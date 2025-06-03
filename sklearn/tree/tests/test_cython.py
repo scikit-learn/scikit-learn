@@ -10,6 +10,19 @@ from sklearn.tree._partitioner import (
     py_breiman_sort_categories,
     py_init_node_split,
 )
+from sklearn.utils._testing import (
+    assert_array_equal,
+)
+
+CLF_TREES = {
+    "DecisionTreeClassifier": DecisionTreeClassifier,
+    "ExtraTreeClassifier": ExtraTreeClassifier,
+}
+# toy sample
+X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+y = [-1, -1, -1, 1, 1, 1]
+T = [[-1, -1], [2, 2], [3, 2]]
+true_result = [-1, 1, 1]
 
 
 def test_breiman_sort_categories():
@@ -129,20 +142,6 @@ def test_categorical_split_vs_onehot_tree_depth():
     assert (
         tree_ohe.get_depth() >= 3
     ), f"One-hot tree depth should be at least 3, got {tree_ohe.get_depth()}"
-
-
-CLF_TREES = {
-    "DecisionTreeClassifier": DecisionTreeClassifier,
-    "ExtraTreeClassifier": ExtraTreeClassifier,
-}
-# toy sample
-X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-y = [-1, -1, -1, 1, 1, 1]
-T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [-1, 1, 1]
-from sklearn.utils._testing import (
-    assert_array_equal,
-)
 
 
 def test_weighted_classification_toy():

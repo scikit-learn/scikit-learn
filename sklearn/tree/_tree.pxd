@@ -9,7 +9,7 @@ cimport numpy as cnp
 
 from ..utils._bitset cimport BITSET_INNER_DTYPE_C
 from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint8_t, uint32_t, BITSET_t
-from ._utils cimport ParentInfo, SplitRecord, SplitValue, Node
+from ._utils cimport ParentInfo, SplitRecord, SplitValue, Node, copy_array_to_memview
 from ._splitter cimport Splitter
 
 
@@ -23,7 +23,7 @@ cdef class Tree:
     cdef intp_t* n_classes               # Number of classes in y[:, k]
     cdef public intp_t n_outputs         # Number of outputs in y
     cdef public intp_t max_n_classes     # max(n_classes)
-    cdef int32_t *n_categories           # (n_features,) array giving number of
+    cdef int32_t[::1] n_categories       # (n_features,) array giving number of
     #                                    # categories (<0 for non-categorical)
 
     # Inner structures: values are stored separately from node structure,
@@ -108,18 +108,18 @@ cdef class TreeBuilder:
 
 
 # TODO: implement category cache manager to precompute the bitmasks
-# cdef class CategoryCacheMgr:
-#     # Class to manage the category cache memory during Tree.apply()
+cdef class CategoryCacheMgr:
+    # Class to manage the category cache memory during Tree.apply()
 
-#     cdef intp_t n_nodes
-#     cdef BITSET_INNER_DTYPE_C **bits
+    # cdef vector[vector[BITSET_INNER_DTYPE_C]] bitset_arr
+    cdef BITSET_INNER_DTYPE_C[:, ::1] bitset_arr
+    cdef intp_t n_nodes
 
-#     cdef void populate(
-#         self,
-#         Node *nodes,
-#         intp_t n_nodes,
-#         int32_t *n_categories
-#     )
+    cdef void populate(
+        self,
+        Node *nodes,
+        int32_t[:] n_categories
+    ) noexcept
 
 # =============================================================================
 # Tree pruning

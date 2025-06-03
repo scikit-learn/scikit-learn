@@ -127,47 +127,38 @@ cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
 # Cache manager for categorical splits
 # =============================================================================
 
-# cdef class CategoryCacheMgr:
-#     """Class to manage the category cache memory during Tree.apply()
-#     """
+cdef class CategoryCacheMgr:
+    """Class to manage the category cache memory during Tree.apply()
+    """
+    def __cinit__(self, n_nodes):
+        # construct empty vector of vectors
+        # self.bitset_arr = new vector[vector[BITSET_INNER_DTYPE_C]]()
+        self.n_nodes = n_nodes
+        self.bitset_arr = np.empty((n_nodes, 8), dtype=np.uint32)
 
-#     def __cinit__(self):
-#         self.n_nodes = 0
-#         self.bits = NULL
+    # def __dealloc__(self):
+        # if self.bitset_arr is not NULL:
+        #     del self.bitset_arr
+        #     self.bitset_arr = NULL
 
-#     def _dealloc__(self):
-#         cdef int i
+    cdef inline void populate(
+        self,
+        Node *nodes,
+        int32_t[:] n_categories
+    ) noexcept:
+        cdef intp_t i
+        cdef int32_t ncat
 
-#         if self.bits != NULL:
-#             for i in range(self.n_nodes):
-#                 free(self.bits[i])
-#         free(self.bits)
+        if nodes == NULL:
+            return
 
-#     cdef void populate(
-#         self,
-#         Node *nodes,
-#         intp_t n_nodes,
-#         int32_t *n_categories
-#     ):
-#         cdef intp_t i
-#         cdef int32_t ncat
+        for i in range(self.n_nodes):
+            if nodes[i].left_child != _TREE_LEAF:
+                ncat = n_categories[nodes[i].feature]
 
-#         if nodes == NULL or n_categories == NULL:
-#             return
-
-#         self.n_nodes = n_nodes
-#         safe_realloc(<void ***> &self.bits, n_nodes)
-#         for i in range(n_nodes):
-#             self.bits[i] = NULL
-#             if nodes[i].left_child != _TREE_LEAF:
-#                 ncat = n_categories[nodes[i].feature]
-#                 if ncat > 0:
-#                     cache_size = (ncat + 63) // 64
-#                     safe_realloc(&self.bits[i],
-#                                  cache_size)
-#                     setup_cat_cache(self.bits[i],
-#                                     nodes[i].split_value.cat_split,
-#                                     ncat)
+                # popoulate a bitset if this feature is categorical
+                if ncat > 0:
+                    copy_array_to_memview(self.bitset_arr[i, :], nodes[i].split_value.cat_split)
 
 # =============================================================================
 # TreeBuilder
@@ -893,7 +884,8 @@ cdef class Tree:
 
     @property
     def n_categories(self):
-        return int32t_ptr_to_ndarray(self.n_categories, self.n_features).copy()
+        return self.n_categories
+        # return int32t_ptr_to_ndarray(self.n_categories, self.n_features).copy()
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -916,8 +908,8 @@ cdef class Tree:
         self.n_classes = NULL
         safe_realloc(&self.n_classes, n_outputs)
 
-        self.n_categories = NULL
-        safe_realloc(&self.n_categories, n_features)
+        self.n_categories = n_categories
+        # safe_realloc(&self.n_categories, n_features)
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
@@ -925,8 +917,8 @@ cdef class Tree:
         cdef intp_t k
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
-        for k in range(n_features):
-            self.n_categories[k] = n_categories[k]
+        # for k in range(n_features):
+            # self.n_categories[k] = n_categories[k]
 
         # Inner structures
         self.max_depth = 0
@@ -941,14 +933,13 @@ cdef class Tree:
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
-        free(self.n_categories)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
         return (Tree, (self.n_features,
                        sizet_ptr_to_ndarray(self.n_classes, self.n_outputs),
                        self.n_outputs,
-                       int32t_ptr_to_ndarray(self.n_categories, self.n_features),
+                       self.n_categories
                        ), self.__getstate__())
 
     def __getstate__(self):
@@ -1141,9 +1132,16 @@ cdef class Tree:
         cdef Node* node = NULL
         cdef intp_t i = 0
 
+        # setup category cache manager
+        cache_mgr = CategoryCacheMgr(self.node_count)
+        cache_mgr.populate(self.nodes, self.n_categories)
+        cdef BITSET_INNER_DTYPE_C[:, ::1] cat_caches = cache_mgr.bitset_arr
+        cdef BITSET_INNER_DTYPE_C[:] cache = np.zeros(8, dtype=np.uint32)
+
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
+                cache = cat_caches[i]
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     X_i_node_feature = X_ndarray[i, node.feature]
@@ -1151,17 +1149,22 @@ cdef class Tree:
                     if isnan(X_i_node_feature):
                         if node.missing_go_to_left:
                             node = &self.nodes[node.left_child]
+                            cache = cat_caches[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    # elif goes_left(
-                    #     X_i_node_feature,
-                    #     node.split_value,
-                    #     self.n_categories[node.feature],
-                    #     cat_bitsets
-                    # ):
-                    elif X_i_node_feature <= node.split_value.threshold:
+                            cache = cat_caches[node.right_child]
+                    elif goes_left(
+                        X_i_node_feature,
+                        node.split_value,
+                        self.n_categories[node.feature],
+                        cache
+                    ):
+                        cache = cat_caches[node.left_child]
                         node = &self.nodes[node.left_child]
+                    # elif X_i_node_feature <= node.split_value.threshold:
+                        # node = &self.nodes[node.left_child]
                     else:
+                        cache = cat_caches[node.right_child]
                         node = &self.nodes[node.right_child]
 
                 out[i] = <intp_t>(node - self.nodes)  # node offset

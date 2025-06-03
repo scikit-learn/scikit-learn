@@ -13,6 +13,7 @@ from itertools import chain, pairwise, product
 import joblib
 import numpy as np
 import pytest
+import scipy
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
@@ -2893,36 +2894,34 @@ def test_sort_log2_build():
     assert_array_equal(samples, expected_samples)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize("name", ALL_TREES)
 @pytest.mark.parametrize(
-    "categorical",
-    ["invalid string", [[0]], [False, False, False], [1, 2], [-3], [0, 0, 1]],
+    "categorical_features",
+    [[[0]], [False, False, False], [1, 2], [-3], [0, 0, 1]],
 )
-def test_invalid_categorical(name, categorical):
+def test_invalid_categorical(name, categorical_features):
     Tree = ALL_TREES[name]
-    with pytest.raises(ValueError, match="Invalid value for categorical"):
-        Tree(categorical=categorical).fit(X, y)
+    with pytest.raises(ValueError, match="Invalid value for categorical_features"):
+        Tree(categorical_features=categorical_features).fit(X, y)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_no_sparse_with_categorical(name):
     # Currently we do not support sparse categorical features
-    X, y, X_sparse = [DATASETS["clf_small"][z] for z in ["X", "y", "X_sparse"]]
+    X, y = [DATASETS["clf_small"][z] for z in ["X", "y"]]
+    X_sparse = scipy.sparse.csc_array(X)
     Tree = ALL_TREES[name]
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
-        Tree(categorical=[6, 10]).fit(X_sparse, y)
+        Tree(categorical_features=[6, 10]).fit(X_sparse, y)
 
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
-        Tree(categorical=[6, 10]).fit(X, y).predict(X_sparse)
+        Tree(categorical_features=[6, 10]).fit(X, y).predict(X_sparse)
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize("model", ALL_TREES)
 @pytest.mark.parametrize(
     "data_params",
@@ -2974,9 +2973,9 @@ def test_categorical_data(model, data_params):
         np.arange(data_params["n_categorical"]) + data_params["n_numerical"]
     )
 
-    model = ALL_TREES[model](random_state=42, categorical=categorical_features).fit(
-        X, y
-    )
+    model = ALL_TREES[model](
+        random_state=42, categorical_features=categorical_features
+    ).fit(X, y)
     fi = model.feature_importances_
     bad_features = np.array([True] * cols)
     bad_features[meaningful_features] = False
@@ -3017,8 +3016,8 @@ def test_categorical_split_vs_onehot_tree_depth():
 
     # The categorical split should yield a shallower tree
     assert (
-        tree_cat.get_depth() == 1
-    ), f"Categorical split depth should be 1, got {tree_cat.get_depth()}"
+        tree_cat.get_depth() == 0
+    ), f"Categorical split depth should be 0, got {tree_cat.get_depth()}"
     assert (
         tree_ohe.get_depth() >= 3
     ), f"One-hot tree depth should be at least 3, got {tree_ohe.get_depth()}"

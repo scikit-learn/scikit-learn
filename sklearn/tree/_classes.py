@@ -384,67 +384,89 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 sample_weight = expanded_class_weight
 
         # Validate categorical features
-        if isinstance(self.categorical_features, str):
-            if self.categorical_features == "all":
-                categorical = np.arange(self.n_features_in_)
+        cat_type = self.categorical_features
+        if isinstance(cat_type, str):
+            if cat_type == "all":
+                cat_idx = np.arange(self.n_features_in_, dtype=int)
             else:
                 raise ValueError(
-                    "Invalid value for categorical: {}. Allowed"
-                    " strings are 'all' or 'none'"
-                    "".format(self.categorical_features)
+                    f"Invalid string for categorical_features: '{cat_type}'. "
+                    "Allowed string values are 'all' or None."
                 )
-        elif self.categorical_features is None:
-            categorical = np.array([], dtype=np.intp)
+
+        # 2) None → no categorical columns
+        elif cat_type is None:
+            cat_idx = np.zeros(0, dtype=int)
+
+        # 3) Array‐like (integer indices or boolean mask)
         else:
-            categorical = np.atleast_1d(self.categorical_features).flatten()
-        print(categorical)
-        if categorical.dtype == np.bool:
-            if categorical.size != self.n_features_:
+            arr = np.asarray(cat_type)
+
+            # 3a) Boolean mask of shape (n_features,)
+            if arr.dtype == bool:
+                if arr.shape != (self.n_features_in_,):
+                    raise ValueError(
+                        f"Invalid value for categorical_features: If "
+                        "categorical_features is a boolean mask, it must have "
+                        f"shape (n_features,) = ({self.n_features_in_},), but "
+                        f"got {arr.shape}."
+                    )
+                cat_idx = np.flatnonzero(arr).astype(int)
+
+            # 3b) Otherwise interpret as integer indices
+            else:
+                # Convert to 1D integer array
+                arr = np.atleast_1d(arr).ravel()
+                if not np.issubdtype(arr.dtype, np.integer):
+                    raise ValueError(
+                        "Invalid value for categorical_features: If "
+                        "categorical_features is array-like, it must "
+                        "be a boolean mask or a sequence of integer indices."
+                    )
+                cat_idx = arr.astype(int)
+
+        # 4) Now check that indices are in [0, n_features)
+        if cat_idx.size > 0:
+            if np.any(cat_idx < 0) or np.any(cat_idx >= self.n_features_in_):
                 raise ValueError(
-                    "Invalid value for categorical: Shape of "
-                    "boolean parameter categorical must "
-                    "be (n_features,)"
+                    "Invalid value for categorical_features: "
+                    f"indices must be between 0 and {self.n_features_in_ - 1}, "
+                    f"but got {cat_idx}."
                 )
-            categorical = np.nonzero(categorical)[0]
-        print(categorical)
-        if np.size(categorical) > self.n_features_in_ or (
-            categorical.size > 0
-            and (categorical.min() < 0 or categorical.max() >= self.n_features_in_)
-        ):
-            raise ValueError(
-                "Invalid value for categorical: Invalid shape or "
-                "feature index for parameter categorical "
-                "invalid."
+
+        # 5) Sparse‐input check
+        if issparse(X) and cat_idx.size > 0:
+            raise NotImplementedError(
+                "Categorical features are not supported with sparse inputs."
             )
-        if issparse(X):
-            if categorical.size > 0:
-                raise NotImplementedError(
-                    "Categorical features not supported" " with sparse inputs"
-                )
-        else:
-            if np.any(X[:, categorical].astype(np.intp) < 0):
+
+        # 6) For dense X, ensure categorical columns contain non‐negative values
+        if (not issparse(X)) and (cat_idx.size > 0):
+            # We cast to int‐type (np.intp) and check for negativity
+            # (assumes X[:, cat_idx] can be cast to integer)
+            subset = X[:, cat_idx].astype(np.intp)
+            if np.any(subset < 0):
                 raise ValueError(
-                    "Invalid value for categorical: given values "
-                    "for categorical features must be "
-                    "non-negative."
+                    "Invalid value for categorical_features: values in categorical "
+                    "columns must be non-negative integers."
                 )
 
         # Calculate n_categories and verify they are all at least 1% populated
         n_categories = np.array(
             [
-                np.intp(X[:, i].max()) + 1 if i in categorical else -1
+                np.intp(X[:, i].max()) + 1 if i in cat_idx else -1
                 for i in range(self.n_features_in_)
             ],
             dtype=np.int32,
         )
         n_cat_present = np.array(
             [
-                np.unique(X[:, i].astype(np.intp)).size if i in categorical else -1
+                np.unique(X[:, i].astype(np.intp)).size if i in cat_idx else -1
                 for i in range(self.n_features_in_)
             ],
             dtype=np.int32,
         )
-        if np.any((n_cat_present < 0.01 * n_cat_present)[categorical]):
+        if np.any((n_cat_present < 0.01 * n_cat_present)[cat_idx]):
             warn(
                 "At least one categorical feature has less than 1%"
                 " of its categories present in the sample. Runtime"
@@ -452,7 +474,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 " represent the categories as sequential integers.",
                 UserWarning,
             )
-
         self.n_categories_ = n_categories
 
         # Set min_weight_leaf from min_weight_fraction_leaf
