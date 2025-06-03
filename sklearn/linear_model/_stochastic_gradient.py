@@ -1082,7 +1082,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1208,7 +1208,7 @@ class SGDClassifier(BaseSGDClassifier):
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
-        "power_t": [Interval(Real, None, None, closed="neither")],
+        "power_t": [Interval(Real, 0, None, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
@@ -1880,7 +1880,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0, inf)`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1994,7 +1994,7 @@ class SGDRegressor(BaseSGDRegressor):
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
-        "power_t": [Interval(Real, None, None, closed="neither")],
+        "power_t": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
             Hidden(StrOptions({"pa1", "pa2"})),
@@ -2118,7 +2118,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0, inf)`.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2201,7 +2201,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             Hidden(StrOptions({"pa1", "pa2"})),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
-        "power_t": [Interval(Real, None, None, closed="neither")],
+        "power_t": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
