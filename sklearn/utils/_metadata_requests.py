@@ -256,7 +256,7 @@ VALID_REQUEST_VALUES = [False, True, None, UNUSED, WARN]
 
 
 def request_is_alias(item):
-    """Check if a name is a valid alias.
+    """Check if a name is a valid string alias.
 
     Values in ``VALID_REQUEST_VALUES`` are not considered aliases in this
     context. Only a string which is a valid identifier is.
@@ -448,7 +448,7 @@ class MethodMetadataRequest:
         -------
         params : Bunch
             A :class:`~sklearn.utils.Bunch` of {metadata: value} which can be
-            given to the corresponding method.
+            passed to the corresponding method.
         """
         self._check_warnings(params=params)
         unrequested = dict()
@@ -862,7 +862,7 @@ class MetadataRouter:
         return self
 
     def add(self, *, method_mapping, **objs):
-        """Add :term:`consumers<consumer>` to the `MetadataRouter`.
+        """Add :term:`consumers <consumer>` to the `MetadataRouter`.
 
         The estimators that consume metadata are passed as named objects along with a
         method mapping, that defines how their methods relate to those of the
@@ -875,7 +875,7 @@ class MetadataRouter:
             (:term:`router`'s) methods.
 
         **objs : dict
-            A dictionary of objects from which their requests are extracted by calling
+            A dictionary of objects, whose requests are extracted by calling
             :func:`~sklearn.utils.metadata_routing.get_routing_for_object` on them.
 
         Returns
@@ -1028,7 +1028,7 @@ class MetadataRouter:
         return res
 
     def route_params(self, *, caller, params):
-        """Get the values of metadata requested by :term:`consumers<consumer>`.
+        """Get the values of metadata requested by :term:`consumers <consumer>`.
 
         Returns a :class:`~sklearn.utils.Bunch` containing the metadata that this
         :term:`router`'s `caller` method needs to route, organized by each
