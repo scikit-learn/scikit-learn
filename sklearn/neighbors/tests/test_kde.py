@@ -250,3 +250,13 @@ def test_bandwidth(bandwidth):
     else:
         h = bandwidth
     assert kde.bandwidth_ == pytest.approx(h)
+
+
+@pytest.mark.parametrize("bandwidth", ["scott", "silverman"])
+def test_kde_bandwidth_1d_raises(bandwidth):
+    n_samples, n_features = (100, 0)  # Shape (100,)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    kde = KernelDensity(bandwidth=bandwidth)
+    with pytest.raises(ValueError):
+        kde.fit(X)
