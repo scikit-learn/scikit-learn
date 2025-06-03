@@ -74,7 +74,6 @@ estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported, for instance some loss functions.
 
-
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
@@ -371,8 +370,8 @@ following modelling constraint:
 Also, monotonic constraints are not supported for multiclass classification.
 
 For a practical implementation of monotonic constraints with the histogram-based
-gradient boosting, including how they can improve generalization when "domain knowledge
-is available", see
+gradient boosting, including how they can improve generalization when domain knowledge
+is available, see
 :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`.
 
 .. note::
