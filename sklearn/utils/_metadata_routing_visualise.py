@@ -89,8 +89,6 @@ def _visualise_metadata_router(param, router, indent, output):
                     param, inner_router, indent=indent + 1, output=sub_output
                 )
                 if sub_routed:
-                    if caller == "fit" and callee == "fit" and name == "classifier":
-                        temp = 1
                     print(" ." * indent, f"{caller} -> {name}.{callee}", file=output)
                     print(sub_output.getvalue(), end="", file=output)
                     routed = True
