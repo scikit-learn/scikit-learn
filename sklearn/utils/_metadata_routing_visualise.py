@@ -120,9 +120,22 @@ def visualise_matrix(routing_info):
         for comp_name, methods in consumers.items():
             matrix[comp_name][param] = methods
 
-    # Calculate column widths
+    # Calculate column widths - need to check all method strings that will be displayed
     comp_width = max(len(comp) for comp in components) + 2
-    param_widths = {param: max(len(param), 8) + 2 for param in params}
+    param_widths = {}
+    for param in params:
+        # Start with parameter name length
+        max_width = len(param)
+
+        # Check all method strings that will be displayed for this parameter
+        for comp in components:
+            methods = matrix[comp][param]
+            if methods:
+                method_str = ",".join(sorted(methods))
+                max_width = max(max_width, len(method_str))
+
+        # Add padding
+        param_widths[param] = max_width + 2
 
     # Print header
     print(f"{'Component':<{comp_width}}", end="")
@@ -143,8 +156,7 @@ def visualise_matrix(routing_info):
             methods = matrix[comp][param]
             if methods:
                 method_str = ",".join(sorted(methods))
-                if len(method_str) > param_widths[param] - 2:
-                    method_str = method_str[: param_widths[param] - 5] + "..."
+                # No truncation needed now that column widths are calculated properly
                 print(f"{method_str:^{param_widths[param]}}", end="")
             else:
                 print(f"{'-':^{param_widths[param]}}", end="")
@@ -263,11 +275,8 @@ def _display_tree_new(
         param_details = []
         for param in sorted(info["params"]):
             methods = sorted(info["methods"][param])
-            if show_method_mappings and len(methods) > 1:
-                param_details.append(f"{param}[{','.join(methods)}]")
-            else:
-                # Just show the parameter
-                param_details.append(param)
+            # Always show which methods consume each parameter
+            param_details.append(f"{param}[{','.join(methods)}]")
         display_parts.append(f" ➤ {', '.join(param_details)}")
 
     # Print with proper tree structure
@@ -416,7 +425,9 @@ def _build_compact_structure(router, level=0, top_router=None):
     return structure
 
 
-def _print_compact_structure(structure, indent=0, show_method_mappings=False):
+def _print_compact_structure(
+    structure, indent=0, show_method_mappings=False, mapping_info=None
+):
     """Print the compact structure."""
     prefix = "  " * indent
 
@@ -428,25 +439,29 @@ def _print_compact_structure(structure, indent=0, show_method_mappings=False):
             param_strs.append(f"{param}[{','.join(sorted(methods))}]")
         comp_str += f" ◆ {', '.join(param_strs)}"
 
-    print(f"{prefix}▸ {comp_str}")
+    # If this is being printed as a child with mapping info, combine on same line
+    if mapping_info:
+        mapping_str = f"↳ via {mapping_info['name']}"
+        if show_method_mappings and mapping_info["mappings"]:
+            unique_mappings = set()
+            for caller, callee in mapping_info["mappings"]:
+                if caller != callee:
+                    unique_mappings.add(f"{caller}→{callee}")
+            if unique_mappings:
+                mapping_str += f" [{', '.join(sorted(unique_mappings))}]"
+        print(f"{prefix}{mapping_str}: {comp_str}")
+    else:
+        print(f"{prefix}▸ {comp_str}")
 
     # Children
     for child in structure["children"]:
-        mapping_str = ""
+        mapping_info = None
         if "mapping_name" in child:
-            mapping_str = f" via {child['mapping_name']}"
-            if show_method_mappings and child["mappings"]:
-                unique_mappings = set()
-                for caller, callee in child["mappings"]:
-                    if caller != callee:
-                        unique_mappings.add(f"{caller}→{callee}")
-                if unique_mappings:
-                    mapping_str += f" [{', '.join(sorted(unique_mappings))}]"
-
-        if mapping_str:
-            print(f"{prefix}  ↳{mapping_str}")
-
-        _print_compact_structure(child, indent + 2, show_method_mappings)
+            mapping_info = {
+                "name": child["mapping_name"],
+                "mappings": child.get("mappings", []),
+            }
+        _print_compact_structure(child, indent + 2, show_method_mappings, mapping_info)
 
 
 def _find_routing_paths(router, param):
