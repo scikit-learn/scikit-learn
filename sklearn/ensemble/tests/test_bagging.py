@@ -692,6 +692,71 @@ def test_warning_bootstrap_sample_weight():
         reg.fit(X, y, sample_weight=sample_weight)
 
 
+class EstimatorAcceptingSampleWeight(BaseEstimator):
+    "Fake estimator accepting sample_weight"
+
+    def fit(self, X, y, sample_weight=None):
+        "Record values passed during fit"
+        self.X_ = X
+        self.y_ = y
+        self.sample_weight_ = sample_weight
+
+    def predict(self, X):
+        pass
+
+
+class EstimatorRejectingSampleWeight(BaseEstimator):
+    "Fake estimator rejecting sample_weight"
+
+    def fit(self, X, y):
+        "Record values passed during fit"
+        self.X_ = X
+        self.y_ = y
+
+    def predict(self, X):
+        pass
+
+
+@pytest.mark.parametrize(
+    "bagging_class, accept_sample_weight, metadata_routing",
+    product([BaggingRegressor, BaggingClassifier], [False, True], [False, True]),
+)
+def test_draw_indices_using_sample_weight(
+    bagging_class, accept_sample_weight, metadata_routing
+):
+    X = np.arange(100).reshape(-1, 1)
+    y = np.repeat([0, 1], 50)
+    # all indices except 4 and 5 have zero weight
+    sample_weight = np.zeros(100)
+    sample_weight[4] = 1
+    sample_weight[5] = 2
+    if accept_sample_weight:
+        base_estimator = EstimatorAcceptingSampleWeight()
+    else:
+        base_estimator = EstimatorRejectingSampleWeight()
+
+    with config_context(enable_metadata_routing=metadata_routing):
+        # TODO(slep006): remove block when default routing is implemented
+        if metadata_routing and accept_sample_weight:
+            base_estimator = base_estimator.set_fit_request(sample_weight=True)
+        bagging = bagging_class(base_estimator, max_samples=10, n_estimators=4)
+        bagging.fit(X, y, sample_weight=sample_weight)
+        for estimator, samples in zip(bagging.estimators_, bagging.estimators_samples_):
+            counts = np.bincount(samples, minlength=100)
+            assert sum(counts) == len(samples) == bagging._max_samples
+            # only indices 4 and 5 should appear
+            assert np.isin(samples, [4, 5]).all()
+            if accept_sample_weight:
+                # sampled indices represented thru weighting
+                assert np.allclose(estimator.X_, X)
+                assert np.allclose(estimator.y_, y)
+                assert np.allclose(estimator.sample_weight_, counts)
+            else:
+                # sampled indices represented thru indexing
+                assert np.allclose(estimator.X_, X[samples])
+                assert np.allclose(estimator.y_, y[samples])
+
+
 def test_oob_score_removed_on_warm_start():
     X, y = make_hastie_10_2(n_samples=100, random_state=1)
 
