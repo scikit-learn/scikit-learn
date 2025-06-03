@@ -734,7 +734,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         if self.power_t < 0:
             warnings.warn(
-                "Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10."
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
                 "Use values in the range [0.0, inf) instead.",
                 FutureWarning,
             )
@@ -1092,8 +1093,8 @@ class SGDClassifier(BaseSGDClassifier):
         The exponent for inverse scaling learning rate.
 
         .. deprecated:: 1.8
-            Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10. 
-            Values must be in the range [0.0, inf).
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1598,7 +1599,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         if self.power_t < 0:
             warnings.warn(
-                "Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10."
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
                 "Use values in the range [0.0, inf) instead.",
                 FutureWarning,
             )
@@ -1900,8 +1902,8 @@ class SGDRegressor(BaseSGDRegressor):
         The exponent for inverse scaling learning rate.
 
         .. deprecated:: 1.8
-            Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10.
-            Values must be in the range [0.0, inf).
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -2141,8 +2143,8 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         The exponent for inverse scaling learning rate.
 
         .. deprecated:: 1.8
-            Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10.
-            Values must be in the range [0.0, inf).
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2516,7 +2518,8 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
         if self.power_t < 0:
             warnings.warn(
-                "Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10."
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
                 "Use values in the range [0.0, inf) instead.",
                 FutureWarning,
             )
