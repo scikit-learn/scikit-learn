@@ -1222,9 +1222,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _sk_visual_block_(self):
         transformers = getattr(self, "transformers_", self.transformers)
 
-        if isinstance(self.remainder, str) and self.remainder == "drop":
-            remainder_columns = ""
-        elif hasattr(self, "_remainder"):
+        transformers = [tr for tr in transformers if "remainder" not in tr]
+        transformers = self.transformers
+        if hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
             if (
                 hasattr(self, "feature_names_in_")
@@ -1237,8 +1237,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         else:
             transformers = chain(transformers, [("remainder", self.remainder, "")])
-
         names, transformers, name_details = zip(*transformers)
+
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )
