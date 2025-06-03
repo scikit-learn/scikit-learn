@@ -14,15 +14,15 @@ for objects that consume metadata, and ``MetadataRouter`` objects for objects th
 can route metadata, which are then aligned during a call to `process_routing()`."
 
 The ``MetadataRequest`` and ``MetadataRouter`` objects are constructed via a
-``get_metadata_routing`` method, which all estimators (should) therefore implement.
+``get_metadata_routing`` method, which all scikit-learn estimators implement.
 This method is automatically implemented via ``BaseEstimator`` for all simple
 estimators, but needs a custom implementation for meta-estimators.
 
-    In non-routing consumers, i.e. the simplest case, e.g. ``SVM``,
+    In non-routing consumers, the simplest case, e.g. ``SVM``,
     ``get_metadata_routing`` returns a ``MetadataRequest`` object. It stores
-    information on which methods of the consumer do request which metadata.
+    which metadata is required by each method of the consumer.
 
-    In routers, e.g. meta-estimators and a multi metric scorer,
+    In routers such as meta-estimators or multi metric scorers,
     ``get_metadata_routing`` returns a ``MetadataRouter`` object. It stores
     information on which method from the router object calls which in a consumer's
     object, because this is how the metadata is to be passed.
@@ -35,7 +35,7 @@ estimators, but needs a custom implementation for meta-estimators.
     for its sub-estimators.
 
 A ``MetadataRequest`` instance includes one ``MethodMetadataRequest`` per
-method in ``METHODS``, which includes ``fit``, ``score``, etc.
+method in ``METHODS`` (e. g. ``fit``, ``score``, etc).
 
 Request values are added to the routing mechanism by adding them to
 ``MethodMetadataRequest`` instances, e.g.
@@ -791,7 +791,7 @@ class MetadataRouter:
     This class is used by :term:`meta-estimators` or functions that can route metadata
     to store and handle their metadata routing. Routing information is stored in a
     dictionary-like structure of the form ``{"object_name":
-    RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
+    RouterMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
     :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
@@ -1015,7 +1015,7 @@ class MetadataRouter:
                     f"In {self.owner}, there is a conflict on {key} between what is"
                     " requested for this estimator and what is requested by its"
                     " children. You can resolve this conflict by using an alias for"
-                    " the child estimator(s)' requested metadata."
+                    " the child estimators' requested metadata."
                 )
 
         res.update(child_params)
