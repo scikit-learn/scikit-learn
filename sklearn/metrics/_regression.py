@@ -19,6 +19,7 @@ from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
     _find_matching_floating_dtype,
+    _median,
     get_namespace,
     get_namespace_and_device,
     size,
@@ -915,14 +916,15 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
+    xp, _ = get_namespace(y_true, y_pred, multioutput, sample_weight)
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
         y_true, y_pred, sample_weight, multioutput
     )
     if sample_weight is None:
-        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+        output_errors = _median(xp.abs(y_pred - y_true), axis=0)
     else:
         output_errors = _weighted_percentile(
-            np.abs(y_pred - y_true), sample_weight=sample_weight
+            xp.abs(y_pred - y_true), sample_weight=sample_weight
         )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -931,7 +933,7 @@ def median_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return float(np.average(output_errors, weights=multioutput))
+    return float(_average(output_errors, weights=multioutput))
 
 
 def _assemble_r2_explained_variance(
