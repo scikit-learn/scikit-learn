@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
+    UNUSED,
     WARN,
     MetadataRequest,
     MetadataRouter,
@@ -124,7 +125,9 @@ def visualise_matrix(routing_info):
 
     # Build the consumption matrix with alias info
     matrix = defaultdict(
-        lambda: defaultdict(lambda: {"methods": set(), "user_param": None})
+        lambda: defaultdict(
+            lambda: {"methods": set(), "user_param": None, "statuses": {}}
+        )
     )
 
     for comp_path, info in routing_map.items():
@@ -135,12 +138,14 @@ def visualise_matrix(routing_info):
             if param not in info.get("aliases", {}):
                 matrix[comp_name][param]["methods"] = info["methods"][param]
                 matrix[comp_name][param]["user_param"] = param
+                matrix[comp_name][param]["statuses"] = info["statuses"][param]
 
         # Handle aliased parameters
         for comp_param, user_param in info.get("aliases", {}).items():
             matrix[comp_name][user_param]["methods"] = info["methods"][comp_param]
             matrix[comp_name][user_param]["user_param"] = user_param
             matrix[comp_name][user_param]["comp_param"] = comp_param
+            matrix[comp_name][user_param]["statuses"] = info["statuses"][comp_param]
 
     # Calculate column widths - need to check all method strings that will be displayed
     comp_width = max(len(comp) for comp in components) + 2
@@ -153,8 +158,14 @@ def visualise_matrix(routing_info):
         for comp in components:
             cell_info = matrix[comp][param]
             if cell_info["methods"]:
-                methods = sorted(cell_info["methods"])
-                method_str = ",".join(methods)
+                # Build method string with status indicators
+                method_parts = []
+                for method in sorted(cell_info["methods"]):
+                    status = cell_info["statuses"].get(method, False)
+                    indicator = _get_status_indicator(status)
+                    method_parts.append(f"{method}{indicator}")
+                method_str = ",".join(method_parts)
+
                 if "comp_param" in cell_info:
                     display_str = f"{method_str}→{cell_info['comp_param']}"
                 else:
@@ -182,8 +193,14 @@ def visualise_matrix(routing_info):
         for param in params:
             cell_info = matrix[comp][param]
             if cell_info["methods"]:
-                methods = sorted(cell_info["methods"])
-                method_str = ",".join(methods)
+                # Build method string with status indicators
+                method_parts = []
+                for method in sorted(cell_info["methods"]):
+                    status = cell_info["statuses"].get(method, False)
+                    indicator = _get_status_indicator(status)
+                    method_parts.append(f"{method}{indicator}")
+                method_str = ",".join(method_parts)
+
                 if "comp_param" in cell_info:
                     display_str = f"{method_str}→{cell_info['comp_param']}"
                 else:
@@ -239,7 +256,12 @@ def _collect_routing_info(router, top_router=None):
         top_router = router
 
     info = defaultdict(
-        lambda: {"params": set(), "methods": defaultdict(set), "aliases": {}}
+        lambda: {
+            "params": set(),
+            "methods": defaultdict(set),
+            "aliases": {},
+            "statuses": defaultdict(dict),
+        }
     )
 
     def _collect(obj, path=""):
@@ -254,11 +276,19 @@ def _collect_routing_info(router, top_router=None):
             for method in SIMPLE_METHODS:
                 method_req = getattr(obj, method)
                 for param, alias in method_req.requests.items():
-                    if alias is False or alias == WARN or alias is None:
-                        continue
-                    # Track the parameter that the component actually consumes
+                    # Include ALL parameters regardless of status
                     info[current_path]["params"].add(param)
-                    info[current_path]["methods"][param].add(method)
+                    info[current_path]["statuses"][param][method] = alias
+
+                    # Only add to methods set if actually requested
+                    if (
+                        alias is not False
+                        and alias != WARN
+                        and alias is not None
+                        and alias != UNUSED
+                    ):
+                        info[current_path]["methods"][param].add(method)
+
                     # If it's an alias (string), track the mapping:
                     # component_param -> user_param
                     if isinstance(alias, str) and alias != param:
@@ -271,10 +301,19 @@ def _collect_routing_info(router, top_router=None):
                 for method in SIMPLE_METHODS:
                     method_req = getattr(obj._self_request, method)
                     for param, alias in method_req.requests.items():
-                        if alias is False or alias == WARN or alias is None:
-                            continue
+                        # Include ALL parameters regardless of status
                         info[current_path]["params"].add(param)
-                        info[current_path]["methods"][param].add(method)
+                        info[current_path]["statuses"][param][method] = alias
+
+                        # Only add to methods set if actually requested
+                        if (
+                            alias is not False
+                            and alias != WARN
+                            and alias is not None
+                            and alias != UNUSED
+                        ):
+                            info[current_path]["methods"][param].add(method)
+
                         if isinstance(alias, str) and alias != param:
                             # Store the mapping from component param to user param for
                             # display
@@ -285,6 +324,46 @@ def _collect_routing_info(router, top_router=None):
 
     _collect(router)
     return info
+
+
+def _get_status_indicator(alias):
+    """Get a visual indicator for parameter status."""
+    if alias is True:
+        return "✓"  # requested
+    elif alias is False:
+        return "✗"  # not requested
+    elif alias is None:
+        return "⚠"  # error if passed (unrequested)
+    elif alias == WARN:
+        return "⚠"  # warn status
+    elif alias == UNUSED:
+        return "⊘"  # unused status
+    elif isinstance(alias, str):
+        return "↗"  # alias
+    else:
+        return "?"  # unknown status
+
+
+def _format_param_with_status(param, methods, statuses, aliases):
+    """Format a parameter with its status indicators and methods."""
+    if param in aliases:
+        alias = aliases[param]
+        param_display = f"{alias}→{param}"
+    else:
+        param_display = param
+
+    # Show all methods with their statuses for this parameter
+    all_method_parts = []
+    for method in SIMPLE_METHODS:
+        status = statuses.get(param, {}).get(method)
+        if status is not None:  # Only show methods that have been explicitly set
+            indicator = _get_status_indicator(status)
+            all_method_parts.append(f"{method}{indicator}")
+
+    if all_method_parts:
+        return f"{param_display}[{','.join(all_method_parts)}]"
+    else:
+        return param_display
 
 
 def _get_original_params(router):
@@ -360,14 +439,13 @@ def _display_tree_new(
     if has_params:
         param_strs = []
         for param in sorted(node_info["params"]):
-            methods = sorted(node_info["methods"][param])
-            method_str = ",".join(methods)
-            # Check if this parameter has an alias
-            if param in node_info.get("aliases", {}):
-                alias = node_info["aliases"][param]
-                param_strs.append(f"{alias}→{param}[{method_str}]")
-            else:
-                param_strs.append(f"{param}[{method_str}]")
+            param_str = _format_param_with_status(
+                param,
+                node_info["methods"][param],
+                node_info["statuses"],
+                node_info.get("aliases", {}),
+            )
+            param_strs.append(param_str)
         display_parts.append(f"  ➤ {', '.join(param_strs)}")
 
     display_line = "".join(display_parts)
@@ -545,13 +623,13 @@ def _print_compact_structure(
         if routing_map[structure["path"]]["params"]:
             param_strs = []
             for param in sorted(routing_map[structure["path"]]["params"]):
-                methods = sorted(routing_map[structure["path"]]["methods"][param])
-                method_str = ",".join(methods)
-                if param in routing_map[structure["path"]].get("aliases", {}):
-                    alias = routing_map[structure["path"]]["aliases"][param]
-                    param_strs.append(f"{alias}→{param}[{method_str}]")
-                else:
-                    param_strs.append(f"{param}[{method_str}]")
+                param_str = _format_param_with_status(
+                    param,
+                    routing_map[structure["path"]]["methods"][param],
+                    routing_map[structure["path"]]["statuses"],
+                    routing_map[structure["path"]].get("aliases", {}),
+                )
+                param_strs.append(param_str)
             print(f"{prefix}{name_part} ◆ {', '.join(param_strs)}")
         else:
             print(f"{prefix}{name_part}")
@@ -568,14 +646,18 @@ def _print_compact_structure(
         if structure["params"] and indent == 0:
             param_strs = []
             for param, methods in sorted(structure["params"].items()):
-                method_str = ",".join(sorted(methods))
                 comp_path = structure.get("path", structure["name"])
-                if comp_path in routing_map and param in routing_map[comp_path].get(
-                    "aliases", {}
-                ):
-                    alias = routing_map[comp_path]["aliases"][param]
-                    param_strs.append(f"{alias}→{param}[{method_str}]")
+                if comp_path in routing_map:
+                    param_str = _format_param_with_status(
+                        param,
+                        methods,
+                        routing_map[comp_path]["statuses"],
+                        routing_map[comp_path].get("aliases", {}),
+                    )
+                    param_strs.append(param_str)
                 else:
+                    # Fallback for when routing_map doesn't have this path
+                    method_str = ",".join(sorted(methods))
                     param_strs.append(f"{param}[{method_str}]")
             print(f"{prefix}  Parameters: {', '.join(param_strs)}")
 
