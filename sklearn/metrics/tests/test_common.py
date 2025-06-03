@@ -1591,6 +1591,32 @@ def test_regression_sample_weight_invariance(name):
 @pytest.mark.parametrize(
     "name",
     sorted(
+        set(ALL_METRICS).intersection(set(REGRESSION_METRICS))
+        - METRICS_WITHOUT_SAMPLE_WEIGHT
+    ),
+)
+def test_regression_with_invalid_sample_weight(name):
+    # Check that `sample_weight` with incorrect length raises error
+    n_samples = 50
+    random_state = check_random_state(0)
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    metric = ALL_METRICS[name]
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize(
+    "name",
+    sorted(
         set(ALL_METRICS)
         - set(REGRESSION_METRICS)
         - METRICS_WITHOUT_SAMPLE_WEIGHT
@@ -2205,6 +2231,10 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    median_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
@@ -2249,6 +2279,23 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    # TODO: Remove once array-api-strict > 2.3.1
+    # https://github.com/data-apis/array-api-strict/issues/134 has been fixed but
+    # not released yet.
+    if (
+        getattr(metric, "__name__", None) == "median_absolute_error"
+        and array_namespace == "array_api_strict"
+    ):
+        try:
+            import array_api_strict
+        except ImportError:
+            pass
+        else:
+            if device == array_api_strict.Device("device1"):
+                pytest.xfail(
+                    "`_weighted_percentile` is affected by array_api_strict bug when "
+                    "indexing with tuple of arrays on non-'CPU_DEVICE' devices."
+                )
     check_func(metric, array_namespace, device, dtype_name)
 
 
