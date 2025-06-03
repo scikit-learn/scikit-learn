@@ -1221,10 +1221,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def _sk_visual_block_(self):
         transformers = getattr(self, "transformers_", self.transformers)
+        filtered_transformers = [tr for tr in transformers if "remainder" not in tr]
 
-        transformers = [tr for tr in transformers if "remainder" not in tr]
-        transformers = self.transformers
-        if hasattr(self, "_remainder"):
+        if isinstance(self.remainder, str) and self.remainder == "drop":
+            pass
+        elif hasattr(self, "_remainder"):
             remainder_columns = self._remainder[2]
             if (
                 hasattr(self, "feature_names_in_")
@@ -1232,15 +1233,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 and not all(isinstance(col, str) for col in remainder_columns)
             ):
                 remainder_columns = self.feature_names_in_[remainder_columns].tolist()
-            transformers = chain(
-                transformers, [("remainder", self.remainder, remainder_columns)]
+            filtered_transformers = chain(
+                filtered_transformers,
+                [("remainder", self.remainder, remainder_columns)],
             )
         else:
-            transformers = chain(transformers, [("remainder", self.remainder, "")])
-        names, transformers, name_details = zip(*transformers)
+            filtered_transformers = chain(
+                filtered_transformers, [("remainder", self.remainder, "")]
+            )
+        names, filtered_transformers, name_details = zip(*filtered_transformers)
 
         return _VisualBlock(
-            "parallel", transformers, names=names, name_details=name_details
+            "parallel", filtered_transformers, names=names, name_details=name_details
         )
 
     def __getitem__(self, key):
