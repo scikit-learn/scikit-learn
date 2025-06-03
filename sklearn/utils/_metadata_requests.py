@@ -14,46 +14,39 @@ for objects that consume metadata, and ``MetadataRouter`` objects for objects th
 can route metadata, which are then aligned during a call to `process_routing()`."
 
 The ``MetadataRequest`` and ``MetadataRouter`` objects are constructed via a
-``get_metadata_routing`` method, which all scikit-learn estimators implement.
+``get_metadata_routing`` method, which all scikit-learn estimators provide.
 This method is automatically implemented via ``BaseEstimator`` for all simple
 estimators, but needs a custom implementation for meta-estimators.
 
-    In non-routing consumers, the simplest case, e.g. ``SVM``,
-    ``get_metadata_routing`` returns a ``MetadataRequest`` object. It stores
-    which metadata is required by each method of the consumer.
+MetadataRequest
+~~~~~~~~~~~~~~~
 
-    In routers such as meta-estimators or multi metric scorers,
-    ``get_metadata_routing`` returns a ``MetadataRouter`` object. It stores
-    information about which method, from the router object, calls which in a consumer's
-    object, thus specifying how metadata is to be passed.
+In non-routing consumers, the simplest case, e.g. ``SVM``, ``get_metadata_routing``
+returns a ``MetadataRequest`` object as the consumer's `_metadata_request` attribute.
+It stores which metadata is required by each method of the consumer by including one
+``MethodMetadataRequest`` per method in ``METHODS`` (e. g. ``fit``, ``score``, etc).
 
-    An object that is both a router and a consumer, e.g. a meta-estimator which
-    consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
-    also returns a ``MetadataRouter`` object. Its
-    routing information includes both information about what metadata is required by the object itself (added
-    via ``MetadataRouter.add_self_request``), as well as the routing information
-    for its sub-estimators (added via ``MetadataRouter.add``).
+Users and developers almost never need to directly add a new ``MethodMetadataRequest``,
+to the consumer's `_metadata_request` attribute, since these are generated
+automatically. The attribute is created while running `set_{method}_request` methods
+(such as `set_fit_request()`), which is adding the request via
+`method_metadata_request.add_request(param=prop, alias=alias)`.
 
-A ``MetadataRequest`` instance includes one ``MethodMetadataRequest`` per
-method in ``METHODS`` (e. g. ``fit``, ``score``, etc).
-
-Request values are added to the routing mechanism by adding them to
-``MethodMetadataRequest`` instances, e.g.
-``metadatarequest.fit.add(param="sample_weight", alias="my_weights")``. This is
-used in ``set_{method}_request`` which are automatically generated, so users
-and developers almost never need to directly call methods on a
-``MethodMetadataRequest``.
-
-The ``alias`` above in the ``add`` method has to be either a string (an alias),
-or a {True (requested), False (unrequested), None (error if passed)}``. There
+The ``alias`` in the ``add_request`` method has to be either a string (an alias),
+or in ``[True (requested), False (unrequested), None (error if passed)]``. There
 are some other special values such as ``UNUSED`` and ``WARN`` which are used
 for purposes such as warning of removing a metadata in a child class, but not
 used by the end users.
 
-``MetadataRouter`` includes information about sub-objects' routing and how
-methods are mapped together. For instance, the information about which methods
-of a sub-estimator are called in which methods of the meta-estimator are all
-stored here. Conceptually, this information looks like:
+MetadataRouter
+~~~~~~~~~~~~~~
+
+In routers such as meta-estimators or multi metric scorers, ``get_metadata_routing``
+returns a ``MetadataRouter`` object. It provides information about which method, from
+the router object, calls which method in a consumer's object, thus specifying how
+metadata is to be passed.
+
+Conceptually, this information looks like:
 
 ```
 {
@@ -64,6 +57,19 @@ stored here. Conceptually, this information looks like:
     ...
 }
 ```
+
+The ``MetadataRouter`` object is created anew whenever a router calls a method from a
+sub-estimator.
+
+An object that is both a router and a consumer, e.g. a meta-estimator which
+consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
+also returns a ``MetadataRouter`` object. Its routing information includes both
+information about what metadata is required by the object itself (added via
+``MetadataRouter.add_self_request``), as well as the routing information for its
+sub-estimators (added via ``MetadataRouter.add``).
+
+Implementation Details
+~~~~~~~~~~~~~~~~~~~~~~
 
 To give the above representation some structure, we use the following objects:
 
