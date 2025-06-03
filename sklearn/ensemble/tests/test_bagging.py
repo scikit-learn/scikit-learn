@@ -693,10 +693,10 @@ def test_warning_bootstrap_sample_weight():
 
 
 class EstimatorAcceptingSampleWeight(BaseEstimator):
-    "Fake estimator accepting sample_weight"
+    """Fake estimator accepting sample_weight"""
 
     def fit(self, X, y, sample_weight=None):
-        "Record values passed during fit"
+        """Record values passed during fit"""
         self.X_ = X
         self.y_ = y
         self.sample_weight_ = sample_weight
