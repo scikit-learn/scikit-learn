@@ -74,8 +74,6 @@ estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported, for instance some loss functions.
 
-For a practical implementation of monotonic constraints with the histogram-based gradient boosting, including how they can improve generalization when "domain knowledge is available", see
-:ref:`this example <sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py>`.
 
 .. rubric:: Examples
 
