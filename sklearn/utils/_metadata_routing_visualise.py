@@ -254,7 +254,7 @@ def _collect_routing_info(router, top_router=None):
             for method in SIMPLE_METHODS:
                 method_req = getattr(obj, method)
                 for param, alias in method_req.requests.items():
-                    if alias is False or alias == WARN:
+                    if alias is False or alias == WARN or alias is None:
                         continue
                     # Track the parameter that the component actually consumes
                     info[current_path]["params"].add(param)
@@ -271,7 +271,7 @@ def _collect_routing_info(router, top_router=None):
                 for method in SIMPLE_METHODS:
                     method_req = getattr(obj._self_request, method)
                     for param, alias in method_req.requests.items():
-                        if alias is False or alias == WARN:
+                        if alias is False or alias == WARN or alias is None:
                             continue
                         info[current_path]["params"].add(param)
                         info[current_path]["methods"][param].add(method)
