@@ -707,7 +707,8 @@ term :math:`b`.
   misclassified, or it is correctly classified but does not lie beyond the
   margin.
 
-Note: For ease of reference here's an example using SVC on the Iris dataset.  :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
+Note: For ease of reference here's an example using SVC on the Iris dataset.
+:ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
 
 
 SVR
