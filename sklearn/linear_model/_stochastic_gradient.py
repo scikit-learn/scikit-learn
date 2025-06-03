@@ -1880,7 +1880,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
-        Values must be in the range `[0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -2118,7 +2118,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `[0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
