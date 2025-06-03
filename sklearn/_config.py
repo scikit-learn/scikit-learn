@@ -153,7 +153,7 @@ def set_config(
         .. versionadded:: 1.4
             `"polars"` option was added.
 
-    enable_metadata_routing : bool, str, default=None
+    enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
 
         Refer to :ref:`metadata routing user guide <metadata_routing>` for more
@@ -324,7 +324,7 @@ def config_context(
         .. versionadded:: 1.4
             `"polars"` option was added.
 
-    enable_metadata_routing : bool, str, default=None
+    enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
 
         Refer to :ref:`metadata routing user guide <metadata_routing>` for more

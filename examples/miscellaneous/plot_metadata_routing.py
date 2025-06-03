@@ -471,7 +471,7 @@ print_routing(meta_est)
 # ------------------------
 # There are two ways a class can modify the default metadata routing requests:
 #
-# 1. Class-level defaults using `__metadata_request__method` class attributes,
+# 1. Class-level defaults using `__metadata_request__{method}` class attributes,
 #    which set default request values for all instances of a class, and can even
 #    remove a metadata from the metadata routing machinery if necessary.
 # 2. Instance-level defaults via the `add_auto_request` method, which would only
@@ -508,8 +508,8 @@ clf = DefaultRoutingClassifier()
 print_routing(clf)
 
 # %%
-# And now with default routing enabled:
-with config_context(enable_metadata_routing="default_routing"):
+# And now with auto routing enabled:
+with config_context(metadata_request_policy="auto"):
     print_routing(clf)
 
 # %%
