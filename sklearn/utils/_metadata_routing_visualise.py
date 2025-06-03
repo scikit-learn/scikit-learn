@@ -30,7 +30,7 @@ def _param_names(router):
     for method in SIMPLE_METHODS:
         res = res.union(
             router._get_param_names(
-                method=method, return_alias=True, ignore_self_request=False
+                method=method, return_alias=False, ignore_self_request=False
             )
         )
     return res
@@ -1087,5 +1087,7 @@ print("=" * 80)
 
 # Show all new visualization styles
 for view_type in ["tree", "matrix", "compact", "flow"]:
-    visualise_routing(test, view=view_type, show_method_mappings=False)
+    visualise_routing(
+        test, view=view_type, show_method_mappings=False, show_all_metadata=True
+    )
     print("\n")
