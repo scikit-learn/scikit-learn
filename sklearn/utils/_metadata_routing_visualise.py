@@ -80,25 +80,28 @@ def visualise_tree(routing_info, show_method_mappings=False):
         routing_info, routing_map, show_method_mappings=show_method_mappings
     )
 
-    # Get original parameters (before aliasing)
-    original_params = sorted(_get_original_params(routing_info))
+    # Get user-facing parameters (including aliases)
+    user_params = sorted(_get_user_facing_params(routing_map))
 
-    if original_params:
+    if user_params:
         print("\nParameters:")
-        for param in original_params:
+        for param in user_params:
             consumers = []
-            aliases_info = []
 
-            # Find all consumers and their aliases
+            # Find all consumers for this user-facing parameter
             for comp_path, info in routing_map.items():
-                if param in info["params"]:
-                    comp_name = comp_path.split("/")[-1]
-                    if param in info.get("aliases", {}):
-                        alias = info["aliases"][param]
-                        consumers.append(f"{comp_name} (as {alias})")
-                        aliases_info.append((comp_name, alias))
-                    else:
-                        consumers.append(comp_name)
+                comp_name = comp_path.split("/")[-1]
+
+                # Check if this component consumes the param directly (no alias)
+                if param in info["params"] and param not in info.get("aliases", {}):
+                    consumers.append(comp_name)
+
+                # Check if this component consumes the param via alias
+                elif param in info.get("aliases", {}).values():
+                    # Find the component parameter that maps to this user param
+                    for comp_param, alias in info["aliases"].items():
+                        if alias == param:
+                            consumers.append(f"{comp_name} (as {comp_param})")
 
             if consumers:
                 print(f"  • {param} → {', '.join(consumers)}")
@@ -110,24 +113,34 @@ def visualise_matrix(routing_info):
     """Show a matrix view of components vs parameters."""
     print("\n=== METADATA ROUTING MATRIX ===")
 
-    # Collect all components and original parameters
+    # Collect all components and user-facing parameters
     components = _collect_all_components(routing_info)
-    params = sorted(_get_original_params(routing_info))
+    routing_map = _collect_routing_info(routing_info)
+    params = sorted(_get_user_facing_params(routing_map))
 
     if not params:
         print("No parameters are being routed.")
         return
 
     # Build the consumption matrix with alias info
-    routing_map = _collect_routing_info(routing_info)
-    matrix = defaultdict(lambda: defaultdict(lambda: {"methods": set(), "alias": None}))
+    matrix = defaultdict(
+        lambda: defaultdict(lambda: {"methods": set(), "user_param": None})
+    )
 
     for comp_path, info in routing_map.items():
         comp_name = comp_path.split("/")[-1]  # Get the component name from path
+
+        # Handle direct parameters (no alias)
         for param in info["params"]:
-            matrix[comp_name][param]["methods"] = info["methods"][param]
-            if param in info.get("aliases", {}):
-                matrix[comp_name][param]["alias"] = info["aliases"][param]
+            if param not in info.get("aliases", {}):
+                matrix[comp_name][param]["methods"] = info["methods"][param]
+                matrix[comp_name][param]["user_param"] = param
+
+        # Handle aliased parameters
+        for comp_param, user_param in info.get("aliases", {}).items():
+            matrix[comp_name][user_param]["methods"] = info["methods"][comp_param]
+            matrix[comp_name][user_param]["user_param"] = user_param
+            matrix[comp_name][user_param]["comp_param"] = comp_param
 
     # Calculate column widths - need to check all method strings that will be displayed
     comp_width = max(len(comp) for comp in components) + 2
@@ -142,8 +155,8 @@ def visualise_matrix(routing_info):
             if cell_info["methods"]:
                 methods = sorted(cell_info["methods"])
                 method_str = ",".join(methods)
-                if cell_info["alias"]:
-                    display_str = f"{method_str}→{cell_info['alias']}"
+                if "comp_param" in cell_info:
+                    display_str = f"{method_str}→{cell_info['comp_param']}"
                 else:
                     display_str = method_str
                 max_width = max(max_width, len(display_str))
@@ -171,8 +184,8 @@ def visualise_matrix(routing_info):
             if cell_info["methods"]:
                 methods = sorted(cell_info["methods"])
                 method_str = ",".join(methods)
-                if cell_info["alias"]:
-                    display_str = f"{method_str}→{cell_info['alias']}"
+                if "comp_param" in cell_info:
+                    display_str = f"{method_str}→{cell_info['comp_param']}"
                 else:
                     display_str = method_str
                 print(f"{display_str:^{param_widths[param]}}", end="")
@@ -243,11 +256,14 @@ def _collect_routing_info(router, top_router=None):
                 for param, alias in method_req.requests.items():
                     if alias is False or alias == WARN:
                         continue
-                    # Track the original parameter name
+                    # Track the parameter that the component actually consumes
                     info[current_path]["params"].add(param)
                     info[current_path]["methods"][param].add(method)
-                    # If it's an alias (string), track the mapping
+                    # If it's an alias (string), track the mapping:
+                    # component_param -> user_param
                     if isinstance(alias, str) and alias != param:
+                        # Store the mapping from component param to user param for
+                        # display
                         info[current_path]["aliases"][param] = alias
 
         elif isinstance(obj, MetadataRouter):
@@ -260,6 +276,8 @@ def _collect_routing_info(router, top_router=None):
                         info[current_path]["params"].add(param)
                         info[current_path]["methods"][param].add(method)
                         if isinstance(alias, str) and alias != param:
+                            # Store the mapping from component param to user param for
+                            # display
                             info[current_path]["aliases"][param] = alias
 
             for name, mapping in obj._route_mappings.items():
@@ -290,6 +308,23 @@ def _get_original_params(router):
 
     _search(router)
     return params
+
+
+def _get_user_facing_params(routing_map):
+    """Get all user-facing parameter names (including aliases)."""
+    user_params = set()
+
+    for comp_path, info in routing_map.items():
+        # Add all component parameters that don't have aliases (they are user-facing)
+        for param in info["params"]:
+            if param not in info.get("aliases", {}):
+                user_params.add(param)
+
+        # Add all alias names (these are the user-facing names for aliased params)
+        for alias in info.get("aliases", {}).values():
+            user_params.add(alias)
+
+    return user_params
 
 
 def _display_tree_new(
@@ -330,7 +365,7 @@ def _display_tree_new(
             # Check if this parameter has an alias
             if param in node_info.get("aliases", {}):
                 alias = node_info["aliases"][param]
-                param_strs.append(f"{param}→{alias}[{method_str}]")
+                param_strs.append(f"{alias}→{param}[{method_str}]")
             else:
                 param_strs.append(f"{param}[{method_str}]")
         display_parts.append(f"  ➤ {', '.join(param_strs)}")
@@ -507,17 +542,14 @@ def _print_compact_structure(
         name_part = f"↳ via {mapping_info['name']}: {structure['name']}"
 
         # Add parameters if any
-        if structure["params"]:
+        if routing_map[structure["path"]]["params"]:
             param_strs = []
-            for param, methods in sorted(structure["params"].items()):
-                method_str = ",".join(sorted(methods))
-                # Check for alias in routing map
-                comp_path = structure.get("path", structure["name"])
-                if comp_path in routing_map and param in routing_map[comp_path].get(
-                    "aliases", {}
-                ):
-                    alias = routing_map[comp_path]["aliases"][param]
-                    param_strs.append(f"{param}→{alias}[{method_str}]")
+            for param in sorted(routing_map[structure["path"]]["params"]):
+                methods = sorted(routing_map[structure["path"]]["methods"][param])
+                method_str = ",".join(methods)
+                if param in routing_map[structure["path"]].get("aliases", {}):
+                    alias = routing_map[structure["path"]]["aliases"][param]
+                    param_strs.append(f"{alias}→{param}[{method_str}]")
                 else:
                     param_strs.append(f"{param}[{method_str}]")
             print(f"{prefix}{name_part} ◆ {', '.join(param_strs)}")
@@ -542,7 +574,7 @@ def _print_compact_structure(
                     "aliases", {}
                 ):
                     alias = routing_map[comp_path]["aliases"][param]
-                    param_strs.append(f"{param}→{alias}[{method_str}]")
+                    param_strs.append(f"{alias}→{param}[{method_str}]")
                 else:
                     param_strs.append(f"{param}[{method_str}]")
             print(f"{prefix}  Parameters: {', '.join(param_strs)}")
@@ -635,7 +667,7 @@ def _build_flow_diagram(router, show_method_mappings=False):
                         # Show alias if exists
                         if param in info.get("aliases", {}):
                             alias = info["aliases"][param]
-                            param_details.append(f"{param}→{alias}[{methods}]")
+                            param_details.append(f"{alias}→{param}[{methods}]")
                         else:
                             param_details.append(f"{param}[{methods}]")
                     param_info = f" ◆ {', '.join(param_details)}"
@@ -697,7 +729,7 @@ def _build_flow_diagram(router, show_method_mappings=False):
                         # Show alias if exists
                         if param in info.get("aliases", {}):
                             alias = info["aliases"][param]
-                            param_details.append(f"{param}→{alias}[{methods}]")
+                            param_details.append(f"{alias}→{param}[{methods}]")
                         else:
                             param_details.append(f"{param}[{methods}]")
                     param_str = f" ◆ {', '.join(param_details)}"
