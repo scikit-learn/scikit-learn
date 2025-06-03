@@ -731,6 +731,14 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 ),
                 ConvergenceWarning,
             )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10."
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
+            )
+
         return self
 
     def _fit_binary(self, X, y, alpha, C, sample_weight, learning_rate, max_iter):
@@ -1082,7 +1090,10 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10. 
+            Values must be in the range [0.0, inf).
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1208,7 +1219,7 @@ class SGDClassifier(BaseSGDClassifier):
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
-        "power_t": [Interval(Real, 0, None, closed="left")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
@@ -1585,6 +1596,13 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                 ConvergenceWarning,
             )
 
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10."
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
+            )
+
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1880,7 +1898,10 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
-        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10.
+            Values must be in the range [0.0, inf).
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1994,7 +2015,7 @@ class SGDRegressor(BaseSGDRegressor):
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
-        "power_t": [Interval(Real, 0, None, closed="left")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
             Hidden(StrOptions({"pa1", "pa2"})),
@@ -2118,7 +2139,10 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10.
+            Values must be in the range [0.0, inf).
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2201,7 +2225,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             Hidden(StrOptions({"pa1", "pa2"})),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
-        "power_t": [Interval(Real, 0, None, closed="left")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
     }
 
     def __init__(
@@ -2488,6 +2512,13 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+            )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 and will raise an error in 1.10."
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
             )
 
         return self

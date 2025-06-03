@@ -507,6 +507,7 @@ def test_sgd_failing_penalty_validation(Estimator):
         clf.fit(X, Y)
 
 
+# TODO(1.10): remove this test
 @pytest.mark.parametrize(
     "klass",
     [
@@ -520,16 +521,10 @@ def test_sgd_failing_penalty_validation(Estimator):
 )
 def test_power_t_limits(klass):
     """Check that power_t is limited to [0, inf)"""
-    clf = klass(power_t=0.0)
-    clf.fit(X, Y)
-    assert clf.power_t == 0.0
-
-    clf = klass(power_t=0.5)
-    clf.fit(X, Y)
-    assert clf.power_t == 0.5
-
     clf = klass(power_t=-1.0)
-    with pytest.raises(ValueError, match=r"must be a float in the range \[0\.0, inf\)"):
+    with pytest.warns(
+        FutureWarning, match="Negative values for `power_t` are deprecated"
+    ):
         clf.fit(X, Y)
 
 
