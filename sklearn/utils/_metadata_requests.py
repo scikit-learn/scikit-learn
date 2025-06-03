@@ -24,15 +24,15 @@ estimators, but needs a custom implementation for meta-estimators.
 
     In routers such as meta-estimators or multi metric scorers,
     ``get_metadata_routing`` returns a ``MetadataRouter`` object. It stores
-    information on which method from the router object calls which in a consumer's
-    object, because this is how the metadata is to be passed.
+    information about which method, from the router object, calls which in a consumer's
+    object, thus specifying how metadata is to be passed.
 
-    An object which is both a router and a consumer, e.g. a meta-estimator which
+    An object that is both a router and a consumer, e.g. a meta-estimator which
     consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
     also returns a ``MetadataRouter`` object. Its
-    routing information includes both information about the object itself (added
+    routing information includes both information about what metadata is required by the object itself (added
     via ``MetadataRouter.add_self_request``), as well as the routing information
-    for its sub-estimators.
+    for its sub-estimators (added via ``MetadataRouter.add``).
 
 A ``MetadataRequest`` instance includes one ``MethodMetadataRequest`` per
 method in ``METHODS`` (e. g. ``fit``, ``score``, etc).
