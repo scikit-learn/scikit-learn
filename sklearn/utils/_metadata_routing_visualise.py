@@ -39,7 +39,7 @@ def _param_names(router):
 # ============================================================================
 
 
-def visualise_routing(routing_info, view="tree"):
+def visualise_routing(routing_info, view="tree", show_method_mappings=False):
     """
     Visualize metadata routing information.
 
@@ -49,38 +49,56 @@ def visualise_routing(routing_info, view="tree"):
         The routing information to visualize
     view : str, default='tree'
         The visualization style. Options: 'tree', 'matrix', 'compact', 'flow'
+    show_method_mappings : bool, default=False
+        Whether to show method mappings (e.g., fit→fit_transform) in the output.
     """
     if view == "tree":
-        visualise_tree(routing_info)
+        visualise_tree(routing_info, show_method_mappings)
     elif view == "matrix":
         visualise_matrix(routing_info)
     elif view == "compact":
-        visualise_compact(routing_info)
+        visualise_compact(routing_info, show_method_mappings)
     elif view == "flow":
-        visualise_flow(routing_info)
+        visualise_flow(routing_info, show_method_mappings)
     else:
         # Default to old behavior for backward compatibility
         visualise_routing_old(routing_info)
 
 
-def visualise_tree(routing_info):
+def visualise_tree(routing_info, show_method_mappings=False):
     """Show a consolidated tree view with parameters annotated inline."""
     print("\n=== METADATA ROUTING TREE ===")
-    print(f"Root: {routing_info.owner}")
 
     # Collect all routing information first
     routing_map = _collect_routing_info(routing_info)
 
-    # Display the tree
-    _display_tree(routing_info, routing_map, indent=0)
+    # Display the tree with proper vertical lines
+    # Start from root without duplicating it
+    print(f"Root: {routing_info.owner}")
+
+    # Process children directly
+    if isinstance(routing_info, MetadataRouter) and routing_info._route_mappings:
+        print("│")
+        children = list(routing_info._route_mappings.items())
+        for i, (name, mapping) in enumerate(children):
+            is_last_child = i == len(children) - 1
+            _display_tree_new(
+                mapping.router,
+                routing_map,
+                "",
+                is_last_child,
+                show_method_mappings,
+                name,
+                routing_info.owner,
+            )
 
     # Show parameter summary
     params = _param_names(routing_info)
     if params:
-        print("\nParameters tracked:")
+        print("\nParameters:")
         for param in sorted(params):
             consumers = _find_consumers(routing_info, param)
-            print(f"  • {param}: consumed by {len(consumers)} component(s)")
+            print(f"  • {param} → {', '.join(consumers)}")
 
 
 def visualise_matrix(routing_info):
@@ -133,31 +151,34 @@ def visualise_matrix(routing_info):
         print()
 
 
-def visualise_compact(routing_info):
+def visualise_compact(routing_info, show_method_mappings=False):
     """Show a compact hierarchical view."""
     print("\n=== COMPACT METADATA ROUTING ===")
 
     # Build compact representation
     structure = _build_compact_structure(routing_info)
-    _print_compact_structure(structure, indent=0)
+    _print_compact_structure(
+        structure, indent=0, show_method_mappings=show_method_mappings
+    )
 
     # Show routing paths
     params = _param_names(routing_info)
     if params:
-        print("\nRouting paths:")
+        print("\nRouting Paths:")
         for param in sorted(params):
             paths = _find_routing_paths(routing_info, param)
-            print(f"\n{param}:")
-            for path in paths:
-                print(f"  → {' → '.join(path)}")
+            if paths:
+                print(f"\n{param}:")
+                for path in paths:
+                    print(f"  → {' → '.join(path)}")
 
 
-def visualise_flow(routing_info):
+def visualise_flow(routing_info, show_method_mappings=False):
     """Show an ASCII flow diagram."""
     print("\n=== METADATA ROUTING FLOW ===")
 
     # Build flow representation
-    flow = _build_flow_diagram(routing_info)
+    flow = _build_flow_diagram(routing_info, show_method_mappings)
 
     # Display the flow
     for line in flow:
@@ -177,7 +198,11 @@ def _collect_routing_info(router, top_router=None):
     info = defaultdict(lambda: {"params": set(), "methods": defaultdict(set)})
 
     def _collect(obj, path=""):
-        current_path = f"{path}/{obj.owner}" if path else obj.owner
+        # Build the current path correctly
+        if path:
+            current_path = f"{path}/{obj.owner}"
+        else:
+            current_path = obj.owner
 
         if isinstance(obj, MetadataRequest):
             # Get all parameters from the top-level router
@@ -204,70 +229,89 @@ def _collect_routing_info(router, top_router=None):
     return info
 
 
-def _display_tree(router, routing_map, indent=0, prefix="", is_last=True):
-    """Display the routing tree with inline parameter annotations."""
-    connector = "└── " if is_last else "├── "
+def _display_tree_new(
+    router,
+    routing_map,
+    prefix="",
+    is_last=True,
+    show_method_mappings=False,
+    step_name=None,
+    parent_path="",
+):
+    """Display the routing tree with proper formatting and inline parameters."""
 
-    # Get info for current node
-    info = routing_map.get(router.owner, {"params": set(), "methods": defaultdict(set)})
-    param_str = ""
+    # Build the full path for this node
+    if parent_path:
+        full_path = f"{parent_path}/{router.owner}"
+    else:
+        full_path = router.owner
+
+    # Get info for current node using full path
+    info = routing_map.get(full_path, {"params": set(), "methods": defaultdict(set)})
+
+    # Build the display string
+    display_parts = []
+
+    # Add step name and class name together
+    if step_name:
+        display_parts.append(f"{step_name} ({router.owner})")
+    else:
+        display_parts.append(router.owner)
+
+    # Add parameter consumption info inline
     if info["params"]:
         param_details = []
         for param in sorted(info["params"]):
-            methods = ",".join(sorted(info["methods"][param]))
-            param_details.append(f"{param}[{methods}]")
-        param_str = f" ({', '.join(param_details)})"
+            methods = sorted(info["methods"][param])
+            if show_method_mappings and len(methods) > 1:
+                param_details.append(f"{param}[{','.join(methods)}]")
+            else:
+                # Just show the parameter
+                param_details.append(param)
+        display_parts.append(f" ➤ {', '.join(param_details)}")
 
-    if indent == 0:
-        print("│")
-    else:
-        print(f"{prefix}{connector}{router.owner}{param_str}")
+    # Print with proper tree structure
+    connector = "└── " if is_last else "├── "
+    print(f"{prefix}{connector}{' '.join(display_parts)}")
+    new_prefix = prefix + ("    " if is_last else "│   ")
 
-    # Process children
-    if isinstance(router, MetadataRouter):
+    # Process children if it's a router
+    if isinstance(router, MetadataRouter) and router._route_mappings:
         children = list(router._route_mappings.items())
         for i, (name, mapping) in enumerate(children):
             is_last_child = i == len(children) - 1
-            new_prefix = prefix + ("    " if is_last else "│   ")
 
-            # Show method mapping
-            if mapping.mapping:
+            # Show method mappings if requested
+            if show_method_mappings and mapping.mapping:
                 method_maps = []
                 for m in mapping.mapping:
                     if m.caller != m.callee:
                         method_maps.append(f"{m.caller}→{m.callee}")
-                    else:
-                        method_maps.append(m.caller)
-                method_str = f" [{', '.join(method_maps)}]"
-            else:
-                method_str = ""
+                if method_maps:
+                    line_start = f"{new_prefix}{'└── ' if is_last_child else '├── '}"
+                    print(f"{line_start}[{', '.join(method_maps)}]")
+                    method_prefix = new_prefix + ("    " if is_last_child else "│   ")
+                    _display_tree_new(
+                        mapping.router,
+                        routing_map,
+                        method_prefix,
+                        True,
+                        show_method_mappings,
+                        name,
+                        full_path,  # Pass current full path as parent
+                    )
+                    continue
 
-            print(f"{new_prefix}{connector}{name}{method_str}")
-
-            # Recurse
-            newer_prefix = new_prefix + ("    " if is_last_child else "│   ")
-            _display_tree_inner(mapping.router, routing_map, newer_prefix)
-
-
-def _display_tree_inner(router, routing_map, prefix):
-    """Helper for displaying inner tree nodes."""
-    if isinstance(router, MetadataRequest):
-        # Get parameter info from routing map
-        info = routing_map.get(
-            router.owner, {"params": set(), "methods": defaultdict(set)}
-        )
-
-        if info["params"]:
-            params = []
-            for param in sorted(info["params"]):
-                methods = ",".join(sorted(info["methods"][param]))
-                params.append(f"{param}[{methods}]")
-            param_str = f" consumes: {', '.join(params)}"
-            print(f"{prefix}    {router.owner}{param_str}")
-
-    elif isinstance(router, MetadataRouter):
-        # Display the router
-        _display_tree(router, routing_map, len(prefix) // 4, prefix, True)
+            # Regular display
+            _display_tree_new(
+                mapping.router,
+                routing_map,
+                new_prefix,
+                is_last_child,
+                show_method_mappings,
+                name,
+                full_path,  # Pass full path as parent
+            )
 
 
 def _collect_all_components(router, prefix=""):
@@ -372,7 +416,7 @@ def _build_compact_structure(router, level=0, top_router=None):
     return structure
 
 
-def _print_compact_structure(structure, indent=0):
+def _print_compact_structure(structure, indent=0, show_method_mappings=False):
     """Print the compact structure."""
     prefix = "  " * indent
 
@@ -391,18 +435,18 @@ def _print_compact_structure(structure, indent=0):
         mapping_str = ""
         if "mapping_name" in child:
             mapping_str = f" via {child['mapping_name']}"
-            if child["mappings"]:
+            if show_method_mappings and child["mappings"]:
                 unique_mappings = set()
                 for caller, callee in child["mappings"]:
                     if caller != callee:
                         unique_mappings.add(f"{caller}→{callee}")
                 if unique_mappings:
-                    mapping_str += f" ({', '.join(unique_mappings)})"
+                    mapping_str += f" [{', '.join(sorted(unique_mappings))}]"
 
         if mapping_str:
             print(f"{prefix}  ↳{mapping_str}")
 
-        _print_compact_structure(child, indent + 2)
+        _print_compact_structure(child, indent + 2, show_method_mappings)
 
 
 def _find_routing_paths(router, param):
@@ -434,7 +478,7 @@ def _find_routing_paths(router, param):
     return paths
 
 
-def _build_flow_diagram(router):
+def _build_flow_diagram(router, show_method_mappings=False):
     """Build an ASCII flow diagram."""
     lines = []
 
@@ -518,7 +562,7 @@ def _build_flow_diagram(router):
 
                     # Show method mapping
                     method_info = ""
-                    if mapping.mapping:
+                    if show_method_mappings and mapping.mapping:
                         unique_maps = set()
                         for m in mapping.mapping:
                             if m.caller != m.callee:
@@ -703,5 +747,5 @@ print("=" * 80)
 
 # Show all new visualization styles
 for view_type in ["tree", "matrix", "compact", "flow"]:
-    visualise_routing(test, view=view_type)
+    visualise_routing(test, view=view_type, show_method_mappings=False)
     print("\n")
