@@ -282,6 +282,8 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
             "methods": defaultdict(set),
             "aliases": {},
             "statuses": defaultdict(dict),
+            # Track which methods actually exist for this component
+            "existing_methods": set(),
         }
     )
 
@@ -295,6 +297,11 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
         if isinstance(obj, MetadataRequest):
             # Get detailed info about each method's requests
             for method in SIMPLE_METHODS:
+                # Skip methods that don't exist on this estimator
+                if not hasattr(obj, method):
+                    continue
+
+                info[current_path]["existing_methods"].add(method)
                 method_req = getattr(obj, method)
 
                 if show_all_metadata:
@@ -317,9 +324,9 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
                             # If it's an alias (string), track the mapping
                             if isinstance(alias, str) and alias != param:
                                 info[current_path]["aliases"][param] = alias
-                        else:
-                            # Parameter not set for this method, default to False
-                            info[current_path]["statuses"][param][method] = False
+                        # Don't set status to False for methods that don't use this
+                        # parameter. Only show parameters that are actually configured
+                        # for this method
                 else:
                     # Original behavior: only show explicitly set parameters
                     for param, alias in method_req.requests.items():
@@ -346,6 +353,11 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
         elif isinstance(obj, MetadataRouter):
             if obj._self_request:
                 for method in SIMPLE_METHODS:
+                    # Skip methods that don't exist on this estimator
+                    if not hasattr(obj._self_request, method):
+                        continue
+
+                    info[current_path]["existing_methods"].add(method)
                     method_req = getattr(obj._self_request, method)
 
                     if show_all_metadata:
@@ -368,9 +380,9 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
                                     info[current_path]["methods"][param].add(method)
                                 if isinstance(alias, str) and alias != param:
                                     info[current_path]["aliases"][param] = alias
-                            else:
-                                # Parameter not set for this method, default to False
-                                info[current_path]["statuses"][param][method] = False
+                            # Don't set status to False for methods that don't use this
+                            # parameter. Only show parameters that are actually
+                            # configured for this method
                     else:
                         # Original behavior: only show explicitly set parameters
                         for param, alias in method_req.requests.items():
@@ -433,11 +445,10 @@ def _format_param_with_status(
     if show_all_metadata:
         # Show all methods with their status indicators
         for method in SIMPLE_METHODS:
-            status = statuses.get(param, {}).get(
-                method, False
-            )  # Default to False if not set
-            indicator = _get_status_indicator(status)
-            all_method_parts.append(f"{method}{indicator}")
+            if method in statuses.get(param, {}):
+                status = statuses[param][method]
+                indicator = _get_status_indicator(status)
+                all_method_parts.append(f"{method}{indicator}")
     else:
         # Original behavior: only show methods that have been explicitly set
         for method in SIMPLE_METHODS:
@@ -970,6 +981,10 @@ def _visualise_param_in_metadata_request(param, request, indent, output):
     print(" ." * indent, request.owner, file=output)
     routed = False
     for method in SIMPLE_METHODS:
+        # Skip methods that don't exist on this estimator
+        if not hasattr(request, method):
+            continue
+
         if request.consumes(method, [param]):
             print(" ." * (indent + 1), f"{method} consumes {param}", file=output)
             routed = True
