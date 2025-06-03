@@ -42,7 +42,11 @@ from sklearn.tests.metadata_routing_common import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 rng = check_random_state(0)
@@ -709,7 +713,7 @@ class EstimatorRejectingSampleWeight(BaseEstimator):
     """Fake estimator rejecting sample_weight"""
 
     def fit(self, X, y):
-        "Record values passed during fit"
+        """Record values passed during fit"""
         self.X_ = X
         self.y_ = y
 
@@ -734,26 +738,32 @@ def test_draw_indices_using_sample_weight(
     else:
         base_estimator = EstimatorRejectingSampleWeight()
 
+    n_samples, n_features = X.shape
+    max_samples = 10
     with config_context(enable_metadata_routing=metadata_routing):
         # TODO(slep006): remove block when default routing is implemented
         if metadata_routing and accept_sample_weight:
             base_estimator = base_estimator.set_fit_request(sample_weight=True)
-        bagging = bagging_class(base_estimator, max_samples=10, n_estimators=4)
+        bagging = bagging_class(base_estimator, max_samples=max_samples, n_estimators=4)
         bagging.fit(X, y, sample_weight=sample_weight)
         for estimator, samples in zip(bagging.estimators_, bagging.estimators_samples_):
-            counts = np.bincount(samples, minlength=100)
-            assert sum(counts) == len(samples) == bagging._max_samples
+            counts = np.bincount(samples, minlength=n_samples)
+            assert sum(counts) == len(samples) == max_samples
             # only indices 4 and 5 should appear
             assert np.isin(samples, [4, 5]).all()
             if accept_sample_weight:
                 # sampled indices represented through weighting
-                assert np.allclose(estimator.X_, X)
-                assert np.allclose(estimator.y_, y)
-                assert np.allclose(estimator.sample_weight_, counts)
+                assert estimator.X_.shape == (n_samples, n_features)
+                assert estimator.y_.shape == (n_samples,)
+                assert_allclose(estimator.X_, X)
+                assert_allclose(estimator.y_, y)
+                assert_allclose(estimator.sample_weight_, counts)
             else:
-                # sampled indices represented thru indexing
-                assert np.allclose(estimator.X_, X[samples])
-                assert np.allclose(estimator.y_, y[samples])
+                # sampled indices represented through indexing
+                assert estimator.X_.shape == (max_samples, n_features)
+                assert estimator.y_.shape == (max_samples,)
+                assert_allclose(estimator.X_, X[samples])
+                assert_allclose(estimator.y_, y[samples])
 
 
 def test_oob_score_removed_on_warm_start():
