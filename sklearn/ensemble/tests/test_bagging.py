@@ -706,7 +706,7 @@ class EstimatorAcceptingSampleWeight(BaseEstimator):
 
 
 class EstimatorRejectingSampleWeight(BaseEstimator):
-    "Fake estimator rejecting sample_weight"
+    """Fake estimator rejecting sample_weight"""
 
     def fit(self, X, y):
         "Record values passed during fit"
@@ -717,10 +717,9 @@ class EstimatorRejectingSampleWeight(BaseEstimator):
         pass
 
 
-@pytest.mark.parametrize(
-    "bagging_class, accept_sample_weight, metadata_routing",
-    product([BaggingRegressor, BaggingClassifier], [False, True], [False, True]),
-)
+@pytest.mark.parametrize("bagging_class", [BaggingRegressor, BaggingClassifier])
+@pytest.mark.parametrize("accept_sample_weight", [False, True])
+@pytest.mark.parametrize("metadata_routing", [False, True])
 def test_draw_indices_using_sample_weight(
     bagging_class, accept_sample_weight, metadata_routing
 ):
@@ -747,7 +746,7 @@ def test_draw_indices_using_sample_weight(
             # only indices 4 and 5 should appear
             assert np.isin(samples, [4, 5]).all()
             if accept_sample_weight:
-                # sampled indices represented thru weighting
+                # sampled indices represented through weighting
                 assert np.allclose(estimator.X_, X)
                 assert np.allclose(estimator.y_, y)
                 assert np.allclose(estimator.sample_weight_, counts)
