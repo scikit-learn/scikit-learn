@@ -1079,7 +1079,10 @@ def _temperature_scaling(predictions, labels, sample_weight=None):
     log_beta_minimizer = minimize_scalar(
         log_loss,
         bounds=(-10.0, 10.0),
-        options={"disp": 1},  # Display non-convergence message
+        options={
+            "disp": 1,  # Display non-convergence message
+            "xatol": 64 * np.finfo(float).eps,
+        },
     )
 
     return np.exp(log_beta_minimizer.x)
