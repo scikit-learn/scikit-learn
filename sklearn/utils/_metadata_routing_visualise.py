@@ -41,7 +41,9 @@ def _param_names(router):
 # ============================================================================
 
 
-def visualise_routing(routing_info, view="tree", show_method_mappings=False):
+def visualise_routing(
+    routing_info, view="tree", show_method_mappings=False, show_all_metadata=True
+):
     """
     Visualize metadata routing information.
 
@@ -53,32 +55,40 @@ def visualise_routing(routing_info, view="tree", show_method_mappings=False):
         The visualization style. Options: 'tree', 'matrix', 'compact', 'flow'
     show_method_mappings : bool, default=False
         Whether to show method mappings (e.g., fit→fit_transform) in the output.
+    show_all_metadata : bool, default=True
+        Whether to show all possible metadata parameters with status indicators,
+        or only the parameters that are explicitly requested.
     """
     if view == "tree":
-        visualise_tree(routing_info, show_method_mappings)
+        visualise_tree(routing_info, show_method_mappings, show_all_metadata)
     elif view == "matrix":
-        visualise_matrix(routing_info)
+        visualise_matrix(routing_info, show_all_metadata)
     elif view == "compact":
-        visualise_compact(routing_info, show_method_mappings)
+        visualise_compact(routing_info, show_method_mappings, show_all_metadata)
     elif view == "flow":
-        visualise_flow(routing_info, show_method_mappings)
+        visualise_flow(routing_info, show_method_mappings, show_all_metadata)
     else:
         # Default to old behavior for backward compatibility
         visualise_routing_old(routing_info)
 
 
-def visualise_tree(routing_info, show_method_mappings=False):
+def visualise_tree(routing_info, show_method_mappings=False, show_all_metadata=True):
     """Show a consolidated tree view with parameters annotated inline."""
     print("\n=== METADATA ROUTING TREE ===")
 
     # Get all routing information
-    routing_map = _collect_routing_info(routing_info)
+    routing_map = _collect_routing_info(
+        routing_info, show_all_metadata=show_all_metadata
+    )
 
     # Display tree structure
     print(f"Root: {routing_info.owner}")
     print("│")
     _display_tree_new(
-        routing_info, routing_map, show_method_mappings=show_method_mappings
+        routing_info,
+        routing_map,
+        show_method_mappings=show_method_mappings,
+        show_all_metadata=show_all_metadata,
     )
 
     # Get user-facing parameters (including aliases)
@@ -110,13 +120,15 @@ def visualise_tree(routing_info, show_method_mappings=False):
         print("\nNo parameters are being routed.")
 
 
-def visualise_matrix(routing_info):
+def visualise_matrix(routing_info, show_all_metadata=True):
     """Show a matrix view of components vs parameters."""
     print("\n=== METADATA ROUTING MATRIX ===")
 
     # Collect all components and user-facing parameters
     components = _collect_all_components(routing_info)
-    routing_map = _collect_routing_info(routing_info)
+    routing_map = _collect_routing_info(
+        routing_info, show_all_metadata=show_all_metadata
+    )
     params = sorted(_get_user_facing_params(routing_map))
 
     if not params:
@@ -211,14 +223,23 @@ def visualise_matrix(routing_info):
         print()
 
 
-def visualise_compact(routing_info, show_method_mappings=False):
+def visualise_compact(routing_info, show_method_mappings=False, show_all_metadata=True):
     """Show a compact hierarchical view."""
     print("\n=== COMPACT METADATA ROUTING ===")
 
     # Build compact representation
-    structure = _build_compact_structure(routing_info)
+    structure = _build_compact_structure(
+        routing_info, show_all_metadata=show_all_metadata
+    )
+    routing_map = _collect_routing_info(
+        routing_info, show_all_metadata=show_all_metadata
+    )
     _print_compact_structure(
-        structure, indent=0, show_method_mappings=show_method_mappings
+        structure,
+        indent=0,
+        show_method_mappings=show_method_mappings,
+        show_all_metadata=show_all_metadata,
+        routing_map=routing_map,
     )
 
     # Show routing paths
@@ -233,12 +254,12 @@ def visualise_compact(routing_info, show_method_mappings=False):
                     print(f"  → {' → '.join(path)}")
 
 
-def visualise_flow(routing_info, show_method_mappings=False):
+def visualise_flow(routing_info, show_method_mappings=False, show_all_metadata=True):
     """Show an ASCII flow diagram."""
     print("\n=== METADATA ROUTING FLOW ===")
 
     # Build flow representation
-    flow = _build_flow_diagram(routing_info, show_method_mappings)
+    flow = _build_flow_diagram(routing_info, show_method_mappings, show_all_metadata)
 
     # Display the flow
     for line in flow:
@@ -250,7 +271,7 @@ def visualise_flow(routing_info, show_method_mappings=False):
 # ============================================================================
 
 
-def _collect_routing_info(router, top_router=None):
+def _collect_routing_info(router, top_router=None, show_all_metadata=True):
     """Collect all routing information into a structured format."""
     if top_router is None:
         top_router = router
@@ -275,31 +296,32 @@ def _collect_routing_info(router, top_router=None):
             # Get detailed info about each method's requests
             for method in SIMPLE_METHODS:
                 method_req = getattr(obj, method)
-                for param, alias in method_req.requests.items():
-                    # Include ALL parameters regardless of status
-                    info[current_path]["params"].add(param)
-                    info[current_path]["statuses"][param][method] = alias
 
-                    # Only add to methods set if actually requested
-                    if (
-                        alias is not False
-                        and alias != WARN
-                        and alias is not None
-                        and alias != UNUSED
-                    ):
-                        info[current_path]["methods"][param].add(method)
-
-                    # If it's an alias (string), track the mapping:
-                    # component_param -> user_param
-                    if isinstance(alias, str) and alias != param:
-                        # Store the mapping from component param to user param for
-                        # display
-                        info[current_path]["aliases"][param] = alias
-
-        elif isinstance(obj, MetadataRouter):
-            if obj._self_request:
-                for method in SIMPLE_METHODS:
-                    method_req = getattr(obj._self_request, method)
+                if show_all_metadata:
+                    # Get all possible metadata parameters for this estimator
+                    all_possible_params = _param_names(obj)
+                    for param in all_possible_params:
+                        info[current_path]["params"].add(param)
+                        # Check if this parameter is actually requested for this method
+                        alias = method_req.requests.get(param)
+                        if alias is not None:
+                            info[current_path]["statuses"][param][method] = alias
+                            # Only add to methods set if actually requested
+                            if (
+                                alias is not False
+                                and alias != WARN
+                                and alias is not None
+                                and alias != UNUSED
+                            ):
+                                info[current_path]["methods"][param].add(method)
+                            # If it's an alias (string), track the mapping
+                            if isinstance(alias, str) and alias != param:
+                                info[current_path]["aliases"][param] = alias
+                        else:
+                            # Parameter not set for this method, default to False
+                            info[current_path]["statuses"][param][method] = False
+                else:
+                    # Original behavior: only show explicitly set parameters
                     for param, alias in method_req.requests.items():
                         # Include ALL parameters regardless of status
                         info[current_path]["params"].add(param)
@@ -314,10 +336,61 @@ def _collect_routing_info(router, top_router=None):
                         ):
                             info[current_path]["methods"][param].add(method)
 
+                        # If it's an alias (string), track the mapping:
+                        # component_param -> user_param
                         if isinstance(alias, str) and alias != param:
                             # Store the mapping from component param to user param for
                             # display
                             info[current_path]["aliases"][param] = alias
+
+        elif isinstance(obj, MetadataRouter):
+            if obj._self_request:
+                for method in SIMPLE_METHODS:
+                    method_req = getattr(obj._self_request, method)
+
+                    if show_all_metadata:
+                        # Get all possible metadata parameters for this estimator
+                        all_possible_params = _param_names(obj._self_request)
+                        for param in all_possible_params:
+                            info[current_path]["params"].add(param)
+                            # Check if this parameter is actually requested for this
+                            # method
+                            alias = method_req.requests.get(param)
+                            if alias is not None:
+                                info[current_path]["statuses"][param][method] = alias
+                                # Only add to methods set if actually requested
+                                if (
+                                    alias is not False
+                                    and alias != WARN
+                                    and alias is not None
+                                    and alias != UNUSED
+                                ):
+                                    info[current_path]["methods"][param].add(method)
+                                if isinstance(alias, str) and alias != param:
+                                    info[current_path]["aliases"][param] = alias
+                            else:
+                                # Parameter not set for this method, default to False
+                                info[current_path]["statuses"][param][method] = False
+                    else:
+                        # Original behavior: only show explicitly set parameters
+                        for param, alias in method_req.requests.items():
+                            # Include ALL parameters regardless of status
+                            info[current_path]["params"].add(param)
+                            info[current_path]["statuses"][param][method] = alias
+
+                            # Only add to methods set if actually requested
+                            if (
+                                alias is not False
+                                and alias != WARN
+                                and alias is not None
+                                and alias != UNUSED
+                            ):
+                                info[current_path]["methods"][param].add(method)
+
+                            if isinstance(alias, str) and alias != param:
+                                # Store the mapping from component param to user param
+                                # for display
+                                info[current_path]["aliases"][param] = alias
 
             for name, mapping in obj._route_mappings.items():
                 _collect(mapping.router, current_path)
@@ -344,7 +417,9 @@ def _get_status_indicator(alias):
         return "?"  # unknown status
 
 
-def _format_param_with_status(param, methods, statuses, aliases):
+def _format_param_with_status(
+    param, methods, statuses, aliases, show_all_metadata=True
+):
     """Format a parameter with its status indicators and methods."""
     if param in aliases:
         alias = aliases[param]
@@ -354,11 +429,22 @@ def _format_param_with_status(param, methods, statuses, aliases):
 
     # Show all methods with their statuses for this parameter
     all_method_parts = []
-    for method in SIMPLE_METHODS:
-        status = statuses.get(param, {}).get(method)
-        if status is not None:  # Only show methods that have been explicitly set
+
+    if show_all_metadata:
+        # Show all methods with their status indicators
+        for method in SIMPLE_METHODS:
+            status = statuses.get(param, {}).get(
+                method, False
+            )  # Default to False if not set
             indicator = _get_status_indicator(status)
             all_method_parts.append(f"{method}{indicator}")
+    else:
+        # Original behavior: only show methods that have been explicitly set
+        for method in SIMPLE_METHODS:
+            status = statuses.get(param, {}).get(method)
+            if status is not None:  # Only show methods that have been explicitly set
+                indicator = _get_status_indicator(status)
+                all_method_parts.append(f"{method}{indicator}")
 
     if all_method_parts:
         return f"{param_display}[{','.join(all_method_parts)}]"
@@ -412,6 +498,7 @@ def _display_tree_new(
     prefix="",
     is_last=True,
     show_method_mappings=False,
+    show_all_metadata=True,
     step_name=None,
     parent_path="",
 ):
@@ -444,6 +531,7 @@ def _display_tree_new(
                 node_info["methods"][param],
                 node_info["statuses"],
                 node_info.get("aliases", {}),
+                show_all_metadata=show_all_metadata,
             )
             param_strs.append(param_str)
         display_parts.append(f"  ➤ {', '.join(param_strs)}")
@@ -485,6 +573,7 @@ def _display_tree_new(
                 new_prefix,
                 is_last_child,
                 show_method_mappings,
+                show_all_metadata,
                 name,
                 current_path,
             )
@@ -556,12 +645,14 @@ def _find_consumers_with_methods(router, param):
     return consumers
 
 
-def _build_compact_structure(router, level=0, top_router=None, parent_path=""):
+def _build_compact_structure(
+    router, level=0, top_router=None, parent_path="", show_all_metadata=True
+):
     """Build a compact structure representation."""
     if top_router is None:
         top_router = router
 
-    # Get current path
+    # Build current path
     if parent_path:
         current_path = f"{parent_path}/{router.owner}"
     else:
@@ -570,49 +661,47 @@ def _build_compact_structure(router, level=0, top_router=None, parent_path=""):
     structure = {
         "name": router.owner,
         "type": type(router).__name__,
-        "params": defaultdict(set),
-        "children": [],
+        "level": level,
         "path": current_path,
+        "children": [],
     }
 
-    # Get routing info with aliases
-    routing_map = _collect_routing_info(top_router)
-    structure["routing_map"] = routing_map
-
-    # Get params for this component from routing map
+    # Add routing info
+    routing_map = _collect_routing_info(top_router, show_all_metadata=show_all_metadata)
     if current_path in routing_map:
-        info = routing_map[current_path]
-        for param in info["params"]:
-            structure["params"][param] = info["methods"][param]
+        structure["params"] = routing_map[current_path]["params"]
+        structure["methods"] = routing_map[current_path]["methods"]
 
-    elif isinstance(router, MetadataRouter):
+    if isinstance(router, MetadataRouter):
         for name, mapping in router._route_mappings.items():
-            child = _build_compact_structure(
-                mapping.router, level + 1, top_router, current_path
+            child_structure = _build_compact_structure(
+                mapping.router, level + 1, top_router, current_path, show_all_metadata
             )
-            child["mapping_name"] = name
+            child_structure["mapping_name"] = name
 
             # Collect method mappings if any
             mappings = []
-            for method_pair in mapping.mapping:  # Fix attribute access
+            for method_pair in mapping.mapping:
                 if method_pair.caller != method_pair.callee:
                     mappings.append(f"{method_pair.caller} → {method_pair.callee}")
             if mappings:
-                child["mappings"] = mappings
+                child_structure["mappings"] = mappings
 
-            structure["children"].append(child)
+            structure["children"].append(child_structure)
 
     return structure
 
 
 def _print_compact_structure(
-    structure, indent=0, show_method_mappings=False, mapping_info=None
+    structure,
+    indent=0,
+    show_method_mappings=False,
+    show_all_metadata=True,
+    mapping_info=None,
+    routing_map=None,
 ):
     """Print the compact structure."""
     prefix = "  " * indent
-
-    # Get routing info for aliases
-    routing_map = structure.get("routing_map", {})
 
     # For child nodes with mappings, combine on one line
     if mapping_info and indent > 0:
@@ -620,15 +709,20 @@ def _print_compact_structure(
         name_part = f"↳ via {mapping_info['name']}: {structure['name']}"
 
         # Add parameters if any
-        if routing_map[structure["path"]]["params"]:
+        if structure.get("params"):
             param_strs = []
-            for param in sorted(routing_map[structure["path"]]["params"]):
-                param_str = _format_param_with_status(
-                    param,
-                    routing_map[structure["path"]]["methods"][param],
-                    routing_map[structure["path"]]["statuses"],
-                    routing_map[structure["path"]].get("aliases", {}),
-                )
+            for param in sorted(structure["params"]):
+                if routing_map and structure["path"] in routing_map:
+                    param_str = _format_param_with_status(
+                        param,
+                        routing_map[structure["path"]]["methods"][param],
+                        routing_map[structure["path"]]["statuses"],
+                        routing_map[structure["path"]].get("aliases", {}),
+                        show_all_metadata=show_all_metadata,
+                    )
+                else:
+                    # Fallback if routing_map not available
+                    param_str = param
                 param_strs.append(param_str)
             print(f"{prefix}{name_part} ◆ {', '.join(param_strs)}")
         else:
@@ -643,34 +737,37 @@ def _print_compact_structure(
         print(f"{prefix}▸ {structure['name']}")
 
         # Show parameters for root
-        if structure["params"] and indent == 0:
+        if structure.get("params") and indent == 0:
             param_strs = []
-            for param, methods in sorted(structure["params"].items()):
-                comp_path = structure.get("path", structure["name"])
-                if comp_path in routing_map:
+            for param in sorted(structure["params"]):
+                if routing_map and structure["path"] in routing_map:
                     param_str = _format_param_with_status(
                         param,
-                        methods,
-                        routing_map[comp_path]["statuses"],
-                        routing_map[comp_path].get("aliases", {}),
+                        routing_map[structure["path"]]["methods"][param],
+                        routing_map[structure["path"]]["statuses"],
+                        routing_map[structure["path"]].get("aliases", {}),
+                        show_all_metadata=show_all_metadata,
                     )
-                    param_strs.append(param_str)
                 else:
-                    # Fallback for when routing_map doesn't have this path
-                    method_str = ",".join(sorted(methods))
-                    param_strs.append(f"{param}[{method_str}]")
+                    # Fallback if routing_map not available
+                    param_str = param
+                param_strs.append(param_str)
             print(f"{prefix}  Parameters: {', '.join(param_strs)}")
 
     # Process children
-    for child in structure["children"]:
-        # Check if this child has a mapping
-        mapping_info = None
-        if "mapping_name" in child:
-            mapping_info = {
-                "name": child["mapping_name"],
-                "mappings": child.get("mappings", []),
-            }
-        _print_compact_structure(child, indent + 2, show_method_mappings, mapping_info)
+    for child in structure.get("children", []):
+        mapping_info = {
+            "name": child["mapping_name"],
+            "mappings": child.get("mappings", []),
+        }
+        _print_compact_structure(
+            child,
+            indent + 2,
+            show_method_mappings,
+            show_all_metadata,
+            mapping_info,
+            routing_map,
+        )
 
 
 def _find_routing_paths(router, param):
@@ -702,7 +799,7 @@ def _find_routing_paths(router, param):
     return paths
 
 
-def _build_flow_diagram(router, show_method_mappings=False):
+def _build_flow_diagram(router, show_method_mappings=False, show_all_metadata=True):
     """Build an ASCII flow diagram."""
     lines = []
 
@@ -745,13 +842,14 @@ def _build_flow_diagram(router, show_method_mappings=False):
                 if info["params"]:
                     param_details = []
                     for param in sorted(info["params"]):
-                        methods = ",".join(sorted(info["methods"][param]))
-                        # Show alias if exists
-                        if param in info.get("aliases", {}):
-                            alias = info["aliases"][param]
-                            param_details.append(f"{alias}→{param}[{methods}]")
-                        else:
-                            param_details.append(f"{param}[{methods}]")
+                        param_str = _format_param_with_status(
+                            param,
+                            info["methods"][param],
+                            info["statuses"],
+                            info.get("aliases", {}),
+                            show_all_metadata=show_all_metadata,
+                        )
+                        param_details.append(param_str)
                     param_info = f" ◆ {', '.join(param_details)}"
 
             # Draw component box
@@ -771,9 +869,7 @@ def _build_flow_diagram(router, show_method_mappings=False):
 
                     # Show method mapping
                     method_info = ""
-                    if show_method_mappings and getattr(
-                        mapping, "mapping", []
-                    ):  # Fix attribute access
+                    if show_method_mappings and getattr(mapping, "mapping", []):
                         unique_maps = set()
                         for m in mapping.mapping:
                             if m.caller != m.callee:
@@ -807,13 +903,14 @@ def _build_flow_diagram(router, show_method_mappings=False):
                 if info["params"]:
                     param_details = []
                     for param in sorted(info["params"]):
-                        methods = ",".join(sorted(info["methods"][param]))
-                        # Show alias if exists
-                        if param in info.get("aliases", {}):
-                            alias = info["aliases"][param]
-                            param_details.append(f"{alias}→{param}[{methods}]")
-                        else:
-                            param_details.append(f"{param}[{methods}]")
+                        param_str = _format_param_with_status(
+                            param,
+                            info["methods"][param],
+                            info["statuses"],
+                            info.get("aliases", {}),
+                            show_all_metadata=show_all_metadata,
+                        )
+                        param_details.append(param_str)
                     param_str = f" ◆ {', '.join(param_details)}"
 
             # Show component with or without parameters
