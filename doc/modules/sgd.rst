@@ -231,6 +231,10 @@ For regression with a squared loss and a :math:`L_2` penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
 Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
 
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`
+
 .. _sgd_online_one_class_svm:
 
 Online One-Class SVM
