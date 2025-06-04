@@ -1553,7 +1553,8 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         # Due to numerical instability of floating points in `cumulative_sum` in
-        # `median_absolute_error`, it is not always equivalent when scaling by a float.
+        # `median_absolute_error` (not fixable by `stable_cumsum`), it is not
+        # always equivalent when scaling by a float.
         scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
         for scaling in scaling_values:
             assert_allclose(
