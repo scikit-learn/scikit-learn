@@ -299,7 +299,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         self.support_ = current_mask
         self.n_features_to_select_ = self.support_.sum()
-        
+
         # Store the final cross-validation score of the selected feature set
         X_new = X[:, self.support_]
         self.final_cv_score_ = cross_val_score(
