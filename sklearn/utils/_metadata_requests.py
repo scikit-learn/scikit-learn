@@ -1185,10 +1185,10 @@ def get_routing_for_object(obj=None):
 # Request method
 # ==============
 # This section includes what's needed for the `RequestMethod` descriptor and
-# the dynamic generation of `set_{method}_request` methods in a meta class.
+# the dynamic generation of `set_{method}_request` methods in the `_MetadataRequester`
+# mixin class.
 
-# These strings are used to dynamically generate the docstrings for
-# the methods.
+# These strings are used to dynamically generate the docstrings for the methods.
 REQUESTER_DOC = """Configure whether metadata should be requested and passed to the
 ``{method}`` method.
 
@@ -1236,7 +1236,7 @@ REQUESTER_DOC_RETURN = """        Returns
 
 class RequestMethod:
     """
-    A descriptor to add `set_{method}_request` methods to estimators.
+    Descriptor for defining `set_{method}_request` methods in estimators.
 
     .. versionadded:: 1.3
 
