@@ -1465,6 +1465,8 @@ cdef class Tree:
                         # Only supports criterion=="gini"(resp. "squared_error") for classification (resp. regression)
                         importances[node.feature] += self.mdi_oob_impurity_decrease(oob_node_values, node_idx, left_idx, right_idx, node)
 
+        for i in range(self.n_features):
+            importances[i] /= nodes[0].weighted_n_node_samples
         return np.asarray(importances), np.asarray(oob_pred)
 
     cdef float64_t mdi_oob_impurity_decrease(
