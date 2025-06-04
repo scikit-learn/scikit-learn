@@ -33,9 +33,9 @@ or with conda::
 # See the example below and click on the different estimator's blocks to see the
 # improved HTML representation.
 
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 
 model = make_pipeline(StandardScaler(with_std=False), LogisticRegression(C=2.0))
 model
