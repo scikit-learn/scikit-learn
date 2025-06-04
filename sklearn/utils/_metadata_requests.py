@@ -28,8 +28,8 @@ It stores which metadata is required by each method of the consumer by including
 
 Users and developers almost never need to directly add a new ``MethodMetadataRequest``,
 to the consumer's `_metadata_request` attribute, since these are generated
-automatically. The attribute is created while running `set_{method}_request` methods
-(such as `set_fit_request()`), which is adding the request via
+automatically. This attribute is created while running `set_{method}_request` methods
+(such as `set_fit_request()`), which adds the request via
 `method_metadata_request.add_request(param=prop, alias=alias)`.
 
 The ``alias`` in the ``add_request`` method has to be either a string (an alias),
