@@ -1091,6 +1091,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
+        Values must be in the range `[0.0, inf)`.
 
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
@@ -1900,6 +1901,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
+        Values must be in the range `[0.0, inf)`.
 
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
@@ -2141,6 +2143,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
+        Values must be in the range `[0.0, inf)`.
 
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
