@@ -289,6 +289,7 @@ supports averaged SGD. Averaging can be enabled by setting ``average=True``.
 .. rubric:: Examples
 
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+- :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`
 
 Stochastic Gradient Descent for sparse data
 ===========================================
