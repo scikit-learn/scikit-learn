@@ -132,6 +132,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     support_ : ndarray of shape (n_features,), dtype=bool
         The mask of selected features.
+        
+    final_cv_score_ : float
+        The mean cross-validation score of the selected feature set.
+        
+        .. versionadded:: 1.6
 
     See Also
     --------
@@ -294,6 +299,18 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         self.support_ = current_mask
         self.n_features_to_select_ = self.support_.sum()
+        
+        # Store the final cross-validation score of the selected feature set
+        X_new = X[:, self.support_]
+        self.final_cv_score_ = cross_val_score(
+            cloned_estimator,
+            X_new,
+            y,
+            cv=cv,
+            scoring=self.scoring,
+            n_jobs=self.n_jobs,
+            params=params if _routing_enabled() else None,
+        ).mean()
 
         return self
 
