@@ -615,8 +615,6 @@ you have several options:
 * **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
   <https://github.com/sponsors/scikit-learn>`_.
 
-* **Corporate Giving Programs**: Many companies match employee donations through platforms like 
-  `Benevity <https://benevity.com/>`_ and `Open Collective <https://opencollective.com/scikit-learn>`_.
 
 All donations will be handled by `NumFOCUS <https://numfocus.org/>`_, a non-profit
 organization which is managed by a board of `Scipy community members
