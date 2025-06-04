@@ -70,5 +70,5 @@ def test_read_params():
 def test_params_html_repr():
     """Check returned HTML template"""
     params = ParamsDict({"a": 1, "b": 2})
-    assert "parameters-table" in _params_html_repr(params)
+    assert "body-table" in _params_html_repr(params)
     assert "estimator-table" in _params_html_repr(params)
