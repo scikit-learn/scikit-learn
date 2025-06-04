@@ -1,0 +1,5 @@
+- :class:`dummy.DummyClassifier` now supports a new strategy "uniform-proba" that
+  generates random probability distributions for each sample using a Dirichlet
+  distribution with all concentration parameters set to 1. This results in uniformly
+  distributed probability vectors that sum to 1 for each sample.
+  By :user:`Chris Boseakc <cboseak>`
