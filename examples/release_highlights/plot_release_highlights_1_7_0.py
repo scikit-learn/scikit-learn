@@ -73,7 +73,6 @@ _ = RocCurveDisplay.from_cv_results(cv_results, X, y)
 # %%
 # Array API support
 # -----------------
-#
 # Several functions have been updated to support array API compatible inputs since
 # version 1.6, especially metrics from the :mod:`sklearn.metrics` module.
 #
@@ -84,8 +83,14 @@ _ = RocCurveDisplay.from_cv_results(cv_results, X, y)
 # scikit-learn with array API compatible libraries such as PyTorch or CuPy.
 
 # %%
-# sample_weight support + new losses in MLP ?
-# -------------------------------------------
+# Improved API consistency of Multi-layer Perceptron
+# --------------------------------------------------
+# The :class:`neural_network.MLPRegressor` has a new parameter `loss` and now supports
+# the "poisson" loss in addition to the default "squared_error" loss.
+# Moreover, the :class:`neural_network.MLPClassifier` and
+# :class:`neural_network.MLPRegressor` estimators now support sample weights.
+# These improvements have been made to improve the consistency of these estimators
+# with regard to the other estimators in scikit-learn.
 
 # %%
 # Migration toward sparse arrays
