@@ -31,8 +31,8 @@ from ..metrics._scorer import (
     get_scorer_names,
 )
 from ..utils import Bunch, check_random_state
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -1946,7 +1946,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2.195), 'penalty': 'l1'}
+    {'C': np.float64(2.195...), 'penalty': 'l1'}
     """
 
     _parameter_constraints: dict = {
