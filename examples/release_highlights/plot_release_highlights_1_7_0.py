@@ -40,7 +40,6 @@ from sklearn.linear_model import LogisticRegression
 model = make_pipeline(StandardScaler(with_std=False), LogisticRegression(C=2.0))
 model
 
-
 # %%
 # Custom validation set for histogram-based Gradient Boosting estimators
 # ----------------------------------------------------------------------
