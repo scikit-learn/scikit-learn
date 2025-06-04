@@ -1132,10 +1132,12 @@ def test_stable_cumsum_array_api(array_namespace, device, dtype, axis):
     arr_np = np.asarray(
         [[1, 2e-9, 3e-9] * int(1e6)],
     )
-    arr_xp = xp.asarray(arr_np, dtype=getattr(xp, dtype) if dtype is not None else dtype)
+    arr_xp = xp.asarray(
+        arr_np, dtype=getattr(xp, dtype) if dtype is not None else dtype
+    )
     with config_context(array_api_dispatch=True):
         assert_allclose(
-            _convert_to_numpy(stable_cumsum(arr, axis=axis), xp),
+            _convert_to_numpy(stable_cumsum(arr_xp, axis=axis), xp),
             np.cumsum(arr_np, axis=axis),
         )
 
