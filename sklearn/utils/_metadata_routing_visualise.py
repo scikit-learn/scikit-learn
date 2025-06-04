@@ -310,42 +310,45 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
                     for param in all_possible_params:
                         info[current_path]["params"].add(param)
                         # Check if this parameter is actually requested for this method
-                        alias = method_req.requests.get(param)
-                        info[current_path]["statuses"][param][method] = alias
+                        if param in method_req.requests:
+                            alias = method_req.requests[param]
+                            info[current_path]["statuses"][param][method] = alias
 
-                        # Only add to methods set if actually requested
-                        if (
-                            alias is not False
-                            and alias != WARN
-                            and alias is not None
-                            and alias != UNUSED
-                        ):
-                            info[current_path]["methods"][param].add(method)
-                        # If it's an alias (string), track the mapping
-                        if isinstance(alias, str) and alias != param:
-                            info[current_path]["aliases"][param] = alias
+                            # Only add to methods set if actually requested
+                            if (
+                                alias is not False
+                                and alias != WARN
+                                and alias is not None
+                                and alias != UNUSED
+                            ):
+                                info[current_path]["methods"][param].add(method)
+                            # If it's an alias (string), track the mapping
+                            if isinstance(alias, str) and alias != param:
+                                info[current_path]["aliases"][param] = alias
                 else:
                     # Original behavior: only show explicitly set parameters
                     for param, alias in method_req.requests.items():
                         # Include ALL parameters regardless of status
                         info[current_path]["params"].add(param)
-                        info[current_path]["statuses"][param][method] = alias
+                        # Record status only if this method actually defines the
+                        # parameter
+                        if param in method_req.requests:
+                            alias = method_req.requests[param]
+                            info[current_path]["statuses"][param][method] = alias
 
-                        # Only add to methods set if actually requested
-                        if (
-                            alias is not False
-                            and alias != WARN
-                            and alias is not None
-                            and alias != UNUSED
-                        ):
-                            info[current_path]["methods"][param].add(method)
+                            # Only add to requested-methods set if it is actively
+                            # requested
+                            if (
+                                alias is not False
+                                and alias != WARN
+                                and alias is not None
+                                and alias != UNUSED
+                            ):
+                                info[current_path]["methods"][param].add(method)
 
-                        # If it's an alias (string), track the mapping:
-                        # component_param -> user_param
-                        if isinstance(alias, str) and alias != param:
-                            # Store the mapping from component param to user param for
-                            # display
-                            info[current_path]["aliases"][param] = alias
+                            # Track alias relationships
+                            if isinstance(alias, str) and alias != param:
+                                info[current_path]["aliases"][param] = alias
 
         elif isinstance(obj, MetadataRouter):
             if obj._self_request:
@@ -364,39 +367,42 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
                             info[current_path]["params"].add(param)
                             # Check if this parameter is actually requested for this
                             # method
-                            alias = method_req.requests.get(param)
-                            info[current_path]["statuses"][param][method] = alias
+                            if param in method_req.requests:
+                                alias = method_req.requests[param]
+                                info[current_path]["statuses"][param][method] = alias
 
-                            # Only add to methods set if actually requested
-                            if (
-                                alias is not False
-                                and alias != WARN
-                                and alias is not None
-                                and alias != UNUSED
-                            ):
-                                info[current_path]["methods"][param].add(method)
-                            if isinstance(alias, str) and alias != param:
-                                info[current_path]["aliases"][param] = alias
+                                # Only add to methods set if actually requested
+                                if (
+                                    alias is not False
+                                    and alias != WARN
+                                    and alias is not None
+                                    and alias != UNUSED
+                                ):
+                                    info[current_path]["methods"][param].add(method)
+                                if isinstance(alias, str) and alias != param:
+                                    info[current_path]["aliases"][param] = alias
                     else:
                         # Original behavior: only show explicitly set parameters
                         for param, alias in method_req.requests.items():
                             # Include ALL parameters regardless of status
                             info[current_path]["params"].add(param)
-                            info[current_path]["statuses"][param][method] = alias
+                            # Only record status for methods that define the parameter
+                            if param in method_req.requests:
+                                alias = method_req.requests[param]
+                                info[current_path]["statuses"][param][method] = alias
 
-                            # Only add to methods set if actually requested
-                            if (
-                                alias is not False
-                                and alias != WARN
-                                and alias is not None
-                                and alias != UNUSED
-                            ):
-                                info[current_path]["methods"][param].add(method)
+                                if (
+                                    alias is not False
+                                    and alias != WARN
+                                    and alias is not None
+                                    and alias != UNUSED
+                                ):
+                                    info[current_path]["methods"][param].add(method)
 
-                            if isinstance(alias, str) and alias != param:
-                                # Store the mapping from component param to user param
-                                # for display
-                                info[current_path]["aliases"][param] = alias
+                                if isinstance(alias, str) and alias != param:
+                                    # Store the mapping from component param to user
+                                    # param for display
+                                    info[current_path]["aliases"][param] = alias
 
             for name, mapping in obj._route_mappings.items():
                 _collect(mapping.router, current_path)
