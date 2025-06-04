@@ -563,7 +563,8 @@ class RFECV(RFE):
     The performance of each :class:`RFE` selector is evaluated using `scoring` for
     different numbers of selected features and aggregated together. Finally, the scores
     are averaged across folds and the number of features selected is set to the number
-    of features that maximize the cross-validation score, as illustrated in the
+    of features that maximize the cross-validation score,  as illustrated in the
+    following example:
     :ref:`example using RFE with cross-validation
     <sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py>`.
 
