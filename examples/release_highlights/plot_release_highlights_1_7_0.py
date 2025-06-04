@@ -22,8 +22,24 @@ or with conda::
 """
 
 # %%
-# parameters added to HTML repr
-# -------------------------------------------
+# Improved estimator's HTML representation
+# ----------------------------------------
+# The HTML representation of estimators now includes a section containing the list of
+# parameters and their values. Non-default parameters are highlighted in orange. A copy
+# button is also available to copy the "fully-qualified" parameter name without the
+# need to call the `get_params` method. It is particularly useful when defining a
+# parameter grid for a grid-search or a randomized-search with a complex pipeline.
+#
+# See the example below and click on the different estimator's blocks to see the
+# improved HTML representation.
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+model = make_pipeline(StandardScaler(with_std=False), LogisticRegression(C=2.0))
+model
+
 
 # %%
 # Custom validation set for histogram-based Gradient Boosting estimators
