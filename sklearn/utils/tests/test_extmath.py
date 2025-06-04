@@ -1129,14 +1129,14 @@ def test_randomized_range_finder_array_api_compliance(array_namespace, device, d
 @pytest.mark.parametrize("axis", [0, 1, None])
 def test_stable_cumsum_array_api(array_namespace, device, dtype, axis):
     xp = _array_api_for_tests(array_namespace, device)
-    arr = xp.asarray(
+    arr_np = np.asarray(
         [[1, 2e-9, 3e-9] * int(1e6)],
-        dtype=getattr(xp, dtype) if dtype is not None else dtype,
     )
+    arr_xp = xp.asarray(arr_np, dtype=getattr(xp, dtype) if dtype is not None else dtype)
     with config_context(array_api_dispatch=True):
         assert_allclose(
             _convert_to_numpy(stable_cumsum(arr, axis=axis), xp),
-            np.cumsum(arr, axis=axis),
+            np.cumsum(arr_np, axis=axis),
         )
 
     arr = xp.asarray(
