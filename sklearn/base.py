@@ -209,6 +209,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
+
+        if hasattr(init, "steps") and not len(init.steps):
+            return AttrsDict("")
+
         attributes = inspect.getmembers(init)
 
         fitted_attributes = {
