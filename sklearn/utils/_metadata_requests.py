@@ -81,7 +81,7 @@ To give the above representation some structure, we use the following objects:
 - ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``.
 
 The ``set_{method}_request`` methods are dynamically generated for estimators
-which inherit from the ``BaseEstimator``. This is done by attaching instances
+which inherit from ``BaseEstimator``. This is done by attaching instances
 of the ``RequestMethod`` descriptor to classes, which is done in the
 ``_MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
 This mixin also implements the ``get_metadata_routing``, which meta-estimators
@@ -1184,16 +1184,18 @@ def get_routing_for_object(obj=None):
 
 # Request method
 # ==============
-# This section includes what's needed for the request method descriptor and
-# their dynamic generation in a meta class.
+# This section includes what's needed for the `RequestMethod` descriptor and
+# the dynamic generation of `set_{method}_request` methods in a meta class.
 
 # These strings are used to dynamically generate the docstrings for
-# set_{method}_request methods.
-REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
+# the methods.
+REQUESTER_DOC = """Configure whether metadata should be requested and passed to the
+``{method}`` method.
 
-        Note that this method is only relevant if
-        ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        Note that this method is only relevant when this estimator is used as a
+        sub-estimator within a :term:`meta-estimator` and metadata routing is enabled
+        with ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
+        Please check the :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
         The options for each parameter are:
@@ -1217,11 +1219,6 @@ this given alias instead of the original name.
 
         .. versionadded:: 1.3
 
-        .. note::
-            This method is only relevant if this estimator is used as a
-            sub-estimator of a meta-estimator, e.g. used inside a
-            :class:`~sklearn.pipeline.Pipeline`. Otherwise it has no effect.
-
         Parameters
         ----------
 """
@@ -1239,7 +1236,7 @@ REQUESTER_DOC_RETURN = """        Returns
 
 class RequestMethod:
     """
-    A descriptor for request methods.
+    A descriptor to add `set_{method}_request` methods to estimators.
 
     .. versionadded:: 1.3
 
@@ -1282,7 +1279,7 @@ class RequestMethod:
             for the parameters provided as `**kw`.
 
             This docstring is overwritten below.
-            See REQUESTER_DOC for expected functionality
+            See REQUESTER_DOC for expected functionality.
             """
             if not _routing_enabled():
                 raise RuntimeError(
@@ -1570,7 +1567,7 @@ def process_routing(_obj, _method, /, **kwargs):
     ----------
     _obj : object
         An object implementing ``get_metadata_routing``. Typically a
-        meta-estimator.
+        :term:`meta-estimator`.
 
     _method : str
         The name of the router's method in which this function is called.
