@@ -792,9 +792,9 @@ class MethodMapping:
 
 
 class MetadataRouter:
-    """Stores and handles metadata routing for a :term:`router` object.
+    """Coordinates metadata routing for a :term:`router` object.
 
-    This class is used by :term:`meta-estimators` or functions that can route metadata
+    This class is used by :term:`meta-estimators` or functions that can route metadata,
     to store and handle their metadata routing. Routing information is stored in a
     dictionary-like structure of the form ``{"object_name":
     RouterMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
