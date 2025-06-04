@@ -8,13 +8,15 @@ from numpy.testing import assert_allclose
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
+    _add_to_diagonal_using_helper,
     _asarray_with_order,
     _atol_for_type,
     _average,
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
-    _fill_or_add_to_diagonal,
+    _fill_diagonal_using_helper,
+    _fill_or_add_to_diagonal_loop,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
@@ -592,6 +594,14 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
         )
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+def test_aa():
+    xp = _array_api_for_tests("numpy", None)
+    array_np = numpy.zeros((5, 4))
+    _fill_or_add_to_diagonal_loop(array_np, 1, xp)
+    _fill_diagonal_using_helper(array_np, 1, xp)
+    _add_to_diagonal_using_helper(array_np, 1, xp)
 
 
 def test_fill_or_add_to_diagonal_transpose():

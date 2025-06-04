@@ -527,7 +527,7 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
+def _fill_or_add_to_diagonal_reshape(array, value, xp, add_value=True, wrap=False):
     """Implementation to facilitate adding or assigning specified values to the
     diagonal of a 2-d array.
 
@@ -560,6 +560,90 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
     # When `array` is not C-contiguous, `reshape` creates a copy, and cannot
     # return a view. Thus we need to *return* reshaped `array_flat`.
     return xp.reshape(array_flat, array.shape)
+
+
+def _fill_diagonal_helper(array, value, xp, assignment_function):
+    """Implementation to facilitate adding or assigning specified values to the
+    diagonal of a 2-d array.
+
+    The implementation is inspired from the `numpy.fill_diagonal` function:
+    https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
+    """
+    if array.ndim != 2:
+        raise ValueError(
+            f"array should be 2-d. Got array with shape {tuple(array.shape)}"
+        )
+
+    value = xp.asarray(value, dtype=array.dtype, device=device(array))
+    if value.ndim not in [0, 1]:
+        raise ValueError(
+            "value needs to be a scalar or a 1d array, "
+            f"got a {value.ndim}d array instead"
+        )
+
+    step = array.shape[1] + 1
+    # 'end' avoids wrapping in case of array is non-square with n_rows > n_columns
+    end = array.shape[1] * array.shape[1]
+    min_rows_columns = min(array.shape)
+
+    if _is_numpy_namespace(xp):
+        assignment_function(array.flat, slice(None, end, step), value)
+    elif value.ndim == 1:
+        for i in range(min_rows_columns):
+            assignment_function(array, (i, i), value[i])
+    else:
+        for i in range(min_rows_columns):
+            assignment_function(array, (i, i), value)
+
+
+def _fill_diagonal_using_helper(array, value, xp):
+    def assignment_function(lhs, index, rhs):
+        lhs[index] = rhs
+
+    return _fill_diagonal_helper(array, value, xp, assignment_function)
+
+
+def _add_to_diagonal_using_helper(array, value, xp):
+    def assignment_function(lhs, index, rhs):
+        lhs[index] += rhs
+
+    return _fill_diagonal_helper(array, value, xp, assignment_function)
+
+
+def _fill_or_add_to_diagonal_loop(array, value, xp, add_value=True, wrap=False):
+    if _is_numpy_namespace(xp):
+        if add_value:
+            numpy.fill_diagonal(array, numpy.diagonal(array) + value, wrap=wrap)
+        else:
+            numpy.fill_diagonal(array, value, wrap=wrap)
+        return
+
+    if wrap:
+        # Note `diagonal` does not support wrap, so difficult to implement
+        # `add_diagonal` with wrap
+        raise ValueError("`wrap=True` is not supported")
+
+    if array.ndim != 2:
+        raise ValueError(
+            f"array should be 2-d. Got array with shape {tuple(array.shape)}"
+        )
+
+    value = xp.asarray(value, dtype=array.dtype, device=device(array))
+    if value.ndim not in [0, 1]:
+        raise ValueError(
+            "value needs to be a scalar or a 1d array, "
+            f"got a {value.ndim}d array instead"
+        )
+    if add_value:
+        value = xp.diagonal(array) + value
+    else:
+        if value.ndim == 0:
+            value = xp.repeat(value, min(array.shape))
+
+    min_rows_columns = min(array.shape)
+
+    for i in range(min_rows_columns):
+        array[i, i] = value[i]
 
 
 def _is_xp_namespace(xp, name):
