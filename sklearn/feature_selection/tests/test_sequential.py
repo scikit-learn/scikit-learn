@@ -367,7 +367,5 @@ def test_final_cv_score_attribute():
 
     # Verify that the score matches what we would get by manually computing it
     X_selected = X[:, sfs_forward.get_support()]
-    manual_score = cross_val_score(
-        LinearRegression(), X_selected, y, cv=2
-    ).mean()
+    manual_score = cross_val_score(LinearRegression(), X_selected, y, cv=2).mean()
     assert abs(sfs_forward.final_cv_score_ - manual_score) < 1e-10
