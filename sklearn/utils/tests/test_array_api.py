@@ -8,15 +8,13 @@ from numpy.testing import assert_allclose
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
-    _add_to_diagonal_using_helper,
     _asarray_with_order,
     _atol_for_type,
     _average,
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
-    _fill_diagonal_using_helper,
-    _fill_or_add_to_diagonal_loop,
+    _fill_or_add_to_diagonal,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
@@ -589,19 +587,9 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
 
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     with config_context(array_api_dispatch=True):
-        array_xp = _fill_or_add_to_diagonal(
-            array_xp, value=1, xp=xp, add_value=False, wrap=wrap
-        )
+        _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
-
-
-def test_aa():
-    xp = _array_api_for_tests("numpy", None)
-    array_np = numpy.zeros((5, 4))
-    _fill_or_add_to_diagonal_loop(array_np, 1, xp)
-    _fill_diagonal_using_helper(array_np, 1, xp)
-    _add_to_diagonal_using_helper(array_np, 1, xp)
 
 
 def test_fill_or_add_to_diagonal_transpose():
@@ -611,7 +599,7 @@ def test_fill_or_add_to_diagonal_transpose():
     # within `_fill_or_add_to_diagonal`, returns a copy instead of a view. Note
     # `numpy.fill_diagonal` avoids this problem as it uses `.flat` instead of `reshape`
     array = numpy.ones((2, 2)).T
-    array = _fill_or_add_to_diagonal(array, value=99, xp=xp, add_value=False)
+    _fill_or_add_to_diagonal(array, value=99, xp=xp, add_value=False)
     assert array[0, 0] == 99
 
 
