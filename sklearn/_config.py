@@ -35,8 +35,8 @@ def _get_threadlocal_config():
 def get_config():
     """Retrieve the current scikit-learn configuration.
 
-    This reflects the effective settings as established by default upon library import,
-    or modified via :func:`set_config` or :func:`config_context`.
+    This reflects the effective global configurations as established by default upon
+    library import, or modified via :func:`set_config` or :func:`config_context`.
 
     Returns
     -------
@@ -77,9 +77,8 @@ def set_config(
     These settings control the behaviour of scikit-learn functions during a library
     usage session. Global default configurations (as defined below in the parameter
     list) take effect when scikit-learn is imported. Passing `None` for an argument
-    (the defaults) leaves the corresponding setting unchanged, allowing users to
-    selectively update the global configuration without changing the other
-    configurations.
+    (the default) leaves the corresponding setting unchanged. This allows users to
+    selectively update the global configuration without changing the other settings.
 
     .. versionadded:: 0.19
 
@@ -249,9 +248,9 @@ def config_context(
     within a specific scope. Once the context exits, the previous global configuration
     is restored.
 
-    It is recommended to use this context manager for experimental features (such as
-    `array_api_dispatch` or `enable_metadata_routing`), as their support is not yet
-    consistently available across the library.
+    It is recommended to use this context manager over :func:`set_config` for
+    experimental features (such as `array_api_dispatch` or `enable_metadata_routing`),
+    as their support is not yet consistently available across the library.
 
     Parameters
     ----------
