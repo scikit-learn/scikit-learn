@@ -527,7 +527,7 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _fill_or_add_to_diagonal(array, value, xp, add_value=False):
+def _fill_or_add_to_diagonal(array, value, xp, add_value=False, wrap=False):
     """Minimal implementation of `numpy.fill_diagonal`, which
 
     `wrap` is not supported (i.e. always False). `value` should be a scalar or
