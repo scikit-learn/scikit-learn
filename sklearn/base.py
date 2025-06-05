@@ -218,9 +218,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         fitted_attributes = {
             name: value
             for name, value in attributes
-            if not name.startswith("_")
-            and name.endswith("_")
-            and not name == "transformers_"
+            if not name.startswith("_") and name.endswith("_")
         }
         arrays_attr = {
             name: (type(value).__name__, value.shape)
