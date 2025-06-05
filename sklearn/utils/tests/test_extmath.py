@@ -1141,9 +1141,8 @@ def test_stable_cumsum_array_api(array_namespace, device, dtype, axis):
             np.cumsum(arr_np, axis=axis),
         )
 
-    arr = xp.asarray(
-        [np.random.RandomState(0).rand(1000000)], dtype=xp.float32, device=device
-    )
+    arr = xp.asarray([np.full(1000, 100.5)], dtype=xp.float64, device=device)
+    arr[-1, -1] += 0.01
     if axis == 0:
         # transpose to mimic a 2nd dimension
         # (we do this to save memory)
