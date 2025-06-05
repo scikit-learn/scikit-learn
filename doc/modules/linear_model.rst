@@ -775,6 +775,8 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
+A comparison of :class:`BayesianRidge` and :class:`ARDRegression` on sparse and non-linear datasets is available in :ref:`this example <sphx_glr_auto_examples_linear_model_plot_ard_vs_bayesian_ridge.py>`.
+
 Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
