@@ -75,10 +75,13 @@ def set_config(
     """Set global scikit-learn configuration.
 
     These settings control the behaviour of scikit-learn functions during a library
-    usage session. Global default configurations (as defined below in the parameter
-    list) take effect when scikit-learn is imported. Passing `None` for an argument
-    (the default) leaves the corresponding setting unchanged. This allows users to
-    selectively update the global configuration without changing the other settings.
+    usage session. Global configuration defaults (as described in the parameter list
+    below) take effect when scikit-learn is imported.
+
+    This function can be used to modify the global scikit-learn configuration at this
+    runtime. Passing `None` as an argument (the default) leaves the corresponding
+    setting unchanged. This allows users to selectively update the global configuration
+    values without affecting the others.
 
     .. versionadded:: 0.19
 
@@ -157,6 +160,7 @@ def set_config(
         - `"pandas"`: DataFrame output
         - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
+
         Global default: "default".
 
         .. versionadded:: 1.2
@@ -172,6 +176,7 @@ def set_config(
         - `True`: Metadata routing is enabled
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
+
         Global default: False.
 
         .. versionadded:: 1.3
@@ -326,6 +331,7 @@ def config_context(
         - `"pandas"`: DataFrame output
         - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
+
         Global default: "default".
 
         .. versionadded:: 1.2
@@ -341,6 +347,7 @@ def config_context(
         - `True`: Metadata routing is enabled
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
+
         Global default: False.
 
         .. versionadded:: 1.3
