@@ -137,7 +137,7 @@ named_estimators = [
     ),
 ]
 score_iterative_imputer = pd.DataFrame()
-# Iterative imputer is sensible to the tolerance and
+# Iterative imputer is sensitive to the tolerance and
 # dependent on the estimator used internally.
 # We tuned the tolerance to keep this example run with limited computational
 # resources while not changing the results too much compared to keeping the
