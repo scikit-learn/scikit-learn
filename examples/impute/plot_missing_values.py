@@ -47,8 +47,6 @@ import numpy as np
 
 from sklearn.datasets import fetch_california_housing, load_diabetes
 
-rng = np.random.RandomState(42)
-
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_california, y_california = fetch_california_housing(return_X_y=True)
 
@@ -58,7 +56,7 @@ X_california = X_california[:300]
 y_california = y_california[:300]
 
 
-def add_missing_values(X_full, y_full):
+def add_missing_values(X_full, y_full, rng):
     n_samples, n_features = X_full.shape
 
     # Add missing values in 75% of the lines
@@ -77,8 +75,11 @@ def add_missing_values(X_full, y_full):
     return X_missing, y_missing
 
 
-X_miss_diabetes, y_miss_diabetes = add_missing_values(X_diabetes, y_diabetes)
-X_miss_california, y_miss_california = add_missing_values(X_california, y_california)
+rng = np.random.RandomState(42)
+X_miss_diabetes, y_miss_diabetes = add_missing_values(X_diabetes, y_diabetes, rng)
+X_miss_california, y_miss_california = add_missing_values(
+    X_california, y_california, rng
+)
 
 
 # %%
@@ -90,8 +91,6 @@ X_miss_california, y_miss_california = add_missing_values(X_california, y_califo
 # regression.
 #
 
-rng = np.random.RandomState(0)
-
 from sklearn.ensemble import RandomForestRegressor
 
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
@@ -102,10 +101,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler
 
 N_SPLITS = 4
-regressor = RandomForestRegressor(random_state=0)
 
 
-def get_score(X, y, imputer):
+def get_score(X, y, imputer=None):
+    regressor = RandomForestRegressor(random_state=0)
     if imputer is not None:
         estimator = make_pipeline(imputer, regressor)
     else:
@@ -130,8 +129,8 @@ stds_california = np.zeros(5)
 #
 
 
-mses_diabetes[0], stds_diabetes[0] = get_score(X_diabetes, y_diabetes, None)
-mses_california[0], stds_california[0] = get_score(X_california, y_california, None)
+mses_diabetes[0], stds_diabetes[0] = get_score(X_diabetes, y_diabetes)
+mses_california[0], stds_california[0] = get_score(X_california, y_california)
 x_labels.append("Full Data")
 
 

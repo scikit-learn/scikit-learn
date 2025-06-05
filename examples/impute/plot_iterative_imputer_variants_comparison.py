@@ -66,8 +66,6 @@ from sklearn.preprocessing import RobustScaler
 
 N_SPLITS = 5
 
-rng = np.random.RandomState(0)
-
 X_full, y_full = fetch_california_housing(return_X_y=True)
 # ~2k samples is enough for the purpose of the example.
 # Remove the following two lines for a slower run with different error bars.
@@ -75,17 +73,15 @@ X_full = X_full[::10]
 y_full = y_full[::10]
 n_samples, n_features = X_full.shape
 
-target_estimator = BayesianRidge()
 
-
-def compute_score_for(X, y, imputer):
+def compute_score_for(X, y, imputer=None):
     # We scale data before imputation and training a target estimator,
     # because our target estimator and some of the imputers assume
     # that the features have similar scales.
     if imputer is None:
-        estimator = make_pipeline(RobustScaler(), target_estimator)
+        estimator = make_pipeline(RobustScaler(), BayesianRidge())
     else:
-        estimator = make_pipeline(RobustScaler(), imputer, target_estimator)
+        estimator = make_pipeline(RobustScaler(), imputer, BayesianRidge())
     return cross_val_score(
         estimator, X, y, scoring="neg_mean_squared_error", cv=N_SPLITS
     )
@@ -93,11 +89,12 @@ def compute_score_for(X, y, imputer):
 
 # Estimate the score on the entire dataset, with no missing values
 score_full_data = pd.DataFrame(
-    compute_score_for(X_full, y_full, None),
+    compute_score_for(X_full, y_full),
     columns=["Full Data"],
 )
 
 # Add a single missing value to each row
+rng = np.random.RandomState(0)
 X_missing = X_full.copy()
 y_missing = y_full
 missing_samples = np.arange(n_samples)
@@ -106,9 +103,10 @@ X_missing[missing_samples, missing_features] = np.nan
 
 # Estimate the score after imputation (mean and median strategies)
 score_simple_imputer = pd.DataFrame()
-score_simple_imputer["mean"] = compute_score_for(
-    X_missing, y_missing, SimpleImputer(strategy="mean")
-)
+for strategy in ("mean", "median"):
+    score_simple_imputer[strategy] = compute_score_for(
+        X_missing, y_missing, SimpleImputer(strategy=strategy)
+    )
 
 # Estimate the score after iterative imputation of the missing values
 # with different estimators
