@@ -1000,3 +1000,13 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
+
+
+def test_get_fitted_attr_html():
+    """Check the behaviour of the `_get_fitted_attr_html` method."""
+    est = MyEstimator()
+    est.n_features_in_ = 2
+    est._not_a_fitted_attr = "x"
+    est._not_a_fitted_attr_either_ = "y"
+
+    assert est._get_fitted_attr_html() == {"n_features_in_": "int"}
