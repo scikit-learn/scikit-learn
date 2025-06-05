@@ -394,3 +394,4 @@ _ = plt.title("Effect of using a radial basis function kernel")
 # As testing samples get further away from the training ones, predictions
 # are converging towards their mean and their standard deviation
 # also increases.
+plt.show()
