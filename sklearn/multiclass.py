@@ -264,15 +264,13 @@ class OneVsRestClassifier(
         to multiple classes, and the final prediction is not defined.
 
         This parameter controls how the final prediction is made in these cases:
-        - 'first_seen': the first class seen in the training data is returned for
-          undefined predictions.
-        - 'last_seen': the last class seen in the training data is returned for
-          undefined predictions.
-        - 'random': a random class is returned for undefined predictions. If a sample
-          belongs to multiple classes, one of them is randomly selected. If a sample
-          does not belong to any class, a random class is returned.
-        - 'negative': -1 is returned for undefined predictions, allowing you to easily
-          take action in this case.
+        ``first_seen`` means the first class seen in the training data is returned for
+        undefined predictions. ``last_seen`` means the last class seen in the training
+        data is returned for undefined predictions. ``random`` means a random class is
+        returned for undefined predictions. If a sample belongs to multiple classes,
+        one of them is randomly selected. If a sample does not belong to any class, a
+        random class is returned. ``negative`` means ``-1`` is returned for undefined
+        predictions, allowing you to easily take action in this case.
 
           .. versionadded:: 1.7
 
