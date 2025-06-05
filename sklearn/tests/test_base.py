@@ -1010,3 +1010,10 @@ def test_get_fitted_attr_html():
     est._not_a_fitted_attr_either_ = "y"
 
     assert est._get_fitted_attr_html() == {"n_features_in_": "int"}
+
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+
+    fitted_attr_html = pca._get_fitted_attr_html()
+    assert len(fitted_attr_html) == 9
+    assert fitted_attr_html["components_"] == ("ndarray", (2, 2))
