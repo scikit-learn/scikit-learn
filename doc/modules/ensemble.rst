@@ -369,13 +369,17 @@ following modelling constraint:
 
 Also, monotonic constraints are not supported for multiclass classification.
 
+For a practical implementation of monotonic constraints with the histogram-based
+gradient boosting, including how they can improve generalization when domain knowledge
+is available, see
+:ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`.
+
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
     monotonic constraints on categorical features.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:

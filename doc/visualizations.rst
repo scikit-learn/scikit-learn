@@ -100,8 +100,10 @@ again by using the `plot` method of the `Display` object.
     rfc.fit(X_train, y_train)
 
     ax = plt.gca()
-    rfc_disp = RocCurveDisplay.from_estimator(rfc, X_test, y_test, ax=ax, alpha=0.8)
-    clf_disp.plot(ax=ax, alpha=0.8)
+    rfc_disp = RocCurveDisplay.from_estimator(
+      rfc, X_test, y_test, ax=ax, curve_kwargs={"alpha": 0.8}
+    )
+    clf_disp.plot(ax=ax, curve_kwargs={"alpha": 0.8})
 
 Notice that we pass `alpha=0.8` to the plot functions to adjust the alpha
 values of the curves.

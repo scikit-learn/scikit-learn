@@ -1,4 +1,0 @@
-- Fitting :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet` with
-  `fit_intercept=True` is faster for sparse input `X` because an unnecessary
-  re-computation of the sum of residuals is avoided.
-  By :user:`Christian Lorentzen <lorentzenchr>`
