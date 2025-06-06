@@ -233,13 +233,15 @@ class KernelDensity(BaseEstimator):
         cov = np.cov(X, rowvar=False)
         if n_features == 1:
             std = np.sqrt(cov)
-            self.whitening_matrix_ = 1.0 / std   # scalar
+            self.whitening_matrix_ = 1.0 / std  # scalar
             # self.whitening_matrix_ = np.array([[1.0 / std]])
             self.log_jacobian_det_ = -np.log(std)
             X_white = X * self.whitening_matrix_
         else:
             eigvals, eigvecs = np.linalg.eigh(cov)
-            self.whitening_matrix_ = eigvecs @ np.diag(1.0 / np.sqrt(eigvals)) @ eigvecs.T
+            self.whitening_matrix_ = (
+                eigvecs @ np.diag(1.0 / np.sqrt(eigvals)) @ eigvecs.T
+            )
             self.log_jacobian_det_ = np.log(np.linalg.det(self.whitening_matrix_))
             # Whiten training data
             X_white = X @ self.whitening_matrix_.T
