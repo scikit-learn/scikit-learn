@@ -526,11 +526,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
 
             if callable(self.oob_score):
-                self._set_oob_score_and_attributes(
+                self._set_oob_score_and_ufi_attributes(
                     X, y, sample_weight, scoring_function=self.oob_score
                 )
             else:
-                self._set_oob_score_and_attributes(X, y, sample_weight)
+                self._set_oob_score_and_ufi_attributes(X, y, sample_weight)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -540,8 +540,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y, sample_weight, scoring_function=None):
-        """Compute and set the OOB score and attributes.
+    def _set_oob_score_and_ufi_attributes(
+        self, X, y, sample_weight, scoring_function=None
+    ):
+        """Compute and set the OOB score, unbiased feature importance and set their
+        corresponding attributes.
 
         Parameters
         ----------
@@ -549,10 +552,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
         scoring_function : callable, default=None
-            Scoring function for OOB score. Default depends on whether
-            this is a regression (R2 score) or classification problem
-            (accuracy score).
+            Scoring function for OOB score. Defaults to `accuracy_score`.
         """
 
     def _compute_oob_predictions(self, X, y):
@@ -683,7 +686,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return all_importances / np.sum(all_importances)
 
     def _compute_unbiased_feature_importance_and_oob_predictions_per_tree(
-        self, tree, X, y, sample_weight, method
+        self, tree, X, y, sample_weight
     ):
         n_samples = X.shape[0]
         if sample_weight is None:
@@ -710,7 +713,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 X_test=X_test,
                 y_test=y_test,
                 sample_weight=sample_weight_test,
-                method=method,
             )
         )
         oob_pred[oob_indices, :, :] += y_pred
@@ -718,8 +720,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return (importances, oob_pred, n_oob_pred)
 
     def _compute_unbiased_feature_importance_and_oob_predictions(
-        self, X, y, sample_weight, method="ufi"
-    ):  # "mdi_oob"
+        self, X, y, sample_weight
+    ):
         check_is_fitted(self)
         # Importance computations require X to be in CSR format
         if issparse(X):
@@ -727,12 +729,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         n_samples, n_features = X.shape
         max_n_classes = self.estimators_[0].tree_.max_n_classes
-        # TODO: dropped return_as="generator_unordered" for compatibility on joblib
-        # version: introduced in 1.3 but 1.2 is the minimal requirement
+        # TODO: re-add the dropped return_as="generator_unordered" for compatibility on
+        # joblib version. Introduced in 1.3 but 1.2 is the minimal requirement
         results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
             delayed(
                 self._compute_unbiased_feature_importance_and_oob_predictions_per_tree
-            )(tree, X, y, sample_weight, method)
+            )(tree, X, y, sample_weight)
             for tree in self.estimators_
             if tree.tree_.node_count > 1
         )
@@ -886,8 +888,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y, sample_weight, scoring_function=None):
-        """Compute and set the OOB score and attributes.
+    def _set_oob_score_and_ufi_attributes(
+        self, X, y, sample_weight, scoring_function=None
+    ):
+        """Compute and set the OOB score, unbiased feature importance and set their
+        corresponding attributes.
 
         Parameters
         ----------
@@ -895,28 +900,19 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `accuracy_score`.
         """
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        ufi_feature_importances, self.oob_decision_function_ = (
+        self.unbiased_feature_importances_, self.oob_decision_function_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, sample_weight, method="ufi"
+                X, y, sample_weight
             )
         )
-        mdi_oob_feature_importances, _ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, sample_weight, method="mdi_oob"
-            )
-        )
-        if self.criterion == "gini":
-            self._unnormalized_ufi_feature_importances = ufi_feature_importances
-            self._unnormalized_mdi_oob_feature_importances = mdi_oob_feature_importances
-        elif self.criterion in ["log_loss", "entropy"]:
-            self._unnormalized_ufi_feature_importances = ufi_feature_importances
-            # mdi_oob does not support entropy yet
 
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
@@ -925,40 +921,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
-
-    @property
-    def ufi_feature_importances_(self):
-        check_is_fitted(self)
-        if self.criterion in ["gini", "log_loss", "entropy"]:
-            if not self._unnormalized_ufi_feature_importances.any():
-                return np.zeros(self.n_features_in_, dtype=np.float64)
-            else:
-                return (
-                    self._unnormalized_ufi_feature_importances
-                    / self._unnormalized_ufi_feature_importances.sum()
-                )
-        else:
-            raise AttributeError(
-                "ufi feature importance only available for"
-                " classification with split criterion 'gini', 'log_loss' or 'entropy'."
-            )
-
-    @property
-    def mdi_oob_feature_importances_(self):
-        check_is_fitted(self)
-        if self.criterion != "gini":
-            raise AttributeError(
-                "mdi_oob feature importance only available for"
-                " classification with split criterion 'gini'"
-            )
-        else:
-            if not self._unnormalized_mdi_oob_feature_importances.any():
-                return np.zeros(self.n_features_in_, dtype=np.float64)
-            else:
-                return (
-                    self._unnormalized_mdi_oob_feature_importances
-                    / self._unnormalized_mdi_oob_feature_importances.sum()
-                )
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -1243,8 +1205,11 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y, sample_weight, scoring_function=None):
-        """Compute and set the OOB score and attributes.
+    def _set_oob_score_and_ufi_attributes(
+        self, X, y, sample_weight, scoring_function=None
+    ):
+        """Compute and set the OOB score, unbiased feature importance and set their
+        corresponding attributes.
 
         Parameters
         ----------
@@ -1252,25 +1217,19 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
         scoring_function : callable, default=None
-            Scoring function for OOB score. Defaults to `r2_score`.
+            Scoring function for OOB score. Defaults to `accuracy_score`.
         """
         if scoring_function is None:
             scoring_function = r2_score
 
-        ufi_feature_importances, self.oob_prediction_ = (
+        self.unbiased_feature_importances_, self.oob_prediction_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, sample_weight, method="ufi"
+                X, y, sample_weight
             )
         )
-        mdi_oob_feature_importances, _ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, sample_weight, method="mdi_oob"
-            )
-        )
-        if self.criterion == "squared_error":
-            self._unnormalized_ufi_feature_importances = ufi_feature_importances
-            self._unnormalized_mdi_oob_feature_importances = mdi_oob_feature_importances
 
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
@@ -1280,40 +1239,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         self.oob_prediction_ = self.oob_prediction_.squeeze(axis=1)
 
         self.oob_score_ = scoring_function(y, self.oob_prediction_)
-
-    @property
-    def ufi_feature_importances_(self):
-        check_is_fitted(self)
-        if self.criterion != "squared_error":
-            raise AttributeError(
-                "Unbiased feature importance only available for"
-                " regression with split criterion MSE"
-            )
-        else:
-            if not self._unnormalized_ufi_feature_importances.any():
-                return np.zeros(self.n_features_in_, dtype=np.float64)
-            else:
-                return (
-                    self._unnormalized_ufi_feature_importances
-                    / self._unnormalized_ufi_feature_importances.sum()
-                )
-
-    @property
-    def mdi_oob_feature_importances_(self):
-        check_is_fitted(self)
-        if self.criterion != "squared_error":
-            raise AttributeError(
-                "Unbiased feature importance only available for"
-                " regression with split criterion MSE"
-            )
-        else:
-            if not self._unnormalized_mdi_oob_feature_importances.any():
-                return np.zeros(self.n_features_in_, dtype=np.float64)
-            else:
-                return (
-                    self._unnormalized_mdi_oob_feature_importances
-                    / self._unnormalized_mdi_oob_feature_importances.sum()
-                )
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -3092,7 +3017,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.sparse_output = sparse_output
 
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
+    def _set_oob_score_and_ufi_attributes(self, X, y, scoring_function=None):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):

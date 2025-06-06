@@ -542,29 +542,14 @@ def test_oob_sample_weights(est_name, global_random_seed):
         X_oob_weighted,
         y_oob_weighted,
         sample_weight=sw,
-        method="ufi",
     )[0]
     ufi_repeated = est._compute_unbiased_feature_importance_and_oob_predictions(
         X_oob_repeated,
         y_oob_repeated,
         sample_weight=np.ones(X_oob_repeated.shape[0]),
-        method="ufi",
     )[0]
 
-    mdi_oob_weighted = est._compute_unbiased_feature_importance_and_oob_predictions(
-        X_oob_weighted,
-        y_oob_weighted,
-        sample_weight=sw,
-        method="mdi_oob",
-    )[0]
-    mdi_oob_repeated = est._compute_unbiased_feature_importance_and_oob_predictions(
-        X_oob_repeated,
-        y_oob_repeated,
-        sample_weight=np.ones(X_oob_repeated.shape[0]),
-        method="mdi_oob",
-    )[0]
     assert_allclose(ufi_repeated, ufi_weighted, atol=1e-12)
-    assert_allclose(mdi_oob_repeated, mdi_oob_weighted)
 
 
 def test_max_features():

@@ -87,23 +87,12 @@ cdef class Tree:
         float64_t[:, :, ::1] oob_pred,
         int32_t[::1] has_oob_sample,
         float64_t[:, :, ::1] oob_node_values,
-        str method,
     )
     cpdef _compute_unbiased_feature_importance_and_oob_predictions(
         self,
         object X_test,
         object y_test,
         object sample_weight,
-        criterion,
-        method=*,
-    )
-    cdef float64_t mdi_oob_impurity_decrease(
-        self,
-        float64_t[:, :, ::1] oob_node_values,
-        int node_idx,
-        int left_idx,
-        int right_idx,
-        Node node,
     )
     cdef float64_t ufi_impurity_decrease(
         self,
@@ -112,7 +101,6 @@ cdef class Tree:
         int left_idx,
         int right_idx,
         Node node,
-        str criterion,
     )
 
 # =============================================================================

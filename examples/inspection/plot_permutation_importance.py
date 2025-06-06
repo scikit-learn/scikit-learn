@@ -23,10 +23,7 @@ from MDI while keeping its computational efficiency.
 .. rubric:: References
 
 * :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-  2001. <10.1023/A:1010933404324>`
-* :doi:`Zhou, Z., & Hooker, G., "Unbiased measurement of feature importance in
-  tree-based methods". ACM Transactions on Knowledge Discovery from Data, 15(2),
-  Article 26, 2020. <10.1145/3429445>`
+  2001. <10.1023/A:1010933404324>
 * :doi:`Li, X., Wang, Y., Basu, S., Kumbier, K., & Yu, B., "A debiased MDI
   feature importance measure for random forests". Proceedings of the 33rd Conference on
   Neural Information Processing Systems (NeurIPS 2019). <10.48550/arXiv.1906.10845>`
@@ -156,19 +153,16 @@ print(f"RF out-of-bag accuracy: {rf[-1].oob_score_:.3f}")
 # The fact that we use training set statistics explains why both the
 # `random_num` and `random_cat` features have a non-null importance.
 #
-# The attribute `ufi_feature_importances_`, available as soon as `oob_score` is set to
-# `True`, uses the out-of-bag samples of each tree to correct these biases.
+# The attribute `unbiased_feature_importances_`, available as soon as `oob_score` is set
+# to `True`, uses the out-of-bag samples of each tree to correct these biases.
 # It succesfully detects the uninformative features by assigning them a near zero
 # (here slightly negative) importance value.
-# The prefix `ufi` refers to the name given by the authors to their method. An other
-# method is available with the attribute `mdi_oob_feature_importances_`. See references
-# for more details on these methods.
 import pandas as pd
 
 feature_names = rf[:-1].get_feature_names_out()
 
 mdi_importances = pd.DataFrame(index=feature_names)
-mdi_importances.loc[:, "unbiased mdi"] = rf[-1].ufi_feature_importances_
+mdi_importances.loc[:, "unbiased mdi"] = rf[-1].unbiased_feature_importances_
 mdi_importances.loc[:, "mdi"] = rf[-1].feature_importances_
 mdi_importances = mdi_importances.sort_values(ascending=True, by="mdi")
 
@@ -268,7 +262,7 @@ for name, importances in zip(["train", "test"], [train_importances, test_importa
 
 plt.figure()
 umdi_importances = pd.Series(
-    rf[-1].ufi_feature_importances_[sorted_importances_idx],
+    rf[-1].unbiased_feature_importances_[sorted_importances_idx],
     index=feature_names[sorted_importances_idx],
 )
 ax = umdi_importances.plot.barh()

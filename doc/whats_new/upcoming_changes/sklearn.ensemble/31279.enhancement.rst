@@ -1,7 +1,7 @@
 - Forest estimators such as :class:`ensemble.RandomForestClassifier` and
   :class:`ensemble.ExtraTreesRegressor` now have a new attribute
-  for unbiased impurity feature importance: `ufi_feature_importances_`
-  and `mdi_oob_feature_importances_`. These methods leverage out-of-bag samples
-  to correct the known bias of MDI importance. They are automatically computed
-  during fitting when `oob_score=True`.
+  for unbiased impurity feature importance: `unbiased_feature_importances_`
+  This method leverages out-of-bag samples to correct the known bias of MDI
+  importance. It is automatically computed during training when
+  `oob_score=True`.
   By :user:`Gaétan de Castellane <GaetandeCast>`.
