@@ -564,9 +564,9 @@ def _display_tree_new(
     else:
         display_parts.append(router.owner)
 
-    # Add parameters if any
+    # Collect parameters for separate printing (one per line)
+    param_strs = []
     if has_params:
-        param_strs = []
         for param in sorted(node_info["params"]):
             param_str = _format_param_with_status(
                 param,
@@ -576,10 +576,16 @@ def _display_tree_new(
                 show_all_metadata=show_all_metadata,
             )
             param_strs.append(param_str)
-        display_parts.append(f"  ➤ {', '.join(param_strs)}")
 
     display_line = "".join(display_parts)
     print(f"{prefix}{connector}{display_line}")
+
+    # Print each parameter on its own indented line
+    if param_strs:
+        # Use spaces after the branch connector to avoid an unnecessary vertical bar
+        param_prefix = prefix + ("    " if is_last else "│   ") + "    "
+        for p in param_strs:
+            print(f"{param_prefix}➤ {p}")
 
     # Show method mappings if requested
     if show_method_mappings and isinstance(router, MetadataRouter):
