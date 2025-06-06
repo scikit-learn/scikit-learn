@@ -1,129 +1,31 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
 jobs:
-  lint:
+  say-hello:
+    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/executor-intro/ & https://circleci.com/docs/configuration-reference/#executor-job
     docker:
-      - image: cimg/python:3.10.16
+      # Specify the version you desire here
+      # See: https://circleci.com/developer/images/image/cimg/base
+      - image: cimg/base:current
+
+    # Add steps to the job
+    # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
     steps:
+      # Checkout the code as the first step.
       - checkout
       - run:
-          name: dependencies
-          command: |
-            source build_tools/shared.sh
-            # Include pytest compatibility with mypy
-            pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
-      - run:
-          name: linting
-          command: ./build_tools/linting.sh
+          name: "Say hello"
+          command: "echo Hello, World!"
 
-  doc-min-dependencies:
-    docker:
-      - image: cimg/base:current-22.04
-    environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
-      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
-      # Do not fail if the documentation build generates warnings with minimum
-      # dependencies as long as we can avoid raising warnings with more recent
-      # versions of the same dependencies.
-      - SKLEARN_WARNINGS_AS_ERRORS: '0'
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
-      - restore_cache:
-          keys:
-            - doc-min-deps-ccache-{{ .Branch }}
-            - doc-min-deps-ccache
-      - run: ./build_tools/circle/build_doc.sh
-      - save_cache:
-          key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-      - save_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
-          paths:
-            - ~/scikit_learn_data
-      - store_artifacts:
-          path: doc/_build/html/stable
-          destination: doc
-      - store_artifacts:
-          path: ~/log.txt
-          destination: log.txt
-
-  doc:
-    docker:
-      - image: cimg/base:current-22.04
-    environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
-      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
-      # Make sure that we fail if the documentation build generates warnings with
-      # recent versions of the dependencies.
-      - SKLEARN_WARNINGS_AS_ERRORS: '1'
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: v1-doc-datasets-{{ .Branch }}
-      - restore_cache:
-          keys:
-            - doc-ccache-{{ .Branch }}
-            - doc-ccache
-      - run: ./build_tools/circle/build_doc.sh
-      - save_cache:
-          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-      - save_cache:
-          key: v1-doc-datasets-{{ .Branch }}
-          paths:
-            - ~/scikit_learn_data
-      - store_artifacts:
-          path: doc/_build/html/stable
-          destination: doc
-      - store_artifacts:
-          path: ~/log.txt
-          destination: log.txt
-      # Persists generated documentation so that it can be attached and deployed
-      # in the 'deploy' step.
-      - persist_to_workspace:
-          root: doc/_build/html
-          paths: .
-
-  deploy:
-    docker:
-      - image: cimg/base:current-22.04
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      # Attach documentation generated in the 'doc' step so that it can be
-      # deployed.
-      - attach_workspace:
-          at: doc/_build/html
-      - run: ls -ltrh doc/_build/html/stable
-      - run:
-          command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
-              bash build_tools/circle/push_doc.sh doc/_build/html/stable
-            fi
-
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
 workflows:
-  version: 2
-  build-doc-and-deploy:
+  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
+    # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - lint
-      - doc:
-          requires:
-            - lint
-      - doc-min-dependencies:
-          requires:
-            - lint
-      - deploy:
-          requires:
-            - doc
+      - say-hello
