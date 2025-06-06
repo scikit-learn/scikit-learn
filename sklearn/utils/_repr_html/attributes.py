@@ -26,7 +26,7 @@ def _fitted_attr_html_repr(fitted_attributes):
        </div>
     """
     ROW_TEMPLATE = """
-       <tr>
+       <tr class="default">
            <td>{name}&nbsp;</td>
            <td>{value}</td>
        </tr>

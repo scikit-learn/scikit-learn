@@ -41,5 +41,5 @@ def test_fitted_attr_html_repr():
     out = _fitted_attr_html_repr({"a": int, "b": float})
     assert "<summary>Fitted attributes</summary>" in out
     assert '<table class="body-table">' in out
-    assert "<td><class 'int'></td>" in out
+    assert '<tr class="default">' in out
     assert "<class 'float'></td>" in out
