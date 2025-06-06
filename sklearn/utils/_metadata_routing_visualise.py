@@ -756,9 +756,9 @@ def _print_compact_structure(
         # This is a mapped component - show mapping name and component together
         name_part = f"↳ via {mapping_info['name']}: {structure['name']}"
 
-        # Add parameters if any
+        # Prepare parameter strings if any
+        param_strs = []
         if structure.get("params"):
-            param_strs = []
             for param in sorted(structure["params"]):
                 if routing_map and structure["path"] in routing_map:
                     param_str = _format_param_with_status(
@@ -772,9 +772,15 @@ def _print_compact_structure(
                     # Fallback if routing_map not available
                     param_str = param
                 param_strs.append(param_str)
-            print(f"{prefix}{name_part} ◆ {', '.join(param_strs)}")
-        else:
-            print(f"{prefix}{name_part}")
+
+        # First, print the component line
+        print(f"{prefix}{name_part}")
+
+        # Then, print each parameter on its own indented line
+        if param_strs:
+            param_prefix = prefix + "    "
+            for ps in param_strs:
+                print(f"{param_prefix}◆ {ps}")
 
         # Show method mappings if requested
         if show_method_mappings and mapping_info.get("mappings"):
