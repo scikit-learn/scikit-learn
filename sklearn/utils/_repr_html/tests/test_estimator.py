@@ -48,10 +48,11 @@ def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"
     params = ""
+    attrs = ""
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, params, name, tool_tip, checked=checked)
+        _write_label_html(out, params, attrs, name, tool_tip, checked=checked)
         html_label = out.getvalue()
 
         p = (
@@ -613,4 +614,4 @@ def test_function_transformer_show_caption(func, expected_name):
 def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(C=10.0, fit_intercept=False)
-    assert "parameters-table" in estimator_html_repr(est)
+    assert "body-table" in estimator_html_repr(est)
