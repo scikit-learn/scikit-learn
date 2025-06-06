@@ -9,11 +9,10 @@ from libc.string cimport memset
 
 import numpy as np
 
-from .common import HISTOGRAM_DTYPE
 from .common cimport hist_struct
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport G_H_DTYPE_C
+from .common import HISTOGRAM_DTYPE
 from ...utils._typedefs cimport uint8_t
+from ...utils._bitset cimport X_BINNED_DTYPE_C, G_H_DTYPE_C
 
 
 # Notes:

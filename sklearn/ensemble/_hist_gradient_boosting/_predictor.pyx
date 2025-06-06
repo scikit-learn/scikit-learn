@@ -6,13 +6,10 @@ from libc.math cimport isnan
 import numpy as np
 
 from ...utils._typedefs cimport intp_t, uint8_t
-from .common cimport X_DTYPE_C
-from .common cimport Y_DTYPE_C
-from .common import Y_DTYPE
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport BITSET_INNER_DTYPE_C
+from ...utils._bitset cimport X_DTYPE_C, Y_DTYPE_C, X_BINNED_DTYPE_C, BITSET_INNER_DTYPE_C
+from ...utils._bitset cimport in_bitset_2d_memoryview
 from .common cimport node_struct
-from ._bitset cimport in_bitset_2d_memoryview
+from .common import Y_DTYPE
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
