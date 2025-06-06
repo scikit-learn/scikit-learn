@@ -227,6 +227,22 @@ class KernelDensity(BaseEstimator):
             self.bandwidth_ = self.bandwidth
 
         X = validate_data(self, X, order="C", dtype=np.float64)
+        n_samples, n_features = X.shape
+
+        # Compute whitening transform
+        cov = np.cov(X, rowvar=False)
+        if n_features == 1:
+            std = np.sqrt(cov)
+            self.whitening_matrix_ = 1.0 / std   # scalar
+            # self.whitening_matrix_ = np.array([[1.0 / std]])
+            self.log_jacobian_det_ = -np.log(std)
+            X_white = X * self.whitening_matrix_
+        else:
+            eigvals, eigvecs = np.linalg.eigh(cov)
+            self.whitening_matrix_ = eigvecs @ np.diag(1.0 / np.sqrt(eigvals)) @ eigvecs.T
+            self.log_jacobian_det_ = np.log(np.linalg.det(self.whitening_matrix_))
+            # Whiten training data
+            X_white = X @ self.whitening_matrix_.T
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
@@ -237,7 +253,7 @@ class KernelDensity(BaseEstimator):
         if kwargs is None:
             kwargs = {}
         self.tree_ = TREE_DICT[algorithm](
-            X,
+            X_white,
             metric=self.metric,
             leaf_size=self.leaf_size,
             sample_weight=sample_weight,
@@ -266,13 +282,20 @@ class KernelDensity(BaseEstimator):
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
         X = validate_data(self, X, order="C", dtype=np.float64, reset=False)
+
+        # Whiten test data
+        if X.shape[1] == 1:
+            X_white = X * self.whitening_matrix_
+        else:
+            X_white = X @ self.whitening_matrix_.T
+
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:
             N = self.tree_.sum_weight
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
-            X,
+            X_white,
             h=self.bandwidth_,
             kernel=self.kernel,
             atol=atol_N,
@@ -280,7 +303,9 @@ class KernelDensity(BaseEstimator):
             breadth_first=self.breadth_first,
             return_log=True,
         )
+        # Adjust for normalization and Jacobian of whitening transform
         log_density -= np.log(N)
+        log_density += self.log_jacobian_det_
         return log_density
 
     def score(self, X, y=None):
