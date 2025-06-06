@@ -636,8 +636,8 @@ def test_median(namespace, device, dtype_name, axis):
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
     assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
-    
-    
+
+
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
