@@ -439,28 +439,59 @@ def _format_param_with_status(
     else:
         param_display = param
 
-    # Show all methods with their statuses for this parameter
-    all_method_parts = []
+    # Split methods by whether they use an alias (str) or not. This allows us
+    # to display alias relationships only for the methods that actually use
+    # them. We need to generate *two* entries when a parameter is aliased in
+    # some methods but not others, e.g. ``inner_weights→sample_weight[fit↗]``
+    # and ``sample_weight[partial_fit⚠]``.
 
-    if show_all_metadata:
-        # Show all methods with their status indicators
-        for method in SIMPLE_METHODS:
-            if method in statuses.get(param, {}):
-                status = statuses[param][method]
-                indicator = _get_status_indicator(status)
-                all_method_parts.append(f"{method}{indicator}")
-    else:
-        # Original behavior: only show methods that have been explicitly set
-        for method in SIMPLE_METHODS:
-            status = statuses.get(param, {}).get(method)
-            if status is not None:  # Only show methods that have been explicitly set
-                indicator = _get_status_indicator(status)
-                all_method_parts.append(f"{method}{indicator}")
+    # Collect the status mapping once for convenience
+    param_statuses = statuses.get(param, {})
 
-    if all_method_parts:
-        return f"{param_display}[{','.join(all_method_parts)}]"
-    else:
-        return param_display
+    alias_methods = {m: s for m, s in param_statuses.items() if isinstance(s, str)}
+    non_alias_methods = {
+        m: s for m, s in param_statuses.items() if not isinstance(s, str)
+    }
+
+    parts = []
+
+    # Helper to build the method part respecting the `show_all_metadata` flag.
+    def _build_method_part(method_map):
+        method_parts = []
+        if show_all_metadata:
+            # Show all methods but only include indicators for those present in
+            # the supplied map.
+            for method in SIMPLE_METHODS:
+                if method in method_map:
+                    status = method_map[method]
+                    indicator = _get_status_indicator(status)
+                    method_parts.append(f"{method}{indicator}")
+        else:
+            for method, status in method_map.items():
+                indicator = _get_status_indicator(status)
+                method_parts.append(f"{method}{indicator}")
+        return method_parts
+
+    # 1. Alias part (where status is a str)
+    if alias_methods:
+        alias = next(iter(alias_methods.values()))  # They should all be the same
+        method_parts = _build_method_part(alias_methods)
+        alias_display = f"{alias}→{param}"
+        if method_parts:
+            parts.append(f"{alias_display}[{','.join(method_parts)}]")
+        else:
+            parts.append(alias_display)
+
+    # 2. Non-alias part
+    if non_alias_methods or (show_all_metadata and not alias_methods):
+        method_parts = _build_method_part(non_alias_methods)
+        if method_parts:
+            parts.append(f"{param}[{','.join(method_parts)}]")
+        else:
+            parts.append(param)
+
+    # Join the parts with ", " to mimic the desired output style.
+    return ", ".join(parts)
 
 
 def _get_original_params(router):
