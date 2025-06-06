@@ -1,0 +1,7 @@
+- :class:`tree.Tree` now has a method that allows passing test samples
+  to compute a test score and feature importance measure.
+  The private method `_compute_unbiased_feature_importance_and_oob_predictions`
+  is used by forest estimators to provide an unbiased feature importance by
+  using oob samples but could be made public to allow the user to pass their
+  own test data.
+  By :user:`Gaétan de Castellane <GaetandeCast>`.
