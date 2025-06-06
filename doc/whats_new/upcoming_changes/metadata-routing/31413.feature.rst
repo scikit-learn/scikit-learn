@@ -1,0 +1,8 @@
+- |Feature| Added support for default metadata routing through
+  ``set_config(metadata_request_policy="auto")``. This enables automatic routing
+  of common metadata like ``sample_weight`` by default. Consumers (estimators,
+  scorers, and CV splitters) can now define instance-level default routing via
+  the ``add_auto_request`` method, which complements the existing
+  class-level defaults set through ``__metadata_request__*`` attributes.
+  Refer to :ref:`metadata_routing_auto_request` for more details.
+  By `Adrin Jalali`_.
