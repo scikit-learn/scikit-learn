@@ -1,4 +1,0 @@
-- The `force_int_remainder_cols` parameter of :class:`compose.ColumnTransformer` and
-  :func:`compose.make_column_transformer` is deprecated and will be removed in 1.9.
-  It has no effect.
-  By :user:`Jérémie du Boisberranger <jeremiedbb>`
