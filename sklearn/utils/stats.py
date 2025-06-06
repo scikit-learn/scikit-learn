@@ -101,12 +101,10 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
             for feature_idx in range(weight_cdf.shape[0])
         ],
     )
-    print(f"{adjusted_percentile_rank=} {adjusted_percentile_rank[0]}")
-    print(f"{weight_cdf=}")
     # In rare cases, `percentile_indices` equals to `sorted_idx.shape[0]`
     max_idx = sorted_idx.shape[0] - 1
     percentile_indices = xp.clip(percentile_indices, 0, max_idx)
-    print(f"XXXX {percentile_indices=}")
+
     col_indices = xp.arange(array.shape[1], device=device)
     percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
 
