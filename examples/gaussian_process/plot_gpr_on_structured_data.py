@@ -5,7 +5,7 @@ Gaussian processes on discrete data structures
 
 This example illustrates the use of Gaussian processes for regression and
 classification tasks on data that are not in fixed-length feature vector form.
-This is achieved through the use of kernel functions that operates directly
+This is achieved through the use of kernel functions that operate directly
 on discrete structures such as variable-length sequences, trees, and graphs.
 
 Specifically, here the input variables are some gene sequences stored as
@@ -54,7 +54,7 @@ class SequenceKernel(GenericKernelMixin, Kernel):
     A minimal (but valid) convolutional kernel for sequences of variable
     lengths."""
 
-    def __init__(self, baseline_similarity=0.5, baseline_similarity_bounds=(1e-5, 1)):
+    def __init__(self, baseline_similarity=0.5, baseline_similarity_bounds="fixed"):
         self.baseline_similarity = baseline_similarity
         self.baseline_similarity_bounds = baseline_similarity_bounds
 
@@ -102,7 +102,15 @@ class SequenceKernel(GenericKernelMixin, Kernel):
         return cloned
 
 
-kernel = SequenceKernel()
+# %%
+# .. note::
+#    Here, we freeze ``baseline_similarity_bounds`` by setting it to `"fixed"` in order
+#    to show this example without ``ConvergenceWarning``s that would otherwise raise.
+#    In another use case, you probably want to optimise on
+#    ``baseline_similarity_bounds``  and should set bounds by passing a tuple of
+#    values.
+#
+kernel = SequenceKernel(baseline_similarity_bounds="fixed")
 
 # %%
 # Sequence similarity matrix under the kernel
