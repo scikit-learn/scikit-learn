@@ -23,6 +23,7 @@ __all__ = [
     "estimator_html_repr",
 ]
 
+# TODO(1.8): Remove the entire module
 warnings.warn(
     "Importing from sklearn.utils._estimator_html_repr is deprecated. The tools have "
     "been moved to sklearn.utils._repr_html. Be aware that this module is private and "

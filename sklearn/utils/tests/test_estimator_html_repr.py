@@ -4,6 +4,7 @@
 import pytest
 
 
+# TODO(1.8): Remove the entire file
 def test_estimator_html_repr_warning():
     with pytest.warns(FutureWarning):
         from sklearn.utils._estimator_html_repr import estimator_html_repr
