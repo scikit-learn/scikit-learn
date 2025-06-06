@@ -418,7 +418,7 @@ def _get_status_indicator(alias):
     elif alias is False:
         return "✗"  # not requested
     elif alias is None:
-        return "⚠"  # error if passed (unrequested)
+        return "⛔"  # error if passed (unrequested)
     elif alias == WARN:
         return "⚠"  # warn status
     elif alias == UNUSED:
