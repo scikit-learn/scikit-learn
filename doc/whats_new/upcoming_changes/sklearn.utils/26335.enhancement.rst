@@ -1,4 +1,0 @@
-- :func:`utils.multiclass.type_of_target` raises a warning when the number
-  of unique classes is greater than 50% of the number of samples. This warning is raised
-  only if `y` has more than 20 samples.
-  By :user:`Rahil Parikh <rprkh>`.
