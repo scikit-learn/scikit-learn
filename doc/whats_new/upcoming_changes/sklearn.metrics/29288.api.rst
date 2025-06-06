@@ -1,4 +1,0 @@
-- The `raise_warning` parameter of :func:`metrics.class_likelihood_ratios` is deprecated
-  and will be removed in 1.9. An `UndefinedMetricWarning` will always be raised in case
-  of a division by zero.
-  By :user:`Stefanie Senger <StefanieSenger>`.
