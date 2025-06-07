@@ -593,6 +593,17 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
 
+def test_fill_or_add_to_diagonal_transpose():
+    """Check `_fill_or_add_to_diagonal` when `reshape` returns a copy."""
+    xp = _array_api_for_tests("numpy", None)
+    # Transposing an array makes it F-contiguous, meaning `reshape(x, (-1,))`, used
+    # within `_fill_or_add_to_diagonal`, returns a copy instead of a view. Note
+    # `numpy.fill_diagonal` avoids this problem as it uses `.flat` instead of `reshape`
+    array = numpy.ones((2, 2)).T
+    _fill_or_add_to_diagonal(array, value=99, xp=xp, add_value=False)
+    assert array[0, 0] == 99
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
