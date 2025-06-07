@@ -1,0 +1,1 @@
+- :class:`GaussianProcessRegressor` now skips the `solve_triangular` function computation when return_cov and return_std are false in the `predict` function.  By :user:`Rafael Ayllón Gavilán <RafaAyGar>`
