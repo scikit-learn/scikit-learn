@@ -9,10 +9,12 @@ from sklearn.compose import ColumnTransformer
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import GroupKFold, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._metadata_requests import (
+    COMPOSITE_METHODS,
     SIMPLE_METHODS,
     UNUSED,
     WARN,
@@ -271,10 +273,72 @@ def visualise_flow(routing_info, show_method_mappings=False, show_all_metadata=T
 # ============================================================================
 
 
+def _compute_reachable_methods(router):
+    """Return a mapping ``{component_path: {methods}}`` of *reachable* methods.
+
+    A method on a component is considered reachable if there exists a chain of
+    ``MethodMapping`` objects starting from *any* root‐level simple method that
+    results in that method being invoked.  This respects the caller → callee
+    relationships stored in each :class:`~sklearn.utils.metadata_routing.MethodMapping`.
+    """
+
+    def _expand_methods(methods):
+        """Return a set with composite methods broken into their simple parts."""
+        expanded = set()
+        for m in methods:
+            if m in COMPOSITE_METHODS:
+                expanded.update(COMPOSITE_METHODS[m])
+            expanded.add(m)
+        return expanded
+
+    reachable = defaultdict(set)
+
+    def _walk(obj, incoming_methods, path=""):
+        # Build path in the exact same way as in _collect_routing_info so that
+        # look-ups can be shared.
+        current_path = f"{path}/{obj.owner}" if path else obj.owner
+
+        incoming_methods = _expand_methods(incoming_methods)
+
+        if isinstance(obj, MetadataRequest):
+            for method in incoming_methods:
+                if hasattr(obj, method):
+                    reachable[current_path].add(method)
+            # No children – stop.
+            return
+
+        # obj is a MetadataRouter -------------------------------------------
+        # 1. Handle potential self-request (router acts as a consumer).
+        if obj._self_request:
+            for method in incoming_methods:
+                if hasattr(obj._self_request, method):
+                    reachable[current_path].add(method)
+
+        # 2. Propagate reachability to children via method mappings.
+        for name, mapping_pair in obj._route_mappings.items():
+            child_obj = mapping_pair.router
+            # Collect child methods reachable through *any* caller that is itself
+            # reachable on *this* router.
+            child_methods_raw = {
+                pair.callee
+                for pair in mapping_pair.mapping
+                if pair.caller in incoming_methods
+            }
+            child_methods = _expand_methods(child_methods_raw)
+            if child_methods:
+                _walk(child_obj, child_methods, current_path)
+
+    _walk(router, set(SIMPLE_METHODS))
+    return reachable
+
+
 def _collect_routing_info(router, top_router=None, show_all_metadata=True):
     """Collect all routing information into a structured format."""
     if top_router is None:
         top_router = router
+
+    # Compute reachability map so we can ignore unreachable methods.
+    reachable_map = _compute_reachable_methods(top_router)
 
     info = defaultdict(
         lambda: {
@@ -294,11 +358,14 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
         else:
             current_path = obj.owner
 
+        # Fetch reachable methods for *this* component (may be empty)
+        reachable_here = reachable_map.get(current_path, set())
+
         if isinstance(obj, MetadataRequest):
             # Get detailed info about each method's requests
             for method in SIMPLE_METHODS:
-                # Skip methods that don't exist on this estimator
-                if not hasattr(obj, method):
+                # Skip if method not reachable or not implemented
+                if method not in reachable_here or not hasattr(obj, method):
                     continue
 
                 info[current_path]["existing_methods"].add(method)
@@ -353,8 +420,10 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
         elif isinstance(obj, MetadataRouter):
             if obj._self_request:
                 for method in SIMPLE_METHODS:
-                    # Skip methods that don't exist on this estimator
-                    if not hasattr(obj._self_request, method):
+                    # Skip if method not reachable or not implemented
+                    if method not in reachable_here or not hasattr(
+                        obj._self_request, method
+                    ):
                         continue
 
                     info[current_path]["existing_methods"].add(method)
@@ -778,6 +847,7 @@ def _print_compact_structure(
 
         # Then, print each parameter on its own indented line
         if param_strs:
+            # Use spaces after the branch connector to avoid an unnecessary vertical bar
             param_prefix = prefix + "    "
             for ps in param_strs:
                 print(f"{param_prefix}◆ {ps}")
@@ -1112,7 +1182,11 @@ param_grid = {
     "classifier__C": [0.1, 1.0, 10, 100],
 }
 
-search_cv = RandomizedSearchCV(clf, param_grid, cv=GroupKFold(), random_state=0)
+scorer = get_scorer("accuracy").set_score_request(sample_weight=True)
+
+search_cv = RandomizedSearchCV(
+    clf, param_grid, cv=GroupKFold(), scoring=scorer, random_state=0
+)
 
 
 # Get the routing information
