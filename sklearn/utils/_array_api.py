@@ -548,7 +548,7 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
 
     min_rows_columns = min(array.shape)
     if add_value:
-        value = xp.diagonal(array) + value
+        value = xp.linalg.diagonal(array) + value
     if value.ndim == 0:
         for i in range(min_rows_columns):
             array[i, i] = value
