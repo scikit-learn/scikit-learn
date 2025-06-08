@@ -2986,3 +2986,4 @@ def validate_data(
         _check_n_features(_estimator, X, reset=reset)
 
     return out
+
