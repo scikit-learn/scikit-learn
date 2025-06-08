@@ -1,3 +1,62 @@
+"""sklearn.utils._metadata_routing_visualise
+================================================
+Utilities to *inspect* and *visualise* scikit-learn's experimental
+*metadata-routing* configuration.  The module is **purely diagnostic** – it
+never mutates routing information – and can be imported inside notebooks or
+unit-tests to print human-readable ASCII diagrams that explain how
+``sample_weight``, ``groups`` … flow through complex estimator pipelines.
+
+Overview of sections
+--------------------
+1.  **Public entry-points**
+    • ``visualise_routing`` – convenience wrapper that currently defaults to a
+      tree view but could dispatch to other formats in the future.
+    • ``visualise_tree`` – prints a hierarchical tree with parameters annotated
+      inline (the view most users care about).
+
+2.  **Core data gathering**
+    ``_collect_routing_info`` walks a (potentially nested) structure of
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` and
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` objects and returns a
+    *rich* mapping that contains, for **every** component path:
+
+    ::
+
+        {
+            "params"          : set[str],             # names understood by component
+            "methods"         : {param -> {methods}}, # caller methods that *request*
+            "aliases"         : {param -> alias},     # component-param → user-param
+            "statuses"        : {param -> {method -> status}},
+            "existing_methods": set[str],             # methods implemented on object
+        }
+
+    The heavy lifting of reachability analysis (only consider methods that can
+    actually be invoked) lives in ``_compute_reachable_methods``.
+
+3.  **Rendering helpers**
+    Once the mapping is built we only need pretty-printers.  Each view resides
+    in its own function (``_display_tree_new``, ``_build_flow_diagram`` …) so
+    that UI changes remain isolated from the routing logic.
+
+4.  **Test fixtures** (bottom of file)
+    The last section sets up an end-to-end *example* pipeline that is executed
+    when running the file directly (or when doctests need a quick demo).  The
+    code lives at module level on purpose so our unit-tests can import the
+    objects without duplicating boilerplate.
+
+Conventions & design notes
+--------------------------
+* A *path* is a ``/``-separated string that encodes the position of a component
+  inside the estimator tree (e.g. ``"Pipeline/StandardScaler"``).  Paths are
+  unique keys in the mapping produced by ``_collect_routing_info``.
+* Unicode glyphs (``✓ ✗ ↗ ⊘ ⚠``) are used to keep the output compact yet
+  expressive.  They are generated via ``_get_status_indicator``.
+* The module relies *only* on the public helpers defined in
+  ``sklearn.utils._metadata_requests`` and keeps a strict separation between
+  *data collection* and *rendering* so that new visualisation styles can be
+  added without touching the traversal logic.
+"""
+
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -174,155 +233,116 @@ def _compute_reachable_methods(router):
 
 
 def _collect_routing_info(router, top_router=None, show_all_metadata=True):
-    """Collect all routing information into a structured format."""
+    """Return a *rich* mapping describing every parameter/method/alias path.
+
+    The returned ``defaultdict`` has *paths* ( ``"Pipeline/StandardScaler"``)
+    as keys and for each path stores::
+
+        {
+            "params"          : set[str],             # every param encountered
+            "methods"         : {param -> {methods}}, # methods that actively request
+            "aliases"         : {param -> alias},     # component-param -> user-param
+            "statuses"        : {param -> {method -> status}},
+            "existing_methods": set[str],             # methods implemented on object
+        }
+
+    The heavy lifting is delegated to two small helpers so that the control-flow
+    is easier to follow:
+
+    * :func:`_collect_request_info` handles *simple* consumers
+      (:class:`~sklearn.utils.metadata_routing.MetadataRequest`).
+    * :func:`_collect_router_info` handles routers which can also include a
+      *self-request* consumer.
+    """
     if top_router is None:
         top_router = router
 
-    # Compute reachability map so we can ignore unreachable methods.
     reachable_map = _compute_reachable_methods(top_router)
 
-    info = defaultdict(
+    info: dict[str, dict] = defaultdict(
         lambda: {
             "params": set(),
             "methods": defaultdict(set),
             "aliases": {},
             "statuses": defaultdict(dict),
-            # Track which methods actually exist for this component
             "existing_methods": set(),
         }
     )
 
-    def _collect(obj, path=""):
-        # Build the current path correctly
-        if path:
-            current_path = f"{path}/{obj.owner}"
-        else:
-            current_path = obj.owner
+    # ------------------------------------------------------------------
+    # Helper functions – defined *inside* to keep them private to algorithm
+    # ------------------------------------------------------------------
 
-        # Fetch reachable methods for *this* component (may be empty)
+    def _record_status(current_path: str, param: str, method: str, alias):
+        """Populate *info* dictionaries in a single place."""
+
+        info[current_path]["statuses"][param][method] = alias
+
+        if alias not in (False, WARN, None, UNUSED):
+            info[current_path]["methods"][param].add(method)
+
+        if isinstance(alias, str) and alias != param:
+            info[current_path]["aliases"][param] = alias
+
+    # ---------------------------------------
+    # Simple consumer (MetadataRequest) branch
+    # ---------------------------------------
+
+    def _collect_request_info(obj, current_path: str, reachable_here: set[str]):
+        """Handle the *consumer* case.
+
+        Parameters
+        ----------
+        obj : MetadataRequest
+        current_path : str
+            Absolute path in the routing tree.
+        reachable_here : set[str]
+            Methods that can *actually* be invoked given parent→child mappings.
+        """
+        for method in SIMPLE_METHODS:
+            if method not in reachable_here or not hasattr(obj, method):
+                continue
+
+            info[current_path]["existing_methods"].add(method)
+            method_req = getattr(obj, method)
+
+            param_source = (
+                _param_names(obj) if show_all_metadata else method_req.requests.keys()
+            )
+
+            for param in param_source:
+                info[current_path]["params"].add(param)
+                alias = method_req.requests.get(param, False)
+                _record_status(current_path, param, method, alias)
+
+    # ---------------------------------------
+    # Router branch (can include a *self* request)
+    # ---------------------------------------
+
+    def _collect_router_info(obj, current_path: str, reachable_here: set[str]):
+        """Handle :class:`MetadataRouter` instances (including *self* request)."""
+        if obj._self_request is not None:
+            _collect_request_info(obj._self_request, current_path, reachable_here)
+
+        # Recurse into children -------------------------------------------------
+        for name, mapping in obj._route_mappings.items():
+            _collect(
+                mapping.router,
+                current_path,  # becomes *path* for child
+            )
+
+    # ------------------------------------------------------------------
+    # Main DFS traversal
+    # ------------------------------------------------------------------
+
+    def _collect(obj, path=""):
+        current_path = f"{path}/{obj.owner}" if path else obj.owner
         reachable_here = reachable_map.get(current_path, set())
 
         if isinstance(obj, MetadataRequest):
-            # Get detailed info about each method's requests
-            for method in SIMPLE_METHODS:
-                # Skip if method not reachable or not implemented
-                if method not in reachable_here or not hasattr(obj, method):
-                    continue
-
-                info[current_path]["existing_methods"].add(method)
-                method_req = getattr(obj, method)
-
-                if show_all_metadata:
-                    # Get all possible metadata parameters for this estimator
-                    all_possible_params = _param_names(obj)
-                    for param in all_possible_params:
-                        info[current_path]["params"].add(param)
-
-                        # Determine alias/status for this method
-                        if param in method_req.requests:
-                            alias = method_req.requests[param]
-                        else:
-                            alias = False  # reachable but not requested
-
-                        info[current_path]["statuses"][param][method] = alias
-
-                        # Only add to requested-methods set if actually requested
-                        if (
-                            alias is not False
-                            and alias != WARN
-                            and alias is not None
-                            and alias != UNUSED
-                        ):
-                            info[current_path]["methods"][param].add(method)
-
-                        # Track alias relationships
-                        if isinstance(alias, str) and alias != param:
-                            info[current_path]["aliases"][param] = alias
-                else:
-                    # Original behavior: only show explicitly set parameters
-                    for param, alias in method_req.requests.items():
-                        # Include ALL parameters regardless of status
-                        info[current_path]["params"].add(param)
-                        # Record status only if this method actually defines the
-                        # parameter
-                        if param in method_req.requests:
-                            alias = method_req.requests[param]
-                            info[current_path]["statuses"][param][method] = alias
-
-                            # Only add to requested-methods set if it is actively
-                            # requested
-                            if (
-                                alias is not False
-                                and alias != WARN
-                                and alias is not None
-                                and alias != UNUSED
-                            ):
-                                info[current_path]["methods"][param].add(method)
-
-                            # Track alias relationships
-                            if isinstance(alias, str) and alias != param:
-                                info[current_path]["aliases"][param] = alias
-
+            _collect_request_info(obj, current_path, reachable_here)
         elif isinstance(obj, MetadataRouter):
-            if obj._self_request:
-                for method in SIMPLE_METHODS:
-                    # Skip if method not reachable or not implemented
-                    if method not in reachable_here or not hasattr(
-                        obj._self_request, method
-                    ):
-                        continue
-
-                    info[current_path]["existing_methods"].add(method)
-                    method_req = getattr(obj._self_request, method)
-
-                    if show_all_metadata:
-                        # Get all possible metadata parameters for this estimator
-                        all_possible_params = _param_names(obj._self_request)
-                        for param in all_possible_params:
-                            info[current_path]["params"].add(param)
-
-                            if param in method_req.requests:
-                                alias = method_req.requests[param]
-                            else:
-                                alias = False
-
-                            info[current_path]["statuses"][param][method] = alias
-
-                            if (
-                                alias is not False
-                                and alias != WARN
-                                and alias is not None
-                                and alias != UNUSED
-                            ):
-                                info[current_path]["methods"][param].add(method)
-
-                            if isinstance(alias, str) and alias != param:
-                                info[current_path]["aliases"][param] = alias
-                    else:
-                        # Original behavior: only show explicitly set parameters
-                        for param, alias in method_req.requests.items():
-                            # Include ALL parameters regardless of status
-                            info[current_path]["params"].add(param)
-                            # Only record status for methods that define the parameter
-                            if param in method_req.requests:
-                                alias = method_req.requests[param]
-                                info[current_path]["statuses"][param][method] = alias
-
-                                if (
-                                    alias is not False
-                                    and alias != WARN
-                                    and alias is not None
-                                    and alias != UNUSED
-                                ):
-                                    info[current_path]["methods"][param].add(method)
-
-                                if isinstance(alias, str) and alias != param:
-                                    # Store the mapping from component param to user
-                                    # param for display
-                                    info[current_path]["aliases"][param] = alias
-
-            for name, mapping in obj._route_mappings.items():
-                _collect(mapping.router, current_path)
+            _collect_router_info(obj, current_path, reachable_here)
 
     _collect(router)
     return info
@@ -409,29 +429,6 @@ def _format_param_with_status(
 
     # Join the parts with ", " to mimic the desired output style.
     return ", ".join(parts)
-
-
-def _get_original_params(router):
-    """Get all original parameter names before aliasing."""
-    params = set()
-
-    def _search(obj):
-        if isinstance(obj, MetadataRequest):
-            for method in SIMPLE_METHODS:
-                method_request = getattr(obj, method)
-                for param in method_request.requests:
-                    params.add(param)
-        elif isinstance(obj, MetadataRouter):
-            if obj._self_request:
-                for method in SIMPLE_METHODS:
-                    method_request = getattr(obj._self_request, method)
-                    for param in method_request.requests:
-                        params.add(param)
-            for mapping in obj._route_mappings.values():
-                _search(mapping.router)
-
-    _search(router)
-    return params
 
 
 def _get_user_facing_params(routing_map):
@@ -571,54 +568,6 @@ def _collect_all_components(router, prefix=""):
     return components
 
 
-def _find_consumers(router, param):
-    """Find all components that consume a parameter."""
-    consumers = []
-
-    def _search(obj):
-        if isinstance(obj, MetadataRequest):
-            for method in SIMPLE_METHODS:
-                if obj.consumes(method, [param]):
-                    consumers.append(obj.owner)
-                    break
-
-        elif isinstance(obj, MetadataRouter):
-            if obj._self_request:
-                for method in SIMPLE_METHODS:
-                    if obj._self_request.consumes(method, [param]):
-                        consumers.append(obj.owner)
-                        break
-
-            for mapping in obj._route_mappings.values():
-                _search(mapping.router)
-
-    _search(router)
-    return consumers
-
-
-def _find_consumers_with_methods(router, param):
-    """Find all components that consume a parameter with their methods."""
-    consumers = defaultdict(set)
-
-    def _search(obj):
-        if isinstance(obj, MetadataRequest):
-            for method in SIMPLE_METHODS:
-                if obj.consumes(method, [param]):
-                    consumers[obj.owner].add(method)
-
-        elif isinstance(obj, MetadataRouter):
-            if obj._self_request:
-                for method in SIMPLE_METHODS:
-                    if obj._self_request.consumes(method, [param]):
-                        consumers[obj.owner].add(method)
-
-            for mapping in obj._route_mappings.values():
-                _search(mapping.router)
-
-    _search(router)
-    return consumers
-
-
 def _build_compact_structure(
     router, level=0, top_router=None, parent_path="", show_all_metadata=True
 ):
@@ -749,178 +698,6 @@ def _print_compact_structure(
             mapping_info,
             routing_map,
         )
-
-
-def _find_routing_paths(router, param):
-    """Find all routing paths for a parameter."""
-    paths = []
-
-    def _trace_path(obj, current_path):
-        if isinstance(obj, MetadataRequest):
-            for method in SIMPLE_METHODS:
-                if obj.consumes(method, [param]):
-                    paths.append(current_path + [f"{obj.owner}.{method}"])
-
-        elif isinstance(obj, MetadataRouter):
-            current_path.append(obj.owner)
-
-            if obj._self_request:
-                for method in SIMPLE_METHODS:
-                    if obj._self_request.consumes(method, [param]):
-                        paths.append(current_path + [f"self.{method}"])
-
-            for name, mapping in obj._route_mappings.items():
-                for m in mapping.mapping:
-                    if mapping.router.consumes(m.callee, [param]):
-                        path_copy = current_path.copy()
-                        path_copy.append(f"{m.caller} → {name}.{m.callee}")
-                        _trace_path(mapping.router, path_copy)
-
-    _trace_path(router, [])
-    return paths
-
-
-def _build_flow_diagram(router, show_method_mappings=False, show_all_metadata=True):
-    """Build an ASCII flow diagram."""
-    lines = []
-
-    # Header
-    lines.append("┌" + "─" * 50 + "┐")
-    lines.append(f"│ {router.owner:^48} │")
-    lines.append("└" + "─" * 25 + "┬" + "─" * 25 + "┘")
-
-    # Collect all routing information
-    routing_map = _collect_routing_info(router)
-    original_params = sorted(_get_original_params(router))
-
-    if original_params:
-        lines.append(" " * 26 + "│")
-        lines.append(" " * 20 + f"Parameters: {', '.join(original_params)}")
-        lines.append(" " * 26 + "│")
-
-    # Build the flow structure recursively
-    def _add_flow_node(obj, indent=0, prefix="", is_last=True, parent_path=""):
-        # Build current path
-        if parent_path:
-            current_path = f"{parent_path}/{obj.owner}"
-        else:
-            current_path = obj.owner
-
-        if isinstance(obj, MetadataRouter):
-            # Add connector for non-root nodes
-            if indent > 0:
-                connector = "└──" if is_last else "├──"
-                lines.append(f"{prefix}{connector}─┐")
-                lines.append(f"{prefix}{'   ' if is_last else '│  '} │")
-
-            # Add component box
-            comp_prefix = prefix + ("   " if is_last else "│  ") if indent > 0 else ""
-
-            # Get consumed parameters for this component from routing map
-            param_info = ""
-            if current_path in routing_map:
-                info = routing_map[current_path]
-                if info["params"]:
-                    param_details = []
-                    for param in sorted(info["params"]):
-                        param_str = _format_param_with_status(
-                            param,
-                            info["methods"][param],
-                            info["statuses"],
-                            info.get("aliases", {}),
-                            show_all_metadata=show_all_metadata,
-                        )
-                        param_details.append(param_str)
-                    param_info = f" ◆ {', '.join(param_details)}"
-
-            # Draw component box
-            box_content = obj.owner + param_info
-            box_width = max(40, len(box_content) + 4)
-            lines.append(f"{comp_prefix}┌" + "─" * box_width + "┐")
-            lines.append(f"{comp_prefix}│ {box_content:<{box_width - 2}} │")
-            lines.append(f"{comp_prefix}└" + "─" * box_width + "┘")
-
-            # Process children
-            children = list(obj._route_mappings.items())
-            if children:
-                lines.append(f"{comp_prefix}" + " " * (box_width // 2) + "│")
-
-                for i, (name, mapping) in enumerate(children):
-                    is_last_child = i == len(children) - 1
-
-                    # Show method mapping
-                    method_info = ""
-                    if show_method_mappings and getattr(mapping, "mapping", []):
-                        unique_maps = set()
-                        for m in mapping.mapping:
-                            if m.caller != m.callee:
-                                unique_maps.add(f"{m.caller}→{m.callee}")
-                        if unique_maps:
-                            method_info = f" [{', '.join(sorted(unique_maps))}]"
-
-                    # Add branch
-                    branch_char = "└" if is_last_child else "├"
-                    lines.append(
-                        f"{comp_prefix}"
-                        + " " * (box_width // 2)
-                        + f"{branch_char}── {name}{method_info}"
-                    )
-
-                    # Recurse
-                    new_prefix = (
-                        comp_prefix
-                        + " " * (box_width // 2)
-                        + ("    " if is_last_child else "│   ")
-                    )
-                    _add_flow_node(
-                        mapping.router, indent + 1, new_prefix, True, current_path
-                    )
-
-        elif isinstance(obj, MetadataRequest):
-            # Terminal node - show consumed parameters from routing map
-            param_str = ""
-            if current_path in routing_map:
-                info = routing_map[current_path]
-                if info["params"]:
-                    param_details = []
-                    for param in sorted(info["params"]):
-                        param_str = _format_param_with_status(
-                            param,
-                            info["methods"][param],
-                            info["statuses"],
-                            info.get("aliases", {}),
-                            show_all_metadata=show_all_metadata,
-                        )
-                        param_details.append(param_str)
-                    param_str = f" ◆ {', '.join(param_details)}"
-
-            # Show component with or without parameters
-            lines.append(f"{prefix}    ◆ {obj.owner}{param_str}")
-
-    # Start building the flow
-    _add_flow_node(router)
-
-    # Add parameter flow summary at the bottom with aliases
-    if original_params:
-        lines.append("")
-        lines.append("─" * 60)
-        lines.append("Parameter Flow Summary:")
-        for param in original_params:
-            consumers = []
-            # Find all consumers and their aliases
-            for comp_path, info in routing_map.items():
-                if param in info["params"]:
-                    comp_name = comp_path.split("/")[-1]
-                    if param in info.get("aliases", {}):
-                        alias = info["aliases"][param]
-                        consumers.append(f"{comp_name} (as {alias})")
-                    else:
-                        consumers.append(comp_name)
-
-            if consumers:
-                lines.append(f"  • {param} → {', '.join(consumers)}")
-
-    return lines
 
 
 # ============================================================================
