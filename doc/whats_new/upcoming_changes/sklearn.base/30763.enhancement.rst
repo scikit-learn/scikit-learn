@@ -1,4 +1,0 @@
-- :class:`base.BaseEstimator` now has a parameter table added to the
-  estimators HTML representation that can be visualized with jupyter.
-  By :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Dea María Léon <DeaMariaLeon>`
