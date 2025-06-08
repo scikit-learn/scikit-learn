@@ -145,6 +145,11 @@ unseen data.
 * :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: An example
   of an inductive clustering model for handling new data.
 
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_face_compression.py`: This example
+  shows how one can use :class:`~sklearn.preprocessing.KBinsDiscretizer
+  to perform vector quantization on a set of toy image.
+
 .. _k_means:
 
 K-means
