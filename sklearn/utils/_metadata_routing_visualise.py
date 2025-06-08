@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import defaultdict
-from io import StringIO
 
 from sklearn import set_config
 from sklearn.compose import ColumnTransformer
@@ -43,9 +42,7 @@ def _param_names(router):
 # ============================================================================
 
 
-def visualise_routing(
-    routing_info, view="tree", show_method_mappings=False, show_all_metadata=True
-):
+def visualise_routing(routing_info, show_method_mappings=False, show_all_metadata=True):
     """
     Visualize metadata routing information.
 
@@ -53,25 +50,13 @@ def visualise_routing(
     ----------
     routing_info : MetadataRouter or MetadataRequest
         The routing information to visualize
-    view : str, default='tree'
-        The visualization style. Options: 'tree', 'matrix', 'compact', 'flow'
     show_method_mappings : bool, default=False
         Whether to show method mappings (e.g., fit→fit_transform) in the output.
     show_all_metadata : bool, default=True
         Whether to show all possible metadata parameters with status indicators,
         or only the parameters that are explicitly requested.
     """
-    if view == "tree":
-        visualise_tree(routing_info, show_method_mappings, show_all_metadata)
-    elif view == "matrix":
-        visualise_matrix(routing_info, show_all_metadata)
-    elif view == "compact":
-        visualise_compact(routing_info, show_method_mappings, show_all_metadata)
-    elif view == "flow":
-        visualise_flow(routing_info, show_method_mappings, show_all_metadata)
-    else:
-        # Default to old behavior for backward compatibility
-        visualise_routing_old(routing_info)
+    visualise_tree(routing_info, show_method_mappings, show_all_metadata)
 
 
 def visualise_tree(routing_info, show_method_mappings=False, show_all_metadata=True):
@@ -120,152 +105,6 @@ def visualise_tree(routing_info, show_method_mappings=False, show_all_metadata=T
                 print(f"  • {param} → {', '.join(consumers)}")
     else:
         print("\nNo parameters are being routed.")
-
-
-def visualise_matrix(routing_info, show_all_metadata=True):
-    """Show a matrix view of components vs parameters."""
-    print("\n=== METADATA ROUTING MATRIX ===")
-
-    # Collect all components and user-facing parameters
-    components = _collect_all_components(routing_info)
-    routing_map = _collect_routing_info(
-        routing_info, show_all_metadata=show_all_metadata
-    )
-    params = sorted(_get_user_facing_params(routing_map))
-
-    if not params:
-        print("No parameters are being routed.")
-        return
-
-    # Build the consumption matrix with alias info
-    matrix = defaultdict(
-        lambda: defaultdict(
-            lambda: {"methods": set(), "user_param": None, "statuses": {}}
-        )
-    )
-
-    for comp_path, info in routing_map.items():
-        comp_name = comp_path.split("/")[-1]  # Get the component name from path
-
-        # Handle direct parameters (no alias)
-        for param in info["params"]:
-            if param not in info.get("aliases", {}):
-                matrix[comp_name][param]["methods"] = info["methods"][param]
-                matrix[comp_name][param]["user_param"] = param
-                matrix[comp_name][param]["statuses"] = info["statuses"][param]
-
-        # Handle aliased parameters
-        for comp_param, user_param in info.get("aliases", {}).items():
-            matrix[comp_name][user_param]["methods"] = info["methods"][comp_param]
-            matrix[comp_name][user_param]["user_param"] = user_param
-            matrix[comp_name][user_param]["comp_param"] = comp_param
-            matrix[comp_name][user_param]["statuses"] = info["statuses"][comp_param]
-
-    # Calculate column widths - need to check all method strings that will be displayed
-    comp_width = max(len(comp) for comp in components) + 2
-    param_widths = {}
-    for param in params:
-        # Start with parameter name length
-        max_width = len(param)
-
-        # Check all method strings that will be displayed for this parameter
-        for comp in components:
-            cell_info = matrix[comp][param]
-            if cell_info["methods"]:
-                # Build method string with status indicators
-                method_parts = []
-                for method in sorted(cell_info["methods"]):
-                    status = cell_info["statuses"].get(method, False)
-                    indicator = _get_status_indicator(status)
-                    method_parts.append(f"{method}{indicator}")
-                method_str = ",".join(method_parts)
-
-                if "comp_param" in cell_info:
-                    display_str = f"{method_str}→{cell_info['comp_param']}"
-                else:
-                    display_str = method_str
-                max_width = max(max_width, len(display_str))
-
-        # Add padding
-        param_widths[param] = max_width + 2
-
-    # Print header
-    print(f"{'Component':<{comp_width}}", end="")
-    for param in params:
-        print(f"{param:^{param_widths[param]}}", end="")
-    print()
-
-    # Print separator
-    print("=" * comp_width, end="")
-    for param in params:
-        print("=" * param_widths[param], end="")
-    print()
-
-    # Print rows
-    for comp in components:
-        print(f"{comp:<{comp_width}}", end="")
-        for param in params:
-            cell_info = matrix[comp][param]
-            if cell_info["methods"]:
-                # Build method string with status indicators
-                method_parts = []
-                for method in sorted(cell_info["methods"]):
-                    status = cell_info["statuses"].get(method, False)
-                    indicator = _get_status_indicator(status)
-                    method_parts.append(f"{method}{indicator}")
-                method_str = ",".join(method_parts)
-
-                if "comp_param" in cell_info:
-                    display_str = f"{method_str}→{cell_info['comp_param']}"
-                else:
-                    display_str = method_str
-                print(f"{display_str:^{param_widths[param]}}", end="")
-            else:
-                print(f"{'-':^{param_widths[param]}}", end="")
-        print()
-
-
-def visualise_compact(routing_info, show_method_mappings=False, show_all_metadata=True):
-    """Show a compact hierarchical view."""
-    print("\n=== COMPACT METADATA ROUTING ===")
-
-    # Build compact representation
-    structure = _build_compact_structure(
-        routing_info, show_all_metadata=show_all_metadata
-    )
-    routing_map = _collect_routing_info(
-        routing_info, show_all_metadata=show_all_metadata
-    )
-    _print_compact_structure(
-        structure,
-        indent=0,
-        show_method_mappings=show_method_mappings,
-        show_all_metadata=show_all_metadata,
-        routing_map=routing_map,
-    )
-
-    # Show routing paths
-    original_params = sorted(_get_original_params(routing_info))
-    if original_params:
-        print("\nRouting Paths:")
-        for param in original_params:
-            paths = _find_routing_paths(routing_info, param)
-            if paths:
-                print(f"\n{param}:")
-                for path in paths:
-                    print(f"  → {' → '.join(path)}")
-
-
-def visualise_flow(routing_info, show_method_mappings=False, show_all_metadata=True):
-    """Show an ASCII flow diagram."""
-    print("\n=== METADATA ROUTING FLOW ===")
-
-    # Build flow representation
-    flow = _build_flow_diagram(routing_info, show_method_mappings, show_all_metadata)
-
-    # Display the flow
-    for line in flow:
-        print(line)
 
 
 # ============================================================================
@@ -1074,75 +913,6 @@ def _build_flow_diagram(router, show_method_mappings=False, show_all_metadata=Tr
 
 
 # ============================================================================
-# OLD VISUALIZATION (for backward compatibility)
-# ============================================================================
-
-
-def visualise_routing_old(routing_info):
-    params = _param_names(routing_info)
-    for param in params:
-        output = StringIO()
-        print(f"Visualising routing for {param}", file=output)
-        routed = _visualise_param(param, routing_info, indent=0, output=output)
-        if routed:
-            print(output.getvalue())
-
-
-def _visualise_param(param, routing_info, indent, output):
-    if isinstance(routing_info, MetadataRouter):
-        return _visualise_metadata_router(param, routing_info, indent, output)
-    elif isinstance(routing_info, MetadataRequest):
-        return _visualise_param_in_metadata_request(param, routing_info, indent, output)
-    else:
-        raise ValueError(f"Unknown type {type(routing_info)}")
-
-
-def _visualise_param_in_metadata_request(param, request, indent, output):
-    print(" ." * indent, request.owner, file=output)
-    routed = False
-    for method in SIMPLE_METHODS:
-        # Skip methods that don't exist on this estimator
-        if not hasattr(request, method):
-            continue
-
-        if request.consumes(method, [param]):
-            print(" ." * (indent + 1), f"{method} consumes {param}", file=output)
-            routed = True
-    return routed
-
-
-def _visualise_metadata_router(param, router, indent, output):
-    routed = False
-    print(" ." * indent, router.owner, file=output)
-    indent += 1
-    if router._self_request:
-        sub_output = StringIO()
-        sub_routed = _visualise_param_in_metadata_request(
-            param, router._self_request, indent=indent + 1, output=sub_output
-        )
-        if sub_routed:
-            print(" ." * indent, "Self request", file=output)
-            print(sub_output.getvalue(), end="", file=output)
-            routed = True
-
-    for name, router_mapping_pair in router._route_mappings.items():
-        inner_router = router_mapping_pair.router
-        for mappings in router_mapping_pair.mapping:
-            caller, callee = mappings.caller, mappings.callee
-            if inner_router.consumes(method=callee, params=[param]):
-                sub_output = StringIO()
-                sub_routed = _visualise_param(
-                    param, inner_router, indent=indent + 1, output=sub_output
-                )
-                if sub_routed:
-                    print(" ." * indent, f"{caller} -> {name}.{callee}", file=output)
-                    print(sub_output.getvalue(), end="", file=output)
-                    routed = True
-
-    return routed
-
-
-# ============================================================================
 # TEST CASES
 # ============================================================================
 
@@ -1199,19 +969,4 @@ search_cv = RandomizedSearchCV(
 # Get the routing information
 test = get_routing_for_object(search_cv)
 
-print("=" * 80)
-print("OLD VERBOSE OUTPUT:")
-print("=" * 80)
-visualise_routing_old(test)
-
-print("\n" * 3)
-print("=" * 80)
-print("NEW VISUALIZATION OPTIONS:")
-print("=" * 80)
-
-# Show all new visualization styles
-for view_type in ["tree", "matrix", "compact", "flow"]:
-    visualise_routing(
-        test, view=view_type, show_method_mappings=False, show_all_metadata=True
-    )
-    print("\n")
+visualise_routing(test, show_method_mappings=False, show_all_metadata=True)
