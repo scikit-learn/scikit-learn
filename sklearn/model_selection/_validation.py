@@ -1162,10 +1162,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
-    For a complete walk-through, see the
-    :ref:`plot_cv_predict.py
-        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`
-    example.
+    # For a complete walk-through, see the
+    # :ref:`plot_cv_predict.py
+    #     <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`
+    # example.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
