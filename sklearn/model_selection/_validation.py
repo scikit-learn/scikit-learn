@@ -1144,11 +1144,6 @@ def cross_val_predict(
     cross_validate : Calculate one or more scores and timings for each CV
         split.
 
-    See the example in
-    :ref:`plot_cv_predict.py
-        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`.
-
-
     Notes
     -----
     In the case that one or more classes are absent in a training portion, a
@@ -1167,6 +1162,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
+    For a complete walk-through, see the
+    :ref:`plot_cv_predict.py
+        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`
+    example.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
