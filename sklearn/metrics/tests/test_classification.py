@@ -30,9 +30,12 @@ from sklearn.metrics import (
     make_scorer,
     matthews_corrcoef,
     multilabel_confusion_matrix,
+    npv_score,
     precision_recall_fscore_support,
     precision_score,
     recall_score,
+    specificity_score,
+    tpr_fpr_tnr_fnr_score,
     zero_one_loss,
 )
 from sklearn.metrics._classification import _check_targets, d2_log_loss_score
@@ -371,6 +374,274 @@ def test_precision_recall_f_ignored_labels():
         # ensure the above were meaningful tests:
         for average in ["macro", "weighted", "micro"]:
             assert recall_13(average=average) != recall_all(average=average)
+
+
+def test_tpr_fpr_tnr_fnr_score_binary_averaged():
+    # Test TPR, FPR, TNR, FNR scores for binary classification task
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # compute scores with default labels introspection
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score(y_true, y_pred, average=None)
+    assert_array_almost_equal(tprs, [0.88, 0.68], 2)
+    assert_array_almost_equal(fprs, [0.32, 0.12], 2)
+    assert_array_almost_equal(tnrs, [0.68, 0.88], 2)
+    assert_array_almost_equal(fnrs, [0.12, 0.32], 2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
+    assert_array_almost_equal(tp / (tp + fn), 0.68, 2)
+    assert_array_almost_equal(fp / (tn + fp), 0.12, 2)
+    assert_array_almost_equal(tn / (tn + fp), 0.88, 2)
+    assert_array_almost_equal(fn / (tp + fn), 0.32, 2)
+
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="macro")
+    assert tpr == np.mean(tprs)
+    assert fpr == np.mean(fprs)
+    assert tnr == np.mean(tnrs)
+    assert fnr == np.mean(fnrs)
+
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="weighted")
+    support = np.bincount(y_true)
+    assert tpr == np.average(tprs, weights=support)
+    assert fpr == np.average(fprs, weights=support)
+    assert tnr == np.average(tnrs, weights=support)
+    assert fnr == np.average(fnrs, weights=support)
+
+
+@ignore_warnings
+def test_tpr_fpr_tnr_fnr_score_binary_single_class():
+    # Test how the scores behave with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score([1, 1], [1, 1])
+    assert 1.0 == tprs[0]
+    assert 0.0 == fprs[0]
+    assert 0.0 == tnrs[0]
+    assert 0.0 == fnrs[0]
+
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score([-1, -1], [-1, -1])
+    assert 1.0 == tprs[0]
+    assert 0.0 == fprs[0]
+    assert 0.0 == tnrs[0]
+    assert 0.0 == fnrs[0]
+
+
+@ignore_warnings
+def test_tpr_fpr_tnr_fnr_score_extra_labels():
+    # Test TPR, FPR, TNR, FNR handling of explicit additional (not in input)
+    # labels
+    y_true = [1, 3, 3, 2]
+    y_pred = [1, 1, 3, 2]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        # No averaging
+        tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average=None
+        )
+        assert_array_almost_equal(tprs, [0.0, 1.0, 1.0, 0.5, 0.0], 2)
+        assert_array_almost_equal(fprs, [0.0, 0.33, 0.0, 0.0, 0.0], 2)
+        assert_array_almost_equal(tnrs, [1.0, 0.67, 1.0, 1.0, 1.0], 2)
+        assert_array_almost_equal(fnrs, [0.0, 0.0, 0.0, 0.5, 0.0], 2)
+
+        # Macro average
+        scores = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro"
+        )
+        assert_array_almost_equal(scores, [0.5, 0.07, 0.93, 0.1], 2)
+
+        # Micro average
+        scores = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="micro"
+        )
+        assert_array_almost_equal(scores, [0.75, 0.0625, 0.9375, 0.25], 4)
+
+        # Further tests
+        for average in ["macro", "micro", "weighted", "samples"]:
+            if average in ["macro", "micro", "samples"] and i == 0:
+                continue
+            assert_almost_equal(
+                tpr_fpr_tnr_fnr_score(
+                    y_true, y_pred, labels=[0, 1, 2, 3, 4], average=average
+                ),
+                tpr_fpr_tnr_fnr_score(y_true, y_pred, labels=None, average=average),
+            )
+
+    # Error when introducing invalid label in multilabel case
+    for average in [None, "macro", "micro", "samples"]:
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got 5 > 4"
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            tpr_fpr_tnr_fnr_score(
+                y_true_bin, y_pred_bin, labels=np.arange(6), average=average
+            )
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got -1 < 0"
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            tpr_fpr_tnr_fnr_score(
+                y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average
+            )
+
+
+@ignore_warnings
+def test_tpr_fpr_tnr_fnr_score_ignored_labels():
+    # Test TPR, FPR, TNR, FNR handling of a subset of labels
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        scores_13 = partial(tpr_fpr_tnr_fnr_score, y_true, y_pred, labels=[1, 3])
+        scores_all = partial(tpr_fpr_tnr_fnr_score, y_true, y_pred, labels=None)
+
+        assert_array_almost_equal(
+            ([0.5, 1.0], [0.0, 0.67], [1.0, 0.33], [0.5, 0.0]),
+            scores_13(average=None),
+            2,
+        )
+        assert_almost_equal([0.75, 0.33, 0.67, 0.25], scores_13(average="macro"), 2)
+        assert_almost_equal([0.67, 0.4, 0.6, 0.33], scores_13(average="micro"), 2)
+        assert_almost_equal([0.67, 0.22, 0.78, 0.33], scores_13(average="weighted"), 2)
+
+        # ensure the above were meaningful tests:
+        for average in ["macro", "weighted", "micro"]:
+            assert scores_13(average=average) != scores_all(average=average)
+
+
+def test_tpr_fpr_tnr_fnr_score_multiclass():
+    # Test TPR, FPR, TNR, FNR scores for multiclass classification task
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute scores with default labels introspection
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score(y_true, y_pred, average=None)
+    assert_array_almost_equal(tprs, [0.79, 0.1, 0.9], 2)
+    assert_array_almost_equal(fprs, [0.08, 0.14, 0.45], 2)
+    assert_array_almost_equal(tnrs, [0.92, 0.86, 0.55], 2)
+    assert_array_almost_equal(fnrs, [0.21, 0.9, 0.1], 2)
+
+    # averaging tests
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="micro")
+    assert_almost_equal(tpr, 0.53, 2)
+    assert_almost_equal(fpr, 0.23, 2)
+    assert_almost_equal(tnr, 0.77, 2)
+    assert_almost_equal(fnr, 0.47, 2)
+
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="macro")
+    assert_almost_equal(tpr, 0.6, 2)
+    assert_almost_equal(fpr, 0.22, 2)
+    assert_almost_equal(tnr, 0.78, 2)
+    assert_almost_equal(fnr, 0.4, 2)
+
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="weighted")
+    assert_almost_equal(tpr, 0.53, 2)
+    assert_almost_equal(fpr, 0.2, 2)
+    assert_almost_equal(tnr, 0.8, 2)
+    assert_almost_equal(fnr, 0.47, 2)
+
+    err_msg = (
+        "Samplewise metrics are not available outside of multilabel"
+        r" classification\."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        tpr_fpr_tnr_fnr_score(y_true, y_pred, average="samples")
+
+    # same prediction but with explicit label ordering
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+        y_true, y_pred, labels=[0, 2, 1], average=None
+    )
+    assert_array_almost_equal(tpr, [0.79, 0.9, 0.1], 2)
+    assert_array_almost_equal(fpr, [0.08, 0.45, 0.14], 2)
+    assert_array_almost_equal(tnr, [0.92, 0.55, 0.86], 2)
+    assert_array_almost_equal(fnr, [0.21, 0.1, 0.9], 2)
+
+
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
+    y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
+    y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
+
+    msg = (
+        "Fnr is ill-defined and being set to 0.0 in labels with no positives samples."
+        " Use `zero_division` parameter to control this behavior."
+    )
+
+    zero_division_value = 1.0 if zero_division == 1.0 else 0.0
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average=None, zero_division=zero_division
+        )
+        if zero_division == "warn":
+            assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
+    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
+    assert_array_almost_equal(fpr, [0.0, 0.0, 0.0, 1 / 3.0], 2)
+    assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
+    assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division_value], 2)
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average="macro", zero_division=zero_division
+        )
+        if zero_division == "warn":
+            assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
+    assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
+    assert_almost_equal(fpr, 1 / 3.0 / 4.0)
+    assert_almost_equal(tnr, 0.91666, 5)
+    assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average="micro", zero_division=zero_division
+        )
+    assert_almost_equal(tpr, 0.5)
+    assert_almost_equal(fpr, 0.125)
+    assert_almost_equal(tnr, 0.875)
+    assert_almost_equal(fnr, 0.5)
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average="weighted", zero_division=zero_division
+        )
+        if zero_division == "warn":
+            assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
+    assert_almost_equal(tpr, 0.5)
+    assert_almost_equal(fpr, 0)
+    assert_almost_equal(tnr, 1.0)
+    assert_almost_equal(fnr, 0.5)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true,
+            y_pred,
+            average="samples",
+            sample_weight=[1, 1, 2],
+            zero_division=zero_division,
+        )
+    assert_almost_equal(tpr, 0.5)
+    assert_almost_equal(fpr, 0.08333, 5)
+    assert_almost_equal(tnr, 0.91666, 5)
+    assert_almost_equal(fnr, 0.5)
 
 
 def test_average_precision_score_non_binary_class():
@@ -1238,6 +1509,7 @@ def test_zero_precision_recall():
         assert_almost_equal(precision_score(y_true, y_pred, average="macro"), 0.0, 2)
         assert_almost_equal(recall_score(y_true, y_pred, average="macro"), 0.0, 2)
         assert_almost_equal(f1_score(y_true, y_pred, average="macro"), 0.0, 2)
+        assert_almost_equal(specificity_score(y_true, y_pred, average="macro"), 0.5, 2)
 
     finally:
         np.seterr(**old_error_settings)
@@ -2434,6 +2706,203 @@ def test_fscore_warnings(zero_division):
                 )
             else:
                 assert len(record) == 0
+
+
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+def test_specificity_warnings(zero_division):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        specificity_score(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        specificity_score(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+        if zero_division == "warn":
+            assert (
+                str(record.pop().message) == "Tnr is ill-defined and "
+                "being set to 0.0 due to no negatives samples."
+                " Use `zero_division` parameter to control"
+                " this behavior."
+            )
+        else:
+            assert len(record) == 0
+
+        specificity_score([1, 1], [1, 1])
+        assert (
+            str(record.pop().message) == "Tnr is ill-defined and "
+            "being set to 0.0 due to no negatives samples."
+            " Use `zero_division` parameter to control"
+            " this behavior."
+        )
+
+
+def test_npv_binary_averaged():
+    # Test NPV score for binary classification task
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # compute scores with default labels
+    npv_none = npv_score(y_true, y_pred, average=None)
+    assert_array_almost_equal(npv_none, [0.85, 0.73], 2)
+
+    npv_macro = npv_score(y_true, y_pred, average="macro")
+    assert npv_macro == np.mean(npv_none)
+
+    npw_weighted = npv_score(y_true, y_pred, average="weighted")
+    support = np.bincount(y_true)
+    assert npw_weighted == np.average(npv_none, weights=support)
+
+
+@ignore_warnings
+def test_npv_binary_single_class():
+    # Test how the NPV score behaves with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
+    assert 0.0 == npv_score([1, 1], [1, 1])
+    assert 1.0 == npv_score([-1, -1], [-1, -1])
+
+
+@ignore_warnings
+def test_npv_extra_labels():
+    # Test NPV handling of explicit additional (not in input) labels
+    y_true = [1, 3, 3, 2]
+    y_pred = [1, 1, 3, 2]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        print(i)
+        # No averaging
+        npvs = npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average=None)
+        assert_array_almost_equal(npvs, [1.0, 1.0, 1.0, 0.67, 1.0], 2)
+
+        # Macro average
+        npv = npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro")
+        assert_almost_equal(npv, 0.93, 2)
+
+        # Micro average
+        npv = npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average="micro")
+        assert_almost_equal(npv, 0.9375, 4)
+
+        # Further tests
+        for average in ["macro", "micro", "weighted", "samples"]:
+            if average in ["macro", "micro", "samples"] and i == 0:
+                continue
+            assert_almost_equal(
+                npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average=average),
+                npv_score(y_true, y_pred, labels=None, average=average),
+            )
+
+    # Error when introducing invalid label in multilabel case
+    for average in [None, "macro", "micro", "samples"]:
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got 5 > 4"
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            npv_score(y_true_bin, y_pred_bin, labels=np.arange(6), average=average)
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got -1 < 0"
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            npv_score(y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average)
+
+
+@ignore_warnings
+def test_npv_ignored_labels():
+    # Test NPV handling of a subset of labels
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        npv_13 = partial(npv_score, y_true, y_pred, labels=[1, 3])
+        npv_all = partial(npv_score, y_true, y_pred, labels=None)
+
+        assert_almost_equal([0.67, 1.0], npv_13(average=None), 2)
+        assert_almost_equal(0.83, npv_13(average="macro"), 2)
+        assert_almost_equal(0.75, npv_13(average="micro"), 2)
+        assert_almost_equal(0.78, npv_13(average="weighted"), 2)
+
+        # ensure the above were meaningful tests:
+        for average in ["macro", "weighted", "micro"]:
+            if average == "micro" and i == 0:
+                continue
+            assert npv_13(average=average) != npv_all(average=average)
+
+
+def test_npv_multiclass():
+    # Test NPV score for multiclass classification task
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    # compute scores with default labels
+    assert_array_almost_equal(
+        npv_score(y_true, y_pred, average=None), [0.9, 0.58, 0.94], 2
+    )
+
+    # averaging tests
+    assert_array_almost_equal(npv_score(y_true, y_pred, average="micro"), 0.77, 2)
+
+    assert_array_almost_equal(npv_score(y_true, y_pred, average="macro"), 0.81, 2)
+
+    assert_array_almost_equal(npv_score(y_true, y_pred, average="weighted"), 0.78, 2)
+
+    err_msg = (
+        "Samplewise metrics are not available outside of multilabel"
+        r" classification\."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        npv_score(y_true, y_pred, average="samples")
+
+    # same prediction but with explicit label ordering
+    assert_array_almost_equal(
+        npv_score(y_true, y_pred, labels=[0, 2, 1], average=None), [0.9, 0.94, 0.58], 2
+    )
+
+
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1])
+def test_npv_warnings(zero_division):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        npv_score(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+
+    msg = (
+        "Npv is ill-defined and being set to 0.0 due to no negative call samples."
+        " Use `zero_division` parameter to control this behavior."
+    )
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        npv_score(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+        if zero_division == "warn":
+            assert str(record[-1].message) == msg
+        else:
+            assert len(record) == 0
+
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        npv_score([1, 1], [1, 1])
 
 
 def test_prf_average_binary_data_non_binary():
