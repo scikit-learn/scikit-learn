@@ -1143,8 +1143,11 @@ def cross_val_predict(
     cross_val_score : Calculate score for each CV split.
     cross_validate : Calculate one or more scores and timings for each CV
         split.
+
+    See the example in
     :ref:`plot_cv_predict.py
-        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`
+        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`.
+
 
     Notes
     -----
