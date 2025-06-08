@@ -68,14 +68,16 @@ def visualise_tree(routing_info, show_method_mappings=False, show_all_metadata=T
         routing_info, show_all_metadata=show_all_metadata
     )
 
-    # Display tree structure
-    print(f"Root: {routing_info.owner}")
-    print("│")
+    # Display tree structure without duplicate root entry
     _display_tree_new(
         routing_info,
         routing_map,
+        prefix="",
+        is_last=True,
         show_method_mappings=show_method_mappings,
         show_all_metadata=show_all_metadata,
+        parent_path="",
+        root=True,
     )
 
     # Get user-facing parameters (including aliases)
@@ -458,6 +460,7 @@ def _display_tree_new(
     show_all_metadata=True,
     step_name=None,
     parent_path="",
+    root=False,
 ):
     """Display the routing tree with proper formatting and inline parameters."""
     # Get current path
@@ -471,7 +474,11 @@ def _display_tree_new(
     has_params = bool(node_info.get("params"))
 
     # Build the display line
-    connector = "└── " if is_last else "├── "
+    # For the root node we don't want branch connectors
+    if root and prefix == "":
+        connector = ""
+    else:
+        connector = "└── " if is_last else "├── "
 
     display_parts = []
     if step_name:
@@ -497,15 +504,18 @@ def _display_tree_new(
 
     # Print each parameter on its own indented line
     if param_strs:
-        # Use spaces after the branch connector to avoid an unnecessary vertical bar
-        param_prefix = prefix + ("    " if is_last else "│   ") + "    "
+        # Special-case root to avoid surplus indentation
+        if root and prefix == "":
+            param_prefix = "    "
+        else:
+            param_prefix = prefix + ("    " if is_last else "│   ") + "    "
         for p in param_strs:
             print(f"{param_prefix}➤ {p}")
 
     # Show method mappings if requested
     if show_method_mappings and isinstance(router, MetadataRouter):
-        extension = "    " if is_last else "│   "
-        new_prefix = prefix + extension
+        extension = "    " if (is_last or root and prefix == "") else "│   "
+        new_prefix = prefix + ("" if root and prefix == "" else extension)
 
         # Collect all method mappings
         all_mappings = []
@@ -522,8 +532,8 @@ def _display_tree_new(
     # Process children
     if isinstance(router, MetadataRouter):
         children = list(router._route_mappings.items())
-        extension = "    " if is_last else "│   "
-        new_prefix = prefix + extension
+        extension = "    " if (is_last or root and prefix == "") else "│   "
+        new_prefix = prefix + ("" if root and prefix == "" else extension)
 
         for i, (name, mapping) in enumerate(children):
             is_last_child = i == len(children) - 1
@@ -539,6 +549,7 @@ def _display_tree_new(
                 show_all_metadata,
                 name,
                 current_path,
+                root=False,
             )
 
 
