@@ -1450,6 +1450,11 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
+    Examples
+    --------
+    See an example of using `RandomForestClassifier` with out-of-bag estimates:
+    :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
+
     See Also
     --------
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
@@ -1490,6 +1495,9 @@ class RandomForestClassifier(ForestClassifier):
     RandomForestClassifier(...)
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
+
+  
+
     """
 
     _parameter_constraints: dict = {
@@ -2812,6 +2820,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
+
+   
 
     See Also
     --------
