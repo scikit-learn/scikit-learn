@@ -1496,7 +1496,6 @@ class RandomForestClassifier(ForestClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
-  
 
     """
 
@@ -2821,7 +2820,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
         .. versionadded:: 1.4
 
-   
 
     See Also
     --------
