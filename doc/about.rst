@@ -163,7 +163,9 @@ Branding & Logos
 
 High quality PNG and SVG logos are available in the `doc/logos/
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
-source directory.
+source directory. There is also a 
+`branding guide <https://github.com/scikit-learn/blog?tab=readme-ov-file#brand-standards>`_
+with the color palette.
 
 .. image:: images/scikit-learn-logo-notext.png
   :align: center
