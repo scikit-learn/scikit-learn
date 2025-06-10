@@ -643,20 +643,19 @@ There are several options for making donations:
   <https://github.com/sponsors/scikit-learn>`_.
 
 
-All donations will be handled by `NumFOCUS <https://numfocus.org/>`_, a non-profit
-organization which is managed by a board of `Scipy community members
-<https://numfocus.org/board.html>`_. NumFOCUS's mission is to foster scientific
-computing software, in particular in Python. As a fiscal home of scikit-learn, it
-ensures that money is available when needed to keep the project funded and available
-while in compliance with tax regulations.
-
-The received donations for the scikit-learn project mostly will go towards covering
-travel-expenses for code sprints, as well as towards the organization budget of the
-project [#f1]_.
+All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
+non-profit organization based in Austin, Texas, USA. The NumFOCUS board
+consists of `SciPy community members <https://numfocus.org/board.html>`_. 
+Contributions are tax-deductible to the extent allowed by law.
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget, in particular, we might use some of
-  the donated funds to pay for other project expenses such as DNS,
-  hosting or continuous integration services.
+Contributions support the maintenance of the project, including development, 
+documentation, infrastructure and coding sprints. 
 
+
+scikit-learn Swag
+-----------------
+Official scikit-learn swag is available for purchase at the `NumFOCUS online store
+<https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
+A portion of the proceeds from each sale goes to support the scikit-learn project.`
