@@ -210,6 +210,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             # No explicit constructor to introspect
             return []
 
+        # it raises when inspecting an empty Pipeline, so we need
+        # to check that it's not empty:
         if hasattr(init, "steps") and not len(init.steps):
             return AttrsDict("")
 
