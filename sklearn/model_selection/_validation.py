@@ -1040,17 +1040,16 @@ def cross_val_predict(
     to exactly one test set, and its prediction is computed with an
     estimator fitted on the corresponding training set.
 
+    This function can be useful to visualize prediction results,
+    as shown in the example:
+    :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
+
     Passing these predictions into an evaluation metric may not be a valid
     way to measure generalization performance. Results can differ from
     :func:`cross_validate` and :func:`cross_val_score` unless all tests sets
     have equal size and the metric decomposes over samples.
 
     Read more in the :ref:`User Guide <cross_validation>`.
-
-    .. seealso::
-
-        :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`
-            Example of using cross_val_predict to visualize prediction results.
 
     Parameters
     ----------
