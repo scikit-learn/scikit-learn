@@ -95,6 +95,26 @@ longer active in the project:
 
 .. include:: maintainers_emeritus.rst
 
++-----------------------------+-----------------------------+-----------------------------+
+| Name                        | Name                        | Name                        |
+|-----------------------------|-----------------------------|-----------------------------|
+| Mathieu Blondel             | Joris Van den Bossche       | Matthieu Brucher            |
+| Lars Buitinck               | David Cournapeau            | Noel Dawe                   |
+| Vincent Dubourg             | Edouard Duchesnay           | Alexander Fabisch           |
+| Virgile Fritsch             | Satrajit Ghosh              | Angel Soler Gollonet        |
+| Chris Gorgolewski           | Jaques Grobler              | Yaroslav Halchenko          |
+| Brian Holt                  | Arnaud Joly                 | Thouis (Ray) Jones          |
+| Kyle Kastner                | Manoj Kumar                 | Robert Layton               |
+| Wei Li                      | Paolo Losi                  | Gilles Louppe               |
+| Jan Hendrik Metzen          | Vincent Michel              | Jarrod Millman              |
+| Vlad Niculae                | Alexandre Passos            | Fabian Pedregosa            |
+| Peter Prettenhofer          | Hanmin Qin                  | (Venkat) Raghav Rajagopalan |
+| Jacob Schreiber             | 杜世橋 Du Shiqiao            | Bertrand Thirion            |
+| Tom Dupré la Tour           | Jake Vanderplas             | Nelle Varoquaux             |
+| David Warde-Farley          | Ron Weiss                   | Roman Yurchak               |
++-----------------------------+-----------------------------+-----------------------------+
+
+
 Emeritus Communication Team
 ...........................
 
@@ -588,6 +608,8 @@ Donations in Kind
 The following organizations provide non-financial contributions to the
 scikit-learn project.
 
+.. raw:: markdown
+  
   +----------------+----------------------------------------------------------------------------------+
   | Company        | Contribution                                                                    |
   +================+==================================================================================+
@@ -600,6 +622,34 @@ scikit-learn project.
   | `Microsoft Azure <https://azure.microsoft.com/en-us/>`_   | CPU time on their Continuous Integration servers |
   +----------------+----------------------------------------------------------------------------------+
 
+.. raw:: html
+
+  <table cellspacing="0" cellpadding="8">
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Contribution</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="https://circleci.com/">CircleCI</a></td>
+        <td>CPU time on their Continuous Integration servers</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.anaconda.com">Anaconda Inc.</a></td>
+        <td>Storage for our staging and nightly builds</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.github.com">GitHub</a></td>
+        <td>Teams account</td>
+      </tr>
+      <tr>
+        <td><a href="https://azure.microsoft.com/en-us/">Microsoft Azure</a></td>
+        <td>CPU time on their Continuous Integration servers</td>
+      </tr>
+    </tbody>
+  </table>
 
 Coding Sprints
 --------------
@@ -653,4 +703,4 @@ scikit-learn Swag
 -----------------
 Official scikit-learn swag is available for purchase at the `NumFOCUS online store
 <https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
-A portion of the proceeds from each sale goes to support the scikit-learn project.`
+A portion of the proceeds from each sale goes to support the scikit-learn project.
