@@ -1,2 +1,2 @@
-- :class:`feature_selection.SequentialFeatureSelector` now stores the final cross-validation score of the selected feature set in a new attribute :attr:`final_cv_score_`.
+- Add attribute :attr:`final_cv_score_` to :class:`feature_selection.SequentialFeatureSelector`, which stores the final cross-validation score of the selected feature set.
   By :user:`Chris Boseakc <cboseak>`

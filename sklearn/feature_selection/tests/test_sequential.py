@@ -332,40 +332,25 @@ def test_fit_rejects_params_with_no_routing_enabled():
         sfs.fit(X, y, sample_weight=np.ones_like(y))
 
 
-def test_final_cv_score_attribute():
+@pytest.mark.parametrize("direction", ("forward", "backward"))
+def test_final_cv_score_attribute(direction):
     """Test that final_cv_score_ attribute is set after fitting."""
     X, y = make_regression(n_features=5, random_state=0)
 
-    # Test with forward selection
-    sfs_forward = SequentialFeatureSelector(
+    # Test with the specified direction
+    sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select=3,
-        direction="forward",
+        direction=direction,
         cv=2,
     )
-    sfs_forward.fit(X, y)
+    sfs.fit(X, y)
 
     # Check that the attribute exists and is a float
-    assert hasattr(sfs_forward, "final_cv_score_")
-    assert isinstance(sfs_forward.final_cv_score_, float)
-
-    # Test with backward selection
-    sfs_backward = SequentialFeatureSelector(
-        LinearRegression(),
-        n_features_to_select=3,
-        direction="backward",
-        cv=2,
-    )
-    sfs_backward.fit(X, y)
-
-    # Check that the attribute exists and is a float
-    assert hasattr(sfs_backward, "final_cv_score_")
-    assert isinstance(sfs_backward.final_cv_score_, float)
-
-    # Verify that the score is reasonable for regression (can be negative)
-    # For classification tasks, we could check that 0 <= score <= 1
+    assert hasattr(sfs, "final_cv_score_")
+    assert isinstance(sfs.final_cv_score_, float)
 
     # Verify that the score matches what we would get by manually computing it
-    X_selected = X[:, sfs_forward.get_support()]
+    X_selected = X[:, sfs.get_support()]
     manual_score = cross_val_score(LinearRegression(), X_selected, y, cv=2).mean()
-    assert abs(sfs_forward.final_cv_score_ - manual_score) < 1e-10
+    assert pytest.approx(sfs.final_cv_score_) == manual_score
