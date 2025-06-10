@@ -1047,6 +1047,11 @@ def cross_val_predict(
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. seealso::
+
+        :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`
+            Example of using cross_val_predict to visualize prediction results.
+
     Parameters
     ----------
     estimator : estimator
