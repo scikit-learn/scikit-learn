@@ -118,14 +118,14 @@ longer active in the project:
 
 .. raw:: html
 
-  <table border="1">
+  <table border="1" style="border-collapse: collapse; width: 95%;">
     <thead>
-      <tr>
-        <th>Name</th>
-        <th>Name</th>
-        <th>Name</th>
-      </tr>
-    </thead>
+    <tr>
+      <th style="width: 33%;">Name</th>
+      <th style="width: 33%;">Name</th>
+      <th style="width: 33%;">Name</th>
+    </tr>
+  </thead>
     <tbody>
     <tr><td>Mathieu Blondel</td><td>Joris Van den Bossche</td><td>Matthieu Brucher</td></tr>
     <tr><td>Lars Buitinck</td><td>David Cournapeau</td><td>Noel Dawe</td></tr>
@@ -724,7 +724,7 @@ There are several options for making donations:
   widely used by hundreds of Fortune 1000 companies to streamline and scale
   their social impact initiatives. If your company uses Benevity, you are
   able to make a donation with a company match as high as 100%. Our project
-  ID is `433725 <https://causes.benevity.org/projects/433725>`_
+  ID is `433725 <https://causes.benevity.org/projects/433725>`_.
 
 All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
 non-profit organization based in Austin, Texas, USA. The NumFOCUS board
