@@ -158,8 +158,8 @@ Bibtex entry::
     pages = {108--122},
   }
 
-Artwork
-=======
+Branding & Logos
+================
 
 High quality PNG and SVG logos are available in the `doc/logos/
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
@@ -592,19 +592,18 @@ scikit-learn project.
 
 *   - Company
     - Donation
-*   - `Microsoft Azure <https://azure.microsoft.com/en-us/>`_
-    - CPU time on their Continuous Integration servers
-    - On a stick!
 *   - `CircleCI <https://circleci.com/>`_
     - CPU time on their Continuous Integration servers
 *   - `Anaconda Inc. <https://www.anaconda.com>`_
     - Storage for our staging and nightly builds
-*   - `GitHub <https://www.anaconda.com>`_
+*   - `GitHub <https://www.github.com>`_
     - Teams account
+*   - `Microsoft Azure <https://azure.microsoft.com/en-us/>`_
+    - CPU time on their Continuous Integration servers
 :::
 
 Coding Sprints
-==============
+--------------
 
 The scikit-learn project has a long history of `open source coding sprints
 <https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
@@ -616,8 +615,9 @@ list of events.
 Donating to the project
 =======================
 
-If you are interested in donating to the project or to one of our code-sprints,
-you have several options:
+If you have found scikit-learn to be useful in your work, research, or company, 
+please consider making a donation to the project commensurate with your resources.
+There are several options for making donations:
 
 .. raw:: html
 
