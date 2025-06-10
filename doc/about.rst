@@ -97,24 +97,24 @@ longer active in the project:
 
 .. raw:: markdown
 
-+-----------------------------+-----------------------------+-----------------------------+
-| Name                        | Name                        | Name                        |
-|-----------------------------|-----------------------------|-----------------------------|
-| Mathieu Blondel             | Joris Van den Bossche       | Matthieu Brucher            |
-| Lars Buitinck               | David Cournapeau            | Noel Dawe                   |
-| Vincent Dubourg             | Edouard Duchesnay           | Alexander Fabisch           |
-| Virgile Fritsch             | Satrajit Ghosh              | Angel Soler Gollonet        |
-| Chris Gorgolewski           | Jaques Grobler              | Yaroslav Halchenko          |
-| Brian Holt                  | Arnaud Joly                 | Thouis (Ray) Jones          |
-| Kyle Kastner                | Manoj Kumar                 | Robert Layton               |
-| Wei Li                      | Paolo Losi                  | Gilles Louppe               |
-| Jan Hendrik Metzen          | Vincent Michel              | Jarrod Millman              |
-| Vlad Niculae                | Alexandre Passos            | Fabian Pedregosa            |
-| Peter Prettenhofer          | Hanmin Qin                  | (Venkat) Raghav Rajagopalan |
-| Jacob Schreiber             | 杜世橋 Du Shiqiao            | Bertrand Thirion            |
-| Tom Dupré la Tour           | Jake Vanderplas             | Nelle Varoquaux             |
-| David Warde-Farley          | Ron Weiss                   | Roman Yurchak               |
-+-----------------------------+-----------------------------+-----------------------------+
+  +-----------------------------+-----------------------------+-----------------------------+
+  | Name                        | Name                        | Name                        |
+  |-----------------------------|-----------------------------|-----------------------------|
+  | Mathieu Blondel             | Joris Van den Bossche       | Matthieu Brucher            |
+  | Lars Buitinck               | David Cournapeau            | Noel Dawe                   |
+  | Vincent Dubourg             | Edouard Duchesnay           | Alexander Fabisch           |
+  | Virgile Fritsch             | Satrajit Ghosh              | Angel Soler Gollonet        |
+  | Chris Gorgolewski           | Jaques Grobler              | Yaroslav Halchenko          |
+  | Brian Holt                  | Arnaud Joly                 | Thouis (Ray) Jones          |
+  | Kyle Kastner                | Manoj Kumar                 | Robert Layton               |
+  | Wei Li                      | Paolo Losi                  | Gilles Louppe               |
+  | Jan Hendrik Metzen          | Vincent Michel              | Jarrod Millman              |
+  | Vlad Niculae                | Alexandre Passos            | Fabian Pedregosa            |
+  | Peter Prettenhofer          | Hanmin Qin                  | (Venkat) Raghav Rajagopalan |
+  | Jacob Schreiber             | 杜世橋 Du Shiqiao            | Bertrand Thirion            |
+  | Tom Dupré la Tour           | Jake Vanderplas             | Nelle Varoquaux             |
+  | David Warde-Farley          | Ron Weiss                   | Roman Yurchak               |
+  +-----------------------------+-----------------------------+-----------------------------+
 
 
 Emeritus Communication Team
@@ -639,7 +639,7 @@ scikit-learn project.
         <td>CPU time on their Continuous Integration servers</td>
       </tr>
       <tr>
-        <td><a href="https://www.anaconda.com">Anaconda Inc.</a></td>
+        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
         <td>Storage for our staging and nightly builds</td>
       </tr>
       <tr>
@@ -697,7 +697,7 @@ There are several options for making donations:
   widely used by hundreds of Fortune 1000 companies to streamline and scale
   their social impact initiatives. If your company uses Benevity, you are
   able to make a donation with a company match as high as 100%. Our project
-  ID is `433725 <https://causes.benevity.org/projects/433725`_
+  ID is `433725 <https://causes.benevity.org/projects/433725>`_
 
 All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
 non-profit organization based in Austin, Texas, USA. The NumFOCUS board
