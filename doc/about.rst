@@ -609,7 +609,7 @@ The following organizations provide non-financial contributions to the
 scikit-learn project.
 
 .. raw:: markdown
-  
+
   +----------------+----------------------------------------------------------------------------------+
   | Company        | Contribution                                                                    |
   +================+==================================================================================+
@@ -677,6 +677,9 @@ There are several options for making donations:
     <a class="btn sk-btn-orange mb-1" href="https://github.com/sponsors/scikit-learn">
       Donate via GitHub Sponsors
     </a>
+    <a class="btn sk-btn-orange mb-1" href="https://causes.benevity.org/projects/433725">
+      Donate via Benevity
+    </a>
   </p>
 
 **Donation Options:**
@@ -687,6 +690,12 @@ There are several options for making donations:
 * **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
   <https://github.com/sponsors/scikit-learn>`_.
 
+* **Benevity**: If your company uses scikit-learn, you can also support the
+  project through Benevity, a platform to manage employee donations. It is
+  widely used by hundreds of Fortune 1000 companies to streamline and scale
+  their social impact initiatives. If your company uses Benevity, you are
+  able to make a donation with a company match as high as 100%. Our project
+  ID is `433725 <https://causes.benevity.org/projects/433725`_
 
 All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
 non-profit organization based in Austin, Texas, USA. The NumFOCUS board
