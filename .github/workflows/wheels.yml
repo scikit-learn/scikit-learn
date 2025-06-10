@@ -117,6 +117,11 @@ jobs:
             python: 313
             platform_id: manylinux_aarch64
             manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313t
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+            free_threaded_support: True
 
           # MacOS x86_64
           - os: macos-13
