@@ -118,7 +118,7 @@ longer active in the project:
 
 .. raw:: html
 
-  <table border="1" style="border-collapse: collapse; width: 95%;">
+  <table  style="border-collapse: collapse; width: 95%;">
     <thead>
     <tr>
       <th style="width: 33%;">Name</th>
