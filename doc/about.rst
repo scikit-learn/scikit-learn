@@ -588,22 +588,17 @@ Donations in Kind
 The following organizations provide non-financial contributions to the
 scikit-learn project.
 
-:::{list-table} Contributions
-:widths: 20 45
-:header-rows: 1
-
-*   - Company
-    - Donation
-*   - `CircleCI <https://circleci.com/>`_
-    - CPU time on their Continuous Integration servers
-*   - `Anaconda Inc. <https://www.anaconda.com>`_
-    - Storage for our staging and nightly builds
-*   - `GitHub <https://www.github.com>`_
-    - Teams account
-*   - `Microsoft Azure <https://azure.microsoft.com/en-us/>`_
-    - CPU time on their Continuous Integration servers
-
-:::
+  +----------------+----------------------------------------------------------------------------------+
+  | Company        | Contribution                                                                    |
+  +================+==================================================================================+
+  | `CircleCI <https://circleci.com/>`_        | CPU time on their Continuous Integration servers     |
+  +----------------+----------------------------------------------------------------------------------+
+  | `Anaconda Inc. <https://www.anaconda.com>`_ | Storage for our staging and nightly builds          |
+  +----------------+----------------------------------------------------------------------------------+
+  | `GitHub <https://www.github.com>`_ | Teams account   |
+  +----------------+----------------------------------------------------------------------------------+
+  | `Microsoft Azure <https://azure.microsoft.com/en-us/>`_   | CPU time on their Continuous Integration servers |
+  +----------------+----------------------------------------------------------------------------------+
 
 
 Coding Sprints
