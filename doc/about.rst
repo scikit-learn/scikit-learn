@@ -93,37 +93,14 @@ Emeritus Maintainers Team
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
-.. include:: maintainers_emeritus.rst
-
-.. raw:: markdown
-
-  +-----------------------------+-----------------------------+-----------------------------+
-  | Name                        | Name                        | Name                        |
-  +-----------------------------+-----------------------------+-----------------------------+
-  | Mathieu Blondel             | Joris Van den Bossche       | Matthieu Brucher            |
-  | Lars Buitinck               | David Cournapeau            | Noel Dawe                   |
-  | Vincent Dubourg             | Edouard Duchesnay           | Alexander Fabisch           |
-  | Virgile Fritsch             | Satrajit Ghosh              | Angel Soler Gollonet        |
-  | Chris Gorgolewski           | Jaques Grobler              | Yaroslav Halchenko          |
-  | Brian Holt                  | Arnaud Joly                 | Thouis (Ray) Jones          |
-  | Kyle Kastner                | Manoj Kumar                 | Robert Layton               |
-  | Wei Li                      | Paolo Losi                  | Gilles Louppe               |
-  | Jan Hendrik Metzen          | Vincent Michel              | Jarrod Millman              |
-  | Vlad Niculae                | Alexandre Passos            | Fabian Pedregosa            |
-  | Peter Prettenhofer          | Hanmin Qin                  | (Venkat) Raghav Rajagopalan |
-  | Jacob Schreiber             | 杜世橋 Du Shiqiao            | Bertrand Thirion            |
-  | Tom Dupré la Tour           | Jake Vanderplas             | Nelle Varoquaux             |
-  | David Warde-Farley          | Ron Weiss                   | Roman Yurchak               |
-  +-----------------------------+-----------------------------+-----------------------------+
-
 .. raw:: html
 
-  <table  style="border-collapse: collapse; width: 95%;">
+  <table  cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 99%;">
     <thead>
     <tr>
-      <th style="width: 33%;">Name</th>
-      <th style="width: 33%;">Name</th>
-      <th style="width: 33%;">Name</th>
+      <th style="width: 33%;"></th>
+      <th style="width: 33%;"></th>
+      <th style="width: 33%;"></th>
     </tr>
   </thead>
     <tbody>
