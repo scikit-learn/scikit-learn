@@ -19,10 +19,9 @@ from .exceptions import InconsistentVersionWarning
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._missing import is_scalar_nan
 from .utils._param_validation import validate_parameter_constraints
-from .utils._repr_html.attributes import AttrsDict
 from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from .utils._repr_html.estimator import estimator_html_repr
-from .utils._repr_html.params import ParamsDict
+from .utils._repr_html.params import AttrsDict, ParamsDict
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     ClassifierTags,
