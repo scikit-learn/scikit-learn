@@ -587,7 +587,7 @@ The following organizations provide non-financial contributions to the
 scikit-learn project.
 
 :::{list-table} Contributions
-:widths: 15 10 30
+:widths: 20 45
 :header-rows: 1
 
 *   - Company
@@ -600,7 +600,9 @@ scikit-learn project.
     - Teams account
 *   - `Microsoft Azure <https://azure.microsoft.com/en-us/>`_
     - CPU time on their Continuous Integration servers
+
 :::
+
 
 Coding Sprints
 --------------
