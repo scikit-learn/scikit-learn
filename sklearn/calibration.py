@@ -1148,7 +1148,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    beta : float
+    beta_ : float
         The optimized inverse temperature.
     """
 
@@ -1181,7 +1181,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             Returns an instance of self.
         """
         X, y = indexable(X, y)
-        self.beta = _temperature_scaling(X, y, sample_weight)
+        self.beta_ = _temperature_scaling(X, y, sample_weight)
         return self
 
     def predict(self, X):
@@ -1207,7 +1207,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
              The predicted data.
         """
         X = _convert_to_logits(X)
-        return softmax(self.beta * X)
+        return softmax(self.beta_ * X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
