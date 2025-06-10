@@ -343,28 +343,43 @@ def test_importances(dtype, name, criterion, X_type, global_random_seed):
         "feature_importances_",
         "unbiased_feature_importances_",
     ]:
-        importances = getattr(est, importance_attribute_name)
-        importances /= importances.sum()
-        # The forest estimator can detect that only the first 3 features of the
-        # dataset are informative:
-        n_important = np.sum(importances > 0.1)
-        assert importances.shape[0] == 10
-        assert n_important == 3
-        assert np.all(importances[:3] > 0.1)
+        if (
+            importance_attribute_name == "unbiased_feature_importances_"
+            and criterion not in ["gini", "squared_error", "friedman_mse"]
+        ):
+            with pytest.raises(
+                AttributeError,
+                match=r"Unbiased feature importance is only available for .*",
+            ):
+                importances = getattr(est, importance_attribute_name)
 
-        # Check with parallel
-        importances = getattr(est, importance_attribute_name)
-        est.set_params(n_jobs=2)
-        importances_parallel = getattr(est, importance_attribute_name)
-        assert_array_almost_equal(importances, importances_parallel)
+        else:
+            importances = getattr(est, importance_attribute_name)
+            importances /= importances.sum()
+            # The forest estimator can detect that only the first 3 features of the
+            # dataset are informative:
+            n_important = np.sum(importances > 0.1)
+            assert importances.shape[0] == 10
+            assert n_important == 3
+            assert np.all(importances[:3] > 0.1)
 
-        # Check with sample weights
-        importances_sw = getattr(est_sw, importance_attribute_name)
+            # Check with parallel
+            est.set_params(n_jobs=2)
+            importances_parallel = getattr(est, importance_attribute_name)
+            importances_parallel /= importances_parallel.sum()
+            assert_array_almost_equal(importances, importances_parallel)
 
-        importances_sw_05 = getattr(est_sw_05, importance_attribute_name)
-        assert np.abs(importances_sw - importances_sw_05).mean() < tolerance
-        importances_sw_100 = getattr(est_sw_100, importance_attribute_name)
-        assert np.abs(importances_sw - importances_sw_100).mean() < tolerance
+            # Check with sample weights
+            importances_sw = getattr(est_sw, importance_attribute_name)
+            importances_sw /= importances_sw.sum()
+
+            importances_sw_05 = getattr(est_sw_05, importance_attribute_name)
+            importances_sw_05 /= importances_sw_05.sum()
+            assert np.abs(importances_sw - importances_sw_05).mean() < tolerance
+
+            importances_sw_100 = getattr(est_sw_100, importance_attribute_name)
+            importances_sw_100 /= importances_sw_100.sum()
+            assert np.abs(importances_sw - importances_sw_100).mean() < tolerance
 
 
 def test_importances_asymptotic():

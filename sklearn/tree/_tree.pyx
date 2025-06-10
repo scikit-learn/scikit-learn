@@ -1395,7 +1395,7 @@ cdef class Tree:
                     if total_oob_weight[node_idx, k] > 0.0:
                         for c in range(n_classes[k]):
                             oob_node_values[node_idx, c, k] /= total_oob_weight[node_idx, k]
-                # if at leaf store the predictive proba
+                # if at leaf store the prediction
                 if self.nodes[node_idx].left_child == _TREE_LEAF and self.nodes[node_idx].right_child == _TREE_LEAF:
                     for sample_idx in range(n_samples):
                         if y_leafs[sample_idx] == node_idx:

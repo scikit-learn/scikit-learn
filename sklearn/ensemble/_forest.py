@@ -908,11 +908,14 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = accuracy_score
 
-        self.unbiased_feature_importances_, self.oob_decision_function_ = (
+        unbiased_feature_importances, self.oob_decision_function_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, sample_weight
             )
         )
+
+        if self.criterion == "gini":
+            self._unbiased_feature_importances = unbiased_feature_importances
 
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
@@ -921,6 +924,34 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
+
+    @property
+    def unbiased_feature_importances_(self):
+        """
+        An unbiased impurity-based feature importance measure.
+
+        The higher, the more important the feature.
+
+        Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
+        "Unbiased Measurement of Feature Importance in Tree-Based Methods".
+
+        It is only available if the chosen split criterion is `gini` in classification
+        and `squared_error` or `friedman_mse` in regression.
+
+        Returns
+        -------
+        unbiased_feature_importances_ : ndarray of shape (n_features,)
+            Contrary to `feature_importances_`, the values of this array do not sum to 1
+            . If all trees are single node trees consisting of only the root node,
+            it will be an array of zeros. If you want them to sum to 1, please divide by
+            `unbiased_feature_importances_.sum()`.
+        """
+        if self.criterion != "gini":
+            raise AttributeError(
+                "Unbiased feature importance is only available for the gini"
+                " impurity criterion in classification."
+            )
+        return self._unbiased_feature_importances
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -1225,11 +1256,14 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = r2_score
 
-        self.unbiased_feature_importances_, self.oob_prediction_ = (
+        unbiased_feature_importances, self.oob_prediction_ = (
             self._compute_unbiased_feature_importance_and_oob_predictions(
                 X, y, sample_weight
             )
         )
+
+        if self.criterion in ["squared_error", "friedman_mse"]:
+            self._unbiased_feature_importances = unbiased_feature_importances
 
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
@@ -1239,6 +1273,34 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         self.oob_prediction_ = self.oob_prediction_.squeeze(axis=1)
 
         self.oob_score_ = scoring_function(y, self.oob_prediction_)
+
+    @property
+    def unbiased_feature_importances_(self):
+        """
+        An unbiased impurity-based feature importance measure.
+
+        The higher, the more important the feature.
+
+        Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
+        "Unbiased Measurement of Feature Importance in Tree-Based Methods".
+
+        It is only available if the chosen split criterion is `gini` in classification
+        and `squared_error` or `friedman_mse` in regression.
+
+        Returns
+        -------
+        unbiased_feature_importances_ : ndarray of shape (n_features,)
+            Contrary to `feature_importances_`, the values of this array do not sum to 1
+            . If all trees are single node trees consisting of only the root node,
+            it will be an array of zeros. If you want them to sum to 1, please divide by
+            `unbiased_feature_importances_.sum()`.
+        """
+        if self.criterion not in ["squared_error", "friedman_mse"]:
+            raise AttributeError(
+                "Unbiased feature importance is only available for the `squared_error`"
+                " and `friedman_mse` impurity criteria in regression."
+            )
+        return self._unbiased_feature_importances
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
