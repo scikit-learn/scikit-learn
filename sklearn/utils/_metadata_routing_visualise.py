@@ -115,11 +115,6 @@ def visualise_routing(routing_info, show_method_mappings=False, show_all_metadat
         Whether to show all possible metadata parameters with status indicators,
         or only the parameters that are explicitly requested.
     """
-    visualise_tree(routing_info, show_method_mappings, show_all_metadata)
-
-
-def visualise_tree(routing_info, show_method_mappings=False, show_all_metadata=True):
-    """Show a consolidated tree view with parameters annotated inline."""
     print("\n=== METADATA ROUTING TREE ===")
 
     # Get all routing information
@@ -128,7 +123,7 @@ def visualise_tree(routing_info, show_method_mappings=False, show_all_metadata=T
     )
 
     # Display tree structure without duplicate root entry
-    _display_tree_new(
+    _display_tree(
         routing_info,
         routing_map,
         prefix="",
@@ -448,7 +443,7 @@ def _get_user_facing_params(routing_map):
     return user_params
 
 
-def _display_tree_new(
+def _display_tree(
     router,
     routing_map,
     prefix="",
@@ -537,7 +532,7 @@ def _display_tree_new(
             full_path = f"{current_path}/{mapping.router.owner}"
 
             # Display child with step name
-            _display_tree_new(
+            _display_tree(
                 mapping.router,
                 routing_map,
                 new_prefix,
@@ -757,4 +752,4 @@ search_cv = RandomizedSearchCV(
 # Get the routing information
 test = get_routing_for_object(search_cv)
 
-visualise_routing(test, show_method_mappings=False, show_all_metadata=True)
+visualise_routing(test, show_method_mappings=True, show_all_metadata=True)
