@@ -222,7 +222,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             if not name.startswith("_") and name.endswith("_")
         }
         arrays_attr = {
-            name: (type(value).__name__, value.shape)
+            name: f"{type(value).__name__} of shape {value.shape}, dtype={value.dtype}"
             for name, value in fitted_attributes.items()
             if _is_arraylike_not_scalar(value) and hasattr(value, "shape")
         }
@@ -230,6 +230,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             key: type(value).__name__ for key, value in fitted_attributes.items()
         }
         out = fitted_attributes | arrays_attr
+
         return AttrsDict(out)
 
     @classmethod
