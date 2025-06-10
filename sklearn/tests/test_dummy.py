@@ -715,7 +715,8 @@ def test_dtype_of_classifier_probas(strategy):
     assert probas.dtype == np.float64
 
 
-def test_uniform_proba_strategy(global_random_seed):
+def test_uniform_proba_strategy(global_random_seed) -> None:
+    """Basic checks on uniform probability distributions in the dummy classifier."""
     X = [[0]] * 5  # ignored
     y = [1, 2, 1, 1, 2]
     clf = DummyClassifier(strategy="uniform-proba", random_state=global_random_seed)
