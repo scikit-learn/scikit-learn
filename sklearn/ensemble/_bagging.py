@@ -465,11 +465,26 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_samples
         if max_samples is None:
             max_samples = self.max_samples
-        elif not isinstance(max_samples, numbers.Integral):
-            max_samples = int(max_samples * X.shape[0])
 
-        if max_samples > X.shape[0]:
-            raise ValueError("max_samples must be <= n_samples")
+        if not isinstance(max_samples, numbers.Integral):
+            if sample_weight is None:
+                max_samples = max(int(max_samples * X.shape[0]), 1)
+            else:
+                sw_sum = np.sum(sample_weight)
+                if sw_sum <= 1:
+                    raise ValueError(
+                        f"The total sum of sample weights is {sw_sum}, which prevents "
+                        "resampling with a fractional value for max_samples="
+                        f"{max_samples}. Either pass max_samples as an integer or "
+                        "use a larger sample_weight."
+                    )
+                max_samples = max(int(max_samples * sw_sum), 1)
+
+        if not self.bootstrap and max_samples > X.shape[0]:
+            raise ValueError(
+                f"Effective max_samples={max_samples} must be <= n_samples="
+                f"{X.shape[0]} to be able to sample without replacement."
+            )
 
         # Store validated integer row sampling value
         self._max_samples = max_samples
@@ -722,7 +737,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         replacement by default, see `bootstrap` for more details).
 
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (

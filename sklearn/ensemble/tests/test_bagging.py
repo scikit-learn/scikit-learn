@@ -5,6 +5,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import re
 from itertools import cycle, product
 
 import joblib
@@ -696,6 +697,37 @@ def test_warning_bootstrap_sample_weight():
         reg.fit(X, y, sample_weight=sample_weight)
 
 
+def test_invalid_sample_weight_max_samples_bootstrap_combinations():
+    X, y = iris.data, iris.target
+
+    # Case 1: small weights and fractional max_samples would lead to sampling
+    # less than 1 sample, which is not allowed.
+    clf = BaggingClassifier(max_samples=1.0)
+    sample_weight = np.ones_like(y) / (2 * len(y))
+    expected_msg = (
+        r"The total sum of sample weights is 0.5(\d*), which prevents resampling with "
+        r"a fractional value for max_samples=1\.0\. Either pass max_samples as an "
+        r"integer or use a larger sample_weight\."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        clf.fit(X, y, sample_weight=sample_weight)
+
+    # Case 2: large weights and bootstrap=False would lead to sampling without
+    # replacement more than the number of samples, which is not allowed.
+    clf = BaggingClassifier(bootstrap=False, max_samples=1.0)
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = 2
+    expected_msg = re.escape(
+        "max_samples=151 must be <= n_samples=150 to be able to sample without "
+        "replacement."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        with pytest.warns(
+            UserWarning, match="When fitting BaggingClassifier with sample_weight"
+        ):
+            clf.fit(X, y, sample_weight=sample_weight)
+
+
 class EstimatorAcceptingSampleWeight(BaseEstimator):
     """Fake estimator accepting sample_weight"""
 
@@ -724,8 +756,9 @@ class EstimatorRejectingSampleWeight(BaseEstimator):
 @pytest.mark.parametrize("bagging_class", [BaggingRegressor, BaggingClassifier])
 @pytest.mark.parametrize("accept_sample_weight", [False, True])
 @pytest.mark.parametrize("metadata_routing", [False, True])
+@pytest.mark.parametrize("max_samples", [10, 0.8])
 def test_draw_indices_using_sample_weight(
-    bagging_class, accept_sample_weight, metadata_routing
+    bagging_class, accept_sample_weight, metadata_routing, max_samples
 ):
     X = np.arange(100).reshape(-1, 1)
     y = np.repeat([0, 1], 50)
@@ -739,7 +772,15 @@ def test_draw_indices_using_sample_weight(
         base_estimator = EstimatorRejectingSampleWeight()
 
     n_samples, n_features = X.shape
-    max_samples = 10
+
+    if isinstance(max_samples, float):
+        # max_samples passed as a fraction of the input data. Since
+        # sample_weight are provided, the effective number of samples is the
+        # sum of the sample weights.
+        expected_integer_max_samples = int(max_samples * sample_weight.sum())
+    else:
+        expected_integer_max_samples = max_samples
+
     with config_context(enable_metadata_routing=metadata_routing):
         # TODO(slep006): remove block when default routing is implemented
         if metadata_routing and accept_sample_weight:
@@ -748,7 +789,7 @@ def test_draw_indices_using_sample_weight(
         bagging.fit(X, y, sample_weight=sample_weight)
         for estimator, samples in zip(bagging.estimators_, bagging.estimators_samples_):
             counts = np.bincount(samples, minlength=n_samples)
-            assert sum(counts) == len(samples) == max_samples
+            assert sum(counts) == len(samples) == expected_integer_max_samples
             # only indices 4 and 5 should appear
             assert np.isin(samples, [4, 5]).all()
             if accept_sample_weight:
@@ -760,8 +801,8 @@ def test_draw_indices_using_sample_weight(
                 assert_allclose(estimator.sample_weight_, counts)
             else:
                 # sampled indices represented through indexing
-                assert estimator.X_.shape == (max_samples, n_features)
-                assert estimator.y_.shape == (max_samples,)
+                assert estimator.X_.shape == (expected_integer_max_samples, n_features)
+                assert estimator.y_.shape == (expected_integer_max_samples,)
                 assert_allclose(estimator.X_, X[samples])
                 assert_allclose(estimator.y_, y[samples])
 
