@@ -32,10 +32,10 @@ The decision making process and governance structure of scikit-learn, like roles
 The people behind scikit-learn
 ==============================
 
-Scikit-learn is a community project, developed by a large group of
+scikit-learn is a community project, developed by a large group of
 people, all across the world. A few core contributor teams, listed below, have
 central roles, however a more complete list of contributors can be found `on
-github
+GitHub
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
 
 Active Core Contributors
@@ -99,7 +99,7 @@ longer active in the project:
 
   +-----------------------------+-----------------------------+-----------------------------+
   | Name                        | Name                        | Name                        |
-  |-----------------------------|-----------------------------|-----------------------------|
+  +-----------------------------+-----------------------------+-----------------------------+
   | Mathieu Blondel             | Joris Van den Bossche       | Matthieu Brucher            |
   | Lars Buitinck               | David Cournapeau            | Noel Dawe                   |
   | Vincent Dubourg             | Edouard Duchesnay           | Alexander Fabisch           |
@@ -115,6 +115,34 @@ longer active in the project:
   | Tom Dupré la Tour           | Jake Vanderplas             | Nelle Varoquaux             |
   | David Warde-Farley          | Ron Weiss                   | Roman Yurchak               |
   +-----------------------------+-----------------------------+-----------------------------+
+
+.. raw:: html
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Name</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody>
+    <tr><td>Mathieu Blondel</td><td>Joris Van den Bossche</td><td>Matthieu Brucher</td></tr>
+    <tr><td>Lars Buitinck</td><td>David Cournapeau</td><td>Noel Dawe</td></tr>
+    <tr><td>Vincent Dubourg</td><td>Edouard Duchesnay</td><td>Alexander Fabisch</td></tr>
+    <tr><td>Virgile Fritsch</td><td>Satrajit Ghosh</td><td>Angel Soler Gollonet</td></tr>
+    <tr><td>Chris Gorgolewski</td><td>Jaques Grobler</td><td>Yaroslav Halchenko</td></tr>
+    <tr><td>Brian Holt</td><td>Arnaud Joly</td><td>Thouis (Ray) Jones</td></tr>
+    <tr><td>Kyle Kastner</td><td>Manoj Kumar</td><td>Robert Layton</td></tr>
+    <tr><td>Wei Li</td><td>Paolo Losi</td><td>Gilles Louppe</td></tr>
+    <tr><td>Jan Hendrik Metzen</td><td>Vincent Michel</td><td>Jarrod Millman</td></tr>
+    <tr><td>Vlad Niculae</td><td>Alexandre Passos</td><td>Fabian Pedregosa</td></tr>
+    <tr><td>Peter Prettenhofer</td><td>Hanmin Qin</td><td>(Venkat) Raghav Rajagopalan</td></tr>
+    <tr><td>Jacob Schreiber</td><td>杜世橋 Du Shiqiao</td><td>Bertrand Thirion</td></tr>
+    <tr><td>Tom Dupré la Tour</td><td>Jake Vanderplas</td><td>Nelle Varoquaux</td></tr>
+    <tr><td>David Warde-Farley</td><td>Ron Weiss</td><td>Roman Yurchak</td></tr>
+    </tbody>
+  </table>
 
 
 Emeritus Communication Team
@@ -183,11 +211,10 @@ Bibtex entry::
 Branding & Logos
 ================
 
-High quality PNG and SVG logos are available in the `doc/logos/
+High quality PNG and SVG logos are available in the `doc/logos
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
-source directory. There is also a 
-`branding guide <https://github.com/scikit-learn/blog?tab=readme-ov-file#brand-standards>`_
-with the color palette.
+source directory. The color palette is available in the
+`Branding Guide <https://github.com/scikit-learn/blog?tab=readme-ov-file#brand-standards>`_.
 
 .. image:: images/scikit-learn-logo-notext.png
   :align: center
@@ -615,11 +642,11 @@ scikit-learn project.
   +----------------+----------------------------------------------------------------------------------+
   | Company        | Contribution                                                                    |
   +================+==================================================================================+
-  | `CircleCI <https://circleci.com/>`_        | CPU time on their Continuous Integration servers     |
-  +----------------+----------------------------------------------------------------------------------+
   | `Anaconda Inc. <https://www.anaconda.com>`_ | Storage for our staging and nightly builds          |
   +----------------+----------------------------------------------------------------------------------+
-  | `GitHub <https://www.github.com>`_ | Teams account   |
+  | `CircleCI <https://circleci.com/>`_        | CPU time on their Continuous Integration servers     |
+  +----------------+----------------------------------------------------------------------------------+
+  | `GitHub <https://www.github.com>`_          | Teams account                                       |
   +----------------+----------------------------------------------------------------------------------+
   | `Microsoft Azure <https://azure.microsoft.com/en-us/>`_   | CPU time on their Continuous Integration servers |
   +----------------+----------------------------------------------------------------------------------+
@@ -634,13 +661,13 @@ scikit-learn project.
       </tr>
     </thead>
     <tbody>
+          <tr>
+        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
+        <td>Storage for our staging and nightly builds</td>
+      </tr>
       <tr>
         <td><a href="https://circleci.com/">CircleCI</a></td>
         <td>CPU time on their Continuous Integration servers</td>
-      </tr>
-      <tr>
-        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
-        <td>Storage for our staging and nightly builds</td>
       </tr>
       <tr>
         <td><a href="https://www.github.com">GitHub</a></td>
