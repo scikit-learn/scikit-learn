@@ -28,7 +28,7 @@ It stores which metadata is required by each method of the consumer by including
 
 Users and developers almost never need to directly add a new ``MethodMetadataRequest``,
 to the consumer's `_metadata_request` attribute, since these are generated
-automatically. This attribute is created while running `set_{method}_request` methods
+automatically. This attribute is modified while running `set_{method}_request` methods
 (such as `set_fit_request()`), which adds the request via
 `method_metadata_request.add_request(param=prop, alias=alias)`.
 
@@ -301,7 +301,7 @@ def request_is_valid(item):
 
 
 class MethodMetadataRequest:
-    """Container for metadata routing rules associated with a single method.
+    """Container for metadata requests associated with a single method.
 
     Refer to :class:`MetadataRequest` for how this class is used.
 
@@ -493,7 +493,7 @@ class MethodMetadataRequest:
         return res
 
     def _consumes(self, params):
-        """Check whether the given metadata is consumed by this method.
+        """Check whether the given metadata are consumed by this method.
 
         Parameters
         ----------
@@ -563,7 +563,7 @@ class MetadataRequest:
             )
 
     def consumes(self, method, params):
-        """Check whether the given metadata is consumed by the given method.
+        """Check whether the given metadata are consumed by the given method.
 
         .. versionadded:: 1.4
 
