@@ -10,6 +10,7 @@ import platform
 import re
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -209,8 +210,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             # No explicit constructor to introspect
             return []
 
-        # it raises when inspecting an empty Pipeline, so we need
-        # to check that it's not empty:
+        # It raises when inspecting an empty Pipeline. So we need
+        # to check that a Pipeline is not empty.
         if hasattr(init, "steps") and not len(init.steps):
             return AttrsDict("")
 
@@ -221,15 +222,25 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             for name, value in attributes
             if not name.startswith("_") and name.endswith("_")
         }
+
+        cleaned_fitted_attr = {
+            name: "None"
+            if value is None
+            else f"{type(value).__name__} of lenght {len(value)}"
+            for name, value in fitted_attributes.items()
+            if value is None or isinstance(value, Sequence)
+        }
+
         arrays_attr = {
             name: f"{type(value).__name__} of shape {value.shape}, dtype={value.dtype}"
             for name, value in fitted_attributes.items()
             if _is_arraylike_not_scalar(value) and hasattr(value, "shape")
         }
+
         fitted_attributes = {
             key: type(value).__name__ for key, value in fitted_attributes.items()
         }
-        out = fitted_attributes | arrays_attr
+        out = fitted_attributes | cleaned_fitted_attr | arrays_attr
 
         return AttrsDict(out)
 
