@@ -194,6 +194,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 "examples/svm/plot_rbf_parameters.py"=["CPY001"]
 # __all__ has un-imported names
 "sklearn/__init__.py"=["F822"]
+"sklearn/utils/_metadata_requests.py"=["CPY001"]
 
 [tool.mypy]
 ignore_missing_imports = true
