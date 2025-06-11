@@ -67,6 +67,7 @@ from sklearn.utils._metadata_requests import (
     WARN,
     MetadataRequest,
     MetadataRouter,
+    request_is_alias,
 )
 
 
@@ -239,12 +240,19 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
     def _record_status(current_path: str, param: str, method: str, alias):
         """Populate *info* dictionaries in a single place."""
 
+        # Record the raw status so we can later derive visual indicators.
         info[current_path]["statuses"][param][method] = alias
 
-        if alias not in (False, WARN, None, UNUSED):
+        # Only count the method as *requesting* the parameter when the status
+        # truly indicates a request (True) or a *user* alias. Special markers
+        # such as WARN/UNUSED (*do not* constitute a request) and must be
+        # skipped, otherwise they would incorrectly show up as "requested".
+        if alias is True or request_is_alias(alias):
             info[current_path]["methods"][param].add(method)
 
-        if isinstance(alias, str) and alias != param:
+        # Maintain the mapping {component_param -> user_alias}. Again, ignore
+        # special placeholders such as WARN/UNUSED which are *not* aliases.
+        if request_is_alias(alias) and alias != param:
             info[current_path]["aliases"][param] = alias
 
     # ---------------------------------------
@@ -368,9 +376,9 @@ def _format_param_with_status(
     # Collect the status mapping once for convenience
     param_statuses = statuses.get(param, {})
 
-    alias_methods = {m: s for m, s in param_statuses.items() if isinstance(s, str)}
+    alias_methods = {m: s for m, s in param_statuses.items() if request_is_alias(s)}
     non_alias_methods = {
-        m: s for m, s in param_statuses.items() if not isinstance(s, str)
+        m: s for m, s in param_statuses.items() if not request_is_alias(s)
     }
 
     parts = []
