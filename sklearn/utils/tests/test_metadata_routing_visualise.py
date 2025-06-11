@@ -25,6 +25,7 @@ from sklearn.metrics import get_scorer
 from sklearn.model_selection import GroupKFold, RandomizedSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.utils._metadata_requests import WARN
 from sklearn.utils._metadata_routing_visualise import (
     _collect_routing_info,
     visualise_routing,
@@ -206,6 +207,7 @@ def run_test_2():
         make_pipeline(StandardScaler().set_fit_request(sample_weight=True)),
         make_pipeline(StandardScaler().set_fit_request(sample_weight=False)),
         make_pipeline(StandardScaler()),
+        make_pipeline(StandardScaler().set_fit_request(sample_weight=WARN)),
     )
 
     visualise_routing(get_routing_for_object(est), show_all_metadata=True)
