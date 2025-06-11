@@ -11,7 +11,8 @@ the objects implemented in this file.
 
 The routing is coordinated by building ``MetadataRequest`` objects
 for objects that consume metadata, and ``MetadataRouter`` objects for objects that
-can route metadata, which are then aligned during a call to `process_routing()`."
+can route metadata, which are then aligned during a call to `process_routing()`. The
+actual metadata values are held out until this point.
 
 The ``MetadataRequest`` and ``MetadataRouter`` objects are constructed via a
 ``get_metadata_routing`` method, which all scikit-learn estimators provide.
@@ -58,8 +59,8 @@ Conceptually, this information looks like:
 }
 ```
 
-The ``MetadataRouter`` object is created anew whenever a router calls a method from a
-sub-estimator.
+The `MetadataRouter` objects are never stored and are always recreated anew whenever
+the object's `get_metadata_routing` method is called.
 
 An object that is both a router and a consumer, e.g. a meta-estimator which
 consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
@@ -256,15 +257,15 @@ VALID_REQUEST_VALUES = [False, True, None, UNUSED, WARN]
 
 
 def request_is_alias(item):
-    """Check if a name is a valid string alias.
+    """Check if an item is a valid string alias for a metadata.
 
     Values in ``VALID_REQUEST_VALUES`` are not considered aliases in this
     context. Only a string which is a valid identifier is.
 
     Parameters
     ----------
-    item : str
-        The given name to be checked if it can be an alias for the metadata.
+    item : object
+        The given item to be checked if it can be an alias for the metadata.
 
     Returns
     -------
@@ -303,7 +304,8 @@ def request_is_valid(item):
 class MethodMetadataRequest:
     """Container for metadata requests associated with a single method.
 
-    Refer to :class:`MetadataRequest` for how this class is used.
+    Instances of this class get used within a :class:`MetadataRequest` - one per each
+    public method (`fit`, `transform`, ...) that its owning consumer has.
 
     .. versionadded:: 1.3
 
