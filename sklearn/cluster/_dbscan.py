@@ -10,7 +10,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-
+import gc
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
@@ -443,6 +443,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         else:
             # no core samples
             self.components_ = np.empty((0, X.shape[1]))
+        # Clean up large temporary objects to free memory after fit
+        # These are not needed after clustering and may consume significant memory
+        del neighborhoods
+        del neighbors_model
+        gc.collect()
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
