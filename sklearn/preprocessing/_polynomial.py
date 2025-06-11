@@ -643,7 +643,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Specifies the way missing values are handled.
 
         - 'error' : Raise an error if `np.nan` values are present during :meth:`fit`.
-        - 'zeros' : Encode missing values as splines with value `0`.
+        - 'zeros' : Encode splines of missing values with values `0`.
+
+        Note that `handle_missing='zeros'` differs from first imputing missing values
+        with zeros and then creating the spline basis. The latter makes an assumption
+        about the data, whereas this option simply neutralizes the influence of missing
+        values without imputing them.
 
         .. versionadded:: 1.8
 
@@ -1137,6 +1142,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         (feature_idx * n_splines) : ((feature_idx + 1) * n_splines),
                     ] = spl(X[inside_range_mask, feature_idx])
 
+            # Note for extrapolation:
+            # 'continue' is already returned as is by scipy BSplines
             if self.extrapolation == "error":
                 has_nan_output_values = False
                 if use_sparse:
