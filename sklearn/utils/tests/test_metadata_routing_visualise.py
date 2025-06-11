@@ -213,5 +213,5 @@ def run_test_2():
 if __name__ == "__main__":
     # Enable metadata routing
     set_config(enable_metadata_routing=True)
-    # run_test_1()
+    run_test_1()
     run_test_2()

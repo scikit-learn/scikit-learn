@@ -139,8 +139,9 @@ def visualise_routing(routing_info):
 
             for cat, glyph in _CATEGORY_ORDER:
                 if cat in cats:
-                    paths = ", ".join(cats[cat])
-                    print(f"    • {glyph} {cat}: {paths}")
+                    print(f"    • {glyph} {cat}:")
+                    for p in cats[cat]:
+                        print(f"        - {p}")
 
     else:
         print("\nNo parameter summary.")
