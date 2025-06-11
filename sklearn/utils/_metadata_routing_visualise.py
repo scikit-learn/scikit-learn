@@ -9,10 +9,8 @@ unit-tests to print human-readable ASCII diagrams that explain how
 Overview of sections
 --------------------
 1.  **Public entry-points**
-    • ``visualise_routing`` – convenience wrapper that currently defaults to a
-      tree view but could dispatch to other formats in the future.
-    • ``visualise_tree`` – prints a hierarchical tree with parameters annotated
-      inline (the view most users care about).
+    • ``visualise_routing`` – prints a hierarchical tree with parameters
+      annotated inline (the primary public helper).
 
 2.  **Core data gathering**
     ``_collect_routing_info`` walks a (potentially nested) structure of
