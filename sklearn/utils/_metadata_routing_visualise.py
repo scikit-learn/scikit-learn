@@ -82,8 +82,6 @@ def visualise_routing(routing_info):
     print("\n=== METADATA ROUTING TREE ===")
 
     # Get all routing information
-    show_all_metadata = True  # always collect full information
-
     routing_map = _collect_routing_info(routing_info)
 
     # Display tree structure without duplicate root entry
@@ -123,6 +121,29 @@ def visualise_routing(routing_info):
                 print(f"  • {param} → {', '.join(consumers)}")
     else:
         print("\nNo parameters are being routed.")
+
+    # Print parameter summary
+    summary = _summarise_params(routing_map)
+    if summary:
+        print("\nParameter summary:")
+
+        glyph_for = dict(_CATEGORY_ORDER)
+
+        for param in sorted(summary):
+            cats = summary[param]
+
+            # Choose leading glyph based on first category present in order.
+            leading_glyph = next(glyph for cat, glyph in _CATEGORY_ORDER if cat in cats)
+
+            print(f"{leading_glyph} {param}")
+
+            for cat, glyph in _CATEGORY_ORDER:
+                if cat in cats:
+                    paths = ", ".join(cats[cat])
+                    print(f"    • {glyph} {cat}: {paths}")
+
+    else:
+        print("\nNo parameter summary.")
 
 
 # ============================================================================
@@ -490,3 +511,51 @@ def _display_tree(
                 f"{current_path}/{name}",  # parent_path for child
                 root=False,
             )
+
+
+_CATEGORY_ORDER = [
+    ("requested", "✓"),
+    ("ignored", "✗"),
+    ("warns", "⚠"),
+    ("errors", "⛔"),
+    ("unused", "⊘"),
+]
+
+
+def _summarise_params(routing_map):
+    """Aggregate parameter statuses across the whole tree.
+
+    Returns
+    -------
+    dict
+        { user_param -> {category -> [path.method, ...]} }
+    """
+    summary = {}
+
+    for path, info in routing_map.items():
+        for comp_param in info["params"]:
+            statuses = info["statuses"].get(comp_param, {})
+
+            for method, status in statuses.items():
+                # Determine user-facing name
+                user_param = status if isinstance(status, str) else comp_param
+
+                # Classify category
+                if status is True or isinstance(status, str):
+                    cat = "requested"
+                elif status is False:
+                    cat = "ignored"
+                elif status == WARN:
+                    cat = "warns"
+                elif status is None:
+                    cat = "errors"
+                elif status == UNUSED:
+                    cat = "unused"
+                else:
+                    continue
+
+                summary.setdefault(user_param, {}).setdefault(cat, []).append(
+                    f"{path}.{method}"
+                )
+
+    return summary
