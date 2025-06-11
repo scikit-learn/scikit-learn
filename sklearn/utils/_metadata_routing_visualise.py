@@ -129,11 +129,27 @@ def visualise_routing(routing_info):
 
         glyph_for = dict(_CATEGORY_ORDER)
 
+        LEADING_PRIORITY = [
+            "errors",  # any ⛔ overrides everything
+            "warns",  # any ⚠ but no errors
+            "ignored",  # only ignored cases
+            "requested",  # all requested (no other categories)
+        ]
+
         for param in sorted(summary):
             cats = summary[param]
 
-            # Choose leading glyph based on first category present in order.
-            leading_glyph = next(glyph for cat, glyph in _CATEGORY_ORDER if cat in cats)
+            # Determine leading glyph according to precedence rules.
+            if "errors" in cats:
+                leading_glyph = glyph_for["errors"]
+            elif "warns" in cats:
+                leading_glyph = glyph_for["warns"]
+            elif set(cats.keys()) == {"ignored"}:
+                leading_glyph = glyph_for["ignored"]
+            else:
+                # Default to requested ✓ when no error/warn and at least one
+                # request (could be mixed with ignored).
+                leading_glyph = glyph_for["requested"]
 
             print(f"{leading_glyph} {param}")
 
