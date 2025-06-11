@@ -1164,8 +1164,7 @@ def cross_val_predict(
 
     For a detailed example of using ``cross_val_predict`` to visualize
     prediction errors, please see
-    :ref:`plot_cv_predict example
-        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`.
+    :ref:`this example <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`.
 
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
