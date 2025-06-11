@@ -60,7 +60,6 @@ Conventions & design notes
 
 from collections import defaultdict
 
-from sklearn import set_config
 from sklearn.utils._metadata_requests import (
     COMPOSITE_METHODS,
     SIMPLE_METHODS,
@@ -69,25 +68,6 @@ from sklearn.utils._metadata_requests import (
     MetadataRequest,
     MetadataRouter,
 )
-
-# Enable metadata routing
-set_config(enable_metadata_routing=True)
-
-
-def _param_names(router):
-    res = set()
-    for method in SIMPLE_METHODS:
-        res = res.union(
-            router._get_param_names(
-                method=method, return_alias=False, ignore_self_request=False
-            )
-        )
-    return res
-
-
-# ============================================================================
-# NEW VISUALIZATION FUNCTIONS
-# ============================================================================
 
 
 def visualise_routing(routing_info, *, show_all_metadata=True):
