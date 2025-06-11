@@ -71,24 +71,20 @@ from sklearn.utils._metadata_requests import (
 )
 
 
-def visualise_routing(routing_info, *, show_all_metadata=True):
+def visualise_routing(routing_info):
     """
     Visualize metadata routing information.
 
-    Parameters
-    ----------
-    routing_info : MetadataRouter or MetadataRequest
-        The routing information to visualize
-    show_all_metadata : bool, default=True
-        Whether to show all possible metadata parameters with status indicators,
-        or only the parameters that are explicitly requested.
+    This diagnostic always displays *all* possible metadata parameters with
+    their status indicators. The previous ``show_all_metadata`` toggle has been
+    removed – comprehensive output is now the default (and only) mode.
     """
     print("\n=== METADATA ROUTING TREE ===")
 
     # Get all routing information
-    routing_map = _collect_routing_info(
-        routing_info, show_all_metadata=show_all_metadata
-    )
+    show_all_metadata = True  # always collect full information
+
+    routing_map = _collect_routing_info(routing_info)
 
     # Display tree structure without duplicate root entry
     _display_tree(
@@ -96,7 +92,6 @@ def visualise_routing(routing_info, *, show_all_metadata=True):
         routing_map,
         prefix="",
         is_last=True,
-        show_all_metadata=show_all_metadata,
         parent_path="",
         root=True,
     )
@@ -196,7 +191,7 @@ def _compute_reachable_methods(router):
     return reachable
 
 
-def _collect_routing_info(router, top_router=None, show_all_metadata=True):
+def _collect_routing_info(router, top_router=None):
     """Return a *rich* mapping describing every parameter/method/alias path.
 
     The returned ``defaultdict`` has *paths* ( ``"Pipeline/StandardScaler"``)
@@ -277,24 +272,10 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
             info[current_path]["existing_methods"].add(method)
             method_req = getattr(obj, method)
 
-            # When displaying *all* possible metadata, we should only include the
-            # parameters that *this specific method* can handle, not the union of
-            # parameters across every method. Otherwise, parameters that are
-            # completely irrelevant to the current method (e.g. ``sample_weight``
-            # for ``transform`` on ``StandardScaler``) would incorrectly appear in
-            # the output as "not requested" (✗).  Selecting the parameter names
-            # on a per-method basis avoids this confusion.
-            if show_all_metadata:
-                # Use the *method's* own request dictionary.  This includes
-                # every parameter appearing in the method signature (default
-                # value ``None``) as well as those explicitly set to ``True``/
-                # ``False``/aliases.  Crucially, it does *not* include params
-                # that belong solely to other methods, so it avoids false
-                # positives like ``sample_weight`` for
-                # ``StandardScaler.transform``.
-                param_source = method_req.requests.keys()
-            else:
-                param_source = method_req.requests.keys()
+            # Consider only the parameters that *this specific method* can
+            # handle so that unrelated parameters for other methods never show
+            # up as "not requested" here.
+            param_source = method_req.requests.keys()
 
             for param in param_source:
                 info[current_path]["params"].add(param)
@@ -357,9 +338,7 @@ def _get_status_indicator(alias):
         return "?"  # unknown status
 
 
-def _format_param_with_status(
-    param, methods, statuses, aliases, show_all_metadata=True
-):
+def _format_param_with_status(param, methods, statuses, aliases):
     """Format a parameter with its status indicators and methods."""
     if param in aliases:
         alias = aliases[param]
@@ -386,16 +365,10 @@ def _format_param_with_status(
     # Helper to build the method part respecting the `show_all_metadata` flag.
     def _build_method_part(method_map):
         method_parts = []
-        if show_all_metadata:
-            # Show all methods but only include indicators for those present in
-            # the supplied map.
-            for method in SIMPLE_METHODS:
-                if method in method_map:
-                    status = method_map[method]
-                    indicator = _get_status_indicator(status)
-                    method_parts.append(f"{method}{indicator}")
-        else:
-            for method, status in method_map.items():
+        # Always in full-metadata mode now.
+        for method in SIMPLE_METHODS:
+            if method in method_map:
+                status = method_map[method]
                 indicator = _get_status_indicator(status)
                 method_parts.append(f"{method}{indicator}")
         return method_parts
@@ -411,7 +384,7 @@ def _format_param_with_status(
             parts.append(alias_display)
 
     # 2. Non-alias part
-    if non_alias_methods or (show_all_metadata and not alias_methods):
+    if non_alias_methods or (not alias_methods):
         method_parts = _build_method_part(non_alias_methods)
         if method_parts:
             parts.append(f"{param}[{','.join(method_parts)}]")
@@ -444,7 +417,6 @@ def _display_tree(
     routing_map,
     prefix="",
     is_last=True,
-    show_all_metadata=True,
     step_name=None,
     parent_path="",
     root=False,
@@ -482,7 +454,6 @@ def _display_tree(
                 node_info["methods"][param],
                 node_info["statuses"],
                 node_info.get("aliases", {}),
-                show_all_metadata=show_all_metadata,
             )
             param_strs.append(param_str)
 
@@ -515,7 +486,6 @@ def _display_tree(
                 routing_map,
                 new_prefix,
                 is_last_child,
-                show_all_metadata,
                 name,
                 f"{current_path}/{name}",  # parent_path for child
                 root=False,

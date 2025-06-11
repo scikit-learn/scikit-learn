@@ -90,17 +90,14 @@ def test_collect_routing_info_show_all_metadata_flag():
     scaler = StandardScaler().set_fit_request(sample_weight=True)
     routing = get_routing_for_object(scaler)
 
-    # When show_all_metadata=True (default) we expect *all* known params.
+    # Collecting with the flag True (always default) still returns all params.
     info_all = _collect_routing_info(routing, show_all_metadata=True)
     # "copy" is a legitimate StandardScaler kw on transform method.
     assert "copy" in info_all[scaler.__class__.__name__]["params"]
 
-    # With show_all_metadata=False we should still include defaults but at least
-    # the explicitly requested one is present.
+    # Passing False no longer changes behaviour; still includes all params.
     info_req = _collect_routing_info(routing, show_all_metadata=False)
     assert "sample_weight" in info_req[scaler.__class__.__name__]["params"]
-    # We no longer assert absence of other default params since the legacy code
-    # keeps them in the mapping even when not requested.
 
 
 # ---------------------------------------------------------------------------
@@ -118,7 +115,7 @@ def test_visualise_routing_smoke(capsys):
     )
 
     routing = get_routing_for_object(pipe)
-    visualise_routing(routing, show_all_metadata=True)
+    visualise_routing(routing)
 
     out = capsys.readouterr().out
     # Basic expectations – root name and the alias arrow should appear.
@@ -199,7 +196,7 @@ def run_test_1():
     # Get the routing information
     test = get_routing_for_object(search_cv)
 
-    visualise_routing(test, show_all_metadata=True)
+    visualise_routing(test)
 
 
 def run_test_2():
@@ -210,7 +207,7 @@ def run_test_2():
         make_pipeline(StandardScaler().set_fit_request(sample_weight=WARN)),
     )
 
-    visualise_routing(get_routing_for_object(est), show_all_metadata=True)
+    visualise_routing(get_routing_for_object(est))
 
 
 if __name__ == "__main__":
