@@ -1050,9 +1050,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = X[:, feature_idx]
 
                 if use_sparse:
-                    # Copy the current column to avoid mutation of the user provided
-                    # input data when doing inplace operations.
-                    x = x.copy()
                     # We replace the nan values in the input column by some
                     # arbitrary, in-range, numerical value since
                     # BSpline.design_matrix() would otherwise raise on any nan
@@ -1071,8 +1068,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         # The column is all np.nan valued. Replace it by a
                         # constant column with an arbitrary non-nan value
                         # inside so that it is encoded as constant column.
-                        x[:] = 0
-                    else:
+                        x = np.zeros_like(x)  # avoid mutation of input data
+                    elif nan_row_indices.shape[0] > 0:
+                        x = x.copy()  # avoid mutation of input data
                         x[nan_row_indices] = np.nanmin(x)
                     XBS_sparse = BSpline.design_matrix(
                         x, spl.t, spl.k, **kwargs_extrapolate
