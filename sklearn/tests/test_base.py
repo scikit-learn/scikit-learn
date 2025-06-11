@@ -1016,4 +1016,4 @@ def test_get_fitted_attr_html():
 
     fitted_attr_html = pca._get_fitted_attr_html()
     assert len(fitted_attr_html) == 9
-    assert fitted_attr_html["components_"] == ("ndarray", (2, 2))
+    assert fitted_attr_html["components_"] == "ndarray of shape (2, 2), dtype=float64"
