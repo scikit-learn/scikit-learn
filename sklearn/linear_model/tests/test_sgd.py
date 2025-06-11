@@ -1,4 +1,5 @@
 import pickle
+import warnings
 from unittest.mock import Mock
 
 import joblib
@@ -505,6 +506,35 @@ def test_sgd_failing_penalty_validation(Estimator):
         ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
     ):
         clf.fit(X, Y)
+
+
+# TODO(1.10): remove this test
+@pytest.mark.parametrize(
+    "klass",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_power_t_limits(klass):
+    """Check that a warning is raised when `power_t` is negative."""
+
+    # Check that negative values of `power_t` raise a warning
+    clf = klass(power_t=-1.0)
+    with pytest.warns(
+        FutureWarning, match="Negative values for `power_t` are deprecated"
+    ):
+        clf.fit(X, Y)
+
+    # Check that values of 'power_t in range [0, inf) do not raise a warning
+    with warnings.catch_warnings(record=True) as w:
+        clf = klass(power_t=0.5)
+        clf.fit(X, Y)
+    assert len(w) == 0
 
 
 ###############################################################################
