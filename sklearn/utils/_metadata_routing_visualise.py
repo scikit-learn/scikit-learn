@@ -63,14 +63,6 @@ Conventions & design notes
 from collections import defaultdict
 
 from sklearn import set_config
-from sklearn.compose import ColumnTransformer
-from sklearn.feature_selection import SelectPercentile, chi2
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import get_scorer
-from sklearn.model_selection import GroupKFold, RandomizedSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils._metadata_requests import (
     COMPOSITE_METHODS,
     SIMPLE_METHODS,
@@ -79,7 +71,6 @@ from sklearn.utils._metadata_requests import (
     MetadataRequest,
     MetadataRouter,
 )
-from sklearn.utils.metadata_routing import get_routing_for_object
 
 # Enable metadata routing
 set_config(enable_metadata_routing=True)
@@ -101,7 +92,7 @@ def _param_names(router):
 # ============================================================================
 
 
-def visualise_routing(routing_info, show_all_metadata=True):
+def visualise_routing(routing_info, *, show_all_metadata=True):
     """
     Visualize metadata routing information.
 
@@ -218,7 +209,9 @@ def _compute_reachable_methods(router):
             }
             child_methods = _expand_methods(child_methods_raw)
             if child_methods:
-                _walk(child_obj, child_methods, current_path)
+                # Propagate the *mapping name* into the path so that it stays
+                # in-sync with the scheme used in `_collect_routing_info`.
+                _walk(child_obj, child_methods, f"{current_path}/{name}")
 
     _walk(router, set(SIMPLE_METHODS))
     return reachable
@@ -233,7 +226,7 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
         {
             "params"          : set[str],             # every param encountered
             "methods"         : {param -> {methods}}, # methods that actively request
-            "aliases"         : {param -> alias},     # component-param -> user-param
+            "aliases"         : {param -> alias},     # component-param → user-param
             "statuses"        : {param -> {method -> status}},
             "existing_methods": set[str],             # methods implemented on object
         }
@@ -333,9 +326,14 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
 
         # Recurse into children -------------------------------------------------
         for name, mapping in obj._route_mappings.items():
+            # Include the *mapping name* in the path so that identical child
+            # objects appearing in different locations (e.g. several
+            # ``StandardScaler`` instances) do not share the same key in the
+            # routing map.  This fixes cases where their individual requests
+            # get merged and displayed incorrectly.
             _collect(
                 mapping.router,
-                current_path,  # becomes *path* for child
+                f"{current_path}/{name}",  # becomes *path* for child
             )
 
     # ------------------------------------------------------------------
@@ -523,9 +521,9 @@ def _display_tree(
 
         for i, (name, mapping) in enumerate(children):
             is_last_child = i == len(children) - 1
-            full_path = f"{current_path}/{mapping.router.owner}"
 
-            # Display child with step name
+            # Pass the *mapping name* on the path so that it matches the key
+            # format used in `_collect_routing_info`.
             _display_tree(
                 mapping.router,
                 routing_map,
@@ -533,66 +531,6 @@ def _display_tree(
                 is_last_child,
                 show_all_metadata,
                 name,
-                current_path,
+                f"{current_path}/{name}",  # parent_path for child
                 root=False,
             )
-
-
-# ============================================================================
-# TEST CASES
-# ============================================================================
-
-numeric_features = ["age", "fare"]
-numeric_transformer = Pipeline(
-    steps=[
-        ("imputer", SimpleImputer(strategy="median")),
-        (
-            "scaler",
-            StandardScaler()
-            .set_fit_request(sample_weight="inner_weights")
-            .set_transform_request(copy=True),
-        ),
-    ]
-)
-
-categorical_features = ["embarked", "sex", "pclass"]
-categorical_transformer = Pipeline(
-    steps=[
-        ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ("selector", SelectPercentile(chi2, percentile=50)),
-    ]
-)
-preprocessor = ColumnTransformer(
-    transformers=[
-        ("num", numeric_transformer, numeric_features),
-        ("cat", categorical_transformer, categorical_features),
-    ]
-)
-
-# %%
-# Append classifier to preprocessing pipeline.
-# Now we have a full prediction pipeline.
-clf = Pipeline(
-    steps=[
-        ("preprocessor", preprocessor),
-        ("classifier", LogisticRegression().set_fit_request(sample_weight=False)),
-    ]
-)
-
-param_grid = {
-    "preprocessor__num__imputer__strategy": ["mean", "median"],
-    "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
-    "classifier__C": [0.1, 1.0, 10, 100],
-}
-
-scorer = get_scorer("accuracy").set_score_request(sample_weight=True)
-
-search_cv = RandomizedSearchCV(
-    clf, param_grid, cv=GroupKFold(), scoring=scorer, random_state=0
-)
-
-
-# Get the routing information
-test = get_routing_for_object(search_cv)
-
-visualise_routing(test, show_all_metadata=True)
