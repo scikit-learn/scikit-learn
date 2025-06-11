@@ -266,7 +266,7 @@ def _collect_routing_info(router, top_router=None):
         if alias is True or request_is_alias(alias):
             info[current_path]["methods"][param].add(method)
 
-        # Maintain the mapping {component_param -> user_alias}. Again, ignore
+        # Maintain the mapping {component_param → user_alias}. Again, ignore
         # special placeholders such as WARN/UNUSED which are *not* aliases.
         if request_is_alias(alias) and alias != param:
             info[current_path]["aliases"][param] = alias
@@ -537,11 +537,13 @@ def _summarise_params(routing_map):
             statuses = info["statuses"].get(comp_param, {})
 
             for method, status in statuses.items():
-                # Determine user-facing name
-                user_param = status if isinstance(status, str) else comp_param
+                # Determine user-facing name: only *real* aliases count. WARN/
+                # UNUSED are special markers and should not become separate
+                # parameters.
+                user_param = status if request_is_alias(status) else comp_param
 
                 # Classify category
-                if status is True or isinstance(status, str):
+                if status is True or request_is_alias(status):
                     cat = "requested"
                 elif status is False:
                     cat = "ignored"
