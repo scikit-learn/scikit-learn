@@ -1162,11 +1162,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
 
-    For a detailed example of using ``cross_val_predict`` to
-    visualize prediction errors, please see
-    :ref:`plot_cv_predict.py
-        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`
-    example.
+    For a detailed example of using ``cross_val_predict`` to visualize
+    prediction errors, please see
+    :ref:`plot_cv_predict example
+        <sphx_glr_auto_examples_model_selection_plot_cv_predict.py>`.
 
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
