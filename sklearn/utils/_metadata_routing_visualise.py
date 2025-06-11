@@ -94,70 +94,47 @@ def visualise_routing(routing_info):
         root=True,
     )
 
-    # Get user-facing parameters (including aliases)
-    user_params = sorted(_get_user_facing_params(routing_map))
+    # ------------------------------------------------------------------
+    # New style: root-level method blocks
+    # ------------------------------------------------------------------
 
-    if user_params:
-        print("\nParameters:")
-        for param in user_params:
-            consumers = []
+    summary_by_method = _summarise_params_by_method(routing_info, routing_map)
 
-            # Find all consumers for this user-facing parameter
-            for comp_path, info in routing_map.items():
-                comp_name = comp_path.split("/")[-1]
-
-                # Check if this component consumes the param directly (no alias)
-                if param in info["params"] and param not in info.get("aliases", {}):
-                    consumers.append(comp_name)
-
-                # Check if this component consumes the param via alias
-                elif param in info.get("aliases", {}).values():
-                    # Find the component parameter that maps to this user param
-                    for comp_param, alias in info["aliases"].items():
-                        if alias == param:
-                            consumers.append(f"{comp_name} (as {comp_param})")
-
-            if consumers:
-                print(f"  • {param} → {', '.join(consumers)}")
-    else:
-        print("\nNo parameters are being routed.")
-
-    # Print parameter summary
-    summary = _summarise_params(routing_map)
-    if summary:
+    if summary_by_method:
         print("\nParameter summary:")
 
         glyph_for = dict(_CATEGORY_ORDER)
 
-        LEADING_PRIORITY = [
-            "errors",  # any ⛔ overrides everything
-            "warns",  # any ⚠ but no errors
-            "ignored",  # only ignored cases
-            "requested",  # all requested (no other categories)
-        ]
+        for root_method in SIMPLE_METHODS:
+            if root_method not in summary_by_method:
+                continue
 
-        for param in sorted(summary):
-            cats = summary[param]
+            print(f"{root_method}")
 
-            # Determine leading glyph according to precedence rules.
-            if "errors" in cats:
-                leading_glyph = glyph_for["errors"]
-            elif "warns" in cats:
-                leading_glyph = glyph_for["warns"]
-            elif set(cats.keys()) == {"ignored"}:
-                leading_glyph = glyph_for["ignored"]
-            else:
-                # Default to requested ✓ when no error/warn and at least one
-                # request (could be mixed with ignored).
-                leading_glyph = glyph_for["requested"]
+            params_for_method = summary_by_method[root_method]
 
-            print(f"{leading_glyph} {param}")
+            for param in sorted(params_for_method):
+                cats = params_for_method[param]
 
-            for cat, glyph in _CATEGORY_ORDER:
-                if cat in cats:
-                    print(f"    • {glyph} {cat}:")
-                    for p in cats[cat]:
-                        print(f"        - {p}")
+                # Leading glyph precedence (error > warn > ignored > requested)
+                if "errors" in cats:
+                    leading = glyph_for["errors"]
+                elif "warns" in cats:
+                    leading = glyph_for["warns"]
+                elif set(cats.keys()) == {"ignored"}:
+                    leading = glyph_for["ignored"]
+                else:
+                    leading = glyph_for["requested"]
+
+                print(f" ├─ {leading} {param}")
+
+                for cat, glyph in _CATEGORY_ORDER:
+                    if cat in cats:
+                        print(f" │   • {glyph} {cat}:")
+                        for p in cats[cat]:
+                            print(f" │       - {p}")
+
+            print()  # blank line between methods
 
     else:
         print("\nNo parameter summary.")
@@ -227,6 +204,58 @@ def _compute_reachable_methods(router):
 
     _walk(router, set(SIMPLE_METHODS))
     return reachable
+
+
+# -----------------------------------------------------------------------------
+# Helper: map each component path.method to the ROOT simple method(s) that
+# trigger it when calling the *top* object. This considers caller→callee chains
+# so that, for example, ``RandomizedSearchCV.fit`` leading to
+# ``_Scorer.score`` will be attributed to root ``fit``.
+# -----------------------------------------------------------------------------
+
+
+def _compute_method_origins(router):
+    """Return mapping {"path.method": set(root_methods)}."""
+
+    def _expand_methods(methods):
+        expanded = set()
+        for m in methods:
+            if m in COMPOSITE_METHODS:
+                expanded.update(COMPOSITE_METHODS[m])
+            expanded.add(m)
+        return expanded
+
+    origins = defaultdict(set)
+
+    def _walk(obj, incoming_methods: set[str], root_method: str, path=""):
+        current_path = f"{path}/{obj.owner}" if path else obj.owner
+
+        inc_expanded = _expand_methods(incoming_methods)
+
+        for m in inc_expanded:
+            origins[f"{current_path}.{m}"].add(root_method)
+
+        if isinstance(obj, MetadataRequest):
+            return  # leaf
+
+        # handle self request
+        if obj._self_request is not None:
+            _walk(obj._self_request, inc_expanded, root_method, current_path)
+
+        # children via mappings
+        for name, mpair in obj._route_mappings.items():
+            child_obj = mpair.router
+            child_methods_raw = {
+                p.callee for p in mpair.mapping if p.caller in inc_expanded
+            }
+            child_methods = _expand_methods(child_methods_raw)
+            if child_methods:
+                _walk(child_obj, child_methods, root_method, f"{current_path}/{name}")
+
+    for root in SIMPLE_METHODS:
+        _walk(router, {root}, root)
+
+    return origins
 
 
 def _collect_routing_info(router, top_router=None):
@@ -576,5 +605,51 @@ def _summarise_params(routing_map):
                 summary.setdefault(user_param, {}).setdefault(cat, []).append(
                     f"{path}.{method}"
                 )
+
+    return summary
+
+
+def _summarise_params_by_method(router, routing_map):
+    """Aggregate parameter statuses across the whole tree, grouped by root method.
+
+    Returns
+    -------
+    dict
+        { root_method -> { user_param -> {category -> [path.method, ...]} } }
+    """
+    summary = {}
+
+    origins = _compute_method_origins(router)
+
+    for path, info in routing_map.items():
+        for comp_param in info["params"]:
+            statuses = info["statuses"].get(comp_param, {})
+
+            for method, status in statuses.items():
+                # Determine user-facing name: only *real* aliases count. WARN/
+                # UNUSED are special markers and should not become separate
+                # parameters.
+                user_param = status if request_is_alias(status) else comp_param
+
+                # Classify category
+                if status is True or request_is_alias(status):
+                    cat = "requested"
+                elif status is False:
+                    cat = "ignored"
+                elif status == WARN:
+                    cat = "warns"
+                elif status is None:
+                    cat = "errors"
+                elif status == UNUSED:
+                    cat = "unused"
+                else:
+                    continue
+
+                roots = origins.get(f"{path}.{method}", {method.split(".")[0]})
+
+                for root_method in roots:
+                    summary.setdefault(root_method, {}).setdefault(
+                        user_param, {}
+                    ).setdefault(cat, []).append(f"{path}.{method}")
 
     return summary
