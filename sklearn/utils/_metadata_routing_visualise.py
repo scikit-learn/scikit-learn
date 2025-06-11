@@ -101,7 +101,7 @@ def _param_names(router):
 # ============================================================================
 
 
-def visualise_routing(routing_info, show_method_mappings=False, show_all_metadata=True):
+def visualise_routing(routing_info, show_all_metadata=True):
     """
     Visualize metadata routing information.
 
@@ -109,8 +109,6 @@ def visualise_routing(routing_info, show_method_mappings=False, show_all_metadat
     ----------
     routing_info : MetadataRouter or MetadataRequest
         The routing information to visualize
-    show_method_mappings : bool, default=False
-        Whether to show method mappings (e.g., fit→fit_transform) in the output.
     show_all_metadata : bool, default=True
         Whether to show all possible metadata parameters with status indicators,
         or only the parameters that are explicitly requested.
@@ -128,7 +126,6 @@ def visualise_routing(routing_info, show_method_mappings=False, show_all_metadat
         routing_map,
         prefix="",
         is_last=True,
-        show_method_mappings=show_method_mappings,
         show_all_metadata=show_all_metadata,
         parent_path="",
         root=True,
@@ -301,9 +298,24 @@ def _collect_routing_info(router, top_router=None, show_all_metadata=True):
             info[current_path]["existing_methods"].add(method)
             method_req = getattr(obj, method)
 
-            param_source = (
-                _param_names(obj) if show_all_metadata else method_req.requests.keys()
-            )
+            # When displaying *all* possible metadata, we should only include the
+            # parameters that *this specific method* can handle, not the union of
+            # parameters across every method. Otherwise, parameters that are
+            # completely irrelevant to the current method (e.g. ``sample_weight``
+            # for ``transform`` on ``StandardScaler``) would incorrectly appear in
+            # the output as "not requested" (✗).  Selecting the parameter names
+            # on a per-method basis avoids this confusion.
+            if show_all_metadata:
+                # Use the *method's* own request dictionary.  This includes
+                # every parameter appearing in the method signature (default
+                # value ``None``) as well as those explicitly set to ``True``/
+                # ``False``/aliases.  Crucially, it does *not* include params
+                # that belong solely to other methods, so it avoids false
+                # positives like ``sample_weight`` for
+                # ``StandardScaler.transform``.
+                param_source = method_req.requests.keys()
+            else:
+                param_source = method_req.requests.keys()
 
             for param in param_source:
                 info[current_path]["params"].add(param)
@@ -448,7 +460,6 @@ def _display_tree(
     routing_map,
     prefix="",
     is_last=True,
-    show_method_mappings=False,
     show_all_metadata=True,
     step_name=None,
     parent_path="",
@@ -504,23 +515,6 @@ def _display_tree(
         for p in param_strs:
             print(f"{param_prefix}➤ {p}")
 
-    # Show method mappings if requested
-    if show_method_mappings and isinstance(router, MetadataRouter):
-        extension = "    " if (is_last or root and prefix == "") else "│   "
-        new_prefix = prefix + ("" if root and prefix == "" else extension)
-
-        # Collect all method mappings
-        all_mappings = []
-        for mapping in router._route_mappings.values():
-            for method_pair in mapping.mapping:
-                all_mappings.append(f"{method_pair.caller} → {method_pair.callee}")
-
-        if all_mappings:
-            print(f"{new_prefix}├─ Method mappings:")
-            for i, mapping_str in enumerate(sorted(all_mappings)):
-                mapping_connector = "└─" if i == len(all_mappings) - 1 else "├─"
-                print(f"{new_prefix}│ {mapping_connector} {mapping_str}")
-
     # Process children
     if isinstance(router, MetadataRouter):
         children = list(router._route_mappings.items())
@@ -537,162 +531,11 @@ def _display_tree(
                 routing_map,
                 new_prefix,
                 is_last_child,
-                show_method_mappings,
                 show_all_metadata,
                 name,
                 current_path,
                 root=False,
             )
-
-
-def _collect_all_components(router, prefix=""):
-    """Collect all component names in the routing hierarchy."""
-    components = []
-
-    if isinstance(router, MetadataRequest):
-        if router.owner:
-            components.append(router.owner)
-    elif isinstance(router, MetadataRouter):
-        if router.owner:
-            components.append(router.owner)
-
-        for name, mapping in router._route_mappings.items():
-            sub_comps = _collect_all_components(mapping.router, f"{prefix}{name}.")
-            components.extend(sub_comps)
-
-    return components
-
-
-def _build_compact_structure(
-    router, level=0, top_router=None, parent_path="", show_all_metadata=True
-):
-    """Build a compact structure representation."""
-    if top_router is None:
-        top_router = router
-
-    # Build current path
-    if parent_path:
-        current_path = f"{parent_path}/{router.owner}"
-    else:
-        current_path = router.owner
-
-    structure = {
-        "name": router.owner,
-        "type": type(router).__name__,
-        "level": level,
-        "path": current_path,
-        "children": [],
-    }
-
-    # Add routing info
-    routing_map = _collect_routing_info(top_router, show_all_metadata=show_all_metadata)
-    if current_path in routing_map:
-        structure["params"] = routing_map[current_path]["params"]
-        structure["methods"] = routing_map[current_path]["methods"]
-
-    if isinstance(router, MetadataRouter):
-        for name, mapping in router._route_mappings.items():
-            child_structure = _build_compact_structure(
-                mapping.router, level + 1, top_router, current_path, show_all_metadata
-            )
-            child_structure["mapping_name"] = name
-
-            # Collect method mappings if any
-            mappings = []
-            for method_pair in mapping.mapping:
-                if method_pair.caller != method_pair.callee:
-                    mappings.append(f"{method_pair.caller} → {method_pair.callee}")
-            if mappings:
-                child_structure["mappings"] = mappings
-
-            structure["children"].append(child_structure)
-
-    return structure
-
-
-def _print_compact_structure(
-    structure,
-    indent=0,
-    show_method_mappings=False,
-    show_all_metadata=True,
-    mapping_info=None,
-    routing_map=None,
-):
-    """Print the compact structure."""
-    prefix = "  " * indent
-
-    # For child nodes with mappings, combine on one line
-    if mapping_info and indent > 0:
-        # This is a mapped component - show mapping name and component together
-        name_part = f"↳ via {mapping_info['name']}: {structure['name']}"
-
-        # Prepare parameter strings if any
-        param_strs = []
-        if structure.get("params"):
-            for param in sorted(structure["params"]):
-                if routing_map and structure["path"] in routing_map:
-                    param_str = _format_param_with_status(
-                        param,
-                        routing_map[structure["path"]]["methods"][param],
-                        routing_map[structure["path"]]["statuses"],
-                        routing_map[structure["path"]].get("aliases", {}),
-                        show_all_metadata=show_all_metadata,
-                    )
-                else:
-                    # Fallback if routing_map not available
-                    param_str = param
-                param_strs.append(param_str)
-
-        # First, print the component line
-        print(f"{prefix}{name_part}")
-
-        # Then, print each parameter on its own indented line
-        if param_strs:
-            # Use spaces after the branch connector to avoid an unnecessary vertical bar
-            param_prefix = prefix + "    "
-            for ps in param_strs:
-                print(f"{param_prefix}◆ {ps}")
-
-        # Show method mappings if requested
-        if show_method_mappings and mapping_info.get("mappings"):
-            for mapping in sorted(mapping_info["mappings"]):
-                print(f"{prefix}    └─ {mapping}")
-    else:
-        # Root node or no mapping
-        print(f"{prefix}▸ {structure['name']}")
-
-        # Show parameters for root
-        if structure.get("params") and indent == 0:
-            param_strs = []
-            for param in sorted(structure["params"]):
-                if routing_map and structure["path"] in routing_map:
-                    param_str = _format_param_with_status(
-                        param,
-                        routing_map[structure["path"]]["methods"][param],
-                        routing_map[structure["path"]]["statuses"],
-                        routing_map[structure["path"]].get("aliases", {}),
-                        show_all_metadata=show_all_metadata,
-                    )
-                else:
-                    # Fallback if routing_map not available
-                    param_str = param
-                param_strs.append(param_str)
-            print(f"{prefix}  Parameters: {', '.join(param_strs)}")
-
-    # Process children
-    for child in structure.get("children", []):
-        mapping_info = {
-            "name": child["mapping_name"],
-            "mappings": child.get("mappings", []),
-        }
-        _print_compact_structure(
-            child,
-            indent + 2,
-            show_method_mappings,
-            show_all_metadata,
-            mapping_info,
-            routing_map,
-        )
 
 
 # ============================================================================
@@ -732,7 +575,7 @@ preprocessor = ColumnTransformer(
 clf = Pipeline(
     steps=[
         ("preprocessor", preprocessor),
-        ("classifier", LogisticRegression().set_fit_request(sample_weight=True)),
+        ("classifier", LogisticRegression().set_fit_request(sample_weight=False)),
     ]
 )
 
@@ -752,4 +595,4 @@ search_cv = RandomizedSearchCV(
 # Get the routing information
 test = get_routing_for_object(search_cv)
 
-visualise_routing(test, show_method_mappings=True, show_all_metadata=True)
+visualise_routing(test, show_all_metadata=True)
