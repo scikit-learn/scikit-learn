@@ -210,8 +210,21 @@ def run_test_2():
     visualise_routing(get_routing_for_object(est))
 
 
+def run_test_3():
+    est = RandomizedSearchCV(estimator=LogisticRegression(), param_distributions={})
+    visualise_routing(get_routing_for_object(est))
+
+    est = RandomizedSearchCV(
+        estimator=LogisticRegression(),
+        param_distributions={},
+        scoring=get_scorer("accuracy").set_score_request(sample_weight=True),
+    )
+    visualise_routing(get_routing_for_object(est))
+
+
 if __name__ == "__main__":
     # Enable metadata routing
     set_config(enable_metadata_routing=True)
-    run_test_1()
-    run_test_2()
+    # run_test_1()
+    # run_test_2()
+    run_test_3()

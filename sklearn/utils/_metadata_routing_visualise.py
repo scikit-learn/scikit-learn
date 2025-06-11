@@ -132,7 +132,7 @@ def visualise_routing(routing_info):
                     if cat in cats:
                         print(f" │   • {glyph} {cat}:")
                         for p in cats[cat]:
-                            print(f" │       - {p}")
+                            print(f" │       - {_shorten_path(p)}")
 
             print()  # blank line between methods
 
@@ -360,11 +360,8 @@ def _collect_routing_info(router, top_router=None):
 
         # Recurse into children -------------------------------------------------
         for name, mapping in obj._route_mappings.items():
-            # Include the *mapping name* in the path so that identical child
-            # objects appearing in different locations (e.g. several
-            # ``StandardScaler`` instances) do not share the same key in the
-            # routing map.  This fixes cases where their individual requests
-            # get merged and displayed incorrectly.
+            # Include the *mapping name* in the path so that it matches the key
+            # format used in `_collect_routing_info`.
             _collect(
                 mapping.router,
                 f"{current_path}/{name}",  # becomes *path* for child
@@ -653,3 +650,32 @@ def _summarise_params_by_method(router, routing_map):
                     ).setdefault(cat, []).append(f"{path}.{method}")
 
     return summary
+
+
+# -----------------------------------------------------------------------------
+# Formatting helpers
+# -----------------------------------------------------------------------------
+
+
+def _shorten_path(path_method: str) -> str:
+    """Remove estimator class tokens from a path for display purposes."""
+    if "/" not in path_method:
+        return path_method
+
+    try:
+        path, method = path_method.rsplit(".", 1)
+    except ValueError:
+        # no method part
+        return path_method
+
+    tokens = path.split("/")
+    if len(tokens) <= 2:
+        # nothing to shorten
+        return path_method
+
+    root = tokens[0]
+    rest = tokens[1:]
+    # Keep every other token starting from index0 of *rest* (mapping names).
+    filtered = [root] + rest[::2]
+    short_path = "/".join(filtered)
+    return f"{short_path}.{method}"
