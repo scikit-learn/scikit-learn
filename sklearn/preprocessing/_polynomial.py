@@ -1108,8 +1108,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
-                # Values outside of the feature space during `fit` and nan values get
-                # masked out:
+                # Values outside of the feature range during fit and nan values get
+                # filtered out:
                 inside_range_mask = (xmin <= X[:, feature_idx]) & (
                     X[:, feature_idx] <= xmax
                 )
@@ -1267,8 +1267,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " transformer to produce fewer than 2^31 output features"
                 )
             XBS = sparse.hstack(output_list, format="csr")
-        # TODO: Remove conversion to csr, once scipy 1.10 is the minimum version:
         elif self.sparse_output:
+            # TODO: Remove conversion to csr, once scipy 1.10 is the minimum version:
             # Adjust format of XBS to sparse, for scipy versions < 1.10.0:
             XBS = sparse.csr_matrix(XBS)
 
