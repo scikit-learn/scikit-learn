@@ -1063,12 +1063,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # when `extrapolation == "error"`. Any other choice of
                     # in-range value would have worked work since the
                     # corresponding values in the array are replaced by zeros.
-
                     if nan_row_indices.size == x.size:
                         # The column is all np.nan valued. Replace it by a
                         # constant column with an arbitrary non-nan value
                         # inside so that it is encoded as constant column.
-                        x = np.zeros_like(x)  # avoid mutation of input data
+                        x = np.zeros_like(
+                            x
+                        )  # new array to avoid mutation of input data
                     elif nan_row_indices.shape[0] > 0:
                         x = x.copy()  # avoid mutation of input data
                         x[nan_row_indices] = np.nanmin(x)
@@ -1085,27 +1086,24 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
 
-                    # Replace any indicated values with 0:
                     if nan_row_indices.shape[0] > 0:
                         # Note: See comment about SparseEfficiencyWarning below.
-                        XBS_sparse = XBS_sparse.tolil()
-                        for spline_idx in range(n_splines):
-                            output_feature_idx = n_splines * feature_idx + spline_idx
-                            XBS_sparse[
-                                nan_row_indices,
-                                output_feature_idx : output_feature_idx + 1,
-                            ] = 0
+                        XBS = XBS_sparse.tolil()
+
                 else:
                     XBS[
                         :, (feature_idx * n_splines) : ((feature_idx + 1) * n_splines)
                     ] = spl(x)
-                    # Replace any output that corresponds to a missing input value
-                    # by zero.
+
+                # Replace any indicated values with 0:
+                if nan_row_indices.shape[0] > 0:
                     for spline_idx in range(n_splines):
                         output_feature_idx = n_splines * feature_idx + spline_idx
                         XBS[
                             nan_row_indices, output_feature_idx : output_feature_idx + 1
                         ] = 0
+                    if use_sparse:
+                        XBS_sparse = XBS
 
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
