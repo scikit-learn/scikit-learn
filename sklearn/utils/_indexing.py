@@ -50,7 +50,11 @@ def _pandas_indexing(X, key, key_dtype, axis):
     else:
         # check whether we should index with loc or iloc
         indexer = X.iloc if key_dtype == "int" else X.loc
-        return indexer[:, key] if axis else indexer[key]
+        result = indexer[:, key] if axis else indexer[key]
+        # When using a slice, make a copy to avoid SettingWithCopyWarning
+        if isinstance(key, slice):
+            result = result.copy()
+        return result
 
 
 def _list_indexing(X, key, key_dtype):
