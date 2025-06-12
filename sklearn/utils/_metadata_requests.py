@@ -34,7 +34,7 @@ automatically. This attribute is modified while running `set_{method}_request` m
 `method_metadata_request.add_request(param=prop, alias=alias)`.
 
 The ``alias`` in the ``add_request`` method has to be either a string (an alias),
-or in ``[True (requested), False (unrequested), None (error if passed)]``. There
+or one of ``[True (requested), False (unrequested), None (error if passed)]``. There
 are some other special values such as ``UNUSED`` and ``WARN`` which are used
 for purposes such as warning of removing a metadata in a child class, but not
 used by the end users.
