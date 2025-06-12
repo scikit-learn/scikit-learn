@@ -341,6 +341,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def get_final_cv_score(self, X, y=None, **params):
         """Calculate the cross-validation score of the selected feature set.
 
+        .. versionadded:: 1.8
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
