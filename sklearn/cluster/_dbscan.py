@@ -5,12 +5,13 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import gc
 import warnings
 from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-import gc
+
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
