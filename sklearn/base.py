@@ -293,15 +293,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             ):
                 return True
 
-            try:
-                if param_value != init_default_params[param_name] and not (
-                    is_scalar_nan(init_default_params[param_name])
-                    and is_scalar_nan(param_value)
-                ):
-                    return True
-            except Exception:
-                # any exception raised means that we don't have the same
-                # parameters
+            if param_value != init_default_params[param_name] and not (
+                is_scalar_nan(init_default_params[param_name])
+                and is_scalar_nan(param_value)
+            ):
                 return True
             return False
 
