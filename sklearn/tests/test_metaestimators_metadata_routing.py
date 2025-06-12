@@ -676,7 +676,8 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             instance = metaestimator_class(**kwargs)
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
-                f" requested for {estimator.__class__.__name__}.{method_name}"
+                f" requested for {estimator.__class__.__name__}(registry=...)."
+                f"{method_name}"
             )
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
