@@ -79,7 +79,7 @@ ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 scatter = ax.scatter(X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k")
 ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
 ax.set_title("Samples in two-dimensional feature space")
-_ = plt.show()
+plt.show()
 
 # %%
 # We can see that the samples are not clearly separable by a straight line.
