@@ -506,6 +506,13 @@ def estimator_checks_generator(
 ):
     """Iteratively yield all check callables for an estimator.
 
+    This function is used by
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` and
+    :func:`~sklearn.utils.estimator_checks.check_estimator` to yield all check callables
+    for an estimator. In most cases, these functions should be used instead. When
+    implementing a custom equivalent, please refer to their source code to
+    understand how `estimator_checks_generator` is intended to be used.
+
     .. versionadded:: 1.6
 
     Parameters
