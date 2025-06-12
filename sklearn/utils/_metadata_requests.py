@@ -11,8 +11,11 @@ the objects implemented in this file.
 
 The routing is coordinated by building ``MetadataRequest`` objects
 for objects that consume metadata, and ``MetadataRouter`` objects for objects that
-can route metadata, which are then aligned during a call to `process_routing()`. The
-actual metadata values are held out until this point.
+can route metadata, which are then aligned during a call to `process_routing()`. This
+function returns a Bunch object (dictionary-like) with all the information on the
+consumers and which metadata they had requested and the actual metadata values. A
+routing method (such as `fit` in a meta-estimator) can now provide the metadata to the
+relevant consuming method (such as `fit` in a sub-estimator).
 
 The ``MetadataRequest`` and ``MetadataRouter`` objects are constructed via a
 ``get_metadata_routing`` method, which all scikit-learn estimators provide.
@@ -23,9 +26,10 @@ MetadataRequest
 ~~~~~~~~~~~~~~~
 
 In non-routing consumers, the simplest case, e.g. ``SVM``, ``get_metadata_routing``
-returns a ``MetadataRequest`` object as the consumer's `_metadata_request` attribute.
-It stores which metadata is required by each method of the consumer by including one
-``MethodMetadataRequest`` per method in ``METHODS`` (e. g. ``fit``, ``score``, etc).
+returns a ``MetadataRequest`` object  which is assigned to the consumer's
+`_metadata_request` attribute. It stores which metadata is required by each method of
+the consumer by including one ``MethodMetadataRequest`` per method in ``METHODS``
+(e. g. ``fit``, ``score``, etc).
 
 Users and developers almost never need to directly add a new ``MethodMetadataRequest``,
 to the consumer's `_metadata_request` attribute, since these are generated
@@ -42,10 +46,12 @@ used by the end users.
 MetadataRouter
 ~~~~~~~~~~~~~~
 
-In routers such as meta-estimators or multi metric scorers, ``get_metadata_routing``
+In routers (such as meta-estimators or multi metric scorers), ``get_metadata_routing``
 returns a ``MetadataRouter`` object. It provides information about which method, from
-the router object, calls which method in a consumer's object, thus specifying how
-metadata is to be passed.
+the router object, calls which method in a consumer's object, and also, which metadata
+had been requested by the consumer's methods, thus specifying how metadata is to be
+passed. If a sub-estimator is a router as well, their routing information is also stored
+in the meta-estimators router.
 
 Conceptually, this information looks like:
 
@@ -797,12 +803,12 @@ class MetadataRouter:
     """Coordinates metadata routing for a :term:`router` object.
 
     This class is used by :term:`meta-estimators` or functions that can route metadata,
-    to store and handle their metadata routing. Routing information is stored in a
+    to handle their metadata routing. Routing information is stored in a
     dictionary-like structure of the form ``{"object_name":
-    RouterMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
+    RouterMappingPair(mapping, router)}``, where ``mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
-    ``routing_info`` is either a
-    :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
+    ``router`` is either a
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` or another
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
 
     .. versionadded:: 1.3
@@ -1034,9 +1040,9 @@ class MetadataRouter:
 
         Returns a :class:`~sklearn.utils.Bunch` containing the metadata that this
         :term:`router`'s `caller` method needs to route, organized by each
-        :term:`consumer` and their corresponding method(s).
+        :term:`consumer` and their corresponding methods.
 
-        This can can be used to pass the required metadata to corresponding methods in
+        This can be used to pass the required metadata to corresponding methods in
         consumers.
 
         Parameters
