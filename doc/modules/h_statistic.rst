@@ -102,7 +102,7 @@ Interpretation
 Workflow
 ========
 
-Calculating all pairwise H-statistics has computational complexity of :math:`O(n^2p^2)`.
+Calculating all pairwise H-statistics has computational complexity of :math:`O(n^2 p^2)`.
 Therefore, our implementation randomly selects ``n_max = 500`` rows from the provided dataset ``X``.
 Furthermore, if the number of features :math:`p` is large, use some feature importance measure
 to select the most important features and pass them via the ``features=None`` argument.
