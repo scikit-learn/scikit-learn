@@ -300,18 +300,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.support_ = current_mask
         self.n_features_to_select_ = self.support_.sum()
 
-        # Store the final cross-validation score of the selected feature set
-        X_new = X[:, self.support_]
-        self.final_cv_score_ = cross_val_score(
-            cloned_estimator,
-            X_new,
-            y,
-            cv=cv,
-            scoring=self.scoring,
-            n_jobs=self.n_jobs,
-            params=params if _routing_enabled() else None,
-        ).mean()
-
         return self
 
     def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask, **params):
@@ -349,6 +337,44 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
+
+    def get_final_cv_score(self, X, y=None, **params):
+        """Calculate the cross-validation score of the selected feature set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
+        y : array-like of shape (n_samples,), default=None
+            Target values. This parameter may be ignored for
+            unsupervised learning.
+
+        **params : dict, default=None
+            Parameters to be passed to the underlying `estimator`, `cv`
+            and `scorer` objects.
+
+        Returns
+        -------
+        score : float
+            The mean cross-validation score of the selected feature set.
+        """
+        check_is_fitted(self)
+        
+        X_new = X[:, self.support_]
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
+        cloned_estimator = clone(self.estimator)
+        
+        return cross_val_score(
+            cloned_estimator,
+            X_new,
+            y,
+            cv=cv,
+            scoring=self.scoring,
+            n_jobs=self.n_jobs,
+            params=params if _routing_enabled() else None,
+        ).mean()
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
