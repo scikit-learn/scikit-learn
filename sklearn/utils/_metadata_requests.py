@@ -295,8 +295,8 @@ class MethodMetadataRequest:
 
     Parameters
     ----------
-    owner : str
-        A display name for the object owning these requests.
+    owner : object
+        The object owning these requests.
 
     method : str
         The name of the method to which these requests belong.
@@ -529,8 +529,8 @@ class MetadataRequest:
 
     Parameters
     ----------
-    owner : str
-        The name of the object to which these requests belong.
+    owner : object
+        The object to which these requests belong.
     """
 
     # this is here for us to use this attribute's value instead of doing

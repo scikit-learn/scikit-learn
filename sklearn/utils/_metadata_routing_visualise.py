@@ -168,7 +168,7 @@ def _compute_reachable_methods(router):
     def _walk(obj, incoming_methods, path=""):
         # Build path in the exact same way as in _collect_routing_info so that
         # look-ups can be shared.
-        current_path = f"{path}/{obj.owner}" if path else obj.owner
+        current_path = f"{path}/{obj.owner}" if path else f"{obj.owner}"
 
         incoming_methods = _expand_methods(incoming_methods)
 
@@ -228,7 +228,7 @@ def _compute_method_origins(router):
     origins = defaultdict(set)
 
     def _walk(obj, incoming_methods: set[str], root_method: str, path=""):
-        current_path = f"{path}/{obj.owner}" if path else obj.owner
+        current_path = f"{path}/{obj.owner}" if path else f"{obj.owner}"
 
         inc_expanded = _expand_methods(incoming_methods)
 
@@ -372,7 +372,7 @@ def _collect_routing_info(router, top_router=None):
     # ------------------------------------------------------------------
 
     def _collect(obj, path=""):
-        current_path = f"{path}/{obj.owner}" if path else obj.owner
+        current_path = f"{path}/{obj.owner}" if path else f"{obj.owner}"
         reachable_here = reachable_map.get(current_path, set())
 
         if isinstance(obj, MetadataRequest):
@@ -490,7 +490,7 @@ def _display_tree(
     if parent_path:
         current_path = f"{parent_path}/{router.owner}"
     else:
-        current_path = router.owner
+        current_path = f"{router.owner}"
 
     # Determine if this node has parameters
     node_info = routing_map.get(current_path, {})
@@ -505,9 +505,9 @@ def _display_tree(
 
     display_parts = []
     if step_name:
-        display_parts.append(f"{step_name} ({router.owner})")
+        display_parts.append(f"{step_name} ({router.owner!r})")
     else:
-        display_parts.append(router.owner)
+        display_parts.append(f"{router.owner!r}")
 
     # Collect parameters for separate printing (one per line)
     param_strs = []
