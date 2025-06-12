@@ -271,14 +271,15 @@ ax.axvline(x=0, color="k", linestyle="--")
 ax.figure.tight_layout()
 # %%
 # Now, we can observe that on both sets, the `random_num` and `random_cat`
-# features have a lower permuatation importance compared to the overfitting random
+# features have a lower permutation importance compared to the overfitting random
 # forest. However, the conclusions regarding the importance of the other features are
 # still valid.
 #
-# These accurate permutation importances match the results obtained with oob-based
-# impurity methods on this new random forest.
+# The ranking of features by test-set permutation importance values approximately
+# match the ranking obtained with oob-based impurity method on this new random
+# forest.
 #
-# Do note that permutation importances are costly as they require refitting the whole
-# model for every permutation of each feature. When working on large datasets with
-# random forests, it may be preferable to use debiased impurity based feature importance
-# measures.
+# Do note that permutation importances are costly as they require computing 
+# many predictions with perturbed version of the dataset for each feature.
+# When working on large datasets with random forests, it may be preferable to
+# use debiased impurity based feature importance measures instead.
