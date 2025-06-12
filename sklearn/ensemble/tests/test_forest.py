@@ -471,12 +471,12 @@ def test_unfitted_feature_importances(name):
             *datasets.make_classification(
                 n_samples=1000, n_classes=3, n_informative=6, random_state=0
             ),
-            0.65,
+            0.64,
         ),
         (
             iris.data,
             iris.target * 2 + 1,
-            0.65,
+            0.64,
         ),
         (
             *datasets.make_multilabel_classification(n_samples=300, random_state=0),
@@ -651,7 +651,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
             oob_unsampled_indices = _generate_unsampled_indices(
-                tree.random_state, len(X), n_samples_bootstrap
+                tree.random_state, len(X), n_samples_bootstrap, None
             )
             if sample_idx in oob_unsampled_indices:
                 n_samples_oob += 1
@@ -1168,8 +1168,10 @@ def test_class_weights(name):
     # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
+    assert clf1._sample_weight is None
     clf2 = ForestClassifier(class_weight="balanced", random_state=0)
     clf2.fit(iris.data, iris.target)
+    assert_allclose(clf2._sample_weight, 1.0)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Make a multi-output problem with three copies of Iris

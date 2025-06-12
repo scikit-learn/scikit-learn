@@ -38,7 +38,7 @@ Single and multi-output problems are both handled.
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
-from warnings import catch_warnings, simplefilter, warn
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import hstack as sparse_hstack
@@ -121,23 +121,30 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max(round(n_samples * max_samples), 1)
 
 
-def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_sample_indices(
+    random_state, n_samples, n_samples_bootstrap, sample_weight
+):
     """
     Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(
-        0, n_samples, n_samples_bootstrap, dtype=np.int32
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples)
+    normalized_sample_weight = sample_weight / np.sum(sample_weight)
+    sample_indices = random_instance.choice(
+        n_samples, n_samples_bootstrap, replace=True, p=normalized_sample_weight
     )
-
+    sample_indices = sample_indices.astype(np.int32)
     return sample_indices
 
 
-def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_unsampled_indices(
+    random_state, n_samples, n_samples_bootstrap, sample_weight
+):
     """
     Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(
-        random_state, n_samples, n_samples_bootstrap
+        random_state, n_samples, n_samples_bootstrap, sample_weight
     )
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
@@ -167,28 +174,16 @@ def _parallel_build_trees(
 
     if bootstrap:
         n_samples = X.shape[0]
-        if sample_weight is None:
-            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
-        else:
-            curr_sample_weight = sample_weight.copy()
-
         indices = _generate_sample_indices(
-            tree.random_state, n_samples, n_samples_bootstrap
+            tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
         sample_counts = np.bincount(indices, minlength=n_samples)
-        curr_sample_weight *= sample_counts
 
-        if class_weight == "subsample":
-            with catch_warnings():
-                simplefilter("ignore", DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight("auto", y, indices=indices)
-        elif class_weight == "balanced_subsample":
-            curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
-
+        # TODO: choose indexing/weighting strategy ? Here always weighting.
         tree._fit(
             X,
             y,
-            sample_weight=curr_sample_weight,
+            sample_weight=sample_counts,
             check_input=False,
             missing_values_in_feature_mask=missing_values_in_feature_mask,
         )
@@ -426,6 +421,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             else:
                 sample_weight = expanded_class_weight
 
+        # storing sample_weight (needed by _get_estimators_indices)
+        self._sample_weight = sample_weight
+
         if not self.bootstrap and self.max_samples is not None:
             raise ValueError(
                 "`max_sample` cannot be set if `bootstrap=False`. "
@@ -600,6 +598,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 estimator.random_state,
                 n_samples,
                 n_samples_bootstrap,
+                self._sample_weight,
             )
 
             y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
@@ -694,7 +693,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 # Operations accessing random_state must be performed identically
                 # to those in `_parallel_build_trees()`
                 yield _generate_sample_indices(
-                    seed, self._n_samples, self._n_samples_bootstrap
+                    seed,
+                    self._n_samples,
+                    self._n_samples_bootstrap,
+                    self._sample_weight,
                 )
 
     @property
@@ -869,13 +871,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                         "distributions. Pass the resulting weights as the "
                         "class_weight parameter."
                     )
-
-            if self.class_weight != "balanced_subsample" or not self.bootstrap:
-                if self.class_weight == "balanced_subsample":
-                    class_weight = "balanced"
-                else:
-                    class_weight = self.class_weight
-                expanded_class_weight = compute_sample_weight(class_weight, y_original)
+            # NOTE: "balanced_subsample" option is ignored, treated as "balanced"
+            class_weight = self.class_weight
+            if class_weight == "balanced_subsample":
+                class_weight = "balanced"
+            expanded_class_weight = compute_sample_weight(class_weight, y_original)
 
         return y, expanded_class_weight
 
