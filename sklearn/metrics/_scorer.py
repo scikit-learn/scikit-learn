@@ -495,7 +495,7 @@ class _PassthroughScorer(_MetadataRequester):
         return estimator.score(*args, **kwargs)
 
     def __repr__(self):
-        return f"{self._estimator.__class__}.score"
+        return f"{self._estimator.__class__.__name__}.score"
 
     def _routing_str(self):
         return repr(self)
