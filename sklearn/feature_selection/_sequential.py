@@ -133,11 +133,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     support_ : ndarray of shape (n_features,), dtype=bool
         The mask of selected features.
 
-    final_cv_score_ : float
-        The mean cross-validation score of the selected feature set.
-
-        .. versionadded:: 1.6
-
     See Also
     --------
     GenericUnivariateSelect : Univariate feature selector with configurable
