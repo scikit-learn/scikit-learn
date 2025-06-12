@@ -78,7 +78,7 @@ need to override, but it works for simple consumers as is.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from copy import deepcopy
 from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
@@ -1385,28 +1385,74 @@ class _MetadataRequester:
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
         try:
-            requests = cls._get_default_requests()
+            for method in SIMPLE_METHODS:
+                method_metadata_args = cls._get_metadata_args_and_aliases(method)
+                if not method_metadata_args:
+                    continue
+                setattr(
+                    cls,
+                    f"set_{method}_request",
+                    RequestMethod(method, sorted(method_metadata_args)),
+                )
         except Exception:
-            # if there are any issues in the default values, it will be raised
-            # when ``get_metadata_routing`` is called. Here we are going to
-            # ignore all the issues such as bad defaults etc.
-            super().__init_subclass__(**kwargs)
-            return
-
-        for method in SIMPLE_METHODS:
-            mmr = getattr(requests, method)
-            # set ``set_{method}_request`` methods
-            if not len(mmr.requests):
-                continue
-            setattr(
-                cls,
-                f"set_{method}_request",
-                RequestMethod(method, sorted(mmr.requests.keys())),
-            )
+            # if there are any issues here, it will be raised when
+            # ``get_metadata_routing`` is called. Here we are going to ignore
+            # all the issues and make sure class definition does not fail.
+            pass
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _build_request_for_signature(cls, router, method):
+    def _get_metadata_args_and_aliases(cls, method: str):
+        """Get the metadata arguments for a method."""
+        # Here we use `isfunction` instead of `ismethod` because calling `getattr`
+        # on a class instead of an instance returns an unbound function.
+        if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
+            return dict()
+        # ignore the first parameter of the method, which is usually "self"
+        params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
+        params = defaultdict(
+            str,
+            {
+                pname: None
+                for pname, param in params
+                if pname not in {"X", "y", "Y", "Xt", "yt"}
+                and param.kind not in {param.VAR_POSITIONAL, param.VAR_KEYWORD}
+            },
+        )
+
+        # Then overwrite those defaults with the ones provided in
+        # __metadata_request__* attributes. Defaults set in
+        # __metadata_request__* attributes take precedence over signature
+        # sniffing.
+
+        # need to go through the MRO since this is a class attribute and
+        # ``vars`` doesn't report the parent class attributes. We go through
+        # the reverse of the MRO so that child classes have precedence over
+        # their parents.
+        substr = f"__metadata_request__{method}"
+        for base_class in reversed(inspect.getmro(cls)):
+            for attr, value in vars(base_class).items():
+                # we don't check for equivalence since python prefixes attrs
+                # starting with __ with the `_ClassName`.
+                if substr not in attr:
+                    continue
+                for prop, alias in value.items():
+                    # Here we add request values specified via those class attributes
+                    # to the `MetadataRequest` object. Adding a request which already
+                    # exists will override the previous one. Since we go through the
+                    # MRO in reverse order, the one specified by the lowest most classes
+                    # in the inheritance tree are the ones which take effect.
+                    if prop not in params and alias == UNUSED:
+                        raise ValueError(
+                            f"Trying to remove parameter {prop} with UNUSED which"
+                            " doesn't exist."
+                        )
+
+                    params[prop] = alias
+
+        return {param: alias for param, alias in params.items() if alias is not UNUSED}
+
+    def _build_request_for_signature(self, method):
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
@@ -1425,66 +1471,27 @@ class _MetadataRequester:
         method_request : MethodMetadataRequest
             The prepared request using the method's signature.
         """
-        mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
-        # Here we use `isfunction` instead of `ismethod` because calling `getattr`
-        # on a class instead of an instance returns an unbound function.
-        if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
-            return mmr
-        # ignore the first parameter of the method, which is usually "self"
-        params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
-        for pname, param in params:
-            if pname in {"X", "y", "Y", "Xt", "yt"}:
-                continue
-            if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
-                continue
-            mmr.add_request(
-                param=pname,
-                alias=None,
-            )
+        mmr = MethodMetadataRequest(owner=self, method=method)
+        method_metadata_args = self._get_metadata_args_and_aliases(method)
+        for param, alias in method_metadata_args.items():
+            mmr.add_request(param=param, alias=alias)
         return mmr
 
-    @classmethod
-    def _get_default_requests(cls):
+    def _get_default_requests(self):
         """Collect default request values.
 
         This method combines the information present in ``__metadata_request__*``
         class attributes, as well as determining request keys from method
         signatures.
         """
-        requests = MetadataRequest(owner=cls.__name__)
+        requests = MetadataRequest(owner=self)
 
         for method in SIMPLE_METHODS:
             setattr(
                 requests,
                 method,
-                cls._build_request_for_signature(router=requests, method=method),
+                self._build_request_for_signature(method=method),
             )
-
-        # Then overwrite those defaults with the ones provided in
-        # __metadata_request__* attributes. Defaults set in
-        # __metadata_request__* attributes take precedence over signature
-        # sniffing.
-
-        # need to go through the MRO since this is a class attribute and
-        # ``vars`` doesn't report the parent class attributes. We go through
-        # the reverse of the MRO so that child classes have precedence over
-        # their parents.
-        substr = "__metadata_request__"
-        for base_class in reversed(inspect.getmro(cls)):
-            for attr, value in vars(base_class).items():
-                if substr not in attr:
-                    continue
-                # we don't check for attr.startswith() since python prefixes attrs
-                # starting with __ with the `_ClassName`.
-                method = attr[attr.index(substr) + len(substr) :]
-                for prop, alias in value.items():
-                    # Here we add request values specified via those class attributes
-                    # to the `MetadataRequest` object. Adding a request which already
-                    # exists will override the previous one. Since we go through the
-                    # MRO in reverse order, the one specified by the lowest most classes
-                    # in the inheritance tree are the ones which take effect.
-                    getattr(requests, method).add_request(param=prop, alias=alias)
-
         return requests
 
     def _get_metadata_request(self):
