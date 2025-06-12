@@ -93,34 +93,7 @@ Emeritus Maintainers Team
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
-.. raw:: html
-
-  <table  cellspacing="0" cellpadding="8" style="border-collapse: collapse; width: 99%;">
-    <thead>
-    <tr>
-      <th style="width: 33%;"></th>
-      <th style="width: 33%;"></th>
-      <th style="width: 33%;"></th>
-    </tr>
-  </thead>
-    <tbody>
-    <tr><td>Mathieu Blondel</td><td>Joris Van den Bossche</td><td>Matthieu Brucher</td></tr>
-    <tr><td>Lars Buitinck</td><td>David Cournapeau</td><td>Noel Dawe</td></tr>
-    <tr><td>Vincent Dubourg</td><td>Edouard Duchesnay</td><td>Alexander Fabisch</td></tr>
-    <tr><td>Virgile Fritsch</td><td>Satrajit Ghosh</td><td>Angel Soler Gollonet</td></tr>
-    <tr><td>Chris Gorgolewski</td><td>Jaques Grobler</td><td>Yaroslav Halchenko</td></tr>
-    <tr><td>Brian Holt</td><td>Arnaud Joly</td><td>Thouis (Ray) Jones</td></tr>
-    <tr><td>Kyle Kastner</td><td>Manoj Kumar</td><td>Robert Layton</td></tr>
-    <tr><td>Wei Li</td><td>Paolo Losi</td><td>Gilles Louppe</td></tr>
-    <tr><td>Jan Hendrik Metzen</td><td>Vincent Michel</td><td>Jarrod Millman</td></tr>
-    <tr><td>Vlad Niculae</td><td>Alexandre Passos</td><td>Fabian Pedregosa</td></tr>
-    <tr><td>Peter Prettenhofer</td><td>Hanmin Qin</td><td>(Venkat) Raghav Rajagopalan</td></tr>
-    <tr><td>Jacob Schreiber</td><td>杜世橋 Du Shiqiao</td><td>Bertrand Thirion</td></tr>
-    <tr><td>Tom Dupré la Tour</td><td>Jake Vanderplas</td><td>Nelle Varoquaux</td></tr>
-    <tr><td>David Warde-Farley</td><td>Ron Weiss</td><td>Roman Yurchak</td></tr>
-    </tbody>
-  </table>
-
+.. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
 ...........................
