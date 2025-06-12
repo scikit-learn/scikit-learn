@@ -16,9 +16,9 @@ importances can be high even for features that are not predictive of the target
 variable, as long as the model has the capacity to use them to overfit.
 
 This example shows how to use Permutation Importances as an alternative that
-can mitigate those limitations. It also introduces a new method from recent
-litterature on random forests that allows removing the aforementioned biases
-from MDI while keeping its computational efficiency.
+can mitigate those limitations. It also introduces a method allows removing the
+aforementioned biases from MDI while keeping its computational efficiency by
+leveraging the out-of-bag data points of each tree in the forest.
 
 .. rubric:: References
 
