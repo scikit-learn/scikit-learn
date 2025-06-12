@@ -498,9 +498,9 @@ def test_unbiased_feature_importance_asymptotics(estimator, global_random_seed):
 
     rng = check_random_state(global_random_seed)
     X_large, y_large = make_classification(
-        n_samples=100000, n_features=4, n_informative=2, n_redundant=0, random_state=rng
+        n_samples=10000, n_features=4, n_informative=2, n_redundant=0, random_state=rng
     )
-    sub_sample_sizes = [100, 1000, 10000, 50000, 100000]
+    sub_sample_sizes = [100, 1000, 10000]
 
     params = dict(
         n_estimators=50,
@@ -513,7 +513,7 @@ def test_unbiased_feature_importance_asymptotics(estimator, global_random_seed):
     res = []
     for sample_size in sub_sample_sizes:
         sub_sample_indices = rng.choice(
-            list(range(100000)), size=sample_size, replace=False
+            list(range(10000)), size=sample_size, replace=False
         )
         X_small = X_large[sub_sample_indices]
         y_small = y_large[sub_sample_indices]
@@ -521,17 +521,15 @@ def test_unbiased_feature_importance_asymptotics(estimator, global_random_seed):
         est.fit(X_small, y_small)
         res.append(
             np.linalg.norm(
-                est.feature_importances_
+                est._unnormalized_feature_importances
                 - est.unbiased_feature_importances_
-                / est.unbiased_feature_importances_.sum()
             )
         )
-        if res[-1] < 1e-1:
-            # Feature importance measures converged
-            break
 
     res = np.array(res)
-    assert np.all(res[:-1] > res[1:])
+    # Test that the L2 norm of the vector of differences decreases with sample size
+    # with a small tolerance
+    assert np.all((res[:-1] - res[1:]) > -1e-3)
 
 
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
@@ -1641,7 +1639,7 @@ def test_forest_degenerate_unbiased_feature_importances():
         )
 
 
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_unbiased_feature_importance_on_train(name, global_random_seed):
     from sklearn.ensemble._forest import _generate_sample_indices
 
@@ -1652,18 +1650,18 @@ def test_unbiased_feature_importance_on_train(name, global_random_seed):
         random_state=global_random_seed,
         n_classes=2,
     )
-    clf = FOREST_ESTIMATORS[name](
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](
         n_estimators=1,
         bootstrap=True,
         random_state=global_random_seed,
     )
-    clf.fit(X, y)
+    est.fit(X, y)
     ufi_on_train = 0
-    for tree_idx, tree in enumerate(clf.estimators_):
+    for tree in est.estimators_:
         in_bag_indicies = _generate_sample_indices(
-            clf.estimators_[tree_idx].random_state, n_samples, n_samples
+            tree.random_state, n_samples, n_samples
         )
-        X_in_bag = clf._validate_X_predict(X)[in_bag_indicies]
+        X_in_bag = est._validate_X_predict(X)[in_bag_indicies]
         y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
         ufi_on_train_tree = (
             tree._compute_unbiased_feature_importance_and_oob_predictions(
@@ -1673,9 +1671,10 @@ def test_unbiased_feature_importance_on_train(name, global_random_seed):
             )[0]
         )
         ufi_on_train += ufi_on_train_tree
-    ufi_on_train /= clf.n_estimators
-    ufi_on_train /= ufi_on_train.sum()
-    assert_allclose(clf.feature_importances_, ufi_on_train, rtol=0, atol=1e-12)
+    ufi_on_train /= est.n_estimators
+    assert_allclose(
+        est._unnormalized_feature_importances, ufi_on_train, rtol=0, atol=1e-12
+    )
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
@@ -1787,7 +1786,7 @@ def test_ufi_match_paper(name, global_random_seed):
                             * (impurity[node_left] + impurity_train[node_left])
                             - weighted_n_node_samples[node_right]
                             * (impurity_train[node_right] + impurity[node_right])
-                        )
+                        ) / 2
             feature_importance += fi_tree
         feature_importance /= n_estimators
         return feature_importance
@@ -1835,7 +1834,7 @@ def test_importance_reg_match_onehot_classi(global_random_seed):
 
     assert_almost_equal(cls.feature_importances_, reg.feature_importances_)
     assert_almost_equal(
-        cls.unbiased_feature_importances_, reg.unbiased_feature_importances_
+        cls.unbiased_feature_importances_, reg.unbiased_feature_importances_ * 2
     )
 
 

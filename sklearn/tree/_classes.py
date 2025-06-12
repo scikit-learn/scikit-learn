@@ -686,9 +686,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             Normalized total reduction of criteria by feature
             (Gini importance).
         """
+        return self._unnormalized_feature_importances / np.sum(
+            self._unnormalized_feature_importances
+        )
+
+    @property
+    def _unnormalized_feature_importances(self):
         check_is_fitted(self)
 
-        return self.tree_.compute_feature_importances()
+        return self.tree_.compute_feature_importances(normalize=False)
 
     def _compute_unbiased_feature_importance_and_oob_predictions(
         self, X_test, y_test, sample_weight

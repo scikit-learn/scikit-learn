@@ -1481,7 +1481,6 @@ cdef class Tree:
                             self.value[right_value_idx] * oob_node_values[right_idx, c, k]
                             * self.nodes[right_idx].weighted_n_node_samples
                         )
-                        # TODO: assert node.weighted_n_node_samples = self.nodes[left_idx].weighted_n_node_samples + self.nodes[right_idx].weighted_n_node_samples
                 else:  # Regression
                     importance += (
                         (node.impurity + oob_node_values[node_idx, 0, k])
@@ -1492,7 +1491,7 @@ cdef class Tree:
                         -
                         (self.nodes[right_idx].impurity + oob_node_values[right_idx, 0, k])
                         * self.nodes[right_idx].weighted_n_node_samples
-                    )
+                    ) / 2
             return importance / self.n_outputs
 
     cdef cnp.ndarray _get_value_ndarray(self):
