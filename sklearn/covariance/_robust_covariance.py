@@ -636,10 +636,6 @@ class MinCovDet(EmpiricalCovariance):
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated robust covariance matrix.
 
-        For an example of using covariance estimation with Mahalanobis
-        distances on Gaussian distributed data, refer to
-        :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`
-
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)

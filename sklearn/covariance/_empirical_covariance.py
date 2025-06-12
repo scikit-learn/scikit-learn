@@ -137,10 +137,6 @@ class EmpiricalCovariance(BaseEstimator):
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
 
-        For an example of using covariance estimation with Mahalanobis
-        distances on Gaussian distributed data, refer to
-        :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`
-
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
@@ -358,6 +354,11 @@ class EmpiricalCovariance(BaseEstimator):
         -------
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
+
+        Notes
+        -----
+        For a detailed example of how outlying data affects the Mahalanobis distance,
+        see :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`.
         """
         X = validate_data(self, X, reset=False)
 
