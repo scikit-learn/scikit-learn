@@ -348,7 +348,7 @@ def test_get_final_cv_score_method(direction):
 
     # Get the score using the method
     cv_score = sfs.get_final_cv_score(X, y)
-    
+
     # Check that the score is a float
     assert isinstance(cv_score, float)
 

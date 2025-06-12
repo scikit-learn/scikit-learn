@@ -363,11 +363,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             The mean cross-validation score of the selected feature set.
         """
         check_is_fitted(self)
-        
+
         X_new = X[:, self.support_]
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
         cloned_estimator = clone(self.estimator)
-        
+
         return cross_val_score(
             cloned_estimator,
             X_new,
