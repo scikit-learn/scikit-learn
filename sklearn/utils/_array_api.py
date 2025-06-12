@@ -638,7 +638,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         # If weights are 1D, add singleton dimensions for broadcasting
         shape = [1] * a.ndim
         shape[axis] = a.shape[axis]
-        weights = xp.reshape(weights, shape)
+        weights = xp.reshape(weights, tuple(shape))
 
     if xp.isdtype(a.dtype, "complex floating"):
         raise NotImplementedError(

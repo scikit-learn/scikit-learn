@@ -1893,10 +1893,11 @@ def check_array_api_metric(
         np.asarray(a_xp)
         np.asarray(b_xp)
         numpy_as_array_works = True
-    except (TypeError, RuntimeError):
+    except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # array-api-strict chose to raise RuntimeError instead. Exception type
-        # may need to be updated in the future for other libraries.
+        # array-api-strict chose to raise RuntimeError instead. NumPy raises
+        # a ValueError if the `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
     if numpy_as_array_works:
