@@ -261,6 +261,9 @@ class _BaseScorer(_MetadataRequester):
             f"{response_method_string}{kwargs_string})"
         )
 
+    def _routing_str(self):
+        return repr(self)
+
     def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
@@ -493,6 +496,9 @@ class _PassthroughScorer(_MetadataRequester):
 
     def __repr__(self):
         return f"{self._estimator.__class__}.score"
+
+    def _routing_str(self):
+        return repr(self)
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
