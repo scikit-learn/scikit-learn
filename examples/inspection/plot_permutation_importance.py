@@ -16,14 +16,14 @@ importances can be high even for features that are not predictive of the target
 variable, as long as the model has the capacity to use them to overfit.
 
 This example shows how to use Permutation Importances as an alternative that
-can mitigate those limitations. It also introduces a method allows removing the
+can mitigate those limitations. It also introduces a method that allows removing the
 aforementioned biases from MDI while keeping its computational efficiency by
 leveraging the out-of-bag data points of each tree in the forest.
 
 .. rubric:: References
 
 * :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-  2001. <10.1023/A:1010933404324>
+  2001. <10.1023/A:1010933404324>`
 * :doi:`Li, X., Wang, Y., Basu, S., Kumbier, K., & Yu, B., "A debiased MDI
   feature importance measure for random forests". Proceedings of the 33rd Conference on
   Neural Information Processing Systems (NeurIPS 2019). <10.48550/arXiv.1906.10845>`
@@ -279,7 +279,7 @@ ax.figure.tight_layout()
 # match the ranking obtained with oob-based impurity method on this new random
 # forest.
 #
-# Do note that permutation importances are costly as they require computing 
+# Do note that permutation importances are costly as they require computing
 # many predictions with perturbed version of the dataset for each feature.
 # When working on large datasets with random forests, it may be preferable to
-# use debiased impurity based feature importance measures instead.
+# use the unbiased impurity-based feature importance measure instead.
