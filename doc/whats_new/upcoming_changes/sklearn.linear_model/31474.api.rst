@@ -1,0 +1,6 @@
+- :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`, and
+  :class:`linear_model.SGDOneClassSVM` now deprecate negative values for the
+  `power_t` parameter. Using a negative value will raise a warning in version 1.8
+  and will raise an error in version 1.10. A value in the range [0.0, inf) must be used
+  instead.
+  By :user:`Ritvi Alagusankar <ritvi-alagusankar>`

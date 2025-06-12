@@ -1,5 +1,0 @@
-- Change the `ConvergenceWarning` message of estimators that rely on the
-  `"lbfgs"` optimizer internally to be more informative and to avoid
-  suggesting to increase the maximum number of iterations when it is not
-  user-settable or when the convergence problem happens before reaching it.
-  By :user:`Olivier Grisel <ogrisel>`.

@@ -837,13 +837,11 @@ prior over all :math:`\lambda_i` is chosen to be the same gamma distribution
 given by the hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 ARD is also known in the literature as *Sparse Bayesian Learning* and *Relevance
-Vector Machine* [3]_ [4]_. For a worked-out comparison between ARD and `Bayesian
-Ridge Regression`_, see the example below.
+Vector Machine* [3]_ [4]_.
 
-.. rubric:: Examples
+See :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a worked-out comparison between ARD and `Bayesian Ridge Regression`_.
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
-
+See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py` for a comparison between various methods - Lasso, ARD and ElasticNet - on correlated data.
 
 .. rubric:: References
 

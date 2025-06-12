@@ -1,1 +1,0 @@
-- :class:`gaussian_process.GaussianProcessClassifier` now includes a `latent_mean_and_variance` method that exposes the mean and the variance of the latent function, :math:`f`, used in the Laplace approximation. By :user:`Miguel González Duque <miguelgondu>`

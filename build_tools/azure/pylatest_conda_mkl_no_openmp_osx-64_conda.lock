@@ -26,14 +26,14 @@ https://repo.anaconda.com/pkgs/main/osx-64/ninja-base-1.12.1-h1962661_0.conda#9c
 https://repo.anaconda.com/pkgs/main/osx-64/openssl-3.0.16-h184c1cd_0.conda#8e3c130ef85c3260d535153b4d0fd63a
 https://repo.anaconda.com/pkgs/main/osx-64/readline-8.2-hca72f7f_0.conda#971667436260e523f6f7355fdfa238bf
 https://repo.anaconda.com/pkgs/main/osx-64/tbb-2021.8.0-ha357a0b_0.conda#fb48530a3eea681c11dafb95b3387c0f
-https://repo.anaconda.com/pkgs/main/osx-64/tk-8.6.14-h4d00af3_0.conda#a2c03940c2ae54614301ec82e6a98d75
+https://repo.anaconda.com/pkgs/main/osx-64/tk-8.6.14-h0a12a5f_1.conda#b5c23bac899d2e153b438a2b638c2c9b
 https://repo.anaconda.com/pkgs/main/osx-64/freetype-2.13.3-h02243ff_0.conda#acf5e48106235eb200eecb79119c7ffc
 https://repo.anaconda.com/pkgs/main/osx-64/libgfortran-5.0.0-11_3_0_hecd8cb5_28.conda#2eb13b680803f1064e53873ae0aaafb3
 https://repo.anaconda.com/pkgs/main/osx-64/mkl-2023.1.0-h8e150cf_43560.conda#85d0f3431dd5c6ae44f8725fdd3d3e59
 https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.45.3-h6c40b1e_0.conda#2edf909b937b3aad48322c9cb2e8f1a0
 https://repo.anaconda.com/pkgs/main/osx-64/zstd-1.5.6-h138b38a_0.conda#f4d15d7d0054d39e6a24fe8d7d1e37c5
 https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.7.0-h2dfa3ea_0.conda#82a118ce0139e2bf6f7a99c4cfbd4749
-https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.9-hcd54a6c_0.conda#1bf9af06f3e476df1f72e8674a9224df
+https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.11-he8d2d4c_0.conda#9783e45825df3d441392b7fa66759899
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-python-1.0.9-py312h6d0c2b6_9.conda#425936421fe402074163ac3ffe33a060
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.9-py312h46256e1_0.conda#f8c1547bbf522a600ee795901240a7b0
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
@@ -53,7 +53,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/pytz-2024.1-py312hecd8cb5_0.conda#2b2
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-78.1.1-py312hecd8cb5_0.conda#76b66b96a1564cb76011408c1eb8df3e
 https://repo.anaconda.com/pkgs/main/osx-64/six-1.17.0-py312hecd8cb5_0.conda#aadd782bc06426887ae0835eedd98ceb
 https://repo.anaconda.com/pkgs/main/noarch/toml-0.10.2-pyhd3eb1b0_0.conda#cda05f5f6d8509529d1a2743288d197a
-https://repo.anaconda.com/pkgs/main/osx-64/tornado-6.5-py312h46256e1_0.conda#7e82973ed53e71854971e7b3922fad24
+https://repo.anaconda.com/pkgs/main/osx-64/tornado-6.5.1-py312h46256e1_0.conda#8ce574315c742b52790459087e273fb4
 https://repo.anaconda.com/pkgs/main/osx-64/unicodedata2-15.1.0-py312h46256e1_1.conda#4a7fd1dec7277c8ab71aa11aa08df86b
 https://repo.anaconda.com/pkgs/main/osx-64/wheel-0.45.1-py312hecd8cb5_0.conda#fafb8687668467d8624d2ddd0909bce9
 https://repo.anaconda.com/pkgs/main/osx-64/fonttools-4.55.3-py312h46256e1_0.conda#f7680dd6b8b1c2f8aab17cf6630c6deb

@@ -594,16 +594,27 @@ Donating to the project
 =======================
 
 If you are interested in donating to the project or to one of our code-sprints,
-please donate via the `NumFOCUS Donations Page
-<https://numfocus.org/donate-to-scikit-learn>`_.
+you have several options:
 
 .. raw:: html
 
   <p class="text-center">
     <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">
-      Help us, <strong>donate!</strong>
+      Donate via NumFOCUS
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://github.com/sponsors/scikit-learn">
+      Donate via GitHub Sponsors
     </a>
   </p>
+
+**Donation Options:**
+
+* **NumFOCUS**: Donate via the `NumFOCUS Donations Page
+  <https://numfocus.org/donate-to-scikit-learn>`_, scikit-learn's fiscal sponsor.
+
+* **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
+  <https://github.com/sponsors/scikit-learn>`_.
+
 
 All donations will be handled by `NumFOCUS <https://numfocus.org/>`_, a non-profit
 organization which is managed by a board of `Scipy community members

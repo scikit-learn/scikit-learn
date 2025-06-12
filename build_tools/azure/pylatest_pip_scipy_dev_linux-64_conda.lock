@@ -18,13 +18,19 @@ https://repo.anaconda.com/pkgs/main/linux-64/libmpdec-4.0.0-h5eee18b_0.conda#feb
 https://repo.anaconda.com/pkgs/main/linux-64/libuuid-1.41.5-h5eee18b_0.conda#4a6a2354414c9080327274aa514e5299
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.16-h5eee18b_0.conda#5875526739afa058cfa84da1fa7a2ef4
+https://repo.anaconda.com/pkgs/main/linux-64/pthread-stubs-0.3-h0ce48e5_1.conda#973a642312d2a28927aaf5b477c67250
+https://repo.anaconda.com/pkgs/main/linux-64/xorg-libxau-1.0.12-h9b100fa_0.conda#a8005a9f6eb903e113cd5363e8a11459
+https://repo.anaconda.com/pkgs/main/linux-64/xorg-libxdmcp-1.1.5-h9b100fa_0.conda#c284a09ddfba81d9c4e740110f09ea06
+https://repo.anaconda.com/pkgs/main/linux-64/xorg-xorgproto-2024.1-h5eee18b_1.conda#412a0d97a7a51d23326e57226189da92
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.6.4-h5eee18b_1.conda#3581505fa450962d631bd82b8616350e
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_1.conda#92e42d8310108b0a440fb2e60b2b2a25
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
+https://repo.anaconda.com/pkgs/main/linux-64/libxcb-1.17.0-h9b100fa_0.conda#fdf0d380fa3809a301e2dbc0d5183883
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be42180685cce6e6b0329201d9f48efb
-https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h39e8969_0.conda#78dbc5e3c69143ebc037fc5d5b22e597
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.45.3-h5eee18b_0.conda#acf93d6aceb74d6110e20b44cc45939e
-https://repo.anaconda.com/pkgs/main/linux-64/python-3.13.2-hf623796_100_cp313.conda#bf836f30ac4c16fd3d71c1aaa25da08c
+https://repo.anaconda.com/pkgs/main/linux-64/xorg-libx11-1.8.12-h9b100fa_1.conda#6298b27afae6f49f03765b2a03df2fcb
+https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h993c535_1.conda#bfe656b29fc64afe5d4bd46dbd5fd240
+https://repo.anaconda.com/pkgs/main/linux-64/python-3.13.4-h4612cfd_100_cp313.conda#f8f9a0c1eff2663e73ef296d5303c3f8
 https://repo.anaconda.com/pkgs/main/linux-64/setuptools-78.1.1-py313h06a4308_0.conda#8f8e1c1e3af9d2d371aaa0ee8316ae7c
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.45.1-py313h06a4308_0.conda#29057e876eedce0e37c2388c138a19f9
 https://repo.anaconda.com/pkgs/main/noarch/pip-25.1-pyhc872135_2.conda#2778327d2a700153fefe0e69438b18e1
@@ -59,7 +65,7 @@ https://repo.anaconda.com/pkgs/main/noarch/pip-25.1-pyhc872135_2.conda#2778327d2
 # pip urllib3 @ https://files.pythonhosted.org/packages/6b/11/cc635220681e93a0183390e26485430ca2c7b5f9d33b15c74c2861cb8091/urllib3-2.4.0-py3-none-any.whl#sha256=4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813
 # pip jinja2 @ https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl#sha256=85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/7e/b1/8e63033b259e0a4e40dd1ec4a9fee17718016845048b43a36ec67d62e6fe/pyproject_metadata-0.9.1-py3-none-any.whl#sha256=ee5efde548c3ed9b75a354fc319d5afd25e9585fa918a34f62f904cc731973ad
-# pip pytest @ https://files.pythonhosted.org/packages/30/3d/64ad57c803f1fa1e963a7946b6e0fea4a70df53c1a7fed304586539c2bac/pytest-8.3.5-py3-none-any.whl#sha256=c69214aa47deac29fad6c2a4f590b9c4a9fdb16a403176fe154b79c0b4d4d820
+# pip pytest @ https://files.pythonhosted.org/packages/2f/de/afa024cbe022b1b318a3d224125aa24939e99b4ff6f22e0ba639a2eaee47/pytest-8.4.0-py3-none-any.whl#sha256=f40f825768ad76c0977cbacdf1fd37c6f7a468e460ea6a0636078f8972d4517e
 # pip python-dateutil @ https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl#sha256=a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
 # pip requests @ https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl#sha256=70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6
 # pip meson-python @ https://files.pythonhosted.org/packages/28/58/66db620a8a7ccb32633de9f403fe49f1b63c68ca94e5c340ec5cceeb9821/meson_python-0.18.0-py3-none-any.whl#sha256=3b0fe051551cc238f5febb873247c0949cd60ded556efa130aa57021804868e2

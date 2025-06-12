@@ -1,7 +1,0 @@
-- Using the `"liblinear"` solver for multiclass classification with a one-versus-rest
-  scheme in :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV` is deprecated and will raise an error in
-  version 1.8. Either use a solver which supports the multinomial loss or wrap the
-  estimator in a :class:`sklearn.multiclass.OneVsRestClassifier` to keep applying a
-  one-versus-rest scheme.
-  By :user:`Jérémie du Boisberranger <jeremiedbb>`.

@@ -555,7 +555,6 @@ NOT_SYMMETRIC_METRICS = {
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
-    "median_absolute_error",
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
@@ -1474,9 +1473,10 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-def check_sample_weight_invariance(name, metric, y1, y2):
+def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 10, size=len(y1))
+    if sample_weight is None:
+        sample_weight = rng.randint(1, 10, size=len(y1))
 
     # top_k_accuracy_score always lead to a perfect score for k > 1 in the
     # binary case
@@ -1552,7 +1552,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     if not name.startswith("unnormalized"):
         # check that the score is invariant under scaling of the weights by a
         # common factor
-        for scaling in [2, 0.3]:
+        # Due to numerical instability of floating points in `cumulative_sum` in
+        # `median_absolute_error`, it is not always equivalent when scaling by a float.
+        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+        for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
@@ -1584,8 +1587,10 @@ def test_regression_sample_weight_invariance(name):
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
+    sample_weight = np.arange(len(y_true))
     metric = ALL_METRICS[name]
-    check_sample_weight_invariance(name, metric, y_true, y_pred)
+
+    check_sample_weight_invariance(name, metric, y_true, y_pred, sample_weight)
 
 
 @pytest.mark.parametrize(
@@ -1893,10 +1898,11 @@ def check_array_api_metric(
         np.asarray(a_xp)
         np.asarray(b_xp)
         numpy_as_array_works = True
-    except (TypeError, RuntimeError):
+    except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # array-api-strict chose to raise RuntimeError instead. Exception type
-        # may need to be updated in the future for other libraries.
+        # array-api-strict chose to raise RuntimeError instead. NumPy raises
+        # a ValueError if the `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
     if numpy_as_array_works:

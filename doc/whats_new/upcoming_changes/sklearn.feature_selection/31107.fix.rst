@@ -1,4 +1,0 @@
-- :class:`feature_selection.SelectFromModel` now correctly works when the estimator
-  is an instance of :class:`linear_model.ElasticNetCV` with its `l1_ratio` parameter
-  being an array-like.
-  By :user:`Vasco Pereira <vasco-s-pereira>`.
