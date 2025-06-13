@@ -249,9 +249,9 @@ def config_context(
     Global default configurations (as defined below in the parameter list) take effect
     when scikit-learn is imported.
 
-    This context manager can be used to apply scikit-learn configuration changes locally
-    within a specific scope. Once the context exits, the previous global configuration
-    is restored.
+    This context manager can be used to apply scikit-learn configuration changes within
+    the scope of the with statement. Once the context exits, the previous global
+    configuration is restored.
 
     It is recommended to use this context manager over :func:`set_config` for
     experimental features (such as `array_api_dispatch` or `enable_metadata_routing`),
