@@ -20,7 +20,6 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import (
     _euclidean_distances,
-    cosine_distances,
     euclidean_distances,
 )
 from ..preprocessing import normalize
