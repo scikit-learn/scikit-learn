@@ -75,6 +75,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1876,8 +1877,20 @@ def check_array_api_metric(
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
-    a_xp = xp.asarray(a_np, device=device)
-    b_xp = xp.asarray(b_np, device=device)
+    def _get_device_arr(arr_np):
+        # Gets the equivalent device array for input numpy array
+        # Downcasts to a lower float precision type if float64 isn't
+        # supported (e.g. on MPS)
+        if np.isdtype(arr_np.dtype, "real floating"):
+            max_float_dtype = _max_precision_float_dtype(xp, device)
+            arr_xp = xp.asarray(arr_np, dtype=max_float_dtype, device=device)
+            arr_np = _convert_to_numpy(arr_xp, xp)
+            return arr_np, arr_xp
+        arr_xp = xp.asarray(arr_np, device=device)
+        return arr_np, arr_xp
+
+    a_np, a_xp = _get_device_arr(a_np)
+    b_np, b_xp = _get_device_arr(b_np)
 
     metric_np = metric(a_np, b_np, **metric_kwargs)
 
@@ -2164,6 +2177,66 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
     )
 
 
+def check_array_api_ranking_metric(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array(
+        [
+            [10, 0, 0, 1, 5],
+            [0, 0, 10, 5, 1],
+        ]
+    )
+    y_score_np = np.array(
+        [
+            [0.1, 0.2, 0.3, 4, 70],
+            [5, 1, 3, 0, 50],
+        ]
+    )
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_score_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 0.9], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_score_np,
+        sample_weight=sample_weight,
+    )
+
+    if "k" in signature(metric).parameters:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_score_np,
+            sample_weight=None,
+            k=2,
+        )
+    if "ignore_ties" in signature(metric).parameters:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_score_np,
+            sample_weight=None,
+            ignore_ties=True,
+        )
+
+
 array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -2269,6 +2342,8 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    ndcg_score: [check_array_api_ranking_metric],
+    dcg_score: [check_array_api_ranking_metric],
 }
 
 
