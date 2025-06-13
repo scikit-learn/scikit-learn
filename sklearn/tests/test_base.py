@@ -1026,7 +1026,11 @@ def test_get_params_html_ridgecv():
 
 @pytest.mark.parametrize(
     "initial_value, instance_value",
-    [(np.array([np.float32(2)]), [2]), ([2.0], [np.int32(2)]), (True, 1)],
+    [
+        (np.array([np.float32(2)]), [2]),
+        ([2.0], [np.int32(2)]),
+        (True, 1),
+    ],
 )
 def test_get_params_html_types(initial_value, instance_value):
     class MyEstimator(BaseEstimator):
