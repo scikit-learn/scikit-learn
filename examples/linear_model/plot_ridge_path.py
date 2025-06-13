@@ -65,5 +65,7 @@ plt.xlabel("alpha")
 plt.ylabel("weights")
 plt.title("Ridge Coefficients vs Regularization Strength (alpha)")
 plt.axis("tight")
-plt.legend([f"Feature {i+1}" for i in range(X.shape[1])], loc="best", fontsize="small")
+plt.legend(
+    [f"Feature {i + 1}" for i in range(X.shape[1])], loc="best", fontsize="small"
+)
 plt.show()
