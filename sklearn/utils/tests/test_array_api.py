@@ -24,6 +24,7 @@ from sklearn.utils._array_api import (
     _nanmean,
     _nanmin,
     _ravel,
+    _validate_diagonal_args,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -574,26 +575,46 @@ def test_count_nonzero(
         assert device(array_xp) == device(result)
 
 
-def test_validate_diagonal_args():
+@pytest.mark.parametrize(
+    "array, value, match",
+    [
+        (numpy.array([1, 2, 3]), 1, "`array` should be 2D"),
+        (numpy.array([[1, 2], [3, 4]]), numpy.array([1, 2, 3]), "`value` needs to be"),
+        (numpy.array([[1, 2], [3, 4]]), [1, 2, 3], "`value` needs to be"),
+        (numpy.array([[1, 2], [3, 4]]), numpy.array([[1, 2], [3, 4]]), "`value` needs to be a"),
+    ],
+)
+def test_validate_diagonal_args(array, value, match):
     """Check `_validate_diagonal_args` raises the correct errors."""
-
-
-
-
-@pytest.mark.parametrize("array, c_contiguity", [(numpy.zeros((3,4)), True), (numpy.zeros((3,4)).T, False)])
-def test_fill_diagonal(array, c_contiguity):
-    """Check `_fill_diagonal` behaviour is correct with numpy arrays."""
     xp = _array_api_for_tests("numpy", None)
+    with pytest.raises(ValueError, match=match):
+        _validate_diagonal_args(array, value, xp)
+
+
+@pytest.mark.parametrize("function", ["fill", "add"])
+@pytest.mark.parametrize("c_contiguity", [True, False])
+def test_fill_and_add_to_diagonal(c_contiguity, function):
+    """Check `_fill/add_to_diagonal` behaviour correct with numpy arrays."""
+    xp = _array_api_for_tests("numpy", None)
+    if c_contiguity:
+        array = numpy.zeros((3,4))
+    else:
+        array = numpy.zeros((3,4)).T
     assert array.flags['C_CONTIGUOUS'] == c_contiguity
 
-    _fill_diagonal(array, 1, xp)
+    if function == "fill":
+        func = _fill_diagonal
+    else:
+        func = _add_to_diagonal
+
+    func(array, 1, xp)
     assert_allclose(array.diagonal(), numpy.ones((3,)))
 
-    _fill_diagonal(array, [0, 1, 2], xp)
+    func(array, [0, 1, 2], xp)
     assert_allclose(array.diagonal(), numpy.arange(3))
 
     fill_array = numpy.array([11, 12, 13])
-    _fill_diagonal(array, fill_array, xp)
+    func(array, fill_array, xp)
     assert_allclose(array.diagonal(), fill_array)
 
 
@@ -609,9 +630,9 @@ def test_add_to_diagonal(array, c_contiguity):
     _add_to_diagonal(array, [0, 1, 2], xp)
     assert_allclose(array.diagonal(), numpy.arange(3))
 
-    fill_array = numpy.array([11, 12, 13])
-    _add_to_diagonal(array, fill_array, xp)
-    assert_allclose(array.diagonal(), fill_array)
+    add_array = numpy.array([11, 12, 13])
+    _add_to_diagonal(array, add_array, xp)
+    assert_allclose(array.diagonal(), add_array)
 
 
 
