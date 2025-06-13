@@ -1161,9 +1161,10 @@ class WrongDummyMemory:
     pass
 
 
-def test_check_memory():
-    memory = check_memory("cache_directory")
-    assert memory.location == "cache_directory"
+def test_check_memory(tmp_path):
+    cache_directory = str(tmp_path / "cache_directory")
+    memory = check_memory(cache_directory)
+    assert memory.location == cache_directory
 
     memory = check_memory(None)
     assert memory.location is None

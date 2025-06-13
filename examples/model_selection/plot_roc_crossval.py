@@ -62,8 +62,9 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 # Classification and ROC analysis
 # -------------------------------
 #
-# Here we run a :class:`~sklearn.svm.SVC` classifier with cross-validation and
-# plot the ROC curves fold-wise. Notice that the baseline to define the chance
+# Here we run :func:`~sklearn.model_selection.cross_validate` on a
+# :class:`~sklearn.svm.SVC` classifier, then use the computed cross-validation results
+# to plot the ROC curves fold-wise. Notice that the baseline to define the chance
 # level (dashed ROC curve) is a classifier that would always predict the most
 # frequent class.
 
@@ -71,37 +72,46 @@ import matplotlib.pyplot as plt
 
 from sklearn import svm
 from sklearn.metrics import RocCurveDisplay, auc
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, cross_validate
 
 n_splits = 6
 cv = StratifiedKFold(n_splits=n_splits)
 classifier = svm.SVC(kernel="linear", probability=True, random_state=random_state)
+cv_results = cross_validate(
+    classifier, X, y, cv=cv, return_estimator=True, return_indices=True
+)
 
-tprs = []
-aucs = []
+prop_cycle = plt.rcParams["axes.prop_cycle"]
+colors = prop_cycle.by_key()["color"]
+curve_kwargs_list = [
+    dict(alpha=0.3, lw=1, color=colors[fold % len(colors)]) for fold in range(n_splits)
+]
+names = [f"ROC fold {idx}" for idx in range(n_splits)]
+
 mean_fpr = np.linspace(0, 1, 100)
+interp_tprs = []
 
-fig, ax = plt.subplots(figsize=(6, 6))
-for fold, (train, test) in enumerate(cv.split(X, y)):
-    classifier.fit(X[train], y[train])
-    viz = RocCurveDisplay.from_estimator(
-        classifier,
-        X[test],
-        y[test],
-        name=f"ROC fold {fold}",
-        curve_kwargs=dict(alpha=0.3, lw=1),
-        ax=ax,
-        plot_chance_level=(fold == n_splits - 1),
-    )
-    interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
+_, ax = plt.subplots(figsize=(6, 6))
+viz = RocCurveDisplay.from_cv_results(
+    cv_results,
+    X,
+    y,
+    ax=ax,
+    name=names,
+    curve_kwargs=curve_kwargs_list,
+    plot_chance_level=True,
+)
+
+for idx in range(n_splits):
+    interp_tpr = np.interp(mean_fpr, viz.fpr[idx], viz.tpr[idx])
     interp_tpr[0] = 0.0
-    tprs.append(interp_tpr)
-    aucs.append(viz.roc_auc)
+    interp_tprs.append(interp_tpr)
 
-mean_tpr = np.mean(tprs, axis=0)
+mean_tpr = np.mean(interp_tprs, axis=0)
 mean_tpr[-1] = 1.0
 mean_auc = auc(mean_fpr, mean_tpr)
-std_auc = np.std(aucs)
+std_auc = np.std(viz.roc_auc)
+
 ax.plot(
     mean_fpr,
     mean_tpr,
@@ -111,7 +121,7 @@ ax.plot(
     alpha=0.8,
 )
 
-std_tpr = np.std(tprs, axis=0)
+std_tpr = np.std(interp_tprs, axis=0)
 tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
 tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
 ax.fill_between(
