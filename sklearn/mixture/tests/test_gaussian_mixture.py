@@ -1564,8 +1564,9 @@ def test_gaussian_mixture_array_api_compliance(
 def test_gaussian_mixture_array_api_compliance_with_array_like_constructor_parameters(
     array_namespace, device_, dtype, global_random_seed
 ):
-    """Check that array api works with `weights_init`, which unlike other passed arrays
-    is an init param."""
+    """Check that array api works with array-like constructors: 'means_init',
+    'precisions_init' and 'weights_init'
+    """
     n_features = 2
     n_components = 3
     X, _ = make_blobs(
