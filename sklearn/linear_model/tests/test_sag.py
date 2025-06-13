@@ -69,7 +69,6 @@ def sag(
     sample_weight=None,
     fit_intercept=True,
     saga=False,
-    random_state=77,
 ):
     n_samples, n_features = X.shape[0], X.shape[1]
 
@@ -81,7 +80,7 @@ def sag(
     intercept_sum_gradient = 0.0
     intercept_gradient_memory = np.zeros(n_samples)
 
-    rng = np.random.RandomState(random_state)
+    rng = np.random.RandomState(77)
     decay = 1.0
     seen = set()
 
@@ -91,19 +90,14 @@ def sag(
 
     for epoch in range(n_iter):
         for k in range(n_samples):
-            if sample_weight is not None:
-                idx = rng.choice(
-                    np.arange(n_samples), p=sample_weight / np.sum(sample_weight)
-                )
-            else:
-                idx = int(rng.rand() * n_samples)
+            idx = int(rng.rand() * n_samples)
             # idx = k
             entry = X[idx]
             seen.add(idx)
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
-            # if sample_weight is not None:
-            #    gradient *= sample_weight[idx]
+            if sample_weight is not None:
+                gradient *= sample_weight[idx]
             update = entry * gradient + alpha * weights
             gradient_correction = update - gradient_memory[idx]
             sum_gradient += gradient_correction
