@@ -54,22 +54,13 @@ from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_spars
 ###############################################################################
 # Distance calculation utilities
 
-def _compute_distances(X, centers, metric="euclidean", squared=True, x_squared_norms=None):
+def _compute_distances(X, centers, metric="euclidean", squared=False, x_squared_norms=None):
     """Compute distances between X and centers based on metric."""
     if metric == "euclidean":
-        return _euclidean_distances(X, centers, Y_norm_squared=x_squared_norms, squared=squared)
-    elif metric == "cosine":
-        # For cosine distance, we need normalized data
-        X_normalized = normalize(X)
-        centers_normalized = normalize(centers)
-        return cosine_distances(X_normalized, centers_normalized)
-    else:
-        raise ValueError(f"Unknown metric: {metric}")
-
-def _compute_distances_full(X, centers, metric="euclidean"):
-    """Compute full distance matrix between X and centers based on metric."""
-    if metric == "euclidean":
-        return euclidean_distances(X, centers)
+        if squared and x_squared_norms is not None:
+            return _euclidean_distances(X, centers, Y_norm_squared=x_squared_norms, squared=squared)
+        else:
+            return euclidean_distances(X, centers)
     elif metric == "cosine":
         # For cosine distance, we need normalized data
         X_normalized = normalize(X)
@@ -497,6 +488,7 @@ def _kmeans_single_elkan(
     verbose=False,
     tol=1e-4,
     n_threads=1,
+    metric="euclidean",
 ):
     """A single run of k-means elkan, assumes preparation completed prior.
 
@@ -529,6 +521,11 @@ def _kmeans_single_elkan(
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
 
+    metric : str, default="euclidean"
+        The distance metric to use. Can be "euclidean" or "cosine".
+        When using "cosine", the algorithm will automatically switch to Lloyd's
+        algorithm as Elkan's algorithm is not compatible with cosine distance.
+
     Returns
     -------
     centroid : ndarray of shape (n_clusters, n_features)
@@ -545,6 +542,16 @@ def _kmeans_single_elkan(
     n_iter : int
         Number of iterations run.
     """
+    if metric == "cosine":
+        warnings.warn(
+            "Using cosine distance with Elkan's algorithm is not recommended "
+            "as it may lead to incorrect results. Switching to Lloyd's algorithm.",
+            UserWarning,
+        )
+        return _kmeans_single_lloyd(
+            X, sample_weight, centers_init, max_iter, verbose, tol, n_threads, metric
+        )
+
     n_samples = X.shape[0]
     n_clusters = centers_init.shape[0]
 
@@ -554,7 +561,7 @@ def _kmeans_single_elkan(
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
     labels_old = labels.copy()
-    center_half_distances = _compute_distances_full(centers, centers, metric="euclidean") / 2
+    center_half_distances = _compute_distances(centers, centers, metric="euclidean") / 2
     distance_next_center = np.partition(
         np.asarray(center_half_distances), kth=1, axis=0
     )[1]
@@ -601,7 +608,7 @@ def _kmeans_single_elkan(
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
-        center_half_distances = _compute_distances_full(centers_new, centers_new, metric="euclidean") / 2
+        center_half_distances = _compute_distances(centers_new, centers_new, metric="euclidean") / 2
         distance_next_center = np.partition(
             np.asarray(center_half_distances), kth=1, axis=0
         )[1]
@@ -1321,9 +1328,21 @@ class KMeans(_BaseKMeans):
             Renamed "full" to "lloyd", and deprecated "auto" and "full".
             Changed "auto" to use "lloyd" instead of "elkan".
 
+        .. warning::
+            When using `metric="cosine"`, the algorithm will automatically switch
+            to `"lloyd"` as Elkan's algorithm is not compatible with cosine distance
+            due to the triangle inequality not holding for cosine distance.
+
     metric : {"euclidean", "cosine"}, default="euclidean"
         The distance metric to use for clustering. When using "cosine", 
         the data and centroids are normalized before distance computation.
+
+        .. warning::
+            When using "cosine" distance, the algorithm will automatically use
+            Lloyd's algorithm as Elkan's algorithm is not compatible with cosine
+            distance due to the triangle inequality not holding for cosine distance.
+            This ensures correct clustering results but may be slower than using
+            Euclidean distance with Elkan's algorithm.
 
     Attributes
     ----------
@@ -1572,6 +1591,7 @@ class KMeans(_BaseKMeans):
                 verbose=self.verbose,
                 tol=self._tol,
                 n_threads=self._n_threads,
+                metric=self.metric,
             )
 
             # determine if these results are the best so far
