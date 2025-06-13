@@ -27,9 +27,11 @@ packaging==25.0
     #   pytest
 pluggy==1.6.0
     # via pytest
+pygments==2.19.1
+    # via pytest
 pyproject-metadata==0.9.1
     # via meson-python
-pytest==8.3.5
+pytest==8.4.0
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
@@ -41,5 +43,5 @@ tomli==2.2.1
     # via
     #   meson-python
     #   pytest
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via exceptiongroup
