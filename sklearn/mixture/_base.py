@@ -388,7 +388,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_likelihood : float
             Log-likelihood of `X` under the Gaussian mixture model.
         """
-        check_is_fitted(self)
         xp, _ = get_namespace(X)
         return float(xp.mean(self.score_samples(X)))
 
