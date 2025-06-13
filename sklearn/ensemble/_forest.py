@@ -88,7 +88,7 @@ __all__ = [
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _get_n_samples_bootstrap(n_samples, max_samples):
+def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     """
     Get the number of samples in a bootstrap sample.
 
@@ -102,6 +102,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
               the interval `(0.0, 1.0]`;
             - if int, this indicates the exact number of samples;
             - if None, this indicates the total number of samples.
+    sample_weight : array of shape (n_samples,) or None
+        Sample weights.
 
     Returns
     -------
@@ -118,7 +120,18 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, Real):
-        return max(round(n_samples * max_samples), 1)
+        if sample_weight is None:
+            return max(int(max_samples * n_samples), 1)
+        else:
+            sw_sum = np.sum(sample_weight)
+            if sw_sum <= 1:
+                raise ValueError(
+                    f"The total sum of sample weights is {sw_sum}, which prevents "
+                    "resampling with a fractional value for max_samples="
+                    f"{max_samples}. Either pass max_samples as an integer or "
+                    "use a larger sample_weight."
+                )
+            return max(int(max_samples * sw_sum), 1)
 
 
 def _generate_sample_indices(
@@ -436,7 +449,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         elif self.bootstrap:
             n_samples_bootstrap = _get_n_samples_bootstrap(
-                n_samples=X.shape[0], max_samples=self.max_samples
+                X.shape[0], self.max_samples, self._sample_weight
             )
         else:
             n_samples_bootstrap = None
@@ -594,8 +607,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
 
         n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples,
-            self.max_samples,
+            n_samples, self.max_samples, self._sample_weight
         )
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(

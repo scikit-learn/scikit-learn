@@ -643,7 +643,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     )
     estimator.fit(X, y)
 
-    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples, None)
     n_samples_test = X.shape[0] // 4
     oob_pred = np.zeros([n_samples_test, 2])
     for sample_idx, sample in enumerate(X[:n_samples_test]):
