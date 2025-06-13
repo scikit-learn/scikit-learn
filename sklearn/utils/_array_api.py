@@ -60,6 +60,8 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
+    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
+    clearer pytest parametrization ID names.
 
     Parameters
     ----------
@@ -636,7 +638,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         # If weights are 1D, add singleton dimensions for broadcasting
         shape = [1] * a.ndim
         shape[axis] = a.shape[axis]
-        weights = xp.reshape(weights, shape)
+        weights = xp.reshape(weights, tuple(shape))
 
     if xp.isdtype(a.dtype, "complex floating"):
         raise NotImplementedError(
@@ -665,6 +667,30 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         raise ZeroDivisionError("Weights sum to zero, can't be normalized")
 
     return sum_ / scale
+
+
+def _median(x, axis=None, keepdims=False, xp=None):
+    # XXX: `median` is not included in the array API spec, but is implemented
+    # in most array libraries, and all that we support (as of May 2025).
+    # TODO: consider simplifying this code to use scipy instead once the oldest
+    # supported SciPy version provides `scipy.stats.quantile` with native array API
+    # support (likely scipy 1.6 at the time of writing). Proper benchmarking of
+    # either option with popular array namespaces is required to evaluate the
+    # impact of this choice.
+    xp, _, device = get_namespace_and_device(x, xp=xp)
+
+    # `torch.median` takes the lower of the two medians when `x` has even number
+    # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
+    if array_api_compat.is_torch_namespace(xp):
+        return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
+
+    if hasattr(xp, "median"):
+        return xp.median(x, axis=axis, keepdims=keepdims)
+
+    # Intended mostly for array-api-strict (which as no "median", as per the spec)
+    # as `_convert_to_numpy` does not necessarily work for all array types.
+    x_np = _convert_to_numpy(x, xp=xp)
+    return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
 
 
 def _xlogy(x, y, xp=None):
@@ -854,7 +880,7 @@ def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
     # Temporary workaround needed as long as searchsorted is not widely
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
     xp, _ = get_namespace(a, v, xp=xp)
     if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)

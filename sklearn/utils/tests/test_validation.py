@@ -852,9 +852,9 @@ def test_has_fit_parameter():
         def fit(self, X, y, sample_weight=None):
             pass
 
-    assert has_fit_parameter(
-        TestClassWithDeprecatedFitMethod, "sample_weight"
-    ), "has_fit_parameter fails for class with deprecated fit method."
+    assert has_fit_parameter(TestClassWithDeprecatedFitMethod, "sample_weight"), (
+        "has_fit_parameter fails for class with deprecated fit method."
+    )
 
 
 def test_check_symmetric():
@@ -1161,9 +1161,10 @@ class WrongDummyMemory:
     pass
 
 
-def test_check_memory():
-    memory = check_memory("cache_directory")
-    assert memory.location == "cache_directory"
+def test_check_memory(tmp_path):
+    cache_directory = str(tmp_path / "cache_directory")
+    memory = check_memory(cache_directory)
+    assert memory.location == cache_directory
 
     memory = check_memory(None)
     assert memory.location is None

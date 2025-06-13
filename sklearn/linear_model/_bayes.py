@@ -293,8 +293,19 @@ class BayesianRidge(RegressorMixin, LinearModel):
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
-        U, S, Vh = linalg.svd(X, full_matrices=False)
+        # Let M, N = n_samples, n_features and K = min(M, N).
+        # The posterior covariance matrix needs Vh_full: (N, N).
+        # The full SVD is only required when n_samples < n_features.
+        # When n_samples < n_features, K=M and full_matrices=True
+        # U: (M, M), S: M, Vh_full: (N, N), Vh: (M, N)
+        # When n_samples > n_features, K=N and full_matrices=False
+        # U: (M, N), S: N, Vh_full: (N, N), Vh: (N, N)
+        U, S, Vh_full = linalg.svd(X, full_matrices=(n_samples < n_features))
+        K = len(S)
         eigen_vals_ = S**2
+        eigen_vals_full = np.zeros(n_features, dtype=dtype)
+        eigen_vals_full[0:K] = eigen_vals_
+        Vh = Vh_full[0:K, :]
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.max_iter):
@@ -353,11 +364,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
 
-        # posterior covariance is given by 1/alpha_ * scaled_sigma_
-        scaled_sigma_ = np.dot(
-            Vh.T, Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis]
+        # posterior covariance
+        self.sigma_ = np.dot(
+            Vh_full.T, Vh_full / (alpha_ * eigen_vals_full + lambda_)[:, np.newaxis]
         )
-        self.sigma_ = (1.0 / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
 
@@ -558,11 +568,6 @@ class ARDRegression(RegressorMixin, LinearModel):
     --------
     BayesianRidge : Bayesian ridge regression.
 
-    Notes
-    -----
-    For an example, see :ref:`examples/linear_model/plot_ard.py
-    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
-
     References
     ----------
     D. J. C. MacKay, Bayesian nonlinear modeling for the prediction
@@ -584,6 +589,12 @@ class ARDRegression(RegressorMixin, LinearModel):
     ARDRegression()
     >>> clf.predict([[1, 1]])
     array([1.])
+
+    -   :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` demonstrates ARD
+        Regression.
+    -   :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+        showcases ARD Regression alongside Lasso and Elastic-Net for sparse,
+        correlated signals, in the presence of noise.
     """
 
     _parameter_constraints: dict = {
