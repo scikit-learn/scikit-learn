@@ -583,6 +583,13 @@ def _add_to_diagonal(array, value, xp):
     """
     value, min_rows_columns = _validate_diagonal_args(array, value, xp)
 
+    if _is_numpy_namespace(xp):
+        step = array.shape[1] + 1
+        # Ensure we do not wrap
+        end = array.shape[1] * array.shape[1]
+        array.flat[:end:step] += value
+        return
+
     value = xp.linalg.diagonal(array) + value
     for i in range(min_rows_columns):
         array[i, i] = value[i]
