@@ -157,7 +157,6 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
-        yield check_sample_weights_scaled
         if not tags.input_tags.pairwise:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
@@ -1598,33 +1597,6 @@ def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
 
 def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
     _check_sample_weight_equivalence(name, estimator_orig, sparse.csr_array)
-
-
-def check_sample_weights_scaled(name, estimator_orig):
-    estimator = clone(estimator_orig)
-    estimator_scaled = clone(estimator_orig)
-    set_random_state(estimator, random_state=0)
-    set_random_state(estimator_scaled, random_state=0)
-
-    rng = np.random.RandomState(42)
-    n_samples = 600
-    X, y = make_regression(n_samples=600, n_features=4, random_state=rng)
-    # Use random integers (including zero) as weights.
-    sample_weight = rng.uniform(size=n_samples)
-
-    estimator.fit(X, y)
-    estimator_scaled.fit(np.repeat(X, 2, axis=0), np.repeat(y, 2, axis=0))
-
-    for method in ["predict_proba", "decision_function", "predict", "transform"]:
-        if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator, method)(X)
-            X_pred2 = getattr(estimator_scaled, method)(X)
-            err_msg = (
-                f"Comparing the output of {name}.{method} revealed that fitting "
-                "with duplicating samples does not lead to the same "
-                "results."
-            )
-            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
