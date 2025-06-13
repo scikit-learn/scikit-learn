@@ -378,11 +378,12 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
-        if sample_weight is not None and not self.bootstrap:
-            warn(
-                f"When fitting {self.__class__.__name__} with sample_weight "
-                f"it is recommended to use bootstrap=True, got {self.bootstrap}."
-            )
+
+            if not self.bootstrap:
+                warn(
+                    f"When fitting {self.__class__.__name__} with sample_weight "
+                    f"it is recommended to use bootstrap=True, got {self.bootstrap}."
+                )
 
         return self._fit(
             X,
