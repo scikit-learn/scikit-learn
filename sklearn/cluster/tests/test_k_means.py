@@ -1366,7 +1366,8 @@ def test_relocating_with_duplicates(algorithm, array_constr):
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_cosine_distance_metric(Estimator, global_random_seed):
-    """Test that cosine distance metric works correctly for both KMeans and MiniBatchKMeans."""
+    """Test that cosine distance metric works correctly for
+      both KMeans and MiniBatchKMeans."""
     # Create points on a unit circle and add some noise
     rng = np.random.RandomState(global_random_seed)
     n_samples = 100

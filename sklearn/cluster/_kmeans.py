@@ -20,8 +20,8 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import (
     _euclidean_distances,
-    euclidean_distances,
     cosine_distances,
+    euclidean_distances,
 )
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
@@ -1224,7 +1224,7 @@ class _BaseKMeans(
 
     def _transform(self, X):
         """Guts of transform method; no input validation."""
-        return _compute_distances_full(X, self.cluster_centers_, self.metric)
+        return _compute_distances(X, self.cluster_centers_, self.metric)
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.
@@ -1366,7 +1366,7 @@ class KMeans(_BaseKMeans):
             due to the triangle inequality not holding for cosine distance.
 
     metric : {"euclidean", "cosine"}, default="euclidean"
-        The distance metric to use for clustering. When using "cosine", 
+        The distance metric to use for clustering. When using "cosine",
         the data and centroids are normalized before distance computation.
 
         .. warning::
@@ -1897,7 +1897,7 @@ class MiniBatchKMeans(_BaseKMeans):
         size.
 
     metric : {"euclidean", "cosine"}, default="euclidean"
-        The distance metric to use for clustering. When using "cosine", 
+        The distance metric to use for clustering. When using "cosine",
         the data and centroids are normalized before distance computation.
 
     Attributes
