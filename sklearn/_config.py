@@ -78,7 +78,7 @@ def set_config(
     usage session. Global configuration defaults (as described in the parameter list
     below) take effect when scikit-learn is imported.
 
-    This function can be used to modify the global scikit-learn configuration at this
+    This function can be used to modify the global scikit-learn configuration at
     runtime. Passing `None` as an argument (the default) leaves the corresponding
     setting unchanged. This allows users to selectively update the global configuration
     values without affecting the others.
