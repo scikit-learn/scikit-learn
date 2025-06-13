@@ -18,7 +18,11 @@ from ..base import (
     _fit_context,
 )
 from ..exceptions import ConvergenceWarning
-from ..metrics.pairwise import _euclidean_distances, euclidean_distances, cosine_distances
+from ..metrics.pairwise import (
+    _euclidean_distances,
+    euclidean_distances,
+    cosine_distances,
+)
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
@@ -54,11 +58,16 @@ from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_spars
 ###############################################################################
 # Distance calculation utilities
 
-def _compute_distances(X, centers, metric="euclidean", squared=False, x_squared_norms=None):
+
+def _compute_distances(
+    X, centers, metric="euclidean", squared=False, x_squared_norms=None
+):
     """Compute distances between X and centers based on metric."""
     if metric == "euclidean":
         if squared and x_squared_norms is not None:
-            return _euclidean_distances(X, centers, Y_norm_squared=x_squared_norms, squared=squared)
+            return _euclidean_distances(
+                X, centers, Y_norm_squared=x_squared_norms, squared=squared
+            )
         else:
             return euclidean_distances(X, centers)
     elif metric == "cosine":
@@ -68,6 +77,7 @@ def _compute_distances(X, centers, metric="euclidean", squared=False, x_squared_
         return cosine_distances(X_normalized, centers_normalized)
     else:
         raise ValueError(f"Unknown metric: {metric}")
+
 
 ###############################################################################
 # Initialization heuristic
@@ -189,14 +199,26 @@ def kmeans_plusplus(
 
     # Call private k-means++
     centers, indices = _kmeans_plusplus(
-        X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials, metric
+        X,
+        n_clusters,
+        x_squared_norms,
+        sample_weight,
+        random_state,
+        n_local_trials,
+        metric,
     )
 
     return centers, indices
 
 
 def _kmeans_plusplus(
-    X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None, metric="euclidean"
+    X,
+    n_clusters,
+    x_squared_norms,
+    sample_weight,
+    random_state,
+    n_local_trials=None,
+    metric="euclidean",
 ):
     """Computational component for initialization of n_clusters by
     k-means++. Prior validation of data is assumed.
@@ -259,7 +281,11 @@ def _kmeans_plusplus(
 
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = _compute_distances(
-        centers[0, np.newaxis], X, metric=metric, squared=True, x_squared_norms=x_squared_norms
+        centers[0, np.newaxis],
+        X,
+        metric=metric,
+        squared=True,
+        x_squared_norms=x_squared_norms,
     ).flatten()
     current_pot = closest_dist_sq @ sample_weight
 
@@ -276,7 +302,11 @@ def _kmeans_plusplus(
 
         # Compute distances to center candidates
         distance_to_candidates = _compute_distances(
-            X[candidate_ids], X, metric=metric, squared=True, x_squared_norms=x_squared_norms
+            X[candidate_ids],
+            X,
+            metric=metric,
+            squared=True,
+            x_squared_norms=x_squared_norms,
         )
 
         # update closest distances squared and potential for each candidate
@@ -608,7 +638,9 @@ def _kmeans_single_elkan(
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
-        center_half_distances = _compute_distances(centers_new, centers_new, metric="euclidean") / 2
+        center_half_distances = (
+            _compute_distances(centers_new, centers_new, metric="euclidean") / 2
+        )
         distance_next_center = np.partition(
             np.asarray(center_half_distances), kth=1, axis=0
         )[1]
