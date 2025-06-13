@@ -8,13 +8,14 @@ from numpy.testing import assert_allclose
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
+    _add_to_diagonal,
     _asarray_with_order,
     _atol_for_type,
     _average,
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
-    _fill_or_add_to_diagonal,
+    _fill_diagonal,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
@@ -573,12 +574,52 @@ def test_count_nonzero(
         assert device(array_xp) == device(result)
 
 
+def test_validate_diagonal_args():
+    """Check `_validate_diagonal_args` raises the correct errors."""
+
+
+
+
+@pytest.mark.parametrize("array, c_contiguity", [(numpy.zeros((3,4)), True), (numpy.zeros((3,4)).T, False)])
+def test_fill_diagonal(array, c_contiguity):
+    """Check `_fill_diagonal` behaviour is correct with numpy arrays."""
+    xp = _array_api_for_tests("numpy", None)
+    assert array.flags['C_CONTIGUOUS'] == c_contiguity
+
+    _fill_diagonal(array, 1, xp)
+    assert_allclose(array.diagonal(), numpy.ones((3,)))
+
+    _fill_diagonal(array, [0, 1, 2], xp)
+    assert_allclose(array.diagonal(), numpy.arange(3))
+
+    fill_array = numpy.array([11, 12, 13])
+    _fill_diagonal(array, fill_array, xp)
+    assert_allclose(array.diagonal(), fill_array)
+
+
+@pytest.mark.parametrize("array, c_contiguity", [(numpy.zeros((3,4)), True), (numpy.zeros((3,4)).T, False)])
+def test_add_to_diagonal(array, c_contiguity):
+    """Check `_add_to_diagonal` behaviour is correct with numpy arrays."""
+    xp = _array_api_for_tests("numpy", None)
+    assert array.flags['C_CONTIGUOUS'] == c_contiguity
+
+    _add_to_diagonal(array, 1, xp)
+    assert_allclose(array.diagonal(), numpy.ones((3,)))
+
+    _add_to_diagonal(array, [0, 1, 2], xp)
+    assert_allclose(array.diagonal(), numpy.arange(3))
+
+    fill_array = numpy.array([11, 12, 13])
+    _add_to_diagonal(array, fill_array, xp)
+    assert_allclose(array.diagonal(), fill_array)
+
+
+
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-@pytest.mark.parametrize("wrap", [True, False])
 def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     xp = _array_api_for_tests(array_namespace, device_)
 
@@ -590,17 +631,6 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
         _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
-
-
-def test_fill_or_add_to_diagonal_transpose():
-    """Check `_fill_or_add_to_diagonal` when `reshape` returns a copy."""
-    xp = _array_api_for_tests("numpy", None)
-    # Transposing an array makes it F-contiguous, meaning `reshape(x, (-1,))`, used
-    # within `_fill_or_add_to_diagonal`, returns a copy instead of a view. Note
-    # `numpy.fill_diagonal` avoids this problem as it uses `.flat` instead of `reshape`
-    array = numpy.ones((2, 2)).T
-    _fill_or_add_to_diagonal(array, value=99, xp=xp, add_value=False)
-    assert array[0, 0] == 99
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
