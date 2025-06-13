@@ -1032,6 +1032,7 @@ def test_get_params_html_ridgecv():
         ([2.0], [np.int32(2)], 0),
         (True, 1, 0),
         ([1, 2], [3], 1),
+        (np.array([1]), 1, 1),
     ],
 )
 def test_get_params_html_types(initial_value, instance_value, non_default_length):
