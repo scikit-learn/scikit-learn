@@ -1003,6 +1003,7 @@ def test_get_params_html():
     assert est._get_params_html().non_default == ("empty",)
 
 
+# non regression test see github issue #31525
 def test_get_params_html_ridgecv():
     est = RidgeCV(np.logspace(-3, 3, num=10))
     assert_allclose(
@@ -1025,17 +1026,20 @@ def test_get_params_html_ridgecv():
 
 
 @pytest.mark.parametrize(
-    "initial_value, instance_value",
+    "initial_value, instance_value, non_default_length",
     [
-        (np.array([np.float32(2)]), [2]),
-        ([2.0], [np.int32(2)]),
-        (True, 1),
+        (np.array([np.float32(2)]), [2], 0),
+        ([2.0], [np.int32(2)], 0),
+        (True, 1, 0),
+        ([1, 2], [3], 1),
     ],
 )
-def test_get_params_html_types(initial_value, instance_value):
+def test_get_params_html_types(initial_value, instance_value, non_default_length):
     class MyEstimator(BaseEstimator):
         def __init__(self, initial_value=initial_value):
             self.initial_value = initial_value
 
     est = MyEstimator(initial_value=instance_value)
-    assert len(est._get_params_html().non_default) == 0
+    # when initial_value and instance_value are different, it means
+    # that instance_value is a non default value
+    assert len(est._get_params_html().non_default) == non_default_length
