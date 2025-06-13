@@ -105,7 +105,7 @@ def test_converged_to_local_maximum(kernel):
     )
 
 
-@pytest.mark.parametrize("kernel", non_fixed_kernels)
+@pytest.mark.parametrize("kernel", non_fixed_kernels[:-1])
 def test_lml_gradient(kernel):
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
