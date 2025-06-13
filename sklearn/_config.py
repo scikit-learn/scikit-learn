@@ -253,10 +253,6 @@ def config_context(
     the scope of the with statement. Once the context exits, the previous global
     configuration is restored.
 
-    It is recommended to use this context manager over :func:`set_config` for
-    experimental features (such as `array_api_dispatch` or `enable_metadata_routing`),
-    as their support is not yet consistently available across the library.
-
     Parameters
     ----------
     assume_finite : bool, default=None
