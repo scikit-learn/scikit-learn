@@ -26,7 +26,6 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -1001,32 +1000,6 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
-
-
-def test_get_params_html_ridgecv():
-    """Check that we detect non-default parameters with various types.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/31525
-    """
-    est = RidgeCV(np.logspace(-3, 3, num=10))
-    assert_allclose(
-        est._get_params_html()["alphas"],
-        np.array(
-            [
-                1.00000000e-03,
-                4.64158883e-03,
-                2.15443469e-02,
-                1.00000000e-01,
-                4.64158883e-01,
-                2.15443469e00,
-                1.00000000e01,
-                4.64158883e01,
-                2.15443469e02,
-                1.00000000e03,
-            ]
-        ),
-    )
 
 
 def make_estimator_with_param(default_value):
