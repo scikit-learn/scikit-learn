@@ -287,7 +287,7 @@ def _check_fitted_model(km):
 )
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers.copy(), lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
