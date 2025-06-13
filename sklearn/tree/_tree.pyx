@@ -2,29 +2,27 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
-
-from libc.stdlib cimport free
-from libc.string cimport memcpy
-from libc.string cimport memset
-from libc.stdint cimport INTPTR_MAX
 from libc.math cimport isnan
-from libcpp.vector cimport vector
-from libcpp.algorithm cimport pop_heap
-from libcpp.algorithm cimport push_heap
-from libcpp.stack cimport stack
+from libc.stdint cimport INTPTR_MAX
+from libc.stdlib cimport free
+from libc.string cimport memcpy, memset
 from libcpp cimport bool
+from libcpp.algorithm cimport pop_heap, push_heap
+from libcpp.stack cimport stack
+from libcpp.vector cimport vector
 
 import struct
 
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
-from ._utils cimport safe_realloc
-from ._utils cimport sizet_ptr_to_ndarray
+from ._utils cimport int32t_ptr_to_ndarray, safe_realloc, sizet_ptr_to_ndarray, goes_left
+
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -40,6 +38,7 @@ cdef extern from "numpy/arrayobject.h":
 from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
 
+
 cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
@@ -54,18 +53,112 @@ TREE_UNDEFINED = -2
 cdef intp_t _TREE_LEAF = TREE_LEAF
 cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
+# XXX: this includes cat_split, but it breaks joblib.hash
+# NODE_DTYPE = np.dtype({
+#     'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
+#               'impurity', 'n_node_samples', 'weighted_n_node_samples'],
+#     'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
+#                 np.intp, np.float64],
+#     'offsets': [
+#         <Py_ssize_t> &(<Node*> NULL).left_child,
+#         <Py_ssize_t> &(<Node*> NULL).right_child,
+#         <Py_ssize_t> &(<Node*> NULL).feature,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).impurity,
+#         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+#         <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
+#     ]
+# })
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
+
 cdef Node dummy
-NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# A 32‐byte union “SplitValue” ──
+#   – ‘threshold’ is a float64 at offset 0
+#   – ‘cat_split’ is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
+#   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
+SplitValue_dtype = np.dtype({
+    'names':   ['threshold', 'cat_split'],
+    'formats': [np.float64,     (np.uint32, 8)],
+    'offsets': [0,              0],      # both subfields start at the same byte 0
+    'itemsize': 32               # union size = 32 bytes
+})
+NODE_DTYPE = np.dtype([
+    ('left_child',              np.intp),   #  8 bytes  (offset 0)
+    ('right_child',             np.intp),   #  8 bytes  (offset 8)
+    ('feature',                 np.intp),   #  8 bytes  (offset 16)
+    ('split_value',             SplitValue_dtype),  # 32 bytes (offset 24)
+    ('impurity',                np.float64),   #  8 bytes (offset 56)
+    ('n_node_samples',          np.intp),      #  8 bytes (offset 64)
+    ('weighted_n_node_samples', np.float64),   #  8 bytes (offset 72)
+    ('missing_go_to_left',      np.uint8),      #  1 byte  (offset 80)
+    # NumPy will auto‐pad to a multiple of 8 (so total sizeof Node_dtype = 88 bytes),
+    # exactly matching C’s sizeof(Node) on a 64‐bit machine.
+], align=True)
+# NODE_DTYPE = np.dtype({
+#     'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
+#               'impurity', 'n_node_samples', 'weighted_n_node_samples', 'missing_go_to_left'],
+#     'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
+#                 np.intp, np.float64, np.bool],
+#     'offsets': [
+#         <Py_ssize_t> &(<Node*> NULL).left_child,
+#         <Py_ssize_t> &(<Node*> NULL).right_child,
+#         <Py_ssize_t> &(<Node*> NULL).feature,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).impurity,
+#         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+#         <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples,
+#         <Py_ssize_t> &(<Node*> NULL).missing_go_to_left
+#     ]
+# })
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.n_constant_features = 0
     record.impurity = INFINITY
     record.lower_bound = -INFINITY
     record.upper_bound = INFINITY
+
+# =============================================================================
+# Cache manager for categorical splits
+# =============================================================================
+
+cdef class CategoryCacheMgr:
+    """Class to manage the category cache memory during Tree.apply()
+    """
+    def __cinit__(self, n_nodes):
+        # construct empty vector of vectors
+        # self.bitset_arr = new vector[vector[BITSET_INNER_DTYPE_C]]()
+        self.n_nodes = n_nodes
+        self.bitset_arr = np.empty((n_nodes, 8), dtype=np.uint32)
+
+    # def __dealloc__(self):
+        # if self.bitset_arr is not NULL:
+        #     del self.bitset_arr
+        #     self.bitset_arr = NULL
+
+    cdef inline void populate(
+        self,
+        Node *nodes,
+        int32_t[:] n_categories
+    ) noexcept:
+        cdef intp_t i
+        cdef int32_t ncat
+
+        if nodes == NULL:
+            return
+
+        for i in range(self.n_nodes):
+            if nodes[i].left_child != _TREE_LEAF:
+                ncat = n_categories[nodes[i].feature]
+
+                # popoulate a bitset if this feature is categorical
+                if ncat > 0:
+                    copy_array_to_memview(self.bitset_arr[i, :], nodes[i].split_value.cat_split)
 
 # =============================================================================
 # TreeBuilder
@@ -81,6 +174,7 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
+        const int32_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -145,6 +239,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
+        const int32_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -170,7 +265,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef float64_t min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
 
         cdef intp_t start
         cdef intp_t end
@@ -253,10 +348,18 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, parent_record.impurity,
-                                         n_node_samples, weighted_n_node_samples,
-                                         split.missing_go_to_left)
+                node_id = tree._add_node(
+                    parent,
+                    is_left,
+                    is_leaf,
+                    split.feature,
+                    # split.split_value.threshold,
+                    split.split_value,
+                    parent_record.impurity,
+                    n_node_samples,
+                    weighted_n_node_samples,
+                    split.missing_go_to_left
+                )
 
                 if node_id == INTPTR_MAX:
                     rc = -1
@@ -400,6 +503,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
+        const int32_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -411,7 +515,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef intp_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -466,7 +570,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node.left_child = _TREE_LEAF
                     node.right_child = _TREE_LEAF
                     node.feature = _TREE_UNDEFINED
-                    node.threshold = _TREE_UNDEFINED
+                    node.split_value.threshold = <float64_t> _TREE_UNDEFINED
+                    # node.split_value.cat_split = _TREE_UNDEFINED
 
                 else:
                     # Node is expandable
@@ -608,13 +713,18 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             is_leaf = (is_leaf or split.pos >= end or
                        split.improvement + EPSILON < min_impurity_decrease)
 
-        node_id = tree._add_node(parent - tree.nodes
-                                 if parent != NULL
-                                 else _TREE_UNDEFINED,
-                                 is_left, is_leaf,
-                                 split.feature, split.threshold, parent_record.impurity,
-                                 n_node_samples, weighted_n_node_samples,
-                                 split.missing_go_to_left)
+        node_id = tree._add_node(
+            parent - tree.nodes if parent != NULL else _TREE_UNDEFINED,
+            is_left,
+            is_leaf,
+            split.feature,
+            # split.split_value.threshold,
+            split.split_value,
+            parent_record.impurity,
+            n_node_samples,
+            weighted_n_node_samples,
+            split.missing_go_to_left
+        )
         if node_id == INTPTR_MAX:
             return -1
 
@@ -715,6 +825,12 @@ cdef class Tree:
     missing_go_to_left : array of bool, shape [node_count]
         missing_go_to_left[i] holds a bool indicating whether or not there were
         missing values at node i.
+
+    n_classes : array of intp_t, shape [n_outputs]
+        n_classes[j] holds the number of classes of the j-th output.
+
+    n_categories : array of int32_t, shape [n_features]
+        n_categories[i] holds the number of categories of the i-th feature.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
@@ -744,7 +860,7 @@ cdef class Tree:
 
     @property
     def threshold(self):
-        return self._get_node_ndarray()['threshold'][:self.node_count]
+        return self._get_node_ndarray()['split_value']['threshold'][:self.node_count]
 
     @property
     def impurity(self):
@@ -766,9 +882,20 @@ cdef class Tree:
     def value(self):
         return self._get_value_ndarray()[:self.node_count]
 
+    @property
+    def n_categories(self):
+        return self.n_categories
+        # return int32t_ptr_to_ndarray(self.n_categories, self.n_features).copy()
+
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
-    def __cinit__(self, intp_t n_features, cnp.ndarray n_classes, intp_t n_outputs):
+    def __cinit__(
+        self,
+        intp_t n_features,
+        cnp.ndarray n_classes,
+        intp_t n_outputs,
+        cnp.ndarray n_categories,
+    ):
         """Constructor."""
         cdef intp_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -781,12 +908,17 @@ cdef class Tree:
         self.n_classes = NULL
         safe_realloc(&self.n_classes, n_outputs)
 
+        self.n_categories = n_categories
+        # safe_realloc(&self.n_categories, n_features)
+
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
 
         cdef intp_t k
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
+        # for k in range(n_features):
+            # self.n_categories[k] = n_categories[k]
 
         # Inner structures
         self.max_depth = 0
@@ -806,7 +938,9 @@ cdef class Tree:
         """Reduce re-implementation, for pickling."""
         return (Tree, (self.n_features,
                        sizet_ptr_to_ndarray(self.n_classes, self.n_outputs),
-                       self.n_outputs), self.__getstate__())
+                       self.n_outputs,
+                       self.n_categories
+                       ), self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
@@ -830,6 +964,16 @@ cdef class Tree:
         node_ndarray = d['nodes']
         value_ndarray = d['values']
 
+        # If the array is big-endian, swap it back to native first:
+        if not node_ndarray.dtype.isnative:
+            # byteswap() returns a new array with the data swapped in place,
+            # then newbyteorder() marks it as native‐endian dtype.
+            _swapped = node_ndarray.byteswap() 
+            node_ndarray    = _swapped.view(_swapped.dtype.newbyteorder())
+        if not value_ndarray.dtype.isnative:
+            _swapped = value_ndarray.byteswap() 
+            value_ndarray    = _swapped.view(_swapped.dtype.newbyteorder())
+
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
@@ -841,6 +985,7 @@ cdef class Tree:
         )
 
         self.capacity = node_ndarray.shape[0]
+
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
@@ -894,11 +1039,19 @@ cdef class Tree:
         self.capacity = capacity
         return 0
 
-    cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, float64_t threshold, float64_t impurity,
-                          intp_t n_node_samples,
-                          float64_t weighted_n_node_samples,
-                          uint8_t missing_go_to_left) except -1 nogil:
+    cdef intp_t _add_node(
+        self,
+        intp_t parent,
+        bint is_left,
+        bint is_leaf,
+        intp_t feature,
+        # float64_t threshold,
+        SplitValue split_value,
+        float64_t impurity,
+        intp_t n_node_samples,
+        float64_t weighted_n_node_samples,
+        uint8_t missing_go_to_left
+    ) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -926,12 +1079,15 @@ cdef class Tree:
             node.left_child = _TREE_LEAF
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
-            node.threshold = _TREE_UNDEFINED
+            node.split_value.threshold = _TREE_UNDEFINED
+            # XXX: we don't do this since _TREE_UNDEFINED is a intp_t
+            # node.cat_split = 0
 
         else:
             # left_child and right_child will be set later
             node.feature = feature
-            node.threshold = threshold
+            node.split_value.threshold = split_value.threshold
+            node.split_value.cat_split = split_value.cat_split
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
@@ -976,9 +1132,16 @@ cdef class Tree:
         cdef Node* node = NULL
         cdef intp_t i = 0
 
+        # setup category cache manager
+        cache_mgr = CategoryCacheMgr(self.node_count)
+        cache_mgr.populate(self.nodes, self.n_categories)
+        cdef BITSET_INNER_DTYPE_C[:, ::1] cat_caches = cache_mgr.bitset_arr
+        cdef BITSET_INNER_DTYPE_C[:] cache = np.zeros(8, dtype=np.uint32)
+
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
+                cache = cat_caches[i]
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     X_i_node_feature = X_ndarray[i, node.feature]
@@ -986,11 +1149,22 @@ cdef class Tree:
                     if isnan(X_i_node_feature):
                         if node.missing_go_to_left:
                             node = &self.nodes[node.left_child]
+                            cache = cat_caches[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    elif X_i_node_feature <= node.threshold:
+                            cache = cat_caches[node.right_child]
+                    elif goes_left(
+                        X_i_node_feature,
+                        node.split_value,
+                        self.n_categories[node.feature],
+                        cache
+                    ):
+                        cache = cat_caches[node.left_child]
                         node = &self.nodes[node.left_child]
+                    # elif X_i_node_feature <= node.split_value.threshold:
+                        # node = &self.nodes[node.left_child]
                     else:
+                        cache = cat_caches[node.right_child]
                         node = &self.nodes[node.right_child]
 
                 out[i] = <intp_t>(node - self.nodes)  # node offset
@@ -1053,7 +1227,8 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    # if feature_value <= node.threshold:
+                    if feature_value <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1109,7 +1284,8 @@ cdef class Tree:
                     indices[indptr[i + 1]] = <intp_t>(node - self.nodes)
                     indptr[i + 1] += 1
 
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    # if X_ndarray[i, node.feature] <= node.threshold:
+                    if X_ndarray[i, node.feature] <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1189,7 +1365,8 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    # if feature_value <= node.threshold:
+                    if feature_value <= node.split_value.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1389,7 +1566,8 @@ cdef class Tree:
 
                     if is_target_feature:
                         # In this case, we push left or right child on stack
-                        if X[sample_idx, feature_idx] <= current_node.threshold:
+                        # if X[sample_idx, feature_idx] <= current_node.threshold:
+                        if X[sample_idx, feature_idx] <= current_node.split_value.threshold:
                             node_idx_stack[stack_size] = current_node.left_child
                         else:
                             node_idx_stack[stack_size] = current_node.right_child
@@ -1903,6 +2081,8 @@ cdef void _build_pruned_tree(
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
 
+        SplitValue split_value
+
     with nogil:
         # push root node onto stack
         prune_stack.push({"start": 0, "depth": 0, "parent": _TREE_UNDEFINED, "is_left": 0})
@@ -1919,6 +2099,10 @@ cdef void _build_pruned_tree(
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
+            # TODO: remove this
+            # split_value.threshold = node.split_value.threshold
+            # split_value.cat_split = node.split_value.cat_split
+
             # protect against an infinite loop as a runtime error, when leaves_in_subtree
             # are improperly set where a node is not marked as a leaf, but is a node
             # in the original tree. Thus, it violates the assumption that the node
@@ -1929,9 +2113,17 @@ cdef void _build_pruned_tree(
                 break
 
             new_node_id = tree._add_node(
-                parent, is_left, is_leaf, node.feature, node.threshold,
-                node.impurity, node.n_node_samples,
-                node.weighted_n_node_samples, node.missing_go_to_left)
+                parent,
+                is_left,
+                is_leaf,
+                node.feature,
+                # node.threshold,
+                node.split_value,
+                node.impurity,
+                node.n_node_samples,
+                node.weighted_n_node_samples,
+                node.missing_go_to_left
+            )
 
             if new_node_id == INTPTR_MAX:
                 rc = -1

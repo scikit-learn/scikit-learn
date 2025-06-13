@@ -17,6 +17,7 @@ utils_cython_tree = [
 utils_extension_metadata = {
   'sparsefuncs_fast':
     {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
+  '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
   '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx')]},
   'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
   'murmurhash': {
