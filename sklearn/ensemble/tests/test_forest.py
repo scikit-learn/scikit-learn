@@ -643,7 +643,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     )
     estimator.fit(X, y)
 
-    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples, None)
     n_samples_test = X.shape[0] // 4
     oob_pred = np.zeros([n_samples_test, 2])
     for sample_idx, sample in enumerate(X[:n_samples_test]):
@@ -651,7 +651,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
             oob_unsampled_indices = _generate_unsampled_indices(
-                tree.random_state, len(X), n_samples_bootstrap
+                tree.random_state, len(X), n_samples_bootstrap, None
             )
             if sample_idx in oob_unsampled_indices:
                 n_samples_oob += 1
