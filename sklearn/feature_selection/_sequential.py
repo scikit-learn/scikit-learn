@@ -333,6 +333,46 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
+    def get_final_cv_score(self, X, y=None, **params):
+        """Calculate the cross-validation score of the selected feature set.
+
+        .. versionadded:: 1.8
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
+        y : array-like of shape (n_samples,), default=None
+            Target values. This parameter may be ignored for
+            unsupervised learning.
+
+        **params : dict, default=None
+            Parameters to be passed to the underlying `estimator`, `cv`
+            and `scorer` objects.
+
+        Returns
+        -------
+        score : float
+            The mean cross-validation score of the selected feature set.
+        """
+        check_is_fitted(self)
+
+        X_new = X[:, self.support_]
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
+        cloned_estimator = clone(self.estimator)
+
+        return cross_val_score(
+            cloned_estimator,
+            X_new,
+            y,
+            cv=cv,
+            scoring=self.scoring,
+            n_jobs=self.n_jobs,
+            params=params if _routing_enabled() else None,
+        ).mean()
+
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 

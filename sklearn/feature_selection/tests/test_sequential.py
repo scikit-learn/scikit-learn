@@ -330,3 +330,29 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
     with pytest.raises(ValueError, match="is only supported if"):
         sfs.fit(X, y, sample_weight=np.ones_like(y))
+
+
+@pytest.mark.parametrize("direction", ("forward", "backward"))
+def test_get_final_cv_score_method(direction):
+    """Test that get_final_cv_score method calculates the correct score."""
+    X, y = make_regression(n_features=5, random_state=0)
+
+    # Test with the specified direction
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select=3,
+        direction=direction,
+        cv=2,
+    )
+    sfs.fit(X, y)
+
+    # Get the score using the method
+    cv_score = sfs.get_final_cv_score(X, y)
+
+    # Check that the score is a float
+    assert isinstance(cv_score, float)
+
+    # Verify that the score matches what we would get by manually computing it
+    X_selected = X[:, sfs.get_support()]
+    manual_score = cross_val_score(LinearRegression(), X_selected, y, cv=2).mean()
+    assert pytest.approx(cv_score) == manual_score
