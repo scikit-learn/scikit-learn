@@ -1362,3 +1362,88 @@ def test_relocating_with_duplicates(algorithm, array_constr):
         km.fit(array_constr(X))
 
     assert km.n_iter_ == 1
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_cosine_distance_metric(Estimator, global_random_seed):
+    """Test that cosine distance metric works correctly for both KMeans and MiniBatchKMeans."""
+    # Create points on a unit circle and add some noise
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 100
+    n_clusters = 3
+    
+    # Generate angles for 3 clusters
+    angles = np.array([0, 2 * np.pi / 3, 4 * np.pi / 3])
+    # Add some noise to the angles
+    angles = angles + rng.normal(0, 0.1, size=(n_samples, 1))
+    
+    # Convert to cartesian coordinates
+    X = np.column_stack([np.cos(angles), np.sin(angles)])
+    
+    # Add some noise
+    X += rng.normal(0, 0.1, size=X.shape)
+    
+    # Normalize the data
+    X = X / np.linalg.norm(X, axis=1)[:, np.newaxis]
+    
+    # Fit with cosine metric
+    kmeans_cosine = Estimator(
+        n_clusters=n_clusters,
+        metric="cosine",
+        random_state=global_random_seed,
+        n_init="auto"
+    ).fit(X)
+    
+    # Fit with Euclidean metric for comparison
+    kmeans_euclidean = Estimator(
+        n_clusters=n_clusters,
+        metric="euclidean",
+        random_state=global_random_seed,
+        n_init="auto"
+    ).fit(X)
+    
+    # Check that the centers are normalized for cosine metric
+    centers_norm = np.linalg.norm(kmeans_cosine.cluster_centers_, axis=1)
+    assert np.allclose(centers_norm, 1.0, rtol=1e-5)
+    
+    # Check that the labels are reasonable (each cluster should have points)
+    unique_labels = np.unique(kmeans_cosine.labels_)
+    assert len(unique_labels) == n_clusters
+    
+    # Check that the inertia is reasonable (should be small for normalized data)
+    assert kmeans_cosine.inertia_ < n_samples
+    
+    # Check that cosine distance gives different results than Euclidean
+    # (they should be different since we're using angular data)
+    assert not np.array_equal(kmeans_cosine.labels_, kmeans_euclidean.labels_)
+    
+    # Check that cosine distance gives better results for this dataset
+    # (lower inertia for cosine metric)
+    assert kmeans_cosine.inertia_ < kmeans_euclidean.inertia_
+    
+    # Check that the distances between points and their assigned centers
+    # are smaller than distances to other centers
+    for i in range(n_samples):
+        point = X[i]
+        assigned_center = kmeans_cosine.cluster_centers_[kmeans_cosine.labels_[i]]
+        # Compute cosine distance to assigned center
+        dist_to_assigned = 1 - np.dot(point, assigned_center)
+        # Compute cosine distances to other centers
+        for j in range(n_clusters):
+            if j != kmeans_cosine.labels_[i]:
+                other_center = kmeans_cosine.cluster_centers_[j]
+                dist_to_other = 1 - np.dot(point, other_center)
+                assert dist_to_assigned <= dist_to_other
+    
+    # Check stability across multiple runs
+    kmeans_cosine2 = Estimator(
+        n_clusters=n_clusters,
+        metric="cosine",
+        random_state=global_random_seed,
+        n_init="auto"
+    ).fit(X)
+    
+    # The results should be identical with the same random state
+    assert np.array_equal(kmeans_cosine.labels_, kmeans_cosine2.labels_)
+    assert np.allclose(kmeans_cosine.cluster_centers_, kmeans_cosine2.cluster_centers_)
+    assert np.isclose(kmeans_cosine.inertia_, kmeans_cosine2.inertia_)

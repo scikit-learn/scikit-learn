@@ -18,7 +18,8 @@ from ..base import (
     _fit_context,
 )
 from ..exceptions import ConvergenceWarning
-from ..metrics.pairwise import _euclidean_distances, euclidean_distances
+from ..metrics.pairwise import _euclidean_distances, euclidean_distances, cosine_distances
+from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Interval, StrOptions, validate_params
@@ -51,6 +52,33 @@ from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
 from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
 
 ###############################################################################
+# Distance calculation utilities
+
+def _compute_distances(X, centers, metric="euclidean", squared=True, x_squared_norms=None):
+    """Compute distances between X and centers based on metric."""
+    if metric == "euclidean":
+        return _euclidean_distances(X, centers, Y_norm_squared=x_squared_norms, squared=squared)
+    elif metric == "cosine":
+        # For cosine distance, we need normalized data
+        X_normalized = normalize(X)
+        centers_normalized = normalize(centers)
+        return cosine_distances(X_normalized, centers_normalized)
+    else:
+        raise ValueError(f"Unknown metric: {metric}")
+
+def _compute_distances_full(X, centers, metric="euclidean"):
+    """Compute full distance matrix between X and centers based on metric."""
+    if metric == "euclidean":
+        return euclidean_distances(X, centers)
+    elif metric == "cosine":
+        # For cosine distance, we need normalized data
+        X_normalized = normalize(X)
+        centers_normalized = normalize(centers)
+        return cosine_distances(X_normalized, centers_normalized)
+    else:
+        raise ValueError(f"Unknown metric: {metric}")
+
+###############################################################################
 # Initialization heuristic
 
 
@@ -62,6 +90,7 @@ from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_spars
         "x_squared_norms": ["array-like", None],
         "random_state": ["random_state"],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
+        "metric": [StrOptions({"euclidean", "cosine"})],
     },
     prefer_skip_nested_validation=True,
 )
@@ -73,6 +102,7 @@ def kmeans_plusplus(
     x_squared_norms=None,
     random_state=None,
     n_local_trials=None,
+    metric="euclidean",
 ):
     """Init n_clusters seeds according to k-means++.
 
@@ -109,6 +139,9 @@ def kmeans_plusplus(
         Setting to 1 disables the greedy cluster selection and recovers the
         vanilla k-means++ algorithm which was empirically shown to work less
         well than its greedy variant.
+
+    metric : str, default="euclidean"
+        The distance metric to use. Can be "euclidean" or "cosine".
 
     Returns
     -------
@@ -165,14 +198,14 @@ def kmeans_plusplus(
 
     # Call private k-means++
     centers, indices = _kmeans_plusplus(
-        X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials
+        X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials, metric
     )
 
     return centers, indices
 
 
 def _kmeans_plusplus(
-    X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None
+    X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None, metric="euclidean"
 ):
     """Computational component for initialization of n_clusters by
     k-means++. Prior validation of data is assumed.
@@ -200,6 +233,9 @@ def _kmeans_plusplus(
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
+
+    metric : str, default="euclidean"
+        The distance metric to use. Can be "euclidean" or "cosine".
 
     Returns
     -------
@@ -231,9 +267,9 @@ def _kmeans_plusplus(
     indices[0] = center_id
 
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = _euclidean_distances(
-        centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms, squared=True
-    )
+    closest_dist_sq = _compute_distances(
+        centers[0, np.newaxis], X, metric=metric, squared=True, x_squared_norms=x_squared_norms
+    ).flatten()
     current_pot = closest_dist_sq @ sample_weight
 
     # Pick the remaining n_clusters-1 points
@@ -248,8 +284,8 @@ def _kmeans_plusplus(
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
 
         # Compute distances to center candidates
-        distance_to_candidates = _euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True
+        distance_to_candidates = _compute_distances(
+            X[candidate_ids], X, metric=metric, squared=True, x_squared_norms=x_squared_norms
         )
 
         # update closest distances squared and potential for each candidate
@@ -518,7 +554,7 @@ def _kmeans_single_elkan(
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
     labels_old = labels.copy()
-    center_half_distances = euclidean_distances(centers) / 2
+    center_half_distances = _compute_distances_full(centers, centers, metric="euclidean") / 2
     distance_next_center = np.partition(
         np.asarray(center_half_distances), kth=1, axis=0
     )[1]
@@ -565,7 +601,7 @@ def _kmeans_single_elkan(
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
-        center_half_distances = euclidean_distances(centers_new) / 2
+        center_half_distances = _compute_distances_full(centers_new, centers_new, metric="euclidean") / 2
         distance_next_center = np.partition(
             np.asarray(center_half_distances), kth=1, axis=0
         )[1]
@@ -844,6 +880,7 @@ class _BaseKMeans(
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
+        "metric": [StrOptions({"euclidean", "cosine"})],
     }
 
     def __init__(
@@ -856,6 +893,7 @@ class _BaseKMeans(
         tol,
         verbose,
         random_state,
+        metric,
     ):
         self.n_clusters = n_clusters
         self.init = init
@@ -864,6 +902,7 @@ class _BaseKMeans(
         self.n_init = n_init
         self.verbose = verbose
         self.random_state = random_state
+        self.metric = metric
 
     def _check_params_vs_input(self, X, default_n_init=None):
         # n_clusters
@@ -1017,6 +1056,7 @@ class _BaseKMeans(
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
                 sample_weight=sample_weight,
+                metric=self.metric,
             )
         elif isinstance(init, str) and init == "random":
             seeds = random_state.choice(
@@ -1145,7 +1185,7 @@ class _BaseKMeans(
 
     def _transform(self, X):
         """Guts of transform method; no input validation."""
-        return euclidean_distances(X, self.cluster_centers_)
+        return _compute_distances_full(X, self.cluster_centers_, self.metric)
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.
@@ -1281,6 +1321,10 @@ class KMeans(_BaseKMeans):
             Renamed "full" to "lloyd", and deprecated "auto" and "full".
             Changed "auto" to use "lloyd" instead of "elkan".
 
+    metric : {"euclidean", "cosine"}, default="euclidean"
+        The distance metric to use for clustering. When using "cosine", 
+        the data and centroids are normalized before distance computation.
+
     Attributes
     ----------
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
@@ -1372,6 +1416,7 @@ class KMeans(_BaseKMeans):
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
         "algorithm": [StrOptions({"lloyd", "elkan"})],
+        "metric": [StrOptions({"euclidean", "cosine"})],
     }
 
     def __init__(
@@ -1386,6 +1431,7 @@ class KMeans(_BaseKMeans):
         random_state=None,
         copy_x=True,
         algorithm="lloyd",
+        metric="euclidean",
     ):
         super().__init__(
             n_clusters=n_clusters,
@@ -1395,6 +1441,7 @@ class KMeans(_BaseKMeans):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
+            metric=metric,
         )
 
         self.copy_x = copy_x
@@ -1409,6 +1456,16 @@ class KMeans(_BaseKMeans):
                 (
                     "algorithm='elkan' doesn't make sense for a single "
                     "cluster. Using 'lloyd' instead."
+                ),
+                RuntimeWarning,
+            )
+            self._algorithm = "lloyd"
+
+        if self._algorithm == "elkan" and self.metric == "cosine":
+            warnings.warn(
+                (
+                    "algorithm='elkan' doesn't support cosine metric. "
+                    "Using 'lloyd' instead."
                 ),
                 RuntimeWarning,
             )
@@ -1787,6 +1844,10 @@ class MiniBatchKMeans(_BaseKMeans):
         a value may cause convergence issues, especially with a small batch
         size.
 
+    metric : {"euclidean", "cosine"}, default="euclidean"
+        The distance metric to use for clustering. When using "cosine", 
+        the data and centroids are normalized before distance computation.
+
     Attributes
     ----------
 
@@ -1902,6 +1963,7 @@ class MiniBatchKMeans(_BaseKMeans):
         init_size=None,
         n_init="auto",
         reassignment_ratio=0.01,
+        metric="euclidean",
     ):
         super().__init__(
             n_clusters=n_clusters,
@@ -1911,6 +1973,7 @@ class MiniBatchKMeans(_BaseKMeans):
             random_state=random_state,
             tol=tol,
             n_init=n_init,
+            metric=metric,
         )
 
         self.max_no_improvement = max_no_improvement
