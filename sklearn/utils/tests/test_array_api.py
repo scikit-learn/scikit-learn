@@ -581,7 +581,11 @@ def test_count_nonzero(
         (numpy.array([1, 2, 3]), 1, "`array` should be 2D"),
         (numpy.array([[1, 2], [3, 4]]), numpy.array([1, 2, 3]), "`value` needs to be"),
         (numpy.array([[1, 2], [3, 4]]), [1, 2, 3], "`value` needs to be"),
-        (numpy.array([[1, 2], [3, 4]]), numpy.array([[1, 2], [3, 4]]), "`value` needs to be a"),
+        (
+            numpy.array([[1, 2], [3, 4]]),
+            numpy.array([[1, 2], [3, 4]]),
+            "`value` needs to be a",
+        ),
     ],
 )
 def test_validate_diagonal_args(array, value, match):
@@ -597,10 +601,10 @@ def test_fill_and_add_to_diagonal(c_contiguity, function):
     """Check `_fill/add_to_diagonal` behaviour correct with numpy arrays."""
     xp = _array_api_for_tests("numpy", None)
     if c_contiguity:
-        array = numpy.zeros((3,4))
+        array = numpy.zeros((3, 4))
     else:
-        array = numpy.zeros((3,4)).T
-    assert array.flags['C_CONTIGUOUS'] == c_contiguity
+        array = numpy.zeros((3, 4)).T
+    assert array.flags["C_CONTIGUOUS"] == c_contiguity
 
     if function == "fill":
         func = _fill_diagonal
@@ -611,29 +615,19 @@ def test_fill_and_add_to_diagonal(c_contiguity, function):
     assert_allclose(array.diagonal(), numpy.ones((3,)))
 
     func(array, [0, 1, 2], xp)
-    assert_allclose(array.diagonal(), numpy.arange(3))
+    if function == "fill":
+        expected_diag = numpy.arange(3)
+    else:
+        expected_diag = numpy.ones((3,)) + numpy.arange(3)
+    assert_allclose(array.diagonal(), expected_diag)
 
     fill_array = numpy.array([11, 12, 13])
     func(array, fill_array, xp)
-    assert_allclose(array.diagonal(), fill_array)
-
-
-@pytest.mark.parametrize("array, c_contiguity", [(numpy.zeros((3,4)), True), (numpy.zeros((3,4)).T, False)])
-def test_add_to_diagonal(array, c_contiguity):
-    """Check `_add_to_diagonal` behaviour is correct with numpy arrays."""
-    xp = _array_api_for_tests("numpy", None)
-    assert array.flags['C_CONTIGUOUS'] == c_contiguity
-
-    _add_to_diagonal(array, 1, xp)
-    assert_allclose(array.diagonal(), numpy.ones((3,)))
-
-    _add_to_diagonal(array, [0, 1, 2], xp)
-    assert_allclose(array.diagonal(), numpy.arange(3))
-
-    add_array = numpy.array([11, 12, 13])
-    _add_to_diagonal(array, add_array, xp)
-    assert_allclose(array.diagonal(), add_array)
-
+    if function == "fill":
+        expected_diag = fill_array
+    else:
+        expected_diag = fill_array + numpy.arange(3) + numpy.ones((3,))
+    assert_allclose(array.diagonal(), expected_diag)
 
 
 @pytest.mark.parametrize(
@@ -641,15 +635,37 @@ def test_add_to_diagonal(array, c_contiguity):
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
+def test_fill_diagonal(array_namespace, device_, dtype_name):
+    """Check array API `_fill_diagonal` consistent with `numpy._fill_diagonal`."""
     xp = _array_api_for_tests(array_namespace, device_)
 
-    array_np = numpy.zeros((5, 4), dtype=dtype_name)
+    array_np = numpy.zeros((3, 4), dtype=dtype_name)
     array_xp = xp.asarray(array_np.copy(), device=device_)
 
-    numpy.fill_diagonal(array_np, val=1, wrap=wrap)
+    numpy.fill_diagonal(array_np, val=1)
     with config_context(array_api_dispatch=True):
-        _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+        _fill_diagonal(array_xp, value=1, xp=xp)
+
+    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_add_to_diagonal(array_namespace, device_, dtype_name):
+    """Check `_add_to_diagonal` consistent between array API xp and numpy namespace."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    np_xp = _array_api_for_tests("numpy", None)
+
+    array_np = numpy.zeros((3, 4), dtype=dtype_name)
+    array_xp = xp.asarray(array_np.copy(), device=device_)
+
+    add_val = [1, 2, 3]
+    _fill_diagonal(array_np, value=add_val, xp=np_xp)
+    with config_context(array_api_dispatch=True):
+        _fill_diagonal(array_xp, value=add_val, xp=xp)
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
