@@ -14,6 +14,8 @@ from ._supervised import (
     adjusted_rand_score,
     completeness_score,
     contingency_matrix,
+    # TODO(1.10): Remove
+    entropy,
     expected_mutual_information,
     fowlkes_mallows_score,
     homogeneity_completeness_v_measure,
@@ -39,6 +41,8 @@ __all__ = [
     "consensus_score",
     "contingency_matrix",
     "davies_bouldin_score",
+    # TODO(1.10): Remove
+    "entropy",
     "expected_mutual_information",
     "fowlkes_mallows_score",
     "homogeneity_completeness_v_measure",
