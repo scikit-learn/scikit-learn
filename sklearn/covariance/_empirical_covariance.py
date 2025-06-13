@@ -177,10 +177,10 @@ class EmpiricalCovariance(BaseEstimator):
     ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
     >>> cov.covariance_
-    array([[0.7569..., 0.2818...],
-           [0.2818..., 0.3928...]])
+    array([[0.7569, 0.2818],
+           [0.2818, 0.3928]])
     >>> cov.location_
-    array([0.0622..., 0.0193...])
+    array([0.0622, 0.0193])
     """
 
     # X_test should have been called X

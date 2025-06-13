@@ -335,7 +335,7 @@ def cross_validate(
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])
-    [-3635.5... -3573.3... -6114.7...]
+    [-3635.5 -3573.3 -6114.7]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
@@ -1929,6 +1929,11 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See Also
+    --------
+    LearningCurveDisplay.from_estimator : Plot a learning curve using an
+        estimator and data.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -2390,6 +2395,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----

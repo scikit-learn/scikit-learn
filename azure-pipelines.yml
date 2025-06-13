@@ -84,7 +84,6 @@ jobs:
       )
     matrix:
       pylatest_free_threaded:
-        PYTHON_GIL: '0'
         DISTRIB: 'conda-free-threaded'
         LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'

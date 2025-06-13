@@ -55,7 +55,7 @@ data for testing (evaluating) our classifier::
 
   >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
-  0.96...
+  0.96
 
 When evaluating different settings ("hyperparameters") for estimators,
 such as the ``C`` setting that must be manually set for an SVM,
@@ -120,7 +120,7 @@ time)::
   >>> clf = svm.SVC(kernel='linear', C=1, random_state=42)
   >>> scores = cross_val_score(clf, X, y, cv=5)
   >>> scores
-  array([0.96..., 1. , 0.96..., 0.96..., 1. ])
+  array([0.96, 1. , 0.96, 0.96, 1. ])
 
 The mean score and the standard deviation are hence given by::
 
@@ -135,7 +135,7 @@ scoring parameter::
   >>> scores = cross_val_score(
   ...     clf, X, y, cv=5, scoring='f1_macro')
   >>> scores
-  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+  array([0.96, 1., 0.96, 0.96, 1.])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -153,7 +153,7 @@ validation iterator instead, for instance::
   >>> n_samples = X.shape[0]
   >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, X, y, cv=cv)
-  array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
+  array([0.977, 0.977, 1., 0.955, 1.])
 
 Another option is to use an iterable yielding (train, test) splits as arrays of
 indices, for example::
@@ -168,7 +168,7 @@ indices, for example::
   ...
   >>> custom_cv = custom_cv_2folds(X)
   >>> cross_val_score(clf, X, y, cv=custom_cv)
-  array([1.        , 0.973...])
+  array([1.        , 0.973])
 
 .. dropdown:: Data transformation with held-out data
 
@@ -185,7 +185,7 @@ indices, for example::
     >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
     >>> X_test_transformed = scaler.transform(X_test)
     >>> clf.score(X_test_transformed, y_test)
-    0.9333...
+    0.9333
 
   A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
   estimators, providing this behavior under cross-validation::
@@ -193,7 +193,7 @@ indices, for example::
     >>> from sklearn.pipeline import make_pipeline
     >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
     >>> cross_val_score(clf, X, y, cv=cv)
-    array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
+    array([0.977, 0.933, 0.955, 0.933, 0.977])
 
   See :ref:`combining_estimators`.
 
@@ -237,7 +237,7 @@ predefined scorer names::
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']
-    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+    array([0.96, 1., 0.96, 0.96, 1.])
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
@@ -250,7 +250,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_macro',
      'train_prec_macro', 'train_rec_macro']
     >>> scores['train_rec_macro']
-    array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
+    array([0.97, 0.97, 0.99, 0.98, 0.98])
 
 Here is an example of ``cross_validate`` using a single metric::
 
@@ -372,8 +372,7 @@ Thus, one can create the training/test sets using numpy indexing::
 Repeated K-Fold
 ^^^^^^^^^^^^^^^
 
-:class:`RepeatedKFold` repeats K-Fold n times. It can be used when one
-requires to run :class:`KFold` n times, producing different splits in
+:class:`RepeatedKFold` repeats :class:`KFold` :math:`n` times, producing different splits in
 each repetition.
 
 Example of 2-fold K-Fold repeated 2 times::
@@ -392,7 +391,7 @@ Example of 2-fold K-Fold repeated 2 times::
   [1 3] [0 2]
 
 
-Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
+Similarly, :class:`RepeatedStratifiedKFold` repeats :class:`StratifiedKFold` :math:`n` times
 with different randomization in each repetition.
 
 .. _leave_one_out:
@@ -434,10 +433,10 @@ folds are virtually identical to each other and to the model built from the
 entire training set.
 
 However, if the learning curve is steep for the training size in question,
-then 5- or 10- fold cross validation can overestimate the generalization error.
+then 5 or 10-fold cross validation can overestimate the generalization error.
 
-As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
-fold cross validation should be preferred to LOO.
+As a general rule, most authors and empirical evidence suggest that 5 or 10-fold
+cross validation should be preferred to LOO.
 
 .. dropdown:: References
 
@@ -553,10 +552,10 @@ relative class frequencies are approximately preserved in each fold.
 
 .. _stratified_k_fold:
 
-Stratified k-fold
+Stratified K-fold
 ^^^^^^^^^^^^^^^^^
 
-:class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
+:class:`StratifiedKFold` is a variation of *K-fold* which returns *stratified*
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
@@ -648,10 +647,10 @@ parameter.
 
 .. _group_k_fold:
 
-Group k-fold
+Group K-fold
 ^^^^^^^^^^^^
 
-:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
+:class:`GroupKFold` is a variation of K-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
 obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
