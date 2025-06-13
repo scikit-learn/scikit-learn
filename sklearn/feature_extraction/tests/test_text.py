@@ -20,6 +20,7 @@ from sklearn.feature_extraction.text import (
     HashingVectorizer,
     TfidfTransformer,
     TfidfVectorizer,
+    _indic_tokenizer,
     strip_accents_ascii,
     strip_accents_unicode,
     strip_tags,
@@ -1626,3 +1627,29 @@ def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
     X = [str(uuid.uuid4()) for i in range(100_000)]
     vectorizer = TfidfVectorizer(dtype=dtype).fit(X)
     assert vectorizer.idf_.dtype == dtype
+
+
+def test_countvectorizer_multilingual():
+    tel = ["ప్రధానమంత్రిని కలుసుకున్నారు"]
+    hin = ["आधुनिक मानक हिन्दी"]
+    eng = ["They met the Prime Minister,"]
+    cvect = CountVectorizer(
+        ngram_range=(1, 1),
+        max_features=None,
+        min_df=1,
+        strip_accents=None,
+        tokenizer=_indic_tokenizer,
+    )
+    cvect.fit(tel + hin + eng)
+    expected = {
+        "ప్రధానమంత్రిని",
+        "కలుసుకున్నారు",
+        "आधुनिक",
+        "मानक",
+        "हिन्दी",
+        "they",
+        "met",
+        "the",
+        "prime",
+        "minister",
+    }
