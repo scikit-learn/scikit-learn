@@ -433,7 +433,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        _fill_diagonal(distances, 0, xp=xp, add_value=False)
+        _fill_diagonal(distances, 0, xp=xp)
 
     if squared:
         return distances
@@ -1171,7 +1171,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        _fill_diagonal(S, 0.0, xp, add_value=False)
+        _fill_diagonal(S, 0.0, xp)
     return S
 
 
