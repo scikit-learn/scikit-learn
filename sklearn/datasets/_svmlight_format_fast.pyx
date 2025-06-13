@@ -78,7 +78,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         if n_features and features[0].startswith(qid_prefix):
             _, value = features[0].split(COLON, 1)
             if query_id:
-                query.resize(len(query) + 1)
+                # Disable refcheck because it doesn't work on all Python
+                # implementations. We know we are the sole owner at this point
+                query.resize(len(query) + 1, refcheck=False)
                 query[len(query) - 1] = np.int64(value)
             features.pop(0)
             n_features -= 1
