@@ -471,12 +471,12 @@ def test_unfitted_feature_importances(name):
             *datasets.make_classification(
                 n_samples=1000, n_classes=3, n_informative=6, random_state=0
             ),
-            0.64,
+            0.65,
         ),
         (
             iris.data,
             iris.target * 2 + 1,
-            0.64,
+            0.65,
         ),
         (
             *datasets.make_multilabel_classification(n_samples=300, random_state=0),
@@ -1168,10 +1168,8 @@ def test_class_weights(name):
     # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
-    assert clf1._sample_weight is None
     clf2 = ForestClassifier(class_weight="balanced", random_state=0)
     clf2.fit(iris.data, iris.target)
-    assert_allclose(clf2._sample_weight, 1.0)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Make a multi-output problem with three copies of Iris

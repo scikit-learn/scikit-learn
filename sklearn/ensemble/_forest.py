@@ -129,11 +129,15 @@ def _generate_sample_indices(
 
     random_instance = check_random_state(random_state)
     if sample_weight is None:
-        sample_weight = np.ones(n_samples)
-    normalized_sample_weight = sample_weight / np.sum(sample_weight)
-    sample_indices = random_instance.choice(
-        n_samples, n_samples_bootstrap, replace=True, p=normalized_sample_weight
-    )
+        sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+    else:
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        sample_indices = random_instance.choice(
+            n_samples,
+            n_samples_bootstrap,
+            replace=True,
+            p=normalized_sample_weight,
+        )
     sample_indices = sample_indices.astype(np.int32)
     return sample_indices
 
