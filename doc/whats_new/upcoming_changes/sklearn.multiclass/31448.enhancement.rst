@@ -1,0 +1,4 @@
+- Add new `undefined_prediction_behavior` parameter to
+  :class:`sklearn.multiclass.OneVsRestClassifier` to control the behaviour of the
+  predictions when the underlying estimators produces impossible combinations.
+  By :user:`Marc Bresson <MarcBresson>`
