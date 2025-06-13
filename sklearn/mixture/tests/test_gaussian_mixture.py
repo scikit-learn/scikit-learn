@@ -32,6 +32,7 @@ from sklearn.mixture._gaussian_mixture import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -1485,7 +1486,9 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 @pytest.mark.parametrize("init_params", ["random", "random_from_data"])
 @pytest.mark.parametrize("covariance_type", ["full", "tied", "diag", "spherical"])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_gaussian_mixture_array_api_compliance(
     init_params, covariance_type, array_namespace, device_, dtype, global_random_seed
@@ -1552,29 +1555,39 @@ def test_gaussian_mixture_array_api_compliance(
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
     assert_allclose(gmm.covariances_, _convert_to_numpy(gmm_xp.covariances_, xp=xp))
 
-    # TODO test means_init and precisions_init
-
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
-def test_gaussian_mixture_array_api_compliance_with_weights_init(
+def test_gaussian_mixture_array_api_compliance_with_array_like_constructor_parameters(
     array_namespace, device_, dtype, global_random_seed
 ):
     """Check that array api works with `weights_init`, which unlike other passed arrays
     is an init param."""
+    n_features = 2
+    n_components = 3
     X, _ = make_blobs(
-        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
+        n_samples=int(1e3),
+        n_features=n_features,
+        centers=3,
+        random_state=global_random_seed,
     )
+    X = X.astype(dtype)
 
     xp = _array_api_for_tests(array_namespace, device_)
     X = xp.asarray(X, device=device_)
 
+    means_init = xp.zeros((n_components, n_features), device=device_, dtype=X.dtype)
+    precisions_init = xp.ones((n_components, n_features), device=device_, dtype=X.dtype)
     gmm = GaussianMixture(
         n_components=3,
         covariance_type="diag",
         random_state=global_random_seed,
         init_params="random",
+        means_init=means_init,
+        precisions_init=precisions_init,
         weights_init=xp.asarray([0.1, 0.4, 0.5]),
     )
 
@@ -1628,7 +1641,9 @@ def test_gaussian_mixture_array_api_compliance_with_weights_init(
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_gaussian_mixture_raises_where_array_api_not_implemented(
     init_params, array_namespace, device_, dtype
