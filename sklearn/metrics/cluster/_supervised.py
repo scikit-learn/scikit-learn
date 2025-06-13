@@ -1312,5 +1312,20 @@ def _entropy(labels):
 # TODO(1.10): Remove
 @deprecated("`entropy` is deprecated in 1.8 and will be removed in 1.10.")
 def entropy(labels):
-    """Public version of `_entropy`. To be deprecated."""
+    """Calculate the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
+
+    Returns
+    -------
+    entropy : float
+       The entropy for a labeling.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+    """
     return _entropy(labels)
