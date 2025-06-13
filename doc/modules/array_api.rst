@@ -183,27 +183,28 @@ Input and output array type handling
 ------------------------------------
 
 Estimators and scoring functions are able to accept input arrays
-from different array libraries and/or devices. When mixed input arrays are
-passed, scikit-learn silently converted to make them all consistent.
+from different array libraries and/or devices. When a mixed set of input arrays is
+passed, scikit-learn converts arrays as needed to make them all consistent.
 
 For estimators, the rule is **"everything follows `X`"** - mixed array inputs are
-converted so they are all match the array library and device of `X`.
+converted so that they all match the array library and device of `X`.
 For scoring functions the rule is **"everything follows `y_pred`"** - mixed array
-inputs are converted so they are all match the array library and device of `y_pred`.
+inputs are converted so that they all match the array library and device of `y_pred`.
 
-When a function or method has been called with Array API compatible inputs, the
-convention is to return array values of the same array container type and
+When a function or method has been called with array API compatible inputs, the
+convention is to return arrays from the same array library and on the same
 device as the input data.
-
-For details and reasons behind this choice, see below.
 
 Estimators
 ~~~~~~~~~~
 
-When an estimator is fitted with an Array API compatible `X`, all other
+When an estimator is fitted with an array API compatible `X`, all other
 array inputs, including constructor arguments, (e.g., `y`, `sample_weight`,
-`weights_init`) will be silently converted to match the array library and
+`weights_init`) will be converted to match the array library and
 device of `X`, if they do not already.
+This behaviour enables pipelines to switch from processing on
+the CPU to processing on the GPU within the pipeline.
+
 This allows estimators to accept mixed input types, enabling `X` to be moved
 to a different device within a pipeline, without explicitly moving `y`.
 Note that scikit-learn pipelines do not allow transformation of `y` (to avoid
@@ -214,11 +215,10 @@ the following three steps:
 
 * :class:`~sklearn.preprocessing.TargetEncoder`, which will transform categorial
   `X` but also requires `y`, meaning both `X` and `y` need to be on CPU.
-* :class:`~sklearn.preprocessing.FunctionTransformer`, with the function
-  `partial(torch.asarray, device="cuda")`, which moves `X` to GPU, to improve
-  performance in the next step.
+* :class:`FunctionTransformer(func=partial(torch.asarray, device="cuda")) <sklearn.preprocessing.FunctionTransformer>`,
+  which moves `X` to GPU, to improve performance in the next step.
 * :class:`~sklearn.linear_model.Ridge`, whose performance can be improved when
-  passed arrays on GPU, as it only takes numerical inputs.
+  passed arrays on a GPU, as they can handle large matrix operations very efficiently.
 
 `X` initially contains categorical string data (thus needs to be on CPU), which is
 target encoded to numerical values in :class:`~sklearn.preprocessing.TargetEncoder`.
@@ -228,7 +228,7 @@ target encoded to numerical values in :class:`~sklearn.preprocessing.TargetEncod
 :class:`~sklearn.linear_model.Ridge` is able to accept mixed input types,
 this is not a problem and the pipeline is able to be run.
 
-The fitted attributes of an estimator fitted with an Array API compatible `X`, will
+The fitted attributes of an estimator fitted with an array API compatible `X`, will
 be arrays from the same library as the input and stored on the same device.
 The `predict` and `transform` method subsequently expect
 inputs from the same array library and device as the data passed to the `fit`
@@ -237,10 +237,10 @@ method.
 Scoring functions
 ~~~~~~~~~~~~~~~~~
 
-When an Array API compatible `y_pred` is passed to a scoring function,
-all other array inputs (e.g., `y_true`, `sample_weight`) will be silently converted
+When an array API compatible `y_pred` is passed to a scoring function,
+all other array inputs (e.g., `y_true`, `sample_weight`) will be converted
 to match the array library and device of `y_pred`, if they do not already.
-This allows scoring functions to accept mixed input types, which enables it to be
+This allows scoring functions to accept mixed input types, enabling them to be
 used within a :term:`meta-estimator` (or function that accepts estimators), with a
 pipeline that moves input arrays between devices (e.g., CPU to GPU).
 
@@ -260,9 +260,9 @@ Common estimator checks
 =======================
 
 Add the `array_api_support` tag to an estimator's set of tags to indicate that
-it supports the Array API. This will enable dedicated checks as part of the
+it supports the array API. This will enable dedicated checks as part of the
 common tests to verify that the estimators' results are the same when using
-vanilla NumPy and Array API inputs.
+vanilla NumPy and array API inputs.
 
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
