@@ -63,6 +63,12 @@ def _compute_distances(
     X, centers, metric="euclidean", squared=False, x_squared_norms=None
 ):
     """Compute distances between X and centers based on metric."""
+    if metric == "cosine":
+        X = normalize(X)
+        centers = normalize(centers)
+        # After normalization, cosine distance is equivalent to euclidean distance
+        metric = "euclidean"
+
     if metric == "euclidean":
         if squared and x_squared_norms is not None:
             return _euclidean_distances(
@@ -70,11 +76,6 @@ def _compute_distances(
             )
         else:
             return euclidean_distances(X, centers)
-    elif metric == "cosine":
-        # For cosine distance, we need normalized data
-        X_normalized = normalize(X)
-        centers_normalized = normalize(centers)
-        return cosine_distances(X_normalized, centers_normalized)
     else:
         raise ValueError(f"Unknown metric: {metric}")
 
@@ -704,6 +705,7 @@ def _kmeans_single_lloyd(
     verbose=False,
     tol=1e-4,
     n_threads=1,
+    metric="euclidean",
 ):
     """A single run of k-means lloyd, assumes preparation completed prior.
 
@@ -735,6 +737,10 @@ def _kmeans_single_lloyd(
         The number of OpenMP threads to use for the computation. Parallelism is
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
+
+    metric : {"euclidean", "cosine"}, default="euclidean"
+        The distance metric to use for clustering. When using "cosine",
+        the data and centroids are normalized before distance computation.
 
     Returns
     -------
@@ -768,6 +774,12 @@ def _kmeans_single_lloyd(
     else:
         lloyd_iter = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
+
+    # For cosine distance, normalize the data and centers
+    if metric == "cosine":
+        X = normalize(X)
+        centers = normalize(centers)
+        centers_new = np.zeros_like(centers)
 
     strict_convergence = False
 
