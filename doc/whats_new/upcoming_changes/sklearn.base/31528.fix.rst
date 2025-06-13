@@ -1,3 +1,3 @@
-- Fix regression on the :class: `linear_model.RidgeCV` diagram representation
-  with non-default alphas.
+- Fix regression in HTML representation when detecting the non-default parameters
+  that where of array-like types.
   By :user:`Dea María Léon <deamarialeon>`

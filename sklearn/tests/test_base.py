@@ -1003,8 +1003,12 @@ def test_get_params_html():
     assert est._get_params_html().non_default == ("empty",)
 
 
-# non regression test see github issue #31525
 def test_get_params_html_ridgecv():
+    """Check that we detect non-default parameters with various types.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
     est = RidgeCV(np.logspace(-3, 3, num=10))
     assert_allclose(
         est._get_params_html()["alphas"],
@@ -1025,22 +1029,77 @@ def test_get_params_html_ridgecv():
     )
 
 
+def make_estimator_with_param(default_value):
+    class DynamicEstimator(BaseEstimator):
+        def __init__(self, param=default_value):
+            self.param = param
+
+    return DynamicEstimator
+
+
 @pytest.mark.parametrize(
-    "initial_value, instance_value, non_default_length",
+    "default_value, test_value",
     [
-        (np.array([np.float32(2)]), [2], 0),
-        ([2.0], [np.int32(2)], 0),
-        (True, 1, 0),
-        ([1, 2], [3], 1),
-        (np.array([1]), 1, 1),
+        ((), (1,)),
+        ((), [1]),
+        ((), np.array([1])),
+        ((1, 2), (3, 4)),
+        ((1, 2), [3, 4]),
+        ((1, 2), np.array([3, 4])),
+        (None, 1),
+        (None, []),
+        (None, lambda x: x),
+        (np.nan, 1.0),
+        (np.nan, np.array([np.nan])),
+        ("abc", "def"),
+        ("abc", ["abc"]),
+        (True, False),
+        (1, 2),
+        (1, [1]),
+        (1, np.array([1])),
+        (1.0, 2.0),
+        (1.0, [1.0]),
+        (1.0, np.array([1.0])),
+        ([1, 2], [3]),
+        (np.array([1]), [2, 3]),
     ],
 )
-def test_get_params_html_types(initial_value, instance_value, non_default_length):
-    class MyEstimator(BaseEstimator):
-        def __init__(self, initial_value=initial_value):
-            self.initial_value = initial_value
+def test_param_is_non_default(default_value, test_value):
+    """Check that we detect non-default parameters with various types.
 
-    est = MyEstimator(initial_value=instance_value)
-    # when initial_value and instance_value are different, it means
-    # that instance_value is a non default value
-    assert len(est._get_params_html().non_default) == non_default_length
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
+    estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
+@pytest.mark.parametrize(
+    "default_value, test_value",
+    [
+        (None, None),
+        ((), ()),
+        ((), []),
+        ((), np.array([])),
+        ((1, 2, 3), (1, 2, 3)),
+        ((1, 2, 3), [1, 2, 3]),
+        ((1, 2, 3), np.array([1, 2, 3])),
+        (np.nan, np.nan),
+        ("abc", "abc"),
+        (True, True),
+        (1, 1),
+        (1.0, 1.0),
+        (2, 2.0),
+    ],
+)
+def test_param_is_default(default_value, test_value):
+    """Check that we detect the default parameters and values in an array-like will
+    be reported as default as well.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
+    estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" not in non_default
