@@ -750,10 +750,10 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
-    else:
+    else:  # pragma: no cover
         raise ValueError(
             f"Invalid method '{method}'."
-            "Parameter method must be one of"
+            "Parameter method must be one of "
             "{'sigmoid', 'isotonic', 'temperature'}."
         )
 
@@ -833,10 +833,10 @@ class _CalibratedClassifier:
                 )
         elif self.method == "temperature":
             proba = self.calibrators[0].predict(predictions)
-        else:
+        else:  # pragma: no cover
             raise ValueError(
                 f"Invalid method '{self.method}'."
-                "Parameter `method` must be one of"
+                "Parameter `method` must be one of "
                 "{'sigmoid', 'isotonic', 'temperature'}."
             )
 
