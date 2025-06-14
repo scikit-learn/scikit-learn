@@ -116,6 +116,29 @@ COMPOSITE_METHODS = {
 METHODS = SIMPLE_METHODS + list(COMPOSITE_METHODS.keys())
 
 
+def _routing_repr(obj):
+    """Get a representation suitable for messages printed in routing machinery.
+
+    This is differet that `repr(obj)`, since repr(estimator) can be verbose when
+    there are many constructor arguments set by the user.
+
+    This is most usable for Scorers which can give a nice representation of what they
+    are. This is done by implementing a `_routing_repr` method on the object.
+
+    Since the `owner` object used to be the type name (str), we return that string if
+    the given `obj` is a string, otherwise we return the object's type name.
+
+    .. versionadded:: 1.8
+    """
+    try:
+        return obj._routing_repr()
+    except AttributeError:
+        if isinstance(obj, str):
+            return obj
+        else:
+            return type(obj).__name__
+
+
 def _routing_enabled():
     """Return whether metadata routing is enabled.
 
@@ -155,9 +178,7 @@ def _raise_for_params(params, owner, method, allow=None):
     ValueError
         If metadata routing is not enabled and params are passed.
     """
-    caller = (
-        f"{owner.__class__.__name__}.{method}" if method else owner.__class__.__name__
-    )
+    caller = f"{_routing_repr(owner)}.{method}" if method else _routing_repr(owner)
 
     allow = allow if allow is not None else {}
 
@@ -193,7 +214,7 @@ def _raise_for_unsupported_routing(obj, method, **kwargs):
     """
     kwargs = {key: value for key, value in kwargs.items() if value is not None}
     if _routing_enabled() and kwargs:
-        cls_name = obj.__class__.__name__
+        cls_name = _routing_repr(obj)
         raise NotImplementedError(
             f"{cls_name}.{method} cannot accept given metadata ({set(kwargs.keys())})"
             f" since metadata routing is not yet implemented for {cls_name}."
@@ -215,7 +236,7 @@ class _RoutingNotSupportedMixin:
 
         This estimator does not support metadata routing yet."""
         raise NotImplementedError(
-            f"{self.__class__.__name__} has not implemented metadata routing yet."
+            f"{_routing_repr(self)} has not implemented metadata routing yet."
         )
 
 
@@ -462,8 +483,8 @@ class MethodMetadataRequest:
             message = (
                 f"[{', '.join([key for key in unrequested])}] are passed but are not"
                 " explicitly set as requested or not requested for"
-                f" {self.owner}.{self.method}, which is used within"
-                f" {parent}.{caller}. Call `{self.owner}"
+                f" {_routing_repr(self.owner)}.{self.method}, which is used within"
+                f" {_routing_repr(parent)}.{caller}. Call `{_routing_repr(self.owner)}"
                 + set_requests_on
                 + "` for each metadata you want to request/ignore. See the"
                 " Metadata Routing User guide"
@@ -998,10 +1019,10 @@ class MetadataRouter:
             # an issue if they're different objects.
             if child_params[key] is not res[key]:
                 raise ValueError(
-                    f"In {self.owner}, there is a conflict on {key} between what is"
-                    " requested for this estimator and what is requested by its"
-                    " children. You can resolve this conflict by using an alias for"
-                    " the child estimator(s) requested metadata."
+                    f"In {_routing_repr(self.owner)}, there is a conflict on {key}"
+                    " between what is requested for this estimator and what is"
+                    " requested by its children. You can resolve this conflict by"
+                    " using an alias for the child estimator(s) requested metadata."
                 )
 
         res.update(child_params)
@@ -1081,8 +1102,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
-                " are not routed to any object."
+                f"{_routing_repr(self.owner)}.{method} got unexpected argument(s)"
+                f" {extra_keys}, which are not routed to any object."
             )
 
     def _serialize(self):
@@ -1594,7 +1615,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"The given object ({_obj.__class__.__name__!r}) needs to either"
+            f"The given object ({_routing_repr(_obj)}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"
             " `MetadataRouter` instance."
         )
