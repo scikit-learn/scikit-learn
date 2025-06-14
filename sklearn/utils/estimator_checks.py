@@ -4405,7 +4405,14 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            raise ve
+            raise ValueError(
+                "Your estimator raised a ValueError, but with the incorrect or "
+                "incomplete error message to be considered a graceful fail. "
+                "The expected message in the ValueError should contain one of "
+                f"these literal strings:\n{expected_err_msgs}. "
+                f"For example, you could have `ValueError('{expected_err_msgs[0]}')`.\n"
+                f"This is the error message in your exception:\n{ve}"
+            )
 
 
 @ignore_warnings(category=FutureWarning)
