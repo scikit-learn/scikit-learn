@@ -44,7 +44,7 @@ from sklearn.model_selection import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
@@ -428,7 +428,7 @@ def test_sigmoid_calibration():
 @pytest.mark.parametrize(
     "clf",
     [
-        MultinomialNB(),
+        SVC(probability=True, kernel="rbf", C=5e-2, random_state=42),
     ],
 )
 @pytest.mark.parametrize(
@@ -447,7 +447,6 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         n_informative=n_classes,
         random_state=42,
     )
-    X -= X.min()  # MultinomialNB only allows positive X
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
