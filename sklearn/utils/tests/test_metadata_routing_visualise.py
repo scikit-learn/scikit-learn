@@ -14,9 +14,7 @@ from __future__ import annotations
 
 import re
 
-import pytest
-
-from sklearn import set_config
+from sklearn import config_context, set_config
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.impute import SimpleImputer
@@ -25,18 +23,15 @@ from sklearn.metrics import get_scorer
 from sklearn.model_selection import GroupKFold, RandomizedSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.utils._metadata_requests import WARN
+from sklearn.utils._metadata_requests import WARN, _routing_repr
 from sklearn.utils._metadata_routing_visualise import (
     _collect_routing_info,
     visualise_routing,
 )
 from sklearn.utils.metadata_routing import get_routing_for_object
 
-# Enable the experimental feature once for all tests in this module
-set_config(enable_metadata_routing=True)
 
-
-@pytest.fixture()
+@config_context(enable_metadata_routing=True)
 def capsys_disabled_routing(monkeypatch):
     """Capture *only* stdout of `visualise_routing`.
 
@@ -61,18 +56,20 @@ def capsys_disabled_routing(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
+@config_context(enable_metadata_routing=True)
 def test_collect_routing_info_simple_consumer():
     lr = LogisticRegression().set_fit_request(sample_weight=True)
     routing = get_routing_for_object(lr)
 
     info = _collect_routing_info(routing)
-    path = lr.__class__.__name__  # root path is owner name for simple objects
+    path = _routing_repr(lr)  # root path is _routing_repr of the root object
 
     # The parameter should be present and requested for ``fit`` only.
     assert "sample_weight" in info[path]["params"]
     assert info[path]["statuses"]["sample_weight"]["fit"] is True
 
 
+@config_context(enable_metadata_routing=True)
 def test_collect_routing_info_alias():
     scaler = StandardScaler().set_fit_request(sample_weight="user_w")
     routing = get_routing_for_object(scaler)
@@ -86,18 +83,19 @@ def test_collect_routing_info_alias():
     assert info[path]["statuses"]["sample_weight"]["fit"] == "user_w"
 
 
+@config_context(enable_metadata_routing=True)
 def test_collect_routing_info_show_all_metadata_flag():
     scaler = StandardScaler().set_fit_request(sample_weight=True)
     routing = get_routing_for_object(scaler)
 
     # Collecting with the flag True (always default) still returns all params.
-    info_all = _collect_routing_info(routing, show_all_metadata=True)
+    info_all = _collect_routing_info(routing)
     # "copy" is a legitimate StandardScaler kw on transform method.
-    assert "copy" in info_all[scaler.__class__.__name__]["params"]
+    assert "copy" in info_all[_routing_repr(scaler)]["params"]
 
     # Passing False no longer changes behaviour; still includes all params.
-    info_req = _collect_routing_info(routing, show_all_metadata=False)
-    assert "sample_weight" in info_req[scaler.__class__.__name__]["params"]
+    info_req = _collect_routing_info(routing)
+    assert "sample_weight" in info_req[_routing_repr(scaler)]["params"]
 
 
 # ---------------------------------------------------------------------------
@@ -105,6 +103,7 @@ def test_collect_routing_info_show_all_metadata_flag():
 # ---------------------------------------------------------------------------
 
 
+@config_context(enable_metadata_routing=True)
 def test_visualise_routing_smoke(capsys):
     """The helper should print something meaningful and not crash."""
     pipe = Pipeline(
@@ -130,6 +129,7 @@ def test_visualise_routing_smoke(capsys):
 # ---------------------------------------------------------------------------
 
 
+@config_context(enable_metadata_routing=True)
 def test_no_template_placeholders_in_output(capsys):
     lr = LogisticRegression().set_fit_request(sample_weight=True)
     routing = get_routing_for_object(lr)

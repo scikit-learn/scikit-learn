@@ -67,6 +67,7 @@ from sklearn.utils._metadata_requests import (
     WARN,
     MetadataRequest,
     MetadataRouter,
+    _routing_repr,
     request_is_alias,
 )
 
@@ -168,7 +169,9 @@ def _compute_reachable_methods(router):
     def _walk(obj, incoming_methods, path=""):
         # Build path in the exact same way as in _collect_routing_info so that
         # look-ups can be shared.
-        current_path = f"{path}/{obj.owner}" if path else f"{obj.owner}"
+        current_path = (
+            f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
+        )
 
         incoming_methods = _expand_methods(incoming_methods)
 
@@ -228,7 +231,9 @@ def _compute_method_origins(router):
     origins = defaultdict(set)
 
     def _walk(obj, incoming_methods: set[str], root_method: str, path=""):
-        current_path = f"{path}/{obj.owner}" if path else f"{obj.owner}"
+        current_path = (
+            f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
+        )
 
         inc_expanded = _expand_methods(incoming_methods)
 
@@ -372,7 +377,9 @@ def _collect_routing_info(router, top_router=None):
     # ------------------------------------------------------------------
 
     def _collect(obj, path=""):
-        current_path = f"{path}/{obj.owner}" if path else f"{obj.owner}"
+        current_path = (
+            f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
+        )
         reachable_here = reachable_map.get(current_path, set())
 
         if isinstance(obj, MetadataRequest):
@@ -488,9 +495,9 @@ def _display_tree(
     """Display the routing tree with proper formatting and inline parameters."""
     # Get current path
     if parent_path:
-        current_path = f"{parent_path}/{router.owner}"
+        current_path = f"{parent_path}/{_routing_repr(router.owner)}"
     else:
-        current_path = f"{router.owner}"
+        current_path = _routing_repr(router.owner)
 
     # Determine if this node has parameters
     node_info = routing_map.get(current_path, {})
@@ -505,9 +512,9 @@ def _display_tree(
 
     display_parts = []
     if step_name:
-        display_parts.append(f"{step_name} ({router.owner!r})")
+        display_parts.append(f"{step_name} ({_routing_repr(router.owner)})")
     else:
-        display_parts.append(f"{router.owner!r}")
+        display_parts.append(_routing_repr(router.owner))
 
     # Collect parameters for separate printing (one per line)
     param_strs = []
