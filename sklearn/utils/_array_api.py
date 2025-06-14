@@ -1032,7 +1032,7 @@ def _tolist(array, xp=None):
 
 def _logsumexp(array, axis=None, xp=None):
     # TODO replace by scipy.special.logsumexp when
-    # https://github.com/scipy/scipy/pull/22683 is in a relase
+    # https://github.com/scipy/scipy/pull/22683 is part of a release.
     # The following code is strongly inspired and simplified from
     # scipy.special._logsumexp.logsumexp
     xp, _, device = get_namespace_and_device(array, xp=xp)
