@@ -1080,10 +1080,16 @@ def _temperature_scaling(predictions, labels, sample_weight=None):
         log_loss,
         bounds=(-10.0, 10.0),
         options={
-            "disp": 1,  # Display non-convergence message
             "xatol": 64 * np.finfo(float).eps,
         },
     )
+
+    if not log_beta_minimizer.success:  # pragma: no cover
+        raise RuntimeError(
+            "Temperature scaling fails to optimize during calibration. "
+            "Reason from `scipy.optimize.minimize_scalar`: "
+            f"{log_beta_minimizer.message}"
+        )
 
     return np.exp(log_beta_minimizer.x)
 
