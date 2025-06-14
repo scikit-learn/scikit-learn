@@ -568,6 +568,7 @@ class RFECV(RFE):
     For a detailed example of using RFECV to select features when training a
     :class:`~sklearn.linear_model.LogisticRegression`, see
     :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
+
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <rfe>`.
