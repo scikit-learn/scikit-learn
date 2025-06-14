@@ -2562,7 +2562,7 @@ def test_passed_unrequested_metadata(func, extra_args):
 
     err_msg = re.escape(
         "[metadata] are passed but are not explicitly set as requested or not "
-        "requested for ConsumingClassifier().fit, which is used within"
+        "requested for ConsumingClassifier.fit, which is used within"
     )
     with pytest.raises(UnsetMetadataPassedError, match=err_msg):
         func(
@@ -2579,7 +2579,7 @@ def test_passed_unrequested_metadata(func, extra_args):
 
     err_msg = re.escape(
         "[metadata] are passed but are not explicitly set as requested or not "
-        "requested for ConsumingClassifier().score, which is used within"
+        "requested for ConsumingClassifier.score, which is used within"
     )
     with pytest.raises(UnsetMetadataPassedError, match=err_msg):
         func(

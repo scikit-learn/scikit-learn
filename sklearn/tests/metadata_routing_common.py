@@ -146,12 +146,6 @@ class _Registry(list):
     def __copy__(self):
         return self
 
-    def __repr__(self):
-        return "..."
-
-    def __str__(self):
-        return "..."
-
 
 class ConsumingRegressor(RegressorMixin, BaseEstimator):
     """A regressor consuming metadata.

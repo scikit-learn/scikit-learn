@@ -217,11 +217,6 @@ def test_default_requests():
             "sample_weight": True
         }  # type: ignore[var-annotated]
 
-        def fit(self, X, y, **fit_params):
-            # The fit function needs to exist for __metadata_request__fit to have an
-            # effect.
-            pass
-
     odd_request = get_routing_for_object(OddEstimator())
     assert odd_request.fit.requests == {"sample_weight": True}
 
@@ -255,20 +250,11 @@ def test_default_request_override():
     class Base(BaseEstimator):
         __metadata_request__split = {"groups": True}
 
-        def split(self):
-            pass  # pragma: no cover
-
     class class_1(Base):
         __metadata_request__split = {"groups": "sample_domain"}
 
-        def split(self):
-            pass  # pragma: no cover
-
     class Class_1(Base):
         __metadata_request__split = {"groups": "sample_domain"}
-
-        def split(self):
-            pass  # pragma: no cover
 
     assert_request_equal(
         class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
@@ -328,7 +314,7 @@ def test_simple_metadata_routing():
     clf = WeightedMetaClassifier(estimator=ConsumingClassifier())
     err_message = (
         "[sample_weight] are passed but are not explicitly set as requested or"
-        " not requested for ConsumingClassifier().fit"
+        " not requested for ConsumingClassifier.fit"
     )
     with pytest.raises(ValueError, match=re.escape(err_message)):
         clf.fit(X, y, sample_weight=my_weights)
@@ -471,6 +457,19 @@ def test_invalid_metadata():
 
 @config_context(enable_metadata_routing=True)
 def test_get_metadata_routing():
+    class TestDefaultsBadMethodName(_MetadataRequester):
+        __metadata_request__fit = {
+            "sample_weight": None,
+            "my_param": None,
+        }
+        __metadata_request__score = {
+            "sample_weight": None,
+            "my_param": True,
+            "my_other_param": None,
+        }
+        # this will raise an error since we don't understand "other_method" as a method
+        __metadata_request__other_method = {"my_param": True}
+
     class TestDefaults(_MetadataRequester):
         __metadata_request__fit = {
             "sample_weight": None,
@@ -483,14 +482,10 @@ def test_get_metadata_routing():
         }
         __metadata_request__predict = {"my_param": True}
 
-        def fit(self, X, y):
-            pass  # pragma: no cover
-
-        def score(self, X, y):
-            pass  # pragma: no cover
-
-        def predict(self, X):
-            pass  # pragma: no cover
+    with pytest.raises(
+        AttributeError, match="'MetadataRequest' object has no attribute 'other_method'"
+    ):
+        TestDefaultsBadMethodName().get_metadata_routing()
 
     expected = {
         "score": {
@@ -547,7 +542,7 @@ def test_setting_default_requests():
         __metadata_request__fit = {"prop": None}
 
         def fit(self, X, y, **kwargs):
-            return self  # pragma: no cover
+            return self
 
     test_cases[ExplicitRequest] = {"prop": None}
 
@@ -557,7 +552,7 @@ def test_setting_default_requests():
         __metadata_request__fit = {"prop": True}
 
         def fit(self, X, y, prop=None, **kwargs):
-            return self  # pragma: no cover
+            return self
 
     test_cases[ExplicitRequestOverwrite] = {"prop": True}
 
@@ -574,13 +569,14 @@ def test_setting_default_requests():
         __metadata_request__fit = {"prop": metadata_routing.UNUSED}
 
         def fit(self, X, y, prop=None, **kwargs):
-            return self  # pragma: no cover
+            return self
 
     test_cases[ImplicitRequestRemoval] = {}
 
     for Klass, requests in test_cases.items():
         assert get_routing_for_object(Klass()).fit.requests == requests
         assert_request_is_empty(Klass().get_metadata_routing(), exclude="fit")
+        Klass().fit(None, None)  # for coverage
 
 
 @config_context(enable_metadata_routing=True)
@@ -624,11 +620,6 @@ def test_method_metadata_request():
 def test_get_routing_for_object():
     class Consumer(BaseEstimator):
         __metadata_request__fit = {"prop": None}
-
-        def fit(self, X, y):
-            # The fit function needs to exist for __metadata_request__fit to have an
-            # effect.
-            pass
 
     assert_request_is_empty(get_routing_for_object(None))
     assert_request_is_empty(get_routing_for_object(object()))
@@ -1104,9 +1095,8 @@ def test_unsetmetadatapassederror_correct():
     pipe = SimplePipeline([weighted_meta])
     msg = re.escape(
         "[metadata] are passed but are not explicitly set as requested or not requested"
-        " for ConsumingClassifier().fit, which is used within"
-        " WeightedMetaClassifier.fit."
-        " Call `ConsumingClassifier().set_fit_request({metadata}=True/False)` for each"
+        " for ConsumingClassifier.fit, which is used within WeightedMetaClassifier.fit."
+        " Call `ConsumingClassifier.set_fit_request({metadata}=True/False)` for each"
         " metadata you want to request/ignore."
     )
 
@@ -1123,9 +1113,9 @@ def test_unsetmetadatapassederror_correct_for_composite_methods():
 
     msg = re.escape(
         "[metadata] are passed but are not explicitly set as requested or not requested"
-        " for ConsumingTransformer().fit_transform, which is used within"
+        " for ConsumingTransformer.fit_transform, which is used within"
         " Pipeline.fit_transform. Call"
-        " `ConsumingTransformer().set_fit_request({metadata}=True/False)"
+        " `ConsumingTransformer.set_fit_request({metadata}=True/False)"
         ".set_transform_request({metadata}=True/False)`"
         " for each metadata you want to request/ignore."
     )
