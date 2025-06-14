@@ -261,7 +261,7 @@ class _BaseScorer(_MetadataRequester):
             f"{response_method_string}{kwargs_string})"
         )
 
-    def _routing_str(self):
+    def _routing_repr(self):
         return repr(self)
 
     def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
@@ -495,9 +495,9 @@ class _PassthroughScorer(_MetadataRequester):
         return estimator.score(*args, **kwargs)
 
     def __repr__(self):
-        return f"{self._estimator.__class__.__name__}.score"
+        return f"{type(self._estimator).__name__}.score"
 
-    def _routing_str(self):
+    def _routing_repr(self):
         return repr(self)
 
     def _accept_sample_weight(self):
