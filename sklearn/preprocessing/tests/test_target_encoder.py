@@ -32,9 +32,7 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth, sample_weight=Non
 
     if smooth == "auto":
         if sample_weight is not None:
-            y_variance = np.average(
-                (y_numeric - y_mean) ** 2, weights=sample_weight
-            )
+            y_variance = np.average((y_numeric - y_mean) ** 2, weights=sample_weight)
         else:
             y_variance = np.var(y_numeric)
 
