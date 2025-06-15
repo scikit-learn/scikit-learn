@@ -853,6 +853,10 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
      [ 1.  1.]]
     >>> print(scaler.transform([[2, 2]]))
     [[3. 3.]]
+    You can find a visual comparison of different scalers, including `StandardScaler`, in the following example:
+
+    `Compare different scalers on synthetic data <https://scikit-learn.org/stable/auto_examples/preprocessing/plot_all_scaling.html>`_
+    
     """
 
     _parameter_constraints: dict = {
