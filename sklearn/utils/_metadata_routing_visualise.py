@@ -146,77 +146,6 @@ def visualise_routing(routing_info):
 # ============================================================================
 
 
-def _compute_reachable_methods(router):
-    """Return a mapping ``{component_path: {methods}}`` of *reachable* methods.
-
-    A method on a component is considered reachable if there exists a chain of
-    ``MethodMapping`` objects starting from *any* root‐level simple method that
-    results in that method being invoked.  This respects the caller → callee
-    relationships stored in each :class:`~sklearn.utils.metadata_routing.MethodMapping`.
-    """
-
-    def _expand_methods(methods):
-        """Return a set with composite methods broken into their simple parts."""
-        expanded = set()
-        for m in methods:
-            if m in COMPOSITE_METHODS:
-                expanded.update(COMPOSITE_METHODS[m])
-            expanded.add(m)
-        return expanded
-
-    reachable = defaultdict(set)
-
-    def _walk(obj, incoming_methods, path=""):
-        # Build path in the exact same way as in _collect_routing_info so that
-        # look-ups can be shared.
-        current_path = (
-            f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
-        )
-
-        incoming_methods = _expand_methods(incoming_methods)
-
-        if isinstance(obj, MetadataRequest):
-            for method in incoming_methods:
-                if hasattr(obj, method):
-                    reachable[current_path].add(method)
-            # No children – stop.
-            return
-
-        # obj is a MetadataRouter -------------------------------------------
-        # 1. Handle potential self-request (router acts as a consumer).
-        if obj._self_request:
-            for method in incoming_methods:
-                if hasattr(obj._self_request, method):
-                    reachable[current_path].add(method)
-
-        # 2. Propagate reachability to children via method mappings.
-        for name, mapping_pair in obj._route_mappings.items():
-            child_obj = mapping_pair.router
-            # Collect child methods reachable through *any* caller that is itself
-            # reachable on *this* router.
-            child_methods_raw = {
-                pair.callee
-                for pair in mapping_pair.mapping
-                if pair.caller in incoming_methods
-            }
-            child_methods = _expand_methods(child_methods_raw)
-            if child_methods:
-                # Propagate the *mapping name* into the path so that it stays
-                # in-sync with the scheme used in `_collect_routing_info`.
-                _walk(child_obj, child_methods, f"{current_path}/{name}")
-
-    _walk(router, set(SIMPLE_METHODS))
-    return reachable
-
-
-# -----------------------------------------------------------------------------
-# Helper: map each component path.method to the ROOT simple method(s) that
-# trigger it when calling the *top* object. This considers caller→callee chains
-# so that, for example, ``RandomizedSearchCV.fit`` leading to
-# ``_Scorer.score`` will be attributed to root ``fit``.
-# -----------------------------------------------------------------------------
-
-
 def _compute_method_origins(router):
     """Return mapping {"path.method": set(root_methods)}."""
 
@@ -263,7 +192,7 @@ def _compute_method_origins(router):
     return origins
 
 
-def _collect_routing_info(router, top_router=None):
+def _collect_routing_info(router):
     """Return a *rich* mapping describing every parameter/method/alias path.
 
     The returned ``defaultdict`` has *paths* ( ``"Pipeline/StandardScaler"``)
@@ -285,10 +214,15 @@ def _collect_routing_info(router, top_router=None):
     * :func:`_collect_router_info` handles routers which can also include a
       *self-request* consumer.
     """
-    if top_router is None:
-        top_router = router
 
-    reachable_map = _compute_reachable_methods(top_router)
+    def _expand_methods(methods):
+        """Return a set with composite methods expanded into simple ones."""
+        expanded = set()
+        for m in methods:
+            if m in COMPOSITE_METHODS:
+                expanded.update(COMPOSITE_METHODS[m])
+            expanded.add(m)
+        return expanded
 
     info: dict[str, dict] = defaultdict(
         lambda: {
@@ -365,22 +299,28 @@ def _collect_routing_info(router, top_router=None):
 
         # Recurse into children -------------------------------------------------
         for name, mapping in obj._route_mappings.items():
-            # Include the *mapping name* in the path so that it matches the key
-            # format used in `_collect_routing_info`.
-            _collect(
-                mapping.router,
-                f"{current_path}/{name}",  # becomes *path* for child
-            )
+            child_methods_raw = {
+                pair.callee for pair in mapping.mapping if pair.caller in reachable_here
+            }
+            child_methods = _expand_methods(child_methods_raw)
+            if child_methods:
+                _collect(
+                    mapping.router,
+                    f"{current_path}/{name}",  # becomes *path* for child
+                    child_methods,
+                )
 
     # ------------------------------------------------------------------
     # Main DFS traversal
     # ------------------------------------------------------------------
 
-    def _collect(obj, path=""):
+    def _collect(
+        obj, path: "str" = "", incoming_methods: set[str] = set(SIMPLE_METHODS)
+    ):
         current_path = (
             f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
         )
-        reachable_here = reachable_map.get(current_path, set())
+        reachable_here = _expand_methods(incoming_methods)
 
         if isinstance(obj, MetadataRequest):
             _collect_request_info(obj, current_path, reachable_here)
@@ -464,23 +404,6 @@ def _format_param_with_status(param, methods, statuses, aliases):
 
     # Join the parts with ", " to mimic the desired output style.
     return ", ".join(parts)
-
-
-def _get_user_facing_params(routing_map):
-    """Get all user-facing parameter names (including aliases)."""
-    user_params = set()
-
-    for comp_path, info in routing_map.items():
-        # Add all component parameters that don't have aliases (they are user-facing)
-        for param in info["params"]:
-            if param not in info.get("aliases", {}):
-                user_params.add(param)
-
-        # Add all alias names (these are the user-facing names for aliased params)
-        for alias in info.get("aliases", {}).values():
-            user_params.add(alias)
-
-    return user_params
 
 
 def _display_tree(
@@ -570,47 +493,6 @@ _CATEGORY_ORDER = [
     ("errors", "⛔"),
     ("unused", "⊘"),
 ]
-
-
-def _summarise_params(routing_map):
-    """Aggregate parameter statuses across the whole tree.
-
-    Returns
-    -------
-    dict
-        { user_param -> {category -> [path.method, ...]} }
-    """
-    summary = {}
-
-    for path, info in routing_map.items():
-        for comp_param in info["params"]:
-            statuses = info["statuses"].get(comp_param, {})
-
-            for method, status in statuses.items():
-                # Determine user-facing name: only *real* aliases count. WARN/
-                # UNUSED are special markers and should not become separate
-                # parameters.
-                user_param = status if request_is_alias(status) else comp_param
-
-                # Classify category
-                if status is True or request_is_alias(status):
-                    cat = "requested"
-                elif status is False:
-                    cat = "ignored"
-                elif status == WARN:
-                    cat = "warns"
-                elif status is None:
-                    cat = "errors"
-                elif status == UNUSED:
-                    cat = "unused"
-                else:
-                    continue
-
-                summary.setdefault(user_param, {}).setdefault(cat, []).append(
-                    f"{path}.{method}"
-                )
-
-    return summary
 
 
 def _summarise_params_by_method(router, routing_map):
