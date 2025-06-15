@@ -44,18 +44,13 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth, sample_weight=Non
 
             if sample_weight is not None:
                 weights_subset = sample_weight[mask]
-
                 n_i = np.sum(weights_subset)
-
-                y_subset_mean = np.average(y_subset, weights=weights_subset, axis=0)
-
-                y_subset_variance = np.sum(
-                    weights_subset * (y_subset - y_subset_mean) ** 2
-                ) / (np.sum(weights_subset))
-
+                y_subset_mean = np.average(y_subset, weights=weights_subset)
+                y_subset_variance = np.average(
+                    (y_subset - y_subset_mean) ** 2, weights=weights_subset
+                )
             else:
                 n_i = y_subset.shape[0]
-
                 if n_i == 0:
                     cur_encodings[c] = y_mean
                     continue
