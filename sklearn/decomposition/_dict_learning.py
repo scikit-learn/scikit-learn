@@ -1596,6 +1596,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     np.float64(0.056)
+
+    .. note::
+
+    The example :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
+    demonstrates sparse coding with a precomputed dictionary using `SparseCoder`.
+    This complements `DictionaryLearning`, which learns the dictionary from data.
     """
 
     _parameter_constraints: dict = {
@@ -1955,6 +1961,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     np.float64(0.052)
+
+    See the example:
+    :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
+    
+    .. note::
+
+    The example :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
+    demonstrates sparse coding with a precomputed dictionary using `SparseCoder`.
+    While this class learns the dictionary incrementally, the example is useful for
+    understanding how sparse codes relate to fixed dictionaries.
     """
 
     _parameter_constraints: dict = {
