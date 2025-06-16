@@ -2,10 +2,59 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
+import re
 import reprlib
 from collections import UserDict
+from urllib.parse import quote
 
 from sklearn.utils._repr_html.base import ReprHTMLMixin
+
+CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
+
+
+def link_to_param_doc(estimator_type, param_name):
+    """URL to the relevant section of the docstring using a Text Fragment
+
+    https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
+    """
+
+    import sklearn
+
+    module_name = estimator_type.__module__
+    if module_name is None or not module_name.startswith("sklearn."):
+        # Not a scikit-learn estimator. Do not link to the scikit-learn
+        # documentation.
+        return None
+
+    if ".dev" in sklearn.__version__:
+        doc_version = "dev"
+    else:
+        doc_version = ".".join(sklearn.__version__.split(".")[:2])
+
+    class_doc_base_url = CLASS_DOC_URL_PREFIX.format(doc_version=doc_version)
+
+    # Strip private submodule component if any:
+    if "._" in module_name:
+        module_name = module_name.split("._")[0]
+
+    class_name = estimator_type.__class__.__qualname__
+
+    docstring = estimator_type.__doc__
+
+    m = re.search(f"{param_name} : (\\w+)", docstring)
+    if m is None:
+        # No match found in the docstring, return None to indicate that we
+        # cannot link.
+        return None
+
+    # Extract the first word of the type information as disambiguation suffix
+    # to build the fragment.
+    param_type = m.group(1)
+
+    base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
+    text_fragment = f"{quote(param_name)},-{quote(param_type)}"
+
+    return f"{base_url}#:~:text={text_fragment}"
 
 
 def _read_params(name, value, non_default_params):
@@ -50,14 +99,37 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;</td>
             <td class="value">{param_value}</td>
+            <td class="doc_link">{doc_link}</td>
         </tr>
     """
 
-    rows = [
-        ROW_TEMPLATE.format(**_read_params(name, value, params.non_default))
-        for name, value in params.items()
-    ]
+    # links_to_docs = [
+    #    link_to_param_doc(params.estimator_type, param_name)
+    #    for param_name in params.keys()
+    # ]
 
+    # rows = [
+    #    ROW_TEMPLATE.format(**_read_params(name, value, params.non_default))
+    #    for name, value in params.items()
+    # ]
+
+    rows = []
+
+    for row in params:
+        par_row = _read_params(row, params[row], params.non_default)
+        d = link_to_param_doc(params.estimator_type, row)
+        if not d:
+            d = "xx"
+        rows.append(
+            ROW_TEMPLATE.format(
+                param_type="ssss",
+                param_name=par_row["param_name"],
+                param_value=par_row["param_value"],
+                doc_link=d,
+            )
+        )
+
+    breakpoint()
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
 
@@ -78,6 +150,7 @@ class ParamsDict(ReprHTMLMixin, UserDict):
 
     _html_repr = _params_html_repr
 
-    def __init__(self, params=None, non_default=tuple()):
+    def __init__(self, params=None, non_default=tuple(), estimator_type=None):
         super().__init__(params or {})
         self.non_default = non_default
+        self.estimator_type = estimator_type
