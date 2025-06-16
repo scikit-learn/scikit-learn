@@ -652,7 +652,7 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         for class_idx, (r, g, b, _) in enumerate(colors)
     ]
 
-    if plot_method != 'contour':
+    if plot_method != "contour":
         for idx, quad in enumerate(disp.surface_):
             assert quad.cmap == cmaps[idx]
 
