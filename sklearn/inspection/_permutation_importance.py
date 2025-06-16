@@ -176,8 +176,11 @@ def permutation_importance(
         Scorer to use.
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring_callable`) that returns a single value.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -189,8 +192,6 @@ def permutation_importance(
         Passing multiple scores to `scoring` is more efficient than calling
         `permutation_importance` for each of the scores as it reuses
         predictions to avoid redundant computation.
-
-        If None, the estimator's default scorer is used.
 
     n_repeats : int, default=5
         Number of times to permute a feature.
@@ -261,9 +262,9 @@ def permutation_importance(
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
     ...                                 random_state=0)
     >>> result.importances_mean
-    array([0.4666..., 0.       , 0.       ])
+    array([0.4666, 0.       , 0.       ])
     >>> result.importances_std
-    array([0.2211..., 0.       , 0.       ])
+    array([0.2211, 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
         X = check_array(X, ensure_all_finite="allow-nan", dtype=None)

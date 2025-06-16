@@ -22,8 +22,8 @@ endif
 # Python interpreter can be tricky in cross-compilation settings. For more
 # details, see https://docs.scipy.org/doc/scipy/building/cross_compilation.html
 if not meson.is_cross_build()
-  if not py.version().version_compare('>=3.9')
-    error('scikit-learn requires Python>=3.9, got ' + py.version() + ' instead')
+  if not py.version().version_compare('>=3.10')
+    error('scikit-learn requires Python>=3.10, got ' + py.version() + ' instead')
   endif
 
   cython_min_version = run_command(py, ['_min_dependencies.py', 'cython'], check: true).stdout().strip()
@@ -190,6 +190,19 @@ scikit_learn_cython_args = [
 ]
 cython_args += scikit_learn_cython_args
 
+cython_program = find_program(cython.cmd_array()[0])
+
+cython_gen = generator(cython_program,
+  arguments : cython_args + ['@INPUT@', '--output-file', '@OUTPUT@'],
+  output : '@BASENAME@.c',
+)
+
+cython_gen_cpp = generator(cython_program,
+  arguments : cython_args + ['--cplus', '@INPUT@', '--output-file', '@OUTPUT@'],
+  output : '@BASENAME@.cpp',
+)
+
+
 # Write file in Meson build dir to be able to figure out from Python code
 # whether scikit-learn was built with Meson. Adapted from pandas
 # _version_meson.py.
@@ -206,7 +219,7 @@ extensions = ['_isotonic']
 
 py.extension_module(
   '_isotonic',
-  '_isotonic.pyx',
+  cython_gen.process('_isotonic.pyx'),
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',

@@ -235,9 +235,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y)
-    -7.284...
+    -7.284
     >>> huber.predict(X[:1,])
-    array([806.7200...])
+    array([806.7200])
     >>> linear = LinearRegression().fit(X, y)
     >>> print("True coefficients:", coef)
     True coefficients: [20.4923...  34.1698...]
@@ -351,3 +351,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         residual = np.abs(y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

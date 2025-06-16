@@ -254,6 +254,10 @@ class BayesianGaussianMixture(BaseMixture):
         Lower bound value on the model evidence (of the training data) of the
         best fit of inference.
 
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the model evidence from each iteration
+        of the best fit of inference.
+
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The type depends on
@@ -338,8 +342,8 @@ class BayesianGaussianMixture(BaseMixture):
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
     >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
     >>> bgm.means_
-    array([[2.49... , 2.29...],
-           [8.45..., 4.52... ]])
+    array([[2.49 , 2.29],
+           [8.45, 4.52 ]])
     >>> bgm.predict([[0, 0], [9, 3]])
     array([0, 1])
     """

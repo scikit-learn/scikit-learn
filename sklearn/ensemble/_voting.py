@@ -24,8 +24,8 @@ from ..base import (
 from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -38,7 +38,6 @@ from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
-    _deprecate_positional_args,
     check_is_fitted,
     column_or_1d,
 )
@@ -352,11 +351,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         # estimators in VotingClassifier.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert later, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -367,13 +362,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         y : array-like of shape (n_samples,)
             Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
-
-            .. versionadded:: 0.18
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -391,7 +379,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         y_type = type_of_target(y, input_name="y")
         if y_type in ("unknown", "continuous"):
             # raise a specific ValueError for non-classification tasks
@@ -412,9 +401,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
-
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
 
         return super().fit(X, transformed_y, **fit_params)
 
@@ -454,7 +440,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     def _check_voting(self):
         if self.voting == "hard":
             raise AttributeError(
-                f"predict_proba is not available when voting={repr(self.voting)}"
+                f"predict_proba is not available when voting={self.voting!r}"
             )
         return True
 
@@ -636,7 +622,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> y = np.array([2, 6, 12, 20, 30, 42])
     >>> er = VotingRegressor([('lr', r1), ('rf', r2), ('r3', r3)])
     >>> print(er.fit(X, y).predict(X))
-    [ 6.8...  8.4... 12.5... 17.8... 26...  34...]
+    [ 6.8  8.4 12.5 17.8 26  34]
 
     In the following example, we drop the `'lr'` estimator with
     :meth:`~VotingRegressor.set_params` and fit the remaining two estimators:
@@ -657,11 +643,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         # estimators in VotingRegressor.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation cycle;
-    # pop it from `fit_params` before the `_raise_for_params` check and reinsert later,
-    # for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -672,11 +654,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         y : array-like of shape (n_samples,)
             Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -694,10 +671,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         y = column_or_1d(y, warn=True)
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
+
         return super().fit(X, y, **fit_params)
 
     def predict(self, X):

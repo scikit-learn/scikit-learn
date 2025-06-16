@@ -61,8 +61,8 @@ at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
   The disadvantages of Multi-layer Perceptron (MLP) include:
 
-  + MLP with hidden layers have a non-convex loss function where there exists
-    more than one local minimum. Therefore different random weight
+  + MLP with hidden layers has a non-convex loss function where there exists
+    more than one local minimum. Therefore, different random weight
     initializations can lead to different validation accuracy.
 
   + MLP requires tuning a number of hyperparameters such as the number of
@@ -116,8 +116,8 @@ classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])
-    array([[1.967...e-04, 9.998...-01],
-           [1.967...e-04, 9.998...-01]])
+    array([[1.967e-04, 9.998e-01],
+           [1.967e-04, 9.998e-01]])
 
 :class:`MLPClassifier` supports multi-class classification by
 applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_
@@ -127,7 +127,7 @@ Further, the model supports :ref:`multi-label classification <multiclass>`
 in which a sample can belong to more than one class. For each class, the raw
 output passes through the logistic function. Values larger or equal to `0.5`
 are rounded to `1`, otherwise to `0`. For a predicted output of a sample, the
-indices where the value is `1` represents the assigned classes of that sample::
+indices where the value is `1` represent the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]
@@ -261,7 +261,7 @@ training.
   where :math:`z_i` represents the :math:`i` th element of the input to softmax,
   which corresponds to class :math:`i`, and :math:`K` is the number of classes.
   The result is a vector containing the probabilities that sample :math:`x`
-  belong to each class. The output is the class with the highest probability.
+  belongs to each class. The output is the class with the highest probability.
 
   In regression, the output remains as :math:`f(x)`; therefore, output activation
   function is just the identity function.

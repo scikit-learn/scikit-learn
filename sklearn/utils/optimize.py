@@ -19,9 +19,9 @@ import warnings
 
 import numpy as np
 import scipy
+from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 
 from ..exceptions import ConvergenceWarning
-from .fixes import line_search_wolfe1, line_search_wolfe2
 
 
 class _LineSearchError(RuntimeError):
@@ -163,7 +163,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
                 print(
                     f"  Inner CG solver iteration {i} stopped with\n"
                     f"    tiny_|p| = eps * ||p||^2, eps = {eps}, "
-                    f"squred L2 norm ||p||^2 = {psupi_norm2}\n"
+                    f"squared L2 norm ||p||^2 = {psupi_norm2}\n"
                     f"    curvature <= tiny_|p|: {curv} <= {eps * psupi_norm2}"
                 )
             break
@@ -352,25 +352,37 @@ def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None
     """
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
-        if result.status != 0:
-            result_message = result.message
-
-            warning_msg = (
-                "{} failed to converge (status={}):\n{}.\n\n"
-                "Increase the number of iterations (max_iter) "
-                "or scale the data as shown in:\n"
-                "    https://scikit-learn.org/stable/modules/"
-                "preprocessing.html"
-            ).format(solver, result.status, result_message)
-            if extra_warning_msg is not None:
-                warning_msg += "\n" + extra_warning_msg
-            warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)
         if max_iter is not None:
             # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
             # See https://github.com/scipy/scipy/issues/7854
             n_iter_i = min(result.nit, max_iter)
         else:
             n_iter_i = result.nit
+
+        if result.status != 0:
+            warning_msg = (
+                f"{solver} failed to converge after {n_iter_i} iteration(s) "
+                f"(status={result.status}):\n"
+                f"{result.message}\n"
+            )
+            # Append a recommendation to increase iterations only when the
+            # number of iterations reaches the maximum allowed (max_iter),
+            # as this suggests the optimization may have been prematurely
+            # terminated due to the iteration limit.
+            if max_iter is not None and n_iter_i == max_iter:
+                warning_msg += (
+                    f"\nIncrease the number of iterations to improve the "
+                    f"convergence (max_iter={max_iter})."
+                )
+            warning_msg += (
+                "\nYou might also want to scale the data as shown in:\n"
+                "    https://scikit-learn.org/stable/modules/"
+                "preprocessing.html"
+            )
+            if extra_warning_msg is not None:
+                warning_msg += "\n" + extra_warning_msg
+            warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)
+
     else:
         raise NotImplementedError
 
