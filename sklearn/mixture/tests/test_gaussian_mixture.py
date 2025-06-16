@@ -1598,47 +1598,6 @@ def test_gaussian_mixture_array_api_compliance_with_array_like_constructor_param
         assert device(X) == device(gmm.weights_)
 
 
-# TODO What is the expected behavior when weights init
-# and X are not in the same namespace/device?
-# It feels like check_array would need a xp argument?
-# @pytest.mark.parametrize(
-#     "array_namespace, device_, dtype", yield_namespace_device_dtype_combinations()
-# )
-# def test_gaussian_mixture_array_api_different_namespaces(
-#     array_namespace, device_, dtype, global_random_seed
-# ):
-#     """Check that passing `weights_init` in a different namespace during instantiation
-#     correctly converts to the same namespace as X."""
-#     X, _ = make_blobs(
-#         n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
-#     )
-
-#     xp = _array_api_for_tests(array_namespace, device_)
-#     X = xp.asarray(X, device=device_)
-
-#     # check with weights_init being a numpy array
-#     with sklearn.config_context(array_api_dispatch=True):
-#         gmm = GaussianMixture(
-#             n_components=3,
-#             covariance_type="diag",
-#             random_state=global_random_seed,
-#             init_params="random",
-#             weights_init=np.asarray([0.1, 0.4, 0.5]),
-#         )
-#         gmm.fit(X)
-
-#     # check with weights_init being an array_api_strict array
-#     with sklearn.config_context(array_api_dispatch=True):
-#         gmm = GaussianMixture(
-#             n_components=3,
-#             covariance_type="diag",
-#             random_state=global_random_seed,
-#             init_params="random",
-#             weights_init=array_api_strict.asarray([0.1, 0.4, 0.5]),
-#         )
-#         gmm.fit(X)
-
-
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
 @pytest.mark.parametrize(
