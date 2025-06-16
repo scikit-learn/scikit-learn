@@ -2026,6 +2026,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             for name, _ in self.transformer_list:
                 routed_params[name] = Bunch(transform={})
 
+        # Get transformer names for hstack verbose error messages
+        transformer_names = set(name for name, _ in self.transformer_list)
+
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
             for name, trans, weight in self._iter()
@@ -2034,9 +2037,29 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return self._hstack(Xs)
+        return self._hstack(
+            Xs, transformer_names=transformer_names, n_samples=X.shape[0]
+        )
 
-    def _hstack(self, Xs):
+    def _hstack(self, Xs, transformer_names=None, n_samples=None):
+        # Check if Xs dimensions are valid
+        for idx, X in enumerate(Xs):
+            if X.ndim != 2:
+                name = (
+                    transformer_names[idx]
+                    if transformer_names
+                    else f"transformer_{idx}"
+                )
+                raise ValueError(
+                    f"Transformer '{name}' returned an array with {X.ndim} dimensions, "
+                    "but expected 2 dimensions (n_samples, n_features)."
+                )
+            if n_samples is not None and X.shape[0] != n_samples:
+                raise ValueError(
+                    f"Transformer '{name}' returned an array with {X.shape[0]} "
+                    f"samples, but expected {n_samples} samples."
+                )
+
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
