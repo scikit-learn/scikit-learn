@@ -1167,7 +1167,6 @@ def cross_val_predict(
     prediction errors, please see
     :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
     """
-
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
     params = {} if params is None else params
