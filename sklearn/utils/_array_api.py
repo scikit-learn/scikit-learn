@@ -564,6 +564,10 @@ def _fill_diagonal(array, value, xp):
     if _is_numpy_namespace(xp):
         xp.fill_diagonal(array, value, wrap=False)
     else:
+        # TODO: when array libraries support `reshape(copy)`, use
+        # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
+        # `try/except`). This is faster than for loop, when no copy needs to be
+        # made within `reshape`. See #31445 for details.
         if value.ndim == 0:
             for i in range(min_rows_columns):
                 array[i, i] = value
@@ -590,6 +594,10 @@ def _add_to_diagonal(array, value, xp):
         array.flat[:end:step] += value
         return
 
+    # TODO: when array libraries support `reshape(copy)`, use
+    # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
+    # `try/except`). This is faster than for loop, when no copy needs to be
+    # made within `reshape`. See #31445 for details.
     value = xp.linalg.diagonal(array) + value
     for i in range(min_rows_columns):
         array[i, i] = value[i]
