@@ -714,6 +714,9 @@ def make_scorer(
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
+
+    For an example on how to use multiple scorers at the same time see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`.
     """
     sign = 1 if greater_is_better else -1
 
