@@ -120,7 +120,7 @@ class ClassicalMDS(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
+            Input data. If ``metric=='precomputed'``, the input should
             be the dissimilarity matrix.
 
         y : Ignored

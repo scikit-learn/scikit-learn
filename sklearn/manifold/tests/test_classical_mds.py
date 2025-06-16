@@ -49,3 +49,15 @@ def test_classical_mds_wrong_inputs():
     dissim = np.array([[0, 1, 2], [3, 4, 5]])
     with pytest.raises(ValueError, match="array must be 2-dimensional and square"):
         ClassicalMDS(metric="precomputed").fit(dissim)
+
+
+def test_classical_mds_metric_params():
+    X, _ = load_iris(return_X_y=True)
+
+    cmds = ClassicalMDS(n_components=2, metric="euclidean")
+    Z1 = cmds.fit_transform(X)
+
+    cmds = ClassicalMDS(n_components=2, metric="minkowski", metric_params={"p": 2})
+    Z2 = cmds.fit_transform(X)
+
+    assert_array_almost_equal(Z1, Z2)
