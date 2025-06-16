@@ -630,17 +630,25 @@ def test_fill_and_add_to_diagonal(c_contiguity, function):
     assert_allclose(array.diagonal(), expected_diag)
 
 
+@pytest.mark.parametrize("array", ["standard", "transposed", "non-contiguous"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-def test_fill_diagonal(array_namespace, device_, dtype_name):
+def test_fill_diagonal(array, array_namespace, device_, dtype_name):
     """Check array API `_fill_diagonal` consistent with `numpy._fill_diagonal`."""
     xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.zeros((4, 5), dtype=dtype_name)
 
-    array_np = numpy.zeros((3, 4), dtype=dtype_name)
-    array_xp = xp.asarray(array_np.copy(), device=device_)
+    if array == "transposed":
+        array_xp = xp.asarray(array_np.copy(), device=device_).T
+        array_np = array_np.T
+    elif array == "non-contiguous":
+        array_xp = xp.asarray(array_np.copy(), device=device_)[::2, ::2]
+        array_np = array_np[::2, ::2]
+    else:
+        array_xp = xp.asarray(array_np.copy(), device=device_)
 
     numpy.fill_diagonal(array_np, val=1)
     with config_context(array_api_dispatch=True):
