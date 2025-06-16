@@ -13,11 +13,11 @@ dependencies = [
   "threadpoolctl>=3.1.0",
 ]
 requires-python = ">=3.10"
-license = {file = "COPYING"}
+license = "BSD-3-Clause"
+license-files = ["COPYING"]
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: BSD License",
   "Programming Language :: C",
   "Programming Language :: Python",
   "Topic :: Software Development",
