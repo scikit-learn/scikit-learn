@@ -142,9 +142,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             # TODO: when array API supports __setitem__ with fancy indexing we
             # can use the previous code:
             # resp[indices, xp.arange(self.n_components)] = 1
-            # Until we use a for loop one on dimension.
-            for count, index in enumerate(indices):
-                resp[index, count] = 1
+            # Until then we use a for loop on one dimension.
+            for col, index in enumerate(indices):
+                resp[index, col] = 1
         elif self.init_params == "k-means++":
             resp = np.zeros((n_samples, self.n_components), dtype=X.dtype)
             _, indices = kmeans_plusplus(

@@ -662,7 +662,6 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
 
     # if torch on CPU or array api strict on default device
     # check that _logsumexp works when array API dispatch is disabled
-    # TODO is there a better way for this
     if (array_namespace == "torch" and device_ == "cpu") or (
         array_namespace == "array_api_strict" and "CPU" in str(device_)
     ):
