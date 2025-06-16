@@ -555,4 +555,8 @@ class DecisionBoundaryDisplay:
             xlabel=xlabel,
             ylabel=ylabel,
         )
-        return display.plot(ax=ax, plot_method=plot_method, **kwargs)
+
+        plotted_display = display.plot(ax=ax, plot_method=plot_method, **kwargs)
+        plotted_display.response_method_used_ = response_method_used
+        plotted_display.estimator_name_ = estimator.__class__.__name__
+        return plotted_display
