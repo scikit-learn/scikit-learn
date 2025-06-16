@@ -34,7 +34,6 @@ from ..utils._array_api import (
 )
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import stable_cumsum
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
@@ -909,11 +908,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
     y_true = xp.astype(y_true, max_float_dtype)
-    tps = stable_cumsum(y_true * weight)[threshold_idxs]
+    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
-        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
+        fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
+            threshold_idxs
+        ]
     else:
         fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
     return fps, tps, y_score[threshold_idxs]

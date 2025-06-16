@@ -1119,35 +1119,3 @@ def test_randomized_range_finder_array_api_compliance(array_namespace, device, d
 
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
         assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np, atol=atol)
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-@pytest.mark.parametrize("axis", [0, 1, None])
-def test_stable_cumsum_array_api(array_namespace, device, dtype, axis):
-    xp = _array_api_for_tests(array_namespace, device)
-    arr_np = np.asarray(
-        [[1, 2e-9, 3e-9] * int(1e6)],
-    )
-    arr_xp = xp.asarray(
-        arr_np, dtype=getattr(xp, dtype) if dtype is not None else dtype
-    )
-    with config_context(array_api_dispatch=True):
-        assert_allclose(
-            _convert_to_numpy(stable_cumsum(arr_xp, axis=axis), xp),
-            np.cumsum(arr_np, axis=axis),
-        )
-
-    arr = xp.asarray([np.full(1000, 100.5)], dtype=xp.float64, device=device)
-    arr[-1, -1] += 0.01
-    if axis == 0:
-        # transpose to mimic a 2nd dimension
-        # (we do this to save memory)
-        arr = arr.T
-    msg = "cumsum was found to be unstable: its last element does not correspond to sum"
-    with pytest.warns(RuntimeWarning, match=msg):
-        with config_context(array_api_dispatch=True):
-            stable_cumsum(arr, axis=axis, atol=0, rtol=0)

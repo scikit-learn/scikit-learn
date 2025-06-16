@@ -11,16 +11,7 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import (
-    _average,
-    _is_numpy_namespace,
-    _max_precision_float_dtype,
-    _nanmean,
-    device,
-    get_namespace,
-    get_namespace_and_device,
-    xpx,
-)
+from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -1241,29 +1232,10 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    xp, _, device = get_namespace_and_device(arr)
-    if axis is None:
-        # np.cumsum calculates cumsum across flattened array
-        # for axis=None, which is why we flatten here.
-        # (if we don't flatten, cumulative_sum below will raise error)
-        arr = xp.reshape(arr, (-1,))
-        axis = 0
-    max_float_dtype = _max_precision_float_dtype(xp, device)
-    out = xp.cumulative_sum(arr, axis=axis, dtype=max_float_dtype)
-    expected = xp.sum(arr, axis=axis, dtype=max_float_dtype)
-    # workaround to get last element
-    # PyTorch doesn't support this ATM
-    # TODO: remove once issue is fixed
-    # https://github.com/pytorch/pytorch/issues/146211
-    last_elem_idx = xp.asarray(out.shape[axis] - 1)
-    if not xp.all(
-        xpx.isclose(
-            xp.take(out, xp.asarray([last_elem_idx], device=device), axis=axis),
-            expected,
-            rtol=rtol,
-            atol=atol,
-            equal_nan=True,
-        )
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
+    if not np.allclose(
+        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
             (

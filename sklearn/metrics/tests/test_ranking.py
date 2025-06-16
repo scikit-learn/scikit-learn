@@ -2268,3 +2268,25 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+def test_roc_curve_precision_with_float32_sample_weights():
+    """Check that the precision of the roc_curve values is maintained for
+    float32 sample weights when considering a large number of samples.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31533
+    """
+    rng = np.random.RandomState(42)
+    n_samples = 35000000
+    y = rng.randint(2, size=n_samples)
+    prediction = rng.normal(size=n_samples) + y * 0.01
+    sample_weights = np.ones(n_samples)
+
+    roc_float64 = roc_curve(
+        y, prediction, sample_weight=sample_weights.astype("float64")
+    )
+    roc_float32 = roc_curve(
+        y, prediction, sample_weight=sample_weights.astype("float32")
+    )
+    assert_allclose(roc_float64, roc_float32)
