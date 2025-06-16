@@ -334,7 +334,7 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 def test_get_final_cv_score_method(direction):
-    """Test that get_final_cv_score method calculates the correct score."""
+    """Test that get_final_cv_score method calculates the correct scores."""
     X, y = make_regression(n_features=5, random_state=0)
 
     # Test with the specified direction
@@ -346,13 +346,13 @@ def test_get_final_cv_score_method(direction):
     )
     sfs.fit(X, y)
 
-    # Get the score using the method
-    cv_score = sfs.get_final_cv_score(X, y)
+    # Get the scores using the method
+    cv_scores = sfs.get_final_cv_score(X, y)
 
-    # Check that the score is a float
-    assert isinstance(cv_score, float)
+    # Check that the result is a numpy array
+    assert isinstance(cv_scores, np.ndarray)
 
-    # Verify that the score matches what we would get by manually computing it
+    # Verify that the scores match what we would get by manually computing them
     X_selected = X[:, sfs.get_support()]
-    manual_score = cross_val_score(LinearRegression(), X_selected, y, cv=2).mean()
-    assert pytest.approx(cv_score) == manual_score
+    manual_scores = cross_val_score(LinearRegression(), X_selected, y, cv=2)
+    assert_array_equal(cv_scores, manual_scores)
