@@ -28,7 +28,7 @@ class ClassicalMDS(BaseEstimator):
     n_components : int, default=2
         Number of embedding dimensions.
 
-    dissimilarity : str or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         Metric to use for dissimilarity computation. Default is "euclidean".
         See the documentation of `scipy.spatial.distance
         <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
@@ -44,7 +44,7 @@ class ClassicalMDS(BaseEstimator):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-    dissimilarity_params : dict, default=None
+    metric_params : dict, default=None
         Additional keyword arguments for the dissimilarity computaiton.
 
     Attributes
@@ -92,24 +92,24 @@ class ClassicalMDS(BaseEstimator):
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "dissimilarity": [str, callable],
-        "dissimilarity_params": [dict, None],
+        "metric": [str, callable],
+        "metric_params": [dict, None],
     }
 
     def __init__(
         self,
         n_components=2,
         *,
-        dissimilarity="euclidean",
-        dissimilarity_params=None,
+        metric="euclidean",
+        metric_params=None,
     ):
         self.n_components = n_components
-        self.dissimilarity = dissimilarity
-        self.dissimilarity_params = dissimilarity_params
+        self.metric = metric
+        self.metric_params = metric_params
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.pairwise = self.dissimilarity == "precomputed"
+        tags.input_tags.pairwise = self.metric == "precomputed"
         return tags
 
     def fit(self, X, y=None):
@@ -157,7 +157,7 @@ class ClassicalMDS(BaseEstimator):
 
         X = validate_data(self, X)
 
-        if self.dissimilarity == "precomputed":
+        if self.metric == "precomputed":
             self.dissimilarity_matrix_ = X
             self.dissimilarity_matrix_ = check_symmetric(
                 self.dissimilarity_matrix_, raise_exception=True
@@ -165,12 +165,8 @@ class ClassicalMDS(BaseEstimator):
         else:
             self.dissimilarity_matrix_ = pairwise_distances(
                 X,
-                metric=self.dissimilarity,
-                **(
-                    self.dissimilarity_params
-                    if self.dissimilarity_params is not None
-                    else {}
-                ),
+                metric=self.metric,
+                **(self.metric_params if self.metric_params is not None else {}),
             )
 
         # Double centering

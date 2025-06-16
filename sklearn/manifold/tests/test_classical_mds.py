@@ -11,7 +11,7 @@ from sklearn.metrics import euclidean_distances
 def test_classical_mds_equivalent_to_pca():
     X, _ = load_iris(return_X_y=True)
 
-    cmds = ClassicalMDS(n_components=2, dissimilarity="euclidean")
+    cmds = ClassicalMDS(n_components=2, metric="euclidean")
     pca = PCA(n_components=2)
 
     Z1 = cmds.fit_transform(X)
@@ -30,10 +30,10 @@ def test_classical_mds_equivalent_to_pca():
 def test_classical_mds_equivalent_on_data_and_distances():
     X, _ = load_iris(return_X_y=True)
 
-    cmds = ClassicalMDS(n_components=2, dissimilarity="euclidean")
+    cmds = ClassicalMDS(n_components=2, metric="euclidean")
     Z1 = cmds.fit_transform(X)
 
-    cmds = ClassicalMDS(n_components=2, dissimilarity="precomputed")
+    cmds = ClassicalMDS(n_components=2, metric="precomputed")
     Z2 = cmds.fit_transform(euclidean_distances(X))
 
     assert_array_almost_equal(Z1, Z2)
@@ -43,9 +43,9 @@ def test_classical_mds_wrong_inputs():
     # Non-symmetric input
     dissim = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
     with pytest.raises(ValueError, match="Array must be symmetric"):
-        ClassicalMDS(dissimilarity="precomputed").fit(dissim)
+        ClassicalMDS(metric="precomputed").fit(dissim)
 
     # Non-square input
     dissim = np.array([[0, 1, 2], [3, 4, 5]])
     with pytest.raises(ValueError, match="array must be 2-dimensional and square"):
-        ClassicalMDS(dissimilarity="precomputed").fit(dissim)
+        ClassicalMDS(metric="precomputed").fit(dissim)
