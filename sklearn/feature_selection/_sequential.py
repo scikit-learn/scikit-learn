@@ -193,6 +193,21 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
+    def _get_cv(self, y):
+        """Return the CV splitter.
+
+        Parameters
+        ----------
+        y : array-like of shape (n_samples,), default=None
+            Target values.
+
+        Returns
+        -------
+        cv : CV splitter
+            The cross-validation splitter.
+        """
+        return check_cv(self.cv, y, classifier=is_classifier(self.estimator))
+
     @_fit_context(
         # SequentialFeatureSelector.estimator is not validated yet
         prefer_skip_nested_validation=False
@@ -257,7 +272,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 "tol must be strictly positive when doing forward selection"
             )
 
-        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
+        cv = self._get_cv(y)
 
         cloned_estimator = clone(self.estimator)
 
@@ -354,24 +369,23 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         Returns
         -------
-        score : float
-            The mean cross-validation score of the selected feature set.
+        scores : ndarray of shape (n_splits,)
+            Array of cross-validation scores for each split.
         """
+        _raise_for_params(params, self, "get_final_cv_score")
         check_is_fitted(self)
 
         X_new = X[:, self.support_]
-        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
-        cloned_estimator = clone(self.estimator)
-
+        cv = self._get_cv(y)
         return cross_val_score(
-            cloned_estimator,
+            clone(self.estimator),
             X_new,
             y,
             cv=cv,
             scoring=self.scoring,
             n_jobs=self.n_jobs,
             params=params if _routing_enabled() else None,
-        ).mean()
+        )
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
