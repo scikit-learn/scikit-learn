@@ -97,31 +97,15 @@ cdef void update_center_dense(
         new_weight = old_weight + wsum_cluster
         weight_sums[cluster_idx] = new_weight
 
-        # We want to compute the new center with the update formula
-        # C_j^{i+1} = C_j^i*(1-alpha) + alpha*CM(B_j^i).
-
-        # where:
-        # - C_j^i is the center representing the j-th cluster at the i-th
-        #   iteration
-        # - B_j^i is the batch of samples assigned to the j-th cluster at
-        #   the i-th iteration
-        # - CM(B_j^i) is the (weighted) mean of the samples assigned to
-        #   cluster j in iteration i
-        # - alpha is the learning rate
-
-        # In the non-adaptive case, alpha = wsum_cluster/(wsum_cluster+old_weight)
-        # where:
-        # - wsum_cluster is the weight of the points assigned to the cluster in the
-        #   current batch
-        # - old_weight is the weight of all points assigned to cluster j
-        #   in previous iterations.
-        # This is equivalent to computing a weighted average of everything
-        # assigned to cluster j so far.
-
-        # In the adaptive case (see https://arxiv.org/abs/2304.00419),
-        # alpha = sqrt(wsum_cluster/wsum_batch) where wsum_batch is the weight of
-        # the batch. This is similar to an exponential moving average but with
-        # an adaptive decay rate.
+        # Update cluster center: C_j^{i+1} = C_j^i*(1-alpha) + alpha*CM(B_j^i),
+        # where CM(B_j^i) is the (weighted) mean of samples assigned to cluster j.
+        #
+        # In non-adaptive mode: alpha = wsum_cluster / (wsum_cluster + old_weight)
+        # (weighted average over all seen samples).
+        #
+        # In adaptive mode (https://arxiv.org/abs/2304.00419):
+        # alpha = sqrt(wsum_cluster / wsum_batch),
+        # approximating an EMA with adaptive decay.
 
         if adaptive_lr:
             alpha = sqrt(wsum_cluster / wsum_batch)
@@ -133,7 +117,7 @@ cdef void update_center_dense(
         for k in range(n_indices):
             sample_idx = indices[k]
             for feature_idx in range(n_features):
-                weight_idx =  sample_weight[sample_idx] / wsum_cluster
+                weight_idx = sample_weight[sample_idx] / wsum_cluster
                 centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X[sample_idx, feature_idx]
 
     else:
