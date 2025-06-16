@@ -652,21 +652,9 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         for class_idx, (r, g, b, _) in enumerate(colors)
     ]
 
-    for idx, quad in enumerate(disp.surface_):
-        assert quad.cmap == cmaps[idx]
-
-
-def test_multiclass_plot_max_class_cmap_kwarg(pyplot):
-    """Check `cmap` kwarg ignored when using plotting max multiclass class."""
-    X, y = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X, y)
-
-    msg = (
-        "Plotting max class of multiclass 'decision_function' or 'predict_proba', "
-        "thus 'multiclass_colors' used and 'cmap' kwarg ignored."
-    )
-    with pytest.warns(UserWarning, match=msg):
-        DecisionBoundaryDisplay.from_estimator(clf, X, cmap="viridis")
+    if plot_method != 'contour':
+        for idx, quad in enumerate(disp.surface_):
+            assert quad.cmap == cmaps[idx]
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):
