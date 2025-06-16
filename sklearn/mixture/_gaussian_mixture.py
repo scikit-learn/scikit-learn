@@ -441,13 +441,13 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
     if covariance_type == "full":
         precisions_cholesky = xp.asarray(
             [
-                _flipudlr(xp.linalg.cholesky(_flipudlr(precision, xp=xp)), xp=xp)
+                _flipudlr(_call_cholesky(_flipudlr(precision, xp=xp), xp=xp), xp=xp)
                 for precision in precisions
             ]
         )
     elif covariance_type == "tied":
         precisions_cholesky = _flipudlr(
-            xp.linalg.cholesky(_flipudlr(precisions, xp=xp)), xp=xp
+            _call_cholesky(_flipudlr(precisions, xp=xp), xp=xp), xp=xp
         )
     else:
         precisions_cholesky = xp.sqrt(precisions)
