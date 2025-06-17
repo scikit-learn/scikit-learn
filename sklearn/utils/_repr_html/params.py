@@ -45,14 +45,14 @@ def link_to_param_doc(estimator_type, param_name):
 
     docstring = estimator_type.__doc__
 
-    m = re.search(f"{param_name} : (\\w+)", docstring)
+    m = re.search(f"{param_name} : (.+),", docstring)
     if m is None:
         # No match found in the docstring, return None to indicate that we
         # cannot link.
         return None
 
     # Extract the first word of the type information as disambiguation suffix
-    # to build the fragment.
+    # to build the fragment
     param_type = m.group(1)
 
     base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
