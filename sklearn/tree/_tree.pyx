@@ -1274,6 +1274,55 @@ cdef class Tree:
 
         return np.asarray(importances)
 
+    cpdef compute_unbiased_feature_importance(
+        self,
+        object X_test,
+        object y_test,
+        object sample_weight,
+    ):
+        """Compute the unbiased version of the MDI."""
+        cdef intp_t n_samples = X_test.shape[0]
+        cdef intp_t n_features = X_test.shape[1]
+        cdef intp_t n_outputs = self.n_outputs
+        cdef intp_t max_n_classes = self.max_n_classes
+        cdef intp_t node_count = self.node_count
+
+        cdef int32_t[::1] has_oob_sample = np.zeros(node_count, dtype=np.int32)
+        cdef float64_t[::1] importance = np.zeros((n_features,), dtype=np.float64)
+        cdef float64_t[:, :, ::1] oob_pred = np.zeros((n_samples, max_n_classes, n_outputs), dtype=np.float64)
+        cdef float64_t[:, :, ::1] oob_node_values = np.zeros((node_count, max_n_classes, n_outputs), dtype=np.float64)
+
+        cdef Node* nodes = self.nodes
+        cdef Node node = nodes[0]
+        cdef int node_idx = 0
+        cdef int left_idx, right_idx = -1
+
+        cdef intp_t[:, ::1] y_classification
+        cdef float64_t[:, ::1] y_regression
+        if self.max_n_classes > 1:
+            # Classification
+            y_regression = np.zeros((0, 0), dtype=np.float64)  # Unused
+            y_classification = np.ascontiguousarray(y_test, dtype=np.intp)
+        else:
+            # Regression
+            y_regression = np.ascontiguousarray(y_test, dtype=np.float64)
+            y_classification = np.zeros((0, 0), dtype=np.intp)  # Unused
+
+        cdef float64_t[::1] sample_weight_view = np.ascontiguousarray(sample_weight, dtype=np.float64)
+        self._compute_oob_node_values_and_predictions(X_test, y_regression, y_classification, sample_weight_view, oob_pred, has_oob_sample, oob_node_values)
+
+        for node_idx in range(self.node_count):
+            node = nodes[node_idx]
+            if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
+                left_idx = node.left_child
+                right_idx = node.right_child
+                if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
+                    importance[node.feature] += self.ufi_impurity_decrease(oob_node_values, node_idx, left_idx, right_idx, node)
+
+        for i in range(self.n_features):
+            importance[i] /= nodes[0].weighted_n_node_samples
+        return np.asarray(importance), np.asarray(oob_pred)
+
     cdef void _compute_oob_node_values_and_predictions(
         self,
         object X_test,
@@ -1305,16 +1354,13 @@ cdef class Tree:
             X_indptr = X_test.indptr
             feature_to_sample = np.zeros(X_test.shape[1], dtype=np.int32)
             X_sample = np.zeros(X_test.shape[1], dtype=np.float64)
-
             # Unused
             X_ndarray = np.zeros((0, 0), dtype=np.float32)
-
         else:
             if not isinstance(X_test, np.ndarray):
                 raise ValueError("X should be in np.ndarray format, got %s" % type(X_test))
             is_sparse = 0
             X_ndarray = X_test
-
             # Unused
             X_data = np.zeros(0, dtype=np.float32)
             X_indices = np.zeros(0, dtype=np.int32)
@@ -1403,55 +1449,6 @@ cdef class Tree:
                                 for c in range(n_classes[k]):
                                     node_value_idx = node_idx * self.value_stride + k * max_n_classes + c
                                     oob_pred[sample_idx, c, k] = self.value[node_value_idx]
-
-    cpdef _compute_unbiased_feature_importance_and_oob_predictions(
-        self,
-        object X_test,
-        object y_test,
-        object sample_weight,
-    ):
-        # TODO: should this method be made public to allow users to pass arbitrary held-out data manually?
-        cdef intp_t n_samples = X_test.shape[0]
-        cdef intp_t n_features = X_test.shape[1]
-        cdef intp_t n_outputs = self.n_outputs
-        cdef intp_t max_n_classes = self.max_n_classes
-        cdef intp_t node_count = self.node_count
-
-        cdef int32_t[::1] has_oob_sample = np.zeros(node_count, dtype=np.int32)
-        cdef float64_t[::1] importances = np.zeros((n_features,), dtype=np.float64)
-        cdef float64_t[:, :, ::1] oob_pred = np.zeros((n_samples, max_n_classes, n_outputs), dtype=np.float64)
-        cdef float64_t[:, :, ::1] oob_node_values = np.zeros((node_count, max_n_classes, n_outputs), dtype=np.float64)
-
-        cdef Node* nodes = self.nodes
-        cdef Node node = nodes[0]
-        cdef int node_idx = 0
-        cdef int left_idx, right_idx = -1
-
-        cdef intp_t[:, ::1] y_classification
-        cdef float64_t[:, ::1] y_regression
-        if self.max_n_classes > 1:
-            # Classification
-            y_regression = np.zeros((0, 0), dtype=np.float64)  # Unused
-            y_classification = np.ascontiguousarray(y_test, dtype=np.intp)
-        else:
-            # Regression
-            y_regression = np.ascontiguousarray(y_test, dtype=np.float64)
-            y_classification = np.zeros((0, 0), dtype=np.intp)  # Unused
-
-        cdef float64_t[::1] sample_weight_view = np.ascontiguousarray(sample_weight, dtype=np.float64)
-        self._compute_oob_node_values_and_predictions(X_test, y_regression, y_classification, sample_weight_view, oob_pred, has_oob_sample, oob_node_values)
-
-        for node_idx in range(self.node_count):
-            node = nodes[node_idx]
-            if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
-                left_idx = node.left_child
-                right_idx = node.right_child
-                if has_oob_sample[left_idx] and has_oob_sample[right_idx]:
-                    importances[node.feature] += self.ufi_impurity_decrease(oob_node_values, node_idx, left_idx, right_idx, node)
-
-        for i in range(self.n_features):
-            importances[i] /= nodes[0].weighted_n_node_samples
-        return np.asarray(importances), np.asarray(oob_pred)
 
     cdef float64_t ufi_impurity_decrease(
         self,

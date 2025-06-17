@@ -322,7 +322,6 @@ def test_importances(dtype, name, criterion, X_type, global_random_seed):
         criterion=criterion,
         oob_score=True,
         bootstrap=True,
-        n_jobs=-1,
         random_state=global_random_seed,
     )
 
@@ -1663,13 +1662,11 @@ def test_unbiased_feature_importance_on_train(name, global_random_seed):
         )
         X_in_bag = est._validate_X_predict(X)[in_bag_indicies]
         y_in_bag = y.reshape(-1, 1)[in_bag_indicies]
-        ufi_on_train_tree = (
-            tree._compute_unbiased_feature_importance_and_oob_predictions(
-                X_in_bag,
-                y_in_bag,
-                sample_weight=np.ones((n_samples,), dtype=np.float64),
-            )[0]
-        )
+        ufi_on_train_tree = tree.compute_unbiased_feature_importance(
+            X_in_bag,
+            y_in_bag,
+            sample_weight=np.ones((n_samples,), dtype=np.float64),
+        )[0]
         ufi_on_train += ufi_on_train_tree
     ufi_on_train /= est.n_estimators
     assert_allclose(

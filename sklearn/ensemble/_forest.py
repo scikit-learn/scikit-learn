@@ -707,8 +707,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_indices = _generate_unsampled_indices(
             tree.random_state, n_samples, n_samples_bootstrap
         )
-        X_test = X[oob_indices]
-        y_test = y[oob_indices]
+        X_oob = X[oob_indices]
+        y_oob = y[oob_indices]
         sample_weight_test = sample_weight[oob_indices]
 
         oob_pred = np.zeros(
@@ -717,12 +717,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )
         n_oob_pred = np.zeros((n_samples, self.n_outputs_), dtype=np.intp)
 
-        importances, y_pred = (
-            tree._compute_unbiased_feature_importance_and_oob_predictions(
-                X_test=X_test,
-                y_test=y_test,
-                sample_weight=sample_weight_test,
-            )
+        importances, y_pred = tree.compute_unbiased_feature_importance(
+            X_test=X_oob,
+            y_test=y_oob,
+            sample_weight=sample_weight_test,
         )
         oob_pred[oob_indices, :, :] += y_pred
         n_oob_pred[oob_indices, :] += 1

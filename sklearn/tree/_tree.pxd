@@ -78,6 +78,12 @@ cdef class Tree:
     cpdef compute_node_depths(self)
     cpdef compute_feature_importances(self, normalize=*)
 
+    cpdef compute_unbiased_feature_importance(
+        self,
+        object X_test,
+        object y_test,
+        object sample_weight,
+    )
     cdef void _compute_oob_node_values_and_predictions(
         self,
         object X_test,
@@ -87,12 +93,6 @@ cdef class Tree:
         float64_t[:, :, ::1] oob_pred,
         int32_t[::1] has_oob_sample,
         float64_t[:, :, ::1] oob_node_values,
-    )
-    cpdef _compute_unbiased_feature_importance_and_oob_predictions(
-        self,
-        object X_test,
-        object y_test,
-        object sample_weight,
     )
     cdef float64_t ufi_impurity_decrease(
         self,
