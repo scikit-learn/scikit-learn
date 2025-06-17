@@ -37,7 +37,7 @@ def link_to_param_doc(estimator_type, param_name):
     if "._" in module_name:
         module_name = module_name.split("._")[0]
 
-    class_name = estimator_type.__class__.__qualname__
+    class_name = estimator_type.__qualname__
 
     docstring = estimator_type.__doc__
 
@@ -99,7 +99,7 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;</td>
             <td class="value">{param_value}</td>
-            <td class="doc_link">{doc_link}</td>
+            <td class="doc_link"><a href={doc_link}>Link</a></td>
         </tr>
     """
 
@@ -122,14 +122,13 @@ def _params_html_repr(params):
             d = "xx"
         rows.append(
             ROW_TEMPLATE.format(
-                param_type="ssss",
+                param_type=par_row["param_type"],
                 param_name=par_row["param_name"],
                 param_value=par_row["param_value"],
                 doc_link=d,
             )
         )
 
-    breakpoint()
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
 
