@@ -103,31 +103,17 @@ def _params_html_repr(params):
         </tr>
     """
 
-    # links_to_docs = [
-    #    link_to_param_doc(params.estimator_type, param_name)
-    #    for param_name in params.keys()
-    # ]
-
-    # rows = [
-    #    ROW_TEMPLATE.format(**_read_params(name, value, params.non_default))
-    #    for name, value in params.items()
-    # ]
-
-    rows = []
-
-    for row in params:
-        par_row = _read_params(row, params[row], params.non_default)
-        d = link_to_param_doc(params.estimator_type, row)
-        if not d:
-            d = "xx"
-        rows.append(
-            ROW_TEMPLATE.format(
-                param_type=par_row["param_type"],
-                param_name=par_row["param_name"],
-                param_value=par_row["param_value"],
-                doc_link=d,
-            )
+    rows = [
+        ROW_TEMPLATE.format(
+            param_type=_read_params(row, params[row], params.non_default)["param_type"],
+            param_name=_read_params(row, params[row], params.non_default)["param_name"],
+            param_value=_read_params(row, params[row], params.non_default)[
+                "param_value"
+            ],
+            doc_link=link_to_param_doc(params.estimator_type, row) or "TODO",
         )
+        for row in params
+    ]
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
