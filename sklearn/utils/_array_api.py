@@ -290,7 +290,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -299,10 +299,18 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
+    if (
+        array_api_compat.is_torch_namespace(xp)
+        and getattr(device, "type", device) == "mps"
+    ):
+        dtypes = (xp.float32,)
     else:
-        return (xp.float64, xp.float32)
+        dtypes = (xp.float64, xp.float32)
+
+    if hasattr(xp, "float16"):
+        return (*dtypes, xp.float16)
+
+    return dtypes
 
 
 def ensure_common_namespace_device(reference, *arrays):
