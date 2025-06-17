@@ -343,7 +343,7 @@ class EmpiricalCovariance(BaseEstimator):
     def mahalanobis(self, X):
         """Compute the squared Mahalanobis distances of given observations.
 
-        For a detailed example of how outlying data affects the Mahalanobis distance,
+        For a detailed example of how outliers affects the Mahalanobis distance,
         see :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`.
 
         Parameters
