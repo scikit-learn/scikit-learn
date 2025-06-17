@@ -538,12 +538,12 @@ def test_oob_sample_weights(est_name, global_random_seed):
         X_oob_weighted, y_oob_weighted, sw, random_state=global_random_seed
     )
 
-    ufi_weighted = est._compute_unbiased_feature_importance_and_oob_predictions(
+    ufi_weighted = est.compute_unbiased_feature_importance(
         X_oob_weighted,
         y_oob_weighted,
         sample_weight=sw,
     )[0]
-    ufi_repeated = est._compute_unbiased_feature_importance_and_oob_predictions(
+    ufi_repeated = est.compute_unbiased_feature_importance(
         X_oob_repeated,
         y_oob_repeated,
         sample_weight=np.ones(X_oob_repeated.shape[0]),

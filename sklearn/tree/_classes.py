@@ -708,6 +708,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         predictive performance, avoiding the bias inherent in using training data
         for importance estimation.
 
+        Feature importance is computed only at internal nodes where both child
+        nodes are sufficiently represented in the held-out dataset.
+
+        This function assumes that `X_test` and `y_test` were not used during
+        training.
+
+        Feature importance for single trees can be misleading. They are accurate when
+        aggregated over multiple trees.
+
         Parameters
         ----------
         X_test : array-like of shape (n_samples, n_features)
@@ -730,37 +739,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 classification or (n_samples, 1, n_outputs) for regression
             Model predictions for each sample in `X_test`. For classification, these
             are class probabilities. For regression, they are predicted target values.
-
-        See Also
-        --------
-        sklearn.inspection.permutation_importance :
-            Model-agnostic feature importance estimation.
-        sklearn.ensemble.RandomForestClassifier.feature_importances_ :
-            Impurity-based importance (biased).
-        sklearn.ensemble.RandomForestClassifier.unbiased_feature_importances_ :
-            Impurity-based importance (unbiased).
-
-        Notes
-        -----
-        - This method supports both classification and regression trees.
-        - Feature importance is computed only at internal nodes where both child
-        nodes are sufficiently represented in the held-out dataset.
-        - This function assumes that `X_test` and `y_test` were not used during
-            training.
-        - Feature importance for single trees can be misleading. They are accurate when
-            aggregated over multiple trees.
-
-        Examples
-        --------
-        >>> from sklearn.tree import DecisionTreeRegressor
-        >>> from sklearn.datasets import make_regression
-        >>> from sklearn.model_selection import train_test_split
-        >>> X, y = make_regression(n_samples=100, n_features=4, random_state=0)
-        >>> X_train, X_val, y_train, y_val = train_test_split(X, y, random_state=42)
-        >>> tree = DecisionTreeRegressor(random_state=0).fit(X_train, y_train)
-        >>> importance, preds = tree.compute_unbiased_feature_importance(X_val, y_val)
-        >>> importance.shape
-        (4,)
         """
         check_is_fitted(self)
         sample_weight = _check_sample_weight(sample_weight, X_test, dtype=np.float64)
