@@ -20,7 +20,11 @@ def link_to_param_doc(estimator_type, param_name):
 
     import sklearn
 
-    module_name = estimator_type.__module__
+    if hasattr(estimator_type, "__module__"):
+        module_name = estimator_type.__module__
+    else:
+        module_name = None
+
     if module_name is None or not module_name.startswith("sklearn."):
         # Not a scikit-learn estimator. Do not link to the scikit-learn
         # documentation.
