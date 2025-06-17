@@ -114,7 +114,10 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
         predictions = estimator.predict_proba(X)
         if not loss.is_multiclass:
             predictions = predictions[:, 1]  # probability of positive class
-        eps = np.finfo(np.float32).eps  # FIXME: This is quite large!
+        # Use machine epsilon for float64 to avoid overly aggressive clipping that can
+        # deteriorate probability calibration. float32 epsilon (~1e-7) is unnecessarily
+        # large since the predictions are promoted to float64 right after clipping.
+        eps = np.finfo(np.float64).eps
         predictions = np.clip(predictions, eps, 1 - eps, dtype=np.float64)
     else:
         predictions = estimator.predict(X).astype(np.float64)
