@@ -1461,8 +1461,7 @@ class RandomForestClassifier(ForestClassifier):
     sklearn.ensemble.HistGradientBoostingClassifier : A Histogram-based Gradient
         Boosting Classification Tree, very fast for big datasets (n_samples >=
         10_000).
-    :ref:`example ensemble/plot_forest_importances.py
-        <sphx_glr_auto_examples_ensemble_plot_forest_importances.py>`
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
     Notes
     -----
