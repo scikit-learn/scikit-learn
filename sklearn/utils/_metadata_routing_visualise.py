@@ -403,59 +403,48 @@ def _get_status_indicator(status):
 
 
 def _format_param_with_status(param, statuses, aliases):
-    """Format a parameter with its status indicators and methods."""
-    if param in aliases:
-        alias = aliases[param]
-        param_display = f"{alias}→{param}"
-    else:
-        param_display = param
+    """Return a compact textual representation of *param* annotated with
+    method-level status indicators.
 
-    # Split methods by whether they use an alias (str) or not. This allows us
-    # to display alias relationships only for the methods that actually use
-    # them. We need to generate *two* entries when a parameter is aliased in
-    # some methods but not others, e.g. ``inner_weights→sample_weight[fit↗]``
-    # and ``sample_weight[partial_fit⚠]``.
+    The implementation groups methods by *alias* vs *direct* usage in a single
+    pass, avoiding the duplication present in the earlier version while
+    preserving the exact output format.  When some methods use an alias and
+    others do not, two comma-separated segments are produced, e.g.::
 
-    # Collect the status mapping once for convenience
+        inner_weights→sample_weight[fit↗], sample_weight[partial_fit⚠]
+    """
+
+    # `param_statuses` maps method → raw status (True/False/alias/…)
     param_statuses = statuses.get(param, {})
+    if not param_statuses:
+        # No status information – fall back to simple param/alias name.
+        return f"{aliases.get(param, param)}→{param}" if param in aliases else param
 
-    alias_methods = {m: s for m, s in param_statuses.items() if request_is_alias(s)}
-    non_alias_methods = {
-        m: s for m, s in param_statuses.items() if not request_is_alias(s)
-    }
+    # Group methods by whether they rely on an alias (str) or not.
+    grouped: dict[bool, list[str]] = {True: [], False: []}
+    for method in SIMPLE_METHODS:
+        if method not in param_statuses:
+            continue
+        status = param_statuses[method]
+        indicator = _get_status_indicator(status)
+        grouped[request_is_alias(status)].append(f"{method}{indicator}")
 
-    parts = []
+    parts: list[str] = []
+    # Iterate in stable order so alias segment (if any) comes first.
+    for uses_alias in (True, False):
+        if not grouped[uses_alias]:
+            continue
 
-    # Helper to build the method part.
-    def _build_method_part(method_map):
-        method_parts = []
-        # Always in full-metadata mode now.
-        for method in SIMPLE_METHODS:
-            if method in method_map:
-                status = method_map[method]
-                indicator = _get_status_indicator(status)
-                method_parts.append(f"{method}{indicator}")
-        return method_parts
-
-    # 1. Alias part (where status is a str)
-    if alias_methods:
-        alias = next(iter(alias_methods.values()))  # They should all be the same
-        method_parts = _build_method_part(alias_methods)
-        alias_display = f"{alias}→{param}"
-        if method_parts:
-            parts.append(f"{alias_display}[{','.join(method_parts)}]")
+        # Decide *display name* for this segment.
+        if uses_alias:
+            # All alias statuses share the same alias string by construction.
+            alias_name = next(s for s in param_statuses.values() if request_is_alias(s))
+            name = f"{alias_name}→{param}"
         else:
-            parts.append(alias_display)
+            name = param
 
-    # 2. Non-alias part
-    if non_alias_methods or (not alias_methods):
-        method_parts = _build_method_part(non_alias_methods)
-        if method_parts:
-            parts.append(f"{param}[{','.join(method_parts)}]")
-        else:
-            parts.append(param)
+        parts.append(f"{name}[{','.join(grouped[uses_alias])}]")
 
-    # Join the parts with ", " to mimic the desired output style.
     return ", ".join(parts)
 
 
