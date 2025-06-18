@@ -326,8 +326,8 @@ Subsequently, the object is created as::
   ...                                   inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.51
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: 0.67
 
 By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
