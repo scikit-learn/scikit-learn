@@ -47,6 +47,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
     _convert_container,
     assert_almost_equal,
@@ -499,6 +500,8 @@ def test_temperature_scaling_input_validation(global_dtype):
 
     ts = _TemperatureScaling().fit(X, y)
     ts_2d = _TemperatureScaling().fit(X_2d, y)
+
+    assert get_tags(ts) == get_tags(ts_2d)
 
     y_pred1 = ts.predict(X)
     y_pred2 = ts_2d.predict(X_2d)
