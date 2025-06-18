@@ -421,16 +421,10 @@ def test_logistic_cv(global_random_seed):
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
-        Cs=[1.0],
-        fit_intercept=False,
-        solver="liblinear",
-        cv=3,
-        random_state=global_random_seed,
+        Cs=[1.0], fit_intercept=False, solver="liblinear", cv=3
     )
     lr_cv.fit(X_ref, y)
-    lr = LogisticRegression(
-        C=1.0, fit_intercept=False, solver="liblinear", random_state=global_random_seed
-    )
+    lr = LogisticRegression(C=1.0, fit_intercept=False, solver="liblinear")
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
