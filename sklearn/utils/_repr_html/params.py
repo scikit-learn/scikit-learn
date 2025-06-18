@@ -45,7 +45,7 @@ def link_to_param_doc(estimator_type, param_name):
 
     docstring = estimator_type.__doc__
 
-    m = re.search(f"{param_name} : (.+),", docstring)
+    m = re.search(f"{param_name} : (.+)\\n", docstring)
     if m is None:
         # No match found in the docstring, return None to indicate that we
         # cannot link.
