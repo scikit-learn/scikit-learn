@@ -700,7 +700,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             precision=precision,
             recall=recall,
             average_precision=average_precision,
-            curve_name=name,
+            name=name,
             pos_label=pos_label,
             prevalence_pos_label=prevalence_pos_label,
         )

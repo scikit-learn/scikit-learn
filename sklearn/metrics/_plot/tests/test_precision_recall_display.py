@@ -73,7 +73,7 @@ def test_precision_recall_display_plotting(
     assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
     # plotting passing some new parameters
-    display.plot(alpha=0.8, name="MySpecialEstimator")
+    display.plot(name="MySpecialEstimator", curve_kwargs={"alpha": 0.8})
     expected_label = f"MySpecialEstimator (AP = {average_precision:0.2f})"
     assert display.line_.get_label() == expected_label
     assert display.line_.get_alpha() == pytest.approx(0.8)
@@ -180,7 +180,7 @@ def test_precision_recall_display_pipeline(pyplot, clf):
         PrecisionRecallDisplay.from_estimator(clf, X, y)
     clf.fit(X, y)
     display = PrecisionRecallDisplay.from_estimator(clf, X, y)
-    assert display.estimator_name == clf.__class__.__name__
+    assert display.name == clf.__class__.__name__
 
 
 def test_precision_recall_display_string_labels(pyplot):
@@ -198,7 +198,7 @@ def test_precision_recall_display_string_labels(pyplot):
     avg_prec = average_precision_score(y, y_pred, pos_label=lr.classes_[1])
 
     assert display.average_precision == pytest.approx(avg_prec)
-    assert display.estimator_name == lr.__class__.__name__
+    assert display.name == lr.__class__.__name__
 
     err_msg = r"y_true takes value in {'benign', 'malignant'}"
     with pytest.raises(ValueError, match=err_msg):
@@ -211,14 +211,14 @@ def test_precision_recall_display_string_labels(pyplot):
 
 
 @pytest.mark.parametrize(
-    "average_precision, estimator_name, expected_label",
+    "average_precision, name, expected_label",
     [
         (0.9, None, "AP = 0.90"),
         (None, "my_est", "my_est"),
         (0.8, "my_est2", "my_est2 (AP = 0.80)"),
     ],
 )
-def test_default_labels(pyplot, average_precision, estimator_name, expected_label):
+def test_default_labels(pyplot, average_precision, name, expected_label):
     """Check the default labels used in the display."""
     precision = np.array([1, 0.5, 0])
     recall = np.array([0, 0.5, 1])
@@ -226,7 +226,7 @@ def test_default_labels(pyplot, average_precision, estimator_name, expected_labe
         precision,
         recall,
         average_precision=average_precision,
-        estimator_name=estimator_name,
+        name=name,
     )
     display.plot()
     assert display.line_.get_label() == expected_label
