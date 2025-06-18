@@ -1886,7 +1886,7 @@ See concept :term:`sample property`.
         ``class_weight`` are provided, the final weight assigned to a sample is
         the product of the two.
 
-        At the time of writing (version 1.7), not all scikit-learn estimators
+        At the time of writing (version 1.8), not all scikit-learn estimators
         correctly implement the weight-repetition equivalence property. The
         `#16298 meta issue
         <https://github.com/scikit-learn/scikit-learn/issues/16298>`_ tracks
