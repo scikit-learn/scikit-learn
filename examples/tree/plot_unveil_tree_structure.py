@@ -256,8 +256,5 @@ for i in range(len(importance)):
 print(
     "Predicted probabilities of classes for the first test sample : \n", prediction[0]
 )
-print(
-    f"Score of the predictions on the test set: {
-        accuracy_score(np.argmax(prediction, axis=1), y_test):.3f
-    }"
-)
+score = accuracy_score(np.argmax(prediction, axis=1), y_test)
+print(f"Score of the predictions on the test set: {score:.3f}")
