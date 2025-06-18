@@ -16,9 +16,9 @@ from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
 from .utils import Bunch
-from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
+from .utils._repr_html.estimator import _VisualBlock
 from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,
@@ -1648,12 +1648,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[-1.5       ,  3.0..., -0.8...],
-           [ 1.5       ,  5.7...,  0.4...]])
+    array([[-1.5       ,  3.04, -0.872],
+           [ 1.5       ,  5.72,  0.463]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[-1.5       ,  3.0...],
-           [ 1.5       ,  5.7...]])
+    array([[-1.5       ,  3.04],
+           [ 1.5       ,  5.72]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
