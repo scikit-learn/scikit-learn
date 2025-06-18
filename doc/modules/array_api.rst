@@ -117,6 +117,7 @@ Estimators
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
+- :class:`preprocessing.PolynomialFeatures`
 
 Meta-estimators
 ---------------
