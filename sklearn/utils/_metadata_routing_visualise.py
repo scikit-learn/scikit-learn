@@ -71,6 +71,33 @@ from sklearn.utils._metadata_requests import (
     request_is_alias,
 )
 
+# -----------------------------------------------------------------------------
+# General-purpose helpers (shared across collectors / renderers)
+# -----------------------------------------------------------------------------
+
+
+def _expand_methods(methods):
+    """Expand *composite* methods (like ``fit_transform``) into their constituent
+    *simple* methods (``fit`` and ``transform``).
+
+    Parameters
+    ----------
+    methods : Iterable[str]
+        Iterable of method names which may include composite entries present in
+        ``sklearn.utils._metadata_requests.COMPOSITE_METHODS``.
+
+    Returns
+    -------
+    set[str]
+        A set containing every *simple* method after expansion.
+    """
+    expanded: set[str] = set()
+    for m in methods:
+        if m in COMPOSITE_METHODS:
+            expanded.update(COMPOSITE_METHODS[m])
+        expanded.add(m)
+    return expanded
+
 
 def visualise_routing(routing_info):
     """
@@ -149,14 +176,6 @@ def visualise_routing(routing_info):
 def _compute_method_origins(router):
     """Return mapping {"path.method": set(root_methods)}."""
 
-    def _expand_methods(methods):
-        expanded = set()
-        for m in methods:
-            if m in COMPOSITE_METHODS:
-                expanded.update(COMPOSITE_METHODS[m])
-            expanded.add(m)
-        return expanded
-
     origins = defaultdict(set)
 
     def _walk(obj, incoming_methods: set[str], root_method: str, path=""):
@@ -214,15 +233,6 @@ def _collect_routing_info(router):
     * :func:`_collect_router_info` handles routers which can also include a
       *self-request* consumer.
     """
-
-    def _expand_methods(methods):
-        """Return a set with composite methods expanded into simple ones."""
-        expanded = set()
-        for m in methods:
-            if m in COMPOSITE_METHODS:
-                expanded.update(COMPOSITE_METHODS[m])
-            expanded.add(m)
-        return expanded
 
     info: dict[str, dict] = defaultdict(
         lambda: {
