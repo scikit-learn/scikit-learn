@@ -907,6 +907,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
+    # Perform the weighted cumulative sum using float64 precision when possible
+    # to avoid numerical stability problem with tens of millions of very noisy
+    # predictions:
+    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
     y_true = xp.astype(y_true, max_float_dtype)
     tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
     if sample_weight is not None:
