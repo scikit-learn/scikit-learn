@@ -1063,3 +1063,17 @@ def _logsumexp(array, axis=None, xp=None):
     out = out[()] if out.ndim == 0 else out
 
     return out
+
+
+def _cholesky(covariance, xp):
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.cholesky(covariance, lower=True)
+    else:
+        return xp.linalg.cholesky(covariance)
+
+
+def _linalg_solve(cov_chol, eye_matrix, xp):
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
+    else:
+        return xp.linalg.solve(cov_chol, eye_matrix)

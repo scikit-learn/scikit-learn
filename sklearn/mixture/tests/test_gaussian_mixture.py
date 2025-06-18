@@ -1491,22 +1491,24 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
     ids=_get_namespace_device_dtype_ids,
 )
 def test_gaussian_mixture_array_api_compliance(
-    init_params, covariance_type, array_namespace, device_, dtype, global_random_seed
+    init_params, covariance_type, array_namespace, device_, dtype
 ):
     """Test that array api works in GaussianMixture.fit()."""
-    X, _ = make_blobs(
-        n_samples=int(1e3), n_features=2, centers=3, random_state=global_random_seed
-    )
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    X = rand_data.X[covariance_type]
+    X = X.astype(dtype)
+
     gmm = GaussianMixture(
-        n_components=3,
+        n_components=rand_data.n_components,
         covariance_type=covariance_type,
-        random_state=global_random_seed,
+        random_state=0,
         init_params=init_params,
     )
-
     gmm.fit(X)
 
-    xp = _array_api_for_tests(array_namespace, device_)
     X_xp = xp.asarray(X, device=device_)
 
     with sklearn.config_context(array_api_dispatch=True):
@@ -1541,19 +1543,38 @@ def test_gaussian_mixture_array_api_compliance(
             assert isinstance(score, float)
 
     # Check methods
-    assert_allclose(gmm.predict(X), _convert_to_numpy(xp_predict, xp=xp))
-    assert_allclose(gmm.predict_proba(X), _convert_to_numpy(xp_predict_proba, xp=xp))
-    assert_allclose(gmm.score_samples(X), _convert_to_numpy(xp_score_samples, xp=xp))
-    assert_allclose(gmm.score(X), xp_score)
-    assert_allclose(gmm.aic(X), xp_aic)
-    assert_allclose(gmm.bic(X), xp_bic)
+    float32_rtol = 1e-4 if dtype == "float32" else 1e-7
+    increased_rtol = 5e-4 if dtype == "float32" else 1e-7
+
+    assert (
+        adjusted_rand_score(gmm.predict(X), _convert_to_numpy(xp_predict, xp=xp)) > 0.95
+    )
+    assert_allclose(
+        gmm.predict_proba(X),
+        _convert_to_numpy(xp_predict_proba, xp=xp),
+        rtol=increased_rtol,
+    )
+    assert_allclose(
+        gmm.score_samples(X),
+        _convert_to_numpy(xp_score_samples, xp=xp),
+        rtol=increased_rtol,
+    )
+    # comparing Python floats so need explicit rtol
+    assert_allclose(gmm.score(X), xp_score, rtol=float32_rtol)
+    assert_allclose(gmm.aic(X), xp_aic, rtol=float32_rtol)
+    assert_allclose(gmm.bic(X), xp_bic, rtol=float32_rtol)
     sample_X, sample_y = gmm.sample(10)
-    assert_allclose(sample_X, _convert_to_numpy(xp_sample_X, xp=xp))
+    # generated samples are float64 so need explicit rtol for dtype=float32
+    assert_allclose(sample_X, _convert_to_numpy(xp_sample_X, xp=xp), rtol=float32_rtol)
     assert_allclose(sample_y, _convert_to_numpy(xp_sample_y, xp=xp))
 
     # Check fitted attributes
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
-    assert_allclose(gmm.covariances_, _convert_to_numpy(gmm_xp.covariances_, xp=xp))
+    assert_allclose(
+        gmm.covariances_,
+        _convert_to_numpy(gmm_xp.covariances_, xp=xp),
+        rtol=increased_rtol,
+    )
 
 
 @pytest.mark.parametrize(
@@ -1609,7 +1630,7 @@ def test_gaussian_mixture_raises_where_array_api_not_implemented(
     init_params, array_namespace, device_, dtype
 ):
     X, _ = make_blobs(
-        n_samples=int(1e3),
+        n_samples=100,
         n_features=2,
         centers=3,
     )

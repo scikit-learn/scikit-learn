@@ -5,14 +5,16 @@
 import math
 
 import numpy as np
-import scipy.linalg
-
-from sklearn.externals.array_api_compat.common._helpers import is_numpy_namespace
 
 from .._config import get_config
 from ..externals import array_api_extra as xpx
 from ..utils import check_array
-from ..utils._array_api import get_namespace, get_namespace_and_device
+from ..utils._array_api import (
+    _cholesky,
+    _linalg_solve,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import row_norms
 from ._base import BaseMixture, _check_shape
@@ -319,20 +321,6 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, xp=None):
     return nk, means, covariances
 
 
-def _call_cholesky(covariance, xp):
-    if is_numpy_namespace(xp):
-        return scipy.linalg.cholesky(covariance, lower=True)
-    else:
-        return xp.linalg.cholesky(covariance)
-
-
-def _call_solve(cov_chol, eye_matrix, xp):
-    if is_numpy_namespace(xp):
-        return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
-    else:
-        return xp.linalg.solve(cov_chol, eye_matrix)
-
-
 def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     """Compute the Cholesky decomposition of the precisions.
 
@@ -374,21 +362,21 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
         for k in range(covariances.shape[0]):
             covariance = covariances[k, :, :]
             try:
-                cov_chol = _call_cholesky(covariance, xp)
+                cov_chol = _cholesky(covariance, xp)
             # catch only numpy exceptions, b/c exceptions aren't part of array api spec
             except np.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-            precisions_chol[k, :, :] = _call_solve(
+            precisions_chol[k, :, :] = _linalg_solve(
                 cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
         try:
-            cov_chol = _call_cholesky(covariances, xp)
+            cov_chol = _cholesky(covariances, xp)
         # catch only numpy exceptions, since exceptions are not part of array api spec
         except np.linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
-        precisions_chol = _call_solve(
+        precisions_chol = _linalg_solve(
             cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
         ).T
     else:
@@ -441,13 +429,13 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
     if covariance_type == "full":
         precisions_cholesky = xp.asarray(
             [
-                _flipudlr(_call_cholesky(_flipudlr(precision, xp=xp), xp=xp), xp=xp)
+                _flipudlr(_cholesky(_flipudlr(precision, xp=xp), xp=xp), xp=xp)
                 for precision in precisions
             ]
         )
     elif covariance_type == "tied":
         precisions_cholesky = _flipudlr(
-            _call_cholesky(_flipudlr(precisions, xp=xp), xp=xp), xp=xp
+            _cholesky(_flipudlr(precisions, xp=xp), xp=xp), xp=xp
         )
     else:
         precisions_cholesky = xp.sqrt(precisions)
