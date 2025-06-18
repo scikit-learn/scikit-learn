@@ -132,7 +132,8 @@ def test_display_curve_error_no_response(
         Display.from_estimator(clf, X, y, response_method=response_method)
 
 
-@pytest.mark.parametrize("Display", [DetCurveDisplay, PrecisionRecallDisplay])
+# TODO: Remove once 'estimator_name' deprecated in all displays
+@pytest.mark.parametrize("Display", [DetCurveDisplay])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
     pyplot,
@@ -176,7 +177,7 @@ def test_display_curve_estimator_name_multiple_calls(
         ),
     ],
 )
-@pytest.mark.parametrize("Display", [DetCurveDisplay, PrecisionRecallDisplay])
+@pytest.mark.parametrize("Display", [DetCurveDisplay])
 def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
     fitted."""
