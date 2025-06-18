@@ -5,7 +5,7 @@
 import math
 
 import numpy as np
-from scipy import linalg
+import scipy.linalg
 
 from sklearn.externals.array_api_compat.common._helpers import is_numpy_namespace
 
@@ -321,14 +321,14 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, xp=None):
 
 def _call_cholesky(covariance, xp):
     if is_numpy_namespace(xp):
-        return linalg.cholesky(covariance, lower=True)
+        return scipy.linalg.cholesky(covariance, lower=True)
     else:
         return xp.linalg.cholesky(covariance)
 
 
 def _call_solve(cov_chol, eye_matrix, xp):
     if is_numpy_namespace(xp):
-        return linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
+        return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
 
