@@ -10,7 +10,7 @@ from tqdm import tqdm
 from sklearn._config import config_context
 from sklearn.preprocessing._polynomial import PolynomialFeatures
 
-X_np = np.random.rand(100000, 10)
+X_np = np.random.rand(100000, 100)
 X_xp_cuda = xp.asarray(X_np, device="cuda")
 
 # Numpy benchmarks
