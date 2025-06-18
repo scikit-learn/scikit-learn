@@ -551,14 +551,17 @@ def _display_tree(
 
 
 def _summarise_params_by_method(router, routing_map):
-    """Aggregate parameter statuses across the whole tree, grouped by root method.
+    """Return a mapping ``{root_method -> user_param -> category -> [paths]}``.
 
-    Returns
-    -------
-    dict
-        { root_method -> { user_param -> {category -> [path.method, ...]} } }
+    A three-level ``defaultdict`` removes the tedious nested ``setdefault``
+    chains while keeping the public return type identical (converted back to a
+    plain ``dict`` at the end).
     """
-    summary = {}
+
+    from collections import defaultdict
+
+    # summary[root][param][cat] → list[str]
+    summary = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     origins = _compute_method_origins(router)
 
@@ -567,9 +570,7 @@ def _summarise_params_by_method(router, routing_map):
             statuses = info["statuses"].get(comp_param, {})
 
             for method, status in statuses.items():
-                # Determine user-facing name: only *real* aliases count. WARN/
-                # UNUSED are special markers and should not become separate
-                # parameters.
+                # Determine user-facing name: only *real* aliases count.
                 user_param = status if request_is_alias(status) else comp_param
 
                 cat = _status_category(status)
@@ -577,13 +578,14 @@ def _summarise_params_by_method(router, routing_map):
                     continue
 
                 roots = origins.get(f"{path}.{method}", {method.split(".")[0]})
-
                 for root_method in roots:
-                    summary.setdefault(root_method, {}).setdefault(
-                        user_param, {}
-                    ).setdefault(cat, []).append(f"{path}.{method}")
+                    summary[root_method][user_param][cat].append(f"{path}.{method}")
 
-    return summary
+    # Convert back to plain dicts for stable downstream expectations.
+    return {
+        r: {p: dict(cats) for p, cats in params.items()}
+        for r, params in summary.items()
+    }
 
 
 # -----------------------------------------------------------------------------
