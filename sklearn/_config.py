@@ -246,12 +246,12 @@ def config_context(
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
 
-    Global default configurations (as defined below in the parameter list) take effect
-    when scikit-learn is imported.
-
     This context manager can be used to apply scikit-learn configuration changes within
     the scope of the with statement. Once the context exits, the previous global
     configuration is restored.
+
+    Die default global configurations (which take effect when scikit-learn is imported)
+    are defined below in the parameter list.
 
     Parameters
     ----------
