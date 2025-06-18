@@ -359,7 +359,7 @@ def _get_status_indicator(alias):
         return "?"  # unknown status
 
 
-def _format_param_with_status(param, methods, statuses, aliases):
+def _format_param_with_status(param, statuses, aliases):
     """Format a parameter with its status indicators and methods."""
     if param in aliases:
         alias = aliases[param]
@@ -455,7 +455,6 @@ def _display_tree(
         for param in sorted(node_info["params"]):
             param_str = _format_param_with_status(
                 param,
-                node_info["methods"][param],
                 node_info["statuses"],
                 node_info.get("aliases", {}),
             )
