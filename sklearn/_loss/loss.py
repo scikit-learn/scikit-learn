@@ -5,6 +5,10 @@ It is not part of the public API.
 Specific losses are used for regression, binary classification or multiclass
 classification.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Goals:
 # - Provide a common private module for loss functions/classes.
 # - To be used in:

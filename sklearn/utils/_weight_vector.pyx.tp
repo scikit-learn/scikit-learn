@@ -9,7 +9,7 @@ Template file for easily generate fused types consistent code using Tempita
 Generated file: weight_vector.pxd
 
 Each class is duplicated for all dtypes (float and double). The keywords
-between double braces are substituted in setup.py.
+between double braces are substituted during the build.
 """
 
 # name_suffix, c_type, reset_wscale_threshold
@@ -20,11 +20,8 @@ dtypes = [('64', 'double', 1e-9),
 
 # cython: binding=False
 #
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck
-#         Danny Sullivan <dsullivan7@hotmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 cimport cython
 from libc.limits cimport INT_MAX

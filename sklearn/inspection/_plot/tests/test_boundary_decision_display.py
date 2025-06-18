@@ -17,16 +17,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_equal,
 )
-
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
-
+from sklearn.utils.fixes import parse_version
 
 X, y = make_classification(
     n_informative=1,
@@ -59,7 +54,7 @@ def test_input_data_dimension(pyplot):
 
 
 def test_check_boundary_response_method_error():
-    """Check that we raise an error for the cases not supported by
+    """Check error raised for multi-output multi-class classifiers by
     `_check_boundary_response_method`.
     """
 
@@ -70,16 +65,6 @@ def test_check_boundary_response_method_error():
     with pytest.raises(ValueError, match=err_msg):
         _check_boundary_response_method(MultiLabelClassifier(), "predict", None)
 
-    class MulticlassClassifier:
-        classes_ = [0, 1, 2]
-
-    err_msg = "Multiclass classifiers are only supported when `response_method` is"
-    for response_method in ("predict_proba", "decision_function"):
-        with pytest.raises(ValueError, match=err_msg):
-            _check_boundary_response_method(
-                MulticlassClassifier(), response_method, None
-            )
-
 
 @pytest.mark.parametrize(
     "estimator, response_method, class_of_interest, expected_prediction_method",
@@ -87,7 +72,12 @@ def test_check_boundary_response_method_error():
         (DecisionTreeRegressor(), "predict", None, "predict"),
         (DecisionTreeRegressor(), "auto", None, "predict"),
         (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", None, "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "auto", None, "predict"),
+        (
+            LogisticRegression().fit(*load_iris_2d_scaled()),
+            "auto",
+            None,
+            ["decision_function", "predict_proba", "predict"],
+        ),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "predict_proba",
@@ -127,24 +117,8 @@ def test_check_boundary_response_method(
     assert prediction_method == expected_prediction_method
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_multiclass_error(pyplot, response_method):
-    """Check multiclass errors."""
-    X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
-    X = X[:, [0, 1]]
-    lr = LogisticRegression().fit(X, y)
-
-    msg = (
-        "Multiclass classifiers are only supported when `response_method` is 'predict'"
-        " or 'auto'"
-    )
-    with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)
-
-
-@pytest.mark.parametrize("response_method", ["auto", "predict"])
-def test_multiclass(pyplot, response_method):
-    """Check multiclass gives expected results."""
+def test_multiclass_predict(pyplot):
+    """Check multiclass `response=predict` gives expected results."""
     grid_resolution = 10
     eps = 1.0
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
@@ -152,7 +126,7 @@ def test_multiclass(pyplot, response_method):
     lr = LogisticRegression(random_state=0).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
-        lr, X, response_method=response_method, grid_resolution=grid_resolution, eps=1.0
+        lr, X, response_method="predict", grid_resolution=grid_resolution, eps=1.0
     )
 
     x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
@@ -190,6 +164,25 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
     """Check input validation from_estimator."""
     with pytest.raises(ValueError, match=error_msg):
         DecisionBoundaryDisplay.from_estimator(fitted_clf, X, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs, error_msg",
+    [
+        ({"multiclass_colors": "not_cmap"}, "it must be a valid Matplotlib colormap"),
+        ({"multiclass_colors": ["red", "green"]}, "it must be of the same length"),
+        (
+            {"multiclass_colors": ["red", "green", "not color"]},
+            "it can only contain valid Matplotlib color names",
+        ),
+    ],
+)
+def test_input_validation_errors_multiclass_colors(pyplot, kwargs, error_msg):
+    """Check input validation for `multiclass_colors` in `from_estimator`."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+    with pytest.raises(ValueError, match=error_msg):
+        DecisionBoundaryDisplay.from_estimator(clf, X, **kwargs)
 
 
 def test_display_plot_input_error(pyplot, fitted_clf):
@@ -340,7 +333,7 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
 def test_error_bad_response(pyplot, response_method, msg):
     """Check errors for bad response."""
 
-    class MyClassifier(BaseEstimator, ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.fitted_ = True
             self.classes_ = [0, 1]
@@ -468,15 +461,18 @@ def test_string_target(pyplot):
     )
 
 
-def test_dataframe_support(pyplot):
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_dataframe_support(pyplot, constructor_name):
     """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(X, columns=["col_x", "col_y"])
+    df = _convert_container(
+        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+    )
     estimator = LogisticRegression().fit(df, y)
 
     with warnings.catch_warnings():
@@ -580,17 +576,97 @@ def test_class_of_interest_multiclass(pyplot, response_method):
             class_of_interest=class_of_interest_idx,
         )
 
-    # TODO: remove this test when we handle multiclass with class_of_interest=None
-    # by showing the max of the decision function or the max of the predicted
-    # probabilities.
-    err_msg = "Multiclass classifiers are only supported"
-    with pytest.raises(ValueError, match=err_msg):
-        DecisionBoundaryDisplay.from_estimator(
-            estimator,
-            X,
-            response_method=response_method,
-            class_of_interest=None,
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_multiclass_plot_max_class(pyplot, response_method):
+    """Check plot correct when plotting max multiclass class."""
+    import matplotlib as mpl
+
+    # In matplotlib < v3.5, default value of `pcolormesh(shading)` is 'flat', which
+    # results in the last row and column being dropped. Thus older versions produce
+    # a 99x99 grid, while newer versions produce a 100x100 grid.
+    if parse_version(mpl.__version__) < parse_version("3.5"):
+        pytest.skip("`pcolormesh` in Matplotlib >= 3.5 gives smaller grid size.")
+
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        plot_method="pcolormesh",
+        response_method=response_method,
+    )
+
+    grid = np.concatenate([disp.xx0.reshape(-1, 1), disp.xx1.reshape(-1, 1)], axis=1)
+    response = getattr(clf, response_method)(grid).reshape(*disp.response.shape)
+    assert_allclose(response, disp.response)
+
+    assert len(disp.surface_) == len(clf.classes_)
+    # Get which class has highest response and check it is plotted
+    highest_class = np.argmax(response, axis=2)
+    for idx, quadmesh in enumerate(disp.surface_):
+        # Note quadmesh mask is True (i.e. masked) when `idx` is NOT the highest class
+        assert_array_equal(
+            highest_class != idx,
+            quadmesh.get_array().mask.reshape(*highest_class.shape),
         )
+
+
+@pytest.mark.parametrize(
+    "multiclass_colors",
+    [
+        "plasma",
+        ["red", "green", "blue"],
+    ],
+)
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
+def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
+    """Check correct cmap used for all `multiclass_colors` inputs."""
+    import matplotlib as mpl
+
+    if parse_version(mpl.__version__) < parse_version("3.5"):
+        pytest.skip(
+            "Matplotlib >= 3.5 is needed for `==` to check equivalence of colormaps"
+        )
+
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        plot_method=plot_method,
+        multiclass_colors=multiclass_colors,
+    )
+
+    if multiclass_colors == "plasma":
+        colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
+    else:
+        colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
+
+    cmaps = [
+        mpl.colors.LinearSegmentedColormap.from_list(
+            f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+        )
+        for class_idx, (r, g, b, _) in enumerate(colors)
+    ]
+
+    for idx, quad in enumerate(disp.surface_):
+        assert quad.cmap == cmaps[idx]
+
+
+def test_multiclass_plot_max_class_cmap_kwarg(pyplot):
+    """Check `cmap` kwarg ignored when using plotting max multiclass class."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    msg = (
+        "Plotting max class of multiclass 'decision_function' or 'predict_proba', "
+        "thus 'multiclass_colors' used and 'cmap' kwarg ignored."
+    )
+    with pytest.warns(UserWarning, match=msg):
+        DecisionBoundaryDisplay.from_estimator(clf, X, cmap="viridis")
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):

@@ -2,9 +2,10 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import shutil
 from functools import partial
@@ -886,14 +887,3 @@ def test_precomputed_connectivity_metric_with_2_connected_components():
 
     assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
-
-
-# TODO(1.6): remove in 1.6
-@pytest.mark.parametrize(
-    "Agglomeration", [AgglomerativeClustering, FeatureAgglomeration]
-)
-def test_deprecation_warning_metric_None(Agglomeration):
-    X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [4, 4], [4, 0]])
-    warn_msg = "`metric=None` is deprecated in version 1.4 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        Agglomeration(metric=None).fit(X)

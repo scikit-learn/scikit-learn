@@ -10,9 +10,8 @@ and can be found here:
   https://code.google.com/p/smhasher/
 
 """
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ..utils._typedefs cimport int32_t, uint32_t
 

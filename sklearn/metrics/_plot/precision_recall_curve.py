@@ -1,19 +1,29 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections import Counter
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _despine,
+    _validate_style_kwargs,
+)
 from .._ranking import average_precision_score, precision_recall_curve
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
     a :class:`~sklearn.metrics.PrecisionRecallDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the :ref:`Model
+    Evaluation Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
@@ -125,6 +135,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot visualization.
@@ -154,6 +165,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.3
 
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -175,14 +191,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {"drawstyle": "steps-post"}
+        default_line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AP = {self.average_precision:0.2f})"
+            default_line_kwargs["label"] = (
+                f"{name} (AP = {self.average_precision:0.2f})"
+            )
         elif self.average_precision is not None:
-            line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
+            default_line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
 
@@ -211,13 +230,18 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
-            chance_level_line_kw = {
+            default_chance_level_line_kw = {
                 "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
                 "linestyle": "--",
             }
-            if chance_level_kw is not None:
-                chance_level_line_kw.update(chance_level_kw)
+
+            if chance_level_kw is None:
+                chance_level_kw = {}
+
+            chance_level_line_kw = _validate_style_kwargs(
+                default_chance_level_line_kw, chance_level_kw
+            )
 
             (self.chance_level_,) = self.ax_.plot(
                 (0, 1),
@@ -226,6 +250,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             )
         else:
             self.chance_level_ = None
+
+        if despine:
+            _despine(self.ax_)
 
         if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower left")
@@ -240,16 +267,22 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y,
         *,
         sample_weight=None,
-        pos_label=None,
         drop_intermediate=False,
         response_method="auto",
+        pos_label=None,
         name=None,
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
+
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <precision_recall_f_measure_metrics>`.
 
         Parameters
         ----------
@@ -266,11 +299,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when computing the
-            precision and recall metrics. By default, `estimators.classes_[1]`
-            is considered as the positive class.
-
         drop_intermediate : bool, default=False
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted precision-recall curve. This is useful in order to
@@ -284,6 +312,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             :term:`decision_function` as the target response. If set to 'auto',
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
+
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics. By default, `estimators.classes_[1]`
+            is considered as the positive class.
 
         name : str, default=None
             Name for labeling curve. If `None`, no name is used.
@@ -303,6 +336,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -364,6 +402,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             ax=ax,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
 
@@ -374,15 +413,21 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y_pred,
         *,
         sample_weight=None,
-        pos_label=None,
         drop_intermediate=False,
+        pos_label=None,
         name=None,
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
+
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <precision_recall_f_measure_metrics>`.
 
         Parameters
         ----------
@@ -395,16 +440,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when computing the
-            precision and recall metrics.
-
         drop_intermediate : bool, default=False
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted precision-recall curve. This is useful in order to
             create lighter precision-recall curves.
 
             .. versionadded:: 1.3
+
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when computing the
+            precision and recall metrics.
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
@@ -425,6 +470,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -500,5 +550,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )

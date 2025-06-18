@@ -1,8 +1,7 @@
 """Gaussian processes classification."""
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 from operator import itemgetter
@@ -18,7 +17,7 @@ from ..preprocessing import LabelEncoder
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from .kernels import RBF, CompoundKernel, Kernel
 from .kernels import ConstantKernel as C
 
@@ -307,12 +306,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         """
         check_is_fitted(self)
 
-        # Based on Algorithm 3.2 of GPML
-        K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
-        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
-        # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
-        var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
+        # Compute the mean and variance of the latent function
+        # (Lines 4-6 of Algorithm 3.2 of GPML)
+        latent_mean, latent_var = self.latent_mean_and_variance(X)
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
@@ -321,12 +317,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # sigmoid by a linear combination of 5 error functions.
         # For information on how this integral can be computed see
         # blitiri.blogspot.de/2012/11/gaussian-integral-of-error-function.html
-        alpha = 1 / (2 * var_f_star)
-        gamma = LAMBDAS * f_star
+        alpha = 1 / (2 * latent_var)
+        gamma = LAMBDAS * latent_mean
         integrals = (
             np.sqrt(np.pi / alpha)
             * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
-            / (2 * np.sqrt(var_f_star * 2 * np.pi))
+            / (2 * np.sqrt(latent_var * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
 
@@ -410,6 +406,39 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
 
         return Z, d_Z
+
+    def latent_mean_and_variance(self, X):
+        """Compute the mean and variance of the latent function values.
+
+        Based on algorithm 3.2 of [RW2006]_, this function returns the latent
+        mean (Line 4) and variance (Line 6) of the Gaussian process
+        classification model.
+
+        Note that this function is only supported for binary classification.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or list of object
+            Query points where the GP is evaluated for classification.
+
+        Returns
+        -------
+        latent_mean : array-like of shape (n_samples,)
+            Mean of the latent function values at the query points.
+
+        latent_var : array-like of shape (n_samples,)
+            Variance of the latent function values at the query points.
+        """
+        check_is_fitted(self)
+
+        # Based on Algorithm 3.2 of GPML
+        K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
+        latent_mean = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
+        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
+        # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
+        latent_var = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
+
+        return latent_mean, latent_var
 
     def _posterior_mode(self, K, return_temporaries=False):
         """Mode-finding for binary Laplace GPC and fixed kernel.
@@ -642,6 +671,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.83548752, 0.03228706, 0.13222543],
            [0.79064206, 0.06525643, 0.14410151]])
+
+    For a comparison of the GaussianProcessClassifier with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _parameter_constraints: dict = {
@@ -700,12 +732,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             raise ValueError("kernel cannot be a CompoundKernel")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X, y = self._validate_data(
-                X, y, multi_output=False, ensure_2d=True, dtype="numeric"
+            X, y = validate_data(
+                self, X, y, multi_output=False, ensure_2d=True, dtype="numeric"
             )
         else:
-            X, y = self._validate_data(
-                X, y, multi_output=False, ensure_2d=False, dtype=None
+            X, y = validate_data(
+                self, X, y, multi_output=False, ensure_2d=False, dtype=None
             )
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
@@ -770,9 +802,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
         return self.base_estimator_.predict(X)
 
@@ -800,9 +832,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             )
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
         return self.base_estimator_.predict_proba(X)
 
@@ -900,3 +932,42 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                     "Obtained theta with shape %d."
                     % (n_dims, n_dims * self.classes_.shape[0], theta.shape[0])
                 )
+
+    def latent_mean_and_variance(self, X):
+        """Compute the mean and variance of the latent function.
+
+        Based on algorithm 3.2 of [RW2006]_, this function returns the latent
+        mean (Line 4) and variance (Line 6) of the Gaussian process
+        classification model.
+
+        Note that this function is only supported for binary classification.
+
+        .. versionadded:: 1.7
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features) or list of object
+            Query points where the GP is evaluated for classification.
+
+        Returns
+        -------
+        latent_mean : array-like of shape (n_samples,)
+            Mean of the latent function values at the query points.
+
+        latent_var : array-like of shape (n_samples,)
+            Variance of the latent function values at the query points.
+        """
+        if self.n_classes_ > 2:
+            raise ValueError(
+                "Returning the mean and variance of the latent function f "
+                "is only supported for binary classification, received "
+                f"{self.n_classes_} classes."
+            )
+        check_is_fitted(self)
+
+        if self.kernel is None or self.kernel.requires_vector_input:
+            X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
+        else:
+            X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
+
+        return self.base_estimator_.latent_mean_and_variance(X)

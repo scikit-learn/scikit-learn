@@ -30,19 +30,22 @@ build a model with optimized hyperparameters by grid search. We compare the
 performance of non-nested and nested CV strategies by taking the difference
 between their scores.
 
-.. topic:: See Also:
+.. seealso::
 
     - :ref:`cross_validation`
     - :ref:`grid_search`
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] `Cawley, G.C.; Talbot, N.L.C. On over-fitting in model selection and
-     subsequent selection bias in performance evaluation.
-     J. Mach. Learn. Res 2010,11, 2079-2107.
-     <http://jmlr.csail.mit.edu/papers/volume11/cawley10a/cawley10a.pdf>`_
+.. [1] `Cawley, G.C.; Talbot, N.L.C. On over-fitting in model selection and
+    subsequent selection bias in performance evaluation.
+    J. Mach. Learn. Res 2010,11, 2079-2107.
+    <http://jmlr.csail.mit.edu/papers/volume11/cawley10a/cawley10a.pdf>`_
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt

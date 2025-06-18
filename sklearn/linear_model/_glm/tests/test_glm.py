@@ -1,6 +1,5 @@
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import warnings
@@ -608,6 +607,15 @@ def test_sample_weights_validation():
     ],
 )
 def test_glm_wrong_y_range(glm):
+    """
+    Test that fitting a GLM model raises a ValueError when `y` contains
+    values outside the valid range for the given distribution.
+
+    Generalized Linear Models (GLMs) with certain distributions, such as
+    Poisson, Gamma, and Tweedie (with power > 1), require `y` to be
+    non-negative. This test ensures that passing a `y` array containing
+    negative values triggers the expected ValueError with the correct message.
+    """
     y = np.array([-1, 2])
     X = np.array([[1], [1]])
     msg = r"Some value\(s\) of y are out of the valid range of the loss"
@@ -720,6 +728,16 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_warm_start(solver, fit_intercept, global_random_seed):
+    """
+    Test that `warm_start=True` enables incremental fitting in PoissonRegressor.
+
+    This test verifies that when using `warm_start=True`, the model continues
+    optimizing from previous coefficients instead of restarting from scratch.
+    It ensures that after an initial fit with `max_iter=1`, the model has a
+    higher objective function value (indicating incomplete optimization).
+    The test then checks whether allowing additional iterations enables
+    convergence to a solution comparable to a fresh training run (`warm_start=False`).
+    """
     n_samples, n_features = 100, 10
     X, y = make_regression(
         n_samples=n_samples,
@@ -924,10 +942,23 @@ def test_tweedie_score(regression_data, power, link):
     ],
 )
 def test_tags(estimator, value):
-    assert estimator._get_tags()["requires_positive_y"] is value
+    """Test that `positive_only` tag is correctly set for different estimators."""
+    assert estimator.__sklearn_tags__().target_tags.positive_only is value
 
 
 def test_linalg_warning_with_newton_solver(global_random_seed):
+    """
+    Test that the Newton solver raises a warning and falls back to LBFGS when
+    encountering a singular or ill-conditioned Hessian matrix.
+
+    This test assess the behavior of `PoissonRegressor` with the "newton-cholesky"
+    solver.
+    It verifies the following:-
+    - The model significantly improves upon the constant baseline deviance.
+    - LBFGS remains robust on collinear data.
+    - The Newton solver raises a `LinAlgWarning` on collinear data and falls
+      back to LBFGS.
+    """
     newton_solver = "newton-cholesky"
     rng = np.random.RandomState(global_random_seed)
     # Use at least 20 samples to reduce the likelihood of getting a degenerate
@@ -1107,6 +1138,5 @@ def test_newton_solver_verbosity(capsys, verbose):
     if verbose >= 1:
         assert (
             "The inner solver detected a pointwise Hessian with many negative values"
-            " and resorts to lbfgs instead."
-            in captured.out
+            " and resorts to lbfgs instead." in captured.out
         )

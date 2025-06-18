@@ -21,7 +21,7 @@ Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
-changed in the mean while. This `userscript
+changed in the meantime. This `userscript
 <https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`__
 provides a shortcut (Control-Alt-P at the time of writing but look at the code
 to be sure) to unfold all such hidden discussions at once, so you can catch up.
@@ -53,7 +53,7 @@ Useful pytest aliases and flags
 -------------------------------
 
 The full test suite takes fairly long to run. For faster iterations,
-it is possibly to select a subset of tests using pytest selectors.
+it is possible to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
 <https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_:
 
@@ -218,12 +218,6 @@ PR-WIP: Regression test needed
 
     Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
-PR-WIP: PEP8
-
-::
-
-    You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
-
 PR-MRG: Patience
 
 ::
@@ -234,13 +228,64 @@ PR-MRG: Add to what's new
 
 ::
 
-    Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
+    Please add an entry to the future changelog by adding an RST fragment into the module associated with your change located in `doc/whats_new/upcoming_changes`. Refer to the following [README](https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md) for full instructions.
 
 PR: Don't change unrelated
 
 ::
 
     Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
+
+.. _debugging_ci_issues:
+
+Debugging CI issues
+-------------------
+
+CI issues may arise for a variety of reasons, so this is by no means a
+comprehensive guide, but rather a list of useful tips and tricks.
+
+Using a lock-file to get an environment close to the CI
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+`conda-lock` can be used to create a conda environment with the exact same
+conda and pip packages as on the CI. For example, the following command will
+create a conda environment named `scikit-learn-doc` that is similar to the CI:
+
+.. prompt:: bash $
+
+    conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+
+.. note::
+
+    It only works if you have the same OS as the CI build (check `platform:` in
+    the lock-file). For example, the previous command will only work if you are
+    on a Linux machine. Also this may not allow you to reproduce some of the
+    issues that are more tied to the particularities of the CI environment, for
+    example CPU architecture reported by OpenBLAS in `sklearn.show_versions()`.
+
+If you don't have the same OS as the CI build you can still create a conda
+environment from the right environment yaml file, although it won't be as close
+as the CI environment as using the associated lock-file. For example for the
+doc build:
+
+.. prompt:: bash $
+
+    conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
+
+This may not give you exactly the same package versions as in the CI for a
+variety of reasons, for example:
+
+- some packages may have had new releases between the time the lock files were
+  last updated in the `main` branch and the time you run the `conda create`
+  command. You can always try to look at the version in the lock-file and
+  specify the versions by hand for some specific packages that you think would
+  help reproducing the issue.
+- different packages may be installed by default depending on the OS. For
+  example, the default BLAS library when installing numpy is OpenBLAS on Linux
+  and MKL on Windows.
+
+Also the problem may be OS specific so the only way to be able to reproduce
+would be to have the same OS as the CI build.
 
 .. highlight:: default
 
@@ -326,7 +371,7 @@ to your shared folder under the `/io` mount point:
 .. prompt:: bash $
 
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-    docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
+    docker run -v `pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
 
 In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
 architecture:
@@ -355,3 +400,19 @@ point.
 
 Then use pytest to run only the tests of the module you are interested in
 debugging.
+
+.. _meson_build_backend:
+
+The Meson Build Backend
+=======================
+
+Since scikit-learn 1.5.0 we use meson-python as the build tool. Meson is
+a new tool for scikit-learn and the PyData ecosystem. It is used by several
+other packages that have written good guides about what it is and how it works.
+
+- `pandas setup doc
+  <https://pandas.pydata.org/docs/development/contributing_environment.html#step-3-build-and-install-pandas>`_:
+  pandas has a similar setup as ours (no spin or dev.py)
+- `scipy Meson doc
+  <https://scipy.github.io/devdocs/building/understanding_meson.html>`_ gives
+  more background about how Meson works behind the scenes

@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils._set_output import (
     ADAPTERS_MANAGER,
     ContainerAdapterProtocol,
+    _get_adapter_from_container,
     _get_output_config,
     _safe_set_output,
     _SetOutputMixin,
@@ -335,7 +336,7 @@ def test_set_output_mro():
 
     class Base(_SetOutputMixin):
         def transform(self, X):
-            return "Base"  # noqa
+            return "Base"
 
     class A(Base):
         pass
@@ -450,3 +451,14 @@ def test_check_library_installed(monkeypatch):
     msg = "Setting output container to 'pandas' requires"
     with pytest.raises(ImportError, match=msg):
         check_library_installed("pandas")
+
+
+def test_get_adapter_from_container():
+    """Check the behavior fo `_get_adapter_from_container`."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+    adapter = _get_adapter_from_container(X)
+    assert adapter.container_lib == "pandas"
+    err_msg = "The container does not have a registered adapter in scikit-learn."
+    with pytest.raises(ValueError, match=err_msg):
+        _get_adapter_from_container(X.to_numpy())

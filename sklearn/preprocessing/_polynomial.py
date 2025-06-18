@@ -1,6 +1,10 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -21,6 +25,7 @@ from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_is_fitted,
+    validate_data,
 )
 from ._csr_polynomial_expansion import (
     _calc_expanded_nnz,
@@ -53,24 +58,6 @@ def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
     max_int32 = np.iinfo(np.int32).max
     needs_int64 = max(max_indices, max_indptr) > max_int32
     index_dtype = np.int64 if needs_int64 else np.int32
-
-    # This is a pretty specific bug that is hard to work around by a user,
-    # hence we do not detail the entire bug and all possible avoidance
-    # mechnasisms. Instead we recommend upgrading scipy or shrinking their data.
-    cumulative_size += expanded_col
-    if (
-        sp_version < parse_version("1.8.0")
-        and cumulative_size - 1 > max_int32
-        and not needs_int64
-    ):
-        raise ValueError(
-            "In scipy versions `<1.8.0`, the function `scipy.sparse.hstack`"
-            " sometimes produces negative columns when the output shape contains"
-            " `n_cols` too large to be represented by a 32bit signed"
-            " integer. To avoid this error, either use a version"
-            " of scipy `>=1.8.0` or alter the `PolynomialFeatures`"
-            " transformer to produce fewer than 2^31 output features."
-        )
 
     # Result of the expansion, modified in place by the
     # `_csr_polynomial_expansion` routine.
@@ -120,8 +107,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         products of at most `degree` *distinct* input features, i.e. terms with
         power of 2 or higher of the same input feature are excluded:
 
-            - included: `x[0]`, `x[1]`, `x[0] * x[1]`, etc.
-            - excluded: `x[0] ** 2`, `x[0] ** 2 * x[1]`, etc.
+        - included: `x[0]`, `x[1]`, `x[0] * x[1]`, etc.
+        - excluded: `x[0] ** 2`, `x[0] ** 2 * x[1]`, etc.
 
     include_bias : bool, default=True
         If `True` (default), then include a bias column, the feature in which
@@ -319,7 +306,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        _, n_features = self._validate_data(X, accept_sparse=True).shape
+        _, n_features = validate_data(self, X, accept_sparse=True).shape
 
         if isinstance(self.degree, Integral):
             if self.degree == 0 and not self.include_bias:
@@ -387,7 +374,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             raise ValueError(msg)
         # We also record the number of output features for
-        # _max_degree = 0
+        # _min_degree = 0
         self._n_out_full = self._num_combinations(
             n_features=n_features,
             min_degree=0,
@@ -429,8 +416,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, order="F", dtype=FLOAT_DTYPES, reset=False, accept_sparse=("csr", "csc")
+        X = validate_data(
+            self,
+            X,
+            order="F",
+            dtype=FLOAT_DTYPES,
+            reset=False,
+            accept_sparse=("csr", "csc"),
         )
 
         n_samples, n_features = X.shape
@@ -575,6 +567,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 XP = Xout
         return XP
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
@@ -642,8 +639,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         may slow down subsequent estimators.
 
     sparse_output : bool, default=False
-        Will return sparse CSR matrix if set True else will return an array. This
-        option is only available with `scipy>=1.8`.
+        Will return sparse CSR matrix if set True else will return an array.
 
         .. versionadded:: 1.2
 
@@ -744,17 +740,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            percentiles = 100 * np.linspace(
+            percentile_ranks = 100 * np.linspace(
                 start=0, stop=1, num=n_knots, dtype=np.float64
             )
 
             if sample_weight is None:
-                knots = np.percentile(X, percentiles, axis=0)
+                knots = np.percentile(X, percentile_ranks, axis=0)
             else:
                 knots = np.array(
                     [
-                        _weighted_percentile(X, sample_weight, percentile)
-                        for percentile in percentiles
+                        _weighted_percentile(X, sample_weight, percentile_rank)
+                        for percentile_rank in percentile_ranks
                     ]
                 )
 
@@ -829,7 +825,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=True,
             accept_sparse=False,
@@ -853,12 +850,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 raise ValueError("knots.shape[1] == n_features is violated.")
             elif not np.all(np.diff(base_knots, axis=0) > 0):
                 raise ValueError("knots must be sorted without duplicates.")
-
-        if self.sparse_output and sp_version < parse_version("1.8.0"):
-            raise ValueError(
-                "Option sparse_output=True is only available with scipy>=1.8.0, "
-                f"but here scipy=={sp_version} is used."
-            )
 
         # number of knots for base interval
         n_knots = base_knots.shape[0]
@@ -957,7 +948,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = validate_data(self, X, reset=False, accept_sparse=False, ensure_2d=True)
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
@@ -1160,13 +1151,3 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # We chose the last one.
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_estimators_pickle": (
-                    "Current Scipy implementation of _bsplines does not"
-                    "support const memory views."
-                ),
-            }
-        }

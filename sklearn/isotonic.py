@@ -1,23 +1,26 @@
-# Authors: Fabian Pedregosa <fabian@fseoane.net>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD 3 clause
+"""Isotonic regression for obtaining monotonic fit to data."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings
 from numbers import Real
 
 import numpy as np
-from scipy import interpolate
+from scipy import interpolate, optimize
 from scipy.stats import spearmanr
+
+from sklearn.utils import metadata_routing
 
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
 from .utils import check_array, check_consistent_length
 from .utils._param_validation import Interval, StrOptions, validate_params
+from .utils.fixes import parse_version, sp_base_version
 from .utils.validation import _check_sample_weight, check_is_fitted
 
-__all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
+__all__ = ["IsotonicRegression", "check_increasing", "isotonic_regression"]
 
 
 @validate_params(
@@ -64,10 +67,10 @@ def check_increasing(x, y):
     >>> from sklearn.isotonic import check_increasing
     >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
     >>> check_increasing(x, y)
-    True
+    np.True_
     >>> y = [10, 8, 6, 4, 2]
     >>> check_increasing(x, y)
-    False
+    np.False_
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
@@ -148,16 +151,25 @@ def isotonic_regression(
     --------
     >>> from sklearn.isotonic import isotonic_regression
     >>> isotonic_regression([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
-    array([2.75   , 2.75   , 2.75   , 2.75   , 7.33...,
-           7.33..., 7.33..., 7.33..., 7.33..., 7.33...])
+    array([2.75   , 2.75   , 2.75   , 2.75   , 7.33,
+           7.33, 7.33, 7.33, 7.33, 7.33])
     """
-    order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
-    y = np.array(y[order], dtype=y.dtype)
-    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
-    sample_weight = np.ascontiguousarray(sample_weight[order])
+    if sp_base_version >= parse_version("1.12.0"):
+        res = optimize.isotonic_regression(
+            y=y, weights=sample_weight, increasing=increasing
+        )
+        y = np.asarray(res.x, dtype=y.dtype)
+    else:
+        # TODO: remove this branch when Scipy 1.12 is the minimum supported version
+        # Also remove _inplace_contiguous_isotonic_regression.
+        order = np.s_[:] if increasing else np.s_[::-1]
+        y = np.array(y[order], dtype=y.dtype)
+        sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
+        sample_weight = np.ascontiguousarray(sample_weight[order])
+        _inplace_contiguous_isotonic_regression(y, sample_weight)
+        y = y[order]
 
-    _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
         # Older versions of np.clip don't accept None as a bound, so use np.inf
         if y_min is None:
@@ -165,7 +177,7 @@ def isotonic_regression(
         if y_max is None:
             y_max = np.inf
         np.clip(y, y_min, y_max, y)
-    return y[order]
+    return y
 
 
 class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
@@ -259,8 +271,12 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     >>> X, y = make_regression(n_samples=10, n_features=1, random_state=41)
     >>> iso_reg = IsotonicRegression().fit(X, y)
     >>> iso_reg.predict([.1, .2])
-    array([1.8628..., 3.7256...])
+    array([1.8628, 3.7256])
     """
+
+    # T should have been called X
+    __metadata_request__predict = {"T": metadata_routing.UNUSED}
+    __metadata_request__transform = {"T": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "y_min": [Interval(Real, None, None, closed="both"), None],
@@ -494,5 +510,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, "X_thresholds_") and hasattr(self, "y_thresholds_"):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
-    def _more_tags(self):
-        return {"X_types": ["1darray"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags

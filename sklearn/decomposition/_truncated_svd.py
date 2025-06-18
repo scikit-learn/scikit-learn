@@ -1,10 +1,7 @@
-"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
-"""
+"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA)."""
 
-# Author: Lars Buitinck
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Michael Becker <mike@beckerfuffle.com>
-# License: 3-clause BSD.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
@@ -21,9 +18,9 @@ from ..base import (
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
+from ..utils.extmath import _randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 __all__ = ["TruncatedSVD"]
 
@@ -154,11 +151,11 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     >>> svd.fit(X)
     TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> print(svd.explained_variance_ratio_)
-    [0.0157... 0.0512... 0.0499... 0.0479... 0.0453...]
+    [0.0157 0.0512 0.0499 0.0479 0.0453]
     >>> print(svd.explained_variance_ratio_.sum())
-    0.2102...
+    0.2102
     >>> print(svd.singular_values_)
-    [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
+    [35.2410  4.5981   4.5420  4.4486  4.3288]
     """
 
     _parameter_constraints: dict = {
@@ -226,7 +223,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
+        X = validate_data(self, X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
@@ -235,7 +232,8 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
-            U, VT = svd_flip(U[:, ::-1], VT[::-1])
+            # u_based_decision=False is needed to be consistent with PCA.
+            U, VT = svd_flip(U[:, ::-1], VT[::-1], u_based_decision=False)
 
         elif self.algorithm == "randomized":
             if self.n_components > X.shape[1]:
@@ -243,14 +241,16 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                     f"n_components({self.n_components}) must be <="
                     f" n_features({X.shape[1]})."
                 )
-            U, Sigma, VT = randomized_svd(
+            U, Sigma, VT = _randomized_svd(
                 X,
                 self.n_components,
                 n_iter=self.n_iter,
                 n_oversamples=self.n_oversamples,
                 power_iteration_normalizer=self.power_iteration_normalizer,
                 random_state=random_state,
+                flip_sign=False,
             )
+            U, VT = svd_flip(U, VT, u_based_decision=False)
 
         self.components_ = VT
 
@@ -289,7 +289,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             Reduced version of X. This will always be a dense array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        X = validate_data(self, X, accept_sparse=["csr", "csc"], reset=False)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
@@ -310,8 +310,11 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         X = check_array(X)
         return np.dot(X, self.components_)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     @property
     def _n_features_out(self):

@@ -96,8 +96,6 @@ def test_symmetric_non_symmetric_union():
     )
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "metric_name, y1, y2", [(name, y1, y2) for name in SYMMETRIC_METRICS]
 )
@@ -114,8 +112,6 @@ def test_non_symmetry(metric_name, y1, y2):
     assert metric(y1, y2) != pytest.approx(metric(y2, y1))
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", NORMALIZED_METRICS)
 def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
@@ -135,8 +131,6 @@ def test_normalized_output(metric_name):
     assert not (score < 0).any()
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
@@ -156,8 +150,6 @@ def test_permute_labels(metric_name):
         assert_allclose(score_1, metric(X, 1 - y_pred))
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string
@@ -217,3 +209,26 @@ def test_inf_nan_input(metric_name, metric_func):
     with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)
+
+
+@pytest.mark.parametrize("name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
+def test_returned_value_consistency(name):
+    """Ensure that the returned values of all metrics are consistent.
+
+    It can only be a float. It should not be a numpy float64 or float32.
+    """
+
+    rng = np.random.RandomState(0)
+    X = rng.randint(10, size=(20, 10))
+    labels_true = rng.randint(0, 3, size=(20,))
+    labels_pred = rng.randint(0, 3, size=(20,))
+
+    if name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[name]
+        score = metric(labels_true, labels_pred)
+    else:
+        metric = UNSUPERVISED_METRICS[name]
+        score = metric(X, labels_pred)
+
+    assert isinstance(score, float)
+    assert not isinstance(score, (np.float64, np.float32))

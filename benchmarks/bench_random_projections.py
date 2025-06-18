@@ -6,6 +6,7 @@ Random projection benchmark
 Benchmarks for random projections.
 
 """
+
 import collections
 import gc
 import optparse

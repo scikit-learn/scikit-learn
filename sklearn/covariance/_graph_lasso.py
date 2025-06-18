@@ -2,9 +2,9 @@
 estimator.
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD 3 clause
-# Copyright: INRIA
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import operator
 import sys
 import time
@@ -18,16 +18,24 @@ from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from ..linear_model import _cd_fast as cd_fast  # type: ignore
+from ..linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils import Bunch
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _is_arraylike_not_scalar,
     check_random_state,
     check_scalar,
+    validate_data,
 )
 from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
@@ -215,7 +223,6 @@ def alpha_max(emp_cov):
 @validate_params(
     {
         "emp_cov": ["array-like"],
-        "cov_init": ["array-like", None],
         "return_costs": ["boolean"],
         "return_n_iter": ["boolean"],
     },
@@ -225,7 +232,6 @@ def graphical_lasso(
     emp_cov,
     alpha,
     *,
-    cov_init=None,
     mode="cd",
     tol=1e-4,
     enet_tol=1e-4,
@@ -251,14 +257,6 @@ def graphical_lasso(
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
         Range is (0, inf].
-
-    cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance. If None, then the empirical
-        covariance is used.
-
-        .. deprecated:: 1.3
-           `cov_init` is deprecated in 1.3 and will be removed in 1.5.
-           It currently has no effect.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -336,20 +334,10 @@ def graphical_lasso(
     >>> emp_cov = empirical_covariance(X, assume_centered=True)
     >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
     >>> emp_cov
-    array([[ 1.68...,  0.21..., -0.20...],
-           [ 0.21...,  0.22..., -0.08...],
-           [-0.20..., -0.08...,  0.23...]])
+    array([[ 1.687,  0.212, -0.209],
+           [ 0.212,  0.221, -0.0817],
+           [-0.209, -0.0817, 0.232]])
     """
-
-    if cov_init is not None:
-        warnings.warn(
-            (
-                "The cov_init parameter is deprecated in 1.3 and will be removed in "
-                "1.5. It does not have any effect."
-            ),
-            FutureWarning,
-        )
-
     model = GraphicalLasso(
         alpha=alpha,
         mode=mode,
@@ -403,6 +391,9 @@ class BaseGraphicalLasso(EmpiricalCovariance):
 
 class GraphicalLasso(BaseGraphicalLasso):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
+
+    For a usage example see
+    :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -566,7 +557,7 @@ class GraphicalLasso(BaseGraphicalLasso):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_features=2, ensure_min_samples=2)
 
         if self.covariance == "precomputed":
             emp_cov = X.copy()
@@ -721,7 +712,7 @@ def graphical_lasso_path(
     return covariances_, precisions_
 
 
-class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
+class GraphicalLassoCV(BaseGraphicalLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -902,6 +893,11 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
+
+    For an example comparing :class:`sklearn.covariance.GraphicalLassoCV`,
+    :func:`sklearn.covariance.ledoit_wolf` shrinkage and the empirical covariance
+    on high-dimensional gaussian data, see
+    :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`.
     """
 
     _parameter_constraints: dict = {
@@ -942,7 +938,7 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
         self.n_jobs = n_jobs
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **params):
         """Fit the GraphicalLasso covariance model to X.
 
         Parameters
@@ -953,13 +949,26 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter and the
+            cross_val_score function.
+
+            .. versionadded:: 1.5
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2)
+        _raise_for_params(params, self, "fit")
+
+        X = validate_data(self, X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -991,6 +1000,11 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
             alpha_0 = 1e-2 * alpha_1
             alphas = np.logspace(np.log10(alpha_0), np.log10(alpha_1), n_alphas)[::-1]
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(splitter=Bunch(split={}))
+
         t0 = time.time()
         for i in range(n_refinements):
             with warnings.catch_warnings():
@@ -1015,7 +1029,7 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
                         verbose=inner_verbose,
                         eps=self.eps,
                     )
-                    for train, test in cv.split(X, y)
+                    for train, test in cv.split(X, y, **routed_params.splitter.split)
                 )
 
             # Little danse to transform the list in what we need
@@ -1081,6 +1095,7 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
                 cv=cv,
                 n_jobs=self.n_jobs,
                 verbose=inner_verbose,
+                params=params,
             )
         )
         grid_scores = np.array(grid_scores)
@@ -1108,3 +1123,23 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
             eps=self.eps,
         )
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            splitter=check_cv(self.cv),
+            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+        )
+        return router

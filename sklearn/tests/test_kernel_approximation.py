@@ -31,6 +31,11 @@ Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
+# Make sure X and Y are not writable to avoid introducing dependencies between
+# tests.
+X.flags.writeable = False
+Y.flags.writeable = False
+
 
 @pytest.mark.parametrize("gamma", [0.1, 1, 2.5])
 @pytest.mark.parametrize("degree, n_components", [(1, 500), (2, 500), (3, 5000)])
@@ -95,8 +100,8 @@ def test_additive_chi2_sampler(csr_container):
 
     # compute exact kernel
     # abbreviations for easier formula
-    X_ = X[:, np.newaxis, :]
-    Y_ = Y[np.newaxis, :, :]
+    X_ = X[:, np.newaxis, :].copy()
+    Y_ = Y[np.newaxis, :, :].copy()
 
     large_kernel = 2 * X_ * Y_ / (X_ + Y_)
 
@@ -144,19 +149,6 @@ def test_additive_chi2_sampler_sample_steps(method, sample_steps):
     assert transformer.sample_interval == sample_interval
 
 
-# TODO(1.5): remove
-def test_additive_chi2_sampler_future_warnings():
-    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
-    transformer = AdditiveChi2Sampler()
-    transformer.fit(X)
-    msg = re.escape(
-        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
-        "will be removed 1.5."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert transformer.sample_interval_ is not None
-
-
 @pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
 def test_additive_chi2_sampler_wrong_sample_steps(method):
     """Check that we raise a ValueError on invalid sample_steps"""
@@ -176,11 +168,12 @@ def test_skewed_chi2_sampler():
     # set on negative component but greater than c to ensure that the kernel
     # approximation is valid on the group (-c; +\infty) endowed with the skewed
     # multiplication.
-    Y[0, 0] = -c / 2.0
+    Y_ = Y.copy()
+    Y_[0, 0] = -c / 2.0
 
     # abbreviations for easier formula
     X_c = (X + c)[:, np.newaxis, :]
-    Y_c = (Y + c)[np.newaxis, :, :]
+    Y_c = (Y_ + c)[np.newaxis, :, :]
 
     # we do it in log-space in the hope that it's more stable
     # this array is n_samples_x x n_samples_y big x n_features
@@ -193,7 +186,7 @@ def test_skewed_chi2_sampler():
     # approximate kernel mapping
     transform = SkewedChi2Sampler(skewedness=c, n_components=1000, random_state=42)
     X_trans = transform.fit_transform(X)
-    Y_trans = transform.transform(Y)
+    Y_trans = transform.transform(Y_)
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
@@ -201,7 +194,7 @@ def test_skewed_chi2_sampler():
     assert np.isfinite(kernel_approx).all(), "NaNs found in the approximate Gram matrix"
 
     # test error is raised on when inputs contains values smaller than -c
-    Y_neg = Y.copy()
+    Y_neg = Y_.copy()
     Y_neg[0, 0] = -c * 2.0
     msg = "X may not contain entries smaller than -skewedness"
     with pytest.raises(ValueError, match=msg):
@@ -213,9 +206,9 @@ def test_additive_chi2_sampler_exceptions():
     transformer = AdditiveChi2Sampler()
     X_neg = X.copy()
     X_neg[0, 0] = -1
-    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler"):
         transformer.fit(X_neg)
-    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler"):
         transformer.fit(X)
         transformer.transform(X_neg)
 

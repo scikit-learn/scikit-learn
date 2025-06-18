@@ -14,14 +14,11 @@ implementation_specific_values = [
 # KD Tree and Ball Tree
 # =====================
 #
-#    Author: Jake Vanderplas <jakevdp@cs.washington.edu>, 2012-2013
-#            Omar Salman <omar.salman@arbisoft.com>
-#
-#    License: BSD
-#
 # _binary_tree.pxi is generated and is then literally Cython included in
 # ball_tree.pyx and kd_tree.pyx. See ball_tree.pyx.tp and kd_tree.pyx.tp.
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 }}
 
 
@@ -230,10 +227,7 @@ NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
-CLASS_DOC = """
-{BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
-
-{BinaryTree} for fast generalized N-point problems
+CLASS_DOC = """{BinaryTree} for fast generalized N-point problems
 
 Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 

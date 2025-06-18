@@ -1,6 +1,5 @@
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from copy import deepcopy
@@ -10,7 +9,7 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 
-from sklearn.base import clone, is_classifier
+from sklearn.base import clone, config_context, is_classifier
 from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
@@ -49,6 +48,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    assert_array_less,
     ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
@@ -94,13 +94,17 @@ def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    clf = Lasso(alpha=0.1).fit(X, y)
+    # _cd_fast.pyx tests for gap < tol, but here we get 0.0 < 0.0
+    # should probably be changed to gap <= tol ?
+    with ignore_warnings(category=ConvergenceWarning):
+        clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_nonfinite_params():
     # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
@@ -240,10 +244,10 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10, n_tar
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, cv=3).fit(X, y)
+    clf = LassoCV(alphas=10, eps=1e-3, max_iter=max_iter, cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True, cv=3)
+    clf = LassoCV(alphas=10, eps=1e-3, max_iter=max_iter, precompute=True, cv=3)
     clf.fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
@@ -261,9 +265,7 @@ def test_lasso_cv():
     )
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
-    np.testing.assert_approx_equal(
-        mse_lars(clf.alphas_[5]).mean(), clf.mse_path_[5].mean(), significant=2
-    )
+    assert_allclose(mse_lars(clf.alphas_[5]).mean(), clf.mse_path_[5].mean(), rtol=1e-2)
 
     # test set
     assert clf.score(X_test, y_test) > 0.99
@@ -286,13 +288,13 @@ def test_lasso_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1)
+    clf_unconstrained = LassoCV(alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1)
     clf_unconstrained.fit(X, y)
     assert min(clf_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     clf_constrained = LassoCV(
-        n_alphas=3, eps=1e-1, max_iter=max_iter, positive=True, cv=2, n_jobs=1
+        alphas=3, eps=1e-1, max_iter=max_iter, positive=True, cv=2, n_jobs=1
     )
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
@@ -358,6 +360,7 @@ def _scale_alpha_inplace(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [
@@ -477,7 +480,7 @@ def test_enet_path():
     # Multi-output/target case
     X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
     clf = MultiTaskElasticNetCV(
-        n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
+        alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
     )
     ignore_warnings(clf.fit)(X, y)
     # We are in well-conditioned settings with low noise: we should
@@ -488,9 +491,9 @@ def test_enet_path():
     # Mono-output should have same cross-validated alpha_ and l1_ratio_
     # in both cases.
     X, y, _, _ = build_dataset(n_features=10)
-    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1 = ElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
     clf1.fit(X, y)
-    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf2 = MultiTaskElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
     clf2.fit(X, y[:, np.newaxis])
     assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
@@ -500,10 +503,10 @@ def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
 
-    clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter, l1_ratio=0.5, tol=1e-3)
+    clf = ElasticNetCV(alphas=50, eps=1e-3, max_iter=max_iter, l1_ratio=0.5, tol=1e-3)
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
-    assert 50 == clf.n_alphas
+    assert 50 == clf._alphas
     assert 50 == len(clf.alphas_)
 
 
@@ -560,24 +563,24 @@ def test_enet_cv_positive_constraint():
 
     # Ensure the unconstrained fit has a negative coefficient
     enetcv_unconstrained = ElasticNetCV(
-        n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1
+        alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1
     )
     enetcv_unconstrained.fit(X, y)
     assert min(enetcv_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     enetcv_constrained = ElasticNetCV(
-        n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, positive=True, n_jobs=1
+        alphas=3, eps=1e-1, max_iter=max_iter, cv=2, positive=True, n_jobs=1
     )
     enetcv_constrained.fit(X, y)
     assert min(enetcv_constrained.coef_) >= 0
 
 
 def test_uniform_targets():
-    enet = ElasticNetCV(n_alphas=3)
-    m_enet = MultiTaskElasticNetCV(n_alphas=3)
-    lasso = LassoCV(n_alphas=3)
-    m_lasso = MultiTaskLassoCV(n_alphas=3)
+    enet = ElasticNetCV(alphas=3)
+    m_enet = MultiTaskElasticNetCV(alphas=3)
+    lasso = LassoCV(alphas=3)
+    m_lasso = MultiTaskLassoCV(alphas=3)
 
     models_single_task = (enet, lasso)
     models_multi_task = (m_enet, m_lasso)
@@ -593,14 +596,16 @@ def test_uniform_targets():
     for model in models_single_task:
         for y_values in (0, 5):
             y1.fill(y_values)
-            assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            with ignore_warnings(category=ConvergenceWarning):
+                assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
     for model in models_multi_task:
         for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
-            assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            with ignore_warnings(category=ConvergenceWarning):
+                assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
 
@@ -686,7 +691,7 @@ def test_multitask_enet_and_lasso_cv():
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(
-        n_alphas=10, eps=1e-3, max_iter=100, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
+        alphas=10, eps=1e-3, max_iter=200, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
     )
     clf.fit(X, y)
     assert 0.5 == clf.l1_ratio_
@@ -696,7 +701,7 @@ def test_multitask_enet_and_lasso_cv():
     assert (2, 10) == clf.alphas_.shape
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3, cv=3)
+    clf = MultiTaskLassoCV(alphas=10, eps=1e-3, max_iter=500, tol=1e-3, cv=3)
     clf.fit(X, y)
     assert (3, X.shape[1]) == clf.coef_.shape
     assert (3,) == clf.intercept_.shape
@@ -707,9 +712,9 @@ def test_multitask_enet_and_lasso_cv():
 def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
-    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf = ElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
     clf.fit(X, y[:, 0])
-    clf1 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1 = MultiTaskElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
     clf1.fit(X, y)
     assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
@@ -720,9 +725,9 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
-    clf = LassoCV(n_alphas=5, eps=2e-3)
+    clf = LassoCV(alphas=5, eps=2e-3)
     clf.fit(X, y[:, 0])
-    clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3)
+    clf1 = MultiTaskLassoCV(alphas=5, eps=2e-3)
     clf1.fit(X, y)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
     assert_almost_equal(clf.coef_, clf1.coef_[0])
@@ -732,16 +737,16 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_input_dtype_enet_and_lassocv(csr_container):
     X, y, _, _ = build_dataset(n_features=10)
-    clf = ElasticNetCV(n_alphas=5)
+    clf = ElasticNetCV(alphas=5)
     clf.fit(csr_container(X), y)
-    clf1 = ElasticNetCV(n_alphas=5)
+    clf1 = ElasticNetCV(alphas=5)
     clf1.fit(csr_container(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
-    clf = LassoCV(n_alphas=5)
+    clf = LassoCV(alphas=5)
     clf.fit(csr_container(X), y)
-    clf1 = LassoCV(n_alphas=5)
+    clf1 = LassoCV(alphas=5)
     clf1.fit(csr_container(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
@@ -945,7 +950,8 @@ def test_check_input_false():
     # dtype is still cast in _preprocess_data to X's dtype. So the test should
     # pass anyway
     X = check_array(X, order="F", dtype="float32")
-    clf.fit(X, y, check_input=False)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order="C", dtype="float64")
@@ -1061,6 +1067,7 @@ def test_enet_float_precision():
             )
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_l1_ratio():
     # Test that an error message is raised if an estimator that
     # uses _alpha_grid is called with l1_ratio=0
@@ -1129,8 +1136,6 @@ def test_warm_start_multitask_lasso():
     [
         (Lasso, 1, dict(precompute=True)),
         (Lasso, 1, dict(precompute=False)),
-        (MultiTaskLasso, 2, dict()),
-        (MultiTaskLasso, 2, dict()),
     ],
 )
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
@@ -1205,7 +1210,7 @@ def test_multi_task_lasso_cv_dtype():
     X = rng.binomial(1, 0.5, size=(n_samples, n_features))
     X = X.astype(int)  # make it explicit that X is int
     y = X[:, [0, 0]].copy()
-    est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
+    est = MultiTaskLassoCV(alphas=5, fit_intercept=True).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
 
 
@@ -1219,7 +1224,7 @@ def test_enet_sample_weight_consistency(
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone and also tests sparse X.
+    check_sample_weight_equivalence alone and also tests sparse X.
     """
     rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
@@ -1300,55 +1305,78 @@ def test_enet_sample_weight_consistency(
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
-def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
-    """Test that ElasticNetCV with sample weights gives correct results."""
-    rng = np.random.RandomState(42)
-    n_splits, n_samples, n_features = 3, 10, 5
-    X = rng.rand(n_splits * n_samples, n_features)
+def test_enet_cv_sample_weight_correctness(
+    fit_intercept, sparse_container, global_random_seed
+):
+    """Test that ElasticNetCV with sample weights gives correct results.
+
+    We fit the same model twice, once with weighted training data, once with repeated
+    data points in the training data and check that both models converge to the
+    same solution.
+
+    Since this model uses an internal cross-validation scheme to tune the alpha
+    regularization parameter, we make sure that the repetitions only occur within
+    a specific CV group. Data points belonging to other CV groups stay
+    unit-weighted / "unrepeated".
+    """
+    rng = np.random.RandomState(global_random_seed)
+    n_splits, n_samples_per_cv, n_features = 3, 10, 5
+    X_with_weights = rng.rand(n_splits * n_samples_per_cv, n_features)
     beta = rng.rand(n_features)
     beta[0:2] = 0
-    y = X @ beta + rng.rand(n_splits * n_samples)
-    sw = np.ones_like(y)
+    y_with_weights = X_with_weights @ beta + rng.rand(n_splits * n_samples_per_cv)
+
     if sparse_container is not None:
-        X = sparse_container(X)
+        X_with_weights = sparse_container(X_with_weights)
     params = dict(tol=1e-6)
 
-    # Set alphas, otherwise the two cv models might use different ones.
-    if fit_intercept:
-        alphas = np.linspace(0.001, 0.01, num=91)
-    else:
-        alphas = np.linspace(0.01, 0.1, num=91)
+    # Assign random integer weights only to the first cross-validation group.
+    # The samples in the other cross-validation groups are left with unit
+    # weights.
 
-    # We weight the first fold 2 times more.
-    sw[:n_samples] = 2
-    groups_sw = np.r_[
-        np.full(n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
-    ]
-    splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
-    reg_sw = ElasticNetCV(
-        alphas=alphas, cv=splits_sw, fit_intercept=fit_intercept, **params
+    sw = np.ones_like(y_with_weights)
+    sw[:n_samples_per_cv] = rng.randint(0, 5, size=n_samples_per_cv)
+    groups_with_weights = np.concatenate(
+        [
+            np.full(n_samples_per_cv, 0),
+            np.full(n_samples_per_cv, 1),
+            np.full(n_samples_per_cv, 2),
+        ]
     )
-    reg_sw.fit(X, y, sample_weight=sw)
+    splits_with_weights = list(
+        LeaveOneGroupOut().split(X_with_weights, groups=groups_with_weights)
+    )
+    reg_with_weights = ElasticNetCV(
+        cv=splits_with_weights, fit_intercept=fit_intercept, **params
+    )
 
-    # We repeat the first fold 2 times and provide splits ourselves
-    if sparse_container is not None:
-        X = X.toarray()
-    X = np.r_[X[:n_samples], X]
-    if sparse_container is not None:
-        X = sparse_container(X)
-    y = np.r_[y[:n_samples], y]
-    groups = np.r_[
-        np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
-    ]
-    splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept, **params)
-    reg.fit(X, y)
+    reg_with_weights.fit(X_with_weights, y_with_weights, sample_weight=sw)
 
-    # ensure that we chose meaningful alphas, i.e. not boundaries
-    assert alphas[0] < reg.alpha_ < alphas[-1]
-    assert reg_sw.alpha_ == reg.alpha_
-    assert_allclose(reg_sw.coef_, reg.coef_)
-    assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
+    if sparse_container is not None:
+        X_with_weights = X_with_weights.toarray()
+    X_with_repetitions = np.repeat(X_with_weights, sw.astype(int), axis=0)
+    if sparse_container is not None:
+        X_with_repetitions = sparse_container(X_with_repetitions)
+
+    y_with_repetitions = np.repeat(y_with_weights, sw.astype(int), axis=0)
+    groups_with_repetitions = np.repeat(groups_with_weights, sw.astype(int), axis=0)
+
+    splits_with_repetitions = list(
+        LeaveOneGroupOut().split(X_with_repetitions, groups=groups_with_repetitions)
+    )
+    reg_with_repetitions = ElasticNetCV(
+        cv=splits_with_repetitions, fit_intercept=fit_intercept, **params
+    )
+    reg_with_repetitions.fit(X_with_repetitions, y_with_repetitions)
+
+    # Check that the alpha selection process is the same:
+    assert_allclose(reg_with_weights.mse_path_, reg_with_repetitions.mse_path_)
+    assert_allclose(reg_with_weights.alphas_, reg_with_repetitions.alphas_)
+    assert reg_with_weights.alpha_ == pytest.approx(reg_with_repetitions.alpha_)
+
+    # Check that the final model coefficients are the same:
+    assert_allclose(reg_with_weights.coef_, reg_with_repetitions.coef_, atol=1e-10)
+    assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
 
 
 @pytest.mark.parametrize("sample_weight", [False, True])
@@ -1440,9 +1468,29 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
+@pytest.mark.parametrize("X_is_sparse", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
+def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight):
+    X = np.array([[3.0, 1.0], [2.0, 5.0], [5.0, 3.0], [1.0, 4.0]])
+    beta = np.array([1, 1])
+    y = X @ beta
+    if X_is_sparse:
+        X = sparse.csc_matrix(X)
+    # Test alpha_max makes coefs zero.
+    reg = ElasticNetCV(alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, 0, atol=1e-5)
+    alpha_max = reg.alpha_
+    # Test smaller alpha makes coefs nonzero.
+    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
+
+
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
 def test_linear_models_cv_fit_with_loky(estimator):
-    # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
+    # LinearModelsCV.fit performs operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
@@ -1474,6 +1522,7 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1.0, 1e6])
 def test_enet_ridge_consistency(ridge_alpha):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
@@ -1589,11 +1638,11 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
         estimator.fit(X, y, groups=groups)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "MultiTaskEstimatorCV",
     [MultiTaskElasticNetCV, MultiTaskLassoCV],
 )
+@config_context(enable_metadata_routing=True)
 def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     """Check that for :class:`MultiTaskElasticNetCV` and
     class:`MultiTaskLassoCV` if `sample_weight` is passed and the
@@ -1631,3 +1680,126 @@ def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     )
     estimator = MultiTaskEstimatorCV(cv=splitter)
     estimator.fit(X, y, sample_weight=sample_weight)
+
+
+# TODO(1.9): remove
+@pytest.mark.parametrize(
+    "Estimator", [LassoCV, ElasticNetCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
+)
+def test_linear_model_cv_deprecated_n_alphas(Estimator):
+    """Check the deprecation of n_alphas in favor of alphas."""
+    X, y = make_regression(n_targets=2, random_state=42)
+
+    # Asses warning message raised by LinearModelCV when n_alphas is used
+    with pytest.warns(
+        FutureWarning,
+        match="'n_alphas' was deprecated in 1.7 and will be removed in 1.9",
+    ):
+        clf = Estimator(n_alphas=5)
+        if clf._is_multitask():
+            clf = clf.fit(X, y)
+        else:
+            clf = clf.fit(X, y[:, 0])
+
+    # Asses no warning message raised when n_alphas is not used
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf = Estimator(alphas=5)
+        if clf._is_multitask():
+            clf = clf.fit(X, y)
+        else:
+            clf = clf.fit(X, y[:, 0])
+
+
+# TODO(1.9): remove
+@pytest.mark.parametrize(
+    "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
+)
+def test_linear_model_cv_deprecated_alphas_none(Estimator):
+    """Check the deprecation of alphas=None."""
+    X, y = make_regression(n_targets=2, random_state=42)
+
+    with pytest.warns(
+        FutureWarning, match="'alphas=None' is deprecated and will be removed in 1.9"
+    ):
+        clf = Estimator(alphas=None)
+        if clf._is_multitask():
+            clf.fit(X, y)
+        else:
+            clf.fit(X, y[:, 0])
+
+
+# TODO(1.9): remove
+@pytest.mark.parametrize(
+    "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
+)
+def test_linear_model_cv_alphas_n_alphas_unset(Estimator):
+    """Check that no warning is raised when both n_alphas and alphas are unset."""
+    X, y = make_regression(n_targets=2, random_state=42)
+
+    # Asses no warning message raised when n_alphas is not used
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf = Estimator()
+        if clf._is_multitask():
+            clf = clf.fit(X, y)
+        else:
+            clf = clf.fit(X, y[:, 0])
+
+
+# TODO(1.9): remove
+@pytest.mark.filterwarnings("ignore:'n_alphas' was deprecated in 1.7")
+@pytest.mark.parametrize(
+    "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
+)
+def test_linear_model_cv_alphas(Estimator):
+    """Check that the behavior of alphas is consistent with n_alphas."""
+    X, y = make_regression(n_targets=2, random_state=42)
+
+    # n_alphas is set, alphas is not => n_alphas is used
+    clf = Estimator(n_alphas=5)
+    if clf._is_multitask():
+        clf.fit(X, y)
+    else:
+        clf.fit(X, y[:, 0])
+    assert len(clf.alphas_) == 5
+
+    # n_alphas is set, alphas is set => alphas has priority
+    clf = Estimator(n_alphas=5, alphas=10)
+    if clf._is_multitask():
+        clf.fit(X, y)
+    else:
+        clf.fit(X, y[:, 0])
+    assert len(clf.alphas_) == 10
+
+    # same with alphas array-like
+    clf = Estimator(n_alphas=5, alphas=np.arange(10))
+    if clf._is_multitask():
+        clf.fit(X, y)
+    else:
+        clf.fit(X, y[:, 0])
+    assert len(clf.alphas_) == 10
+
+    # n_alphas is not set, alphas is set => alphas is used
+    clf = Estimator(alphas=10)
+    if clf._is_multitask():
+        clf.fit(X, y)
+    else:
+        clf.fit(X, y[:, 0])
+    assert len(clf.alphas_) == 10
+
+    # same with alphas array-like
+    clf = Estimator(alphas=np.arange(10))
+    if clf._is_multitask():
+        clf.fit(X, y)
+    else:
+        clf.fit(X, y[:, 0])
+    assert len(clf.alphas_) == 10
+
+    # both are not set => default = 100
+    clf = Estimator()
+    if clf._is_multitask():
+        clf.fit(X, y)
+    else:
+        clf.fit(X, y[:, 0])
+    assert len(clf.alphas_) == 100

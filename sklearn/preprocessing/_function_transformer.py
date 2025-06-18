@@ -1,37 +1,30 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
+from functools import partial
 
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import StrOptions
-from ..utils._set_output import ADAPTERS_MANAGER, _get_output_config
+from ..utils._repr_html.estimator import _VisualBlock
+from ..utils._set_output import (
+    _get_adapter_from_container,
+    _get_output_config,
+)
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _is_polars_df,
     check_array,
+    validate_data,
 )
-
-
-def _get_adapter_from_container(container):
-    """Get the adapter that nows how to handle such container.
-
-    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
-    details.
-    """
-    module_name = container.__class__.__module__.split(".")[0]
-    try:
-        return ADAPTERS_MANAGER.adapters[module_name]
-    except KeyError as exc:
-        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
-        raise ValueError(
-            "The container does not have a registered adapter in scikit-learn. "
-            f"Available adapters are: {available_adapters} while the container "
-            f"provided is: {container!r}."
-        ) from exc
 
 
 def _identity(X):
@@ -149,8 +142,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[0.       , 0.6931...],
-           [1.0986..., 1.3862...]])
+    array([[0.       , 0.6931],
+           [1.0986, 1.3862]])
     """
 
     _parameter_constraints: dict = {
@@ -187,13 +180,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _check_input(self, X, *, reset):
         if self.validate:
-            return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
+            return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
         elif reset:
             # Set feature_names_in_ and n_features_in_ even if validate=False
             # We run this only when reset==True to store the attributes but not
             # validate them, because validate=False
-            self._check_n_features(X, reset=reset)
-            self._check_feature_names(X, reset=reset)
+            _check_n_features(self, X, reset=reset)
+            _check_feature_names(self, X, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
@@ -269,7 +262,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if hasattr(out, "columns") and self.feature_names_out is not None:
             # check the consistency between the column provided by `transform` and
-            # the the column names provided by `get_feature_names_out`.
+            # the column names provided by `get_feature_names_out`.
             feature_names_out = self.get_feature_names_out()
             if list(out.columns) != list(feature_names_out):
                 # we can override the column names of the output if it is inconsistent
@@ -332,7 +325,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_out : array-like, shape (n_samples, n_features)
+        X_original : array-like, shape (n_samples, n_features)
             Transformed input.
         """
         if self.validate:
@@ -397,8 +390,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Return True since FunctionTransfomer is stateless."""
         return True
 
-    def _more_tags(self):
-        return {"no_validation": not self.validate, "stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.no_validation = not self.validate
+        tags.requires_fit = False
+        tags.input_tags.sparse = not self.validate or self.accept_sparse
+        return tags
 
     def set_output(self, *, transform=None):
         """Set output container.
@@ -408,7 +405,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -429,3 +426,21 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         self._sklearn_output_config["transform"] = transform
         return self
+
+    def _get_function_name(self):
+        """Get the name display of the `func` used in HTML representation."""
+        if hasattr(self.func, "__name__"):
+            return self.func.__name__
+        if isinstance(self.func, partial):
+            return self.func.func.__name__
+        return f"{self.func.__class__.__name__}(...)"
+
+    def _sk_visual_block_(self):
+        return _VisualBlock(
+            "single",
+            self,
+            names=self._get_function_name(),
+            name_details=str(self),
+            name_caption="FunctionTransformer",
+            doc_link_label="FunctionTransformer",
+        )

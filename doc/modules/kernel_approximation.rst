@@ -42,7 +42,7 @@ computational complexity of the exact method is
 :math:`\mathcal{O}(n^3_{\text{samples}})`, the complexity of the approximation
 is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`, where
 one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a
-significative decrease in performance [WS2001]_.
+significant decrease in performance [WS2001]_.
 
 We can construct the eigendecomposition of the kernel matrix :math:`K`, based
 on the features of the data, and then split it into sampled and unsampled data
@@ -88,12 +88,14 @@ function or a precomputed kernel matrix. The number of samples used - which is
 also the dimensionality of the features computed - is given by the parameter
 ``n_components``.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * See the example entitled
-      :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`,
-      that shows an efficient machine learning pipeline that uses a
-      :class:`Nystroem` kernel.
+* See the example entitled
+  :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`,
+  that shows an efficient machine learning pipeline that uses a
+  :class:`Nystroem` kernel.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+  for a comparison of :class:`Nystroem` kernel with :class:`RBFSampler`.
 
 .. _rbf_kernel_approx:
 
@@ -143,9 +145,11 @@ use of larger feature spaces more efficient.
 
     Comparing an exact RBF kernel (left) with the approximation (right)
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py` for a
+  comparison of :class:`Nystroem` kernel with :class:`RBFSampler`.
+
 
 .. _additive_chi_kernel_approx:
 
@@ -241,9 +245,9 @@ In addition, this method can transform samples in
 time, where :math:`n_{\text{components}}` is the desired output dimension,
 determined by ``n_components``.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
+* :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
 
 .. _tensor_sketch_kernel_approx:
 
@@ -283,29 +287,29 @@ The classes in this submodule allow to approximate the embedding
 or store training examples.
 
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [WS2001] `"Using the Nyström method to speed up kernel machines"
-      <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>`_
-      Williams, C.K.I.; Seeger, M. - 2001.
-    .. [RR2007] `"Random features for large-scale kernel machines"
-      <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
-      Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
-    .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-      <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
-      Li, F., Ionescu, C., and Sminchisescu, C.
-      - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
-    .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
-      <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
-      Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
-    .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
-      <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
-      Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
-    .. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
-      <10.1145/2487575.2487591>`
-      Pham, N., & Pagh, R. - 2013
-    .. [CCF2002] `"Finding frequent items in data streams"
-      <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
-      Charikar, M., Chen, K., & Farach-Colton - 2002
-    .. [WIKICS] `"Wikipedia: Count sketch"
-      <https://en.wikipedia.org/wiki/Count_sketch>`_
+.. [WS2001] `"Using the Nyström method to speed up kernel machines"
+  <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>`_
+  Williams, C.K.I.; Seeger, M. - 2001.
+.. [RR2007] `"Random features for large-scale kernel machines"
+  <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
+  Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
+.. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
+  <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
+  Li, F., Ionescu, C., and Sminchisescu, C.
+  - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
+.. [VZ2010] `"Efficient additive kernels via explicit feature maps"
+  <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
+  Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
+.. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
+  <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
+  Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
+.. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
+  <10.1145/2487575.2487591>`
+  Pham, N., & Pagh, R. - 2013
+.. [CCF2002] `"Finding frequent items in data streams"
+  <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
+  Charikar, M., Chen, K., & Farach-Colton - 2002
+.. [WIKICS] `"Wikipedia: Count sketch"
+  <https://en.wikipedia.org/wiki/Count_sketch>`_

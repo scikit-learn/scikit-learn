@@ -1,18 +1,12 @@
-"""
-The :mod:`sklearn.utils` module includes various utilities.
-"""
+"""Various utilities to help with development."""
 
-import platform
-import struct
-from collections.abc import Sequence
-
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ..exceptions import DataConversionWarning
-from . import _joblib, metadata_routing
+from . import metadata_routing
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
-from ._estimator_html_repr import estimator_html_repr
 
 # Make _safe_indexing importable from here for backward compat as this particular
 # helper is considered semi-private and typically very useful for third-party
@@ -20,11 +14,22 @@ from ._estimator_html_repr import estimator_html_repr
 # _safe_indexing was included in our public API documentation despite the leading
 # `_` in its name.
 from ._indexing import (
-    _safe_indexing,  # noqa
+    _safe_indexing,  # noqa: F401
     resample,
     shuffle,
 )
 from ._mask import safe_mask
+from ._repr_html.base import _HTMLDocumentationLinkMixin  # noqa: F401
+from ._repr_html.estimator import estimator_html_repr
+from ._tags import (
+    ClassifierTags,
+    InputTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
 from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
@@ -43,67 +48,37 @@ from .validation import (
     indexable,
 )
 
-# Do not deprecate parallel_backend and register_parallel_backend as they are
-# needed to tune `scikit-learn` behavior and have different effect if called
-# from the vendored version or or the site-package version. The other are
-# utilities that are independent of scikit-learn so they are not part of
-# scikit-learn public API.
-parallel_backend = _joblib.parallel_backend
-register_parallel_backend = _joblib.register_parallel_backend
-
 __all__ = [
-    "murmurhash3_32",
+    "Bunch",
+    "ClassifierTags",
+    "DataConversionWarning",
+    "InputTags",
+    "RegressorTags",
+    "Tags",
+    "TargetTags",
+    "TransformerTags",
+    "all_estimators",
     "as_float_array",
     "assert_all_finite",
+    "check_X_y",
     "check_array",
+    "check_consistent_length",
     "check_random_state",
+    "check_scalar",
+    "check_symmetric",
+    "column_or_1d",
     "compute_class_weight",
     "compute_sample_weight",
-    "column_or_1d",
-    "check_consistent_length",
-    "check_X_y",
-    "check_scalar",
-    "indexable",
-    "check_symmetric",
     "deprecated",
-    "parallel_backend",
-    "register_parallel_backend",
-    "resample",
-    "shuffle",
-    "all_estimators",
-    "DataConversionWarning",
     "estimator_html_repr",
-    "Bunch",
-    "metadata_routing",
-    "safe_sqr",
-    "safe_mask",
     "gen_batches",
     "gen_even_slices",
+    "get_tags",
+    "indexable",
+    "metadata_routing",
+    "murmurhash3_32",
+    "resample",
+    "safe_mask",
+    "safe_sqr",
+    "shuffle",
 ]
-
-IS_PYPY = platform.python_implementation() == "PyPy"
-_IS_32BIT = 8 * struct.calcsize("P") == 32
-_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
-
-
-def tosequence(x):
-    """Cast iterable x to a Sequence, avoiding a copy if possible.
-
-    Parameters
-    ----------
-    x : iterable
-        The iterable to be converted.
-
-    Returns
-    -------
-    x : Sequence
-        If `x` is a NumPy array, it returns it as a `ndarray`. If `x`
-        is a `Sequence`, `x` is returned as-is. If `x` is from any other
-        type, `x` is returned casted as a list.
-    """
-    if isinstance(x, np.ndarray):
-        return np.asarray(x)
-    elif isinstance(x, Sequence):
-        return x
-    else:
-        return list(x)

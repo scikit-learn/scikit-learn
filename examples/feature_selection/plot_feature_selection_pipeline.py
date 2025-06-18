@@ -10,6 +10,9 @@ We also show that you can easily inspect part of the pipeline.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will start by generating a binary classification dataset. Subsequently, we
 # will divide the dataset into two subsets.
@@ -46,7 +49,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 
 anova_filter = SelectKBest(f_classif, k=3)
-clf = LinearSVC(dual="auto")
+clf = LinearSVC()
 anova_svm = make_pipeline(anova_filter, clf)
 anova_svm.fit(X_train, y_train)
 

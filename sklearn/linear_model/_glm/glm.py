@@ -1,10 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Generalized Linear Models with Exponential Dispersion Family
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# some parts and tricks stolen from other sklearn files.
-# License: BSD 3 clause
 
 from numbers import Integral, Real
 
@@ -23,7 +22,7 @@ from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
 from ...utils.optimize import _check_optimize_result
-from ...utils.validation import _check_sample_weight, check_is_fitted
+from ...utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from .._linear_loss import LinearModelLoss
 from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 
@@ -188,7 +187,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csc", "csr"],
@@ -282,7 +282,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
-            self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+            self.n_iter_ = _check_optimize_result(
+                "lbfgs", opt_res, max_iter=self.max_iter
+            )
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
@@ -336,7 +338,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=[np.float64, np.float32],
@@ -439,17 +442,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
         return 1 - (deviance + constant) / (deviance_null + constant)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         try:
             # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
             # TweedieRegressor might set the used loss during fit different from
             # self._base_loss.
             base_loss = self._get_loss()
-            return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+            tags.target_tags.positive_only = not base_loss.in_y_true_range(-1.0)
         except (ValueError, AttributeError, TypeError):
             # This happens when the link or power parameter of TweedieRegressor is
             # invalid. We fallback on the default tags in that case.
-            return {}
+            pass  # pragma: no cover
+        return tags
 
     def _get_loss(self):
         """This is only necessary because of the link and power arguments of the
@@ -554,13 +560,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     PoissonRegressor()
     >>> clf.score(X, y)
-    0.990...
+    np.float64(0.990)
     >>> clf.coef_
-    array([0.121..., 0.158...])
+    array([0.121, 0.158])
     >>> clf.intercept_
-    2.088...
+    np.float64(2.088)
     >>> clf.predict([[1, 1], [3, 4]])
-    array([10.676..., 21.875...])
+    array([10.676, 21.875])
     """
 
     _parameter_constraints: dict = {
@@ -686,13 +692,13 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     GammaRegressor()
     >>> clf.score(X, y)
-    0.773...
+    np.float64(0.773)
     >>> clf.coef_
-    array([0.072..., 0.066...])
+    array([0.073, 0.067])
     >>> clf.intercept_
-    2.896...
+    np.float64(2.896)
     >>> clf.predict([[1, 0], [2, 8]])
-    array([19.483..., 35.795...])
+    array([19.483, 35.795])
     """
 
     _parameter_constraints: dict = {
@@ -848,13 +854,13 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     TweedieRegressor()
     >>> clf.score(X, y)
-    0.839...
+    np.float64(0.839)
     >>> clf.coef_
-    array([0.599..., 0.299...])
+    array([0.599, 0.299])
     >>> clf.intercept_
-    1.600...
+    np.float64(1.600)
     >>> clf.predict([[1, 1], [3, 4]])
-    array([2.500..., 4.599...])
+    array([2.500, 4.599])
     """
 
     _parameter_constraints: dict = {

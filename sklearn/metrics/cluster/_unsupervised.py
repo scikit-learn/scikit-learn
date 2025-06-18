@@ -1,10 +1,7 @@
 """Unsupervised evaluation metrics."""
 
-# Authors: Robert Layton <robertlayton@gmail.com>
-#          Arnaud Fouchet <foucheta@gmail.com>
-#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import functools
 from numbers import Integral
@@ -138,7 +135,7 @@ def silhouette_score(
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+    return float(np.mean(silhouette_samples(X, labels, metric=metric, **kwds)))
 
 
 def _silhouette_reduce(D_chunk, start, labels, label_freqs):
@@ -382,7 +379,7 @@ def calinski_harabasz_score(X, labels):
         extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
         intra_disp += np.sum((cluster_k - mean_k) ** 2)
 
-    return (
+    return float(
         1.0
         if intra_disp == 0.0
         else extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0))
@@ -463,4 +460,4 @@ def davies_bouldin_score(X, labels):
     centroid_distances[centroid_distances == 0] = np.inf
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
-    return np.mean(scores)
+    return float(np.mean(scores))

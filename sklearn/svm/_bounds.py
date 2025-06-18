@@ -1,6 +1,7 @@
 """Determination of parameter bounds"""
-# Author: Paolo Losi
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 
@@ -23,14 +24,17 @@ from ..utils.validation import check_array, check_consistent_length
     prefer_skip_nested_validation=True,
 )
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
-    """Return the lowest bound for C.
+    """Return the lowest bound for `C`.
 
-    The lower bound for C is computed such that for C in (l1_min_C, infinity)
+    The lower bound for `C` is computed such that for `C` in `(l1_min_C, infinity)`
     the model is guaranteed not to be empty. This applies to l1 penalized
-    classifiers, such as LinearSVC with penalty='l1' and
-    linear_model.LogisticRegression with penalty='l1'.
+    classifiers, such as :class:`sklearn.svm.LinearSVC` with penalty='l1' and
+    :class:`sklearn.linear_model.LogisticRegression` with penalty='l1'.
 
-    This value is valid if class_weight parameter in fit() is not set.
+    This value is valid if `class_weight` parameter in `fit()` is not set.
+
+    For an example of how to use this function, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
     Parameters
     ----------

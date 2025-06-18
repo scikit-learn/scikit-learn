@@ -1,9 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Newton solver for Generalized Linear Models
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
 
 import warnings
 from abc import ABC, abstractmethod
@@ -178,13 +178,14 @@ class NewtonSolver(ABC):
             - self.coef
             - self.converged
         """
+        max_iter = self.max_iter - self.iteration
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
             self.coef,
             method="L-BFGS-B",
             jac=True,
             options={
-                "maxiter": self.max_iter,
+                "maxiter": max_iter,
                 "maxls": 50,  # default is 20
                 "iprint": self.verbose - 1,
                 "gtol": self.tol,
@@ -192,7 +193,7 @@ class NewtonSolver(ABC):
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
-        self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+        self.iteration += _check_optimize_result("lbfgs", opt_res, max_iter=max_iter)
         self.coef = opt_res.x
         self.converged = opt_res.status == 0
 
@@ -230,7 +231,7 @@ class NewtonSolver(ABC):
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
-            print(f"    eps=10 * finfo.eps={eps}")
+            print(f"    eps=16 * finfo.eps={eps}")
 
         for i in range(21):  # until and including t = beta**20 ~ 1e-6
             self.coef = self.coef_old + t * self.coef_newton
@@ -254,7 +255,7 @@ class NewtonSolver(ABC):
             check = loss_improvement <= t * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={t}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
                     f"<= {t * armijo_term} {check}"
                 )
@@ -298,6 +299,11 @@ class NewtonSolver(ABC):
             return
 
         self.raw_prediction = raw
+        if is_verbose:
+            print(
+                f"    line search successful after {i + 1} iterations with "
+                f"loss={self.loss_value}."
+            )
 
     def check_convergence(self, X, y, sample_weight):
         """Check for convergence.
@@ -310,14 +316,16 @@ class NewtonSolver(ABC):
         # convergence criterion because even a large step could have brought us close
         # to the true minimum.
         # coef_step = self.coef - self.coef_old
-        # check = np.max(np.abs(coef_step) / np.maximum(1, np.abs(self.coef_old)))
+        # change = np.max(np.abs(coef_step) / np.maximum(1, np.abs(self.coef_old)))
+        # check = change <= tol
 
         # 1. Criterion: maximum |gradient| <= tol
         #    The gradient was already updated in line_search()
-        check = np.max(np.abs(self.gradient))
+        g_max_abs = np.max(np.abs(self.gradient))
+        check = g_max_abs <= self.tol
         if self.verbose:
-            print(f"    1. max |gradient| {check} <= {self.tol}")
-        if check > self.tol:
+            print(f"    1. max |gradient| {g_max_abs} <= {self.tol} {check}")
+        if not check:
             return
 
         # 2. Criterion: For Newton decrement d, check 1/2 * d^2 <= tol
@@ -325,9 +333,10 @@ class NewtonSolver(ABC):
         #         = sqrt(coef_newton @ hessian @ coef_newton)
         #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
         d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        check = 0.5 * d2 <= self.tol
         if self.verbose:
-            print(f"    2. Newton decrement {0.5 * d2} <= {self.tol}")
-        if 0.5 * d2 > self.tol:
+            print(f"    2. Newton decrement {0.5 * d2} <= {self.tol} {check}")
+        if not check:
             return
 
         if self.verbose:
@@ -442,11 +451,23 @@ class NewtonCholeskySolver(NewtonSolver):
 
     def setup(self, X, y, sample_weight):
         super().setup(X=X, y=y, sample_weight=sample_weight)
-        n_dof = X.shape[1]
-        if self.linear_loss.fit_intercept:
-            n_dof += 1
+        if self.linear_loss.base_loss.is_multiclass:
+            # Easier with ravelled arrays, e.g., for scipy.linalg.solve.
+            # As with LinearModelLoss, we always are contiguous in n_classes.
+            self.coef = self.coef.ravel(order="F")
+        # Note that the computation of gradient in LinearModelLoss follows the shape of
+        # coef.
         self.gradient = np.empty_like(self.coef)
-        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
+        # But the hessian is always 2d.
+        n = self.coef.size
+        self.hessian = np.empty_like(self.coef, shape=(n, n))
+        # To help case distinctions.
+        self.is_multinomial_with_intercept = (
+            self.linear_loss.base_loss.is_multiclass and self.linear_loss.fit_intercept
+        )
+        self.is_multinomial_no_penalty = (
+            self.linear_loss.base_loss.is_multiclass and self.l2_reg_strength == 0
+        )
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -479,12 +500,70 @@ class NewtonCholeskySolver(NewtonSolver):
             self.use_fallback_lbfgs_solve = True
             return
 
+        # Note: The following case distinction could also be shifted to the
+        # implementation of HalfMultinomialLoss instead of here within the solver.
+        if self.is_multinomial_no_penalty:
+            # The multinomial loss is overparametrized for each unpenalized feature, so
+            # at least the intercepts. This can be seen by noting that predicted
+            # probabilities are invariant under shifting all coefficients of a single
+            # feature j for all classes by the same amount c:
+            #   coef[k, :] -> coef[k, :] + c    =>    proba stays the same
+            # where we have assumed coef.shape = (n_classes, n_features).
+            # Therefore, also the loss (-log-likelihood), gradient and hessian stay the
+            # same, see
+            # Noah Simon and Jerome Friedman and Trevor Hastie. (2013) "A Blockwise
+            # Descent Algorithm for Group-penalized Multiresponse and Multinomial
+            # Regression". https://doi.org/10.48550/arXiv.1311.6529
+            #
+            # We choose the standard approach and set all the coefficients of the last
+            # class to zero, for all features including the intercept.
+            n_classes = self.linear_loss.base_loss.n_classes
+            n_dof = self.coef.size // n_classes  # degree of freedom per class
+            n = self.coef.size - n_dof  # effective size
+            self.coef[n_classes - 1 :: n_classes] = 0
+            self.gradient[n_classes - 1 :: n_classes] = 0
+            self.hessian[n_classes - 1 :: n_classes, :] = 0
+            self.hessian[:, n_classes - 1 :: n_classes] = 0
+            # We also need the reduced variants of gradient and hessian where the
+            # entries set to zero are removed. For 2 features and 3 classes with
+            # arbitrary values, "x" means removed:
+            #   gradient = [0, 1, x, 3, 4, x]
+            #
+            #   hessian = [0,  1, x,  3,  4, x]
+            #             [1,  7, x,  9, 10, x]
+            #             [x,  x, x,  x,  x, x]
+            #             [3,  9, x, 21, 22, x]
+            #             [4, 10, x, 22, 28, x]
+            #             [x,  x, x,  x, x,  x]
+            # The following slicing triggers copies of gradient and hessian.
+            gradient = self.gradient.reshape(-1, n_classes)[:, :-1].flatten()
+            hessian = self.hessian.reshape(n_dof, n_classes, n_dof, n_classes)[
+                :, :-1, :, :-1
+            ].reshape(n, n)
+        elif self.is_multinomial_with_intercept:
+            # Here, only intercepts are unpenalized. We again choose the last class and
+            # set its intercept to zero.
+            self.coef[-1] = 0
+            self.gradient[-1] = 0
+            self.hessian[-1, :] = 0
+            self.hessian[:, -1] = 0
+            gradient, hessian = self.gradient[:-1], self.hessian[:-1, :-1]
+        else:
+            gradient, hessian = self.gradient, self.hessian
+
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
                 self.coef_newton = scipy.linalg.solve(
-                    self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+                    hessian, -gradient, check_finite=False, assume_a="sym"
                 )
+                if self.is_multinomial_no_penalty:
+                    self.coef_newton = np.c_[
+                        self.coef_newton.reshape(n_dof, n_classes - 1), np.zeros(n_dof)
+                    ].reshape(-1)
+                    assert self.coef_newton.flags.f_contiguous
+                elif self.is_multinomial_with_intercept:
+                    self.coef_newton = np.r_[self.coef_newton, 0]
                 self.gradient_times_newton = self.gradient @ self.coef_newton
                 if self.gradient_times_newton > 0:
                     if self.verbose:
@@ -498,12 +577,11 @@ class NewtonCholeskySolver(NewtonSolver):
             warnings.warn(
                 f"The inner solver of {self.__class__.__name__} stumbled upon a "
                 "singular or very ill-conditioned Hessian matrix at iteration "
-                f"#{self.iteration}. It will now resort to lbfgs instead.\n"
+                f"{self.iteration}. It will now resort to lbfgs instead.\n"
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n"
-                + str(e),
+                "The original Linear Algebra message was:\n" + str(e),
                 scipy.linalg.LinAlgWarning,
             )
             # Possible causes:
@@ -523,3 +601,17 @@ class NewtonCholeskySolver(NewtonSolver):
                 )
             self.use_fallback_lbfgs_solve = True
             return
+
+    def finalize(self, X, y, sample_weight):
+        if self.is_multinomial_no_penalty:
+            # Our convention is usually the symmetric parametrization where
+            # sum(coef[classes, features], axis=0) = 0.
+            # We convert now to this convention. Note that it does not change
+            # the predicted probabilities.
+            n_classes = self.linear_loss.base_loss.n_classes
+            self.coef = self.coef.reshape(n_classes, -1, order="F")
+            self.coef -= np.mean(self.coef, axis=0)
+        elif self.is_multinomial_with_intercept:
+            # Only the intercept needs an update to the symmetric parametrization.
+            n_classes = self.linear_loss.base_loss.n_classes
+            self.coef[-n_classes:] -= np.mean(self.coef[-n_classes:])

@@ -2,6 +2,7 @@
 
 The data is mostly low rank but is a fat infinite tail.
 """
+
 import gc
 from collections import defaultdict
 from time import time
@@ -53,8 +54,8 @@ def compute_bench(samples_range, features_range, n_iter=3, rank=50):
 
 
 if __name__ == "__main__":
-    from mpl_toolkits.mplot3d import axes3d  # noqa register the 3d projection
     import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection  # noqa: F401
 
     samples_range = np.linspace(2, 1000, 4).astype(int)
     features_range = np.linspace(2, 1000, 4).astype(int)

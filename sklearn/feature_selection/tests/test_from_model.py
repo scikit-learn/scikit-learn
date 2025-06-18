@@ -8,7 +8,7 @@ import pytest
 from sklearn import datasets
 from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
-from sklearn.datasets import make_friedman1
+from sklearn.datasets import make_friedman1, make_regression
 from sklearn.decomposition import PCA
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
@@ -35,23 +35,28 @@ from sklearn.utils._testing import (
 
 
 class NaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 class NoNaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {"allow_nan": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = False
+        return tags
 
 
 class NaNTagRandomForest(RandomForestClassifier):
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
-rng = np.random.RandomState(0)
 
 
 def test_invalid_input():
@@ -408,7 +413,7 @@ def test_partial_fit():
 
 
 def test_calling_fit_reinitializes():
-    est = LinearSVC(dual="auto", random_state=0)
+    est = LinearSVC(random_state=0)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
@@ -482,6 +487,21 @@ def test_prefit_max_features():
     model.set_params(max_features=max_features)
     with pytest.raises(ValueError, match="`max_features` must be an integer"):
         model.transform(data)
+
+
+def test_get_feature_names_out_elasticnetcv():
+    """Check if ElasticNetCV works with a list of floats.
+
+    Non-regression test for #30936."""
+    X, y = make_regression(n_features=5, n_informative=3, random_state=0)
+    estimator = ElasticNetCV(l1_ratio=[0.25, 0.5, 0.75], random_state=0)
+    selector = SelectFromModel(estimator=estimator)
+    selector.fit(X, y)
+
+    names_out = selector.get_feature_names_out()
+    mask = selector.get_support()
+    expected = np.array([f"x{i}" for i in range(X.shape[1])])[mask]
+    assert_array_equal(names_out, expected)
 
 
 def test_prefit_get_feature_names_out():
@@ -558,11 +578,11 @@ def test_transform_accepts_nan_inf():
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
-    assert model._get_tags()["allow_nan"] is True
+    assert model.__sklearn_tags__().input_tags.allow_nan is True
 
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
-    assert model._get_tags()["allow_nan"] is False
+    assert model.__sklearn_tags__().input_tags.allow_nan is False
 
 
 def _pca_importances(pca_estimator):

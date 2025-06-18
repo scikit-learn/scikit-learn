@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.gaussian_process.kernels` module implements a set of kernels that
-can be combined by operators and used in Gaussian processes.
-"""
+"""A set of kernels that can be combined by operators and used in Gaussian processes."""
 
 # Kernels for Gaussian process regression and classification.
 #
@@ -18,8 +15,8 @@ can be combined by operators and used in Gaussian processes.
 # optimization.
 
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
@@ -137,9 +134,7 @@ class Hyperparameter(
 
         if fixed is None:
             fixed = isinstance(bounds, str) and bounds == "fixed"
-        return super(Hyperparameter, cls).__new__(
-            cls, name, value_type, bounds, n_elements, fixed
-        )
+        return super().__new__(cls, name, value_type, bounds, n_elements, fixed)
 
     # This is mainly a testing utility to check that two hyperparameters
     # are equal.
@@ -1029,9 +1024,9 @@ class Exponentiation(Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.419...
+    0.419
     >>> gpr.predict(X[:1,:], return_std=True)
-    (array([635.5...]), array([0.559...]))
+    (array([635.5]), array([0.559]))
     """
 
     def __init__(self, kernel, exponent):
@@ -1228,9 +1223,9 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.3696...
+    0.3696
     >>> gpr.predict(X[:1,:], return_std=True)
-    (array([606.1...]), array([0.24...]))
+    (array([606.1]), array([0.248]))
     """
 
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
@@ -1358,9 +1353,9 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.3680...
+    0.3680
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1... ]), array([316.6..., 316.6...]))
+    (array([653.0, 592.1 ]), array([316.6, 316.6]))
     """
 
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
@@ -1502,10 +1497,10 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9866...
+    0.9866
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8354..., 0.03228..., 0.1322...],
-           [0.7906..., 0.0652..., 0.1441...]])
+    array([[0.8354, 0.03228, 0.1322],
+           [0.7906, 0.0652, 0.1441]])
     """
 
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
@@ -1672,10 +1667,10 @@ class Matern(RBF):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9866...
+    0.9866
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8513..., 0.0368..., 0.1117...],
-            [0.8086..., 0.0693..., 0.1220...]])
+    array([[0.8513, 0.0368, 0.1117],
+            [0.8086, 0.0693, 0.1220]])
     """
 
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5), nu=1.5):
@@ -1750,9 +1745,7 @@ class Matern(RBF):
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale**2
-                )
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (length_scale**2)
             else:
                 D = squareform(dists**2)[:, :, np.newaxis]
 
@@ -1857,10 +1850,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9733...
+    0.9733
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8881..., 0.0566..., 0.05518...],
-            [0.8678..., 0.0707... , 0.0614...]])
+    array([[0.8881, 0.0566, 0.05518],
+            [0.8678, 0.0707 , 0.0614]])
     """
 
     def __init__(
@@ -2006,9 +1999,9 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.0144...
+    0.0144
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([425.6..., 457.5...]), array([0.3894..., 0.3467...]))
+    (array([425.6, 457.5]), array([0.3894, 0.3467]))
     """
 
     def __init__(
@@ -2153,9 +2146,9 @@ class DotProduct(Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.3680...
+    0.3680
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
+    (array([653.0, 592.1]), array([316.6, 316.6]))
     """
 
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
@@ -2303,10 +2296,10 @@ class PairwiseKernel(Kernel):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9733...
+    0.9733
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8880..., 0.05663..., 0.05532...],
-           [0.8676..., 0.07073..., 0.06165...]])
+    array([[0.8880, 0.05663, 0.05532],
+           [0.8676, 0.07073, 0.06165]])
     """
 
     def __init__(

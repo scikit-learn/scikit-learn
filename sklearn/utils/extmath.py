@@ -1,16 +1,7 @@
-"""
-The :mod:`sklearn.utils.extmath` module includes utilities to perform
-optimal mathematical operations in scikit-learn that are not available in SciPy.
-"""
-# Authors: Gael Varoquaux
-#          Alexandre Gramfort
-#          Alexandre T. Passos
-#          Olivier Grisel
-#          Lars Buitinck
-#          Stefan van der Walt
-#          Kyle Kastner
-#          Giorgio Patrini
-# License: BSD 3 clause
+"""Utilities to perform optimal mathematical operations in scikit-learn."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial
@@ -20,8 +11,7 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.deprecation import deprecated
-from ._array_api import _is_numpy_namespace, device, get_namespace
+from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -123,7 +113,7 @@ def fast_logdet(A):
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
-    3.6375861597263857
+    np.float64(3.6375861597263857)
     """
     xp, _ = get_namespace(A)
     sign, ld = xp.linalg.slogdet(A)
@@ -187,6 +177,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
            [11, 25, 39],
            [17, 39, 61]])
     """
+    xp, _ = get_namespace(a, b)
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
             # sparse is always 2D. Implies b is 3D+
@@ -202,7 +193,12 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
         else:
-            ret = np.dot(a, b)
+            # Alternative for `np.dot` when dealing with a or b having
+            # more than 2 dimensions, that works with the array api.
+            # If b is 1-dim then the last axis for b is taken otherwise
+            # if b is >= 2-dim then the second to last axis is taken.
+            b_axis = -1 if b.ndim == 1 else -2
+            ret = xp.tensordot(a, b, axes=[-1, b_axis])
     else:
         ret = a @ b
 
@@ -223,7 +219,7 @@ def randomized_range_finder(
 
     Parameters
     ----------
-    A : 2D array
+    A : {array-like, sparse matrix} of shape (n_samples, n_features)
         The input data matrix.
 
     size : int
@@ -250,9 +246,9 @@ def randomized_range_finder(
 
     Returns
     -------
-    Q : ndarray
-        A (size x size) projection matrix, the range of which
-        approximates well the range of the input matrix A.
+    Q : ndarray of shape (size, size)
+        A projection matrix, the range of which approximates well the range of the
+        input matrix A.
 
     Notes
     -----
@@ -273,10 +269,25 @@ def randomized_range_finder(
     >>> from sklearn.utils.extmath import randomized_range_finder
     >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
-    array([[-0.21...,  0.88...],
-           [-0.52...,  0.24...],
-           [-0.82..., -0.38...]])
+    array([[-0.214,  0.887],
+           [-0.521,  0.249],
+           [-0.826, -0.388]])
     """
+    A = check_array(A, accept_sparse=True)
+
+    return _randomized_range_finder(
+        A,
+        size=size,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=random_state,
+    )
+
+
+def _randomized_range_finder(
+    A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
+):
+    """Body of randomized_range_finder without input validation."""
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
@@ -348,7 +359,7 @@ def randomized_range_finder(
 
 @validate_params(
     {
-        "M": [np.ndarray, "sparse matrix"],
+        "M": ["array-like", "sparse matrix"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_oversamples": [Interval(Integral, 0, None, closed="left")],
         "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
@@ -377,9 +388,15 @@ def randomized_svd(
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
 
+    Refer to
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for a typical example where the power iteration algorithm is used to rank web pages.
+    This algorithm is also known to be used as a building block in Google's PageRank
+    algorithm.
+
     Parameters
     ----------
-    M : {ndarray, sparse matrix}
+    M : {array-like, sparse matrix} of shape (n_samples, n_features)
         Matrix to decompose.
 
     n_components : int
@@ -497,6 +514,35 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
+    M = check_array(M, accept_sparse=True)
+    return _randomized_svd(
+        M,
+        n_components=n_components,
+        n_oversamples=n_oversamples,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        transpose=transpose,
+        flip_sign=flip_sign,
+        random_state=random_state,
+        svd_lapack_driver=svd_lapack_driver,
+    )
+
+
+def _randomized_svd(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    transpose="auto",
+    flip_sign=True,
+    random_state=None,
+    svd_lapack_driver="gesdd",
+):
+    """Body of randomized_svd without input validation."""
+    xp, is_array_api_compliant = get_namespace(M)
+
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
@@ -519,7 +565,7 @@ def randomized_svd(
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(
+    Q = _randomized_range_finder(
         M,
         size=n_random,
         n_iter=n_iter,
@@ -531,11 +577,10 @@ def randomized_svd(
     B = Q.T @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
-    xp, is_array_api_compliant = get_namespace(B)
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
-        # When when array_api_dispatch is disabled, rely on scipy.linalg
+        # When array_api_dispatch is disabled, rely on scipy.linalg
         # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
         # previous versions of scikit-learn.
         Uhat, s, Vt = linalg.svd(
@@ -863,12 +908,14 @@ def svd_flip(u, v, u_based_decision=True):
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
+        u can be None if `u_based_decision` is False.
 
     v : ndarray
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`. The input v should
         really be called vt to be consistent with scipy's output.
+        v can be None if `u_based_decision` is True.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -883,66 +930,27 @@ def svd_flip(u, v, u_based_decision=True):
     v_adjusted : ndarray
         Array v with adjusted rows and the same dimensions as v.
     """
-    xp, _ = get_namespace(u, v)
-    device = getattr(u, "device", None)
+    xp, _ = get_namespace(*[a for a in [u, v] if a is not None])
 
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device)
+        shift = xp.arange(u.T.shape[0], device=device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
-        v *= signs[:, np.newaxis]
+        if v is not None:
+            v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device)
+        shift = xp.arange(v.shape[0], device=device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
-        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
-        u *= signs[np.newaxis, :]
+        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
+        if u is not None:
+            u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
-
-
-# TODO(1.6): remove
-@deprecated(  # type: ignore
-    "The function `log_logistic` is deprecated and will be removed in 1.6. "
-    "Use `-np.logaddexp(0, -x)` instead."
-)
-def log_logistic(X, out=None):
-    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
-
-    This implementation is numerically stable and uses `-np.logaddexp(0, -x)`.
-
-    For the ordinary logistic function, use ``scipy.special.expit``.
-
-    Parameters
-    ----------
-    X : array-like of shape (M, N) or (M,)
-        Argument to the logistic function.
-
-    out : array-like of shape (M, N) or (M,), default=None
-        Preallocated output array.
-
-    Returns
-    -------
-    out : ndarray of shape (M, N) or (M,)
-        Log of the logistic function evaluated at every point in x.
-
-    Notes
-    -----
-    See the blog post describing this implementation:
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
-    X = check_array(X, dtype=np.float64, ensure_2d=False)
-
-    if out is None:
-        out = np.empty_like(X)
-
-    np.logaddexp(0, -X, out=out)
-    out *= -1
-    return out
 
 
 def softmax(X, copy=True):
@@ -1263,24 +1271,24 @@ def _nanaverage(a, weights=None):
     that :func:`np.nan` values are ignored from the average and weights can
     be passed. Note that when possible, we delegate to the prime methods.
     """
+    xp, _ = get_namespace(a)
+    if a.shape[0] == 0:
+        return xp.nan
 
-    if len(a) == 0:
-        return np.nan
-
-    mask = np.isnan(a)
-    if mask.all():
-        return np.nan
+    mask = xp.isnan(a)
+    if xp.all(mask):
+        return xp.nan
 
     if weights is None:
-        return np.nanmean(a)
+        return _nanmean(a, xp=xp)
 
-    weights = np.asarray(weights)
+    weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]
     try:
-        return np.average(a, weights=weights)
+        return _average(a, weights=weights)
     except ZeroDivisionError:
         # this is when all weights are zero, then ignore them
-        return np.average(a)
+        return _average(a)
 
 
 def safe_sqr(X, *, copy=True):

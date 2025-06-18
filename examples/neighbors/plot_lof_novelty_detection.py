@@ -25,6 +25,9 @@ n_neighbors=20 appears to work well in general.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
@@ -79,11 +82,12 @@ plt.legend(
         "new regular observations",
         "new abnormal observations",
     ],
-    loc="upper left",
+    loc=(1.05, 0.4),
     prop=matplotlib.font_manager.FontProperties(size=11),
 )
 plt.xlabel(
     "errors novel regular: %d/40 ; errors novel abnormal: %d/40"
     % (n_error_test, n_error_outliers)
 )
+plt.tight_layout()
 plt.show()

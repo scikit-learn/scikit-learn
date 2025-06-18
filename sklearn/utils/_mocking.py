@@ -1,9 +1,18 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..utils._metadata_requests import RequestMethod
 from .metaestimators import available_if
-from .validation import _check_sample_weight, _num_samples, check_array, check_is_fitted
+from .validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_array,
+    check_is_fitted,
+    check_random_state,
+)
 
 
 class ArraySlicingWrapper:
@@ -133,6 +142,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         foo_param=0,
         expected_sample_weight=None,
         expected_fit_params=None,
+        random_state=None,
     ):
         self.check_y = check_y
         self.check_y_params = check_y_params
@@ -142,6 +152,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.foo_param = foo_param
         self.expected_sample_weight = expected_sample_weight
         self.expected_fit_params = expected_fit_params
+        self.random_state = random_state
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
         """Validate X and y and make extra check.
@@ -239,11 +250,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         preds : ndarray of shape (n_samples,)
-            Predictions of the first class seens in `classes_`.
+            Predictions of the first class seen in `classes_`.
         """
         if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)
-        return self.classes_[np.zeros(_num_samples(X), dtype=int)]
+        rng = check_random_state(self.random_state)
+        return rng.choice(self.classes_, size=_num_samples(X))
 
     def predict_proba(self, X):
         """Predict probabilities for each class.
@@ -263,8 +275,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if self.methods_to_check == "all" or "predict_proba" in self.methods_to_check:
             X, y = self._check_X_y(X)
-        proba = np.zeros((_num_samples(X), len(self.classes_)))
-        proba[:, 0] = 1
+        rng = check_random_state(self.random_state)
+        proba = rng.randn(_num_samples(X), len(self.classes_))
+        proba = np.abs(proba, out=proba)
+        proba /= np.sum(proba, axis=1)[:, np.newaxis]
         return proba
 
     def decision_function(self, X):
@@ -286,14 +300,13 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             or "decision_function" in self.methods_to_check
         ):
             X, y = self._check_X_y(X)
+        rng = check_random_state(self.random_state)
         if len(self.classes_) == 2:
             # for binary classifier, the confidence score is related to
             # classes_[1] and therefore should be null.
-            return np.zeros(_num_samples(X))
+            return rng.randn(_num_samples(X))
         else:
-            decision = np.zeros((_num_samples(X), len(self.classes_)))
-            decision[:, 0] = 1
-            return decision
+            return rng.randn(_num_samples(X), len(self.classes_))
 
     def score(self, X=None, Y=None):
         """Fake score.
@@ -322,14 +335,18 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             score = 0.0
         return score
 
-    def _more_tags(self):
-        return {"_skip_test": True, "X_types": ["1dlabel"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 # Deactivate key validation for CheckingClassifier because we want to be able to
 # call fit with arbitrary fit_params and record them. Without this change, we
 # would get an error because those arbitrary params are not expected.
-CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore[assignment,method-assign]
     name="fit", keys=[], validate_keys=False
 )
 
@@ -355,8 +372,10 @@ class NoSampleWeightWrapper(BaseEstimator):
     def predict_proba(self, X):
         return self.est.predict_proba(X)
 
-    def _more_tags(self):
-        return {"_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        return tags
 
 
 def _check_response(method):

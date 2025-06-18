@@ -2,15 +2,9 @@
 Common code for all metrics.
 
 """
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 
@@ -124,7 +118,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             # score from being affected by 0-weighted NaN elements.
             average_weight = np.asarray(average_weight)
             score[average_weight == 0] = 0
-        return np.average(score, weights=average_weight)
+        return float(np.average(score, weights=average_weight))
     else:
         return score
 

@@ -337,7 +337,7 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(dual="auto", random_state=0)
+    svc = LinearSVC(random_state=0)
     multi_class_svc = OneVsRestClassifier(svc)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
@@ -368,9 +368,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(
-        LogisticRegression(solver="liblinear", random_state=seed)
-    )
+    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
 
     clf.fit(X, Y)
 
@@ -378,20 +376,20 @@ def test_multiclass_multioutput_estimator_predict_proba():
     y_actual = [
         np.array(
             [
-                [0.23481764, 0.76518236],
-                [0.67196072, 0.32803928],
-                [0.54681448, 0.45318552],
-                [0.34883923, 0.65116077],
-                [0.73687069, 0.26312931],
+                [0.31525135, 0.68474865],
+                [0.81004803, 0.18995197],
+                [0.65664086, 0.34335914],
+                [0.38584929, 0.61415071],
+                [0.83234285, 0.16765715],
             ]
         ),
         np.array(
             [
-                [0.5171785, 0.23878628, 0.24403522],
-                [0.22141451, 0.64102704, 0.13755846],
-                [0.16751315, 0.18256843, 0.64991843],
-                [0.27357372, 0.55201592, 0.17441036],
-                [0.65745193, 0.26062899, 0.08191907],
+                [0.65759215, 0.20976588, 0.13264197],
+                [0.14996984, 0.82591444, 0.02411571],
+                [0.13111876, 0.13294966, 0.73593158],
+                [0.24663053, 0.65860244, 0.09476703],
+                [0.81458885, 0.1728158, 0.01259535],
             ]
         ),
     ]
@@ -442,7 +440,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(dual="auto", random_state=0))
+    moc = MultiOutputClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -478,7 +476,7 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
 
     # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC(dual="auto"))
+    moc = MultiOutputClassifier(LinearSVC())
     assert not hasattr(moc, "predict_proba")
 
     outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
@@ -513,7 +511,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(
-        LinearSVC(dual="auto"),
+        LinearSVC(),
         chain_method=chain_method,
     ).fit(X, Y)
 
@@ -698,7 +696,6 @@ class DummyClassifierWithFitParams(DummyClassifier):
         return super().fit(X, y, sample_weight)
 
 
-@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
 @pytest.mark.parametrize(
     "estimator, dataset",
     [
@@ -865,3 +862,19 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+# TODO(1.9):  remove when deprecated `base_estimator` is removed
+@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
+def test_base_estimator_deprecation(Estimator):
+    """Check that we warn about the deprecation of `base_estimator`."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([[1, 0], [0, 1]])
+
+    estimator = LogisticRegression()
+
+    with pytest.warns(FutureWarning):
+        Estimator(base_estimator=estimator).fit(X, y)
+
+    with pytest.raises(ValueError):
+        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)

@@ -1,5 +1,5 @@
-# Author: Mathieu Blondel, Tom Dupre la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from libc.math cimport fabs
