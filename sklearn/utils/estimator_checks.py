@@ -1130,10 +1130,11 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except (TypeError, RuntimeError):
+    except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # array-api-strict chose to raise RuntimeError instead. Exception type
-        # may need to be updated in the future for other libraries.
+        # array-api-strict chose to raise RuntimeError instead. NumPy emits
+        # a ValueError if `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
@@ -3996,7 +3997,10 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 0)
     X = _enforce_estimator_tags_X(estimator, X)
-    X -= X.mean()
+    # Make sure that the dtype of X stays unchanged: for instance estimator
+    # that expect categorical inputs typically expected integer-based encoded
+    # categories.
+    X -= X.mean().astype(X.dtype)
 
     if tags.input_tags.positive_only:
         with raises(ValueError, match="Negative values in data"):
@@ -4404,7 +4408,14 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            raise ve
+            raise ValueError(
+                "Your estimator raised a ValueError, but with the incorrect or "
+                "incomplete error message to be considered a graceful fail. "
+                "The expected message in the ValueError should contain one of "
+                f"these literal strings:\n{expected_err_msgs}. "
+                f"For example, you could have `ValueError('{expected_err_msgs[0]}')`.\n"
+                f"This is the error message in your exception:\n{ve}"
+            )
 
 
 @ignore_warnings(category=FutureWarning)
