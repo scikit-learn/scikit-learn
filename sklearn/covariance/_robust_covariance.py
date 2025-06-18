@@ -633,6 +633,10 @@ class MinCovDet(EmpiricalCovariance):
     location_ : ndarray of shape (n_features,)
         Estimated robust location.
 
+        For an example of comparing raw robust estimates with
+        the true location and covariance, refer to
+        :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py`.
+
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated robust covariance matrix.
 
