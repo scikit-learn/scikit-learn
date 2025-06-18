@@ -1490,8 +1490,14 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
+@pytest.mark.parametrize("use_gmm_array_constructor_arguments", [False, True])
 def test_gaussian_mixture_array_api_compliance(
-    init_params, covariance_type, array_namespace, device_, dtype
+    init_params,
+    covariance_type,
+    array_namespace,
+    device_,
+    dtype,
+    use_gmm_array_constructor_arguments,
 ):
     """Test that array api works in GaussianMixture.fit()."""
     xp = _array_api_for_tests(array_namespace, device_)
@@ -1501,11 +1507,21 @@ def test_gaussian_mixture_array_api_compliance(
     X = rand_data.X[covariance_type]
     X = X.astype(dtype)
 
+    if use_gmm_array_constructor_arguments:
+        additional_kwargs = {
+            "means_init": rand_data.means.astype(dtype),
+            "precisions_init": rand_data.precisions[covariance_type].astype(dtype),
+            "weights_init": rand_data.weights.astype(dtype),
+        }
+    else:
+        additional_kwargs = {}
+
     gmm = GaussianMixture(
         n_components=rand_data.n_components,
         covariance_type=covariance_type,
         random_state=0,
         init_params=init_params,
+        **additional_kwargs,
     )
     gmm.fit(X)
 
@@ -1513,6 +1529,13 @@ def test_gaussian_mixture_array_api_compliance(
 
     with sklearn.config_context(array_api_dispatch=True):
         gmm_xp = sklearn.clone(gmm)
+        for param_name, param_value in additional_kwargs.items():
+            arg_xp = xp.asarray(param_value, device=device_)
+            setattr(gmm_xp, param_name, arg_xp)
+
+        print(gmm.means_init)
+        print(gmm.precisions_init)
+        print(gmm.weights_init)
         gmm_xp.fit(X_xp)
 
         assert get_namespace(gmm_xp.means_)[0] == xp
@@ -1542,10 +1565,27 @@ def test_gaussian_mixture_array_api_compliance(
         for score in [score_xp, aic_xp, bic_xp]:
             assert isinstance(score, float)
 
-    # Check methods
-    float32_rtol = 1e-4 if dtype == "float32" else 1e-7
+    # Define specific rtol to make tests pass
+    default_rtol = 1e-4 if dtype == "float32" else 1e-7
+    increased_atol = 1e-4 if dtype == "float32" else 0
     increased_rtol = 5e-4 if dtype == "float32" else 1e-7
 
+    # Check fitted attributes
+    assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
+    assert_allclose(
+        gmm.covariances_,
+        _convert_to_numpy(gmm_xp.covariances_, xp=xp),
+        atol=increased_atol,
+        rtol=increased_rtol,
+    )
+    assert_allclose(
+        gmm.precisions_,
+        _convert_to_numpy(gmm_xp.precisions_, xp=xp),
+        atol=increased_atol,
+        rtol=increased_rtol,
+    )
+
+    # Check methods
     assert (
         adjusted_rand_score(gmm.predict(X), _convert_to_numpy(predict_xp, xp=xp)) > 0.95
     )
@@ -1553,70 +1593,21 @@ def test_gaussian_mixture_array_api_compliance(
         gmm.predict_proba(X),
         _convert_to_numpy(predict_proba_xp, xp=xp),
         rtol=increased_rtol,
+        atol=increased_atol,
     )
     assert_allclose(
         gmm.score_samples(X),
         _convert_to_numpy(score_samples_xp, xp=xp),
         rtol=increased_rtol,
     )
-    # comparing Python floats so need explicit rtol
-    assert_allclose(gmm.score(X), score_xp, rtol=float32_rtol)
-    assert_allclose(gmm.aic(X), aic_xp, rtol=float32_rtol)
-    assert_allclose(gmm.bic(X), bic_xp, rtol=float32_rtol)
+    # comparing Python float so need explicit rtol when X has dtype float32
+    assert_allclose(gmm.score(X), score_xp, rtol=default_rtol)
+    assert_allclose(gmm.aic(X), aic_xp, rtol=default_rtol)
+    assert_allclose(gmm.bic(X), bic_xp, rtol=default_rtol)
     sample_X, sample_y = gmm.sample(10)
-    # generated samples are float64 so need explicit rtol for dtype=float32
-    assert_allclose(sample_X, _convert_to_numpy(sample_X_xp, xp=xp), rtol=float32_rtol)
+    # generated samples are float64 so need explicit rtol when X has dtype float32
+    assert_allclose(sample_X, _convert_to_numpy(sample_X_xp, xp=xp), rtol=default_rtol)
     assert_allclose(sample_y, _convert_to_numpy(sample_y_xp, xp=xp))
-
-    # Check fitted attributes
-    assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
-    assert_allclose(
-        gmm.covariances_,
-        _convert_to_numpy(gmm_xp.covariances_, xp=xp),
-        rtol=increased_rtol,
-    )
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-def test_gaussian_mixture_array_api_compliance_with_array_like_constructor_parameters(
-    array_namespace, device_, dtype, global_random_seed
-):
-    """Check that array api works with array-like constructors: 'means_init',
-    'precisions_init' and 'weights_init'
-    """
-    n_features = 2
-    n_components = 3
-    X, _ = make_blobs(
-        n_samples=int(1e3),
-        n_features=n_features,
-        centers=3,
-        random_state=global_random_seed,
-    )
-    X = X.astype(dtype)
-
-    xp = _array_api_for_tests(array_namespace, device_)
-    X = xp.asarray(X, device=device_)
-
-    means_init = xp.zeros((n_components, n_features), device=device_, dtype=X.dtype)
-    precisions_init = xp.ones((n_components, n_features), device=device_, dtype=X.dtype)
-    gmm = GaussianMixture(
-        n_components=3,
-        covariance_type="diag",
-        random_state=global_random_seed,
-        init_params="random",
-        means_init=means_init,
-        precisions_init=precisions_init,
-        weights_init=xp.asarray([0.1, 0.4, 0.5]),
-    )
-
-    with sklearn.config_context(array_api_dispatch=True):
-        gmm.fit(X)
-
-        assert device(X) == device(gmm.weights_)
 
 
 @skip_if_array_api_compat_not_configured

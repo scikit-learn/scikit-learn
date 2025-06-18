@@ -51,7 +51,7 @@ def _check_weights(weights, n_components, xp=None):
 
     # check normalization
     atol = 1e-6 if weights.dtype == xp.float32 else 1e-8
-    if not xp.all(xpx.isclose(xp.abs(1.0 - xp.sum(weights)), 0.0, atol=atol, xp=xp)):
+    if not np.allclose(float(xp.abs(1.0 - xp.sum(weights))), 0.0, atol=atol):
         raise ValueError(
             "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
             % xp.sum(weights)
@@ -105,8 +105,8 @@ def _check_precision_matrix(precision, covariance_type, xp=None):
 def _check_precisions_full(precisions, covariance_type, xp=None):
     """Check the precision matrices are symmetric and positive-definite."""
     xp, _ = get_namespace(precisions, xp=xp)
-    for prec in precisions:
-        _check_precision_matrix(prec, covariance_type, xp=xp)
+    for i in range(precisions.shape[0]):
+        _check_precision_matrix(precisions[i, :, :], covariance_type, xp=xp)
 
 
 def _check_precisions(precisions, covariance_type, n_components, n_features, xp=None):
@@ -427,10 +427,12 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
         components. The shape depends on the covariance_type.
     """
     if covariance_type == "full":
-        precisions_cholesky = xp.asarray(
+        precisions_cholesky = xp.stack(
             [
-                _flipudlr(_cholesky(_flipudlr(precision, xp=xp), xp=xp), xp=xp)
-                for precision in precisions
+                _flipudlr(
+                    _cholesky(_flipudlr(precisions[i, :, :], xp=xp), xp=xp), xp=xp
+                )
+                for i in range(precisions.shape[0])
             ]
         )
     elif covariance_type == "tied":
