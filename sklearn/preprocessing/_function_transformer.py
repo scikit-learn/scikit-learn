@@ -182,9 +182,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         if self.validate:
             return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
         elif reset:
-            # Set feature_names_in_ and n_features_in_ even if validate=False
-            # We run this only when reset==True to store the attributes but not
-            # validate them, because validate=False
+            #  Usage of _check_n_features and _check_feature_names here aligns with
+            # validate_data(..., skip_check_array=True), which avoids full validation.
             _check_n_features(self, X, reset=reset)
             _check_feature_names(self, X, reset=reset)
         return X

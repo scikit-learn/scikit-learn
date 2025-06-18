@@ -2706,30 +2706,27 @@ def _to_object_array(sequence):
 
 
 def _check_feature_names(estimator, X, *, reset):
-    """Set or check the `feature_names_in_` attribute of an estimator.
+    """Check or set the `feature_names_in_` attribute for an estimator.
 
-    .. versionadded:: 1.0
+       This is typically used when `validate=False` during fitting, to still
+       record the feature names.
 
-    .. versionchanged:: 1.6
-        Moved from :class:`~sklearn.base.BaseEstimator` to
-        :mod:`sklearn.utils.validation`.
+       📌 Note: Prefer using `validate_data(..., skip_check_array=True)` when
+       possible, as it handles these checks more comprehensively.
 
     Parameters
     ----------
     estimator : estimator instance
-        The estimator to validate the input for.
+        The estimator to check or set features name for.
 
-    X : {ndarray, dataframe} of shape (n_samples, n_features)
-        The input samples.
+    X : DataFrame, ndarray, or similar
+        Input data used to extract feature names.
+
 
     reset : bool
-        Whether to reset the `feature_names_in_` attribute.
-        If False, the input will be checked for consistency with
-        feature names of data provided when reset was last True.
-        .. note::
-           It is recommended to call `reset=True` in `fit` and in the first
-           call to `partial_fit`. All other methods that validate `X`
-           should set `reset=False`.
+        If True, sets the `feature_names_in_` attribute from `X`.
+        If False, checks for consistency with `feature_names_in_`.
+
     """
 
     if reset:
@@ -2801,6 +2798,13 @@ def _check_feature_names(estimator, X, *, reset):
 def _check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
+    This is used internally by `sklearn` to track the number of features seen
+    during `fit`, and ensure consistency at `transform` or `predict`.
+
+    📌 Note: In most cases, users should prefer using
+    `validate_data(..., skip_check_array=True)` instead of calling this function
+    directly.
+
     .. versionchanged:: 1.6
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`~sklearn.utils.validation`.
@@ -2815,13 +2819,8 @@ def _check_n_features(estimator, X, reset):
 
     reset : bool
         If True, the `n_features_in_` attribute is set to `X.shape[1]`.
-        If False and the attribute exists, then check that it is equal to
-        `X.shape[1]`. If False and the attribute does *not* exist, then
-        the check is skipped.
-        .. note::
-           It is recommended to call reset=True in `fit` and in the first
-           call to `partial_fit`. All other methods that validate `X`
-           should set `reset=False`.
+        If False, the input will be checked for consistency with
+        `n_features_in_`.
     """
     try:
         n_features = _num_features(X)
