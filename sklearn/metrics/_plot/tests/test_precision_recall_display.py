@@ -13,10 +13,24 @@ from sklearn.metrics import (
     average_precision_score,
     precision_recall_curve,
 )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import shuffle
+from sklearn.utils import _safe_indexing, shuffle
+
+
+def _check_figure_axes_and_labels(display):
+    """Check mpl figure and axes are correct."""
+    import matplotlib as mpl
+
+    assert isinstance(display.ax_, mpl.axes.Axes)
+    assert isinstance(display.figure_, mpl.figure.Figure)
+
+    assert display.ax_.get_xlabel() == "Recall (Positive label: 1)"
+    assert display.ax_.get_ylabel() == "Precision (Positive label: 1)"
+    assert display.ax_.get_adjustable() == "box"
+    assert display.ax_.get_aspect() in ("equal", 1.0)
+    assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -62,15 +76,8 @@ def test_precision_recall_display_plotting(
 
     import matplotlib as mpl
 
+    _check_figure_axes_and_labels(display)
     assert isinstance(display.line_, mpl.lines.Line2D)
-    assert isinstance(display.ax_, mpl.axes.Axes)
-    assert isinstance(display.figure_, mpl.figure.Figure)
-
-    assert display.ax_.get_xlabel() == "Recall (Positive label: 1)"
-    assert display.ax_.get_ylabel() == "Precision (Positive label: 1)"
-    assert display.ax_.get_adjustable() == "box"
-    assert display.ax_.get_aspect() in ("equal", 1.0)
-    assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
     # plotting passing some new parameters
     display.plot(name="MySpecialEstimator", curve_kwargs={"alpha": 0.8})
@@ -78,6 +85,51 @@ def test_precision_recall_display_plotting(
     assert display.line_.get_label() == expected_label
     assert display.line_.get_alpha() == pytest.approx(0.8)
 
+    # Check that the chance level line is not plotted by default
+    assert display.chance_level_ is None
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+def test_precision_recall_display_from_cv_results_plotting(
+    pyplot, response_method, drop_intermediate
+):
+    """Check the overall plotting of `from_cv_results`."""
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    pos_label = 1
+
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    display = PrecisionRecallDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        response_method=response_method,
+        drop_intermediate=drop_intermediate,
+    )
+
+    for idx, (estimator, test_indices) in enumerate(
+        zip(cv_results["estimator"], cv_results["indices"]["test"])
+    ):
+        y_true = _safe_indexing(y, test_indices)
+        y_pred = getattr(estimator, response_method)(_safe_indexing(X, test_indices))
+        y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, pos_label]
+        precision, recall, _ = precision_recall_curve(
+            y_true, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+        )
+        average_precision = average_precision_score(y_true, y_pred, pos_label=pos_label)
+
+        np.testing.assert_allclose(display.precision[idx], precision)
+        np.testing.assert_allclose(display.recall[idx], recall)
+        assert display.average_precision[idx] == pytest.approx(average_precision)
+
+        import matplotlib as mpl
+
+        assert isinstance(display.line_[idx], mpl.lines.Line2D)
+
+    _check_figure_axes_and_labels(display)
     # Check that the chance level line is not plotted by default
     assert display.chance_level_ is None
 
@@ -356,23 +408,29 @@ def test_precision_recall_raise_no_prevalence(pyplot):
 
 
 @pytest.mark.parametrize("despine", [True, False])
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+)
 def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     # Check that the despine keyword is working correctly
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     clf = LogisticRegression().fit(X, y)
     clf.fit(X, y)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
 
     y_pred = clf.decision_function(X)
 
-    # safe guard for the binary if/else construction
-    assert constructor_name in ("from_estimator", "from_predictions")
-
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(clf, X, y, despine=despine)
-    else:
+    elif constructor_name == "from_predictions":
         display = PrecisionRecallDisplay.from_predictions(y, y_pred, despine=despine)
+    else:
+        display = PrecisionRecallDisplay.from_cv_results(
+            cv_results, X, y, despine=despine
+        )
 
     for s in ["top", "right"]:
         assert display.ax_.spines[s].get_visible() is not despine

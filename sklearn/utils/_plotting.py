@@ -173,7 +173,7 @@ class _BinaryClassifierCurveDisplayMixin:
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
         """
-        # TODO: Remove deprecated **kwargs
+        # TODO: Remove once kwargs deprecated on all displays
         if curve_kwargs and kwargs:
             raise ValueError(
                 "Cannot provide both `curve_kwargs` and `kwargs`. `**kwargs` is "
