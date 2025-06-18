@@ -454,6 +454,32 @@ def _format_param_with_status(param, statuses, aliases):
     return ", ".join(parts)
 
 
+# -----------------------------------------------------------------------------
+# Tree rendering helpers (branch / prefix calculation)
+# -----------------------------------------------------------------------------
+
+
+def _branch_connector(root: bool, prefix: str, is_last: bool) -> str:
+    """Return the unicode branch connector for the current node."""
+    if root and prefix == "":
+        return ""
+    return "└── " if is_last else "├── "
+
+
+def _param_prefix(prefix: str, root: bool, is_last: bool) -> str:
+    """Indentation for parameter lines that hang under a node."""
+    if root and prefix == "":
+        return "    "
+    return prefix + ("    " if is_last else "│   ") + "    "
+
+
+def _child_prefix(prefix: str, root: bool, is_last: bool) -> str:
+    """Prefix to pass when recursing into child nodes."""
+    if root and prefix == "":
+        return prefix  # keep root prefix empty for the very top-level call
+    return prefix + ("    " if is_last else "│   ")
+
+
 def _display_tree(
     router,
     routing_map,
@@ -475,11 +501,7 @@ def _display_tree(
     has_params = bool(node_info.get("params"))
 
     # Build the display line
-    # For the root node we don't want branch connectors
-    if root and prefix == "":
-        connector = ""
-    else:
-        connector = "└── " if is_last else "├── "
+    connector = _branch_connector(root, prefix, is_last)
 
     display_parts = []
     if step_name:
@@ -503,19 +525,14 @@ def _display_tree(
 
     # Print each parameter on its own indented line
     if param_strs:
-        # Special-case root to avoid surplus indentation
-        if root and prefix == "":
-            param_prefix = "    "
-        else:
-            param_prefix = prefix + ("    " if is_last else "│   ") + "    "
+        param_prefix = _param_prefix(prefix, root, is_last)
         for p in param_strs:
             print(f"{param_prefix}➤ {p}")
 
     # Process children
     if isinstance(router, MetadataRouter):
         children = list(router._route_mappings.items())
-        extension = "    " if (is_last or root and prefix == "") else "│   "
-        new_prefix = prefix + ("" if root and prefix == "" else extension)
+        new_prefix = _child_prefix(prefix, root, is_last)
 
         for i, (name, mapping) in enumerate(children):
             is_last_child = i == len(children) - 1
