@@ -319,8 +319,8 @@ def lasso_path(
     Notes
     -----
     For an example, see
-    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
+    :ref:`examples/linear_model/plot_regularization.py
+    <sphx_glr_auto_examples_linear_model_plot_regularization.py>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -524,8 +524,8 @@ def enet_path(
     Notes
     -----
     For an example, see
-    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
+    :ref:`examples/linear_model/plot_regularization.py
+    <sphx_glr_auto_examples_linear_model_plot_regularization.py>`.
 
     Examples
     --------
