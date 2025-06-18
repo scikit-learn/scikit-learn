@@ -430,7 +430,7 @@ def test_sigmoid_calibration():
 @pytest.mark.parametrize(
     "clf",
     [
-        SVC(probability=True, kernel="rbf", C=5e-2, random_state=42),
+        SVC(probability=True, kernel="rbf", C=0.05, random_state=42),
     ],
 )
 @pytest.mark.parametrize(
@@ -462,20 +462,20 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         # There is one and only one temperature scaling calibrator
         # for each calibrated classifier
         assert len(calibrated_classifier.calibrators) == 1
+
+        calibrator = calibrated_classifier.calibrators[0]
+        # Should not raise any error
+        check_is_fitted(calibrator)
         # The optimal inverse temperature parameter should always
         # be positive
-        calibrator = calibrated_classifier.calibrators[0]
-        # Shouldn't raise any error
-        check_is_fitted(calibrator)
         assert calibrator.beta_ > 0
 
+    if not ensemble:
         # Accuracy score is invariant under temperature scaling
-        y_pred = calibrated_classifier.estimator.predict(X_cal)
-        y_pred_cal = np.argmax(calibrated_classifier.predict_proba(X_cal), axis=1)
-
+        y_pred = clf.predict(X_cal)
+        y_pred_cal = cal_clf.predict(X_cal)
         assert accuracy_score(y_cal, y_pred_cal) == accuracy_score(y_cal, y_pred)
 
-    if not ensemble:
         # Log Loss should be improved on the calibrating set
         y_scores = clf.predict_proba(X_cal)
         y_scores_cal = cal_clf.predict_proba(X_cal)
