@@ -26,7 +26,8 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
@@ -1035,6 +1036,8 @@ def make_estimator_with_param(default_value):
         (1.0, np.array([1.0])),
         ([1, 2], [3]),
         (np.array([1]), [2, 3]),
+        (None, KFold()),
+        (None, get_scorer("accuracy")),
     ],
 )
 def test_param_is_non_default(default_value, test_value):
