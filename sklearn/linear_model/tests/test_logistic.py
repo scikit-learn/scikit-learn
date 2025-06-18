@@ -332,10 +332,7 @@ def test_consistency_path(global_random_seed):
             )
 
     # test for fit_intercept=True
-    stochastic_solvers = ["liblinear", "sag", "saga"]
     for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
-        random_state = global_random_seed if solver in stochastic_solvers else 0
-
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -344,7 +341,7 @@ def test_consistency_path(global_random_seed):
             tol=1e-6,
             solver=solver,
             intercept_scaling=10000.0,
-            random_state=random_state,
+            random_state=global_random_seed,
         )
         lr = LogisticRegression(
             C=Cs[0],
