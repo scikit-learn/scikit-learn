@@ -1520,26 +1520,26 @@ def test_gaussian_mixture_array_api_compliance(
         assert device(gmm_xp.means_) == device(X_xp)
         assert device(gmm_xp.covariances_) == device(X_xp)
 
-        xp_predict = gmm_xp.predict(X_xp)
-        xp_predict_proba = gmm_xp.predict_proba(X_xp)
-        xp_score_samples = gmm_xp.score_samples(X_xp)
-        xp_score = gmm_xp.score(X_xp)
-        xp_aic = gmm_xp.aic(X_xp)
-        xp_bic = gmm_xp.bic(X_xp)
-        xp_sample_X, xp_sample_y = gmm_xp.sample(10)
+        predict_xp = gmm_xp.predict(X_xp)
+        predict_proba_xp = gmm_xp.predict_proba(X_xp)
+        score_samples_xp = gmm_xp.score_samples(X_xp)
+        score_xp = gmm_xp.score(X_xp)
+        aic_xp = gmm_xp.aic(X_xp)
+        bic_xp = gmm_xp.bic(X_xp)
+        sample_X_xp, sample_y_xp = gmm_xp.sample(10)
 
         results = [
-            xp_predict,
-            xp_predict_proba,
-            xp_score_samples,
-            xp_sample_X,
-            xp_sample_y,
+            predict_xp,
+            predict_proba_xp,
+            score_samples_xp,
+            sample_X_xp,
+            sample_y_xp,
         ]
         for result in results:
             assert get_namespace(result)[0] == xp
             assert device(result) == device(X_xp)
 
-        for score in [xp_score, xp_aic, xp_bic]:
+        for score in [score_xp, aic_xp, bic_xp]:
             assert isinstance(score, float)
 
     # Check methods
@@ -1547,26 +1547,26 @@ def test_gaussian_mixture_array_api_compliance(
     increased_rtol = 5e-4 if dtype == "float32" else 1e-7
 
     assert (
-        adjusted_rand_score(gmm.predict(X), _convert_to_numpy(xp_predict, xp=xp)) > 0.95
+        adjusted_rand_score(gmm.predict(X), _convert_to_numpy(predict_xp, xp=xp)) > 0.95
     )
     assert_allclose(
         gmm.predict_proba(X),
-        _convert_to_numpy(xp_predict_proba, xp=xp),
+        _convert_to_numpy(predict_proba_xp, xp=xp),
         rtol=increased_rtol,
     )
     assert_allclose(
         gmm.score_samples(X),
-        _convert_to_numpy(xp_score_samples, xp=xp),
+        _convert_to_numpy(score_samples_xp, xp=xp),
         rtol=increased_rtol,
     )
     # comparing Python floats so need explicit rtol
-    assert_allclose(gmm.score(X), xp_score, rtol=float32_rtol)
-    assert_allclose(gmm.aic(X), xp_aic, rtol=float32_rtol)
-    assert_allclose(gmm.bic(X), xp_bic, rtol=float32_rtol)
+    assert_allclose(gmm.score(X), score_xp, rtol=float32_rtol)
+    assert_allclose(gmm.aic(X), aic_xp, rtol=float32_rtol)
+    assert_allclose(gmm.bic(X), bic_xp, rtol=float32_rtol)
     sample_X, sample_y = gmm.sample(10)
     # generated samples are float64 so need explicit rtol for dtype=float32
-    assert_allclose(sample_X, _convert_to_numpy(xp_sample_X, xp=xp), rtol=float32_rtol)
-    assert_allclose(sample_y, _convert_to_numpy(xp_sample_y, xp=xp))
+    assert_allclose(sample_X, _convert_to_numpy(sample_X_xp, xp=xp), rtol=float32_rtol)
+    assert_allclose(sample_y, _convert_to_numpy(sample_y_xp, xp=xp))
 
     # Check fitted attributes
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
