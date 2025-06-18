@@ -528,7 +528,7 @@ def _expit(X, xp=None):
 
 
 def _validate_diagonal_args(array, value, xp):
-    """Helper to validate arguments to `_fill_diagonal`/`add_to_diagonal`."""
+    """Validate arguments to `_fill_diagonal`/`_add_to_diagonal`."""
     if array.ndim != 2:
         raise ValueError(
             f"`array` should be 2D. Got array with shape {tuple(array.shape)}"
