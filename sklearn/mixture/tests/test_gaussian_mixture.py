@@ -1533,9 +1533,6 @@ def test_gaussian_mixture_array_api_compliance(
             arg_xp = xp.asarray(param_value, device=device_)
             setattr(gmm_xp, param_name, arg_xp)
 
-        print(gmm.means_init)
-        print(gmm.precisions_init)
-        print(gmm.weights_init)
         gmm_xp.fit(X_xp)
 
         assert get_namespace(gmm_xp.means_)[0] == xp
