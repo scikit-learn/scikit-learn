@@ -56,6 +56,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.validation import check_is_fitted
 
 N_SAMPLES = 200
 
@@ -463,6 +464,8 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         # The optimal inverse temperature parameter should always
         # be positive
         calibrator = calibrated_classifier.calibrators[0]
+        # Shouldn't raise any error
+        check_is_fitted(calibrator)
         assert calibrator.beta_ > 0
 
         # Accuracy score is invariant under temperature scaling
