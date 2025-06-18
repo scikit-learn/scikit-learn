@@ -99,6 +99,58 @@ def _expand_methods(methods):
     return expanded
 
 
+# -----------------------------------------------------------------------------
+# Status classification helpers & glyph mapping
+# -----------------------------------------------------------------------------
+
+# Mapping of *high-level* status categories to the glyph shown in the UI.  Note
+# that both "errors" (raise) and "warns" (warn-only) share the same ⚠ symbol –
+# the distinction is made textual when required.
+_STATUS_GLYPH: dict[str, str] = {
+    "requested": "✓",  # param requested (True) or alias
+    "ignored": "✗",  # param explicitly *not* requested (False)
+    "warns": "⚠",  # warn if passed (WARN sentinel)
+    "errors": "⛔",  # error if passed (None)
+    "unused": "⊘",  # UNUSED sentinel
+}
+
+# Ordered list so that the parameter summary is printed in a predictable and
+# meaningful order (most severe first).
+_CATEGORY_ORDER: list[tuple[str, str]] = [
+    ("errors", _STATUS_GLYPH["errors"]),
+    ("warns", _STATUS_GLYPH["warns"]),
+    ("ignored", _STATUS_GLYPH["ignored"]),
+    ("requested", _STATUS_GLYPH["requested"]),
+    ("unused", _STATUS_GLYPH["unused"]),
+]
+
+
+def _status_category(status):
+    """Return the *category* name for a raw request *status* value."""
+    # `True` → requested -------------------------------------------------------
+    if status is True or request_is_alias(status):
+        return "requested"
+
+    # `False` → explicitly ignored -------------------------------------------
+    if status is False:
+        return "ignored"
+
+    # `None`   → raise error if metadata provided ----------------------------
+    if status is None:
+        return "errors"
+
+    # WARN sentinel → warn only ----------------------------------------------
+    if status == WARN:
+        return "warns"
+
+    # UNUSED sentinel → parameter is accepted but never used -----------------
+    if status == UNUSED:
+        return "unused"
+
+    # Fallback (should not happen) -------------------------------------------
+    return "unknown"
+
+
 def visualise_routing(routing_info):
     """
     Visualize metadata routing information.
@@ -341,22 +393,14 @@ def _collect_routing_info(router):
     return info
 
 
-def _get_status_indicator(alias):
-    """Get a visual indicator for parameter status."""
-    if alias is True:
-        return "✓"  # requested
-    elif alias is False:
-        return "✗"  # not requested
-    elif alias is None:
-        return "⛔"  # error if passed (unrequested)
-    elif alias == WARN:
-        return "⚠"  # warn status
-    elif alias == UNUSED:
-        return "⊘"  # unused status
-    elif isinstance(alias, str):
-        return "↗"  # alias
-    else:
-        return "?"  # unknown status
+def _get_status_indicator(status):
+    """Return the glyph corresponding to *status* (✓, ✗ …)."""
+    if request_is_alias(status):
+        # Alias itself gets the alias arrow glyph.
+        return "↗"
+
+    cat = _status_category(status)
+    return _STATUS_GLYPH.get(cat, "?")
 
 
 def _format_param_with_status(param, statuses, aliases):
@@ -383,7 +427,7 @@ def _format_param_with_status(param, statuses, aliases):
 
     parts = []
 
-    # Helper to build the method part respecting the `show_all_metadata` flag.
+    # Helper to build the method part.
     def _build_method_part(method_map):
         method_parts = []
         # Always in full-metadata mode now.
@@ -495,15 +539,6 @@ def _display_tree(
             )
 
 
-_CATEGORY_ORDER = [
-    ("requested", "✓"),
-    ("ignored", "✗"),
-    ("warns", "⚠"),
-    ("errors", "⛔"),
-    ("unused", "⊘"),
-]
-
-
 def _summarise_params_by_method(router, routing_map):
     """Aggregate parameter statuses across the whole tree, grouped by root method.
 
@@ -526,18 +561,8 @@ def _summarise_params_by_method(router, routing_map):
                 # parameters.
                 user_param = status if request_is_alias(status) else comp_param
 
-                # Classify category
-                if status is True or request_is_alias(status):
-                    cat = "requested"
-                elif status is False:
-                    cat = "ignored"
-                elif status == WARN:
-                    cat = "warns"
-                elif status is None:
-                    cat = "errors"
-                elif status == UNUSED:
-                    cat = "unused"
-                else:
+                cat = _status_category(status)
+                if cat == "unknown":
                     continue
 
                 roots = origins.get(f"{path}.{method}", {method.split(".")[0]})
