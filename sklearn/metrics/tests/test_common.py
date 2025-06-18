@@ -1935,8 +1935,7 @@ def check_array_api_metric(
                 atol=_atol_for_type(dtype_name),
             )
 
-        # Handle cases where there are multiple return
-        # values, e.g. roc_curve
+        # Handle cases where there are multiple return values, e.g. roc_curve:
         if isinstance(metric_xp, tuple):
             for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
                 _check_metric_matches(metric_xp_val, metric_np_val)
