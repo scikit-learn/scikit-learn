@@ -465,12 +465,13 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         calibrator = calibrated_classifier.calibrators[0]
         assert calibrator.beta_ > 0
 
-    if not ensemble:
         # Accuracy score is invariant under temperature scaling
-        y_pred = clf.predict(X_cal)
+        y_pred = calibrated_classifier.estimator.predict(X_cal)
         y_pred_cal = np.argmax(calibrated_classifier.predict_proba(X_cal), axis=1)
+
         assert accuracy_score(y_cal, y_pred_cal) == accuracy_score(y_cal, y_pred)
 
+    if not ensemble:
         # Log Loss should be improved on the calibrating set
         y_scores = clf.predict_proba(X_cal)
         y_scores_cal = cal_clf.predict_proba(X_cal)
