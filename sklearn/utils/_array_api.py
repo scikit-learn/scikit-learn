@@ -16,6 +16,7 @@ import scipy.special as special
 from .._config import get_config
 from ..externals import array_api_compat
 from ..externals import array_api_extra as xpx
+from ..externals.array_api_compat import is_torch_namespace
 from ..externals.array_api_compat import numpy as np_compat
 from .fixes import parse_version
 
@@ -1028,3 +1029,18 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _flip(array, axis, xp=None):
+    # Workaround for PyTorch not supporting ::-1 syntax
+    # (https://github.com/pytorch/pytorch/issues/59786)
+    xp, _ = get_namespace(array, xp=xp)
+    if is_torch_namespace(xp):
+        import torch
+
+        return torch.flip(array, (axis,))
+    index = [
+        slice(None),
+    ] * array.ndim
+    index[axis] = slice(None, None, -1)
+    return array[tuple(index)]
