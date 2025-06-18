@@ -299,23 +299,29 @@ def _collect_routing_info(router):
     # Helper functions – defined *inside* to keep them private to algorithm
     # ------------------------------------------------------------------
 
-    def _record_status(current_path: str, param: str, method: str, alias):
-        """Populate *info* dictionaries in a single place."""
+    def _record_status(current_path: str, param: str, method: str, status):
+        """Record *status* for (*path*, *param*, *method*) in all auxiliary
+        structures.
 
-        # Record the raw status so we can later derive visual indicators.
-        info[current_path]["statuses"][param][method] = alias
+        The helper is on the hot-path of the DFS traversal.  We therefore cache
+        expensive predicate checks (`request_is_alias`) so each call evaluates
+        them only once.
+        """
 
-        # Only count the method as *requesting* the parameter when the status
-        # truly indicates a request (True) or a *user* alias. Special markers
-        # such as WARN/UNUSED (*do not* constitute a request) and must be
-        # skipped, otherwise they would incorrectly show up as "requested".
-        if alias is True or request_is_alias(alias):
+        # Cache predicate evaluations once ------------------------------------
+        is_alias = request_is_alias(status)
+        is_requested = (status is True) or is_alias
+
+        # 1. Raw status mapping (used later for glyph generation)
+        info[current_path]["statuses"][param][method] = status
+
+        # 2. Which methods *actively* request the parameter -------------------
+        if is_requested:
             info[current_path]["methods"][param].add(method)
 
-        # Maintain the mapping {component_param → user_alias}. Again, ignore
-        # special placeholders such as WARN/UNUSED which are *not* aliases.
-        if request_is_alias(alias) and alias != param:
-            info[current_path]["aliases"][param] = alias
+        # 3. Alias bookkeeping (component_param → user_param) -----------------
+        if is_alias and status != param:
+            info[current_path]["aliases"][param] = status
 
     # ---------------------------------------
     # Simple consumer (MetadataRequest) branch
