@@ -812,7 +812,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         PrecisionRecallDisplay.from_estimator : Plot precision-recall curve
             using an estimator.
         precision_recall_curve : Compute precision-recall pairs for different
-            probability thresholds
+            probability thresholds.
         average_precision_score : Compute average precision (AP) from prediction scores.
 
         Notes
