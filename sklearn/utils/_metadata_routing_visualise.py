@@ -156,8 +156,7 @@ def visualise_routing(routing_info):
     Visualize metadata routing information.
 
     This diagnostic always displays *all* possible metadata parameters with
-    their status indicators. The previous ``show_all_metadata`` toggle has been
-    removed – comprehensive output is now the default (and only) mode.
+    their status indicators in a unified, comprehensive view.
     """
     print("\n=== METADATA ROUTING TREE ===")
 
