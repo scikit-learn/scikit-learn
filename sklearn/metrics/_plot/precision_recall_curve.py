@@ -2,17 +2,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
-from collections.abc import Mapping
+
+import numpy as np
 
 from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
-    _deprecate_singular,
+    _check_param_lengths,
+    _convert_to_list_leaving_none,
+    _deprecate_estimator_name,
     _despine,
     _validate_style_kwargs,
 )
 from ...utils._response import _get_response_values_binary
-from ...utils.validation import _num_samples
 from .._ranking import average_precision_score, precision_recall_curve
 
 
@@ -32,31 +34,41 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Parameters
     ----------
-    precisions : list of ndarray
-        Precision values, each ndarray should contain values for a single curve.
+    precision : ndarray or list of ndarrays
+        Precision values. Each ndarray should contain values for a single curve.
         If plotting multiple curves, list should be of same length as
-        and `recalls`.
+        and `recall`.
 
-        .. versionadded:: 1.7
+        .. versionchanged:: 1.8
+            Now accepts a list for plotting multiple curves.
 
-    recalls : list of ndarray
-        Recall values, each ndarray should contain values for a single curve.
+    recall : ndarray or list of ndarrays
+        Recall values. Each ndarray should contain values for a single curve.
         If plotting multiple curves, list should be of same length as
-        and `precisions`.
+        and `precision`.
 
-        .. versionadded:: 1.7
+        .. versionchanged:: 1.8
+            Now accepts a list for plotting multiple curves.
 
-    average_precisions : list of floats, default=None
-        Average precision. Should be list of the same length as `precisions` and
-        `recalls` or None, in which case no average precision score is shown.
+    average_precision : float or list of floats, default=None
+        Average precision, used for labeling each curve in the legend.
+        If plotting multiple curves, should be a list of the same length as `precision`
+        and `recall`. If `None`, average precision values are not shown in the legend.
 
-        .. versionadded:: 1.7
+        .. versionchanged:: 1.8
+            Now accepts a list for plotting multiple curves.
 
-    names : list of str, default=None
-        Label for the precision-recall curve. Should be list of the same length as
-        `precisions` and `recalls` or None, in which case no name is shown.
+    name : str or list of str, default=None
+        Name for labeling legend entries. The number of legend entries is determined
+        by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
+        To label each curve, provide a list of strings. To avoid labeling
+        individual curves that have the same appearance, this cannot be used in
+        conjunction with `curve_kwargs` being a dictionary or None. If a
+        string is provided, it will be used to either label the single legend entry
+        or if there are multiple legend entries, label each individual curve with
+        the same name. If still `None`, no name is shown in the legend.
 
-        .. versionadded:: 1.7
+        .. versionadded:: 1.8
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class. If None, the class will not
@@ -64,56 +76,37 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
-    prevalence_pos_label : float, default=None
+    prevalence_pos_label : float or list of floats, default=None
         The prevalence of the positive label. It is used for plotting the
-        chance level line. If None, the chance level line will not be plotted
+        chance level lines. If None, no chance level line will be plotted
         even if `plot_chance_level` is set to True when plotting.
 
         .. versionadded:: 1.3
 
-    precision : ndarray, default='deprecated'
-        Precision values. When plotting multiple precision-recall curves, `precision`
-        and `recall` should be lists of the same length.
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
 
-        .. deprecated:: 1.7
-            `precision` is deprecated in 1.7 and will be removed in 1.9.
-            Use `precisions` instead.
-
-    recall : ndarray, default='deprecated'
-        Recall values. When plotting multiple precision-recall curves, `precision`
-        and `recall` should be lists of the same length.
-
-        .. deprecated:: 1.7
-            `recall` is deprecated in 1.7 and will be removed in 1.9.
-            Use `recalls` instead.
-
-    average_precision : float, default='deprecated'
-        Average precision.  When plotting multiple precision-recall curves, can be
-        a list of the same length as `precision` and `recall`.
-        If None, no average precision score is shown.
-
-        .. deprecated:: 1.7
-            `average_precision` is deprecated in 1.7 and will be removed in 1.9.
-            Use `average_precisions` instead.
-
-    name : str , default='deprecated'
-        Label for the precision-recall curve. For multiple precision-recall curves,
-        `curve_name` can be a list of the same length as `precision` and `recall`.
-        If None, no name is shown.
-
-        .. deprecated:: 1.7
-            `name` is deprecated in 1.7 and will be removed in 1.9.
-            Use `names` instead.
+        .. deprecated:: 1.8
+            `estimator_name` is deprecated and will be removed in 1.10. Use `name`
+            instead.
 
     Attributes
     ----------
     line_ : matplotlib Artist or list of Artists
         Precision recall curve.
 
-    chance_level_ : matplotlib Artist or None
-        The chance level line. It is `None` if the chance level is not plotted.
+        .. versionchanged:: 1.8
+            This attribute can now be a list of Artists, for when multiple curves
+            are plotted.
+
+    chance_level_ : matplotlib Artist or list of Artists or None
+        Chance level lines. It is `None` if the chance level is not plotted.
 
         .. versionadded:: 1.3
+
+        .. versionchanged:: 1.7
+            This attribute can now be a list of Artists, for when multiple curves
+            are plotted.
 
     ax_ : matplotlib Axes
         Axes with precision recall curve.
@@ -166,88 +159,56 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     def __init__(
         self,
-        precisions,
-        recalls,
+        precision,
+        recall,
         *,
-        average_precisions=None,
-        names=None,
+        average_precision=None,
+        name=None,
         pos_label=None,
         prevalence_pos_label=None,
-        precision="deprecated",
-        recall="deprecated",
-        average_precision="deprecated",
-        name="deprecated",
+        estimator_name="deprecated",
     ):
-        self.precisions = _deprecate_singular(precision, precisions, "precision")
-        self.recalls = _deprecate_singular(recall, recalls, "recall")
-        self.average_precisions = _deprecate_singular(
-            average_precision, average_precisions, "average_precision"
-        )
-        self.names = _deprecate_singular(name, names, "name")
+        self.precision = precision
+        self.recall = recall
+        self.average_precision = average_precision
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.8")
         self.pos_label = pos_label
         self.prevalence_pos_label = prevalence_pos_label
 
-    def _get_line_kwargs(self, n_multi, names, fold_line_kws, **kwargs):
-        """Get validated line kwargs for each curve."""
-        # Ensure parameters are of the correct length
-        names_ = [None] * n_multi if names is None else names
-        average_precisions_ = (
-            [None] * n_multi
-            if self.average_precisions is None
-            else self.average_precisions
+    def _validate_plot_params(self, *, ax, name):
+        self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
+
+        precision = _convert_to_list_leaving_none(self.precision)
+        recall = _convert_to_list_leaving_none(self.recall)
+        average_precision = _convert_to_list_leaving_none(self.average_precision)
+        prevalence_pos_label = _convert_to_list_leaving_none(self.prevalence_pos_label)
+        name = _convert_to_list_leaving_none(name)
+
+        optional = {
+            "self.average_precision": average_precision,
+            "self.prevalence_pos_label": prevalence_pos_label,
+        }
+        if isinstance(name, list) and len(name) != 1:
+            optional.update({"'name' (or self.name)": name})
+        _check_param_lengths(
+            required={"self.precision": precision, "self.recall": recall},
+            optional=optional,
+            class_name="PrecisionRecallDisplay",
         )
-        # `fold_line_kws` ignored for single curve plots
-        # `kwargs` ignored for multi-curve plots
-        if n_multi == 1:
-            fold_line_kws = [kwargs]
-        else:
-            if fold_line_kws is None:
-                fold_line_kws = [
-                    {"alpha": 0.5, "color": "tab:blue", "linestyle": "--"}
-                ] * n_multi
-            elif isinstance(fold_line_kws, Mapping):
-                fold_line_kws = [fold_line_kws] * n_multi
-            elif len(fold_line_kws) != n_multi:
-                raise ValueError(
-                    "When `fold_line_kws` is a list, it must have the same length as "
-                    "the number of precision-recall curves to be plotted."
-                )
-
-        line_kwargs = []
-        for fold_idx, (curve_average_precision, curve_name) in enumerate(
-            zip(average_precisions_, names_)
-        ):
-            # I think we could factorize this for all display classes
-            default_line_kwargs = {"drawstyle": "steps-post"}
-            if curve_average_precision is not None and curve_name is not None:
-                default_line_kwargs["label"] = (
-                    f"{curve_name} (AP = {curve_average_precision:0.2f})"
-                )
-            elif curve_average_precision is not None:
-                default_line_kwargs["label"] = f"AP = {curve_average_precision:0.2f}"
-            elif curve_name is not None:
-                default_line_kwargs["label"] = curve_name
-
-            line_kwargs.append(
-                _validate_style_kwargs(default_line_kwargs, fold_line_kws[fold_idx])
-            )
-        return line_kwargs
+        return precision, recall, average_precision, prevalence_pos_label, name
 
     def plot(
         self,
         ax=None,
         *,
-        names=None,
+        name=None,
+        curve_kwargs=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        fold_line_kws=None,
-        name="deprecated",
         **kwargs,
     ):
         """Plot visualization.
-
-        Extra keyword arguments will be passed to matplotlib's `plot`.
 
         Parameters
         ----------
@@ -255,15 +216,31 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        names : str, default=None
-            Names of each precision-recall curve for labeling. If `None`, use
-            name provided at `PrecisionRecallDisplay` initialization. If not
-            provided at initialization, no labeling is shown.
+        name : str or list of str, default=None
+            Name for labeling legend entries. The number of legend entries
+            is determined by `curve_kwargs`.
+            To label each curve, provide a list of strings. To avoid labeling
+            individual curves that have the same appearance, this cannot be used in
+            conjunction with `curve_kwargs` being a dictionary or None. If a
+            string is provided, it will be used to either label the single legend entry
+            or if there are multiple legend entries, label each individual curve with
+            the same name. If `None`, set to `name` provided at `PrecisionRecallDisplay`
+            initialization. If still `None`, no name is shown in the legend.
 
-        despine : bool, default=False
-            Whether to remove the top and right spines from the plot.
+            .. versionchanged:: 1.8
+                Now accepts a list for plotting multiple curves.
 
-            .. versionadded:: 1.6
+        curve_kwargs : dict or list of dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function
+            to draw individual precision-recall curves. For single curve plotting, this
+            should be a dictionary. For multi-curve plotting, if a list is provided,
+            the parameters are applied to each precision-recall curve
+            sequentially and a legend entry is added for each curve.
+            If a single dictionary is provided, the same parameters are applied
+            to all ROC curves and a single legend entry for all curves is added,
+            labeled with the mean average precision.
+
+            .. versionadded:: 1.8
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
@@ -278,24 +255,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.3
 
-        fold_line_kws : dict or list of dict, default=None
-            Dictionary with keywords passed to the matplotlib's `plot` function
-            to draw the individual precision-recall curves. If a list is provided,
-            the parameters are applied to the precision-recall curves of each fold
-            sequentially. If a single dictionary is provided, the same parameters
-            are applied to all precision-recall curves. Ignored for single curve
-            plots.
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
 
-        name : str, default=None
-            Name of precision-recall curve for labeling. If `None`, use
-            name provided at `PrecisionRecallDisplay` initialization. If not
-            provided at initialization, no labeling is shown.
-
-            .. deprecated:: 1.7
+            .. versionadded:: 1.6
 
         **kwargs : dict
-            For a single curve plots only, keyword arguments to be passed to
-            matplotlib's `plot`. Ignored for multi-curve plots.
+            Keyword arguments to be passed to matplotlib's `plot`.
+
+            .. deprecated:: 1.8
+                kwargs is deprecated and will be removed in 1.10. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -313,40 +283,42 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        names = _deprecate_singular(name, names, "name")
-        names_ = names if names else self.names
-        multi_args = [
-            input
-            for input in (self.average_precisions, names_)
-            if isinstance(input, list)
-        ]
-        multi_args.extend([self.precisions, self.recalls])
-        # I could make this message more informative (i.e. give
-        # lengths of each param) but it requires a fair bit more code
-        if len({len(arg) for arg in multi_args}) > 1:
-            raise ValueError(
-                "`self.precisions`, `self.recalls`, and if provided, "
-                "`self.average_precisions` and `self.names` (or `plot`'s `names`), "
-                "from `PrecisionRecallDisplay` initialization, should all "
-                "be lists of the same length."
-            )
-
-        n_multi = len(self.precisions)
-        self.ax_, self.figure_, name = self._validate_plot_params(
-            ax=ax,
-            name=name,
-            n_multi=n_multi,
-            curve_type="PR",
+        precision, recall, average_precision, prevalence_pos_label, name = (
+            self._validate_plot_params(ax=ax, name=name)
         )
+        n_curves = len(precision)
+        if not isinstance(curve_kwargs, list) and n_curves > 1:
+            if average_precision:
+                legend_metric = {
+                    "mean": np.mean(average_precision),
+                    "std": np.std(average_precision),
+                }
+            else:
+                legend_metric = {"mean": None, "std": None}
+        else:
+            average_precision = (
+                average_precision
+                if average_precision is not None
+                else [None] * n_curves
+            )
+            legend_metric = {"metric": average_precision}
 
-        line_kwargs = self._get_line_kwargs(n_multi, names_, fold_line_kws, **kwargs)
-
+        curve_kwargs = self._validate_curve_kwargs(
+            n_curves,
+            name,
+            legend_metric,
+            "AP",
+            curve_kwargs=curve_kwargs,
+            default_curve_kwargs={"drawstyle": "steps-post"},
+            removed_version="1.10",
+            **kwargs,
+        )
         self.line_ = []
-        for recall, precision, line_kw in zip(
-            self.recalls, self.precisions, line_kwargs
+        for recall_val, precision_val, curve_kwarg in zip(
+            recall, precision, curve_kwargs
         ):
-            self.line_.extend(self.ax_.plot(recall, precision, **line_kw))
-        # Should we do this to be backwards compatible or have `line_` always be list?
+            self.line_.extend(self.ax_.plot(recall_val, precision_val, **curve_kwarg))
+        # Return single artist if only one curve is plotted
         if len(self.line_) == 1:
             self.line_ = self.line_[0]
 
@@ -375,24 +347,43 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
-            default_chance_level_line_kw = {
-                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+            default_chance_level_kwargs = {
                 "color": "k",
                 "linestyle": "--",
             }
+            if n_curves > 1:
+                default_chance_level_kwargs["alpha"] = 0.3
 
             if chance_level_kw is None:
                 chance_level_kw = {}
 
             chance_level_line_kw = _validate_style_kwargs(
-                default_chance_level_line_kw, chance_level_kw
+                default_chance_level_kwargs, chance_level_kw
             )
+            self.chance_level_ = []
+            for prevalence_pos_label_val in prevalence_pos_label:
+                self.chance_level_.extend(
+                    self.ax_.plot(
+                        (0, 1),
+                        (prevalence_pos_label_val, prevalence_pos_label_val),
+                        **chance_level_line_kw,
+                    )
+                )
 
-            (self.chance_level_,) = self.ax_.plot(
-                (0, 1),
-                (self.prevalence_pos_label, self.prevalence_pos_label),
-                **chance_level_line_kw,
-            )
+            if len(self.chance_level_) == 1:
+                # Return single artist if only one curve is plotted
+                self.chance_level_ = self.chance_level_[0]
+                if "label" not in chance_level_line_kw:
+                    self.chance_level_.set_label(
+                        f"Chance level (AP = {prevalence_pos_label[0]:0.2f})"
+                    )
+            else:
+                if "label" not in chance_level_line_kw:
+                    # Only label first curve with mean AP, to get single legend entry
+                    self.chance_level_[0].set_label(
+                        f"Chance level (AP = {np.mean(prevalence_pos_label):0.2f} "
+                        f"+/- {np.std(prevalence_pos_label):0.2f})"
+                    )
         else:
             self.chance_level_ = None
 
@@ -400,7 +391,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             _despine(self.ax_)
 
         # Note: if 'label' present in one `line_kwargs`, it should be present in all
-        if "label" in line_kwargs[0] or plot_chance_level:
+        if curve_kwargs[0].get("label") is not None or (
+            plot_chance_level and chance_level_kw.get("label") is not None
+        ):
             self.ax_.legend(loc="lower left")
 
         return self
@@ -418,6 +411,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
@@ -470,6 +464,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.8
+
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
             of the positive label computed from the data passed during
@@ -490,6 +489,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
+
+            .. deprecated:: 1.8
+                kwargs is deprecated and will be removed in 1.10. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -542,10 +545,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             y,
             y_pred,
             sample_weight=sample_weight,
-            name=name,
-            pos_label=pos_label,
             drop_intermediate=drop_intermediate,
+            pos_label=pos_label,
+            name=name,
             ax=ax,
+            curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
@@ -563,6 +567,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
@@ -604,6 +609,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.8
+
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
             of the positive label computed from the data passed during
@@ -624,6 +634,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
+
+            .. deprecated:: 1.8
+                kwargs is deprecated and will be removed in 1.10. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -694,6 +708,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         return viz.plot(
             ax=ax,
             name=name,
+            curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
@@ -708,26 +723,26 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y,
         *,
         sample_weight=None,
-        pos_label=None,
         drop_intermediate=True,
         response_method="auto",
+        pos_label=None,
+        name=None,
         ax=None,
-        despine=False,
-        names=None,
-        fold_line_kws=None,
+        curve_kwargs=None,
         plot_chance_level=False,
-        chance_level_kw=None,
-        prevalence_pos_label=None,
+        chance_level_kwargs=None,
+        despine=False,
     ):
         """Plot multi-fold precision-recall curves given cross-validation results.
 
-        .. versionadded:: 1.7
+        .. versionadded:: 1.8
 
         Parameters
         ----------
         cv_results : dict
             Dictionary as returned by :func:`~sklearn.model_selection.cross_validate`
-            using `return_estimator=True` and `return_indices=True`.
+            using `return_estimator=True` and `return_indices=True` (i.e., dictionary
+            should contain the keys "estimator" and "indices").
 
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input values.
@@ -737,11 +752,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
-
-        pos_label : str or int, default=None
-            The class considered as the positive class when computing the precision
-            and recall metrics. By default, `estimators.classes_[1]` is considered
-            as the positive class.
 
         drop_intermediate : bool, default=True
             Whether to drop some suboptimal thresholds which would not appear
@@ -755,19 +765,26 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             :term:`predict_proba` is tried first and if it does not exist
             :term:`decision_function` is tried next.
 
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when computing the precision
+            and recall metrics. By default, `estimators.classes_[1]` is considered
+            as the positive class.
+
+        name : str or list of str, default=None
+            Name for labeling legend entries. The number of legend entries
+            is determined by `curve_kwargs`, and is not affected by `name`.
+            To label each curve, provide a list of strings. To avoid labeling
+            individual curves that have the same appearance, this cannot be used in
+            conjunction with `curve_kwargs` being a dictionary or None. If a
+            string is provided, it will be used to either label the single legend entry
+            or if there are multiple legend entries, label each individual curve with
+            the same name. If `None`, no name is shown in the legend.
+
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        despine : bool, default=False
-            Whether to remove the top and right spines from the plot.
-
-        names : list of str, default=None
-            Names used in the legend for each individual precision-recall curve. If
-            `None`, the name will be set to "PR fold {N}" where N is the index of the
-            CV fold.
-
-        fold_line_kws : dict or list of dict, default=None
+        curve_kwargs : dict or list of dict, default=None
             Dictionary with keywords passed to the matplotlib's `plot` function
             to draw the individual precision-recall curves. If a list is provided, the
             parameters are applied to the precision-recall curves of each CV fold
@@ -775,16 +792,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             parameters are applied to all precision-recall curves.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the chance level lines.
 
-        chance_level_kw : dict, default=None
+        chance_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the chance level lines.
 
-        prevalence_pos_label : float, default=None
-            The prevalence of the positive label. It is used for plotting the
-            chance level line. If None, the chance level line will not be plotted
-            even if `plot_chance_level` is set to True when plotting.
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
 
         Returns
         -------
@@ -826,64 +841,36 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        required_keys = {"estimator", "indices"}
-        if not all(key in cv_results for key in required_keys):
-            raise ValueError(
-                "`cv_results` does not contain one of the following required keys: "
-                f"{required_keys}. Set explicitly the parameters return_estimator=True "
-                "and return_indices=True to the function cross_validate."
-            )
-
-        train_size, test_size = (
-            len(cv_results["indices"]["train"][0]),
-            len(cv_results["indices"]["test"][0]),
+        pos_label_ = cls._validate_from_cv_results_params(
+            cv_results, X, y, sample_weight=sample_weight, pos_label=pos_label
         )
 
-        if _num_samples(X) != train_size + test_size:
-            raise ValueError(
-                "X does not contain the correct number of samples. "
-                f"Expected {train_size + test_size}, got {_num_samples(X)}."
-            )
-
-        if names is not None and len(names) != len(cv_results["estimator"]):
-            raise ValueError(
-                "When `names` is provided, it must have the same length as "
-                "the number of precision-recall curves to be plotted. Got "
-                f"{len(names)} names instead of {len(cv_results['estimator'])}."
-            )
-
-        fold_line_kws_ = fold_line_kws
-        if isinstance(fold_line_kws, Mapping):
-            fold_line_kws_ = [fold_line_kws] * len(cv_results["estimator"])
-        elif fold_line_kws is not None and len(fold_line_kws) != len(
-            cv_results["estimator"]
-        ):
-            raise ValueError(
-                "When `fold_line_kws` is a list, it must have the same length as "
-                "the number of precision-recall curves to be plotted."
-            )
-        # The checks above: are any common, and thus could be factored out to helper?
-
-        precision_all = []
-        recall_all = []
-        ap_all = []
+        precision_folds, recall_folds, ap_folds, prevalence_pos_label_folds = (
+            [],
+            [],
+            [],
+            [],
+        )
         for estimator, test_indices in zip(
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred, pos_label_ = _get_response_values_binary(
+            y_pred, _ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
-                pos_label=pos_label,
+                pos_label=pos_label_,
             )
-            # Should we use `_validate_from_predictions_params` here?
-            # The check would technically only be needed once though
+            sample_weight_fold = (
+                None
+                if sample_weight is None
+                else _safe_indexing(sample_weight, test_indices)
+            )
             precision, recall, _ = precision_recall_curve(
                 y_true,
                 y_pred,
-                pos_label=pos_label,
-                sample_weight=sample_weight,
+                pos_label=pos_label_,
+                sample_weight=sample_weight_fold,
                 drop_intermediate=drop_intermediate,
             )
             # Note `pos_label` cannot be `None` (default=1), unlike other metrics
@@ -891,29 +878,27 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             average_precision = average_precision_score(
                 y_true, y_pred, pos_label=pos_label_, sample_weight=sample_weight
             )
-            # Append all
-            precision_all.append(precision)
-            recall_all.append(recall)
-            ap_all.append(average_precision)
+            class_count = Counter(y_true)
+            # would `y_true.shape[0]` be faster?
+            prevalence_pos_label = class_count[pos_label_] / sum(class_count.values())
 
-        # Used all data provided to compute prevalence here, not sure if this is
-        # misleading and thus chance line should be avoided completely in
-        # multi-curve plots
-        class_count = Counter(y)
-        prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
+            precision_folds.append(precision)
+            recall_folds.append(recall)
+            ap_folds.append(average_precision)
+            prevalence_pos_label_folds.append(prevalence_pos_label)
 
         viz = cls(
-            precisions=precision_all,
-            recalls=recall_all,
-            average_precisions=ap_all,
-            pos_label=pos_label,
-            prevalence_pos_label=prevalence_pos_label,
+            precision=precision_folds,
+            recall=recall_folds,
+            average_precision=ap_folds,
+            pos_label=pos_label_,
+            prevalence_pos_label=prevalence_pos_label_folds,
         )
         return viz.plot(
             ax=ax,
-            names=names,
-            despine=despine,
+            name=name,
+            curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
-            fold_line_kws=fold_line_kws_,
+            chance_level_kw=chance_level_kwargs,
+            despine=despine,
         )
