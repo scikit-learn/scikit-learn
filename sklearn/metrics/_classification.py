@@ -1662,7 +1662,7 @@ def fbeta_score(
     ...     zero_division=np.nan,
     ...     beta=0.5,
     ... )
-    0.12...
+    0.128
 
     In order to use :func:`fbeta_scorer` as a scorer, a callable
     scorer objects needs to be created first with :func:`make_scorer`,
