@@ -468,7 +468,7 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         check_is_fitted(calibrator)
         # The optimal inverse temperature parameter should always
         # be positive
-        assert calibrator.beta_ > 0
+        assert calibrator.beta_ > 1
 
     if not ensemble:
         # Accuracy score is invariant under temperature scaling
