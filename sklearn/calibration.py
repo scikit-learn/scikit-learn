@@ -105,7 +105,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         - 'sigmoid', which corresponds to Platt's method (i.e. a binary logistic
           regression model).
-        - 'isotonic', which is a non-parametric approach,
+        - 'isotonic', which is a non-parametric approach.
         - 'temperature', temperature scaling.
 
         Sigmoid and isotonic calibration methods natively support only binary
@@ -128,7 +128,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         calibration samples is too low ``(≪1000)`` since it tends
         to overfit.
 
-        .. versionchanged:: 1.7
+        .. versionchanged:: 1.8
            Added option 'temperature'.
 
     cv : int, cross-validation generator, or iterable, default=None
