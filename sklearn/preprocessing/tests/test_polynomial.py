@@ -1275,7 +1275,7 @@ def test_polynomial_features_array_api_compliance(
     device,
     dtype_name,
 ):
-    """Test PolynomialFeatures on 2 features up to degree 3."""
+    """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
     xp = _array_api_for_tests(array_namespace, device)
     X, _ = two_features_degree3
     X_np = X.astype(dtype_name)
