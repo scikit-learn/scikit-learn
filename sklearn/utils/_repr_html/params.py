@@ -103,7 +103,9 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;</td>
             <td class="value">{param_value}</td>
-            <td class="doc_link"><a href={doc_link}>Link</a></td>
+            <td class="doc_link"><a class="sk-estimator-doc-link"
+              rel="noreferrer" target="_blank"
+              href={doc_link}>?</a></td>
         </tr>
     """
 
