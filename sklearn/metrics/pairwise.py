@@ -19,7 +19,7 @@ from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
 from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
-    _fill_or_add_to_diagonal,
+    _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
@@ -439,7 +439,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        distances = _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
+        _fill_diagonal(distances, 0, xp=xp)
 
     if squared:
         return distances
@@ -1177,7 +1177,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        S = _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
+        _fill_diagonal(S, 0.0, xp)
     return S
 
 
@@ -1982,7 +1982,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        ret = _fill_or_add_to_diagonal(ret, 0, xp=xp, add_value=False)
+        _fill_diagonal(ret, 0, xp=xp)
 
     # Transform output back
     return ret.T
