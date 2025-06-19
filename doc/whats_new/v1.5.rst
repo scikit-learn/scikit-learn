@@ -347,12 +347,13 @@ Changelog
   the previous predicted values were not affected by this bug.
   :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and
-  inverse_transform of:
-  :class:`cross_decomposition.PLSRegression`.
-  :class:`cross_decomposition.PLSCanonical`,
-  :class:`cross_decomposition.CCA`,
-  and :class:`cross_decomposition.PLSSVD`.
+- |API| Deprecates `Y` in favor of `y` in the methods `fit`, `transform` and
+  `inverse_transform` of:
+  :class:`cross_decomposition.PLSRegression`, 
+  :class:`cross_decomposition.PLSCanonical`, 
+  and :class:`cross_decomposition.CCA`, 
+  and methods `fit` and `transform` of:
+  :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
   :pr:`28604` by :user:`David Leon <davidleon123>`.
 
@@ -508,7 +509,7 @@ Changelog
   `OneVsRestClassifier(LogisticRegression(..))`.
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |API| `store_cv_values` and `cv_values_` are deprecated in favor of
+- |API| Parameters `store_cv_values` and `cv_values_` are deprecated in favor of
   `store_cv_results` and `cv_results_` in `~linear_model.RidgeCV` and
   `~linear_model.RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
