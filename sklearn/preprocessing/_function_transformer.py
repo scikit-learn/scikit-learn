@@ -7,6 +7,7 @@ from functools import partial
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import _safe_indexing
 from ..utils._param_validation import StrOptions
 from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._set_output import (
@@ -467,11 +468,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _set_dataframe_feature_names(self, X):
         """Get output column names from `func` output."""
-        if _is_polars_df(X) or _is_pandas_df(X):
-            head = X.head(1)
-        else:
-            head = X[:1]
-
+        head = _safe_indexing(X, [0], axis=0)
         head_out = self.func(head)
         if _is_polars_df(head_out) or _is_pandas_df(head_out):
             self._dataframe_feature_names = _get_feature_names(head_out)
