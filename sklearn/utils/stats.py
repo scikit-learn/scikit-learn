@@ -71,6 +71,11 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
         sorted_idx[-1, ...], xp.arange(n_features, device=device)
     ]
     # NaN values get sorted to end (largest value)
+    # IMPORTANT: This assumes that all supported array libraries (e.g., NumPy, PyTorch, CuPy)
+    # sort NaN values to the end — like NumPy. This behaviour is currently true but not guaranteed
+    # by the Array API specification, which explicitly states sort order of NaNs is
+    # implementation-defined: https://data-apis.org/array-api/latest/API_specification/sorting_functions.html
+    # Revisit this assumption if adding support for new array libraries (e.g. JAX, Ivy, etc.)
     if xp.any(xp.isnan(largest_value_per_column)):
         sorted_nan_mask = xp.take_along_axis(xp.isnan(array), sorted_idx, axis=0)
         sorted_weights[sorted_nan_mask] = 0
