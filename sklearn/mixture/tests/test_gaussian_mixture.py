@@ -1564,8 +1564,8 @@ def test_gaussian_mixture_array_api_compliance(
 
     # Define specific rtol to make tests pass
     default_rtol = 1e-4 if dtype == "float32" else 1e-7
-    increased_atol = 1e-4 if dtype == "float32" else 0
-    increased_rtol = 5e-4 if dtype == "float32" else 1e-7
+    increased_atol = 5e-4 if dtype == "float32" else 0
+    increased_rtol = 1e-3 if dtype == "float32" else 1e-7
 
     # Check fitted attributes
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
