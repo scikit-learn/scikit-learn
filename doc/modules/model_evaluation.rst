@@ -1577,6 +1577,11 @@ Quoting Wikipedia :
   positive rate), at various threshold settings. TPR is also known as
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
+
+For an end-to-end example that demonstrates how to plot ROC curves with
+the Visualization API, see
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`.
+
 This function requires the true binary value and the target scores, which can
 either be probability estimates of the positive class, confidence values, or
 binary decisions. Here is a small example of how to use the :func:`roc_curve`
