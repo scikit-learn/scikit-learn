@@ -597,7 +597,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
         Returns
         -------
@@ -844,9 +847,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         The higher, the more important the feature.
 
         Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
-        "Unbiased Measurement of Feature Importance in Tree-Based Methods".
+        [UFI2020]_.
 
         It is only available if the chosen split criterion is `gini`.
+
+        .. versionadded:: 1.8.0
 
         Returns
         -------
@@ -855,6 +860,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             . If all trees are single node trees consisting of only the root node,
             it will be an array of zeros. If you want them to sum to 1, please divide by
             `unbiased_feature_importances_.sum()`.
+
+        References
+        ----------
+        .. [UFI2020] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+           Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
         """
         if self.criterion != "gini":
             raise AttributeError(

@@ -718,6 +718,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Feature importance for single trees can be misleading. They are accurate when
         aggregated over multiple trees.
 
+        .. versionadded:: 1.8.0
+
         Parameters
         ----------
         X_test : array-like of shape (n_samples, n_features)

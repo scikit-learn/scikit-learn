@@ -4,7 +4,7 @@ Permutation Importance vs Random Forest Feature Importance (MDI)
 ================================================================
 
 In this example, we will show on the titanic dataset how the impurity-based feature
-importance (MDI, introduced by Breiman in [1]_) of
+importance (MDI, introduced by Breiman in [RF2001]_) of
 :class:`~sklearn.ensemble.RandomForestClassifier` can give misleading results by
 favoring high-cardinality features and we will give two alternatives to avoid the
 issue.
@@ -21,16 +21,14 @@ does not suffer from the bias of MDI.
 
 Another solution is to use the `unbiased_feature_importances_` attribute of random
 forests, which leverages out-of-bag samples to correct the aforementioned bias. This
-method was introduced by Li et al. in [2]_ and uses the samples that were not used in
-the construction of each tree of the forest to modify the MDI.
+method was introduced by Li et al. in [UFI2020]_ and uses the samples that were not used
+in the construction of each tree of the forest to modify the MDI.
 
 .. rubric:: References
 
-.. [1] `L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-  2001. <https://link.springer.com/article/10.1023/A:1010933404324>`_
-.. [2] `Li, X., Wang, Y., Basu, S., Kumbier, K., & Yu, B., "A debiased MDI
-  feature importance measure for random forests". Proceedings of the 33rd Conference on
-  Neural Information Processing Systems (NeurIPS 2019). <https://arxiv.org/abs/1906.10845>`_
+.. [RF2001] :doi:`"Random Forests" <10.1023/A:1010933404324>` L. Breiman, 2001
+.. [UFI2020] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based Methods"
+   <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
 """
 
