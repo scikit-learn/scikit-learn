@@ -470,5 +470,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Get output column names from `func` output."""
         head = _safe_indexing(X, [0], axis=0)
         head_out = self.func(head)
-        if _is_polars_df(head_out) or _is_pandas_df(head_out):
-            self._dataframe_feature_names = _get_feature_names(head_out)
+
+        if (feature_names := _get_feature_names(head_out)) is not None:
+            self._dataframe_feature_names = feature_names
