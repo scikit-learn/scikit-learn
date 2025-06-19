@@ -564,6 +564,7 @@ class RFECV(RFE):
     different numbers of selected features and aggregated together. Finally, the scores
     are averaged across folds and the number of features selected is set to the number
     of features that maximize the cross-validation score.
+
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <rfe>`.
@@ -755,6 +756,10 @@ class RFECV(RFE):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
+
+    For a detailed example of using RFECV to select features when training a
+    :class:`~sklearn.linear_model.LogisticRegression`, see
+    :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
     """
 
     _parameter_constraints: dict = {

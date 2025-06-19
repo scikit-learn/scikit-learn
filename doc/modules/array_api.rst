@@ -158,6 +158,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.linear_kernel`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
+- :func:`sklearn.metrics.pairwise.pairwise_kernels` (supports all metrics except :func:`sklearn.metrics.pairwise.laplacian_kernel`)
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
@@ -165,6 +166,7 @@ Metrics
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
+- :func:`sklearn.metrics.roc_curve`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
 - :func:`sklearn.metrics.zero_one_loss`

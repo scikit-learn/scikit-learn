@@ -19,7 +19,7 @@ dependencies:
   - pillow
   - pip
   - ninja
-  - meson-python=0.16.0  # min
+  - meson-python=0.17.1  # min
   - pytest-cov
   - coverage
   - ccache
