@@ -16,9 +16,7 @@ from ..utils._set_output import (
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
-    _check_feature_names,
     _check_feature_names_in,
-    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _is_polars_df,
@@ -182,10 +180,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         if self.validate:
             return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
         elif reset:
-            #  Usage of _check_n_features and _check_feature_names here aligns with
-            # validate_data(..., skip_check_array=True), which avoids full validation.
-            _check_n_features(self, X, reset=reset)
-            _check_feature_names(self, X, reset=reset)
+            # Use validate_data to perform shape and feature name checks
+            return validate_data(self, X, reset=reset, skip_check_array=True)
         return X
 
     def _check_inverse_transform(self, X):
