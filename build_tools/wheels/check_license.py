@@ -2,6 +2,7 @@
 
 import platform
 import site
+import subprocess
 from itertools import chain
 from pathlib import Path
 
@@ -19,6 +20,10 @@ try:
     )
 except StopIteration as e:
     raise RuntimeError("Unable to find scikit-learn's dist-info") from e
+
+# Print the output of ls -laR $distinfo_path for debugging purposes
+print(f"Contents of {distinfo_path}:")
+subprocess.run(["ls", "-laR", str(distinfo_path)], check=True)
 
 license_text = (distinfo_path / "COPYING").read_text()
 
