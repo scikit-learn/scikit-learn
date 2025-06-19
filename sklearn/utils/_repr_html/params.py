@@ -105,7 +105,8 @@ def _params_html_repr(params):
             <td class="value">{param_value}</td>
             <td class="doc_link"><a class="sk-estimator-doc-link"
               rel="noreferrer" target="_blank"
-              href={doc_link}>?<span>Online parameter documentation</span></a></td>
+              href={doc_link} style="color: white; background: black;">?
+              <span>Online `{param_name}` documentation</span></a></td>
         </tr>
     """
 
@@ -116,7 +117,7 @@ def _params_html_repr(params):
             param_value=_read_params(row, params[row], params.non_default)[
                 "param_value"
             ],
-            doc_link=link_to_param_doc(params.estimator_type, row) or "TODO",
+            doc_link=link_to_param_doc(params.estimator_type, row),
         )
         for row in params
     ]
