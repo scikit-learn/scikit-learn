@@ -1038,6 +1038,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
 
+        See the example: :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+        for a visual illustration of how the coefficients evolve with varying alpha.
+
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
