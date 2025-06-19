@@ -1537,6 +1537,15 @@ def test_max_samples_bootstrap(name):
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, y)
+    est.set_params(bootstrap=True)
+    n_samples = len(y)
+    sample_weight = np.full(n_samples, 0.1 / n_samples)
+    err_msg = (
+        f"The total sum of sample weights is {sample_weight.sum()}, which prevents "
+        "resampling with a fractional value for max_samples"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y, sample_weight)
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
