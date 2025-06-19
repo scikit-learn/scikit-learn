@@ -299,14 +299,12 @@ def supported_float_dtypes(xp, device=None):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if (
-        array_api_compat.is_torch_namespace(xp)
-        and getattr(device, "type", device) == "mps"
-    ):
-        dtypes = (xp.float32,)
-    else:
-        dtypes = (xp.float64, xp.float32)
-
+    dtypes_dict = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    # The returned dict contains the dtypes in the order float32, float64. Thus
+    # we reverse this ordering to ensure that the highest precision comes first.
+    dtypes = tuple(dtypes_dict.values())[::-1]
     if hasattr(xp, "float16"):
         return (*dtypes, xp.float16)
 
