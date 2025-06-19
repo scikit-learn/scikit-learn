@@ -1496,7 +1496,19 @@ class RandomForestClassifier(ForestClassifier):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``gini``.
+
+        .. versionadded:: 1.8.0
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1542,7 +1554,10 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests" <10.1023/A:1010933404324>`,
+        Machine Learning, 45(1), 5-32, 2001.
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
     Examples
     --------
@@ -1856,7 +1871,19 @@ class RandomForestRegressor(ForestRegressor):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``squared_error`` or ``friedman_mse``.
+
+        .. versionadded:: 1.8.0
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1912,14 +1939,18 @@ class RandomForestRegressor(ForestRegressor):
 
     The default value ``max_features=1.0`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
-    [1], whereas the former was more recently justified empirically in [2].
+    [1], whereas the former was more recently justified empirically in [3].
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests" <10.1023/A:1010933404324>`,
+        Machine Learning, 45(1), 5-32, 2001.
 
-    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-           trees", Machine Learning, 63(1), 3-42, 2006.
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
+
+    .. [3] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+        trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -2242,7 +2273,19 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``gini``.
+
+        .. versionadded:: 1.8.0
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2294,6 +2337,9 @@ class ExtraTreesClassifier(ForestClassifier):
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
+
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
     Examples
     --------
@@ -2600,7 +2646,19 @@ class ExtraTreesRegressor(ForestRegressor):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``squared_error`` or ``friedman_mse``.
+
+        .. versionadded:: 1.8.0
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2648,6 +2706,9 @@ class ExtraTreesRegressor(ForestRegressor):
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
+
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
     Examples
     --------
