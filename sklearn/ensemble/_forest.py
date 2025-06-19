@@ -555,7 +555,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
         scoring_function : callable, default=None
-            Scoring function for OOB score. Defaults to `accuracy_score`.
+            Scoring function for OOB score. Default depends on whether
+            this is a regression (R2 score) or classification problem
+            (accuracy score).
         """
 
     def _compute_oob_predictions(self, X, y):
@@ -1258,7 +1260,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
         scoring_function : callable, default=None
-            Scoring function for OOB score. Defaults to `accuracy_score`.
+            Scoring function for OOB score. Defaults to `r2_score`.
         """
         if scoring_function is None:
             scoring_function = r2_score
