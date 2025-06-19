@@ -961,10 +961,9 @@ def test_logistic_regression_multinomial(global_random_seed):
 
     X = StandardScaler(with_mean=False).fit_transform(X)
 
-    # 'lbfgs' is used as a reference
-    solver = "lbfgs"
-    ref_i = LogisticRegression(solver=solver, tol=1e-10)
-    ref_w = LogisticRegression(solver=solver, fit_intercept=False, tol=1e-10)
+    # 'lbfgs' solver is used as a reference - it's the default
+    ref_i = LogisticRegression(tol=1e-10)
+    ref_w = LogisticRegression(fit_intercept=False, tol=1e-10)
     ref_i.fit(X, y)
     ref_w.fit(X, y)
     assert ref_i.coef_.shape == (n_classes, n_features)
@@ -998,7 +997,11 @@ def test_logistic_regression_multinomial(global_random_seed):
     # folds, it need not be exactly the same.
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
         clf_path = LogisticRegressionCV(
-            solver=solver, max_iter=2000, tol=1e-10, Cs=[1.0]
+            solver=solver,
+            random_state=global_random_seed,
+            max_iter=2000,
+            tol=1e-10,
+            Cs=[1.0],
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
