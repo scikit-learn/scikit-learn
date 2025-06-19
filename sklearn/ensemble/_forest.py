@@ -560,71 +560,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             (accuracy score).
         """
 
-    def _compute_oob_predictions(self, X, y):
-        """Compute and set the OOB score.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data matrix.
-        y : ndarray of shape (n_samples, n_outputs)
-            The target matrix.
-
-        Returns
-        -------
-        oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
-                (n_samples, 1, n_outputs)
-            The OOB predictions.
-        """
-        # Prediction requires X to be in CSR format
-        if issparse(X):
-            X = X.tocsr()
-
-        n_samples = y.shape[0]
-        n_outputs = self.n_outputs_
-        if is_classifier(self) and hasattr(self, "n_classes_"):
-            # n_classes_ is a ndarray at this stage
-            # all the supported type of target will have the same number of
-            # classes in all outputs
-            oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
-        else:
-            # for regression, n_classes_ does not exist and we create an empty
-            # axis to be consistent with the classification case and make
-            # the array operations compatible with the 2 settings
-            oob_pred_shape = (n_samples, 1, n_outputs)
-
-        oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
-        n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples,
-            self.max_samples,
-        )
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state,
-                n_samples,
-                n_samples_bootstrap,
-            )
-            y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
-            oob_pred[unsampled_indices, ...] += y_pred
-            n_oob_pred[unsampled_indices, :] += 1
-
-        for k in range(n_outputs):
-            if (n_oob_pred == 0).any():
-                warn(
-                    (
-                        "Some inputs do not have OOB scores. This probably means "
-                        "too few trees were used to compute any reliable OOB "
-                        "estimates."
-                    ),
-                    UserWarning,
-                )
-                n_oob_pred[n_oob_pred == 0] = 1
-            oob_pred[..., k] /= n_oob_pred[..., [k]]
-
-        return oob_pred
-
     def _validate_y_class_weight(self, y):
         # Default implementation
         return y, None
@@ -757,18 +692,17 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         importances /= self.n_estimators
 
-        for k in range(self.n_outputs_):
-            if (n_oob_pred == 0).any():
-                warn(
-                    (
-                        "Some inputs do not have OOB scores. This probably means "
-                        "too few trees were used to compute any reliable OOB "
-                        "estimates."
-                    ),
-                    UserWarning,
-                )
-                n_oob_pred[n_oob_pred == 0] = 1
-            oob_pred[..., k] /= n_oob_pred[..., [k]]
+        if (n_oob_pred == 0).any():
+            warn(
+                (
+                    "Some inputs do not have OOB scores. This probably means "
+                    "too few trees were used to compute any reliable OOB "
+                    "estimates."
+                ),
+                UserWarning,
+            )
+            n_oob_pred[n_oob_pred == 0] = 1
+        oob_pred /= n_oob_pred[:, np.newaxis, :]
 
         return importances, oob_pred
 
@@ -864,34 +798,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             class_weight=class_weight,
             max_samples=max_samples,
         )
-
-    @staticmethod
-    def _get_oob_predictions(tree, X):
-        """Compute the OOB predictions for an individual tree.
-
-        Parameters
-        ----------
-        tree : DecisionTreeClassifier object
-            A single decision tree classifier.
-        X : ndarray of shape (n_samples, n_features)
-            The OOB samples.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples, n_classes, n_outputs)
-            The OOB associated predictions.
-        """
-        y_pred = tree.predict_proba(X, check_input=False)
-        y_pred = np.asarray(y_pred)
-        if y_pred.ndim == 2:
-            # binary and multiclass
-            y_pred = y_pred[..., np.newaxis]
-        else:
-            # Roll the first `n_outputs` axis to the last axis. We will reshape
-            # from a shape of (n_outputs, n_samples, n_classes) to a shape of
-            # (n_samples, n_classes, n_outputs).
-            y_pred = np.rollaxis(y_pred, axis=0, start=3)
-        return y_pred
 
     def _set_oob_score_and_ufi_attributes(
         self, X, y, sample_weight, scoring_function=None
@@ -1215,31 +1121,6 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return y_hat
 
-    @staticmethod
-    def _get_oob_predictions(tree, X):
-        """Compute the OOB predictions for an individual tree.
-
-        Parameters
-        ----------
-        tree : DecisionTreeRegressor object
-            A single decision tree regressor.
-        X : ndarray of shape (n_samples, n_features)
-            The OOB samples.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples, 1, n_outputs)
-            The OOB associated predictions.
-        """
-        y_pred = tree.predict(X, check_input=False)
-        if y_pred.ndim == 1:
-            # single output regression
-            y_pred = y_pred[:, np.newaxis, np.newaxis]
-        else:
-            # multioutput regression
-            y_pred = y_pred[:, np.newaxis, :]
-        return y_pred
-
     def _set_oob_score_and_ufi_attributes(
         self, X, y, sample_weight, scoring_function=None
     ):
@@ -1288,7 +1169,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
         "Unbiased Measurement of Feature Importance in Tree-Based Methods".
 
-        It is only available if the chosen split criterion is `squared_error` or `friedman_mse`.
+        It is only available if the chosen split criterion is `squared_error` or
+        `friedman_mse`.
 
         Returns
         -------
