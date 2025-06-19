@@ -2,6 +2,7 @@ from collections import Counter
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
 from sklearn.compose import make_column_transformer
@@ -14,15 +15,19 @@ from sklearn.metrics import (
     precision_recall_curve,
 )
 from sklearn.metrics._plot.tests.test_common_curve_display import (
+    _check_display_kwargs_deprecation,
+    _check_from_cv_results_curve_kwargs,
     _check_from_cv_results_legend_label,
     _check_from_cv_results_param_validation,
     _check_plot_legend_label,
+    _check_pos_label_statistics,
     _check_validate_plot_params,
 )
-from sklearn.model_selection import cross_validate, train_test_split
+from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import _safe_indexing, shuffle
+from sklearn.utils import _safe_indexing
+from sklearn.utils._response import _get_response_values_binary
 
 
 def _check_figure_axes_and_labels(display, pos_label):
@@ -98,14 +103,16 @@ def test_precision_recall_display_plotting(
         y, y_pred, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    np.testing.assert_allclose(display.precision, precision)
-    np.testing.assert_allclose(display.recall, recall)
+    assert_allclose(display.precision, precision)
+    assert_allclose(display.recall, recall)
     assert display.average_precision == pytest.approx(average_precision)
 
     import matplotlib as mpl
 
     _check_figure_axes_and_labels(display, pos_label)
     assert isinstance(display.line_, mpl.lines.Line2D)
+    # Check default curve kwarg
+    assert display.line_.get_drawstyle() == "steps-post"
 
     # plotting passing some new parameters
     display.plot(name="MySpecialEstimator", curve_kwargs={"alpha": 0.8})
@@ -169,13 +176,15 @@ def test_precision_recall_display_from_cv_results_plotting(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight_test
         )
 
-        np.testing.assert_allclose(display.precision[idx], precision)
-        np.testing.assert_allclose(display.recall[idx], recall)
+        assert_allclose(display.precision[idx], precision)
+        assert_allclose(display.recall[idx], recall)
         assert display.average_precision[idx] == pytest.approx(average_precision)
 
         import matplotlib as mpl
 
         assert isinstance(display.line_[idx], mpl.lines.Line2D)
+        # Check default curve kwarg
+        assert display.line_[idx].get_drawstyle() == "steps-post"
 
     _check_figure_axes_and_labels(display, pos_label)
     # Check that the chance level line is not plotted by default
@@ -268,7 +277,7 @@ def test_precison_recall_plot_parameter_length_validation(pyplot, params, err_ms
         display.plot()
 
 
-def test_validate_plot_params(pyplot):
+def test_precision_recall_validate_plot_params(pyplot):
     """Check `_validate_plot_params` returns the correct variables."""
     display_args = {
         "precision": np.array([1, 0.5, 0]),
@@ -287,9 +296,58 @@ def test_precision_recall_from_cv_results_param_validation(pyplot):
     _check_from_cv_results_param_validation(data, PrecisionRecallDisplay)
 
 
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
+)
+def test_precision_recall_display_from_cv_results_curve_kwargs(pyplot, curve_kwargs):
+    """Check `curve_kwargs` correctly passed in `from_cv_results`."""
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    _check_from_cv_results_curve_kwargs(
+        PrecisionRecallDisplay, cv_results, X, y, curve_kwargs
+    )
+
+
+# TODO(1.10): Remove
+def test_precision_recall_display_estimator_name_deprecation(pyplot):
+    """Check deprecation of `estimator_name`."""
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
+        PrecisionRecallDisplay(
+            precision=precision, recall=recall, estimator_name="test"
+        )
+
+
+# TODO(1.10): Remove
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "plot"]
+)
+def test_precision_recall_display_kwargs_deprecation(pyplot, constructor_name):
+    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    lr = LogisticRegression().fit(X, y)
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    _check_display_kwargs_deprecation(
+        PrecisionRecallDisplay,
+        constructor_name,
+        lr,
+        X,
+        y,
+        {"precision": precision, "recall": recall},
+    )
+
+
+@pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_precision_recall_chance_level_line(pyplot, chance_level_kw, constructor_name):
+def test_precision_recall_chance_level_line(
+    pyplot, plot_chance_level, chance_level_kw, constructor_name
+):
     """Check chance level plotting behavior, for `from_estimator`/`from_predictions`."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_prevalence = Counter(y)[1] / len(y)
@@ -302,18 +360,23 @@ def test_precision_recall_chance_level_line(pyplot, chance_level_kw, constructor
             lr,
             X,
             y,
-            plot_chance_level=True,
+            plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y,
             y_pred,
-            plot_chance_level=True,
+            plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
 
     import matplotlib as mpl
+
+    if not plot_chance_level:
+        assert display.chance_level_ is None
+        # Early return if chance level not plotted
+        return
 
     assert isinstance(display.chance_level_, mpl.lines.Line2D)
     assert tuple(display.chance_level_.get_xdata()) == (0, 1)
@@ -328,8 +391,11 @@ def test_precision_recall_chance_level_line(pyplot, chance_level_kw, constructor
     assert display.chance_level_.get_label() == f"Chance level (AP = {pos_prevalence})"
 
 
+@pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
-def test_precision_recall_chance_level_line_from_cv_results(pyplot, chance_level_kw):
+def test_precision_recall_chance_level_line_from_cv_results(
+    pyplot, plot_chance_level, chance_level_kw
+):
     """Check chance level plotting behavior for `from_cv_results`."""
     # Note a separate chance line is plotted for each cv split
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
@@ -342,11 +408,16 @@ def test_precision_recall_chance_level_line_from_cv_results(pyplot, chance_level
         cv_results,
         X,
         y,
-        plot_chance_level=True,
+        plot_chance_level=plot_chance_level,
         chance_level_kwargs=chance_level_kw,
     )
 
     import matplotlib as mpl
+
+    if not plot_chance_level:
+        assert display.chance_level_ is None
+        # Early return if chance level not plotted
+        return
 
     pos_prevalence_folds = []
     for idx in range(n_cv):
@@ -382,6 +453,7 @@ def test_precision_recall_chance_level_line_from_cv_results(pyplot, chance_level
     [
         ("from_estimator", "LogisticRegression (AP = {:.2f})"),
         ("from_predictions", "Classifier (AP = {:.2f})"),
+        ("from_cv_results", "AP = {:.2f} +/- {:.2f}"),
     ],
 )
 def test_precision_recall_display_name(pyplot, constructor_name, default_label):
@@ -389,32 +461,61 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
     X, y = make_classification(n_classes=2, n_samples=100, random_state=0)
     pos_label = 1
 
-    classifier = LogisticRegression().fit(X, y)
+    classifier = LogisticRegression()
+    n_cv = 3
+    cv_results = cross_validate(
+        classifier, X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
     classifier.fit(X, y)
-
     y_pred = classifier.predict_proba(X)[:, pos_label]
-
-    # safe guard for the binary if/else construction
-    assert constructor_name in ("from_estimator", "from_predictions")
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(classifier, X, y)
-    else:
+    elif constructor_name == "from_predictions":
         display = PrecisionRecallDisplay.from_predictions(
             y, y_pred, pos_label=pos_label
         )
+    else:
+        display = PrecisionRecallDisplay.from_cv_results(cv_results, X, y)
 
-    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+    if constructor_name == "from_cv_results":
+        average_precision = []
+        for idx in range(n_cv):
+            test_indices = cv_results["indices"]["test"][idx]
+            y_pred, _ = _get_response_values_binary(
+                cv_results["estimator"][idx],
+                _safe_indexing(X, test_indices),
+                response_method="auto",
+            )
+            average_precision.append(
+                average_precision_score(
+                    _safe_indexing(y, test_indices), y_pred, pos_label=pos_label
+                )
+            )
+        # By default, only the first curve is labelled
+        assert display.line_[0].get_label() == default_label.format(
+            np.mean(average_precision), np.std(average_precision)
+        )
 
-    # check that the default name is used
-    assert display.line_.get_label() == default_label.format(average_precision)
+        # check that the name can be set
+        display.plot(name="MySpecialEstimator")
+        # Sets only first labelled curve
+        assert display.line_[0].get_label() == (
+            f"MySpecialEstimator (AP = {np.mean(average_precision):.2f} +/- "
+            f"{np.std(average_precision):.2f})"
+        )
+    else:
+        average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
 
-    # check that the name can be set
-    display.plot(name="MySpecialEstimator")
-    assert (
-        display.line_.get_label()
-        == f"MySpecialEstimator (AP = {average_precision:.2f})"
-    )
+        # check that the default name is used
+        assert display.line_.get_label() == default_label.format(average_precision)
+
+        # check that the name can be set
+        display.plot(name="MySpecialEstimator")
+        assert (
+            display.line_.get_label()
+            == f"MySpecialEstimator (AP = {average_precision:.2f})"
+        )
 
 
 @pytest.mark.parametrize("average_precision", [[1.0, 1.0, 1.0], None])
@@ -492,9 +593,15 @@ def test_precision_recall_display_string_labels(pyplot):
     X, y = cancer.data, cancer.target_names[cancer.target]
 
     lr = make_pipeline(StandardScaler(), LogisticRegression())
+    n_cv = 3
+    cv_results = cross_validate(
+        lr, X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
     lr.fit(X, y)
     for klass in cancer.target_names:
         assert klass in lr.classes_
+
+    # `from_estimator`
     display = PrecisionRecallDisplay.from_estimator(lr, X, y)
 
     y_pred = lr.predict_proba(X)[:, 1]
@@ -503,6 +610,7 @@ def test_precision_recall_display_string_labels(pyplot):
     assert display.average_precision == pytest.approx(avg_prec)
     assert display.name == lr.__class__.__name__
 
+    # `from_predictions`
     err_msg = r"y_true takes value in {'benign', 'malignant'}"
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_predictions(y, y_pred)
@@ -512,104 +620,65 @@ def test_precision_recall_display_string_labels(pyplot):
     )
     assert display.average_precision == pytest.approx(avg_prec)
 
+    # `from_cv_results`
+    display = PrecisionRecallDisplay.from_cv_results(cv_results, X, y)
+    average_precision = []
+    for idx in range(n_cv):
+        test_indices = cv_results["indices"]["test"][idx]
+        y_pred, _ = _get_response_values_binary(
+            cv_results["estimator"][idx],
+            _safe_indexing(X, test_indices),
+            response_method="auto",
+        )
+        # Note `pos_label` cannot be `None` (default=1), unlike other metrics
+        average_precision.append(
+            average_precision_score(
+                _safe_indexing(y, test_indices),
+                y_pred,
+                pos_label=cv_results["estimator"][idx].classes_[1],
+            )
+        )
+    assert_allclose(display.average_precision, average_precision)
+
 
 @pytest.mark.parametrize(
-    "average_precision, name, expected_label",
-    [
-        (0.9, None, "AP = 0.90"),
-        (None, "my_est", "my_est"),
-        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
-    ],
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
 )
-def test_default_labels(pyplot, average_precision, name, expected_label):
-    """Check the default labels used in the display."""
-    precision = np.array([1, 0.5, 0])
-    recall = np.array([0, 0.5, 1])
-    display = PrecisionRecallDisplay(
-        precision,
-        recall,
-        average_precision=average_precision,
-        name=name,
-    )
-    display.plot()
-    assert display.line_.get_label() == expected_label
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_method):
-    # check that we can provide the positive label and display the proper
-    # statistics
-    X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced version of the breast cancer dataset
-    idx_positive = np.flatnonzero(y == 1)
-    idx_negative = np.flatnonzero(y == 0)
-    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
-    X, y = X[idx_selected], y[idx_selected]
-    X, y = shuffle(X, y, random_state=42)
-    # only use 2 features to make the problem even harder
-    X = X[:, :2]
-    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        stratify=y,
-        random_state=0,
-    )
+    """Check switching `pos_label` give correct statistics, using imbalanced data."""
 
-    classifier = LogisticRegression()
-    classifier.fit(X_train, y_train)
+    def _check_average_precision(display, constructor_name, pos_label):
+        if pos_label == "cancer":
+            avg_prec_limit = 0.65
+            avg_prec_limit_multi = [0.819, 0.8803, 0.88]
+        else:
+            avg_prec_limit = 0.95
+            avg_prec_limit_multi = [0.996, 0.998, 0.997]
 
-    # sanity check to be sure the positive class is classes_[0] and that we
-    # are betrayed by the class imbalance
-    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
+        if constructor_name == "from_cv_results":
+            for idx, average_precision in enumerate(display.average_precision):
+                assert average_precision == pytest.approx(avg_prec_limit_multi[idx])
+                assert -trapezoid(
+                    display.precision[idx], display.recall[idx]
+                ) == pytest.approx(avg_prec_limit_multi[idx])
+        else:
+            assert display.average_precision == pytest.approx(avg_prec_limit)
+            assert -trapezoid(display.precision, display.recall) == pytest.approx(
+                avg_prec_limit
+            )
 
-    y_pred = getattr(classifier, response_method)(X_test)
-    # we select the corresponding probability columns or reverse the decision
-    #  function otherwise
-    y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
-    y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
-
-    if constructor_name == "from_estimator":
-        display = PrecisionRecallDisplay.from_estimator(
-            classifier,
-            X_test,
-            y_test,
-            pos_label="cancer",
-            response_method=response_method,
+        _check_pos_label_statistics(
+            PrecisionRecallDisplay,
+            response_method,
+            constructor_name,
+            _check_average_precision,
         )
-    else:
-        display = PrecisionRecallDisplay.from_predictions(
-            y_test,
-            y_pred_cancer,
-            pos_label="cancer",
-        )
-    # we should obtain the statistics of the "cancer" class
-    avg_prec_limit = 0.65
-    assert display.average_precision < avg_prec_limit
-    assert -trapezoid(display.precision, display.recall) < avg_prec_limit
-
-    # otherwise we should obtain the statistics of the "not cancer" class
-    if constructor_name == "from_estimator":
-        display = PrecisionRecallDisplay.from_estimator(
-            classifier,
-            X_test,
-            y_test,
-            response_method=response_method,
-            pos_label="not cancer",
-        )
-    else:
-        display = PrecisionRecallDisplay.from_predictions(
-            y_test,
-            y_pred_not_cancer,
-            pos_label="not cancer",
-        )
-    avg_prec_limit = 0.95
-    assert display.average_precision > avg_prec_limit
-    assert -trapezoid(display.precision, display.recall) > avg_prec_limit
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+)
 def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name):
     # Check that even if one passes plot_chance_level=False the first time
     # one can still call disp.plot with plot_chance_level=True and get the
@@ -617,15 +686,23 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     lr = LogisticRegression()
+    n_cv = 3
+    cv_results = cross_validate(
+        lr, X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
     y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
             lr, X, y, plot_chance_level=False
         )
-    else:
+    elif constructor_name == "from_predictions":
         display = PrecisionRecallDisplay.from_predictions(
             y, y_pred, plot_chance_level=False
+        )
+    else:
+        display = PrecisionRecallDisplay.from_cv_results(
+            cv_results, X, y, plot_chance_level=False
         )
     assert display.chance_level_ is None
 
@@ -635,7 +712,11 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
     # prevalence_pos_label should have been set, so that directly
     # calling plot_chance_level=True should plot the chance level line
     display.plot(plot_chance_level=True)
-    assert isinstance(display.chance_level_, mpl.lines.Line2D)
+    if constructor_name == "from_cv_results":
+        for idx in range(n_cv):
+            assert isinstance(display.chance_level_[idx], mpl.lines.Line2D)
+    else:
+        assert isinstance(display.chance_level_, mpl.lines.Line2D)
 
 
 def test_precision_recall_raise_no_prevalence(pyplot):

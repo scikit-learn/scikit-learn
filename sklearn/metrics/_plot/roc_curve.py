@@ -756,7 +756,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred, _ = _get_response_values_binary(
+            y_pred, pos_label_ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,

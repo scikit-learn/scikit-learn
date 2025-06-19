@@ -107,11 +107,12 @@ class _BinaryClassifierCurveDisplayMixin:
             )
         check_consistent_length(X, y, sample_weight)
 
-        try:
-            pos_label = _check_pos_label_consistency(pos_label, y)
-        except ValueError as e:
-            # Adapt error message
-            raise ValueError(str(e).replace("y_true", "y"))
+        if pos_label is not None:
+            try:
+                pos_label = _check_pos_label_consistency(pos_label, y)
+            except ValueError as e:
+                # Adapt error message
+                raise ValueError(str(e).replace("y_true", "y"))
 
         return pos_label
 

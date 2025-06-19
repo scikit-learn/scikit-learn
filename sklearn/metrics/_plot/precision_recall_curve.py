@@ -237,7 +237,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the parameters are applied to each precision-recall curve
             sequentially and a legend entry is added for each curve.
             If a single dictionary is provided, the same parameters are applied
-            to all ROC curves and a single legend entry for all curves is added,
+            to all curves and a single legend entry for all curves is added,
             labeled with the mean average precision.
 
             .. versionadded:: 1.8
@@ -855,7 +855,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred, _ = _get_response_values_binary(
+            y_pred, pos_label_ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
