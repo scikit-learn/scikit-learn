@@ -19,15 +19,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import _safe_indexing, shuffle
 
 
-def _check_figure_axes_and_labels(display):
+def _check_figure_axes_and_labels(display, pos_label):
     """Check mpl figure and axes are correct."""
     import matplotlib as mpl
 
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
 
-    assert display.ax_.get_xlabel() == "Recall (Positive label: 1)"
-    assert display.ax_.get_ylabel() == "Precision (Positive label: 1)"
+    assert display.ax_.get_xlabel() == f"Recall (Positive label: {pos_label})"
+    assert display.ax_.get_ylabel() == f"Precision (Positive label: {pos_label})"
     assert display.ax_.get_adjustable() == "box"
     assert display.ax_.get_aspect() in ("equal", 1.0)
     assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
@@ -36,18 +36,34 @@ def _check_figure_axes_and_labels(display):
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize("with_strings", [True, False])
 def test_precision_recall_display_plotting(
-    pyplot, constructor_name, response_method, drop_intermediate
+    pyplot,
+    constructor_name,
+    response_method,
+    drop_intermediate,
+    with_sample_weight,
+    with_strings,
 ):
     """Check the overall plotting rendering."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
+    if with_strings:
+        y = np.array(["c", "b"])[y]
+        pos_label = "c"
 
     classifier = LogisticRegression().fit(X, y)
     classifier.fit(X, y)
 
+    if with_sample_weight:
+        rng = np.random.RandomState(42)
+        sample_weight = rng.randint(1, 4, size=(X.shape[0]))
+    else:
+        sample_weight = None
+
     y_pred = getattr(classifier, response_method)(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, pos_label]
+    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
@@ -57,18 +73,29 @@ def test_precision_recall_display_plotting(
             classifier,
             X,
             y,
+            sample_weight=sample_weight,
             response_method=response_method,
             drop_intermediate=drop_intermediate,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+            y,
+            y_pred,
+            sample_weight=sample_weight,
+            pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
         )
 
     precision, recall, _ = precision_recall_curve(
-        y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+        y,
+        y_pred,
+        pos_label=pos_label,
+        sample_weight=sample_weight,
+        drop_intermediate=drop_intermediate,
     )
-    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+    average_precision = average_precision_score(
+        y, y_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
 
     np.testing.assert_allclose(display.precision, precision)
     np.testing.assert_allclose(display.recall, recall)
@@ -76,7 +103,7 @@ def test_precision_recall_display_plotting(
 
     import matplotlib as mpl
 
-    _check_figure_axes_and_labels(display)
+    _check_figure_axes_and_labels(display, pos_label)
     assert isinstance(display.line_, mpl.lines.Line2D)
 
     # plotting passing some new parameters
@@ -91,23 +118,36 @@ def test_precision_recall_display_plotting(
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize("with_strings", [True, False])
 def test_precision_recall_display_from_cv_results_plotting(
-    pyplot, response_method, drop_intermediate
+    pyplot, response_method, drop_intermediate, with_sample_weight, with_strings
 ):
     """Check the overall plotting of `from_cv_results`."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
+    if with_strings:
+        y = np.array(["c", "b"])[y]
+        pos_label = "c"
 
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
 
+    if with_sample_weight:
+        rng = np.random.RandomState(42)
+        sample_weight = rng.randint(1, 4, size=(X.shape[0]))
+    else:
+        sample_weight = None
+
     display = PrecisionRecallDisplay.from_cv_results(
         cv_results,
         X,
         y,
+        sample_weight=sample_weight,
         response_method=response_method,
         drop_intermediate=drop_intermediate,
+        pos_label=pos_label,
     )
 
     for idx, (estimator, test_indices) in enumerate(
@@ -115,11 +155,22 @@ def test_precision_recall_display_from_cv_results_plotting(
     ):
         y_true = _safe_indexing(y, test_indices)
         y_pred = getattr(estimator, response_method)(_safe_indexing(X, test_indices))
-        y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, pos_label]
-        precision, recall, _ = precision_recall_curve(
-            y_true, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+        y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+        sample_weight_test = (
+            _safe_indexing(sample_weight, test_indices)
+            if sample_weight is not None
+            else None
         )
-        average_precision = average_precision_score(y_true, y_pred, pos_label=pos_label)
+        precision, recall, _ = precision_recall_curve(
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
+            sample_weight=sample_weight_test,
+        )
+        average_precision = average_precision_score(
+            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight_test
+        )
 
         np.testing.assert_allclose(display.precision[idx], precision)
         np.testing.assert_allclose(display.recall[idx], recall)
@@ -129,7 +180,7 @@ def test_precision_recall_display_from_cv_results_plotting(
 
         assert isinstance(display.line_[idx], mpl.lines.Line2D)
 
-    _check_figure_axes_and_labels(display)
+    _check_figure_axes_and_labels(display, pos_label)
     # Check that the chance level line is not plotted by default
     assert display.chance_level_ is None
 

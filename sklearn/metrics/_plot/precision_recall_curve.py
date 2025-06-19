@@ -876,7 +876,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             # Note `pos_label` cannot be `None` (default=1), unlike other metrics
             # such as roc_auc
             average_precision = average_precision_score(
-                y_true, y_pred, pos_label=pos_label_, sample_weight=sample_weight
+                y_true, y_pred, pos_label=pos_label_, sample_weight=sample_weight_fold
             )
             class_count = Counter(y_true)
             # would `y_true.shape[0]` be faster?
