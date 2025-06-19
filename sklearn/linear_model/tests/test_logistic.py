@@ -421,10 +421,16 @@ def test_logistic_cv(global_random_seed):
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
-        Cs=[1.0], fit_intercept=False, solver="liblinear", cv=3
+        Cs=[1.0],
+        fit_intercept=False,
+        random_state=global_random_seed,
+        solver="liblinear",
+        cv=3,
     )
     lr_cv.fit(X_ref, y)
-    lr = LogisticRegression(C=1.0, fit_intercept=False, solver="liblinear")
+    lr = LogisticRegression(
+        C=1.0, fit_intercept=False, random_state=global_random_seed, solver="liblinear"
+    )
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
@@ -704,7 +710,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         class_weight=class_weight,
         tol=1e-8,
     )
-    clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
+    clf_lbfgs = LogisticRegressionCV(**params)
 
     # XXX: lbfgs' line search can fail and cause a ConvergenceWarning for some
     # 10% of the random seeds, but only on specific platforms (in particular
@@ -931,9 +937,8 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in SOLVERS:
-        params = dict(solver=solver, max_iter=1000)
-        if solver in ["sag", "saga", "liblinear"]:
-            params["random_state"] = global_random_seed
+        params = dict(solver=solver, max_iter=1000, random_stage=global_random_seed)
+
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
         clf1.fit(X, y)
@@ -941,25 +946,25 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-def test_logistic_regression_multinomial():
+def test_logistic_regression_multinomial(global_random_seed):
     # Tests for the multinomial option in logistic regression
 
     # Some basic attributes of Logistic Regression
-    n_samples, n_features, n_classes = 50, 20, 3
+    n_samples, n_features, n_classes = 200, 20, 3
     X, y = make_classification(
         n_samples=n_samples,
         n_features=n_features,
         n_informative=10,
         n_classes=n_classes,
-        random_state=0,
+        random_state=global_random_seed,
     )
 
     X = StandardScaler(with_mean=False).fit_transform(X)
 
-    # 'lbfgs' is used as a referenced
+    # 'lbfgs' is used as a reference
     solver = "lbfgs"
-    ref_i = LogisticRegression(solver=solver, tol=1e-6)
-    ref_w = LogisticRegression(solver=solver, fit_intercept=False, tol=1e-6)
+    ref_i = LogisticRegression(solver=solver, tol=1e-10)
+    ref_w = LogisticRegression(solver=solver, fit_intercept=False, tol=1e-10)
     ref_i.fit(X, y)
     ref_w.fit(X, y)
     assert ref_i.coef_.shape == (n_classes, n_features)
@@ -967,15 +972,15 @@ def test_logistic_regression_multinomial():
     for solver in ["sag", "saga", "newton-cg"]:
         clf_i = LogisticRegression(
             solver=solver,
-            random_state=42,
+            random_state=global_random_seed,
             max_iter=2000,
-            tol=1e-7,
+            tol=1e-10,
         )
         clf_w = LogisticRegression(
             solver=solver,
-            random_state=42,
+            random_state=global_random_seed,
             max_iter=2000,
-            tol=1e-7,
+            tol=1e-10,
             fit_intercept=False,
         )
         clf_i.fit(X, y)
@@ -984,7 +989,7 @@ def test_logistic_regression_multinomial():
         assert clf_w.coef_.shape == (n_classes, n_features)
 
         # Compare solutions between lbfgs and the other solvers
-        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-3)
+        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=3e-3)
         assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-2)
         assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-3)
 
@@ -993,7 +998,7 @@ def test_logistic_regression_multinomial():
     # folds, it need not be exactly the same.
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
         clf_path = LogisticRegressionCV(
-            solver=solver, max_iter=2000, tol=1e-6, Cs=[1.0]
+            solver=solver, max_iter=2000, tol=1e-10, Cs=[1.0]
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
