@@ -302,13 +302,15 @@ def supported_float_dtypes(xp, device=None):
     dtypes_dict = xp.__array_namespace_info__().dtypes(
         kind="real floating", device=device
     )
-    # The returned dict contains the dtypes in the order float32, float64. Thus
-    # we reverse this ordering to ensure that the highest precision comes first.
-    dtypes = tuple(dtypes_dict.values())[::-1]
-    if hasattr(xp, "float16"):
-        return (*dtypes, xp.float16)
+    valid_float_dtypes = []
+    for dtype_key in ("float64", "float32"):
+        if dtype_key in dtypes_dict:
+            valid_float_dtypes.append(dtypes_dict[dtype_key])
 
-    return dtypes
+    if hasattr(xp, "float16"):
+        valid_float_dtypes.append(xp.float16)
+
+    return tuple(valid_float_dtypes)
 
 
 def ensure_common_namespace_device(reference, *arrays):
