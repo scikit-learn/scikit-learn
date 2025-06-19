@@ -575,8 +575,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
                 (n_samples, 1, n_outputs)
             The OOB predictions.
-
-        oob_indices_per_tree
         """
         # Prediction requires X to be in CSR format
         if issparse(X):
@@ -673,12 +671,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
-        if not self._unnormalized_feature_importances.any():
-            return np.zeros(self.n_features_in_, dtype=np.float64)
-
-        return self._unnormalized_feature_importances / np.sum(
-            self._unnormalized_feature_importances
-        )
+        all_importances = self._unnormalized_feature_importances
+        if not all_importances.any():
+            return np.zeros(all_importances.shape, dtype=np.float64)
+        return all_importances / all_importances.sum()
 
     @property
     def _unnormalized_feature_importances(self):
