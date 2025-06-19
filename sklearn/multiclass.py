@@ -32,6 +32,7 @@ import array
 import itertools
 import warnings
 from numbers import Integral, Real
+from typing import Literal
 
 import numpy as np
 import scipy.sparse as sp
@@ -49,7 +50,7 @@ from .base import (
 from .metrics.pairwise import pairwise_distances_argmin
 from .preprocessing import LabelBinarizer
 from .utils import check_random_state
-from .utils._param_validation import HasMethods, Interval
+from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils._tags import get_tags
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -255,6 +256,31 @@ class OneVsRestClassifier(
 
         .. versionadded:: 1.1
 
+    undefined_prediction_behaviour : {'first_seen', 'last_seen', 'random', \
+        'negative'}, default='last_seen'
+        Controls the behaviour of the OneVSRestClassifier when a sample has multiple
+        classes with equal probabilities. If multiple (more than one) estimators
+        predict the same class proba for a sample, then the sample would belong
+        to multiple classes, and the final prediction is not defined.
+
+        This parameter controls how the final prediction is made in these cases:
+        ``first_seen`` means the first class seen in the training data is returned for
+        undefined predictions. ``last_seen`` means the last class seen in the training
+        data is returned for undefined predictions. ``random`` means a random class is
+        returned for undefined predictions. If a sample belongs to multiple classes,
+        one of them is randomly selected. If a sample does not belong to any class, a
+        random class is returned. ``negative`` means ``-1`` is returned for undefined
+        predictions, allowing you to easily take action in this case.
+
+          .. versionadded:: 1.7
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the predicted class in case of equal probability.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>` for details.
+
+          .. versionadded:: 1.7
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -284,6 +310,12 @@ class OneVsRestClassifier(
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 1.0
+
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
+
+        .. versionadded:: 1.7
 
     See Also
     --------
@@ -317,12 +349,28 @@ class OneVsRestClassifier(
         "estimator": [HasMethods(["fit"])],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
+        "undefined_prediction_behaviour": [
+            StrOptions({"first_seen", "last_seen", "random", "negative"})
+        ],
+        "random_state": ["random_state"],
     }
 
-    def __init__(self, estimator, *, n_jobs=None, verbose=0):
+    def __init__(
+        self,
+        estimator,
+        *,
+        n_jobs=None,
+        verbose=0,
+        undefined_prediction_behaviour: Literal[
+            "first_seen", "last_seen", "random", "negative"
+        ] = "last_seen",
+        random_state=None,
+    ):
         self.estimator = estimator
         self.n_jobs = n_jobs
         self.verbose = verbose
+        self.undefined_prediction_behaviour = undefined_prediction_behaviour
+        self.random_state = random_state
 
     @_fit_context(
         # OneVsRestClassifier.estimator is not validated yet
@@ -391,6 +439,9 @@ class OneVsRestClassifier(
             self.n_features_in_ = self.estimators_[0].n_features_in_
         if hasattr(self.estimators_[0], "feature_names_in_"):
             self.feature_names_in_ = self.estimators_[0].feature_names_in_
+
+        # Only used if `undefined_prediction_behaviour` is set to "random"
+        self.random_state_ = check_random_state(self.random_state)
 
         return self
 
@@ -496,14 +547,43 @@ class OneVsRestClassifier(
 
         n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
-            maxima = np.empty(n_samples, dtype=float)
-            maxima.fill(-np.inf)
-            argmaxima = np.zeros(n_samples, dtype=int)
+            preds = np.zeros((len(self.estimators_), n_samples), dtype=float)
             for i, e in enumerate(self.estimators_):
                 pred = _predict_binary(e, X)
-                np.maximum(maxima, pred, out=maxima)
-                argmaxima[maxima == pred] = i
-            return self.classes_[argmaxima]
+                preds[i, :] = pred
+
+            argmaxima = np.zeros(n_samples, dtype=int)
+
+            # find the number of maximum for each sample
+            multiple_top_preds = np.sum(np.amax(preds, axis=0) == preds, axis=0) > 1
+
+            if self.undefined_prediction_behaviour == "first_seen":
+                preds.argmax(axis=0, out=argmaxima)
+                return self.classes_[argmaxima]
+            if self.undefined_prediction_behaviour == "last_seen":
+                # reverse order so that argmax directly gives the last seen index
+                preds = np.flip(preds, axis=0)
+                preds.argmax(axis=0, out=argmaxima)
+                # find the right index
+                argmaxima = (len(self.classes_) - 1) - argmaxima
+                return self.classes_[argmaxima]
+            elif self.undefined_prediction_behaviour == "random":
+                preds.argmax(axis=0, out=argmaxima)
+                indices_of_multiple_top = np.asarray(multiple_top_preds).nonzero()[0]
+                for multiple_top_index in indices_of_multiple_top:
+                    possible_indices = np.asarray(
+                        preds[:, multiple_top_index]
+                        == np.amax(preds[:, multiple_top_index])
+                    ).nonzero()[0]
+                    argmaxima[multiple_top_index] = self.random_state_.choice(
+                        possible_indices
+                    )
+                return self.classes_[argmaxima]
+            elif self.undefined_prediction_behaviour == "negative":
+                preds.argmax(axis=0, out=argmaxima)
+                final_preds = self.classes_[argmaxima]
+                final_preds[multiple_top_preds] = -1
+                return final_preds
         else:
             thresh = _threshold_for_binary_predict(self.estimators_[0])
             indices = array.array("i")
