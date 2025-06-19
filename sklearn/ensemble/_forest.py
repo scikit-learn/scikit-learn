@@ -940,8 +940,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
         "Unbiased Measurement of Feature Importance in Tree-Based Methods".
 
-        It is only available if the chosen split criterion is `gini` in classification
-        and `squared_error` or `friedman_mse` in regression.
+        It is only available if the chosen split criterion is `gini`.
 
         Returns
         -------
@@ -1289,8 +1288,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
         "Unbiased Measurement of Feature Importance in Tree-Based Methods".
 
-        It is only available if the chosen split criterion is `gini` in classification
-        and `squared_error` or `friedman_mse` in regression.
+        It is only available if the chosen split criterion is `squared_error` or `friedman_mse`.
 
         Returns
         -------
