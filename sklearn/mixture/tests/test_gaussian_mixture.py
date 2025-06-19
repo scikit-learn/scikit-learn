@@ -1569,9 +1569,16 @@ def test_gaussian_mixture_array_api_compliance(
 
     # Check fitted attributes
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
+    assert_allclose(gmm.weights_, _convert_to_numpy(gmm_xp.weights_, xp=xp))
     assert_allclose(
         gmm.covariances_,
         _convert_to_numpy(gmm_xp.covariances_, xp=xp),
+        atol=increased_atol,
+        rtol=increased_rtol,
+    )
+    assert_allclose(
+        gmm.precisions_cholesky_,
+        _convert_to_numpy(gmm_xp.precisions_cholesky_, xp=xp),
         atol=increased_atol,
         rtol=increased_rtol,
     )
