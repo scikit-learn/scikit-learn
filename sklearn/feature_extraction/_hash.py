@@ -205,4 +205,5 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
             tags.input_tags.string = True
         elif self.input_type == "dict":
             tags.input_tags.dict = True
+        tags.requires_fit = False
         return tags
