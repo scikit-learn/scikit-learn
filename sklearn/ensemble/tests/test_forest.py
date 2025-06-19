@@ -1167,7 +1167,7 @@ def test_class_weights(name):
 
     # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target)
+    clf1.fit(iris.data, iris.target, sample_weight=np.ones_like(iris.target))
     clf2 = ForestClassifier(class_weight="balanced", random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
