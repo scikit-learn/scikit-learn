@@ -14,6 +14,7 @@ from sklearn.metrics import (
     PredictionErrorDisplay,
     RocCurveDisplay,
 )
+from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -291,3 +292,252 @@ def test_classifier_display_curve_named_constructor_return_type(
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+def _check_validate_plot_params(display_class, display_args):
+    """Helper to check `_validate_plot_params` returns the correct variables.
+
+    `display_args` should be given in the same order as output by
+    `_validate_plot_params`. All `display_args` should be for a single curve.
+    """
+    display = display_class(**display_args)
+    results = display._validate_plot_params(ax=None, name=None)
+
+    # Check if the number of parameters match
+    assert len(results) == len(display_args)
+
+    for idx, (param, value) in enumerate(display_args.items()):
+        if param == "name":
+            assert results[idx] == [value] if isinstance(value, str) else value
+        elif value is None:
+            assert results[idx] is None
+        else:
+            assert isinstance(results[idx], list)
+            assert len(results[idx]) == 1
+
+
+def _check_from_cv_results_param_validation(data, display_class):
+    """Check parameter validation is correct."""
+    X, y = data
+
+    # `cv_results` missing key
+    cv_results_no_est = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    cv_results_no_indices = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    for cv_results in (cv_results_no_est, cv_results_no_indices):
+        with pytest.raises(
+            ValueError,
+            match="`cv_results` does not contain one of the following required",
+        ):
+            display_class.from_cv_results(cv_results, X, y)
+
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    # `X` wrong length
+    with pytest.raises(ValueError, match="`X` does not contain the correct"):
+        display_class.from_cv_results(cv_results, X[:10, :], y)
+
+    # `y` not binary
+    y_multi = y.copy()
+    y_multi[0] = 2
+    with pytest.raises(ValueError, match="The target `y` is not binary."):
+        display_class.from_cv_results(cv_results, X, y_multi)
+
+    # input inconsistent length
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        display_class.from_cv_results(cv_results, X, y[:10])
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        display_class.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
+
+    # `pos_label` inconsistency
+    y_multi[y_multi == 1] = 2
+    with pytest.raises(ValueError, match=r"y takes value in \{0, 2\}"):
+        display_class.from_cv_results(cv_results, X, y_multi)
+
+    # `name` is list while `curve_kwargs` is None or dict
+    for curve_kwargs in (None, {"alpha": 0.2}):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            display_class.from_cv_results(
+                cv_results,
+                X,
+                y,
+                name=["one", "two", "three"],
+                curve_kwargs=curve_kwargs,
+            )
+
+    # `curve_kwargs` incorrect length
+    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a dictionary"):
+        display_class.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
+
+    # `curve_kwargs` both alias provided
+    with pytest.raises(TypeError, match="Got both c and"):
+        display_class.from_cv_results(
+            cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
+        )
+
+
+def _check_plot_legend_label(
+    display_class, display_args, name, curve_kwargs, auc_metric, auc_metric_name
+):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations.
+
+    Checks `from_estimator` and `from_predictions` methods, when plotting multiple
+    curves.
+
+    Parameters
+    ----------
+    display_class : class
+        The display class to test (e.g., RocCurveDisplay, PrecisionRecallDisplay).
+
+    display_args : dict
+        Dictionary of arguments to instantiate the display class.
+
+    name : str, list of str, or None
+        The name parameter to pass to the plot method.
+
+    curve_kwargs : dict, list of dict, or None
+        The curve_kwargs parameter to pass to the plot method.
+
+    auc_metric : list of float or None
+        The area under curve metric value (e.g., ROC AUC, average precision) to be
+        displayed in the legend. When a list, should be all 1.0.
+
+    auc_metric_name : str
+        The name of the metric to display in the legend (e.g., "AUC", "AP").
+    """
+    if not isinstance(curve_kwargs, list) and isinstance(name, list):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            display_class(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
+        return
+
+    display = display_class(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
+    legend = display.ax_.get_legend()
+    if legend is None:
+        # No legend is created, exit test early
+        assert name is None
+        assert auc_metric is None
+        return
+    else:
+        legend_labels = [text.get_text() for text in legend.get_texts()]
+
+    if isinstance(curve_kwargs, list):
+        # Multiple labels in legend
+        assert len(legend_labels) == 3
+        for idx, label in enumerate(legend_labels):
+            if name is None:
+                expected_label = f"{auc_metric_name} = 1.00" if auc_metric else None
+                assert label == expected_label
+            elif isinstance(name, str):
+                expected_label = (
+                    f"single ({auc_metric_name} = 1.00)" if auc_metric else "single"
+                )
+                assert label == expected_label
+            else:
+                # `name` is a list of different strings
+                expected_label = (
+                    f"{name[idx]} ({auc_metric_name} = 1.00)"
+                    if auc_metric
+                    else f"{name[idx]}"
+                )
+                assert label == expected_label
+    else:
+        # Single label in legend
+        assert len(legend_labels) == 1
+        if name is None:
+            expected_label = (
+                f"{auc_metric_name} = 1.00 +/- 0.00" if auc_metric else None
+            )
+            assert legend_labels[0] == expected_label
+        else:
+            # name is single string
+            expected_label = (
+                f"single ({auc_metric_name} = 1.00 +/- 0.00)"
+                if auc_metric
+                else "single"
+            )
+            assert legend_labels[0] == expected_label
+
+
+def _check_from_cv_results_legend_label(
+    display_class, cv_results, X, y, name, curve_kwargs, auc_metrics, auc_metric_name
+):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations.
+
+    This function verifies that the legend labels in a Display object created from
+    cross-validation results are correctly formatted based on the provided parameters.
+
+    Parameters
+    ----------
+    display_class : class
+        The display class to test (e.g., RocCurveDisplay, PrecisionRecallDisplay).
+
+    cv_results : dict
+        The cross-validation results dictionary containing the estimators and indices.
+        Should have 3 cv folds.
+
+    X : array-like of shape (n_samples, n_features)
+        The input samples.
+
+    y : array-like of shape (n_samples,)
+        The target values (binary).
+
+    name : str, list of str, or None
+        The `name` parameter to pass to `from_cv_results`.
+
+    curve_kwargs : dict, list of dict, or None
+        The `curve_kwargs` parameter to pass to `from_cv_results`.
+
+    auc_metrics : list of float
+        The area under curve metric values (e.g., ROC AUC, average precision) to be
+        displayed in the legend.
+
+    auc_metric_name : str
+        The name of the metric to display in the legend (e.g., "AUC", "AP").
+    """
+    if not isinstance(curve_kwargs, list) and isinstance(name, list):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            display_class.from_cv_results(
+                cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+            )
+    else:
+        display = display_class.from_cv_results(
+            cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+        )
+
+        legend = display.ax_.get_legend()
+        legend_labels = [text.get_text() for text in legend.get_texts()]
+        if isinstance(curve_kwargs, list):
+            # Multiple labels in legend
+            assert len(legend_labels) == 3
+            for idx, label in enumerate(legend_labels):
+                if name is None:
+                    assert label == f"{auc_metric_name} = {auc_metrics[idx]:.2f}"
+                elif isinstance(name, str):
+                    assert (
+                        label == f"single ({auc_metric_name} = {auc_metrics[idx]:.2f})"
+                    )
+                else:
+                    # `name` is a list of different strings
+                    assert (
+                        label
+                        == f"{name[idx]} ({auc_metric_name} = {auc_metrics[idx]:.2f})"
+                    )
+        else:
+            # Single label in legend
+            assert len(legend_labels) == 1
+            if name is None:
+                assert legend_labels[0] == (
+                    f"{auc_metric_name} = {np.mean(auc_metrics):.2f} +/- "
+                    f"{np.std(auc_metrics):.2f}"
+                )
+            else:
+                # name is single string
+                assert legend_labels[0] == (
+                    f"single ({auc_metric_name} = {np.mean(auc_metrics):.2f} +/- "
+                    f"{np.std(auc_metrics):.2f})"
+                )

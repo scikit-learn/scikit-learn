@@ -195,7 +195,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             optional=optional,
             class_name="PrecisionRecallDisplay",
         )
-        return precision, recall, average_precision, prevalence_pos_label, name
+        return precision, recall, average_precision, name, prevalence_pos_label
 
     def plot(
         self,
@@ -283,7 +283,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        precision, recall, average_precision, prevalence_pos_label, name = (
+        precision, recall, average_precision, name, prevalence_pos_label = (
             self._validate_plot_params(ax=ax, name=name)
         )
         n_curves = len(precision)

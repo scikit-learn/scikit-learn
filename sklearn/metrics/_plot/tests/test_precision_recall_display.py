@@ -13,6 +13,12 @@ from sklearn.metrics import (
     average_precision_score,
     precision_recall_curve,
 )
+from sklearn.metrics._plot.tests.test_common_curve_display import (
+    _check_from_cv_results_legend_label,
+    _check_from_cv_results_param_validation,
+    _check_plot_legend_label,
+    _check_validate_plot_params,
+)
 from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -37,21 +43,16 @@ def _check_figure_axes_and_labels(display, pos_label):
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-@pytest.mark.parametrize("with_strings", [True, False])
 def test_precision_recall_display_plotting(
     pyplot,
     constructor_name,
     response_method,
     drop_intermediate,
     with_sample_weight,
-    with_strings,
 ):
     """Check the overall plotting rendering."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
-    if with_strings:
-        y = np.array(["c", "b"])[y]
-        pos_label = "c"
 
     classifier = LogisticRegression().fit(X, y)
     classifier.fit(X, y)
@@ -119,16 +120,12 @@ def test_precision_recall_display_plotting(
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-@pytest.mark.parametrize("with_strings", [True, False])
 def test_precision_recall_display_from_cv_results_plotting(
-    pyplot, response_method, drop_intermediate, with_sample_weight, with_strings
+    pyplot, response_method, drop_intermediate, with_sample_weight
 ):
     """Check the overall plotting of `from_cv_results`."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
-    if with_strings:
-        y = np.array(["c", "b"])[y]
-        pos_label = "c"
 
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
@@ -185,14 +182,115 @@ def test_precision_recall_display_from_cv_results_plotting(
     assert display.chance_level_ is None
 
 
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {
+                "precision": [np.array([1, 0.5, 0]), np.array([1, 0.5, 0])],
+                "recall": [np.array([0, 0.5, 1])],
+                "average_precision": None,
+                "prevalence_pos_label": None,
+                "name": None,
+            },
+            "self.precision and self.recall from `PrecisionRecallDisplay`",
+        ),
+        (
+            {
+                "precision": [np.array([1, 0.5, 0])],
+                "recall": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "average_precision": [0.8, 0.9],
+                "prevalence_pos_label": None,
+                "name": None,
+            },
+            "self.precision, self.recall and self.average_precision",
+        ),
+        (
+            {
+                "precision": [np.array([1, 0.5, 0])],
+                "recall": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "average_precision": [0.8, 0.9],
+                "prevalence_pos_label": [0.5, 0.5, 0.5],
+                "name": None,
+            },
+            (
+                "self.precision, self.recall, self.average_precision and "
+                "self.prevalence_pos_label"
+            ),
+        ),
+        (
+            {
+                "precision": [np.array([1, 0.5, 0]), np.array([1, 0.5, 0])],
+                "recall": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "average_precision": [0.8],
+                "prevalence_pos_label": [0.8, 0.6, 0.5],
+                "name": None,
+            },
+            (
+                "Got: self.precision: 2, self.recall: 2, self.average_precision: 1, "
+                "self.prevalence_pos_label: 3"
+            ),
+        ),
+        (
+            {
+                "precision": [np.array([1, 0.5, 0]), np.array([1, 0.5, 0])],
+                "recall": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "average_precision": [0.8, 0.9],
+                "prevalence_pos_label": None,
+                "name": ["curve1", "curve2", "curve3"],
+            },
+            (
+                "self.precision, self.recall, self.average_precision and 'name' "
+                r"\(or self.name\)"
+            ),
+        ),
+        (
+            {
+                "precision": [np.array([1, 0.5, 0]), np.array([1, 0.5, 0])],
+                "recall": [np.array([0, 0.5, 1]), np.array([0, 0.5, 1])],
+                "average_precision": [0.8, 0.9],
+                "prevalence_pos_label": [0.5, 0.4],
+                # List of length 1 is always allowed
+                "name": ["curve1"],
+            },
+            None,
+        ),
+    ],
+)
+def test_precison_recall_plot_parameter_length_validation(pyplot, params, err_msg):
+    """Check `plot` parameter length validation performed correctly."""
+    display = PrecisionRecallDisplay(**params)
+    if err_msg:
+        with pytest.raises(ValueError, match=err_msg):
+            display.plot()
+    else:
+        # No error should be raised
+        display.plot()
+
+
+def test_validate_plot_params(pyplot):
+    """Check `_validate_plot_params` returns the correct variables."""
+    display_args = {
+        "precision": np.array([1, 0.5, 0]),
+        "recall": [np.array([0, 0.5, 1])],
+        "average_precision": None,
+        "name": "test_curve",
+        "prevalence_pos_label": 0.5,
+    }
+
+    _check_validate_plot_params(PrecisionRecallDisplay, display_args)
+
+
+def test_precision_recall_from_cv_results_param_validation(pyplot):
+    """Check parameter validation is correct."""
+    data = make_classification(n_classes=2, n_samples=50, random_state=0)
+    _check_from_cv_results_param_validation(data, PrecisionRecallDisplay)
+
+
 @pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_precision_recall_chance_level_line(
-    pyplot,
-    chance_level_kw,
-    constructor_name,
-):
-    """Check the chance level line plotting behavior."""
+def test_precision_recall_chance_level_line(pyplot, chance_level_kw, constructor_name):
+    """Check chance level plotting behavior, for `from_estimator`/`from_predictions`."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_prevalence = Counter(y)[1] / len(y)
 
@@ -226,6 +324,57 @@ def test_precision_recall_chance_level_line(
         assert display.chance_level_.get_color() == "k"
     else:
         assert display.chance_level_.get_color() == "r"
+
+    assert display.chance_level_.get_label() == f"Chance level (AP = {pos_prevalence})"
+
+
+@pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
+def test_precision_recall_chance_level_line_from_cv_results(pyplot, chance_level_kw):
+    """Check chance level plotting behavior for `from_cv_results`."""
+    # Note a separate chance line is plotted for each cv split
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    n_cv = 3
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
+    )
+
+    display = PrecisionRecallDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        plot_chance_level=True,
+        chance_level_kwargs=chance_level_kw,
+    )
+
+    import matplotlib as mpl
+
+    pos_prevalence_folds = []
+    for idx in range(n_cv):
+        assert isinstance(display.chance_level_[idx], mpl.lines.Line2D)
+        assert tuple(display.chance_level_[idx].get_xdata()) == (0, 1)
+        test_indices = cv_results["indices"]["test"][idx]
+        pos_prevalence = Counter(_safe_indexing(y, test_indices))[1] / len(test_indices)
+        pos_prevalence_folds.append(pos_prevalence)
+        assert tuple(display.chance_level_[idx].get_ydata()) == (
+            pos_prevalence,
+            pos_prevalence,
+        )
+
+        # Checking for chance level line styles
+        if chance_level_kw is None:
+            assert display.chance_level_[idx].get_color() == "k"
+        else:
+            assert display.chance_level_[idx].get_color() == "r"
+
+    for idx in range(n_cv):
+        # Only the first chance line should have a label
+        if idx == 0:
+            assert display.chance_level_[idx].get_label() == (
+                f"Chance level (AP = {np.mean(pos_prevalence_folds):0.2f} +/- "
+                f"{np.std(pos_prevalence_folds):0.2f})"
+            )
+        else:
+            assert display.chance_level_[idx].get_label() == f"_child{3 + idx}"
 
 
 @pytest.mark.parametrize(
@@ -265,6 +414,57 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
     assert (
         display.line_.get_label()
         == f"MySpecialEstimator (AP = {average_precision:.2f})"
+    )
+
+
+@pytest.mark.parametrize("average_precision", [[1.0, 1.0, 1.0], None])
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_precision_recall_plot_legend_label(
+    pyplot, name, curve_kwargs, average_precision
+):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
+    precision = [np.array([1, 0.5, 0]), np.array([1, 0.5, 0]), np.array([1, 0.5, 0])]
+    recall = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
+
+    _check_plot_legend_label(
+        PrecisionRecallDisplay,
+        {
+            "precision": precision,
+            "recall": recall,
+            "average_precision": average_precision,
+        },
+        name,
+        curve_kwargs,
+        average_precision,
+        "AP",
+    )
+
+
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_precision_recall_from_cv_results_legend_label(pyplot, name, curve_kwargs):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    _check_from_cv_results_legend_label(
+        PrecisionRecallDisplay,
+        cv_results,
+        X,
+        y,
+        name,
+        curve_kwargs,
+        [0.97, 1.00, 1.00],
+        "AP",
     )
 
 
