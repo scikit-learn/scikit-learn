@@ -230,7 +230,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             reset=True,
             accept_sparse=self.accept_sparse,
             dtype="numeric",
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             ensure_2d=True,
             skip_check_array=not self.validate,
         )
@@ -258,7 +258,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse=self.accept_sparse,
             dtype="numeric",
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             ensure_2d=True,
             skip_check_array=not self.validate,
         )
