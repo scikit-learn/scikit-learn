@@ -1099,13 +1099,15 @@ def test_logreg_l1(global_random_seed):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_logreg_l1_sparse_data(csr_container):
+def test_logreg_l1_sparse_data(csr_container, global_random_seed):
     # Because liblinear penalizes the intercept and saga does not, we do not
     # fit the intercept to make it possible to compare the coefficients of
     # the two models at convergence.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 50
-    X, y = make_classification(n_samples=n_samples, n_features=20, random_state=0)
+    X, y = make_classification(
+        n_samples=n_samples, n_features=20, random_state=global_random_seed
+    )
     X_noise = rng.normal(scale=0.1, size=(n_samples, 3))
     X_constant = np.zeros(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
@@ -1118,6 +1120,7 @@ def test_logreg_l1_sparse_data(csr_container):
         solver="liblinear",
         fit_intercept=False,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_liblinear.fit(X, y)
 
@@ -1128,6 +1131,7 @@ def test_logreg_l1_sparse_data(csr_container):
         fit_intercept=False,
         max_iter=1000,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_saga.fit(X, y)
     assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
@@ -1144,14 +1148,14 @@ def test_logreg_l1_sparse_data(csr_container):
         fit_intercept=False,
         max_iter=1000,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_saga_dense.fit(X.toarray(), y)
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
 
 
-@pytest.mark.parametrize("random_seed", [42])
 @pytest.mark.parametrize("penalty", ["l1", "l2"])
-def test_logistic_regression_cv_refit(random_seed, penalty):
+def test_logistic_regression_cv_refit(global_random_seed, penalty):
     # Test that when refit=True, logistic regression cv with the saga solver
     # converges to the same solution as logistic regression with a fixed
     # regularization parameter.
@@ -1160,11 +1164,13 @@ def test_logistic_regression_cv_refit(random_seed, penalty):
     # logistic regression loss is convex, we should still recover exactly
     # the same solution as long as the stopping criterion is strict enough (and
     # that there are no exactly duplicated features when penalty='l1').
-    X, y = make_classification(n_samples=100, n_features=20, random_state=random_seed)
+    X, y = make_classification(
+        n_samples=100, n_features=20, random_state=global_random_seed
+    )
     common_params = dict(
         solver="saga",
         penalty=penalty,
-        random_state=random_seed,
+        random_state=global_random_seed,
         max_iter=1000,
         tol=1e-12,
     )
