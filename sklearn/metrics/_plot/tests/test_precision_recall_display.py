@@ -81,6 +81,9 @@ def test_precision_recall_display_plotting(
     # Check that the chance level line is not plotted by default
     assert display.chance_level_ is None
 
+    # The F-score baseline must not be shown unless explicitly requested
+    assert display.f1_baseline_ is None
+
 
 @pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -380,3 +383,36 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     if despine:
         for s in ["bottom", "left"]:
             assert display.ax_.spines[s].get_bounds() == (0, 1)
+
+
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_precision_recall_f1_baseline(pyplot, constructor_name):
+    """Smoke-test: the hyperbolic F-score baseline appears when requested."""
+    # Synthetic, slightly imbalanced data
+    X, y = make_classification(n_classes=2, n_samples=60, random_state=0)
+    prevalence = Counter(y)[1] / len(y)  # π for sanity checks
+
+    clf = LogisticRegression().fit(X, y)
+    y_pred = clf.predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        disp = PrecisionRecallDisplay.from_estimator(
+            clf, X, y, plot_f1_baseline=True
+        )
+    else:
+        disp = PrecisionRecallDisplay.from_predictions(
+            y, y_pred, plot_f1_baseline=True
+        )
+
+    import matplotlib as mpl
+
+    # 1. A Line2D object must exist
+    assert isinstance(disp.f1_baseline_, mpl.lines.Line2D)
+
+    # 2. The recall grid starts strictly after π / 2 (formula domain)
+    recalls, _ = disp.f1_baseline_.get_data()
+    assert recalls.min() > prevalence / 2
+
+    # 3. The curve is monotonic in recall (sanity)
+    assert np.all(np.diff(recalls) >= 0)
+

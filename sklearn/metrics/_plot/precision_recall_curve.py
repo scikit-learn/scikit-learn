@@ -3,12 +3,50 @@
 
 from collections import Counter
 
+import numpy as np
+
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _despine,
     _validate_style_kwargs,
 )
 from .._ranking import average_precision_score, precision_recall_curve
+
+
+def _f1_baseline_curve(prevalence, n_points: int = 200):
+    r"""Return recall / precision pairs for the F1-baseline hyperbola.
+
+    The curve keeps the F\ :sub:`1` score equal to that of an always-positive
+    classifier with prevalence :math:`\pi`.
+
+    .. math::
+
+        F_1 \;=\; \frac{2pr}{p + r}
+        \;\;\Longrightarrow\;\;
+        p(r) \;=\; \frac{\pi\,r}{2r - \pi},
+        \qquad  r > \frac{\pi}{2}.
+
+    Parameters
+    ----------
+    prevalence : float
+        Prevalence :math:`\pi` of the positive class in the data.
+
+    n_points : int, default=200
+        Number of (recall, precision) pairs returned.
+
+    Returns
+    -------
+    recall : ndarray of shape (n_points,)
+    precision : ndarray of shape (n_points,)
+
+    .. versionadded:: 1.8
+    """
+    eps = np.finfo(float).eps
+    r_min = prevalence / 2 + eps
+
+    recall = np.linspace(r_min, 1.0, n_points)
+    precision = (prevalence * recall) / (2 * recall - prevalence)
+    return recall, precision
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -67,6 +105,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     figure_ : matplotlib Figure
         Figure containing the curve.
+
+    f1_baseline_ : matplotlib Artist or None
+        Line representing the F-score baseline. ``None`` if not requested.
+
+        .. versionadded:: 1.8
 
     See Also
     --------
@@ -136,6 +179,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        plot_f1_baseline=False,
+        f1_baseline_kw=None,
         **kwargs,
     ):
         """Plot visualization.
@@ -169,6 +214,21 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to remove the top and right spines from the plot.
 
             .. versionadded:: 1.6
+
+        plot_f1_baseline : bool, default=False
+            Whether to plot the F1 baseline hyperbola (Flach & Kull 2015).
+
+            .. versionadded:: 1.8
+                Drawing this hyperbolic baseline can be useful on highly
+                imbalanced datasets because, unlike the diagonal chance line,
+                it marks the **F-score** of an “always-positive” classifier with
+                prevalence :math:`p`.  This gives a more informative reference
+                than the uniform-random baseline when *p* ≪ 0.5.
+
+        f1_baseline_kw : dict, default=None
+            Matplotlib style kwargs for the F1 baseline curve.
+
+            .. versionadded:: 1.8
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -231,7 +291,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 )
 
             default_chance_level_line_kw = {
-                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+                "label": f"Baseline (pi = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
                 "linestyle": "--",
             }
@@ -250,6 +310,28 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             )
         else:
             self.chance_level_ = None
+
+        # --- optional F1 baseline -------------------------------------------------
+        if plot_f1_baseline:
+            if self.prevalence_pos_label is None:
+                raise ValueError(
+                    "plot_f1_baseline=True requires prevalence_pos_label "
+                    "to be set (use from_estimator / from_predictions)."
+                )
+
+            default_f1_kw = {
+                "label": "F1 baseline",
+                "color": "k",
+                "linestyle": ":",
+            }
+            if f1_baseline_kw is None:
+                f1_baseline_kw = {}
+            f1_kw = _validate_style_kwargs(default_f1_kw, f1_baseline_kw)
+
+            r, p = _f1_baseline_curve(self.prevalence_pos_label)
+            (self.f1_baseline_,) = self.ax_.plot(r, p, **f1_kw)
+        else:
+            self.f1_baseline_ = None
 
         if despine:
             _despine(self.ax_)
@@ -275,6 +357,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        plot_f1_baseline=False,
+        f1_baseline_kw=None,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
@@ -342,6 +426,21 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
+        plot_f1_baseline : bool, default=False
+            Whether to add the hyperbolic F-score baseline (Flach & Kull 2015).
+
+            .. versionadded:: 1.8
+                Drawing this hyperbolic baseline can be useful on highly
+                imbalanced datasets because, unlike the diagonal chance line,
+                it marks the **F-score** of an “always-positive” classifier with
+                prevalence :math:`p`.  This gives a more informative reference
+                than the uniform-random baseline when *p* ≪ 0.5.
+
+        f1_baseline_kw : dict, default=None
+            Matplotlib style keywords for that baseline curve.
+
+            .. versionadded:: 1.8
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -402,6 +501,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             ax=ax,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            plot_f1_baseline=plot_f1_baseline,
+            f1_baseline_kw=f1_baseline_kw,
             despine=despine,
             **kwargs,
         )
@@ -420,6 +521,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        plot_f1_baseline=False,
+        f1_baseline_kw=None,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -475,6 +578,21 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to remove the top and right spines from the plot.
 
             .. versionadded:: 1.6
+
+        plot_f1_baseline : bool, default=False
+            Whether to add the hyperbolic F-score baseline (Flach & Kull 2015).
+
+            .. versionadded:: 1.8
+                Drawing this hyperbolic baseline can be useful on highly
+                imbalanced datasets because, unlike the diagonal chance line,
+                it marks the **F-score** of an “always-positive” classifier with
+                prevalence :math:`p`.  This gives a more informative reference
+                than the uniform-random baseline when *p* ≪ 0.5.
+
+        f1_baseline_kw : dict, default=None
+            Matplotlib style keywords for that baseline curve.
+
+            .. versionadded:: 1.8
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -550,6 +668,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            plot_f1_baseline=plot_f1_baseline,
+            f1_baseline_kw=f1_baseline_kw,
             despine=despine,
             **kwargs,
         )
