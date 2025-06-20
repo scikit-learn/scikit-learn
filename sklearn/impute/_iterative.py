@@ -379,16 +379,57 @@ class IterativeImputer(_BaseImputer):
 
     def _detect_categorical_features(self, X):
         """Detect categorical features automatically."""
+        # Handle sparse matrices
+        if hasattr(X, "sparse") or hasattr(X, "toarray"):
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Handle case where X is wrapped in object array (from sparse conversion)
+        if X.dtype == object and X.ndim == 0:
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Handle 1D arrays - reshape to 2D
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+
         if hasattr(X, "dtypes"):  # pandas DataFrame
             return X.dtypes == "object" | X.dtypes.name == "category"
         else:
             # For numpy arrays, check if dtype is object or string
             if X.dtype.kind in ["O", "U", "S"]:
                 return np.ones(X.shape[1], dtype=bool)
-            return np.zeros(X.shape[1], dtype=bool)
+            else:
+                # For numeric data, assume no categorical features by default
+                return np.zeros(X.shape[1], dtype=bool)
 
     def _get_categorical_mask(self, X):
         """Get boolean mask for categorical features."""
+        # Handle sparse matrices - should raise appropriate error
+        if hasattr(X, "sparse") or hasattr(X, "toarray"):
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Ensure X is a numpy array
+        X = np.asarray(X)
+
+        # Handle case where X is wrapped in object array (from sparse conversion)
+        if X.dtype == object and X.ndim == 0:
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Handle 1D arrays - reshape to 2D
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+
         if self.categorical_features is None:
             return self._detect_categorical_features(X)
 
@@ -1156,8 +1197,13 @@ class IterativeImputer(_BaseImputer):
 
         X_indicator = super()._transform_indicator(complete_mask)
 
-        if self.n_iter_ == 0 or np.all(mask_missing_values):
-            return super()._concatenate_indicator(Xt, X_indicator)
+        # Handle case where n_iter_ is 0 (e.g., single feature case)
+        if self.n_iter_ == 0:
+            # No iterative imputation was performed, return initial imputation
+            if self.add_indicator:
+                return np.hstack([Xt, X_indicator])
+            else:
+                return Xt
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
