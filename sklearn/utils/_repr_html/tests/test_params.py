@@ -72,3 +72,51 @@ def test_params_html_repr():
     params = ParamsDict({"a": 1, "b": 2})
     assert "parameters-table" in _params_html_repr(params)
     assert "estimator-table" in _params_html_repr(params)
+
+
+def test_params_html_repr_with_doc_links():
+    """Test `_params_html_repr` with valid and invalid doc links."""
+
+    class MockEstimator:
+        __module__ = "sklearn.mock_module"
+        __qualname__ = "MockEstimator"
+        __doc__ = """
+        a : int
+            Description of a.
+        b : str
+            Description of b.
+        """
+
+    params = ParamsDict(
+        {"a": 1, "b": "value"},
+        non_default=("a",),
+        estimator_type=MockEstimator,
+    )
+    html_output = _params_html_repr(params)
+    # Check that the doc links are correctly generated
+    assert "Online `a` documentation" in html_output
+    assert "Online `b` documentation" in html_output
+    assert "sk-estimator-doc-link" in html_output
+    # Check that the doc links contain the correct URL fragments
+    assert "mock_module.MockEstimator.html#:~:text=a,-int" in html_output
+    assert "mock_module.MockEstimator.html#:~:text=b,-str" in html_output
+
+
+def test_params_html_repr_without_doc_links():
+    """Test `_params_html_repr` when `link_to_param_doc` returns None."""
+
+    class MockEstimatorWithoutDoc:
+        __module__ = "sklearn.mock_module"
+        __qualname__ = "MockEstimatorWithoutDoc"
+        __doc__ = ""  # Empty docstring
+
+    params = ParamsDict(
+        {"a": 1, "b": "value"},
+        non_default=("a",),
+        estimator_type=MockEstimatorWithoutDoc,
+    )
+    html_output = _params_html_repr(params)
+    # Check that no doc links are generated
+    assert "Online `a` documentation" not in html_output
+    assert "Online `b` documentation" not in html_output
+    assert "sk-estimator-doc-link" not in html_output
