@@ -21,6 +21,7 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -1238,7 +1239,7 @@ def test_csr_polynomial_expansion_windows_fail(csr_container):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
@@ -1272,14 +1273,14 @@ def test_polynomial_features_array_api_compliance(
     include_bias,
     interaction_only,
     array_namespace,
-    device,
+    device_,
     dtype_name,
 ):
     """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp = _array_api_for_tests(array_namespace, device_)
     X, _ = two_features_degree3
     X_np = X.astype(dtype_name)
-    X_xp = xp.asarray(X, device=device)
+    X_xp = xp.asarray(X, device=device_)
     with config_context(array_api_dispatch=True):
         tf_np = PolynomialFeatures(
             degree=degree, include_bias=include_bias, interaction_only=interaction_only
@@ -1292,3 +1293,4 @@ def test_polynomial_features_array_api_compliance(
         out_xp = tf_xp.transform(X_xp)
         assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
+        assert device(out_xp) == device(X_xp)
