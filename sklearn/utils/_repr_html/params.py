@@ -87,18 +87,15 @@ def _doc_row(estimator_type, row, param_name):
 
     if link:
         link_string = (
-            f'<td class="doc_link"><a class="sk-estimator-doc-link" '
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
             f'style="color: white; background: black;">?<span>Online `{param_name}` '
-            f"documentation</span></a></td></tr>"
+            f"documentation</span>"
         )
     else:
         link_string = (
-            f'<td class="doc_link"><a class="sk-estimator-doc-link" '
             f'style="color: white; background: black;">?<span>Online documentation'
-            f" for `{param_name}` not found"
-            f" </span></a></td></tr>"
+            f" for `{param_name}` not found </span>"
         )
 
     return link_string
@@ -132,7 +129,11 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;</td>
             <td class="value">{param_value}</td>
-            {doc_link}
+            <td class="doc_link"><a class="sk-estimator-doc-link
+                                 {doc_link}
+                                </a>
+            </td>
+        </tr>
     """
     rows = [
         ROW_TEMPLATE.format(
