@@ -176,14 +176,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
-    def _check_input(self, X, *, reset):
-        if self.validate:
-            return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
-        elif reset:
-            # Use validate_data to perform shape and feature name checks
-            return validate_data(self, X, reset=reset, skip_check_array=True)
-        return X
-
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
@@ -232,7 +224,16 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
-        X = self._check_input(X, reset=True)
+        X = validate_data(
+            self,
+            X,
+            reset=True,
+            accept_sparse=self.accept_sparse,
+            dtype="numeric",
+            force_all_finite="allow-nan",
+            ensure_2d=True,
+            skip_check_array=not self.validate,
+        )
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
         return self
@@ -251,7 +252,16 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        X = self._check_input(X, reset=False)
+        X = validate_data(
+            self,
+            X,
+            reset=False,
+            accept_sparse=self.accept_sparse,
+            dtype="numeric",
+            force_all_finite="allow-nan",
+            ensure_2d=True,
+            skip_check_array=not self.validate,
+        )
         out = self._transform(X, func=self.func, kw_args=self.kw_args)
         output_config = _get_output_config("transform", self)["dense"]
 
