@@ -143,10 +143,9 @@ def _pyarrow_indexing(X, key, key_dtype, axis):
         ) and pyarrow_version <= parse_version("16.0.0"):
             if not isinstance(key, pyarrow.BooleanArray):
                 key = pyarrow.array(key, type=pyarrow.bool_())
-            X_indexed = X.filter(key)
-            pass
-        else:
-            X_indexed = X.filter(key)
+
+        X_indexed = X.filter(key)
+
     else:
         X_indexed = X.take(key)
 
