@@ -76,21 +76,29 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
-def doc_row(estimator_type, row, param_name):
+def _doc_row(estimator_type, row, param_name):
+    """
+    Generate an HTML table row containing a link to the online
+    documentation for a specific parameter of an estimator.
+    If the link cannot be generated, an empty string is returned.
+    """
     link = link_to_param_doc(estimator_type, row)
 
     if link:
-        link_string = """
-          <td class="doc_link"><a class="sk-estimator-doc-link"
-          rel="noreferrer" target="_blank"
-          href=""" + (
-            f"{link}"
-            + """style="color: white; background: black;">?<span>Online `"""
-            + f"{param_name}"
-            + """` documentation</span></a></td></tr>"""
+        link_string = (
+            f'<td class="doc_link"><a class="sk-estimator-doc-link" '
+            f'rel="noreferrer" target="_blank" href='
+            f"{link} "
+            f'style="color: white; background: black;">?<span>Online `{param_name}` '
+            f"documentation</span></a></td></tr>"
         )
     else:
-        link_string = ""
+        link_string = (
+            f'<td class="doc_link"><a class="sk-estimator-doc-link" '
+            f'style="color: white; background: black;">?<span>Online documentation'
+            f" for `{param_name}` not found"
+            f" </span></a></td></tr>"
+        )
 
     return link_string
 
@@ -132,7 +140,7 @@ def _params_html_repr(params):
             param_value=_read_params(row, params[row], params.non_default)[
                 "param_value"
             ],
-            doc_link=doc_row(
+            doc_link=_doc_row(
                 params.estimator_type,
                 row,
                 _read_params(row, params[row], params.non_default)["param_name"],

@@ -84,7 +84,6 @@ def test_params_html_repr_with_doc_links():
         a : int
             Description of a.
         b : str
-            Description of b.
         """
 
     params = ParamsDict(
@@ -93,6 +92,7 @@ def test_params_html_repr_with_doc_links():
         estimator_type=MockEstimator,
     )
     html_output = _params_html_repr(params)
+
     # Check that the doc links are correctly generated
     assert "Online `a` documentation" in html_output
     assert "Online `b` documentation" in html_output
@@ -117,6 +117,5 @@ def test_params_html_repr_without_doc_links():
     )
     html_output = _params_html_repr(params)
     # Check that no doc links are generated
-    assert "Online `a` documentation" not in html_output
-    assert "Online `b` documentation" not in html_output
-    assert "sk-estimator-doc-link" not in html_output
+    assert "Online documentation for `a` not found" in html_output
+    assert "Online documentation for `b` not found" in html_output
