@@ -396,13 +396,9 @@ def test_precision_recall_f1_baseline(pyplot, constructor_name):
     y_pred = clf.predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
-        disp = PrecisionRecallDisplay.from_estimator(
-            clf, X, y, plot_f1_baseline=True
-        )
+        disp = PrecisionRecallDisplay.from_estimator(clf, X, y, plot_f1_baseline=True)
     else:
-        disp = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, plot_f1_baseline=True
-        )
+        disp = PrecisionRecallDisplay.from_predictions(y, y_pred, plot_f1_baseline=True)
 
     import matplotlib as mpl
 
@@ -415,4 +411,3 @@ def test_precision_recall_f1_baseline(pyplot, constructor_name):
 
     # 3. The curve is monotonic in recall (sanity)
     assert np.all(np.diff(recalls) >= 0)
-
