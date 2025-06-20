@@ -1008,14 +1008,18 @@ def test_logistic_regression_multinomial(global_random_seed):
         assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=1e-2)
 
 
-def test_liblinear_decision_function_zero():
+def test_liblinear_decision_function_zero(global_random_seed):
     # Test negative prediction when decision_function values are zero.
     # Liblinear predicts the positive class when decision_function values
     # are zero. This is a test to verify that we do not do the same.
     # See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
     # and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
-    X, y = make_classification(n_samples=5, n_features=5, random_state=0)
-    clf = LogisticRegression(fit_intercept=False, solver="liblinear")
+    X, y = make_classification(
+        n_samples=5, n_features=5, random_state=global_random_seed
+    )
+    clf = LogisticRegression(
+        fit_intercept=False, solver="liblinear", random_state=global_random_seed
+    )
     clf.fit(X, y)
 
     # Dummy data such that the decision function becomes zero.
@@ -1024,20 +1028,24 @@ def test_liblinear_decision_function_zero():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_liblinear_logregcv_sparse(csr_container):
+def test_liblinear_logregcv_sparse(csr_container, global_random_seed):
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
-    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
+    X, y = make_classification(
+        n_samples=10, n_features=5, random_state=global_random_seed
+    )
     clf = LogisticRegressionCV(solver="liblinear")
     clf.fit(csr_container(X), y)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_saga_sparse(csr_container):
+def test_saga_sparse(csr_container, global_random_seed):
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
-    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
-    clf = LogisticRegressionCV(solver="saga", tol=1e-2)
+    X, y = make_classification(
+        n_samples=10, n_features=5, random_state=global_random_seed
+    )
+    clf = LogisticRegressionCV(solver="saga", tol=1e-2, random_state=global_random_seed)
     clf.fit(csr_container(X), y)
 
 
