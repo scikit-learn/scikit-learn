@@ -1524,8 +1524,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     >>> clf.score(X, y)
     0.9595...
 
-    You can also find a visual example here:
-    :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_classifier.py`
+    You can find a visual example here: :ref:`example_linear_model_plot_ridge_classifier`
+
 
     """
 
