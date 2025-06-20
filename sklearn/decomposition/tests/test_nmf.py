@@ -1008,3 +1008,48 @@ def test_nmf_custom_init_shape_error():
 
     with pytest.raises(ValueError, match="Array with wrong second dimension passed"):
         nmf.fit(X, H=H, W=rng.random_sample((6, 3)))
+
+
+def test_nmf_objective_function(global_random_seed):
+    """Test that the objective function is correctly computed."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    n_features = 10
+    alpha_W = 0.1
+    alpha_H = 0.2
+    l1_ratio = 0.5
+    beta_loss = 1
+
+    X = rng.random_sample((n_samples, n_features))
+
+    model = NMF(
+        n_components=5,
+        beta_loss=beta_loss,
+        alpha_W=alpha_W,
+        alpha_H=alpha_H,
+        l1_ratio=l1_ratio,
+        solver="mu",
+        random_state=global_random_seed,
+    ).fit(X)
+
+    W, H = model.transform(X), model.components_
+
+    obj_func = model.objective_function(X)
+
+    # expected normalized objective function based on the formula in NMF's docstring
+    expected_data_fit = nmf._beta_divergence(X, W, H, beta_loss) / n_samples
+    expected_penalty = (
+        alpha_W * l1_ratio * n_features * W.sum()
+        + alpha_H * l1_ratio * n_samples * H.sum()
+        + 0.5 * alpha_W * (1 - l1_ratio) * n_features * (W**2).sum()
+        + 0.5 * alpha_H * (1 - l1_ratio) * n_samples * (H**2).sum()
+    ) / n_samples
+    expected_total = expected_data_fit + expected_penalty
+
+    assert_allclose(obj_func.value, expected_total)
+    assert_allclose(obj_func.data_fit, expected_data_fit)
+    assert_allclose(sum(obj_func.penalisations.values()), expected_penalty)
+
+    # TODO: when we have monitoring callbacks, we should check that the objective
+    # function is decreasing at each iteration.
