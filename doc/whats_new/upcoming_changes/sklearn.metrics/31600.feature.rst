@@ -1,5 +1,5 @@
 - Added the ``plot_f1_baseline`` option to
   :meth:`~sklearn.metrics.PrecisionRecallDisplay.plot`, allowing users to draw
   the hyperbolic **F-score** baseline that is more informative than the random
-  diagonal on strongly imbalanced datasets. (:pr:`0000`)
+  diagonal on strongly imbalanced datasets. (:pr:`31600`)
   By :user:`evgmosme`.
