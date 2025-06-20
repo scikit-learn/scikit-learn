@@ -8,10 +8,12 @@ Array API support (experimental)
 
 The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
-Scikit-learn's Array API support requires
-`array-api-compat <https://github.com/data-apis/array-api-compat>`__ to be installed,
-and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importing
-`scipy` and `scikit-learn`:
+Scikit-learn vendors pinned copies of
+`array-api-compat <https://github.com/data-apis/array-api-compat>`__
+and `array-api-extra <https://github.com/data-apis/array-api-extra>`__.
+
+Scikit-learn's support for the array API standard requires the environment variable
+`SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
 
 .. prompt:: bash $
 
@@ -20,7 +22,6 @@ and the environment variable `SCIPY_ARRAY_API` must be set to `1` before importi
 Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
 <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
-
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
@@ -110,11 +111,14 @@ Estimators
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
+- :class:`mixture.GaussianMixture` (with `init_params="random"` or
+  `init_params="random_from_data"` and `warm_start=False`)
 
 Meta-estimators
 ---------------
@@ -130,12 +134,13 @@ base estimator also does:
 Metrics
 -------
 
-- :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
+- :func:`sklearn.metrics.hamming_loss`
+- :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -145,6 +150,7 @@ Metrics
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.median_absolute_error`
 - :func:`sklearn.metrics.multilabel_confusion_matrix`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
@@ -154,6 +160,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.linear_kernel`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
+- :func:`sklearn.metrics.pairwise.pairwise_kernels` (supports all metrics except :func:`sklearn.metrics.pairwise.laplacian_kernel`)
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
@@ -161,6 +168,7 @@ Metrics
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
+- :func:`sklearn.metrics.roc_curve`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
 - :func:`sklearn.metrics.zero_one_loss`
@@ -199,17 +207,30 @@ common tests to verify that the estimators' results are the same when using
 vanilla NumPy and Array API inputs.
 
 To run these checks you need to install
-`array_api_compat <https://github.com/data-apis/array-api-compat>`_ in your
-test environment. To run the full set of checks you need to install both
-`PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
+`array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
+test environment. This allows you to run checks without having a
+GPU. To run the full set of checks you also need to install
+`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_ and have
 a GPU. Checks that can not be executed or have missing dependencies will be
 automatically skipped. Therefore it's important to run the tests with the
 `-v` flag to see which checks are skipped:
 
 .. prompt:: bash $
 
-    pip install array-api-compat  # and other libraries as needed
+    pip install array-api-strict  # and other libraries as needed
     pytest -k "array_api" -v
+
+Running the scikit-learn tests against `array-api-strict` should help reveal
+most code problems related to handling multiple device inputs via the use of
+simulated non-CPU devices. This allows for fast iterative development and debugging of
+array API related code.
+
+However, to ensure full handling of PyTorch or CuPy inputs allocated on actual GPU
+devices, it is necessary to run the tests against those libraries and hardware.
+This can either be achieved by using
+`Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
+or leveraging our CI infrastructure on pull requests (manually triggered by maintainers
+for cost reasons).
 
 .. _mps_support:
 

@@ -32,8 +32,8 @@ solves a problem of the form:
 
 .. math:: \min_{w} || X w - y||_2^2
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
-   :target: ../auto_examples/linear_model/plot_ols.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_001.png
+   :target: ../auto_examples/linear_model/plot_ols_ridge.html
    :align: center
    :scale: 50%
 
@@ -61,7 +61,7 @@ example, when data are collected without an experimental design.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 
 Non-Negative Least Squares
 --------------------------
@@ -126,7 +126,7 @@ its ``coef_`` member::
     >>> reg.coef_
     array([0.34545455, 0.34545455])
     >>> reg.intercept_
-    np.float64(0.13636...)
+    np.float64(0.13636)
 
 Note that the class :class:`Ridge` allows for the user to specify that the
 solver be automatically chosen by setting `solver="auto"`. When this option
@@ -145,6 +145,11 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Classification
 --------------
@@ -176,9 +181,8 @@ a linear kernel.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+
 
 Ridge Complexity
 ----------------
@@ -623,7 +627,7 @@ function of the norm of its coefficients.
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
    >>> reg.coef_
-   array([0.6..., 0.        ])
+   array([0.6, 0.        ])
 
 .. rubric:: Examples
 
@@ -650,7 +654,7 @@ or :func:`lars_path_gram`.
   .. rubric:: References
 
   * Original Algorithm is detailed in the paper `Least Angle Regression
-    <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+    <https://hastie.su.domains/Papers/LARS/LeastAngle_2002.pdf>`_
     by Hastie et al.
 
 .. _omp:
@@ -833,13 +837,11 @@ prior over all :math:`\lambda_i` is chosen to be the same gamma distribution
 given by the hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 ARD is also known in the literature as *Sparse Bayesian Learning* and *Relevance
-Vector Machine* [3]_ [4]_. For a worked-out comparison between ARD and `Bayesian
-Ridge Regression`_, see the example below.
+Vector Machine* [3]_ [4]_.
 
-.. rubric:: Examples
+See :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a worked-out comparison between ARD and `Bayesian Ridge Regression`_.
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
-
+See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py` for a comparison between various methods - Lasso, ARD and ElasticNet - on correlated data.
 
 .. rubric:: References
 
@@ -967,7 +969,7 @@ logistic regression, see also `log-linear model
 
 .. dropdown:: Mathematical details
 
-  Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
+  Let :math:`y_i \in \{1, \ldots, K\}` be the label (ordinal) encoded target variable for observation :math:`i`.
   Instead of a single coefficient vector, we now have
   a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
   :math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
@@ -1018,7 +1020,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L2 penalty                   |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| L2 penalty                   |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1028,7 +1030,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Multiclass support**       |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| multinomial multiclass       |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| multinomial multiclass       |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Behaviors**                |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1039,8 +1041,11 @@ The following table summarizes the penalties and multinomial multiclass supporte
 | Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 
-The "lbfgs" solver is used by default for its robustness. For large datasets
-the "saga" solver is usually faster.
+The "lbfgs" solver is used by default for its robustness. For
+`n_samples >> n_features`, "newton-cholesky" is a good choice and can reach high
+precision (tiny `tol` values). For large datasets
+the "saga" solver is usually faster (than "lbfgs"), in particular for low precision
+(high `tol`).
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
@@ -1097,13 +1102,12 @@ zero, is likely to be an underfit, bad model and you are advised to set
     scaled datasets and on datasets with one-hot encoded categorical features with rare
     categories.
 
-  * The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+  * The "newton-cholesky" solver is an exact Newton solver that calculates the Hessian
     matrix and solves the resulting linear system. It is a very good choice for
-    `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
-    regularization is supported. Furthermore, because the hessian matrix is explicitly
-    computed, the memory usage has a quadratic dependency on `n_features` as well as on
-    `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
-    multiclass case.
+    `n_samples` >> `n_features` and can reach high precision (tiny values of `tol`),
+    but has a few shortcomings: Only :math:`\ell_2` regularization is supported.
+    Furthermore, because the Hessian matrix is explicitly computed, the memory usage
+    has a quadratic dependency on `n_features` as well as on `n_classes`.
 
   For a comparison of some of these solvers, see [9]_.
 
@@ -1278,9 +1282,9 @@ Usage example::
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
     TweedieRegressor(alpha=0.5, link='log', power=1)
     >>> reg.coef_
-    array([0.2463..., 0.4337...])
+    array([0.2463, 0.4337])
     >>> reg.intercept_
-    np.float64(-0.7638...)
+    np.float64(-0.7638)
 
 
 .. rubric:: Examples

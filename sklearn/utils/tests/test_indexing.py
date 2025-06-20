@@ -10,7 +10,10 @@ from scipy.stats import kstest
 import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -164,7 +167,9 @@ def test_determine_key_type_slice_error():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_determine_key_type_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
@@ -187,6 +192,7 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
                 _determine_key_type(complex_array_key)
 
 
+# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs",
     _convert_container_kwargs("list", "array", "dataframe", include_sparse=True),
@@ -209,6 +215,7 @@ def test_safe_indexing_2d_container_axis_0(array_kwargs, indices_kwargs):
     )
 
 
+# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
@@ -228,6 +235,7 @@ def test_safe_indexing_1d_container(array_kwargs, indices_kwargs):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
+# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
@@ -267,6 +275,7 @@ def test_safe_indexing_2d_container_axis_1(array_kwargs, indices_kwargs, indices
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
+# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
@@ -299,6 +308,7 @@ def test_safe_indexing_2d_read_only_axis_1(
     )
 
 
+# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
@@ -316,6 +326,7 @@ def test_safe_indexing_1d_container_mask(array_kwargs, indices_kwargs):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
+# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
@@ -344,6 +355,7 @@ def test_safe_indexing_2d_mask(array_kwargs, indices_kwargs, axis, expected_subs
     )
 
 
+# TODO(Charlie-XIAO): add (pyarrow, pyarrow_array)
 @pytest.mark.parametrize(
     "array_kwargs, expected_output_kwargs",
     zip(
@@ -359,6 +371,7 @@ def test_safe_indexing_2d_scalar_axis_0(array_kwargs, expected_output_kwargs):
     assert_allclose_dense_sparse(subset, expected_array)
 
 
+# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
@@ -369,6 +382,7 @@ def test_safe_indexing_1d_scalar(array_kwargs):
     assert subset == 3
 
 
+# TODO(Charlie-XIAO): add (pyarrow, pyarrow_array)
 @pytest.mark.parametrize(
     "array_kwargs, expected_output_kwargs",
     zip(
@@ -423,7 +437,9 @@ def test_safe_indexing_error_axis(axis):
         _safe_indexing(X_toy, [0, 1], axis=axis)
 
 
-@pytest.mark.parametrize("X_constructor", ["array", "series", "polars_series"])
+@pytest.mark.parametrize(
+    "X_constructor", ["array", "series", "polars_series", "pyarrow_array"]
+)
 def test_safe_indexing_1d_array_error(X_constructor):
     # check that we are raising an error if the array-like passed is 1D and
     # we try to index on the 2nd dimension
@@ -436,6 +452,9 @@ def test_safe_indexing_1d_array_error(X_constructor):
     elif X_constructor == "polars_series":
         pl = pytest.importorskip("polars")
         X_constructor = pl.Series(values=X)
+    elif X_constructor == "pyarrow_array":
+        pa = pytest.importorskip("pyarrow")
+        X_constructor = pa.array(X)
 
     err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or dataframe"
     with pytest.raises(ValueError, match=err_msg):
@@ -556,20 +575,10 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 
 def test_get_column_indices_interchange():
     """Check _get_column_indices for edge cases with the interchange"""
-    pd = pytest.importorskip("pandas", minversion="1.5")
+    pl = pytest.importorskip("polars")
 
-    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-
-    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
-    # code path.
-    class MockDataFrame:
-        def __init__(self, df):
-            self._df = df
-
-        def __getattr__(self, name):
-            return getattr(self._df, name)
-
-    df_mocked = MockDataFrame(df)
+    # Polars dataframes go down the interchange path.
+    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
 
     key_results = [
         (slice(1, None), [1, 2]),
@@ -583,15 +592,15 @@ def test_get_column_indices_interchange():
         ([], []),
     ]
     for key, result in key_results:
-        assert _get_column_indices(df_mocked, key) == result
+        assert _get_column_indices(df, key) == result
 
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
-        _get_column_indices(df_mocked, ["not_a_column"])
+        _get_column_indices(df, ["not_a_column"])
 
     msg = "key.step must be 1 or None"
     with pytest.raises(NotImplementedError, match=msg):
-        _get_column_indices(df_mocked, slice("a", None, 2))
+        _get_column_indices(df, slice("a", None, 2))
 
 
 def test_resample():
@@ -700,7 +709,6 @@ def test_resample_stratify_2dy():
 
 
 def test_notimplementederror():
-
     with pytest.raises(
         NotImplementedError,
         match="Resampling with sample_weight is only implemented for replace=True.",
@@ -748,15 +756,15 @@ def test_shuffle_dont_convert_to_array(csc_container):
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
     assert a_s == ["c", "b", "a"]
-    assert type(a_s) == list  # noqa: E721
+    assert type(a_s) == list
 
     assert_array_equal(b_s, ["c", "b", "a"])
     assert b_s.dtype == object
 
     assert c_s == [3, 2, 1]
-    assert type(c_s) == list  # noqa: E721
+    assert type(c_s) == list
 
     assert_array_equal(d_s, np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object))
-    assert type(d_s) == MockDataFrame  # noqa: E721
+    assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))

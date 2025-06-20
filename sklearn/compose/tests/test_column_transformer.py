@@ -5,7 +5,6 @@ Test the ColumnTransformer.
 import pickle
 import re
 import warnings
-from unittest.mock import Mock
 
 import joblib
 import numpy as np
@@ -20,7 +19,6 @@ from sklearn.compose import (
     make_column_selector,
     make_column_transformer,
 )
-from sklearn.compose._column_transformer import _RemainderColsList
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import (
@@ -361,7 +359,7 @@ def test_column_transformer_empty_columns(pandas, column_selection, callable_col
         X = X_array
 
     if callable_column:
-        column = lambda X: column_selection  # noqa
+        column = lambda X: column_selection
     else:
         column = column_selection
 
@@ -549,7 +547,7 @@ def test_column_transformer_mixed_cols_sparse():
     # this shouldn't fail, since boolean can be coerced into a numeric
     # See: https://github.com/scikit-learn/scikit-learn/issues/11912
     X_trans = ct.fit_transform(df)
-    assert X_trans.getformat() == "csr"
+    assert X_trans.format == "csr"
     assert_array_equal(X_trans.toarray(), np.array([[1, 0, 1, 1], [0, 1, 2, 0]]))
 
     ct = make_column_transformer(
@@ -792,7 +790,7 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": True,
+        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -814,7 +812,7 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": True,
+        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -944,91 +942,51 @@ def test_column_transformer_remainder():
     assert ct.remainder == "drop"
 
 
-# TODO(1.7): check for deprecated force_int_remainder_cols
-# TODO(1.9): remove force_int but keep the test
 @pytest.mark.parametrize(
-    "cols1, cols2",
+    "cols1, cols2, expected_remainder_cols",
     [
-        ([0], [False, True, False]),  # mix types
-        ([0], [1]),  # ints
-        (lambda x: [0], lambda x: [1]),  # callables
+        ([0], [False, True, False], [2]),  # mix types
+        ([0], [1], [2]),  # ints
+        (lambda x: [0], lambda x: [1], [2]),  # callables
+        (["A"], ["B"], ["C"]),  # all strings
+        ([True, False, False], [False, True, False], [False, False, True]),  # all bools
     ],
 )
-@pytest.mark.parametrize("force_int", [False, True])
-def test_column_transformer_remainder_dtypes_ints(force_int, cols1, cols2):
-    """Check that the remainder columns are always stored as indices when
-    other columns are not all specified as column names or masks, regardless of
-    `force_int_remainder_cols`.
-    """
-    X = np.ones((1, 3))
-
-    ct = make_column_transformer(
-        (Trans(), cols1),
-        (Trans(), cols2),
-        remainder="passthrough",
-        force_int_remainder_cols=force_int,
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-        assert ct.transformers_[-1][-1][0] == 2
-
-
-# TODO(1.7): check for deprecated force_int_remainder_cols
-# TODO(1.9): remove force_int but keep the test
-@pytest.mark.parametrize(
-    "force_int, cols1, cols2, expected_cols",
-    [
-        (True, ["A"], ["B"], [2]),
-        (False, ["A"], ["B"], ["C"]),
-        (True, [True, False, False], [False, True, False], [2]),
-        (False, [True, False, False], [False, True, False], [False, False, True]),
-    ],
-)
-def test_column_transformer_remainder_dtypes(force_int, cols1, cols2, expected_cols):
+def test_column_transformer_remainder_dtypes(cols1, cols2, expected_remainder_cols):
     """Check that the remainder columns format matches the format of the other
-    columns when they're all strings or masks, unless `force_int = True`.
+    columns when they're all strings or masks.
     """
     X = np.ones((1, 3))
 
-    if isinstance(cols1[0], str):
+    if isinstance(cols1, list) and isinstance(cols1[0], str):
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X, columns=["A", "B", "C"])
 
-    # if inputs are column names store remainder columns as column names unless
-    # force_int_remainder_cols is True
+    # if inputs are column names store remainder columns as column names
     ct = make_column_transformer(
         (Trans(), cols1),
         (Trans(), cols2),
         remainder="passthrough",
-        force_int_remainder_cols=force_int,
     )
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        ct.fit_transform(X)
-
-    if force_int:
-        # If we forced using ints and we access the remainder columns a warning is shown
-        match = "The format of the columns of the 'remainder' transformer"
-        cols = ct.transformers_[-1][-1]
-        with pytest.warns(FutureWarning, match=match):
-            cols[0]
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            cols = ct.transformers_[-1][-1]
-            cols[0]
-
-    assert cols == expected_cols
+    ct.fit_transform(X)
+    assert ct.transformers_[-1][-1] == expected_remainder_cols
 
 
-def test_remainder_list_repr():
-    cols = _RemainderColsList([0, 1], warning_enabled=False)
-    assert str(cols) == "[0, 1]"
-    assert repr(cols) == "[0, 1]"
-    mock = Mock()
-    cols._repr_pretty_(mock, False)
-    mock.text.assert_called_once_with("[0, 1]")
+# TODO(1.9): remove this test
+@pytest.mark.parametrize("force_int_remainder_cols", [True, False])
+def test_force_int_remainder_cols_deprecation(force_int_remainder_cols):
+    """Check that ColumnTransformer raises a FutureWarning when
+    force_int_remainder_cols is set.
+    """
+    X = np.ones((1, 3))
+    ct = ColumnTransformer(
+        [("T1", Trans(), [0]), ("T2", Trans(), [1])],
+        remainder="passthrough",
+        force_int_remainder_cols=force_int_remainder_cols,
+    )
+
+    with pytest.warns(FutureWarning, match="`force_int_remainder_cols` is deprecated"):
+        ct.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -1048,7 +1006,6 @@ def test_column_transformer_remainder_numpy(key, expected_cols):
     ct = ColumnTransformer(
         [("trans1", Trans(), key)],
         remainder="passthrough",
-        force_int_remainder_cols=False,
     )
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
@@ -1085,7 +1042,6 @@ def test_column_transformer_remainder_pandas(key, expected_cols):
     ct = ColumnTransformer(
         [("trans1", Trans(), key)],
         remainder="passthrough",
-        force_int_remainder_cols=False,
     )
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
@@ -1114,7 +1070,6 @@ def test_column_transformer_remainder_transformer(key, expected_cols):
     ct = ColumnTransformer(
         [("trans1", Trans(), key)],
         remainder=DoubleTrans(),
-        force_int_remainder_cols=False,
     )
 
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
@@ -1217,7 +1172,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": True,
+        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -1238,7 +1193,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": True,
+        "force_int_remainder_cols": "deprecated",
     }
     assert ct.get_params() == exp
 
@@ -1597,7 +1552,6 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     ct = ColumnTransformer(
         transformers=[("ohe", ohe, ["col1", "col2"])],
         remainder=remainder,
-        force_int_remainder_cols=False,
     )
     df = pd.DataFrame(
         {

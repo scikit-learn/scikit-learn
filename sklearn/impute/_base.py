@@ -391,16 +391,18 @@ class SimpleImputer(_BaseImputer):
                 fill_value_dtype = type(self.fill_value)
                 err_msg = (
                     f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that both dtypes are of the same kind."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "If fill_value is a Python scalar, instead pass  a numpy scalar "
+                    "(e.g. fill_value=np.uint8(0) if your data is of type np.uint8). "
+                    "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
                 fill_value_dtype = self.statistics_.dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that the dtypes of the input data is of the same kind between "
-                    "fit and transform."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "Make sure that the dtypes of the input data are of the same kind "
+                    "between fit and transform."
                 )
             else:
                 # By default, fill_value=None, and the replacement is always
@@ -906,7 +908,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask.eliminate_zeros()
 
             if self.features == "missing-only":
-                n_missing = imputer_mask.getnnz(axis=0)
+                # count number of True values in each row.
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()

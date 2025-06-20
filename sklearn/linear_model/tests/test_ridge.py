@@ -45,6 +45,7 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -524,7 +525,7 @@ def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
     y = rng.randn(5)
     X = rng.randn(5, 10)
-    warning_message = r"sparse_cg did not converge after" r" [0-9]+ iterations."
+    warning_message = r"sparse_cg did not converge after [0-9]+ iterations."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         ridge_regression(
             X, y, alpha=1.0, solver="sparse_cg", tol=0.0, max_iter=None, verbose=1
@@ -749,9 +750,8 @@ def _make_sparse_offset_regression(
     "n_samples,dtype,proportion_nonzero",
     [(20, "float32", 0.1), (40, "float32", 1.0), (20, "float64", 0.2)],
 )
-@pytest.mark.parametrize("seed", np.arange(3))
 def test_solver_consistency(
-    solver, proportion_nonzero, n_samples, dtype, sparse_container, seed
+    solver, proportion_nonzero, n_samples, dtype, sparse_container, global_random_seed
 ):
     alpha = 1.0
     noise = 50.0 if proportion_nonzero > 0.9 else 500.0
@@ -760,10 +760,9 @@ def test_solver_consistency(
         n_features=30,
         proportion_nonzero=proportion_nonzero,
         noise=noise,
-        random_state=seed,
+        random_state=global_random_seed,
         n_samples=n_samples,
     )
-
     # Manually scale the data to avoid pathological cases. We use
     # minmax_scale to deal with the sparse case without breaking
     # the sparsity pattern.
@@ -777,7 +776,21 @@ def test_solver_consistency(
     if solver == "ridgecv":
         ridge = RidgeCV(alphas=[alpha])
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, alpha=alpha)
+        if solver.startswith("sag"):
+            # Avoid ConvergenceWarning for sag and saga solvers.
+            tol = 1e-7
+            max_iter = 100_000
+        else:
+            tol = 1e-10
+            max_iter = None
+
+        ridge = Ridge(
+            alpha=alpha,
+            solver=solver,
+            max_iter=max_iter,
+            tol=tol,
+            random_state=global_random_seed,
+        )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
@@ -859,9 +872,9 @@ def test_ridge_loo_cv_asym_scoring():
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(
-        loo_ridge.alpha_
-    ), f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_), (
+        f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
+    )
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
@@ -1256,7 +1269,9 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1519,9 +1534,9 @@ def test_ridgecv_alphas_conversion(Estimator):
     X = rng.randn(n_samples, n_features)
 
     ridge_est = Estimator(alphas=alphas)
-    assert (
-        ridge_est.alphas is alphas
-    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+    assert ridge_est.alphas is alphas, (
+        f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+    )
 
     ridge_est.fit(X, y)
     assert_array_equal(ridge_est.alphas, np.asarray(alphas))
@@ -2228,32 +2243,6 @@ def test_ridge_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
-
-
-# TODO(1.7): Remove
-def test_ridge_store_cv_values_deprecated():
-    """Check `store_cv_values` parameter deprecated."""
-    X, y = make_regression(n_samples=6, random_state=42)
-    ridge = RidgeCV(store_cv_values=True)
-    msg = "'store_cv_values' is deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        ridge.fit(X, y)
-
-    # Error when both set
-    ridge = RidgeCV(store_cv_results=True, store_cv_values=True)
-    msg = "Both 'store_cv_values' and 'store_cv_results' were"
-    with pytest.raises(ValueError, match=msg):
-        ridge.fit(X, y)
-
-
-def test_ridge_cv_values_deprecated():
-    """Check `cv_values_` deprecated."""
-    X, y = make_regression(n_samples=6, random_state=42)
-    ridge = RidgeCV(store_cv_results=True)
-    msg = "Attribute `cv_values_` is deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        ridge.fit(X, y)
-        ridge.cv_values_
 
 
 @pytest.mark.parametrize("with_sample_weight", [False, True])

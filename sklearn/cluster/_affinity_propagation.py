@@ -148,7 +148,7 @@ def _affinity_propagation(
         c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
-            ii = np.where(c == k)[0]
+            ii = np.asarray(c == k).nonzero()[0]
             j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
             I[k] = ii[j]
 
@@ -398,9 +398,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example usage,
-    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
-
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
@@ -442,6 +439,12 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     >>> clustering.cluster_centers_
     array([[1, 2],
            [4, 2]])
+
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
+
+    For a comparison of Affinity Propagation with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

@@ -34,12 +34,11 @@ from ..utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _searchsorted,
-    _setdiff1d,
     _tolist,
     _union1d,
-    device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -51,7 +50,6 @@ from ..utils._param_validation import (
 from ..utils._unique import attach_unique
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
@@ -153,6 +151,139 @@ def _check_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
+def _validate_multiclass_probabilistic_prediction(
+    y_true, y_prob, sample_weight, labels
+):
+    r"""Convert y_true and y_prob to shape (n_samples, n_classes)
+
+    1. Verify that y_true, y_prob, and sample_weights have the same first dim
+    2. Ensure 2 or more classes in y_true i.e. valid classification task. The
+       classes are provided by the labels argument, or inferred using y_true.
+       When inferring y_true is assumed binary if it has shape (n_samples, ).
+    3. Validate y_true, and y_prob have the same number of classes. Convert to
+       shape (n_samples, n_classes)
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels for n_samples samples.
+
+    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If `y_prob.shape = (n_samples,)`
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in `y_prob` are assumed to be
+        ordered lexicographically, as done by
+        :class:`preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If `labels`
+        is `None` and `y_prob` has shape `(n_samples,)` the labels are
+        assumed to be binary and are inferred from `y_true`.
+
+    Returns
+    -------
+    transformed_labels : array of shape (n_samples, n_classes)
+
+    y_prob : array of shape (n_samples, n_classes)
+    """
+    y_prob = check_array(
+        y_prob, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
+
+    if y_prob.max() > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
+    if y_prob.min() < 0:
+        raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
+
+    check_consistent_length(y_prob, y_true, sample_weight)
+    lb = LabelBinarizer()
+
+    if labels is not None:
+        lb = lb.fit(labels)
+        # LabelBinarizer does not respect the order implied by labels, which
+        # can be misleading.
+        if not np.all(lb.classes_ == labels):
+            warnings.warn(
+                f"Labels passed were {labels}. But this function "
+                "assumes labels are ordered lexicographically. "
+                f"Pass the ordered labels={lb.classes_.tolist()} and ensure that "
+                "the columns of y_prob correspond to this ordering.",
+                UserWarning,
+            )
+        if not np.isin(y_true, labels).all():
+            undeclared_labels = set(y_true) - set(labels)
+            raise ValueError(
+                f"y_true contains values {undeclared_labels} not belonging "
+                f"to the passed labels {labels}."
+            )
+
+    else:
+        lb = lb.fit(y_true)
+
+    if len(lb.classes_) == 1:
+        if labels is None:
+            raise ValueError(
+                "y_true contains only one label ({0}). Please "
+                "provide the list of all expected class labels explicitly through the "
+                "labels argument.".format(lb.classes_[0])
+            )
+        else:
+            raise ValueError(
+                "The labels array needs to contain at least two "
+                "labels, got {0}.".format(lb.classes_)
+            )
+
+    transformed_labels = lb.transform(y_true)
+
+    if transformed_labels.shape[1] == 1:
+        transformed_labels = np.append(
+            1 - transformed_labels, transformed_labels, axis=1
+        )
+
+    # If y_prob is of single dimension, assume y_true to be binary
+    # and then check.
+    if y_prob.ndim == 1:
+        y_prob = y_prob[:, np.newaxis]
+    if y_prob.shape[1] == 1:
+        y_prob = np.append(1 - y_prob, y_prob, axis=1)
+
+    eps = np.finfo(y_prob.dtype).eps
+
+    # Make sure y_prob is normalized
+    y_prob_sum = y_prob.sum(axis=1)
+    if not np.allclose(y_prob_sum, 1, rtol=np.sqrt(eps)):
+        warnings.warn(
+            "The y_prob values do not sum to one. Make sure to pass probabilities.",
+            UserWarning,
+        )
+
+    # Check if dimensions are consistent.
+    transformed_labels = check_array(transformed_labels)
+    if len(lb.classes_) != y_prob.shape[1]:
+        if labels is None:
+            raise ValueError(
+                "y_true and y_prob contain different number of "
+                "classes: {0} vs {1}. Please provide the true "
+                "labels explicitly through the labels argument. "
+                "Classes found in "
+                "y_true: {2}".format(
+                    transformed_labels.shape[1], y_prob.shape[1], lb.classes_
+                )
+            )
+        else:
+            raise ValueError(
+                "The number of classes in labels is different "
+                "from that in y_prob. Classes found in "
+                "labels: {0}".format(lb.classes_)
+            )
+
+    return transformed_labels, y_prob
+
+
 @validate_params(
     {
         "y_true": ["array-like", "sparse matrix"],
@@ -229,12 +360,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type.startswith("multilabel"):
-        if _is_numpy_namespace(xp):
-            differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        else:
-            differing_labels = _count_nonzero(
-                y_true - y_pred, xp=xp, device=device, axis=1
-            )
+        differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
         score = xp.asarray(differing_labels == 0, device=device)
     else:
         score = y_true == y_pred
@@ -528,8 +654,7 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _ = get_namespace(y_true, y_pred)
-    device_ = device(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, device=device_)
@@ -546,7 +671,7 @@ def multilabel_confusion_matrix(
         labels = xp.asarray(labels, device=device_)
         n_labels = labels.shape[0]
         labels = xp.concat(
-            [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
+            [labels, xpx.setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
             axis=-1,
         )
 
@@ -705,7 +830,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
         subset of labels. If `None`, all labels that appear at least once in
-        ``y1`` or ``y2`` are used.
+        ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be
+         present in `y1`, even though this function is otherwise agnostic to the order
+         of `y1` and `y2`.
 
     weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. `None` means not weighted;
@@ -739,7 +866,18 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     >>> cohen_kappa_score(y1, y2)
     0.6875
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    try:
+        confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    except ValueError as e:
+        if "At least one label specified must be in y_true" in str(e):
+            msg = (
+                "At least one label in `labels` must be present in `y1` (even though "
+                "`cohen_kappa_score` is otherwise agnostic to the order of `y1` and "
+                "`y2`)."
+            )
+            raise ValueError(msg) from e
+        raise
+
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -898,7 +1036,7 @@ def jaccard_score(
     In the binary case:
 
     >>> jaccard_score(y_true[0], y_pred[0])
-    0.6666...
+    0.6666
 
     In the 2D comparison case (e.g. image similarity):
 
@@ -908,9 +1046,9 @@ def jaccard_score(
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
-    0.5833...
+    0.5833
     >>> jaccard_score(y_true, y_pred, average='macro')
-    0.6666...
+    0.6666
     >>> jaccard_score(y_true, y_pred, average=None)
     array([0.5, 0.5, 1. ])
 
@@ -919,7 +1057,7 @@ def jaccard_score(
     >>> y_pred = [0, 2, 1, 2]
     >>> y_true = [0, 1, 2, 2]
     >>> jaccard_score(y_true, y_pred, average=None)
-    array([1. , 0. , 0.33...])
+    array([1. , 0. , 0.33])
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
     samplewise = average == "samples"
@@ -933,9 +1071,10 @@ def jaccard_score(
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
 
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
-        numerator = np.array([numerator.sum()])
-        denominator = np.array([denominator.sum()])
+        numerator = xp.asarray(xp.sum(numerator, keepdims=True), device=device_)
+        denominator = xp.asarray(xp.sum(denominator, keepdims=True), device=device_)
 
     jaccard = _prf_divide(
         numerator,
@@ -950,14 +1089,14 @@ def jaccard_score(
         return jaccard
     if average == "weighted":
         weights = MCM[:, 1, 0] + MCM[:, 1, 1]
-        if not np.any(weights):
+        if not xp.any(weights):
             # numerator is 0, and warning should have already been issued
             weights = None
     elif average == "samples" and sample_weight is not None:
         weights = sample_weight
     else:
         weights = None
-    return float(np.average(jaccard, weights=weights))
+    return float(_average(jaccard, weights=weights, xp=xp))
 
 
 @validate_params(
@@ -1029,7 +1168,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    -0.33...
+    -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -1051,10 +1190,11 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
-    if cov_ypyp * cov_ytyt == 0:
+    cov_ypyp_ytyt = cov_ypyp * cov_ytyt
+    if cov_ypyp_ytyt == 0:
         return 0.0
     else:
-        return float(cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp))
+        return float(cov_ytyp / np.sqrt(cov_ypyp_ytyt))
 
 
 @validate_params(
@@ -1298,11 +1438,11 @@ def f1_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> f1_score(y_true, y_pred, average='macro')
-    0.26...
+    0.267
     >>> f1_score(y_true, y_pred, average='micro')
-    0.33...
+    0.33
     >>> f1_score(y_true, y_pred, average='weighted')
-    0.26...
+    0.267
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
@@ -1487,6 +1627,11 @@ def fbeta_score(
     returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
     modified by setting ``zero_division``.
 
+    F-beta score is not implemented as a named scorer that can be passed to
+    the `scoring` parameter of cross-validation tools directly: it requires to be
+    wrapped with :func:`make_scorer` so as to specify the value of `beta`. See
+    examples for details.
+
     References
     ----------
     .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
@@ -1502,17 +1647,37 @@ def fbeta_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    0.23...
+    0.238
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.33...
+    0.33
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    0.23...
+    0.238
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    array([0.71..., 0.        , 0.        ])
+    array([0.71, 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
-    >>> fbeta_score(y_true, y_pred_empty,
-    ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.12...
+    >>> fbeta_score(
+    ...     y_true,
+    ...     y_pred_empty,
+    ...     average="macro",
+    ...     zero_division=np.nan,
+    ...     beta=0.5,
+    ... )
+    0.128
+
+    In order to use :func:`fbeta_scorer` as a scorer, a callable
+    scorer objects needs to be created first with :func:`make_scorer`,
+    passing the value for the `beta` parameter.
+
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(
+    ...     LinearSVC(dual="auto"),
+    ...     param_grid={'C': [1, 10]},
+    ...     scoring=ftwo_scorer,
+    ...     cv=5
+    ... )
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1812,18 +1977,18 @@ def precision_recall_fscore_support(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.222, 0.333, 0.267, None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
+    (0.33, 0.33, 0.33, None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.222, 0.333, 0.267, None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
 
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0.        , 0.        , 0.66...]),
+    (array([0.        , 0.        , 0.66]),
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
@@ -1913,7 +2078,6 @@ def precision_recall_fscore_support(
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "replace_undefined_by": [
-            Hidden(StrOptions({"default"})),
             Options(Real, {1.0, np.nan}),
             dict,
         ],
@@ -1927,7 +2091,7 @@ def class_likelihood_ratios(
     labels=None,
     sample_weight=None,
     raise_warning="deprecated",
-    replace_undefined_by="default",
+    replace_undefined_by=np.nan,
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -2039,16 +2203,15 @@ def class_likelihood_ratios(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
-    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0],
-    ...                          replace_undefined_by=1.0)
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
     (1.5, 0.75)
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
-    (1.33..., 0.66...)
+    >>> class_likelihood_ratios(y_true, y_pred)
+    (1.33, 0.66)
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
-    >>> class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)
+    >>> class_likelihood_ratios(y_true, y_pred)
     (1.5, 0.75)
 
     To avoid ambiguities, use the notation `labels=[negative_class,
@@ -2056,18 +2219,13 @@ def class_likelihood_ratios(
 
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
-    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"],
-    ...                          replace_undefined_by=1.0)
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
     # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
     # The checks for `raise_warning==True` need to be removed and we will always warn,
-    # the default return value of `replace_undefined_by` should be updated from `np.nan`
-    # (which was kept for backwards compatibility) to `1.0`, its hidden option
-    # ("default") is not used anymore, some warning messages can be removed, the Warns
-    # section in the docstring should not mention `raise_warning` anymore and the
-    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
-    # the new default behaviour of `replace_undefined_by`.
+    # remove `FutureWarning`, and the Warns section in the docstring should not mention
+    # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2081,27 +2239,10 @@ def class_likelihood_ratios(
         "`UndefinedMetricWarning` will always be raised in case of a division by zero "
         "and the value set with the `replace_undefined_by` param will be returned."
     )
-    mgs_changed_default = (
-        "The default return value of `class_likelihood_ratios` in case of a division "
-        "by zero has been deprecated in 1.7 and will be changed to the worst scores "
-        "(`(1.0, 1.0)`) in version 1.9. Set `replace_undefined_by=1.0` to use the new"
-        "default and to silence this Warning."
-    )
     if raise_warning != "deprecated":
-        warnings.warn(
-            " ".join((msg_deprecated_param, mgs_changed_default)), FutureWarning
-        )
+        warnings.warn(msg_deprecated_param, FutureWarning)
     else:
-        if replace_undefined_by == "default":
-            # TODO(1.9): Remove. If users don't set any return values in case of a
-            # division by zero (`raise_warning="deprecated"` and
-            # `replace_undefined_by="default"`) they still get a FutureWarning about
-            # changing default return values:
-            warnings.warn(mgs_changed_default, FutureWarning)
         raise_warning = True
-
-    if replace_undefined_by == "default":
-        replace_undefined_by = np.nan
 
     if replace_undefined_by == 1.0:
         replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
@@ -2154,12 +2295,12 @@ def class_likelihood_ratios(
 
     # if `support_pos == 0`a division by zero will occur
     if support_pos == 0:
-        # TODO(1.9): Change return values in warning message to new default: the worst
-        # possible scores: `(1.0, 1.0)`
         msg = (
             "No samples of the positive class are present in `y_true`. "
             "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
-            "to `np.nan`."
+            "to `np.nan`. Use the `replace_undefined_by` param to control this "
+            "behavior. To suppress this warning or turn it into an error, see Python's "
+            "`warnings` module and `warnings.catch_warnings()`."
         )
         warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
@@ -2176,9 +2317,8 @@ def class_likelihood_ratios(
             else:
                 msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
             msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-            "control this behavior."
-            # TODO(1.9): Change return value in warning message to new default: `1.0`,
-            # which is the worst possible score for "LR+"
+            "control this behavior. To suppress this warning or turn it into an error, "
+            "see Python's `warnings` module and `warnings.catch_warnings()`."
             warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by
@@ -2193,11 +2333,11 @@ def class_likelihood_ratios(
     # if `tn == 0`a division by zero will occur
     if tn == 0:
         if raise_warning:
-            # TODO(1.9): Change return value in warning message to new default: `1.0`,
-            # which is the worst possible score for "LR-"
             msg = (
                 "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
-                "Use the `replace_undefined_by` param to control this behavior."
+                "Use the `replace_undefined_by` param to control this behavior. To "
+                "suppress this warning or turn it into an error, see Python's "
+                "`warnings` module and `warnings.catch_warnings()`."
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
@@ -2360,20 +2500,20 @@ def precision_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
-    0.22...
+    0.22
     >>> precision_score(y_true, y_pred, average='micro')
-    0.33...
+    0.33
     >>> precision_score(y_true, y_pred, average='weighted')
-    0.22...
+    0.22
     >>> precision_score(y_true, y_pred, average=None)
-    array([0.66..., 0.        , 0.        ])
+    array([0.66, 0.        , 0.        ])
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> precision_score(y_true, y_pred, average=None)
-    array([0.33..., 0.        , 0.        ])
+    array([0.33, 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
-    array([0.33..., 1.        , 1.        ])
+    array([0.33, 1.        , 1.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=np.nan)
-    array([0.33...,        nan,        nan])
+    array([0.33,        nan,        nan])
 
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
@@ -2542,11 +2682,11 @@ def recall_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    0.33...
+    0.33
     >>> recall_score(y_true, y_pred, average='micro')
-    0.33...
+    0.33
     >>> recall_score(y_true, y_pred, average='weighted')
-    0.33...
+    0.33
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
@@ -2997,15 +3137,20 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+
     if sample_weight is None:
         weight_average = 1.0
     else:
-        weight_average = np.mean(sample_weight)
+        sample_weight = xp.asarray(sample_weight, device=device)
+        weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return float(
-            n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
+        n_differences = _count_nonzero(
+            y_true - y_pred, xp=xp, device=device, sample_weight=sample_weight
+        )
+        return float(n_differences) / (
+            y_true.shape[0] * y_true.shape[1] * weight_average
         )
 
     elif y_type in ["binary", "multiclass"]:
@@ -3090,80 +3235,15 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     >>> from sklearn.metrics import log_loss
     >>> log_loss(["spam", "ham", "ham", "spam"],
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
-    0.21616...
+    0.21616
     """
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
+        y_true, y_pred, sample_weight, labels
     )
 
-    check_consistent_length(y_pred, y_true, sample_weight)
-    lb = LabelBinarizer()
-
-    if labels is not None:
-        lb.fit(labels)
-    else:
-        lb.fit(y_true)
-
-    if len(lb.classes_) == 1:
-        if labels is None:
-            raise ValueError(
-                "y_true contains only one label ({0}). Please "
-                "provide the true labels explicitly through the "
-                "labels argument.".format(lb.classes_[0])
-            )
-        else:
-            raise ValueError(
-                "The labels array needs to contain at least two "
-                "labels for log_loss, "
-                "got {0}.".format(lb.classes_)
-            )
-
-    transformed_labels = lb.transform(y_true)
-
-    if transformed_labels.shape[1] == 1:
-        transformed_labels = np.append(
-            1 - transformed_labels, transformed_labels, axis=1
-        )
-
-    # If y_pred is of single dimension, assume y_true to be binary
-    # and then check.
-    if y_pred.ndim == 1:
-        y_pred = y_pred[:, np.newaxis]
-    if y_pred.shape[1] == 1:
-        y_pred = np.append(1 - y_pred, y_pred, axis=1)
-
-    eps = np.finfo(y_pred.dtype).eps
-
-    # Make sure y_pred is normalized
-    y_pred_sum = y_pred.sum(axis=1)
-    if not np.allclose(y_pred_sum, 1, rtol=np.sqrt(eps)):
-        warnings.warn(
-            "The y_pred values do not sum to one. Make sure to pass probabilities.",
-            UserWarning,
-        )
-
     # Clipping
+    eps = np.finfo(y_pred.dtype).eps
     y_pred = np.clip(y_pred, eps, 1 - eps)
-
-    # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
-    if len(lb.classes_) != y_pred.shape[1]:
-        if labels is None:
-            raise ValueError(
-                "y_true and y_pred contain different number of "
-                "classes {0}, {1}. Please provide the true "
-                "labels explicitly through the labels argument. "
-                "Classes found in "
-                "y_true: {2}".format(
-                    transformed_labels.shape[1], y_pred.shape[1], lb.classes_
-                )
-            )
-        else:
-            raise ValueError(
-                "The number of classes in labels is different "
-                "from that in y_pred. Classes found in "
-                "labels: {0}".format(lb.classes_)
-            )
 
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
@@ -3241,9 +3321,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     LinearSVC(random_state=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
     >>> pred_decision
-    array([-2.18...,  2.36...,  0.09...])
+    array([-2.18,  2.36,  0.09])
     >>> hinge_loss([-1, 1, 1], pred_decision)
-    0.30...
+    0.30
 
     In the multiclass case:
 
@@ -3257,7 +3337,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
-    0.56...
+    0.56
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
@@ -3322,38 +3402,103 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     return float(np.average(losses, weights=sample_weight))
 
 
+def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos_label):
+    r"""Convert y_true and y_prob in binary classification to shape (n_samples, 2)
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True labels.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. If None, `pos_label` will be inferred
+        in the following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    transformed_labels : array of shape (n_samples, 2)
+
+    y_prob : array of shape (n_samples, 2)
+    """
+    # sanity checks on y_true and y_prob
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+
+    check_consistent_length(y_prob, y_true, sample_weight)
+
+    y_type = type_of_target(y_true, input_name="y_true")
+    if y_type != "binary":
+        raise ValueError(
+            f"The type of the target inferred from y_true is {y_type} but should be "
+            "binary according to the shape of y_prob."
+        )
+
+    if y_prob.max() > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
+    if y_prob.min() < 0:
+        raise ValueError(f"y_prob contains values less than 0: {y_prob.min()}")
+
+    # check that pos_label is consistent with y_true
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ("O", "U", "S"):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
+        else:
+            raise
+
+    # convert (n_samples,) to (n_samples, 2) shape
+    y_true = np.array(y_true == pos_label, int)
+    transformed_labels = np.column_stack((1 - y_true, y_true))
+    y_prob = np.column_stack((1 - y_prob, y_prob))
+
+    return transformed_labels, y_prob
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_proba": ["array-like", Hidden(None)],
+        "y_proba": ["array-like"],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
-        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
+        "labels": ["array-like", None],
+        "scale_by_half": ["boolean", StrOptions({"auto"})],
     },
     prefer_skip_nested_validation=True,
 )
 def brier_score_loss(
-    y_true, y_proba=None, *, sample_weight=None, pos_label=None, y_prob="deprecated"
+    y_true,
+    y_proba,
+    *,
+    sample_weight=None,
+    pos_label=None,
+    labels=None,
+    scale_by_half="auto",
 ):
-    """Compute the Brier score loss.
+    r"""Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
     The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome. The Brier score always
-    takes on a value between zero and one, since this is the largest
-    possible difference between a predicted probability (which must be
-    between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed as the sum of refinement loss and
-    calibration loss.
-
-    The Brier score is appropriate for binary and categorical outcomes that
-    can be structured as true or false, but is inappropriate for ordinal
-    variables which can take on three or more values (this is because the
-    Brier score assumes that all possible outcomes are equivalently
-    "distant" from one another). Which label is considered to be the positive
-    label is controlled via the parameter `pos_label`, which defaults to
-    the greater label unless `y_true` is all 0 or all -1, in which case
-    `pos_label` defaults to 1.
+    probability and the actual outcome. The Brier score is a strictly proper scoring
+    rule.
 
     Read more in the :ref:`User Guide <brier_score_loss>`.
 
@@ -3362,14 +3507,20 @@ def brier_score_loss(
     y_true : array-like of shape (n_samples,)
         True targets.
 
-    y_proba : array-like of shape (n_samples,)
-        Probabilities of the positive class.
+    y_proba : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Predicted probabilities. If `y_proba.shape = (n_samples,)`
+        the probabilities provided are assumed to be that of the
+        positive class. If `y_proba.shape = (n_samples, n_classes)`
+        the columns in `y_proba` are assumed to correspond to the
+        labels in alphabetical order, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     pos_label : int, float, bool or str, default=None
-        Label of the positive class. `pos_label` will be inferred in the
+        Label of the positive class when `y_proba.shape = (n_samples,)`.
+        If not provided, `pos_label` will be inferred in the
         following manner:
 
         * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
@@ -3378,17 +3529,48 @@ def brier_score_loss(
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
 
-    y_prob : array-like of shape (n_samples,)
-        Probabilities of the positive class.
+    labels : array-like of shape (n_classes,), default=None
+        Class labels when `y_proba.shape = (n_samples, n_classes)`.
+        If not provided, labels will be inferred from `y_true`.
 
-        .. deprecated:: 1.5
-            `y_prob` is deprecated and will be removed in 1.7. Use
-            `y_proba` instead.
+        .. versionadded:: 1.7
+
+    scale_by_half : bool or "auto", default="auto"
+        When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
+        of the [0, 2] range. The default "auto" option implements the rescaling to
+        [0, 1] only for binary classification (as customary) but keeps the
+        original [0, 2] range for multiclasss classification.
+
+        .. versionadded:: 1.7
 
     Returns
     -------
     score : float
         Brier score loss.
+
+    Notes
+    -----
+
+    For :math:`N` observations labeled from :math:`C` possible classes, the Brier
+    score is defined as:
+
+    .. math::
+        \frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}(y_{ic} - \hat{p}_{ic})^{2}
+
+    where :math:`y_{ic}` is 1 if observation `i` belongs to class `c`,
+    otherwise 0 and :math:`\hat{p}_{ic}` is the predicted probability for
+    observation `i` to belong to class `c`.
+    The Brier score then ranges between :math:`[0, 2]`.
+
+    In binary classification tasks the Brier score is usually divided by
+    two and then ranges between :math:`[0, 1]`. It can be alternatively
+    written as:
+
+    .. math::
+        \frac{1}{N}\sum_{i=1}^{N}(y_{i} - \hat{p}_{i})^{2}
+
+    where :math:`y_{i}` is the binary target and :math:`\hat{p}_{i}`
+    is the predicted probability of the positive class.
 
     References
     ----------
@@ -3403,62 +3585,45 @@ def brier_score_loss(
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> brier_score_loss(y_true, y_prob)
-    0.037...
+    0.0375
     >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
-    0.037...
+    0.0375
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.037...
+    0.0375
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
+    >>> brier_score_loss(y_true, y_prob, scale_by_half=False)
+    0.075
+    >>> brier_score_loss(
+    ...    ["eggs", "ham", "spam"],
+    ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"]
+    ... )
+    0.146
     """
-    # TODO(1.7): remove in 1.7 and reset y_proba to be required
-    # Note: validate params will raise an error if y_prob is not array-like,
-    # or "deprecated"
-    if y_proba is not None and not isinstance(y_prob, str):
-        raise ValueError(
-            "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
-            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
-        )
-    if y_proba is None:
-        warnings.warn(
-            (
-                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_proba`` instead."
-            ),
-            FutureWarning,
-        )
-        y_proba = y_prob
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
 
-    y_true = column_or_1d(y_true)
-    y_proba = column_or_1d(y_proba)
-    assert_all_finite(y_true)
-    assert_all_finite(y_proba)
-    check_consistent_length(y_true, y_proba, sample_weight)
-
-    y_type = type_of_target(y_true, input_name="y_true")
-    if y_type != "binary":
-        raise ValueError(
-            "Only binary classification is supported. The type of the target "
-            f"is {y_type}."
+    if y_proba.ndim == 1 or y_proba.shape[1] == 1:
+        transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
+            y_true, y_proba, sample_weight, pos_label
+        )
+    else:
+        transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
+            y_true, y_proba, sample_weight, labels
         )
 
-    if y_proba.max() > 1:
-        raise ValueError("y_proba contains values greater than 1.")
-    if y_proba.min() < 0:
-        raise ValueError("y_proba contains values less than 0.")
+    brier_score = np.average(
+        np.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
+    )
 
-    try:
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-    except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
-            pos_label = classes[-1]
-        else:
-            raise
-    y_true = np.array(y_true == pos_label, int)
-    return float(np.average((y_true - y_proba) ** 2, weights=sample_weight))
+    if scale_by_half == "auto":
+        scale_by_half = y_proba.ndim == 1 or y_proba.shape[1] < 3
+    if scale_by_half:
+        brier_score *= 0.5
+
+    return float(brier_score)
 
 
 @validate_params(
@@ -3537,8 +3702,19 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     # Proportion of labels in the dataset
     weights = _check_sample_weight(sample_weight, y_true)
 
-    _, y_value_indices = np.unique(y_true, return_inverse=True)
-    counts = np.bincount(y_value_indices, weights=weights)
+    # If labels is passed, augment y_true to ensure that all labels are represented
+    # Use 0 weight for the new samples to not affect the counts
+    y_true_, weights_ = (
+        (
+            np.concatenate([y_true, labels]),
+            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
+        )
+        if labels is not None
+        else (y_true, weights)
+    )
+
+    _, y_value_indices = np.unique(y_true_, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights_)
     y_prob = counts / weights.sum()
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 

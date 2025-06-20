@@ -20,7 +20,7 @@ from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.fixes import parse_version, sp_base_version
 from .utils.validation import _check_sample_weight, check_is_fitted
 
-__all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
+__all__ = ["IsotonicRegression", "check_increasing", "isotonic_regression"]
 
 
 @validate_params(
@@ -151,8 +151,8 @@ def isotonic_regression(
     --------
     >>> from sklearn.isotonic import isotonic_regression
     >>> isotonic_regression([5, 3, 1, 2, 8, 10, 7, 9, 6, 4])
-    array([2.75   , 2.75   , 2.75   , 2.75   , 7.33...,
-           7.33..., 7.33..., 7.33..., 7.33..., 7.33...])
+    array([2.75   , 2.75   , 2.75   , 2.75   , 7.33,
+           7.33, 7.33, 7.33, 7.33, 7.33])
     """
     y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
     if sp_base_version >= parse_version("1.12.0"):
@@ -271,7 +271,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     >>> X, y = make_regression(n_samples=10, n_features=1, random_state=41)
     >>> iso_reg = IsotonicRegression().fit(X, y)
     >>> iso_reg.predict([.1, .2])
-    array([1.8628..., 3.7256...])
+    array([1.8628, 3.7256])
     """
 
     # T should have been called X
