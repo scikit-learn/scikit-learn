@@ -10,6 +10,7 @@ from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
 from sklearn.utils import metadata_routing
+from sklearn.utils.stats import _averaged_weighted_percentile
 
 from ..base import (
     BaseEstimator,
@@ -2737,7 +2738,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _dense_fit(self, X, random_state):
+    def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
         Parameters
@@ -2759,8 +2760,30 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             X = resample(
                 X, replace=False, n_samples=self.subsample, random_state=random_state
             )
+            if sample_weight is not None:
+                sample_weight = sample_weight[: X.shape[0]]
 
-        self.quantiles_ = np.nanpercentile(X, references, axis=0)
+        self.quantiles_ = np.zeros((len(references), n_features))
+
+        for i in range(n_features):
+            col = X[:, i]
+            mask = ~np.isnan(col)
+            col_clean = col[mask]
+
+            if col_clean.size == 0:
+                self.quantiles_[:, i] = np.nan
+                continue
+
+            if sample_weight is not None:
+                weights_clean = sample_weight[mask]
+                self.quantiles_[:, i] = _averaged_weighted_percentile(
+                    col_clean, sample_weight=weights_clean, quantile=references / 100.0
+                )
+            else:
+                self.quantiles_[:, i] = np.nanquantile(
+                    col_clean, references / 100.0, method="averaged_inverted_cdf"
+                )
+
         # Due to floating-point precision error in `np.nanpercentile`,
         # make sure that quantiles are monotonically increasing.
         # Upstream issue in numpy:
@@ -2813,7 +2836,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute the quantiles used for transforming.
 
         Parameters
@@ -2855,9 +2878,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
         if sparse.issparse(X):
+            if sample_weight is not None:
+                raise ValueError("sample_weight is not supported for sparse input.")
             self._sparse_fit(X, rng)
         else:
-            self._dense_fit(X, rng)
+            self._dense_fit(X, rng, sample_weight=sample_weight)
 
         return self
 
