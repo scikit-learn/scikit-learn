@@ -396,9 +396,20 @@ def test_precision_recall_f1_baseline(pyplot, constructor_name):
     y_pred = clf.predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
-        disp = PrecisionRecallDisplay.from_estimator(clf, X, y, plot_f1_baseline=True)
+        disp = PrecisionRecallDisplay.from_estimator(
+            clf,
+            X,
+            y,
+            plot_f1_baseline=True,
+            f1_baseline_kw={"linestyle": "--"},
+        )
     else:
-        disp = PrecisionRecallDisplay.from_predictions(y, y_pred, plot_f1_baseline=True)
+        disp = PrecisionRecallDisplay.from_predictions(
+            y,
+            y_pred,
+            plot_f1_baseline=True,
+            f1_baseline_kw={"linestyle": "--"},
+        )
 
     import matplotlib as mpl
 
@@ -411,3 +422,28 @@ def test_precision_recall_f1_baseline(pyplot, constructor_name):
 
     # 3. The curve is monotonic in recall (sanity)
     assert np.all(np.diff(recalls) >= 0)
+
+    # 4. The custom style kwargs reach the baseline line
+    assert disp.f1_baseline_.get_linestyle() == "--"
+    
+
+@pytest.mark.parametrize("plotter", ["direct", "from_predictions"])
+def test_plot_f1_baseline_requires_prevalence(pyplot, plotter):
+    """F1 baseline requires prevalence_pos_label unless it is inferred."""
+    prec = np.array([1.0, 0.5, 0.0])
+    rec = np.array([0.0, 0.5, 1.0])
+
+    if plotter == "direct":
+        # No prevalence provided → ValueError expected
+        disp = PrecisionRecallDisplay(prec, rec)
+        with pytest.raises(ValueError, match="requires prevalence_pos_label"):
+            disp.plot(plot_f1_baseline=True)
+    else:
+        # Prevalence inferred automatically → no error
+        y_true = np.array([0, 1, 0])
+        y_pred = np.array([0.2, 0.8, 0.1])
+        PrecisionRecallDisplay.from_predictions(
+            y_true,
+            y_pred,
+            plot_f1_baseline=True,
+        )
