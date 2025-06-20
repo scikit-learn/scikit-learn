@@ -9,6 +9,8 @@ the lower the better.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+from sklearn.utils._array_api import bool as np_bool
+
 
 import warnings
 from functools import partial
@@ -2088,7 +2090,7 @@ def top_k_accuracy_score(
             y_pred = (y_score > threshold).astype(np.int64)
             hits = y_pred == y_true_encoded
         else:
-            hits = np.ones_like(y_score, dtype=np.bool_)
+            hits = np.ones_like(y_score, dtype=np.bool)
     elif y_type == "multiclass":
         sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
         hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
