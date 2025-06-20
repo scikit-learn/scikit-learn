@@ -10,8 +10,6 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils.fixes import parse_version
-
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
@@ -136,14 +134,11 @@ def _pyarrow_indexing(X, key, key_dtype, axis):
         # TODO: remove version checking and following if-branch when pyarrow==17.0.0 is
         # the minimal version, see pyarrow issue
         # https://github.com/apache/arrow/issues/42013 for more info on the bug
-        try:
+        from sklearn.utils.fixes import PYARROW_VERSION_BETWEEN_14_AND_17
+
+        if PYARROW_VERSION_BETWEEN_14_AND_17:
             import pyarrow
-        except ModuleNotFoundError:  # pragma: no cover
-            pass
-        pyarrow_version = parse_version(pyarrow.__version__)
-        if pyarrow_version >= parse_version(
-            "14.0.0"
-        ) and pyarrow_version <= parse_version("16.0.0"):
+
             if not isinstance(key, pyarrow.BooleanArray):
                 key = pyarrow.array(key, type=pyarrow.bool_())
 
