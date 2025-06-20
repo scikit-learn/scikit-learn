@@ -82,6 +82,7 @@ def _doc_row(estimator_type, row, param_name):
     documentation for a specific parameter of an estimator.
     If the link cannot be generated, an empty string is returned.
     """
+
     link = link_to_param_doc(estimator_type, row)
 
     if link:
