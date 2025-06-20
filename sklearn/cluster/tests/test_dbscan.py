@@ -373,6 +373,41 @@ def test_weighted_dbscan(global_random_seed):
     assert_array_equal(label1, est.labels_)
 
 
+def test_subsampled_dbscan(global_random_seed):
+    # ensure subsample is validated
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], subsample=1.1)
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], subsample=0)
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], subsample=-0.1)
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], subsample="")
+
+    # ensure subsample has an effect
+    core1, label1 = dbscan(X, subsample=0.1, random_state=global_random_seed)
+    core2 = dbscan(X, subsample=None)[0]
+    assert len(core1) != len(core2)
+
+    # subsample should work with precomputed distance matrix
+    D = pairwise_distances(X)
+    core3 = dbscan(
+        D, subsample=0.1, random_state=global_random_seed, metric="precomputed"
+    )[0]
+    assert_array_equal(core1, core3)
+
+    # subsample should work with estimator
+    est = DBSCAN().fit(X, subsample=0.1, random_state=global_random_seed)
+    assert_array_equal(core1, est.core_sample_indices_)
+    assert_array_equal(label1, est.labels_)
+
+    est = DBSCAN()
+    label4 = est.fit_predict(X, subsample=0.1, random_state=global_random_seed)
+    assert_array_equal(core1, est.core_sample_indices_)
+    assert_array_equal(label1, label4)
+    assert_array_equal(label1, est.labels_)
+
+
 @pytest.mark.parametrize("algorithm", ["brute", "kd_tree", "ball_tree"])
 def test_dbscan_core_samples_toy(algorithm):
     X = [[0], [2], [3], [4], [6], [8], [10]]
