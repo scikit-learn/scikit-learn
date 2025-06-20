@@ -9,7 +9,7 @@ the lower the better.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-from sklearn.utils._array_api import bool as np_bool
+
 
 
 import warnings
