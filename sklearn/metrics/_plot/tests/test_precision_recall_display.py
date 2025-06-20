@@ -425,7 +425,7 @@ def test_precision_recall_f1_baseline(pyplot, constructor_name):
 
     # 4. The custom style kwargs reach the baseline line
     assert disp.f1_baseline_.get_linestyle() == "--"
-    
+
 
 @pytest.mark.parametrize("plotter", ["direct", "from_predictions"])
 def test_plot_f1_baseline_requires_prevalence(pyplot, plotter):
