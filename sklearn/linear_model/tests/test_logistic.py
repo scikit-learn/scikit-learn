@@ -1057,13 +1057,15 @@ def test_logreg_intercept_scaling_zero():
     assert clf.intercept_ == 0.0
 
 
-def test_logreg_l1():
+def test_logreg_l1(global_random_seed):
     # Because liblinear penalizes the intercept and saga does not, we do not
     # fit the intercept to make it possible to compare the coefficients of
     # the two models at convergence.
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 50
-    X, y = make_classification(n_samples=n_samples, n_features=20, random_state=0)
+    X, y = make_classification(
+        n_samples=n_samples, n_features=20, random_state=global_random_seed
+    )
     X_noise = rng.normal(size=(n_samples, 3))
     X_constant = np.ones(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
@@ -1073,6 +1075,7 @@ def test_logreg_l1():
         solver="liblinear",
         fit_intercept=False,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_liblinear.fit(X, y)
 
@@ -1081,10 +1084,12 @@ def test_logreg_l1():
         C=1.0,
         solver="saga",
         fit_intercept=False,
-        max_iter=1000,
+        max_iter=3500,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_saga.fit(X, y)
+
     assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
 
     # Noise and constant features should be regularized to zero by the l1
