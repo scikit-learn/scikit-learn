@@ -180,12 +180,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
 
-    While this preprocessing step is an optimization in this context, it is important
+    While this preprocessing step can be an optimization, it is important
     to note the array returned by ``inverse_transform`` will have an internal type
     of ``np.float64`` or ``np.float32``, denoted by the ``dtype`` input argument.
     This can drastically increase the memory usage of the array. See the example on
     :ref:`sphx_glr_auto_examples_cluster_plot_face_compress.py`
-    where `KBinsDescretizer` is used to compress an image and increases
+    where `KBinsDescretizer` is used to compress an image and instead increases
     the size of the image by 8x.
     """
 
