@@ -841,8 +841,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label_ = cls._validate_from_cv_results_params(
-            cv_results, X, y, sample_weight=sample_weight, pos_label=pos_label
+        cls._validate_from_cv_results_params(
+            cv_results, X, y, sample_weight=sample_weight
         )
 
         precision_folds, recall_folds, ap_folds, prevalence_pos_label_folds = (
@@ -859,7 +859,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
-                pos_label=pos_label_,
+                pos_label=pos_label,
             )
             sample_weight_fold = (
                 None

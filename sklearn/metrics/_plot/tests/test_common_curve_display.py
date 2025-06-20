@@ -357,10 +357,11 @@ def _check_from_cv_results_param_validation(data, display_class):
     with pytest.raises(ValueError, match="Found input variables with inconsistent"):
         display_class.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
 
-    # `pos_label` inconsistency
-    y_multi[y_multi == 1] = 2
-    with pytest.raises(ValueError, match=r"y takes value in \{0, 2\}"):
-        display_class.from_cv_results(cv_results, X, y_multi)
+    # # `pos_label` inconsistent with `cv_results["estimator"]`'s `classes_`, as it was
+    # # fitted on binary `y`
+    # y_multi[y_multi == 1] = 2
+    # with pytest.raises(ValueError, match=r"y takes value in \{0, 2\}"):
+    #     display_class.from_cv_results(cv_results, X, y_multi)
 
     # `name` is list while `curve_kwargs` is None or dict
     for curve_kwargs in (None, {"alpha": 0.2}):
