@@ -527,36 +527,80 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
-    """Implementation to facilitate adding or assigning specified values to the
-    diagonal of a 2-d array.
-
-    If ``add_value`` is `True` then the values will be added to the diagonal
-    elements otherwise the values will be assigned to the diagonal elements.
-    By default, ``add_value`` is set to `True. This is currently only
-    supported for 2-d arrays.
-
-    The implementation is taken from the `numpy.fill_diagonal` function:
-    https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
-    """
+def _validate_diagonal_args(array, value, xp):
+    """Validate arguments to `_fill_diagonal`/`_add_to_diagonal`."""
     if array.ndim != 2:
         raise ValueError(
-            f"array should be 2-d. Got array with shape {tuple(array.shape)}"
+            f"`array` should be 2D. Got array with shape {tuple(array.shape)}"
         )
 
     value = xp.asarray(value, dtype=array.dtype, device=device(array))
-    end = None
-    # Explicit, fast formula for the common case.  For 2-d arrays, we
-    # accept rectangular ones.
-    step = array.shape[1] + 1
-    if not wrap:
-        end = array.shape[1] * array.shape[1]
+    if value.ndim not in [0, 1]:
+        raise ValueError(
+            "`value` needs to be a scalar or a 1D array, "
+            f"got a {value.ndim}D array instead."
+        )
+    min_rows_columns = min(array.shape)
+    if value.ndim == 1 and value.shape[0] != min_rows_columns:
+        raise ValueError(
+            "`value` needs to be a scalar or 1D array of the same length as the "
+            f"diagonal of `array` ({min_rows_columns}). Got {value.shape[0]}"
+        )
 
-    array_flat = xp.reshape(array, (-1,))
-    if add_value:
-        array_flat[:end:step] += value
+    return value, min_rows_columns
+
+
+def _fill_diagonal(array, value, xp):
+    """Minimal implementation of `numpy.fill_diagonal`.
+
+    `wrap` is not supported (i.e. always False). `value` should be a scalar or
+    1D of greater or equal length as the diagonal (i.e., `value` is never repeated
+    when shorter).
+
+    Note `array` is altered in place.
+    """
+    value, min_rows_columns = _validate_diagonal_args(array, value, xp)
+
+    if _is_numpy_namespace(xp):
+        xp.fill_diagonal(array, value, wrap=False)
     else:
-        array_flat[:end:step] = value
+        # TODO: when array libraries support `reshape(copy)`, use
+        # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
+        # `try/except`). This is faster than for loop, when no copy needs to be
+        # made within `reshape`. See #31445 for details.
+        if value.ndim == 0:
+            for i in range(min_rows_columns):
+                array[i, i] = value
+        else:
+            for i in range(min_rows_columns):
+                array[i, i] = value[i]
+
+
+def _add_to_diagonal(array, value, xp):
+    """Add `value` to diagonal of `array`.
+
+    Related to `fill_diagonal`. `value` should be a scalar or
+    1D of greater or equal length as the diagonal (i.e., `value` is never repeated
+    when shorter).
+
+    Note `array` is altered in place.
+    """
+    value, min_rows_columns = _validate_diagonal_args(array, value, xp)
+
+    if _is_numpy_namespace(xp):
+        step = array.shape[1] + 1
+        # Ensure we do not wrap
+        end = array.shape[1] * array.shape[1]
+        array.flat[:end:step] += value
+        return
+
+    # TODO: when array libraries support `reshape(copy)`, use
+    # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
+    # `try/except`). This is faster than for loop, when no copy needs to be
+    # made within `reshape`. See #31445 for details.
+    value = xp.linalg.diagonal(array) + value
+    for i in range(min_rows_columns):
+        array[i, i] = value[i]
 
 
 def _is_xp_namespace(xp, name):
@@ -1028,3 +1072,52 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _logsumexp(array, axis=None, xp=None):
+    # TODO replace by scipy.special.logsumexp when
+    # https://github.com/scipy/scipy/pull/22683 is part of a release.
+    # The following code is strongly inspired and simplified from
+    # scipy.special._logsumexp.logsumexp
+    xp, _, device = get_namespace_and_device(array, xp=xp)
+    axis = tuple(range(array.ndim)) if axis is None else axis
+
+    supported_dtypes = supported_float_dtypes(xp)
+    if array.dtype not in supported_dtypes:
+        array = xp.asarray(array, dtype=supported_dtypes[0])
+
+    array_max = xp.max(array, axis=axis, keepdims=True)
+    index_max = array == array_max
+
+    array = xp.asarray(array, copy=True)
+    array[index_max] = -xp.inf
+    i_max_dt = xp.astype(index_max, array.dtype)
+    m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
+    # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
+    shift = xp.where(
+        xp.isfinite(array_max),
+        array_max,
+        xp.asarray(0, dtype=array_max.dtype, device=device),
+    )
+    exp = xp.exp(array - shift)
+    s = xp.sum(exp, axis=axis, keepdims=True, dtype=exp.dtype)
+    s = xp.where(s == 0, s, s / m)
+    out = xp.log1p(s) + xp.log(m) + array_max
+    out = xp.squeeze(out, axis=axis)
+    out = out[()] if out.ndim == 0 else out
+
+    return out
+
+
+def _cholesky(covariance, xp):
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.cholesky(covariance, lower=True)
+    else:
+        return xp.linalg.cholesky(covariance)
+
+
+def _linalg_solve(cov_chol, eye_matrix, xp):
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
+    else:
+        return xp.linalg.solve(cov_chol, eye_matrix)

@@ -117,6 +117,8 @@ Estimators
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
+- :class:`mixture.GaussianMixture` (with `init_params="random"` or
+  `init_params="random_from_data"` and `warm_start=False`)
 
 Meta-estimators
 ---------------
@@ -158,6 +160,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.linear_kernel`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
+- :func:`sklearn.metrics.pairwise.pairwise_kernels` (supports all metrics except :func:`sklearn.metrics.pairwise.laplacian_kernel`)
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
