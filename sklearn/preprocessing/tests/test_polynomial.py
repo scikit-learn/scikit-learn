@@ -7,6 +7,7 @@ from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.sparse import random as sparse_random
 
+from sklearn._config import config_context
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
@@ -17,7 +18,14 @@ from sklearn.preprocessing import (
 from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    device,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import _array_api_for_tests, assert_array_almost_equal
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -1228,3 +1236,61 @@ def test_csr_polynomial_expansion_windows_fail(csr_container):
         X_trans = pf.fit_transform(X)
         for idx in range(3):
             assert X_trans[0, expected_indices[idx]] == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "degree, include_bias, interaction_only",
+    [
+        (2, True, False),
+        (2, False, False),
+        (2, True, True),
+        (2, False, True),
+        ((2, 2), True, False),
+        ((2, 2), False, False),
+        ((2, 2), True, True),
+        ((2, 2), False, True),
+        (3, True, False),
+        (3, False, False),
+        (3, True, True),
+        (3, False, True),
+        ((2, 3), True, False),
+        ((2, 3), False, False),
+        ((2, 3), True, True),
+        ((2, 3), False, True),
+        ((3, 3), True, False),
+        ((3, 3), False, False),
+        ((3, 3), True, True),
+    ],
+)
+def test_polynomial_features_array_api_compliance(
+    two_features_degree3,
+    degree,
+    include_bias,
+    interaction_only,
+    array_namespace,
+    device_,
+    dtype_name,
+):
+    """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, _ = two_features_degree3
+    X_np = X.astype(dtype_name)
+    X_xp = xp.asarray(X, device=device_)
+    with config_context(array_api_dispatch=True):
+        tf_np = PolynomialFeatures(
+            degree=degree, include_bias=include_bias, interaction_only=interaction_only
+        ).fit(X_np)
+
+        tf_xp = PolynomialFeatures(
+            degree=degree, include_bias=include_bias, interaction_only=interaction_only
+        ).fit(X_xp)
+        out_np = tf_np.transform(X_np)
+        out_xp = tf_xp.transform(X_xp)
+        assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
+        assert get_namespace(out_xp)[0].__name__ == xp.__name__
+        assert device(out_xp) == device(X_xp)
