@@ -185,7 +185,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     of ``np.float64`` or ``np.float32``, denoted by the ``dtype`` input argument.
     This can drastically increase the memory usage of the array. See the example on
     :ref:`sphx_glr_auto_examples_cluster_plot_face_compress.py`
-    where `KBinsDescretizer` is used to compress an image and instead increases
+    where `KBinsDescretizer` is used to cluster the image into bins and increases
     the size of the image by 8x.
     """
 
