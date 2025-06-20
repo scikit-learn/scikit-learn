@@ -76,6 +76,25 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
+def doc_row(estimator_type, row, param_name):
+    link = link_to_param_doc(estimator_type, row)
+
+    if link:
+        link_string = """
+          <td class="doc_link"><a class="sk-estimator-doc-link"
+          rel="noreferrer" target="_blank"
+          href=""" + (
+            f"{link}"
+            + """style="color: white; background: black;">?<span>Online `"""
+            + f"{param_name}"
+            + """` documentation</span></a></td></tr>"""
+        )
+    else:
+        link_string = ""
+
+    return link_string
+
+
 def _params_html_repr(params):
     """Generate HTML representation of estimator parameters.
 
@@ -95,6 +114,7 @@ def _params_html_repr(params):
             </details>
         </div>
     """
+
     ROW_TEMPLATE = """
         <tr class="{param_type}">
             <td><i class="copy-paste-icon"
@@ -103,13 +123,8 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;</td>
             <td class="value">{param_value}</td>
-            <td class="doc_link"><a class="sk-estimator-doc-link"
-              rel="noreferrer" target="_blank"
-              href={doc_link} style="color: white; background: black;">?
-              <span>Online `{param_name}` documentation</span></a></td>
-        </tr>
+            {doc_link}
     """
-
     rows = [
         ROW_TEMPLATE.format(
             param_type=_read_params(row, params[row], params.non_default)["param_type"],
@@ -117,7 +132,11 @@ def _params_html_repr(params):
             param_value=_read_params(row, params[row], params.non_default)[
                 "param_value"
             ],
-            doc_link=link_to_param_doc(params.estimator_type, row),
+            doc_link=doc_row(
+                params.estimator_type,
+                row,
+                _read_params(row, params[row], params.non_default)["param_name"],
+            ),
         )
         for row in params
     ]
