@@ -75,8 +75,8 @@ https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.7-py312hac873b0_0.conda#6
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d57b4c21a9261f97fa511e0940c5d93
 https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.3-py312h6d0c2b6_0.conda#84ce5b8ec4a986d13a5df17811f556a2
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-5.2.1-py312h1962661_0.conda#58881950d4ce74c9302b56961f97a43c
-# pip cython @ https://files.pythonhosted.org/packages/78/06/83ff82381319ff68ae46f9dd3024b1d5101997e81a8e955811525b6f934b/cython-3.1.1-cp312-cp312-macosx_10_13_x86_64.whl#sha256=9d7dc0e4d0cd491fac679a61e9ede348c64ca449f99a284f9a01851aa1dbc7f6
-# pip meson @ https://files.pythonhosted.org/packages/46/77/726b14be352aa6911e206ca7c4d95c5be49660604dfee0bfed0fc75823e5/meson-1.8.1-py3-none-any.whl#sha256=374bbf71247e629475fc10b0bd2ef66fc418c2d8f4890572f74de0f97d0d42da
+# pip cython @ https://files.pythonhosted.org/packages/22/86/9393ab7204d5bb65f415dd271b658c18f57b9345d06002cae069376a5a7a/cython-3.1.2-cp312-cp312-macosx_10_13_x86_64.whl#sha256=9c2c4b6f9a941c857b40168b3f3c81d514e509d985c2dcd12e1a4fea9734192e
+# pip meson @ https://files.pythonhosted.org/packages/8e/6e/b9dfeac98dd508f88bcaff134ee0bf5e602caf3ccb5a12b5dd9466206df1/meson-1.8.2-py3-none-any.whl#sha256=274b49dbe26e00c9a591442dd30f4ae9da8ce11ce53d0f4682cd10a45d50f6fd
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl#sha256=43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/7e/b1/8e63033b259e0a4e40dd1ec4a9fee17718016845048b43a36ec67d62e6fe/pyproject_metadata-0.9.1-py3-none-any.whl#sha256=ee5efde548c3ed9b75a354fc319d5afd25e9585fa918a34f62f904cc731973ad
 # pip meson-python @ https://files.pythonhosted.org/packages/28/58/66db620a8a7ccb32633de9f403fe49f1b63c68ca94e5c340ec5cceeb9821/meson_python-0.18.0-py3-none-any.whl#sha256=3b0fe051551cc238f5febb873247c0949cd60ded556efa130aa57021804868e2
