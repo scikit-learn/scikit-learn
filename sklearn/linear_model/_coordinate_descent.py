@@ -345,6 +345,10 @@ def lasso_path(
     [[0.         0.         0.46874778]
      [0.2159048  0.4425765  0.23689075]]
 
+    For a visual example using this function, see:
+
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path`.
+
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
     >>> from sklearn.linear_model import lars_path
@@ -355,6 +359,7 @@ def lasso_path(
     >>> print(coef_path_continuous([5., 1., .5]))
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
+
     """
     return enet_path(
         X,
