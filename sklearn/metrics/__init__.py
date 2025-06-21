@@ -26,6 +26,7 @@ from ._classification import (
     recall_score,
     zero_one_loss,
 )
+from ._decision_threshold import decision_threshold_curve
 from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 from ._plot.det_curve import DetCurveDisplay
@@ -124,6 +125,7 @@ __all__ = [
     "d2_tweedie_score",
     "davies_bouldin_score",
     "dcg_score",
+    "decision_threshold_curve",
     "det_curve",
     "euclidean_distances",
     "explained_variance_score",
