@@ -164,7 +164,8 @@ class DecisionBoundaryDisplay:
     """
 
     def __init__(
-        self, *, xx0, xx1, response, multiclass_colors=None, xlabel=None, ylabel=None
+        self, *, xx0, xx1, response, multiclass_colors=None, xlabel=None,
+        ylabel=None, response_method_used=None, estimator_name=None
     ):
         self.xx0 = xx0
         self.xx1 = xx1
@@ -172,8 +173,11 @@ class DecisionBoundaryDisplay:
         self.multiclass_colors = multiclass_colors
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.response_method_used_ = response_method_used
+        self.estimator_name_ = estimator_name
 
-    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
+    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None,
+             response_method_used=None, estimator_name=None, **kwargs):
         """Plot visualization.
 
         Parameters
@@ -195,6 +199,12 @@ class DecisionBoundaryDisplay:
         ylabel : str, default=None
             Overwrite the y-axis label.
 
+        response_method_used : str, default=None
+            If provided, it will be used to create the plot's title.
+
+        estimator_name : str, default=None
+            If provided, it will be used to create the plot's title.
+
         **kwargs : dict
             Additional keyword arguments to be passed to the `plot_method`.
 
@@ -215,6 +225,18 @@ class DecisionBoundaryDisplay:
 
         if ax is None:
             _, ax = plt.subplots()
+
+        estimator_name_to_display = (
+            estimator_name if estimator_name is not None else self.estimator_name_
+        )
+        response_method_to_display = (
+            response_method_used
+            if response_method_used is not None
+            else self.response_method_used_
+        )
+
+        if estimator_name_to_display or response_method_to_display:
+            ax.set_title(f"Boundary: {estimator_name_to_display} Method: {response_method_to_display}")
 
         plot_func = getattr(ax, plot_method)
         if self.response.ndim == 2:
@@ -554,9 +576,8 @@ class DecisionBoundaryDisplay:
             multiclass_colors=multiclass_colors,
             xlabel=xlabel,
             ylabel=ylabel,
+            response_method_used=response_method_used,
+            estimator_name=estimator.__class__.__name__,
         )
 
-        plotted_display = display.plot(ax=ax, plot_method=plot_method, **kwargs)
-        plotted_display.response_method_used_ = response_method_used
-        plotted_display.estimator_name_ = estimator.__class__.__name__
-        return plotted_display
+        return display.plot(ax=ax, plot_method=plot_method, **kwargs)
