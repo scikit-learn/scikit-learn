@@ -200,7 +200,7 @@ def _get_response_values(
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
-        target_type = type_of_target(classes)
+        target_type = type_of_target(classes, suppress_warning=True)
 
         if target_type in ("binary", "multiclass"):
             if pos_label is not None and pos_label not in classes.tolist():
