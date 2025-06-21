@@ -318,9 +318,9 @@ def lasso_path(
 
     Notes
     -----
-    For an example, see
+    For an example, see:
     :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.\
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
     For a visual example of computing and plotting the Lasso coordinate
     descent path, see:
