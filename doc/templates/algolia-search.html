@@ -1,0 +1,43 @@
+{%- extends "page.html" %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@8.3.0/themes/reset-min.css" />
+<link rel="stylesheet" href="{{ pathto('_static/styles/algolia-search.css', 1) }}" />
+{% endblock css %}
+
+{% block docs_body %}
+
+<!-- Algolia search page built with Algolia instantsearch. -->
+
+<div class="bd-search-container">
+  <div id="docsearch-powered-by-light"></div>
+  <div id="docsearch-powered-by-dark"></div>
+  <noscript>
+    <div class="admonition error">
+      <p class="admonition-title">Error</p>
+      <p>Please activate JavaScript to enable the search functionality.</p>
+    </div>
+  </noscript>
+
+  <search id="docsearch" role="search">
+    <div id="docsearch-container"></div>
+  </search>
+
+  <div id="docsearch-stats"></div>
+  <div id="docsearch-hits"></div>
+  <div id="docsearch-loading-indicator"></div>
+</div>
+
+{% endblock docs_body %}
+
+{%- block htmltitle -%}
+<title>Search - {{ title or docstitle }}</title>
+{%- endblock htmltitle -%}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.24.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4.73.2"></script>
+<script src="{{ pathto('_static/scripts/algolia-search.js', 1) }}"></script>
+{% endblock scripts %}
