@@ -1175,6 +1175,9 @@ class Lasso(ElasticNet):
 
     Read more in the :ref:`User Guide <lasso>`.
 
+    For a visual comparison of Lasso on dense vs sparse data, see the example:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`
+
     Parameters
     ----------
     alpha : float, default=1.0
@@ -1313,9 +1316,6 @@ class Lasso(ElasticNet):
         compares Lasso with other L1-based regression models (ElasticNet and ARD
         Regression) for sparse signal recovery in the presence of noise and
         feature correlation.
-
-    -   For a visual comparison of Lasso on dense vs sparse data, see:
-        :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`
 
     """
 
