@@ -173,7 +173,7 @@ class DecisionBoundaryDisplay:
         xlabel=None,
         ylabel=None,
         response_method_used=None,
-        estimator_name=None
+        estimator_name=None,
     ):
         self.xx0 = xx0
         self.xx1 = xx1
@@ -192,7 +192,7 @@ class DecisionBoundaryDisplay:
         ylabel=None,
         response_method_used=None,
         estimator_name=None,
-        **kwargs
+        **kwargs,
     ):
         """Plot visualization.
 
@@ -252,7 +252,10 @@ class DecisionBoundaryDisplay:
         )
 
         if estimator_name_to_display or response_method_to_display:
-            ax.set_title(f"Boundary: {estimator_name_to_display} Method: {response_method_to_display}")
+            ax.set_title(
+                f"Boundary: {estimator_name_to_display} "
+                f"Method: {response_method_to_display}"
+            )
 
         plot_func = getattr(ax, plot_method)
         if self.response.ndim == 2:
