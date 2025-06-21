@@ -1173,10 +1173,10 @@ class Lasso(ElasticNet):
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
 
-    Read more in the :ref:`User Guide <lasso>`.
+    A comparison of Lasso on dense versus sparse data is available in the example:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data`.
 
-    For a visual comparison of Lasso on dense vs sparse data, see the example:
-    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data`
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
