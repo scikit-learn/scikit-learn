@@ -357,9 +357,8 @@ def lasso_path(
      [0.2159048  0.4425765  0.23668876]]
 
     For a visual example of computing and plotting the Lasso coordinate
-    descent path, see
+    descent path, see the example:
     :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`.
-
     """
     return enet_path(
         X,
