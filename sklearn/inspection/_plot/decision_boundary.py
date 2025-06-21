@@ -235,8 +235,12 @@ class DecisionBoundaryDisplay:
                     else:
                         colors = cmap.colors
                 elif "colors" in kwargs:
-                    colors = mpl.colors.to_rgba(kwargs.pop("colors"))
-                    colors = [colors for _ in range(n_responses)]
+                    if isinstance(kwargs["colors"], str):
+                        colors = mpl.colors.to_rgba(kwargs.pop("colors"))
+                        colors = [colors for _ in range(n_responses)]
+                    else:
+                        colors = kwargs.pop("colors")
+                        colors = [mpl.colors.to_rgba(color) for color in colors]
                 else:
                     cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
                     colors = plt.get_cmap(cmap, n_responses).colors
