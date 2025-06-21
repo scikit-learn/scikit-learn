@@ -645,16 +645,127 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    cmaps = [
-        mpl.colors.LinearSegmentedColormap.from_list(
-            f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-        )
-        for class_idx, (r, g, b, _) in enumerate(colors)
-    ]
-
     if plot_method != "contour":
+        cmaps = [
+            mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            for class_idx, (r, g, b, _) in enumerate(colors)
+        ]
         for idx, quad in enumerate(disp.surface_):
             assert quad.cmap == cmaps[idx]
+    else:
+        assert_allclose(disp.surface_.colors, colors)
+
+
+def test_cmap_and_colors_logic(pyplot):
+    """Check the handling logic for `cmap` and `colors`."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    with pytest.raises(
+        ValueError,
+        match="Cannot specify both 'cmap' and 'colors' in kwargs.",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            colors="black",
+            cmap="Blues",
+        )
+
+    with pytest.warns(
+        UserWarning,
+        match="'cmap' is ignored when 'multiclass_colors' is set.",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            multiclass_colors="plasma",
+            cmap="Blues",
+        )
+
+    with pytest.warns(
+        UserWarning,
+        match="'colors' is ignored when 'multiclass_colors' is set.",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            multiclass_colors="plasma",
+            colors="blue",
+        )
+
+
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
+@pytest.mark.parametrize("kwargs", [{"cmap": "tab10"}, {"cmap": "Blues"}])
+def test_multiclass_cmap(pyplot, plot_method, kwargs):
+    """Check that `cmap` is correctly applied to DecisionBoundaryDisplay."""
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        cmap=kwargs["cmap"],
+        plot_method=plot_method,
+    )
+
+    cmap = plt.get_cmap(kwargs["cmap"], len(clf.classes_))
+    if not hasattr(cmap, "colors"):
+        colors = cmap(np.linspace(0, 1, len(clf.classes_)))
+    else:
+        colors = cmap.colors
+
+    if plot_method != "contour":
+        cmaps = [
+            mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            for class_idx, (r, g, b, _) in enumerate(colors)
+        ]
+        for idx, quad in enumerate(disp.surface_):
+            assert quad.cmap == cmaps[idx]
+    else:
+        assert_allclose(disp.surface_.colors, colors)
+
+
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
+@pytest.mark.parametrize("kwargs", [{"colors": "black"}, {"colors": ["r", "g", "b"]}])
+def test_multiclass_colors(pyplot, plot_method, kwargs):
+    """Check that `cmap` is correctly applied to DecisionBoundaryDisplay."""
+    import matplotlib as mpl
+
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        colors=kwargs["colors"],
+        plot_method=plot_method,
+    )
+
+    if isinstance(kwargs["colors"], str):
+        colors = mpl.colors.to_rgba(kwargs["colors"])
+        colors = [colors for _ in range(len(clf.classes_))]
+    else:
+        colors = [mpl.colors.to_rgba(color) for color in kwargs["colors"]]
+
+    if plot_method != "contour":
+        cmaps = [
+            mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            for class_idx, (r, g, b, _) in enumerate(colors)
+        ]
+        for idx, quad in enumerate(disp.surface_):
+            assert quad.cmap == cmaps[idx]
+    else:
+        assert_allclose(disp.surface_.colors, colors)
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):
