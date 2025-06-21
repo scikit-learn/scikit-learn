@@ -1818,6 +1818,10 @@ polynomial regression can be created and used as follows::
 The linear model trained on polynomial features is able to exactly recover
 the input polynomial coefficients.
 
+A more advanced use case of polynomial features and pipeline tools, demonstrating 
+polynomial and spline interpolation with ridge regression, can be found in
+:ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`.
+
 In some cases it's not necessary to include higher powers of any single feature,
 but only the so-called *interaction features*
 that multiply together at most :math:`d` distinct features.
