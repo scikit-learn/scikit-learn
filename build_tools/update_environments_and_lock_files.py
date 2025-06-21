@@ -189,6 +189,7 @@ build_metadata_list = [
             "pandas": "min",
             "polars": "min",
             "pyamg": "min",
+            "pyarrow": "min",
         },
     },
     {
