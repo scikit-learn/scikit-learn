@@ -1313,6 +1313,10 @@ class Lasso(ElasticNet):
         compares Lasso with other L1-based regression models (ElasticNet and ARD
         Regression) for sparse signal recovery in the presence of noise and
         feature correlation.
+
+    For a visual comparison of Lasso on dense vs sparse data, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`.
+
     """
 
     _parameter_constraints: dict = {
