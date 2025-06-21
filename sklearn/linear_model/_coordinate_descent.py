@@ -355,6 +355,10 @@ def lasso_path(
     >>> print(coef_path_continuous([5., 1., .5]))
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
+
+    For a visual example of computing and plotting the Lasso coordinate
+    descent path,see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`.
     """
     return enet_path(
         X,
