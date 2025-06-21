@@ -968,3 +968,12 @@ def test_predict_joint_proba(Estimator, global_random_seed):
     log_prob_x = logsumexp(jll, axis=1)
     log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
     assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
+
+
+@pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
+def test_categorical_input_tag(Estimator):
+    tags = Estimator().__sklearn_tags__()
+    if Estimator is CategoricalNB:
+        assert tags.input_tags.categorical
+    else:
+        assert not tags.input_tags.categorical
