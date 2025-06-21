@@ -164,8 +164,16 @@ class DecisionBoundaryDisplay:
     """
 
     def __init__(
-        self, *, xx0, xx1, response, multiclass_colors=None, xlabel=None,
-        ylabel=None, response_method_used=None, estimator_name=None
+        self,
+        *,
+        xx0,
+        xx1,
+        response,
+        multiclass_colors=None,
+        xlabel=None,
+        ylabel=None,
+        response_method_used=None,
+        estimator_name=None
     ):
         self.xx0 = xx0
         self.xx1 = xx1
@@ -176,8 +184,16 @@ class DecisionBoundaryDisplay:
         self.response_method_used_ = response_method_used
         self.estimator_name_ = estimator_name
 
-    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None,
-             response_method_used=None, estimator_name=None, **kwargs):
+    def plot(
+        self,
+        plot_method="contourf",
+        ax=None,
+        xlabel=None,
+        ylabel=None,
+        response_method_used=None,
+        estimator_name=None,
+        **kwargs
+    ):
         """Plot visualization.
 
         Parameters
