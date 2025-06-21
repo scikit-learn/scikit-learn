@@ -318,9 +318,8 @@ def lasso_path(
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
+    :ref:`this example
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -523,9 +522,9 @@ def enet_path(
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
+    :ref:`this example
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path>`.
+
 
     Examples
     --------
@@ -2088,8 +2087,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the `X` argument of the `fit`
     method should be directly passed as a Fortran-contiguous numpy array.
 
-    For an example, see :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    :ref:`Lasso model selection
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection>`.
 
     :class:`LassoCV` leads to different results than a hyperparameter
     search using :class:`~sklearn.model_selection.GridSearchCV` with a
@@ -2374,9 +2373,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
         alpha = a + b and l1_ratio = a / (a + b).
 
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    :ref:`Lasso model selection example
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection>`.
 
     Examples
     --------
