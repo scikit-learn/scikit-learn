@@ -1176,7 +1176,7 @@ class Lasso(ElasticNet):
     Read more in the :ref:`User Guide <lasso>`.
 
     For a visual comparison of Lasso on dense vs sparse data, see the example:
-    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data`
 
     Parameters
     ----------
