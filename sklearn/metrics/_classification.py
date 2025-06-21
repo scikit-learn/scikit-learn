@@ -1627,6 +1627,11 @@ def fbeta_score(
     returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
     modified by setting ``zero_division``.
 
+    F-beta score is not implemented as a named scorer that can be passed to
+    the `scoring` parameter of cross-validation tools directly: it requires to be
+    wrapped with :func:`make_scorer` so as to specify the value of `beta`. See
+    examples for details.
+
     References
     ----------
     .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
@@ -1650,9 +1655,29 @@ def fbeta_score(
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71, 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
-    >>> fbeta_score(y_true, y_pred_empty,
-    ...             average="macro", zero_division=np.nan, beta=0.5)
+    >>> fbeta_score(
+    ...     y_true,
+    ...     y_pred_empty,
+    ...     average="macro",
+    ...     zero_division=np.nan,
+    ...     beta=0.5,
+    ... )
     0.128
+
+    In order to use :func:`fbeta_scorer` as a scorer, a callable
+    scorer objects needs to be created first with :func:`make_scorer`,
+    passing the value for the `beta` parameter.
+
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(
+    ...     LinearSVC(dual="auto"),
+    ...     param_grid={'C': [1, 10]},
+    ...     scoring=ftwo_scorer,
+    ...     cv=5
+    ... )
     """
 
     _, _, f, _ = precision_recall_fscore_support(
