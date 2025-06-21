@@ -1346,6 +1346,10 @@ class LassoLars(Lars):
     LassoLars(alpha=0.01)
     >>> print(reg.coef_)
     [ 0.         -0.955]
+
+    For a visual example using LassoLarsIC with AIC and BIC to select the
+    regularization parameter,see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
     _parameter_constraints: dict = {
