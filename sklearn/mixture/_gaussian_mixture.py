@@ -10,6 +10,7 @@ from .._config import get_config
 from ..externals import array_api_extra as xpx
 from ..utils import check_array
 from ..utils._array_api import (
+    _add_to_diagonal,
     _cholesky,
     _linalg_solve,
     get_namespace,
@@ -192,8 +193,7 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar, xp=None):
     for k in range(n_components):
         diff = X - means[k, :]
         covariances[k, :, :] = ((resp[:, k] * diff.T) @ diff) / nk[k]
-        covariances_flat = xp.reshape(covariances[k, :, :], (-1,))
-        covariances_flat[:: n_features + 1] += reg_covar
+        _add_to_diagonal(covariances[k, :, :], reg_covar, xp)
     return covariances
 
 
@@ -222,8 +222,7 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar, xp=None):
     avg_means2 = nk * means.T @ means
     covariance = avg_X2 - avg_means2
     covariance /= xp.sum(nk)
-    covariance_flat = xp.reshape(covariance, (-1,))
-    covariance_flat[:: covariance.shape[0] + 1] += reg_covar
+    _add_to_diagonal(covariance, reg_covar, xp)
     return covariance
 
 
