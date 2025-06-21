@@ -153,10 +153,7 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channels": ["defaults"],
-        "conda_dependencies": remove_from(
-            common_dependencies, ["cython", "threadpoolctl", "meson-python"]
-        )
-        + ["ccache"],
+        "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
             # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
@@ -164,9 +161,7 @@ build_metadata_list = [
             # channel.
             "scipy": "<1.12",
         },
-        # TODO: put cython, threadpoolctl and meson-python back to conda
-        # dependencies when required version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
+        "pip_dependencies": ["meson"],
     },
     {
         "name": "pymin_conda_forge_openblas_min_dependencies",
@@ -215,14 +210,16 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["defaults"],
-        "conda_dependencies": ["python", "ccache"],
-        "pip_dependencies": (
-            remove_from(common_dependencies, ["python", "blas", "pip"])
+        "conda_dependencies": (
+            ["python", "ccache"]
             + docstring_test_dependencies
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
             # Test array API on CPU without PyTorch
             + ["array-api-strict"]
+        ),
+        "pip_dependencies": (
+            remove_from(common_dependencies, ["python", "blas", "pip"])
             # doctests dependencies
             + ["scipy-doctest"]
         ),
@@ -234,7 +231,15 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["defaults"],
-        "conda_dependencies": ["python", "ccache"],
+        "conda_dependencies": [
+            "python",
+            "ccache",
+            "threadpoolctl",
+            "meson-python",
+            "pytest",
+            "pytest-xdist",
+            "ninja",
+        ],
         "pip_dependencies": (
             remove_from(
                 common_dependencies,
@@ -243,6 +248,11 @@ build_metadata_list = [
                     "blas",
                     "matplotlib",
                     "pyamg",
+                    "pytest",
+                    "meson-python",
+                    "threadpoolctl",
+                    "pytest-xdist",
+                    "ninja",
                     # all the dependencies below have a development version
                     # installed in the CI, so they can be removed from the
                     # environment.yml
@@ -321,13 +331,13 @@ build_metadata_list = [
             "plotly",
             "polars",
             "pooch",
+            "sphinxext-opengraph",
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
             "towncrier",
         ],
         "pip_dependencies": [
-            "sphinxext-opengraph",
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
@@ -381,10 +391,10 @@ build_metadata_list = [
             "sphinx-design",
             "pydata-sphinx-theme",
             "towncrier",
-        ],
-        "pip_dependencies": [
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
+        ],
+        "pip_dependencies": [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
