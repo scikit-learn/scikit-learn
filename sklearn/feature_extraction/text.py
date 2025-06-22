@@ -1071,6 +1071,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
 
+    Notes
+    -----
+    `CountVectorizer` may consume large amounts of memory when applied to very large
+    text corpora,especially with a large vocabulary. Consider using `HashingVectorizer`
+    for more memory-efficient text feature extraction, at the cost of losing inverse
+    mapping of features to tokens.
+
     Attributes
     ----------
     vocabulary_ : dict
