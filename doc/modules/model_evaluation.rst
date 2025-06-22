@@ -1950,7 +1950,7 @@ achieves the best score only when the estimated probabilities equal the
 true ones.
 
 Note that in the binary case, the Brier score is usually divided by two and
-ranges between :math:`[0,1]`. For binary targets :math:`y_i \in {0, 1}` and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in \{0, 1\}` and
 probability estimates :math:`\hat{p}_i  \approx \operatorname{Pr}(y_i = 1)`
 for the positive class, the Brier score is then equal to:
 
