@@ -215,13 +215,13 @@ build_metadata_list = [
             + docstring_test_dependencies
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
-            # Test array API on CPU without PyTorch
-            + ["array-api-strict"]
         ),
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             # doctests dependencies
             + ["scipy-doctest"]
+            # Test array API on CPU without PyTorch
+            + ["array-api-strict"]
         ),
     },
     {

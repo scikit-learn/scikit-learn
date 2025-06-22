@@ -10,7 +10,6 @@ dependencies:
   - numpydoc
   - lightgbm
   - scikit-image
-  - array-api-strict
   - pip
   - pip:
     - numpy
@@ -29,3 +28,4 @@ dependencies:
     - pytest-cov
     - coverage
     - scipy-doctest
+    - array-api-strict
