@@ -7,14 +7,14 @@ This example demonstrates the effectiveness of semi-supervised learning
 in text classification when labeled data is scarce.
 We compare four different approaches:
 
-1. Supervised learning using 100% of labeled data (baseline)
+1. Supervised learning using 100% of labeled data (best-case scenario)
 
    - Uses SGDClassifier with TF-IDF features
    - Represents the best possible performance with full supervision
 
-2. Supervised learning using only 20% of labeled data
+2. Supervised learning using only 20% of labeled data (baseline)
 
-   - Same model as baseline but with limited training data
+   - Same model as the best-case scenario but with limited training data
    - Shows the performance degradation due to limited labeled data
 
 3. SelfTrainingClassifier (semi-supervised)
@@ -111,29 +111,48 @@ X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 f1_scores = {}
 
-# Evaluate supervised model with 100% of training data
+# %%
+# 1. Evaluate a supervised SGDClassifier trained on 100% of the labeled data.
+# This represents the best-case performance when the model has full access to all
+# labeled examples.
+
 print("1. Supervised SGDClassifier on 100% of the data:")
 f1_scores["Supervised (100%)"] = eval_and_get_f1(
     pipeline, X_train, y_train, X_test, y_test
 )
 
-# Evaluate supervised model with 20% of training data
+# %%
+# 2. Evaluate a supervised SGDClassifier trained on only 20% of the labeled data.
+# This serves as a baseline to illustrate the performance drop caused by limited
+# labeled data.
+
 print("2. Supervised SGDClassifier on 20% of the training data:")
 y_mask = np.random.rand(len(y_train)) < 0.2
 # X_20 and y_20 are the subset of the train dataset indicated by the mask
 X_20, y_20 = map(list, zip(*((x, y) for x, y, m in zip(X_train, y_train, y_mask) if m)))
 f1_scores["Supervised (20%)"] = eval_and_get_f1(pipeline, X_20, y_20, X_test, y_test)
 
-# Evaluate semi-supervised approaches
+# %%
+# 3. Evaluate a semi-supervised SelfTrainingClassifier using 20% labeled and 80%
+# unlabeled data.
+# The remaining 80% of the training labels are masked as unlabeled (-1),
+# allowing the model to iteratively label and learn from them.
+
 print(
     "3. SelfTrainingClassifier (semi-supervised) using 20% labeled "
     "+ 80% unlabeled data):"
 )
 y_train_semi = y_train.copy()
-y_train_semi[~y_mask] = -1  # Mark unlabeled data with -1
+y_train_semi[~y_mask] = -1
 f1_scores["SelfTraining"] = eval_and_get_f1(
     st_pipeline, X_train, y_train_semi, X_test, y_test
 )
+# %%
+# 4. Evaluate a semi-supervised LabelSpreading model using 20% labeled and 80%
+# unlabeled data.
+# Like SelfTraining, the model infers labels for the unlabeled portion of the data
+# to enhance performance.
+
 print("4. LabelSpreading (semi-supervised) using 20% labeled + 80% unlabeled data:")
 f1_scores["LabelSpreading"] = eval_and_get_f1(
     ls_pipeline, X_train, y_train_semi, X_test, y_test
