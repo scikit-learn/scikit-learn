@@ -935,6 +935,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     that does some kind of feature selection then the number of features will
     be equal to the vocabulary size found by analyzing the data.
 
+    .. note::
+       For very large corpora or vocabularies, memory usage can grow
+       significantly.In such cases, consider using
+       :class:`~sklearn.feature_extraction.text.HashingVectorizer`,which is
+       more memory efficient but does not preserve the feature names.
+
     For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
@@ -1070,13 +1076,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
-
-    Notes
-    -----
-    `CountVectorizer` may consume large amounts of memory when applied to very large
-    text corpora,especially with a large vocabulary. Consider using `HashingVectorizer`
-    for more memory-efficient text feature extraction, at the cost of losing inverse
-    mapping of features to tokens.
 
     Attributes
     ----------
