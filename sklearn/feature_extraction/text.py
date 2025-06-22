@@ -1071,6 +1071,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
 
+    Notes
+    -----
+    For small documents, using Python's ``List[int]`` as input may result in
+    lower peak memory usage compared to using ``array.array('i')`` internally.
+    This was verified during the resolution of issue :gh:`13062`.
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -1554,6 +1560,8 @@ class TfidfTransformer(
 
     sublinear_tf : bool, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
+
 
     Attributes
     ----------
