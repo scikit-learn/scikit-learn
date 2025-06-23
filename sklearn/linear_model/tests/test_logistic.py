@@ -1501,21 +1501,21 @@ def test_elastic_net_coeffs(global_random_seed):
 
 @pytest.mark.parametrize("C", [0.001, 0.1, 1, 10, 100, 1000, 1e6])
 @pytest.mark.parametrize("penalty, l1_ratio", [("l1", 1), ("l2", 0)])
-def test_elastic_net_l1_l2_equivalence(C, penalty, l1_ratio):
+def test_elastic_net_l1_l2_equivalence(global_random_seed, C, penalty, l1_ratio):
     # Make sure elasticnet is equivalent to l1 when l1_ratio=1 and to l2 when
     # l1_ratio=0.
-    X, y = make_classification(random_state=0)
+    X, y = make_classification(random_state=global_random_seed)
 
     lr_enet = LogisticRegression(
         penalty="elasticnet",
         C=C,
         l1_ratio=l1_ratio,
         solver="saga",
-        random_state=0,
+        random_state=global_random_seed,
         tol=1e-2,
     )
     lr_expected = LogisticRegression(
-        penalty=penalty, C=C, solver="saga", random_state=0, tol=1e-2
+        penalty=penalty, C=C, solver="saga", random_state=global_random_seed, tol=1e-2
     )
     lr_enet.fit(X, y)
     lr_expected.fit(X, y)
@@ -1524,25 +1524,31 @@ def test_elastic_net_l1_l2_equivalence(C, penalty, l1_ratio):
 
 
 @pytest.mark.parametrize("C", [0.001, 1, 100, 1e6])
-def test_elastic_net_vs_l1_l2(C):
+def test_elastic_net_vs_l1_l2(global_random_seed, C):
     # Make sure that elasticnet with grid search on l1_ratio gives same or
     # better results than just l1 or just l2.
 
-    X, y = make_classification(500, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X, y = make_classification(500, random_state=global_random_seed)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=global_random_seed
+    )
 
     param_grid = {"l1_ratio": np.linspace(0, 1, 5)}
 
     enet_clf = LogisticRegression(
-        penalty="elasticnet", C=C, solver="saga", random_state=0, tol=1e-2
+        penalty="elasticnet",
+        C=C,
+        solver="saga",
+        random_state=global_random_seed,
+        tol=1e-2,
     )
     gs = GridSearchCV(enet_clf, param_grid, refit=True)
 
     l1_clf = LogisticRegression(
-        penalty="l1", C=C, solver="saga", random_state=0, tol=1e-2
+        penalty="l1", C=C, solver="saga", random_state=global_random_seed, tol=1e-2
     )
     l2_clf = LogisticRegression(
-        penalty="l2", C=C, solver="saga", random_state=0, tol=1e-2
+        penalty="l2", C=C, solver="saga", random_state=global_random_seed, tol=1e-2
     )
 
     for clf in (gs, l1_clf, l2_clf):
@@ -1721,15 +1727,11 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-# Remove multi_class an change first element of the expected n_iter_.shape from
-# n_classes to 1 (according to the docstring).
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
 
-    n_classes = 3
+    n_classes = 1
     n_features = 20
     X, y = make_classification(
         n_samples=200,
