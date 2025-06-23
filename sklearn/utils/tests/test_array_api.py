@@ -3,6 +3,7 @@ from functools import partial
 
 import numpy
 import pytest
+import scipy
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -18,6 +19,7 @@ from sklearn.utils._array_api import (
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
+    _logsumexp,
     _max_precision_float_dtype,
     _median,
     _nanmax,
@@ -634,3 +636,58 @@ def test_median(namespace, device, dtype_name, axis):
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
     assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("axis", [0, 1, None])
+def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, axis):
+    xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.asarray(
+        [
+            [0, 3, 1000],
+            [2, -1, 1000],
+            [-10, 0, 0],
+            [-50, 8, -numpy.inf],
+            [4, 0, 5],
+        ],
+        dtype=dtype_name,
+    )
+    array_xp = xp.asarray(array_np, device=device_)
+
+    res_np = scipy.special.logsumexp(array_np, axis=axis)
+
+    rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
+
+    # if torch on CPU or array api strict on default device
+    # check that _logsumexp works when array API dispatch is disabled
+    if (array_namespace == "torch" and device_ == "cpu") or (
+        array_namespace == "array_api_strict" and "CPU" in str(device_)
+    ):
+        assert_allclose(_logsumexp(array_xp, axis=axis), res_np, rtol=rtol)
+
+    with config_context(array_api_dispatch=True):
+        res_xp = _logsumexp(array_xp, axis=axis)
+        res_xp = _convert_to_numpy(res_xp, xp)
+        assert_allclose(res_np, res_xp, rtol=rtol)
+
+    # Test with NaNs and +np.inf
+    array_np_2 = numpy.asarray(
+        [
+            [0, numpy.nan, 1000],
+            [2, -1, 1000],
+            [numpy.inf, 0, 0],
+            [-50, 8, -numpy.inf],
+            [4, 0, 5],
+        ],
+        dtype=dtype_name,
+    )
+    array_xp_2 = xp.asarray(array_np_2, device=device_)
+
+    res_np_2 = scipy.special.logsumexp(array_np_2, axis=axis)
+
+    with config_context(array_api_dispatch=True):
+        res_xp_2 = _logsumexp(array_xp_2, axis=axis)
+        res_xp_2 = _convert_to_numpy(res_xp_2, xp)
+        assert_allclose(res_np_2, res_xp_2, rtol=rtol)

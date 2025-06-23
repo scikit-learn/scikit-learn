@@ -27,9 +27,13 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
+from ..utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+    size,
+)
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import stable_cumsum
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
@@ -862,6 +866,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
+    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
@@ -883,7 +889,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
-    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
     y_score = y_score[desc_score_indices]
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
@@ -894,17 +900,27 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_score))[0]
-    threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
 
     # accumulate the true positives with decreasing threshold
-    tps = stable_cumsum(y_true * weight)[threshold_idxs]
+    max_float_dtype = _max_precision_float_dtype(xp, device)
+    # Perform the weighted cumulative sum using float64 precision when possible
+    # to avoid numerical stability problem with tens of millions of very noisy
+    # predictions:
+    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+    y_true = xp.astype(y_true, max_float_dtype)
+    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
-        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
+        fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
+            threshold_idxs
+        ]
     else:
-        fps = 1 + threshold_idxs - tps
+        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
     return fps, tps, y_score[threshold_idxs]
 
 
@@ -1160,6 +1176,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
+    xp, _, device = get_namespace_and_device(y_true, y_score)
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -1173,9 +1190,15 @@ def roc_curve(
     # _binary_clf_curve). This keeps all cases where the point should be kept,
     # but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
-    if drop_intermediate and len(fps) > 2:
-        optimal_idxs = np.where(
-            np.r_[True, np.logical_or(np.diff(fps, 2), np.diff(tps, 2)), True]
+    if drop_intermediate and fps.shape[0] > 2:
+        optimal_idxs = xp.where(
+            xp.concat(
+                [
+                    xp.asarray([True], device=device),
+                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    xp.asarray([True], device=device),
+                ]
+            )
         )[0]
         fps = fps[optimal_idxs]
         tps = tps[optimal_idxs]
@@ -1183,17 +1206,18 @@ def roc_curve(
 
     # Add an extra threshold position
     # to make sure that the curve starts at (0, 0)
-    tps = np.r_[0, tps]
-    fps = np.r_[0, fps]
+    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    fps = xp.concat([xp.asarray([0.0], device=device), fps])
     # get dtype of `y_score` even if it is an array-like
-    thresholds = np.r_[np.inf, thresholds]
+    thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
+    thresholds = xp.concat([xp.asarray([xp.inf], device=device), thresholds])
 
     if fps[-1] <= 0:
         warnings.warn(
             "No negative samples in y_true, false positive value should be meaningless",
             UndefinedMetricWarning,
         )
-        fpr = np.repeat(np.nan, fps.shape)
+        fpr = xp.full(fps.shape, xp.nan)
     else:
         fpr = fps / fps[-1]
 
@@ -1202,7 +1226,7 @@ def roc_curve(
             "No positive samples in y_true, true positive value should be meaningless",
             UndefinedMetricWarning,
         )
-        tpr = np.repeat(np.nan, tps.shape)
+        tpr = xp.full(tps.shape, xp.nan)
     else:
         tpr = tps / tps[-1]
 

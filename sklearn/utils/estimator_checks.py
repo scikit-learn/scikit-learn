@@ -3997,7 +3997,10 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 0)
     X = _enforce_estimator_tags_X(estimator, X)
-    X -= X.mean()
+    # Make sure that the dtype of X stays unchanged: for instance estimator
+    # that expect categorical inputs typically expected integer-based encoded
+    # categories.
+    X -= X.mean().astype(X.dtype)
 
     if tags.input_tags.positive_only:
         with raises(ValueError, match="Negative values in data"):
@@ -4405,7 +4408,14 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            raise ve
+            raise ValueError(
+                "Your estimator raised a ValueError, but with the incorrect or "
+                "incomplete error message to be considered a graceful fail. "
+                "The expected message in the ValueError should contain one of "
+                f"these literal strings:\n{expected_err_msgs}. "
+                f"For example, you could have `ValueError('{expected_err_msgs[0]}')`.\n"
+                f"This is the error message in your exception:\n{ve}"
+            )
 
 
 @ignore_warnings(category=FutureWarning)
