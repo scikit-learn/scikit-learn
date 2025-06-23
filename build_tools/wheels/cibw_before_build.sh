@@ -16,5 +16,3 @@ elif [[ $RUNNER_OS == "macOS" ]]; then
 elif [[ $RUNNER_OS == "Windows" ]]; then
     cat $PROJECT_DIR/build_tools/wheels/LICENSE_windows.txt >>"$LICENSE_FILE"
 fi
-
-echo "^^^^^^ made the license"

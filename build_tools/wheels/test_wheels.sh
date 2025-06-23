@@ -5,12 +5,6 @@ set -x
 
 PROJECT_DIR="$1"
 
-echo "############# ls -laR $PROJECT_DIR"
-ls -laR $PROJECT_DIR
-
-echo "############# ls -laR $PROJECT_DIR/build_tools/wheels"
-ls -laR $PROJECT_DIR/build_tools/wheels
-
 python $PROJECT_DIR/build_tools/wheels/check_license.py
 
 python -c "import joblib; print(f'Number of cores (physical): \
