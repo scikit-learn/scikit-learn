@@ -39,7 +39,7 @@ python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
-TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
+TEST_CMD="python -m pytest -vslx --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the
@@ -59,7 +59,8 @@ fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
-    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+    # TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+    TEST_CMD="$TEST_CMD -n2"
 fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
