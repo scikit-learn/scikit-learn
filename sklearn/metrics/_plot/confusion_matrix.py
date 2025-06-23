@@ -79,6 +79,15 @@ class ConfusionMatrixDisplay:
     >>> disp.plot()
     <...>
     >>> plt.show()
+
+    Examples
+    --------
+    You can find a usage example in:
+    :ref:`sphx_glr_auto_examples_classification_plot_confusion_matrix.py`
+
+    .. minigallery:: sklearn.metrics.ConfusionMatrixDisplay
+        :add-heading: Examples using `ConfusionMatrixDisplay`:
+
     """
 
     def __init__(self, confusion_matrix, *, display_labels=None):
