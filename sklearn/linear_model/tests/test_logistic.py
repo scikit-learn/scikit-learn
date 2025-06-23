@@ -1181,17 +1181,21 @@ def test_logistic_regression_cv_refit(global_random_seed, penalty):
     assert_array_almost_equal(lr_cv.coef_, lr.coef_)
 
 
-def test_logreg_predict_proba_multinomial():
+def test_logreg_predict_proba_multinomial(global_random_seed):
     X, y = make_classification(
-        n_samples=10, n_features=20, random_state=0, n_classes=3, n_informative=10
+        n_samples=10,
+        n_features=20,
+        random_state=global_random_seed,
+        n_classes=3,
+        n_informative=10,
     )
 
     # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
-    clf_multi = LogisticRegression(solver="lbfgs")
+    clf_multi = LogisticRegression()
     clf_multi.fit(X, y)
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
-    clf_ovr = OneVsRestClassifier(LogisticRegression(solver="lbfgs"))
+    clf_ovr = OneVsRestClassifier(LogisticRegression())
     clf_ovr.fit(X, y)
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert clf_ovr_loss > clf_multi_loss
@@ -1203,10 +1207,7 @@ def test_logreg_predict_proba_multinomial():
     assert clf_wrong_loss > clf_multi_loss
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("max_iter", np.arange(1, 5))
-@pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(
     "solver, message",
     [
@@ -1224,21 +1225,18 @@ def test_logreg_predict_proba_multinomial():
         ("newton-cholesky", "Newton solver did not converge after [0-9]* iterations"),
     ],
 )
-def test_max_iter(max_iter, multi_class, solver, message):
+def test_max_iter(global_random_seed, max_iter, solver, message):
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
     y_bin[y_bin == 2] = 0
 
-    if solver in ("liblinear",) and multi_class == "multinomial":
-        pytest.skip("'multinomial' is not supported by liblinear")
     if solver == "newton-cholesky" and max_iter > 1:
         pytest.skip("solver newton-cholesky might converge very fast")
 
     lr = LogisticRegression(
         max_iter=max_iter,
         tol=1e-15,
-        multi_class=multi_class,
-        random_state=0,
+        random_state=global_random_seed,
         solver=solver,
     )
     with pytest.warns(ConvergenceWarning, match=message):
@@ -1247,11 +1245,6 @@ def test_max_iter(max_iter, multi_class, solver, message):
     assert lr.n_iter_[0] == max_iter
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
-@pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
-)
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
