@@ -39,6 +39,8 @@ python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
+export OMP_NUM_THREADS=1
+
 TEST_CMD="python -m pytest -vsl --maxfail=20 --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -60,7 +62,7 @@ fi
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     # TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
-    TEST_CMD="$TEST_CMD -n2"
+    TEST_CMD="$TEST_CMD -n1"
 fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
