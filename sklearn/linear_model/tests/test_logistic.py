@@ -1300,7 +1300,7 @@ def test_n_iter(solver):
 )
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
-def test_warm_start(solver, warm_start, fit_intercept):
+def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
     # A 1-iteration second fit on same data should give almost same result
     # with warm starting, and quite different result without warm starting.
     # Warm starting does not work with liblinear solver.
@@ -1310,7 +1310,7 @@ def test_warm_start(solver, warm_start, fit_intercept):
         tol=1e-4,
         warm_start=warm_start,
         solver=solver,
-        random_state=42,
+        random_state=global_random_seed,
         fit_intercept=fit_intercept,
     )
     with ignore_warnings(category=ConvergenceWarning):
@@ -1331,7 +1331,7 @@ def test_warm_start(solver, warm_start, fit_intercept):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_saga_vs_liblinear(csr_container):
+def test_saga_vs_liblinear(global_random_seed, csr_container):
     iris = load_iris()
     X, y = iris.data, iris.target
     X = np.concatenate([X] * 3)
@@ -1341,7 +1341,7 @@ def test_saga_vs_liblinear(csr_container):
     y_bin = y[y <= 1] * 2 - 1
 
     X_sparse, y_sparse = make_classification(
-        n_samples=50, n_features=20, random_state=0
+        n_samples=50, n_features=20, random_state=global_random_seed
     )
     X_sparse = csr_container(X_sparse)
 
@@ -1356,7 +1356,7 @@ def test_saga_vs_liblinear(csr_container):
                     max_iter=200,
                     fit_intercept=False,
                     penalty=penalty,
-                    random_state=0,
+                    random_state=global_random_seed,
                     tol=1e-6,
                 )
 
@@ -1366,7 +1366,7 @@ def test_saga_vs_liblinear(csr_container):
                     max_iter=200,
                     fit_intercept=False,
                     penalty=penalty,
-                    random_state=0,
+                    random_state=global_random_seed,
                     tol=1e-6,
                 )
 
@@ -1376,20 +1376,14 @@ def test_saga_vs_liblinear(csr_container):
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
-@pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(
     "solver", ["liblinear", "newton-cg", "newton-cholesky", "saga"]
 )
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
+def test_dtype_match(global_random_seed, solver, fit_intercept, csr_container):
     # Test that np.float32 input data is not cast to np.float64 when possible
     # and that the output is approximately the same no matter the input format.
-
-    if solver == "liblinear" and multi_class == "multinomial":
-        pytest.skip(f"Solver={solver} does not support multinomial logistic.")
 
     out32_type = np.float64 if solver == "liblinear" else np.float32
 
@@ -1403,8 +1397,7 @@ def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
 
     lr_templ = LogisticRegression(
         solver=solver,
-        multi_class=multi_class,
-        random_state=42,
+        random_state=global_random_seed,
         tol=solver_tol,
         fit_intercept=fit_intercept,
     )
@@ -1456,15 +1449,19 @@ def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
     assert_allclose(lr_64.coef_, lr_64_sparse.coef_, atol=atol)
 
 
-def test_warm_start_converge_LR():
+def test_warm_start_converge_LR(global_random_seed):
     # Test to see that the logistic regression converges on warm start,
-    # with multi_class='multinomial'. Non-regressive test for #10836
+    # Non-regressive test for #10836
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = np.array([1] * 100 + [-1] * 100)
-    lr_no_ws = LogisticRegression(solver="sag", warm_start=False, random_state=0)
-    lr_ws = LogisticRegression(solver="sag", warm_start=True, random_state=0)
+    lr_no_ws = LogisticRegression(
+        solver="sag", warm_start=False, random_state=global_random_seed
+    )
+    lr_ws = LogisticRegression(
+        solver="sag", warm_start=True, random_state=global_random_seed
+    )
 
     lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
     for i in range(5):
@@ -1473,10 +1470,10 @@ def test_warm_start_converge_LR():
     assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
 
 
-def test_elastic_net_coeffs():
+def test_elastic_net_coeffs(global_random_seed):
     # make sure elasticnet penalty gives different coefficients from l1 and l2
     # with saga solver (l1_ratio different from 0 or 1)
-    X, y = make_classification(random_state=0)
+    X, y = make_classification(random_state=global_random_seed)
 
     C = 2.0
     l1_ratio = 0.5
@@ -1486,15 +1483,16 @@ def test_elastic_net_coeffs():
             penalty=penalty,
             C=C,
             solver="saga",
-            random_state=0,
+            random_state=global_random_seed,
             l1_ratio=ratio,
             tol=1e-3,
-            max_iter=200,
+            max_iter=400,
         )
         lr.fit(X, y)
         coeffs.append(lr.coef_)
 
     elastic_net_coeffs, l1_coeffs, l2_coeffs = coeffs
+
     # make sure coeffs differ by at least .1
     assert not np.allclose(elastic_net_coeffs, l1_coeffs, rtol=0, atol=0.1)
     assert not np.allclose(elastic_net_coeffs, l2_coeffs, rtol=0, atol=0.1)
