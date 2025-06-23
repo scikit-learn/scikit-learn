@@ -183,7 +183,7 @@ Coverage is expected to grow over time. Please follow the dedicated `meta-issue 
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
 
 Input and output array type handling
-------------------------------------
+====================================
 
 Estimators and scoring functions are able to accept input arrays
 from different array libraries and/or devices. When a mixed set of input arrays is
@@ -199,14 +199,13 @@ convention is to return arrays from the same array library and on the same
 device as the input data.
 
 Estimators
-~~~~~~~~~~
+----------
 
 When an estimator is fitted with an array API compatible `X`, all other
-array inputs, including constructor arguments, (e.g., `y`, `sample_weight`,
-`weights_init`) will be converted to match the array library and
-device of `X`, if they do not already.
-This behaviour enables pipelines to switch from processing on
-the CPU to processing on the GPU within the pipeline.
+array inputs, including constructor arguments, (e.g., `y`, `sample_weight`)
+will be converted to match the array library and device of `X`, if they do not already.
+This behaviour enables switching from processing on the CPU to processing
+on the GPU at any point within a pipeline.
 
 This allows estimators to accept mixed input types, enabling `X` to be moved
 to a different device within a pipeline, without explicitly moving `y`.
@@ -238,7 +237,7 @@ inputs from the same array library and device as the data passed to the `fit`
 method.
 
 Scoring functions
-~~~~~~~~~~~~~~~~~
+-----------------
 
 When an array API compatible `y_pred` is passed to a scoring function,
 all other array inputs (e.g., `y_true`, `sample_weight`) will be converted
