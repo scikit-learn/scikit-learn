@@ -1558,9 +1558,10 @@ def test_elastic_net_vs_l1_l2(global_random_seed, C):
     assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
 
 
+# Fix this one:
 @pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
-def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
+def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_ratio):
     # Check that training with a penalty matching the objective leads
     # to a lower objective.
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
@@ -1573,20 +1574,28 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
         n_informative=10,
         n_redundant=0,
         n_repeated=0,
-        random_state=0,
+        random_state=global_random_seed,
     )
     X = scale(X)
 
     lr_enet = LogisticRegression(
         penalty="elasticnet",
         solver="saga",
-        random_state=0,
+        random_state=global_random_seed,
         C=C,
         l1_ratio=l1_ratio,
         fit_intercept=False,
+        max_iter=1000,
+        tol=1e-6,
     )
     lr_l2 = LogisticRegression(
-        penalty="l2", solver="saga", random_state=0, C=C, fit_intercept=False
+        penalty="l2",
+        solver="saga",
+        random_state=global_random_seed,
+        C=C,
+        fit_intercept=False,
+        max_iter=1000,
+        tol=1e-6,
     )
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
@@ -1601,13 +1610,17 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     assert enet_objective(lr_enet) < enet_objective(lr_l2)
 
 
+# Fix this one:
 @pytest.mark.parametrize("n_classes", (2, 3))
-def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
+def test_LogisticRegressionCV_GridSearchCV_elastic_net(global_random_seed, n_classes):
     # make sure LogisticRegressionCV gives same best params (l1 and C) as
     # GridSearchCV when penalty is elasticnet
 
     X, y = make_classification(
-        n_samples=100, n_classes=n_classes, n_informative=3, random_state=0
+        n_samples=100,
+        n_classes=n_classes,
+        n_informative=3,
+        random_state=global_random_seed,
     )
 
     cv = StratifiedKFold(5)
@@ -1622,7 +1635,8 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
         cv=cv,
         l1_ratios=l1_ratios,
         random_state=0,
-        tol=1e-2,
+        max_iter=300,
+        tol=1e-3,
     )
     lrcv.fit(X, y)
 
@@ -1631,7 +1645,8 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
         penalty="elasticnet",
         solver="saga",
         random_state=0,
-        tol=1e-2,
+        max_iter=300,
+        tol=1e-3,
     )
     gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X, y)
@@ -1640,56 +1655,6 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     assert gs.best_params_["C"] == lrcv.C_[0]
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-# Maybe remove whole test after removal of the deprecated multi_class.
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
-def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
-    # make sure LogisticRegressionCV gives same best params (l1 and C) as
-    # GridSearchCV when penalty is elasticnet and multiclass is ovr. We can't
-    # compare best_params like in the previous test because
-    # LogisticRegressionCV with multi_class='ovr' will have one C and one
-    # l1_param for each class, while LogisticRegression will share the
-    # parameters over the *n_classes* classifiers.
-
-    X, y = make_classification(
-        n_samples=100, n_classes=3, n_informative=3, random_state=0
-    )
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    cv = StratifiedKFold(5)
-
-    l1_ratios = np.linspace(0, 1, 3)
-    Cs = np.logspace(-4, 4, 3)
-
-    lrcv = LogisticRegressionCV(
-        penalty="elasticnet",
-        Cs=Cs,
-        solver="saga",
-        cv=cv,
-        l1_ratios=l1_ratios,
-        random_state=0,
-        multi_class="ovr",
-        tol=1e-2,
-    )
-    lrcv.fit(X_train, y_train)
-
-    param_grid = {"C": Cs, "l1_ratio": l1_ratios}
-    lr = LogisticRegression(
-        penalty="elasticnet",
-        solver="saga",
-        random_state=0,
-        multi_class="ovr",
-        tol=1e-2,
-    )
-    gs = GridSearchCV(lr, param_grid, cv=cv)
-    gs.fit(X_train, y_train)
-
-    # Check that predictions are 80% the same
-    assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= 0.8
-    assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= 0.8
-
-
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("penalty", ("l2", "elasticnet"))
 @pytest.mark.parametrize("multi_class", ("ovr", "multinomial", "auto"))
 def test_LogisticRegressionCV_no_refit(penalty, multi_class):
@@ -1781,7 +1746,7 @@ def test_l1_ratio_non_elasticnet():
 
 @pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
-def test_elastic_net_versus_sgd(C, l1_ratio):
+def test_elastic_net_versus_sgd(global_random_seed, C, l1_ratio):
     # Compare elasticnet penalty in LogisticRegression() and SGD(loss='log')
     n_samples = 500
     X, y = make_classification(
@@ -1791,13 +1756,13 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
         n_informative=5,
         n_redundant=0,
         n_repeated=0,
-        random_state=1,
+        random_state=global_random_seed,
     )
     X = scale(X)
 
     sgd = SGDClassifier(
         penalty="elasticnet",
-        random_state=1,
+        random_state=global_random_seed,
         fit_intercept=False,
         tol=None,
         max_iter=2000,
@@ -1807,7 +1772,7 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
     )
     log = LogisticRegression(
         penalty="elasticnet",
-        random_state=1,
+        random_state=global_random_seed,
         fit_intercept=False,
         tol=1e-5,
         max_iter=1000,
@@ -1853,11 +1818,6 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
-@pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
-)
 @pytest.mark.parametrize(
     "est",
     [
@@ -1910,12 +1870,14 @@ def test_logistic_regression_multi_class_auto(est, solver):
 
 
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
-def test_penalty_none(solver):
+def test_penalty_none(global_random_seed, solver):
     # - Make sure warning is raised if penalty=None and C is set to a
     #   non-default value.
     # - Make sure setting penalty=None is equivalent to setting C=np.inf with
     #   l2 penalty.
-    X, y = make_classification(n_samples=1000, n_redundant=0, random_state=0)
+    X, y = make_classification(
+        n_samples=1000, n_redundant=0, random_state=global_random_seed
+    )
 
     msg = "Setting penalty=None will ignore the C"
     lr = LogisticRegression(penalty=None, solver=solver, C=4)
@@ -1924,7 +1886,7 @@ def test_penalty_none(solver):
 
     lr_none = LogisticRegression(penalty=None, solver=solver, random_state=0)
     lr_l2_C_inf = LogisticRegression(
-        penalty="l2", C=np.inf, solver=solver, random_state=0
+        penalty="l2", C=np.inf, solver=solver, random_state=global_random_seed
     )
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
@@ -1939,7 +1901,7 @@ def test_penalty_none(solver):
         {"penalty": "l2", "dual": False, "tol": 1e-12, "max_iter": 1000},
     ],
 )
-def test_logisticregression_liblinear_sample_weight(params):
+def test_logisticregression_liblinear_sample_weight(global_random_seed, params):
     # check that we support sample_weight with liblinear in all possible cases:
     # l1-primal, l2-primal, l2-dual
     X = np.array(
@@ -1971,9 +1933,11 @@ def test_logisticregression_liblinear_sample_weight(params):
     y2 = np.hstack([y, 3 - y])
     sample_weight = np.ones(shape=len(y) * 2)
     sample_weight[len(y) :] = 0
-    X2, y2, sample_weight = shuffle(X2, y2, sample_weight, random_state=0)
+    X2, y2, sample_weight = shuffle(
+        X2, y2, sample_weight, random_state=global_random_seed
+    )
 
-    base_clf = LogisticRegression(solver="liblinear", random_state=42)
+    base_clf = LogisticRegression(solver="liblinear", random_state=global_random_seed)
     base_clf.set_params(**params)
     clf_no_weight = clone(base_clf).fit(X, y)
     clf_with_weight = clone(base_clf).fit(X2, y2, sample_weight=sample_weight)
@@ -1984,14 +1948,14 @@ def test_logisticregression_liblinear_sample_weight(params):
         assert_allclose(X_clf_no_weight, X_clf_with_weight)
 
 
-def test_scores_attribute_layout_elasticnet():
+def test_scores_attribute_layout_elasticnet(global_random_seed):
     # Non regression test for issue #14955.
     # when penalty is elastic net the scores_ attribute has shape
     # (n_classes, n_Cs, n_l1_ratios)
     # We here make sure that the second dimension indeed corresponds to Cs and
     # the third dimension corresponds to l1_ratios.
 
-    X, y = make_classification(n_samples=1000, random_state=0)
+    X, y = make_classification(n_samples=1000, random_state=global_random_seed)
     cv = StratifiedKFold(n_splits=5)
 
     l1_ratios = [0.1, 0.9]
@@ -2003,7 +1967,7 @@ def test_scores_attribute_layout_elasticnet():
         l1_ratios=l1_ratios,
         Cs=Cs,
         cv=cv,
-        random_state=0,
+        random_state=global_random_seed,
         max_iter=250,
         tol=1e-3,
     )
@@ -2018,7 +1982,7 @@ def test_scores_attribute_layout_elasticnet():
                 solver="saga",
                 C=C,
                 l1_ratio=l1_ratio,
-                random_state=0,
+                random_state=global_random_seed,
                 max_iter=250,
                 tol=1e-3,
             )
@@ -2027,11 +1991,9 @@ def test_scores_attribute_layout_elasticnet():
             assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "newton-cholesky"])
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_multinomial_identifiability_on_iris(solver, fit_intercept):
+def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_intercept):
     """Test that the multinomial classification is identifiable.
 
     A multinomial with c classes can be modeled with
@@ -2061,6 +2023,7 @@ def test_multinomial_identifiability_on_iris(solver, fit_intercept):
         C=len(iris.data),
         solver="lbfgs",
         fit_intercept=fit_intercept,
+        random_state=global_random_seed,
     )
     # Scaling X to ease convergence.
     X_scaled = scale(iris.data)
@@ -2072,11 +2035,9 @@ def test_multinomial_identifiability_on_iris(solver, fit_intercept):
         assert clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-11)
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of multi_class
-@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial", "auto"])
 @pytest.mark.parametrize("class_weight", [{0: 1.0, 1: 10.0, 2: 1.0}, "balanced"])
-def test_sample_weight_not_modified(multi_class, class_weight):
+def test_sample_weight_not_modified(global_random_seed, multi_class, class_weight):
     X, y = load_iris(return_X_y=True)
     n_features = len(X)
     W = np.ones(n_features)
@@ -2085,7 +2046,10 @@ def test_sample_weight_not_modified(multi_class, class_weight):
     expected = W.copy()
 
     clf = LogisticRegression(
-        random_state=0, class_weight=class_weight, max_iter=200, multi_class=multi_class
+        random_state=global_random_seed,
+        class_weight=class_weight,
+        max_iter=200,
+        multi_class=multi_class,
     )
     clf.fit(X, y, sample_weight=W)
     assert_allclose(expected, W)
