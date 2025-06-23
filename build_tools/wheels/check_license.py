@@ -26,7 +26,7 @@ print(f"******************* Contents of {distinfo_path}:")
 subprocess.run(["ls", "-laR", str(distinfo_path)])
 
 print("$$$$$$$$$$$$$$$$$$$$ $distinfo_path/COPYING")
-license_text = (distinfo_path / "COPYING").read_text()
+license_text = (distinfo_path / "licenses" / "COPYING").read_text()
 
 assert "Copyright (c)" in license_text
 
