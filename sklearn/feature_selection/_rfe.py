@@ -190,6 +190,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
+
+    See :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py`.
+
     """
 
     _parameter_constraints: dict = {
