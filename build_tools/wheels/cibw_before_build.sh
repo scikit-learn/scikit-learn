@@ -3,7 +3,7 @@
 set -euxo pipefail
 
 PROJECT_DIR="$1"
-LICENSE_FILE="$PROJECT_DIR/COPYING"
+LICENSE_FILE="$PROJECT_DIR/license/COPYING"
 
 echo "" >>"$LICENSE_FILE"
 echo "----" >>"$LICENSE_FILE"
@@ -16,3 +16,5 @@ elif [[ $RUNNER_OS == "macOS" ]]; then
 elif [[ $RUNNER_OS == "Windows" ]]; then
     cat $PROJECT_DIR/build_tools/wheels/LICENSE_windows.txt >>"$LICENSE_FILE"
 fi
+
+echo "^^^^^^ made the license"
