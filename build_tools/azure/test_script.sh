@@ -39,7 +39,7 @@ python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
-TEST_CMD="python -m pytest -vslx --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
+TEST_CMD="python -m pytest -vsl --maxfail=20 --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the
