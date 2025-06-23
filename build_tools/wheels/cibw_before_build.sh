@@ -3,7 +3,7 @@
 set -euxo pipefail
 
 PROJECT_DIR="$1"
-LICENSE_FILE="$PROJECT_DIR/license/COPYING"
+LICENSE_FILE="$PROJECT_DIR/COPYING"
 
 echo "" >>"$LICENSE_FILE"
 echo "----" >>"$LICENSE_FILE"
