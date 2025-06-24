@@ -320,7 +320,7 @@ def test_roc_curve_toydata():
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0, 0, 1])
-    assert_array_almost_equal(fpr, [0, 1, 1])
+    assert_array_almost_equal(fpr, [0, 0, 1])
     assert_almost_equal(roc_auc, 1.0)
 
     y_true = [0, 1]
@@ -344,7 +344,7 @@ def test_roc_curve_toydata():
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0, 0, 1])
-    assert_array_almost_equal(fpr, [0, 1, 1])
+    assert_array_almost_equal(fpr, [0, 0, 1])
     assert_almost_equal(roc_auc, 1.0)
 
     y_true = [1, 0]

@@ -1072,6 +1072,24 @@ def precision_recall_curve(
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
+def collinear_free_mask(fps_np, tps_np, tolerance=1e-12):
+    """Return indices of non-collinear points preserving endpoints."""
+    if len(fps_np) <= 2:
+        return np.arange(len(fps_np))
+    # Compute segment vectors
+    dx0 = fps_np[1:-1] - fps_np[:-2]
+    dy0 = tps_np[1:-1] - tps_np[:-2]
+    dx1 = fps_np[2:] - fps_np[1:-1]
+    dy1 = tps_np[2:] - tps_np[1:-1]
+    # Cross-product test
+    cross = dx0 * dy1 - dy0 * dx1
+    is_collinear = np.abs(cross) < tolerance
+    # Always keep endpoints, drop only true collinear
+    keep = np.ones(len(fps_np), dtype=bool)
+    keep[1:-1] = ~is_collinear
+    return np.flatnonzero(keep)
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1190,27 +1208,32 @@ def roc_curve(
     # _binary_clf_curve). This keeps all cases where the point should be kept,
     # but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
-    if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
-            xp.concat(
-                [
-                    xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
-                    xp.asarray([True], device=device),
-                ]
-            )
-        )[0]
-        fps = fps[optimal_idxs]
-        tps = tps[optimal_idxs]
-        thresholds = thresholds[optimal_idxs]
-
-    # Add an extra threshold position
-    # to make sure that the curve starts at (0, 0)
-    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    # Add an extra threshold position to make sure curve starts at (0, 0)
+    # Prepend start of curve
     fps = xp.concat([xp.asarray([0.0], device=device), fps])
-    # get dtype of `y_score` even if it is an array-like
-    thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
-    thresholds = xp.concat([xp.asarray([xp.inf], device=device), thresholds])
+    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    thresholds = xp.concatenate(
+        [
+            xp.asarray([xp.inf], device=device),
+            xp.astype(thresholds, _max_precision_float_dtype(xp, device)),
+        ]
+    )
+    # Drop intermediate collinear points if requested
+    if drop_intermediate and fps.shape[0] > 2:
+        # Convert to numpy arrays for mask computation
+        if hasattr(xp, "asnumpy"):
+            fps_cpu = xp.asnumpy(fps)
+            tps_cpu = xp.asnumpy(tps)
+        else:
+            fps_cpu = fps.cpu().numpy() if hasattr(fps, "cpu") else np.asarray(fps)
+            tps_cpu = tps.cpu().numpy() if hasattr(tps, "cpu") else np.asarray(tps)
+
+        # Identify indices to keep
+        keep_idx = collinear_free_mask(fps_cpu, tps_cpu)
+        # Apply mask using original array API
+        fps = fps[keep_idx]
+        tps = tps[keep_idx]
+        thresholds = thresholds[keep_idx]
 
     if fps[-1] <= 0:
         warnings.warn(
