@@ -328,10 +328,10 @@ def test_sample_weight(global_random_seed):
     clf2 = GradientBoostingClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = SVC(probability=True, random_state=global_random_seed)
     eclf1 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
+        estimators=[("lr", clf1), ("gbdt", clf2), ("svc", clf3)], voting="soft"
     ).fit(X_scaled, y, sample_weight=np.ones((len(y),)))
     eclf2 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
+        estimators=[("lr", clf1), ("gbdt", clf2), ("svc", clf3)], voting="soft"
     ).fit(X_scaled, y)
     assert_array_equal(eclf1.predict(X_scaled), eclf2.predict(X_scaled))
     assert_array_almost_equal(
