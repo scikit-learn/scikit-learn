@@ -52,3 +52,20 @@ jobs:
       - name: Build and run tests
         shell: bash -el {0}
         run: bash build_tools/github/build_test_arm.sh
+
+  windows-unit-tests:
+    name: Run unit tests
+    runs-on: windows-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: build_tools/azure/pymin_conda_forge_mkl_win-64_conda.lock
+          environment-name: ci
+          cache-environment: true
+
+      - name: Build and run tests
+        shell: bash -el {0}
+        run: bash build_tools/github/build_test_win.sh
