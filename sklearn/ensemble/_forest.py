@@ -592,8 +592,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 (n_samples, 1, n_outputs)
             The OOB predictions.
         """
-        assert X.shape[0] == self._n_samples, "passed X for oob different from fit ?"
-
         # Prediction requires X to be in CSR format
         if issparse(X):
             X = X.tocsr()
@@ -613,12 +611,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
         n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
-        n_samples_bootstrap = self._n_samples_bootstrap
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state,
                 n_samples,
-                n_samples_bootstrap,
+                self._n_samples_bootstrap,
                 self._sample_weight,
             )
 
