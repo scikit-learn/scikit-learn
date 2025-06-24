@@ -21,7 +21,7 @@ from ...base import BaseEstimator, RegressorMixin, _fit_context
 from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
-from ...utils.fixes import _get_lbfgs_iprint_options_dict
+from ...utils.fixes import _get_lbfgs_options_dict
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from .._linear_loss import LinearModelLoss
@@ -279,7 +279,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     # The point is that ftol is very small, but a bit larger than
                     # machine precision for float64, which is the dtype used by lbfgs.
                     "ftol": 64 * np.finfo(float).eps,
-                    **_get_lbfgs_iprint_options_dict(self.verbose - 1),
+                    **_get_lbfgs_options_dict("iprint", self.verbose - 1),
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )

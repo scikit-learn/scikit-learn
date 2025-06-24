@@ -14,7 +14,7 @@ import scipy.optimize
 
 from ..._loss.loss import HalfSquaredError
 from ...exceptions import ConvergenceWarning
-from ...utils.fixes import _get_lbfgs_iprint_options_dict
+from ...utils.fixes import _get_lbfgs_options_dict
 from ...utils.optimize import _check_optimize_result
 from .._linear_loss import LinearModelLoss
 
@@ -190,7 +190,7 @@ class NewtonSolver(ABC):
                 "maxls": 50,  # default is 20
                 "gtol": self.tol,
                 "ftol": 64 * np.finfo(np.float64).eps,
-                **_get_lbfgs_iprint_options_dict(self.verbose - 1),
+                **_get_lbfgs_options_dict("iprint", self.verbose - 1),
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )

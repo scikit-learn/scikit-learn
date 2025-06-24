@@ -30,7 +30,7 @@ from ..utils import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import row_norms, softmax
-from ..utils.fixes import _get_lbfgs_iprint_options_dict
+from ..utils.fixes import _get_lbfgs_options_dict
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -467,7 +467,7 @@ def _logistic_regression_path(
                     "maxls": 50,  # default is 20
                     "gtol": tol,
                     "ftol": 64 * np.finfo(float).eps,
-                    **_get_lbfgs_iprint_options_dict(iprint),
+                    **_get_lbfgs_options_dict("iprint", iprint),
                 },
             )
             n_iter_i = _check_optimize_result(

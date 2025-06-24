@@ -400,5 +400,5 @@ def _in_unstable_openblas_configuration():
 # https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035.
 # For scipy 1.15, iprint has no effect and for scipy >= 1.16 a
 # DeprecationWarning is emitted.
-def _get_lbfgs_iprint_options_dict(iprint_value):
-    return {} if sp_version >= parse_version("1.15") else {"iprint": iprint_value}
+def _get_lbfgs_options_dict(key, iprint_value):
+    return {} if sp_version >= parse_version("1.15") else {key: iprint_value}
