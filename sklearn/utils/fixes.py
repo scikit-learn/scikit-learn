@@ -394,7 +394,7 @@ def _in_unstable_openblas_configuration():
     return False
 
 
-# Remove when minimum pyarrow version is 17.0.0
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
 PYARROW_VERSION_BELOW_17 = False
 try:
     import pyarrow

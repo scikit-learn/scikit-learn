@@ -133,7 +133,7 @@ def _pyarrow_indexing(X, key, key_dtype, axis):
         key = np.asarray(key)
 
     if key_dtype == "bool":
-        # TODO: remove version checking and following if-branch when pyarrow==17.0.0 is
+        # TODO(pyarrow): remove version checking and following if-branch when pyarrow==17.0.0 is
         # the minimal version, see pyarrow issue
         # https://github.com/apache/arrow/issues/42013 for more info
         if PYARROW_VERSION_BELOW_17:
