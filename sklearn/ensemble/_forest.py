@@ -63,7 +63,7 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DOUBLE, DTYPE
-from ..utils import check_random_state, compute_sample_weight
+from ..utils import check_random_state, compute_class_weight, compute_sample_weight
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._tags import get_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
@@ -194,13 +194,17 @@ def _parallel_build_trees(
         indices = _generate_sample_indices(
             tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
-        sample_counts = np.bincount(indices, minlength=n_samples)
+        sample_weight_tree = np.bincount(indices, minlength=n_samples)
+        if class_weight == "balanced_subsample":
+            expanded_class_weight = compute_sample_weight(
+                "balanced", y, indices=indices
+            )
+            sample_weight_tree = sample_weight_tree * expanded_class_weight
 
-        # TODO: choose indexing/weighting strategy ? Here always weighting.
         tree._fit(
             X,
             y,
-            sample_weight=sample_counts,
+            sample_weight=sample_weight_tree,
             check_input=False,
             missing_values_in_feature_mask=missing_values_in_feature_mask,
         )
@@ -427,19 +431,21 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         self._n_samples, self.n_outputs_ = y.shape
 
-        y, expanded_class_weight = self._validate_y_class_weight(y)
+        y, expanded_class_weight = self._validate_y_class_weight(y, sample_weight)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        if expanded_class_weight is not None:
-            if sample_weight is not None:
-                sample_weight = sample_weight * expanded_class_weight
-            else:
-                sample_weight = expanded_class_weight
+        # sample_weight needed in _parallel_build_trees
+        if sample_weight is None:
+            _sample_weight = expanded_class_weight
+        elif expanded_class_weight is None:
+            _sample_weight = sample_weight
+        else:
+            _sample_weight = sample_weight * expanded_class_weight
 
         # storing sample_weight (needed by _get_estimators_indices)
-        self._sample_weight = sample_weight
+        self._sample_weight = _sample_weight
 
         if not self.bootstrap and self.max_samples is not None:
             raise ValueError(
@@ -449,7 +455,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         elif self.bootstrap:
             n_samples_bootstrap = _get_n_samples_bootstrap(
-                X.shape[0], self.max_samples, self._sample_weight
+                X.shape[0], self.max_samples, sample_weight
             )
         else:
             n_samples_bootstrap = None
@@ -508,7 +514,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     self.bootstrap,
                     X,
                     y,
-                    sample_weight,
+                    _sample_weight,
                     i,
                     len(trees),
                     verbose=self.verbose,
@@ -586,6 +592,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 (n_samples, 1, n_outputs)
             The OOB predictions.
         """
+        assert X.shape[0] == self._n_samples, "passed X for oob different from fit ?"
+
         # Prediction requires X to be in CSR format
         if issparse(X):
             X = X.tocsr()
@@ -605,10 +613,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
         n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples, self._sample_weight
-        )
+        n_samples_bootstrap = self._n_samples_bootstrap
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state,
@@ -636,7 +641,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return oob_pred
 
-    def _validate_y_class_weight(self, y):
+    def _validate_y_class_weight(self, y, sample_weight):
         # Default implementation
         return y, None
 
@@ -844,7 +849,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
 
-    def _validate_y_class_weight(self, y):
+    def _validate_y_class_weight(self, y, sample_weight):
         check_classification_targets(y)
 
         y = np.copy(y)
@@ -887,11 +892,36 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                         "distributions. Pass the resulting weights as the "
                         "class_weight parameter."
                     )
-            # NOTE: "balanced_subsample" option is ignored, treated as "balanced"
-            class_weight = self.class_weight
-            if class_weight == "balanced_subsample":
-                class_weight = "balanced"
-            expanded_class_weight = compute_sample_weight(class_weight, y_original)
+
+            # User defined class_weight (dict or list)
+            if isinstance(self.class_weight, (dict, list)):
+                class_weight = self.class_weight
+            # Computing class_weight (dict or list) for the "balanced" option.
+            # The "balanced_subsample" option without subsampling (bootstrap=False)
+            # is equivalent to the "balanced" option.
+            elif (self.class_weight == "balanced") or (
+                self.class_weight == "balanced_subsample" and not self.bootstrap
+            ):
+                class_weight = []
+                for k in range(self.n_outputs_):
+                    class_weight_k_vect = compute_class_weight(
+                        "balanced",
+                        classes=self.classes_[k],
+                        y=y_original[:, k],
+                        sample_weight=sample_weight,
+                    )
+                    class_weight_k = {
+                        key: val
+                        for (key, val) in zip(self.classes_[k], class_weight_k_vect)
+                    }
+                    class_weight.append(class_weight_k)
+                if self.n_outputs_ == 1:
+                    class_weight = class_weight[0]
+
+            # For the "balanced_subsample" option with subsampling (bootstrap=True),
+            # class_weight will be computed on the bootstrap sample for each tree.
+            if not (self.class_weight == "balanced_subsample" and self.bootstrap):
+                expanded_class_weight = compute_sample_weight(class_weight, y_original)
 
         return y, expanded_class_weight
 
