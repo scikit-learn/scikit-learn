@@ -440,8 +440,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Combined _sample_weight = sample_weight * expanded_class_weight
-        # used in _parallel_build_trees to draw indices (boostrap=True)
-        # or passed to the trees (boostrap=False)
+        # used in _parallel_build_trees to draw indices (bootstrap=True)
+        # or passed to the trees (bootstrap=False)
         if sample_weight is None:
             _sample_weight = expanded_class_weight
         elif expanded_class_weight is None:
