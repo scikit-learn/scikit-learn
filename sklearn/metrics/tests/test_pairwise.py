@@ -368,7 +368,6 @@ def test_pairwise_parallel_array_api(
 ):
     xp = _array_api_for_tests(array_namespace, device)
     rng = np.random.RandomState(0)
-    # Why 5 and not more? this seems to still result in a lot of 0 vaules?
     X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
     Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
     X_xp = xp.asarray(X_np, device=device)
@@ -450,10 +449,7 @@ def test_pairwise_kernels(metric, csr_container):
     "metric",
     ["rbf", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
 )
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pairwise_kernels_array_api(
-    metric, csr_container, array_namespace, device, dtype_name
-):
+def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name):
     # Test array API support in pairwise_kernels.
     xp = _array_api_for_tests(array_namespace, device)
 
