@@ -151,6 +151,45 @@ def test_pairwise_distances_for_dense_data(global_dtype):
     assert_allclose(S, S2)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("metric", ["cosine", "euclidean"])
+def test_pairwise_distances_array_api(array_namespace, device, dtype_name, metric):
+    # Test array API support in pairwise_distances.
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X_np = rng.random_sample((5, 4)).astype(dtype_name, copy=False)
+    Y_np = rng.random_sample((5, 4)).astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        # Test with Y=None
+        D_xp = pairwise_distances(X_xp, metric=metric)
+        D_xp_np = _convert_to_numpy(D_xp, xp=xp)
+        assert get_namespace(D_xp)[0].__name__ == xp.__name__
+        assert D_xp.device == X_xp.device
+        assert D_xp.dtype == X_xp.dtype
+
+        D_np = pairwise_distances(X_np, metric=metric)
+        assert_allclose(D_xp_np, D_np)
+
+        # Test with Y=Y_np/Y_xp
+        D_xp = pairwise_distances(X_xp, Y=Y_xp, metric=metric)
+        D_xp_np = _convert_to_numpy(D_xp, xp=xp)
+        assert get_namespace(D_xp)[0].__name__ == xp.__name__
+        assert D_xp.device == X_xp.device
+        assert D_xp.dtype == X_xp.dtype
+
+        D_np = pairwise_distances(X_np, Y=Y_np, metric=metric)
+        assert_allclose(D_xp_np, D_np)
+
+
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 @pytest.mark.parametrize("bsr_container", BSR_CONTAINERS)
