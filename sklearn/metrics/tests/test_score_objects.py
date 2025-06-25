@@ -1395,7 +1395,6 @@ def test_multimetric_scoring_kwargs():
 
 @config_context(enable_metadata_routing=True)
 def test_scorer_metadata_routing():
-
     class MyClf(DummyClassifier):
         def fit(self, X, y, metadata=None):
             return super().fit(X, y)
@@ -1417,7 +1416,6 @@ def test_scorer_metadata_routing():
 
     score = make_scorer(accuracy_score)
     score(clf, X, y, metadata=metadata)
-
 
 
 def test_kwargs_without_metadata_routing_error():

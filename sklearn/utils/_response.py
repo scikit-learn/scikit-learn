@@ -119,7 +119,7 @@ def _get_response_values(
     response_method,
     pos_label=None,
     return_response_method_used=False,
-    **metadata
+    **metadata,
 ):
     """Compute the response values of a classifier, an outlier detector, or a regressor.
 

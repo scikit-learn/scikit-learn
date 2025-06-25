@@ -254,21 +254,23 @@ class _BaseScorer(_MetadataRequester):
         computed for each estimator separately, as the metadata routing depends
         on the estimator.
         """
-        request_routing = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=estimator,
-            method_mapping=MethodMapping().add(
-                caller='score',
-                callee=self._response_method,
-            ),
-        ).add(
-            score=self,
-            method_mapping=MethodMapping().add(
-                caller="score", callee="score"
-            ),
+        request_routing = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=estimator,
+                method_mapping=MethodMapping().add(
+                    caller="score",
+                    callee=self._response_method,
+                ),
+            )
+            .add(
+                score=self,
+                method_mapping=MethodMapping().add(caller="score", callee="score"),
+            )
         )
 
-        request_routing.validate_metadata(params=kwargs, method='score')
-        return request_routing.route_params(params=kwargs, caller='score')
+        request_routing.validate_metadata(params=kwargs, method="score")
+        return request_routing.route_params(params=kwargs, caller="score")
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
@@ -431,9 +433,6 @@ class _Scorer(_BaseScorer):
             **routed_params.estimator[self._response_method],
         )
 
-        scoring_kwargs = {
-
-        }
         return self._sign * self._score_func(
             y_true, y_pred, **self._kwargs, **routed_params.score.score
         )
