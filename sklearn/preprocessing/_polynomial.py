@@ -646,9 +646,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         - 'zeros' : Encode splines of missing values with values `0`.
 
         Note that `handle_missing='zeros'` differs from first imputing missing values
-        with zeros and then creating the spline basis. The latter makes an assumption
-        about the data, whereas this option simply neutralizes the influence of missing
-        values without imputing them.
+        with zeros and then creating the spline basis. The latter creates spline basis
+        functions which have non-zero values at the missing values
+        whereas this option simply sets all spline basis function values to zero at the
+        missing values.
 
         .. versionadded:: 1.8
 
@@ -862,10 +863,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         except ValueError as e:
             if "Input X contains NaN." in str(e) and self.handle_missing == "error":
                 raise ValueError(
-                    "`X` contains invalid values (NaNs) and `SplineTransformer` is "
-                    "configured with `handle_missing='error'`. Set "
-                    "`handle_missing='zeros'` to encode missing values as splines with "
-                    "value `0` or ensure no missing values in `X`."
+                    "Input X contains NaN values and `SplineTransformer` is configured"
+                    "to error in this case (handle_missing='error'). To avoid this error, you"
+                    "could  set handle_missing='zeros' to encode missing values as splines with "
+                    "value 0 or ensure no missing values in X."
                 ) from e
             raise e
 
@@ -1067,9 +1068,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         # The column is all np.nan valued. Replace it by a
                         # constant column with an arbitrary non-nan value
                         # inside so that it is encoded as constant column.
-                        x = np.zeros_like(
-                            x
-                        )  # new array to avoid mutation of input data
+                        x = np.zeros_like(x)  # avoid mutation of input data
                     elif nan_row_indices.shape[0] > 0:
                         x = x.copy()  # avoid mutation of input data
                         x[nan_row_indices] = np.nanmin(x)
