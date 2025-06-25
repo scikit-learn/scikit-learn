@@ -96,12 +96,15 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     ----------
     n_samples : int
         Number of samples in the dataset.
+
     max_samples : int or float
-        The maximum number of samples to draw from the total available:
-            - if float, this indicates a fraction of the total and should be
-              the interval `(0.0, 1.0]`;
-            - if int, this indicates the exact number of samples;
-            - if None, this indicates the total number of samples.
+        The maximum number of samples to draw.
+
+        - If None, then draw `n_samples` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * n_samples` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
+
     sample_weight : array of shape (n_samples,) or None
         Sample weights.
 
@@ -127,9 +130,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
             if sw_sum <= 1:
                 raise ValueError(
                     f"The total sum of sample weights is {sw_sum}, which prevents "
-                    "resampling with a fractional value for max_samples="
-                    f"{max_samples}. Either pass max_samples as an integer or "
-                    "use a larger sample_weight."
+                    f"resampling with a fractional value for {max_samples=}. Either"
+                    " pass max_samples as an integer or use a larger sample_weight."
                 )
             return max(int(max_samples * sw_sum), 1)
 
@@ -194,6 +196,7 @@ def _parallel_build_trees(
         indices = _generate_sample_indices(
             tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
+        # Row sampling by setting sample_weight in tree
         sample_weight_tree = np.bincount(indices, minlength=n_samples)
         if class_weight == "balanced_subsample":
             expanded_class_weight = compute_sample_weight(
@@ -1411,8 +1414,8 @@ class RandomForestClassifier(ForestClassifier):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max(round(n_samples * max_samples), 1)` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
@@ -1799,8 +1802,8 @@ class RandomForestRegressor(ForestRegressor):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max(round(n_samples * max_samples), 1)` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
@@ -2177,8 +2180,8 @@ class ExtraTreesClassifier(ForestClassifier):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
@@ -2549,8 +2552,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
