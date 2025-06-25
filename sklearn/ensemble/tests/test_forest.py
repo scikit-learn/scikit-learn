@@ -1631,11 +1631,23 @@ def test_forest_degenerate_unbiased_feature_importances():
                 " were used to compute any reliable OOB estimates."
             ),
         ):
-            clf = model(n_estimators=10, oob_score=True).fit(X, y)
+            rf = model(n_estimators=10, oob_score=True).fit(X, y)
         assert_array_equal(
-            clf.unbiased_feature_importances_,
+            rf.unbiased_feature_importances_,
             np.zeros(10, dtype=np.float64),
         )
+
+
+def test_ufi_without_oob_score():
+    X = np.zeros((10, 10))
+    y = np.ones((10,))
+    for model in [RandomForestClassifier, RandomForestRegressor]:
+        rf = model(n_estimators=10, oob_score=False).fit(X, y)
+        with pytest.raises(
+            AttributeError,
+            match=r"Unbiased feature importance is computed during `fit` when*",
+        ):
+            rf.unbiased_feature_importances_
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)

@@ -839,7 +839,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
         [UFI2020]_.
 
-        It is only available if the chosen split criterion is `gini`.
+        It is only available if the chosen split criterion is `gini` and if fit was
+        performed with `oob_score=True`.
 
         .. versionadded:: 1.8.0
 
@@ -856,6 +857,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         .. [UFI2020] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
            Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
         """
+        if not self.oob_score:
+            raise AttributeError(
+                "Unbiased feature importance is computed during `fit` when"
+                " `oob_score=True`. Please re-fit the model with `oob_score=True`"
+                " to access this attribute."
+            )
         if self.criterion != "gini":
             raise AttributeError(
                 "Unbiased feature importance is only available for the gini"
@@ -1168,7 +1175,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         "Unbiased Measurement of Feature Importance in Tree-Based Methods".
 
         It is only available if the chosen split criterion is `squared_error` or
-        `friedman_mse`.
+        `friedman_mse` and if fit was performed with `oob_score=True`.
 
         Returns
         -------
@@ -1178,6 +1185,12 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             it will be an array of zeros. If you want them to sum to 1, please divide by
             `unbiased_feature_importances_.sum()`.
         """
+        if not self.oob_score:
+            raise AttributeError(
+                "Unbiased feature importance is computed during `fit` when"
+                " `oob_score=True`. Please re-fit the model with `oob_score=True`"
+                " to access this attribute."
+            )
         if self.criterion not in ["squared_error", "friedman_mse"]:
             raise AttributeError(
                 "Unbiased feature importance is only available for the `squared_error`"
