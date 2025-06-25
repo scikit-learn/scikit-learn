@@ -863,10 +863,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         except ValueError as e:
             if "Input X contains NaN." in str(e) and self.handle_missing == "error":
                 raise ValueError(
-                    "Input X contains NaN values and `SplineTransformer` is configured"
-                    "to error in this case (handle_missing='error'). To avoid this error, you"
-                    "could  set handle_missing='zeros' to encode missing values as splines with "
-                    "value 0 or ensure no missing values in X."
+                    "Input X contains NaN values and `SplineTransformer` is configured "
+                    "to error in this case (handle_missing='error'). To avoid this "
+                    "error, set handle_missing='zeros' to encode missing values as "
+                    "splines with value 0 or ensure no missing values in X."
                 ) from e
             raise e
 

@@ -494,9 +494,7 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     X_nan[3, 0] = np.nan
 
     # Check correct error message for handle_missing="error":
-    msg = (
-        "`X` contains invalid values (NaNs) and `SplineTransformer` is configured with"
-    )
+    msg = "Input X contains NaN values and `SplineTransformer` is configured to error"
     with pytest.raises(ValueError, match=re.escape(msg)):
         spline = SplineTransformer(
             degree=2,
