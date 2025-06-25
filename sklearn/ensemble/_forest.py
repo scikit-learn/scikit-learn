@@ -436,7 +436,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        # sample_weight needed in _parallel_build_trees
+        # Combined _sample_weight = sample_weight * expanded_class_weight
+        # used in _parallel_build_trees to draw indices (boostrap=True)
+        # or passed to the trees (boostrap=False)
         if sample_weight is None:
             _sample_weight = expanded_class_weight
         elif expanded_class_weight is None:
@@ -444,7 +446,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             _sample_weight = sample_weight * expanded_class_weight
 
-        # storing sample_weight (needed by _get_estimators_indices)
+        # storing _sample_weight (needed by _get_estimators_indices)
         self._sample_weight = _sample_weight
 
         if not self.bootstrap and self.max_samples is not None:
