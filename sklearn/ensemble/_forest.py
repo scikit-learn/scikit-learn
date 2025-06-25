@@ -630,9 +630,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances
 
-    def _compute_unbiased_feature_importance_and_oob_predictions_per_tree(
-        self, tree, X, y, sample_weight
-    ):
+    def _compute_ufi_and_oob_pred_per_tree(self, tree, X, y, sample_weight):
         n_samples = X.shape[0]
         if sample_weight is None:
             sample_weight = np.ones((n_samples,), dtype=np.float64)
@@ -662,9 +660,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_oob_pred[oob_indices, :] += 1
         return (importances, oob_pred, n_oob_pred)
 
-    def _compute_unbiased_feature_importance_and_oob_predictions(
-        self, X, y, sample_weight
-    ):
+    def _compute_ufi_and_oob_pred(self, X, y, sample_weight):
         check_is_fitted(self)
         # Importance computations require X to be in CSR format
         if issparse(X):
@@ -672,12 +668,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         n_samples, n_features = X.shape
         max_n_classes = self.estimators_[0].tree_.max_n_classes
-        # TODO: re-add the dropped return_as="generator_unordered" for compatibility on
-        # joblib version. Introduced in 1.3 but 1.2 is the minimal requirement
-        results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
-            delayed(
-                self._compute_unbiased_feature_importance_and_oob_predictions_per_tree
-            )(tree, X, y, sample_weight)
+        results = Parallel(n_jobs=self.n_jobs, prefer="threads", return_as="generator")(
+            delayed(self._compute_ufi_and_oob_pred_per_tree)(tree, X, y, sample_weight)
             for tree in self.estimators_
             if tree.tree_.node_count > 1
         )
@@ -823,9 +815,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             scoring_function = accuracy_score
 
         unbiased_feature_importances, self.oob_decision_function_ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, sample_weight
-            )
+            self._compute_ufi_and_oob_pred(X, y, sample_weight)
         )
 
         if self.criterion == "gini":
@@ -1152,9 +1142,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             scoring_function = r2_score
 
         unbiased_feature_importances, self.oob_prediction_ = (
-            self._compute_unbiased_feature_importance_and_oob_predictions(
-                X, y, sample_weight
-            )
+            self._compute_ufi_and_oob_pred(X, y, sample_weight)
         )
 
         if self.criterion in ["squared_error", "friedman_mse"]:
