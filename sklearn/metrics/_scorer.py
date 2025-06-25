@@ -247,6 +247,29 @@ class _BaseScorer(_MetadataRequester):
             return score_func_params["pos_label"].default
         return None
 
+    def _route_metadata(self, estimator, kwargs):
+        """Route metadata parameters for the scorer.
+
+        This cannot be computed in the constructor, because it needs to be
+        computed for each estimator separately, as the metadata routing depends
+        on the estimator.
+        """
+        request_routing = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=estimator,
+            method_mapping=MethodMapping().add(
+                caller='score',
+                callee=self._response_method,
+            ),
+        ).add(
+            score=self,
+            method_mapping=MethodMapping().add(
+                caller="score", callee="score"
+            ),
+        )
+
+        request_routing.validate_metadata(params=kwargs, method='score')
+        return request_routing.route_params(params=kwargs, caller='score')
+
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
         return "sample_weight" in signature(self._score_func).parameters
@@ -395,17 +418,25 @@ class _Scorer(_BaseScorer):
             kwargs=kwargs,
         )
 
+        routed_params = self._route_metadata(estimator, kwargs)
+
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
         response_method = _check_response_method(estimator, self._response_method)
+
         y_pred = method_caller(
             estimator,
             _get_response_method_name(response_method),
             X,
             pos_label=pos_label,
+            **routed_params.estimator[self._response_method],
         )
 
-        scoring_kwargs = {**self._kwargs, **kwargs}
-        return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
+        scoring_kwargs = {
+
+        }
+        return self._sign * self._score_func(
+            y_true, y_pred, **self._kwargs, **routed_params.score.score
+        )
 
 
 @validate_params(
