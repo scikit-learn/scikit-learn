@@ -30,11 +30,10 @@ class ClassicalMDS(BaseEstimator):
 
     metric : str or callable, default='euclidean'
         Metric to use for dissimilarity computation. Default is "euclidean".
-        See the documentation of `scipy.spatial.distance
-        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
-        the metrics listed in
-        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
-        values.
+
+        If metric is a string, it must be one of the options allowed by 
+        `scipy.spatial.distance.pdist` for its metric parameter, or a metric 
+        listed in :func:`sklearn.metrics.pairwise.distance_metrics`
 
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit.
@@ -45,7 +44,7 @@ class ClassicalMDS(BaseEstimator):
         efficient than passing the metric name as a string.
 
     metric_params : dict, default=None
-        Additional keyword arguments for the dissimilarity computaiton.
+        Additional keyword arguments for the dissimilarity computation.
 
     Attributes
     ----------
@@ -143,7 +142,7 @@ class ClassicalMDS(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
+            Input data. If ``metric=='precomputed'``, the input should
             be the dissimilarity matrix.
 
         y : Ignored

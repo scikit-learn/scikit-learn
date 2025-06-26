@@ -491,9 +491,9 @@ Apart from that, there is a version called *classical MDS*, also known as
 in the separate :class:`ClassicalMDS` class. Classical  MDS replaces the stress
 loss function with a different loss function called *strain*, which allows
 exact solution in terms of eigendecomposition of the double-centered dissimilarity
-matrix. If the dissimilarity matrix is the matrix of pairwise Euclidean distances
-between some vectors, then classical MDS is equivalent to PCA of this set of
-vectors.
+matrix. If the dissimilarity matrix consists of the pairwise Euclidean distances
+between some vectors, then classical MDS is equivalent to PCA applied to this
+set of vectors.
 
 .. rubric:: References
 
