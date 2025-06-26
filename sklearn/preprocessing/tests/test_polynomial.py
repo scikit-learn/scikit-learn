@@ -1414,6 +1414,8 @@ def test_polynomial_features_array_api_compliance(
 def test_polynomial_features_array_api_raises_on_order_F(
     array_namespace, device_, dtype_name
 ):
+    """Test that PolynomialFeatures with order='F' raises AttributeError on
+    array API namespaces other than numpy."""
     xp = _array_api_for_tests(array_namespace, device_)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device_)
