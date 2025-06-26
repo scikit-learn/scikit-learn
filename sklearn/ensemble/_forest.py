@@ -1477,6 +1477,8 @@ class RandomForestClassifier(ForestClassifier):
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
 
+    Sample weights are handled during tree fitting using the 'sample_weight' parameter.
+
     References
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
