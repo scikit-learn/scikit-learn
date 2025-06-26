@@ -402,3 +402,15 @@ def _in_unstable_openblas_configuration():
 # DeprecationWarning is emitted.
 def _get_additional_lbfgs_options_dict(key, value):
     return {} if sp_version >= parse_version("1.15") else {key: value}
+
+
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
+PYARROW_VERSION_BELOW_17 = False
+try:
+    import pyarrow
+
+    pyarrow_version = parse_version(pyarrow.__version__)
+    if pyarrow_version < parse_version("17.0.0"):
+        PYARROW_VERSION_BELOW_17 = True
+except ModuleNotFoundError:  # pragma: no cover
+    pass
