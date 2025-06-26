@@ -141,7 +141,7 @@ def enet_coordinate_descent(
     # compute norms of the columns of X
     # same as norm_cols_X = np.square(X).sum(axis=0)
     cdef floating[::1] norm_cols_X = np.einsum(
-        "ij,ij->j", X.T, X.T, dtype=dtype, order="C"
+        "ij,ij->j", X, X, dtype=dtype, order="C"
     )
 
     # initial value of the residuals
