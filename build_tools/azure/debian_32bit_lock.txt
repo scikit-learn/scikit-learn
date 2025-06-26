@@ -27,11 +27,11 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pygments==2.19.2
+pygments==2.19.1
     # via pytest
 pyproject-metadata==0.9.1
     # via meson-python
-pytest==8.4.1
+pytest==8.4.0
     # via
     #   -r build_tools/azure/debian_32bit_requirements.txt
     #   pytest-cov

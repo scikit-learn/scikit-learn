@@ -284,7 +284,7 @@ build_metadata_list = [
         ],
     },
     {
-        "name": "pymin_conda_forge_mkl",
+        "name": "pymin_conda_forge_openblas",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
