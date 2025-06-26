@@ -285,7 +285,7 @@ build_metadata_list = [
         ],
     },
     {
-        "name": "pymin_conda_forge_mkl",
+        "name": "pymin_conda_forge_openblas",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
@@ -298,7 +298,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.10",
-            "blas": "[build=mkl]",
+            "blas": "[build=openblas]",
         },
     },
     {
