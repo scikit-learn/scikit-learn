@@ -394,7 +394,7 @@ def _in_unstable_openblas_configuration():
     return False
 
 
-# TODO: Remove when Scipy 1.15 is the minimum supported version In scipy 1.15,
+# TODO: Remove when Scipy 1.15 is the minimum supported version. In scipy 1.15,
 # the internal info details (via 'iprint' and 'disp' options) were dropped,
 # following the LBFGS rewrite from Fortran to C, see
 # https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035. For
