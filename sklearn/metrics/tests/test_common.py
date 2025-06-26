@@ -65,6 +65,7 @@ from sklearn.metrics.pairwise import (
     linear_kernel,
     paired_cosine_distances,
     paired_euclidean_distances,
+    pairwise_distances,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -2282,6 +2283,7 @@ array_api_metric_checkers = {
     roc_curve: [
         check_array_api_binary_classification_metric,
     ],
+    pairwise_distances: [check_array_api_metric_pairwise],
 }
 
 
