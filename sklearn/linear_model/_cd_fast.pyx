@@ -359,12 +359,12 @@ def enet_coordinate_descent(
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
-                gap += alpha * l1_norm + 0.5 * beta * (1 + const ** 2) * (w_norm2)
-                # gap -= const * np.dot(R.T, y)
+                gap += alpha * l1_norm + 0.5 * beta * (1 + const_ ** 2) * (w_norm2)
+                # gap -= const_ * np.dot(R.T, y)
                 if no_sample_weights:
-                    gap -= const * _dot(n_samples, &R[0], 1, &y[0], 1)
+                    gap -= const_ * _dot(n_samples, &R[0], 1, &y[0], 1)
                 else:
-                    gap -= const * _dot(n_samples, &R_sw[0], 1, &y[0], 1)
+                    gap -= const_ * _dot(n_samples, &R_sw[0], 1, &y[0], 1)
 
                 if gap < tol:
                     # return if we reached desired tolerance
