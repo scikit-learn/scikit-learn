@@ -476,6 +476,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         self._prune_tree()
+        print(f"Split count: {self.tree_.node_count}")
 
         return self
 
