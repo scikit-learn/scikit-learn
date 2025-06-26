@@ -288,7 +288,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     type that can hold the data in the arrays.
 
     This function returns `np.int64` if it either required by `maxval` or based on the
-    largest precision of the dtype of the arrays passed as argument, or by the their
+    largest precision of the dtype of the arrays passed as argument, or by their
     contents (when `check_contents is True`). If none of the condition requires
     `np.int64` then this function returns `np.int32`.
 
@@ -392,3 +392,15 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
+PYARROW_VERSION_BELOW_17 = False
+try:
+    import pyarrow
+
+    pyarrow_version = parse_version(pyarrow.__version__)
+    if pyarrow_version < parse_version("17.0.0"):
+        PYARROW_VERSION_BELOW_17 = True
+except ModuleNotFoundError:  # pragma: no cover
+    pass
