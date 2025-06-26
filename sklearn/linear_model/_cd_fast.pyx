@@ -139,7 +139,7 @@ def enet_coordinate_descent(
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm_cols_X = zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
@@ -169,6 +169,16 @@ def enet_coordinate_descent(
                       "unexpected results and is discouraged.")
 
     with nogil:
+        # norm_cols_X = np.square(X).sum(axis=0)
+        if no_sample_weights:
+            if not center:
+                for ii in range(n_features):
+                    norm_cols_X[ii] = _dot(n_samples, &X[0, ii], 1, &X[0, ii], 1)
+            else:
+                for ii in range(n_features):
+                    for jj in range(n_samples):
+                        norm_cols_X[ii] += (X[jj, ii] - X_mean[ii]) ** 2
+
         # R = y - np.dot(X, w)
         _copy(n_samples, &y[0], 1, &R[0], 1)
         _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
