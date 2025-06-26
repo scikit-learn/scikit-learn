@@ -38,7 +38,6 @@ from ..utils.metadata_routing import (
     _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
-    process_routing,
 )
 from ..utils.validation import _check_response_method
 from . import (
