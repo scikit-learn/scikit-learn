@@ -1308,10 +1308,10 @@ def test_polynomial_features_array_api_raises_on_order_F(
     xp = _array_api_for_tests(array_namespace, device_)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device_)
-    msg = "PolynomialFeatures does not support order=F for the array API"
+    msg = "PolynomialFeatures does not support order='F' for the array API"
     with config_context(array_api_dispatch=True):
         pf = PolynomialFeatures(order="F").fit(X_xp)
-        if _is_numpy_namespace(xp):
+        if _is_numpy_namespace(xp):  # Numpy should not raise
             pf.transform(X_xp)
         else:
             with pytest.raises(AttributeError, match=msg):
