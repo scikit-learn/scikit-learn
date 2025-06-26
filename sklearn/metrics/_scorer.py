@@ -38,6 +38,7 @@ from ..utils.metadata_routing import (
     _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
+    process_routing,
 )
 from ..utils.validation import _check_response_method
 from . import (
@@ -125,7 +126,7 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        routed_params = self._route_metadata(estimator, kwargs)
+        routed_params = self._route_scorer_metadata(estimator, kwargs)
 
         for name, scorer in self._scorers.items():
             try:
@@ -194,7 +195,7 @@ class _MultimetricScorer:
             method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
 
-    def _route_metadata(self, estimator, kwargs):
+    def _route_scorer_metadata(self, estimator, kwargs):
         """Route metadata parameters for the scorer.
 
         This cannot be computed in the constructor, because it needs to be
@@ -428,9 +429,9 @@ class _Scorer(_BaseScorer):
         )
 
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
-        method_name = _get_response_method_name(self, estimator)
+        routed_params = self._route_scorer_metadata(estimator, kwargs)
 
-        routed_params = self._route_metadata(estimator, method_name, kwargs)
+        method_name = _get_response_method_name(self, estimator)
         y_pred = method_caller(
             estimator,
             method_name,
@@ -442,13 +443,14 @@ class _Scorer(_BaseScorer):
         scoring_kwargs = {**self._kwargs, **routed_params.score.score}
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
-    def _route_metadata(self, estimator, method_name, kwargs):
+    def _route_scorer_metadata(self, estimator, kwargs):
         """Route metadata parameters for the scorer.
 
         This cannot be computed in the constructor, because it needs to be
         computed for each estimator separately, as the metadata routing depends
         on the estimator.
         """
+        method_name = _get_response_method_name(self, estimator)
         if _routing_enabled():
             request_routing = (
                 MetadataRouter(owner=self.__class__.__name__)
@@ -547,16 +549,14 @@ class _PassthroughScorer(_MetadataRequester):
     def __init__(self, estimator):
         self._estimator = estimator
 
-        requests = MetadataRequest(owner=self.__class__.__name__)
-        try:
-            requests.score = copy.deepcopy(estimator._metadata_request.score)
-        except AttributeError:
-            try:
-                requests.score = copy.deepcopy(estimator._get_default_requests().score)
-            except AttributeError:
-                pass
-
-        self._metadata_request = requests
+        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        estimator_request = getattr(
+            estimator,
+            "_metadata_request",
+            estimator._get_default_requests()
+        )
+        if hasattr(estimator_request, "score"):
+            self._metadata_request.score = copy.deepcopy(estimator_request.score)
 
     def __call__(self, estimator, *args, **kwargs):
         """Method that wraps estimator.score"""
@@ -609,6 +609,13 @@ class _PassthroughScorer(_MetadataRequester):
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
+
+    def _route_scorer_metadata(self, estimator, kwargs):
+        return Bunch(
+            score={
+                k: kwargs[k] for k in self.get_metadata_routing().consumes("score", kwargs)
+            }
+        )
 
 
 def _check_multimetric_scoring(estimator, scoring):
