@@ -134,11 +134,9 @@ class _MultimetricScorer:
                     method_name = _get_response_method_name(scorer, estimator)
                     score_kwargs = {
                         **routed_params.estimator[method_name],
-                        **routed_params.get(name).score
+                        **routed_params.get(name).score,
                     }
-                    score = scorer._score(
-                        cached_call, estimator, *args, **score_kwargs
-                    )
+                    score = scorer._score(cached_call, estimator, *args, **score_kwargs)
                 else:
                     score = scorer(estimator, *args, **routed_params.get(name).score)
                 scores[name] = score
@@ -204,10 +202,13 @@ class _MultimetricScorer:
         computed for each estimator separately, as the metadata routing depends
         on the estimator.
         """
-        all_methods = list(set(
-            _get_response_method_name(scorer, estimator)
-            for scorer in self._scorers.values() if isinstance(scorer, _BaseScorer)
-        ))
+        all_methods = list(
+            set(
+                _get_response_method_name(scorer, estimator)
+                for scorer in self._scorers.values()
+                if isinstance(scorer, _BaseScorer)
+            )
+        )
         if _routing_enabled():
             request_routing = self.get_metadata_routing()
             method_mapping = MethodMapping()
@@ -233,9 +234,7 @@ class _MultimetricScorer:
             any_accept = False
             for name, scorer in self._scorers.items():
                 if scorer._accept_sample_weight():
-                    routed_params[name].score["sample_weight"] = kwargs[
-                        "sample_weight"
-                    ]
+                    routed_params[name].score["sample_weight"] = kwargs["sample_weight"]
                     any_accept = True
             if not any_accept:
                 raise TypeError(
@@ -474,9 +473,7 @@ class _Scorer(_BaseScorer):
         # is passed but unsupported. This does not work for metadata other than
         # sample_weight, which would require the user to enable metadata routing.
         if "sample_weight" in kwargs and not self._accept_sample_weight():
-            raise TypeError(
-                "sample_weight parameter is not accepted by this scorer."
-            )
+            raise TypeError("sample_weight parameter is not accepted by this scorer.")
         return Bunch(
             estimator=Bunch(**{method_name: {}}),
             score=Bunch(score=kwargs.copy()),
