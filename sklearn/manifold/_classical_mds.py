@@ -31,8 +31,8 @@ class ClassicalMDS(BaseEstimator):
     metric : str or callable, default='euclidean'
         Metric to use for dissimilarity computation. Default is "euclidean".
 
-        If metric is a string, it must be one of the options allowed by 
-        `scipy.spatial.distance.pdist` for its metric parameter, or a metric 
+        If metric is a string, it must be one of the options allowed by
+        `scipy.spatial.distance.pdist` for its metric parameter, or a metric
         listed in :func:`sklearn.metrics.pairwise.distance_metrics`
 
         If metric is "precomputed", X is assumed to be a distance matrix and
