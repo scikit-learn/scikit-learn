@@ -699,7 +699,8 @@ underestimate how easy an issue is to solve!
 Documentation
 =============
 
-We are glad to accept any sort of documentation:
+We welcome thoughtful contributions to the documentation and are happy to review
+additions in the following areas:
 
 * **Function/method/class docstrings:** Also known as "API documentation", these
   describe what the object does and detail any parameters, attributes and
