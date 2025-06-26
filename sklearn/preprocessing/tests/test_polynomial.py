@@ -1,3 +1,4 @@
+import re
 import sys
 
 import numpy as np
@@ -17,7 +18,11 @@ from sklearn.preprocessing import (
 from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._testing import (
+    assert_allclose_dense_sparse,
+    assert_array_almost_equal,
+)
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -66,7 +71,7 @@ def test_spline_transformer_integer_knots(extrapolation):
 
 
 def test_spline_transformer_feature_names():
-    """Test that SplineTransformer generates correct features name."""
+    """Test that SplineTransformer generates correct feature names."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
     feature_names = splt.get_feature_names_out()
@@ -365,7 +370,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
-    msg = "X contains values beyond the limits of the knots"
+    msg = "`X` contains values beyond the limits of the knots"
     with pytest.raises(ValueError, match=msg):
         splt.transform([[-10]])
     with pytest.raises(ValueError, match=msg):
@@ -439,7 +444,7 @@ def test_spline_transformer_sparse_output(
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
     if extrapolation == "error":
-        msg = "X contains values beyond the limits of the knots"
+        msg = "`X` contains values beyond the limits of the knots"
         with pytest.raises(ValueError, match=msg):
             splt_dense.transform(X_extra)
         msg = "Out of bounds"
@@ -473,6 +478,109 @@ def test_spline_transformer_n_features_out(
     splt.fit(X)
 
     assert splt.transform(X).shape[1] == splt.n_features_out_
+
+
+@pytest.mark.parametrize(
+    "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
+)
+@pytest.mark.parametrize("sparse_output", [False, True])
+def test_spline_transformer_handles_missing_values(extrapolation, sparse_output):
+    """Test that SplineTransformer handles missing values correctly.
+    We only test for knots="uniform", since for "quantile" the metrics are calculated
+    differently with nans present and a different result is thus expected.
+    """
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]], dtype=np.float64)
+    X_nan = X.copy()
+    X_nan[3, 0] = np.nan
+
+    # Check correct error message for handle_missing="error":
+    msg = "Input X contains NaN values and `SplineTransformer` is configured to error"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        spline = SplineTransformer(
+            degree=2,
+            n_knots=3,
+            handle_missing="error",
+            extrapolation=extrapolation,
+        )
+        spline.fit_transform(X_nan)
+
+    # Test correct results for handle_missing="zeros"
+    spline = SplineTransformer(
+        degree=2,
+        n_knots=3,
+        handle_missing="zeros",
+        extrapolation=extrapolation,
+        sparse_output=sparse_output,
+    )
+
+    # Check `fit_transform` does the same as `fit` and then `transform`:
+    X_nan_transform = spline.fit_transform(X_nan)
+    X_nan_fit_then_transform = spline.fit(X_nan).transform(X_nan)
+    assert_allclose_dense_sparse(X_nan_transform, X_nan_fit_then_transform)
+
+    # Check that missing values are handled the same when sample_weight is passed:
+    X_nan_transform_with_sample_weight = spline.fit_transform(
+        X_nan, sample_weight=[1, 1, 1, 1, 1]
+    )
+    assert_allclose_dense_sparse(X_nan_transform, X_nan_transform_with_sample_weight)
+
+    # Check that `transform` works as expected when the passed data has a different
+    # shape than the training data passed to `fit`:
+    X_nan_transform_same_shape = spline.fit_transform(X_nan)[::2]
+    X_nan_transform_different_shapes = spline.fit(X_nan).transform(X_nan[::2])
+    assert_allclose_dense_sparse(
+        X_nan_transform_same_shape, X_nan_transform_different_shapes
+    )
+
+    # Check that the masked nan-values are 0s:
+    nan_mask = _get_mask(X_nan, np.nan)
+    encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
+    assert (X_nan_transform[encoded_nan_mask] == 0).all()
+
+    # Check the nan handling doesn't change that B-Splines basis functions are always in
+    # the interval [0, 1]:
+    X_nan_transform = spline.fit_transform(X_nan)
+    if sparse.issparse(X_nan_transform):
+        X_nan_transform = X_nan_transform.toarray()
+    assert (X_nan_transform >= 0).all()
+    assert (X_nan_transform <= 1).all()
+
+    # Check that additional nan values don't change the calculation of the other
+    # splines. Note: this assertion only holds as long as no np.nan value constructs the
+    # min or max value of the data space (in this case, SplineTransformer's stats would
+    # be calculated based on the other values and thus differ from another
+    # SplineTransformer fit on the whole range).
+    X_transform = spline.fit_transform(X)
+    X_nan_transform = spline.fit_transform(X_nan)
+    assert_allclose_dense_sparse(
+        X_transform[~encoded_nan_mask], X_nan_transform[~encoded_nan_mask]
+    )
+
+
+@pytest.mark.parametrize(
+    "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
+)
+@pytest.mark.parametrize("sparse_output", [False, True])
+def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
+    """Test that SplineTransformer encodes missing values to zeros even for
+    all-nan-features."""
+
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
+    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
+
+    spline = SplineTransformer(
+        degree=2,
+        n_knots=3,
+        handle_missing="zeros",
+        extrapolation=extrapolation,
+        sparse_output=sparse_output,
+    )
+    spline.fit(X_nan_full_column)
+
+    all_missing_column_encoded = spline.transform(X_nan_full_column)
+    nan_mask = _get_mask(X_nan_full_column, np.nan)
+    encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
+    assert (all_missing_column_encoded[encoded_nan_mask] == 0).all()
 
 
 @pytest.mark.parametrize(
