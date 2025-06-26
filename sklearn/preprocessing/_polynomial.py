@@ -17,7 +17,6 @@ from scipy.special import comb
 
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
-    _modify_in_place_if_numpy,
     get_namespace_and_device,
     supported_float_dtypes,
 )
@@ -506,6 +505,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             order_kwargs = {}
             if _is_numpy_namespace(xp=xp):
                 order_kwargs["order"] = self.order
+            elif self.order == "F":
+                raise AttributeError(
+                    "PolynomialFeatures does not support order=F for the array API"
+                )
+
             XP = xp.empty(
                 shape=(n_samples, self._n_out_full),
                 dtype=X.dtype,
@@ -556,13 +560,17 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         break
                     # XP[:, start:end] are terms of degree d - 1
                     # that exclude feature #feature_idx.
-                    XP[:, current_col:next_col] = _modify_in_place_if_numpy(
-                        xp,
-                        xp.multiply,
-                        XP[:, start:end],
-                        X[:, feature_idx : feature_idx + 1],
-                        out=XP[:, current_col:next_col],
-                    )
+                    if _is_numpy_namespace(xp):
+                        np.multiply(
+                            XP[:, start:end],
+                            X[:, feature_idx : feature_idx + 1],
+                            out=XP[:, current_col:next_col],
+                            casting="no",
+                        )
+                    else:
+                        XP[:, current_col:next_col] = xp.multiply(
+                            XP[:, start:end], X[:, feature_idx : feature_idx + 1]
+                        )
                     current_col = next_col
 
                 new_index.append(current_col)

@@ -21,6 +21,7 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _is_numpy_namespace,
     device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -1294,3 +1295,24 @@ def test_polynomial_features_array_api_compliance(
         assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
         assert device(out_xp) == device(X_xp)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_polynomial_features_array_api_raises_on_order_F(
+    array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    X = np.arange(6).reshape((3, 2)).astype(dtype_name)
+    X_xp = xp.asarray(X, device=device_)
+    msg = "PolynomialFeatures does not support order=F for the array API"
+    with config_context(array_api_dispatch=True):
+        pf = PolynomialFeatures(order="F").fit(X_xp)
+        if _is_numpy_namespace(xp):
+            pf.transform(X_xp)
+        else:
+            with pytest.raises(AttributeError, match=msg):
+                pf.transform(X_xp)
