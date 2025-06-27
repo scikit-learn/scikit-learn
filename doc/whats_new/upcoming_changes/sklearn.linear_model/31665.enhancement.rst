@@ -1,3 +1,4 @@
 - class:`linear_model:ElasticNet` and class:`linear_model:Lasso` with
-  `precompute=False` uses less memory for dense `X` and is a bit faster.
+  `precompute=False` use less memory for dense `X` and are a bit faster.
+  Before, they used twice the memory of `X` even for Fortran-contiguous `X`.
   By :user:`Christian Lorentzen <lorentzenchr>`
