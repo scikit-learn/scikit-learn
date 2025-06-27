@@ -47,7 +47,7 @@ def _minibatch_update_dense(
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
         int cluster_idx
-        floating wsum_batch=0.0
+        floating wsum_batch = 0.0
         int *indices
 
     if adaptive_lr:
