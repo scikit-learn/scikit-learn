@@ -37,7 +37,7 @@ from pprint import pprint
 
 import numpy as np
 
-from sklearn import set_config
+from sklearn import config_context, set_config
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -463,6 +463,57 @@ print_routing(meta_est)
 # The meta-estimator cannot use `aliased_sample_weight`, because it expects
 # it passed as `sample_weight`. This would apply even if
 # `set_fit_request(sample_weight=True)` was set on it.
+
+# %%
+# Default Metadata Routing
+# -----------------------
+# There are two ways to set default metadata routing requests in scikit-learn:
+#
+# 1. Class-level defaults using `__metadata_request__method` class attributes,
+#    which sets default request values for all instances of a class, and can even
+#    remove a metadata from the metadata routing machinery if necessary.
+# 2. Instance-level defaults using `__sklearn_default_requests__` method,
+#    which set default request values at instance level, which means you can customize
+#    the default request values on a per-instance basis. Note that this only takes
+#    effect if ``set_config(enable_metadata_routing="default_routing")`` is called.
+#
+# Here's an example demonstrating both approaches:
+
+
+class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
+    # Class-level default request for fit method
+    __metadata_request__fit = {"sample_weight": True}
+
+    def __sklearn_default_request__(self):
+        # Instance-level default requests can override class-level defaults
+        # and add new method requests
+        values = super().__sklearn_default_request__()
+        values["predict"] = {"groups": True}  # Add new method request
+        return values
+
+    def fit(self, X, y, sample_weight=None):
+        check_metadata(self, sample_weight=sample_weight)
+        self.classes_ = np.array([0, 1])
+        return self
+
+    def predict(self, X, groups=None):
+        check_metadata(self, groups=groups)
+        return np.ones(len(X))
+
+
+# Let's see the default routing configuration
+clf = DefaultRoutingClassifier()
+print_routing(clf)
+
+# %%
+# And now with default routing enabled:
+with config_context(enable_metadata_routing="default_routing"):
+    print_routing(clf)
+
+# %%
+# The routing can still be modified using set_*_request methods
+clf.set_fit_request(sample_weight=False)
+print_routing(clf)
 
 # %%
 # Simple Pipeline
