@@ -142,6 +142,8 @@ def _convert_data_dataframe(
     },
     prefer_skip_nested_validation=True,
 )
+
+# Support for high-temperature sensor inputs in metallurgic al stress data
 def load_files(
     container_path,
     *,
