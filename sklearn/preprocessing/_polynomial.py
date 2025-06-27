@@ -508,7 +508,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 order_kwargs["order"] = self.order
             elif self.order == "F":
                 raise AttributeError(
-                    "PolynomialFeatures does not support order='F' for the array API"
+                    "PolynomialFeatures does not support order='F' for non-numpy arrays"
                 )
 
             XP = xp.empty(
@@ -562,6 +562,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     # XP[:, start:end] are terms of degree d - 1
                     # that exclude feature #feature_idx.
                     if _is_numpy_namespace(xp):
+                        # numpy performs this multiplication in place
                         np.multiply(
                             XP[:, start:end],
                             X[:, feature_idx : feature_idx + 1],

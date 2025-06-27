@@ -1353,30 +1353,9 @@ def test_csr_polynomial_expansion_windows_fail(csr_container):
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-@pytest.mark.parametrize(
-    "degree, include_bias, interaction_only",
-    [
-        (2, True, False),
-        (2, False, False),
-        (2, True, True),
-        (2, False, True),
-        ((2, 2), True, False),
-        ((2, 2), False, False),
-        ((2, 2), True, True),
-        ((2, 2), False, True),
-        (3, True, False),
-        (3, False, False),
-        (3, True, True),
-        (3, False, True),
-        ((2, 3), True, False),
-        ((2, 3), False, False),
-        ((2, 3), True, True),
-        ((2, 3), False, True),
-        ((3, 3), True, False),
-        ((3, 3), False, False),
-        ((3, 3), True, True),
-    ],
-)
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+@pytest.mark.parametrize("degree", [2, (2, 2), 3, (3, 3)])
 def test_polynomial_features_array_api_compliance(
     two_features_degree3,
     degree,
@@ -1419,7 +1398,7 @@ def test_polynomial_features_array_api_raises_on_order_F(
     xp = _array_api_for_tests(array_namespace, device_)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device_)
-    msg = "PolynomialFeatures does not support order='F' for the array API"
+    msg = "PolynomialFeatures does not support order='F' for non-numpy arrays"
     with config_context(array_api_dispatch=True):
         pf = PolynomialFeatures(order="F").fit(X_xp)
         if _is_numpy_namespace(xp):  # Numpy should not raise
