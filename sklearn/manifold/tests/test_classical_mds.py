@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
@@ -22,9 +22,9 @@ def test_classical_mds_equivalent_to_pca():
         if Z1[0, comp] < 0 and Z2[0, comp] > 0:
             Z2[:, comp] *= -1
 
-    assert_array_almost_equal(Z1, Z2)
+    assert_allclose(Z1, Z2)
 
-    assert_array_almost_equal(np.sqrt(cmds.eigenvalues_), pca.singular_values_)
+    assert_allclose(np.sqrt(cmds.eigenvalues_), pca.singular_values_)
 
 
 def test_classical_mds_equivalent_on_data_and_distances():
@@ -36,7 +36,7 @@ def test_classical_mds_equivalent_on_data_and_distances():
     cmds = ClassicalMDS(n_components=2, metric="precomputed")
     Z2 = cmds.fit_transform(euclidean_distances(X))
 
-    assert_array_almost_equal(Z1, Z2)
+    assert_allclose(Z1, Z2)
 
 
 def test_classical_mds_wrong_inputs():
@@ -60,4 +60,9 @@ def test_classical_mds_metric_params():
     cmds = ClassicalMDS(n_components=2, metric="minkowski", metric_params={"p": 2})
     Z2 = cmds.fit_transform(X)
 
-    assert_array_almost_equal(Z1, Z2)
+    assert_allclose(Z1, Z2)
+
+    cmds = ClassicalMDS(n_components=2, metric="minkowski", metric_params={"p": 1})
+    Z3 = cmds.fit_transform(X)
+
+    assert not np.allclose(Z1, Z3)
