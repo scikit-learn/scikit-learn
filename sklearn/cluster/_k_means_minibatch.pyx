@@ -52,7 +52,7 @@ def _minibatch_update_dense(
 
     if adaptive_lr:
         for sample_idx in range(n_samples):
-            wsum_batch+= sample_weight[sample_idx]
+            wsum_batch += sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
         for cluster_idx in prange(n_clusters, schedule="static"):
@@ -97,11 +97,12 @@ cdef void update_center_dense(
         new_weight = old_weight + wsum_cluster
         weight_sums[cluster_idx] = new_weight
 
-        # Update cluster center: C_j^{i+1} = C_j^i*(1-alpha) + alpha*CM(B_j^i),
-        # where CM(B_j^i) is the (weighted) mean of samples assigned to cluster j.
+        # Update cluster center with learning rate alpha
+        # center_new = (1-alpha)*center_old + alpha*X_bar,
+        # where X_bar is the (weighted) mean of samples assigned to the cluster.
         #
-        # In non-adaptive mode: alpha = wsum_cluster / (wsum_cluster + old_weight)
-        # (weighted average over all seen samples).
+        # In non-adaptive mode: alpha = wsum_cluster / new_weight
+        # where new_weight is the cumulative sum over iterations.
         #
         # In adaptive mode (https://arxiv.org/abs/2304.00419):
         # alpha = sqrt(wsum_cluster / wsum_batch),
@@ -159,7 +160,7 @@ def _minibatch_update_sparse(
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
-    adaptive_lr : bool (default: False)
+    adaptive_lr : bool, default=False
         Whether to use the adaptive learning rate or not.
 
     n_threads : int
@@ -172,12 +173,12 @@ def _minibatch_update_sparse(
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
         int cluster_idx
-        floating wsum_batch=0.0
+        floating wsum_batch = 0.0
         int *indices
 
     if adaptive_lr:
         for sample_idx in range(n_samples):
-            wsum_batch+= sample_weight[sample_idx]
+            wsum_batch += sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 

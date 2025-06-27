@@ -1606,7 +1606,7 @@ def _mini_batch_step(
         model will take longer to converge, but should converge in a
         better clustering.
 
-    adaptive_lr : bool
+    adaptive_lr : bool, default=False
         If True, use the adaptive learning rate.
 
     verbose : bool, default=False
