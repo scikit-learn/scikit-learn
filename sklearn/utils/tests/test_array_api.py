@@ -9,13 +9,14 @@ from numpy.testing import assert_allclose
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
+    _add_to_diagonal,
     _asarray_with_order,
     _atol_for_type,
     _average,
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
-    _fill_or_add_to_diagonal,
+    _fill_diagonal,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     _isin,
@@ -26,6 +27,7 @@ from sklearn.utils._array_api import (
     _nanmean,
     _nanmin,
     _ravel,
+    _validate_diagonal_args,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -577,20 +579,104 @@ def test_count_nonzero(
 
 
 @pytest.mark.parametrize(
+    "array, value, match",
+    [
+        (numpy.array([1, 2, 3]), 1, "`array` should be 2D"),
+        (numpy.array([[1, 2], [3, 4]]), numpy.array([1, 2, 3]), "`value` needs to be"),
+        (numpy.array([[1, 2], [3, 4]]), [1, 2, 3], "`value` needs to be"),
+        (
+            numpy.array([[1, 2], [3, 4]]),
+            numpy.array([[1, 2], [3, 4]]),
+            "`value` needs to be a",
+        ),
+    ],
+)
+def test_validate_diagonal_args(array, value, match):
+    """Check `_validate_diagonal_args` raises the correct errors."""
+    xp = _array_api_for_tests("numpy", None)
+    with pytest.raises(ValueError, match=match):
+        _validate_diagonal_args(array, value, xp)
+
+
+@pytest.mark.parametrize("function", ["fill", "add"])
+@pytest.mark.parametrize("c_contiguity", [True, False])
+def test_fill_and_add_to_diagonal(c_contiguity, function):
+    """Check `_fill/add_to_diagonal` behaviour correct with numpy arrays."""
+    xp = _array_api_for_tests("numpy", None)
+    if c_contiguity:
+        array = numpy.zeros((3, 4))
+    else:
+        array = numpy.zeros((3, 4)).T
+    assert array.flags["C_CONTIGUOUS"] == c_contiguity
+
+    if function == "fill":
+        func = _fill_diagonal
+    else:
+        func = _add_to_diagonal
+
+    func(array, 1, xp)
+    assert_allclose(array.diagonal(), numpy.ones((3,)))
+
+    func(array, [0, 1, 2], xp)
+    if function == "fill":
+        expected_diag = numpy.arange(3)
+    else:
+        expected_diag = numpy.ones((3,)) + numpy.arange(3)
+    assert_allclose(array.diagonal(), expected_diag)
+
+    fill_array = numpy.array([11, 12, 13])
+    func(array, fill_array, xp)
+    if function == "fill":
+        expected_diag = fill_array
+    else:
+        expected_diag = fill_array + numpy.arange(3) + numpy.ones((3,))
+    assert_allclose(array.diagonal(), expected_diag)
+
+
+@pytest.mark.parametrize("array", ["standard", "transposed", "non-contiguous"])
+@pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-@pytest.mark.parametrize("wrap", [True, False])
-def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
+def test_fill_diagonal(array, array_namespace, device_, dtype_name):
+    """Check array API `_fill_diagonal` consistent with `numpy._fill_diagonal`."""
     xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.zeros((4, 5), dtype=dtype_name)
 
-    array_np = numpy.zeros((5, 4), dtype=dtype_name)
+    if array == "transposed":
+        array_xp = xp.asarray(array_np.copy(), device=device_).T
+        array_np = array_np.T
+    elif array == "non-contiguous":
+        array_xp = xp.asarray(array_np.copy(), device=device_)[::2, ::2]
+        array_np = array_np[::2, ::2]
+    else:
+        array_xp = xp.asarray(array_np.copy(), device=device_)
+
+    numpy.fill_diagonal(array_np, val=1)
+    with config_context(array_api_dispatch=True):
+        _fill_diagonal(array_xp, value=1, xp=xp)
+
+    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_add_to_diagonal(array_namespace, device_, dtype_name):
+    """Check `_add_to_diagonal` consistent between array API xp and numpy namespace."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    np_xp = _array_api_for_tests("numpy", None)
+
+    array_np = numpy.zeros((3, 4), dtype=dtype_name)
     array_xp = xp.asarray(array_np.copy(), device=device_)
 
-    numpy.fill_diagonal(array_np, val=1, wrap=wrap)
+    add_val = [1, 2, 3]
+    _fill_diagonal(array_np, value=add_val, xp=np_xp)
     with config_context(array_api_dispatch=True):
-        _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+        _fill_diagonal(array_xp, value=add_val, xp=xp)
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
