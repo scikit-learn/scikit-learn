@@ -1298,6 +1298,9 @@ class RandomForestClassifier(ForestClassifier):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
@@ -1709,6 +1712,9 @@ class RandomForestRegressor(ForestRegressor):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
@@ -2053,6 +2059,9 @@ class ExtraTreesClassifier(ForestClassifier):
         By default, :func:`~sklearn.metrics.accuracy_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2448,6 +2457,9 @@ class ExtraTreesRegressor(ForestRegressor):
         By default, :func:`~sklearn.metrics.r2_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
