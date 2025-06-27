@@ -1,0 +1,5 @@
+- :class:`BaseHistGradientBoosting` now uses sample weights when binning data
+  either by using sample weights in the `_averaged_weighted_percentile` or
+  by subsampling using normalised sample weights when `n_samples` is greater
+  than 2e5 within the `_find_binning_thresholds` function.
+  By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
