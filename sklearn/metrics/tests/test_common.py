@@ -2312,7 +2312,8 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
     # https://github.com/data-apis/array-api-strict/issues/134 has been fixed but
     # not released yet.
     if (
-        getattr(metric, "__name__", None) == "median_absolute_error"
+        getattr(metric, "__name__", None)
+        in ("median_absolute_error", "d2_pinball_score", "d2_absolute_error_score")
         and array_namespace == "array_api_strict"
     ):
         try:
