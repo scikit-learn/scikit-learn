@@ -1774,8 +1774,13 @@ def d2_pinball_score(
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
     """
-    _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
+    xp, _, device_ = get_namespace_and_device(
         y_true, y_pred, sample_weight, multioutput
+    )
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
 
     if _num_samples(y_pred) < 2:
@@ -1792,16 +1797,14 @@ def d2_pinball_score(
     )
 
     if sample_weight is None:
-        y_quantile = np.tile(
-            np.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
-        )
-    else:
-        y_quantile = np.tile(
-            _weighted_percentile(
-                y_true, sample_weight=sample_weight, percentile_rank=alpha * 100
-            ),
-            (len(y_true), 1),
-        )
+        sample_weight = xp.ones([y_true.shape[0]], dtype=y_pred.dtype, device=device_)
+
+    y_quantile = xp.tile(
+        _weighted_percentile(
+            y_true, sample_weight=sample_weight, percentile_rank=alpha * 100, xp=xp
+        ),
+        (y_true.shape[0], 1),
+    )
 
     denominator = mean_pinball_loss(
         y_true,
@@ -1811,25 +1814,15 @@ def d2_pinball_score(
         multioutput="raw_values",
     )
 
-    nonzero_numerator = numerator != 0
-    nonzero_denominator = denominator != 0
-    valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = np.ones(y_true.shape[1])
-
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
-    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
-
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            # return scores individually
-            return output_scores
-        else:  # multioutput == "uniform_average"
-            # passing None as weights to np.average results in uniform mean
-            avg_weights = None
-    else:
-        avg_weights = multioutput
-
-    return float(np.average(output_scores, weights=avg_weights))
+    return _assemble_r2_explained_variance(
+        numerator=numerator,
+        denominator=denominator,
+        n_outputs=y_true.shape[1],
+        multioutput=multioutput,
+        force_finite=True,
+        xp=xp,
+        device=device_,
+    )
 
 
 @validate_params(
