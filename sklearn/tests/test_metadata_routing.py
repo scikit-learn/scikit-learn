@@ -425,7 +425,7 @@ def test_nested_routing_conflict():
                 "In WeightedMetaRegressor, there is a conflict on sample_weight between"
                 " what is requested for this estimator and what is requested by its"
                 " children. You can resolve this conflict by using an alias for the"
-                " child estimator(s) requested metadata."
+                " child estimators' requested metadata."
             )
         ),
     ):

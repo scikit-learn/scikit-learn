@@ -75,7 +75,7 @@ jobs:
           - os: windows-latest
             python: 313t
             platform_id: win_amd64
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -98,7 +98,7 @@ jobs:
             python: 313t
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
 
           # # Linux 64 bit manylinux2014
           - os: ubuntu-24.04-arm
@@ -121,7 +121,7 @@ jobs:
             python: 313t
             platform_id: manylinux_aarch64
             manylinux_image: manylinux2014
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
 
           # MacOS x86_64
           - os: macos-13
@@ -139,7 +139,7 @@ jobs:
           - os: macos-13
             python: 313t
             platform_id: macosx_x86_64
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
 
           # MacOS arm64
           - os: macos-14
@@ -157,7 +157,7 @@ jobs:
           - os: macos-14
             python: 313t
             platform_id: macosx_arm64
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
 
     steps:
       - name: Checkout scikit-learn
@@ -173,8 +173,7 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
-          CIBW_FREE_THREADED_SUPPORT: ${{ matrix.free_threaded_support }}
+          CIBW_ENABLE: ${{ matrix.cibw_enable }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
