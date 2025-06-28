@@ -92,17 +92,17 @@ def sag(
     for epoch in range(n_iter):
         for k in range(n_samples):
             if sample_weight is not None:
-                idx = rng.choice(n_samples, p=sample_weight / sample_weight.sum())
+                idx = int(rng.choice(n_samples, p=sample_weight / sample_weight.sum()))
             else:
                 idx = int(rng.uniform() * n_samples)
             # idx = k
             entry = X[idx]
 
-            seen.add(idx * sample_weight[idx] if sample_weight is not None else idx)
+            seen.add(idx)
+
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
-            # if sample_weight is not None:
-            #    gradient *= sample_weight[idx]
+
             update = entry * gradient + alpha * weights
             gradient_correction = update - gradient_memory[idx]
             sum_gradient += gradient_correction
@@ -244,11 +244,17 @@ def sag_sparse(
     return weights, intercept
 
 
-def get_step_size(X, alpha, fit_intercept, classification=True):
-    if classification:
-        return 4.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + 4.0 * alpha)
+def get_step_size(X, alpha, fit_intercept, classification=True, sample_weight=None):
+    if sample_weight is None:
+        X_prod = np.sum(X * X, axis=1)
     else:
-        return 1.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + alpha)
+        X = X[sample_weight != 0]
+        X_prod = np.sum(X * X, axis=1)
+
+    if classification:
+        return 4.0 / (np.max(X_prod) + fit_intercept + 4.0 * alpha)
+    else:
+        return 1.0 / (np.max(X_prod) + fit_intercept + alpha)
 
 
 def test_classifier_matching():
