@@ -363,9 +363,9 @@ def test_roc_curve_toydata():
         "No positive samples in y_true, true positive value should be meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
+        fpr, tpr, _ = roc_curve(y_true, y_score)
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -382,9 +382,9 @@ def test_roc_curve_toydata():
         "No negative samples in y_true, false positive value should be meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
+        fpr, tpr, _ = roc_curve(y_true, y_score)
     assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
+    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."

@@ -1094,7 +1094,7 @@ def collinear_free_mask(fps_np, tps_np, tolerance=1e-12):
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "pos_label": [Real, str, "boolean", None],
+        "pos_label": [Real, bool, str, None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
     },
