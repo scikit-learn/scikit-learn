@@ -1,4 +1,5 @@
-from sklearn.feature_extraction import FeatureHasher, HashingVectorizer
+from sklearn.feature_extraction import FeatureHasher
+from sklearn.feature_extraction.text import HashingVectorizer
 
 
 def test_feature_hasher_requires_fit():
