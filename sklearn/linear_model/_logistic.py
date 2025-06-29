@@ -1781,9 +1781,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     See Also
     --------
     LogisticRegression : Logistic regression without tuning the hyperparameter `C`.
-
     plot_logistic_path : Visualize the effect of regularization on coefficients.
-    https://scikit-learn.org/stable/auto_examples/linear_model/plot_logistic_path.html
 
     Examples
     --------
