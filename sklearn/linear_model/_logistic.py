@@ -1776,7 +1776,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
-    .. versionadded:: 1.0
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1785,7 +1785,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     Examples
     --------
-
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
