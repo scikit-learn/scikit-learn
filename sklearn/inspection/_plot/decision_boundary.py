@@ -221,6 +221,10 @@ class DecisionBoundaryDisplay:
         ylabel : str, default=None
             Overwrite the y-axis label.
 
+        response_method : str, default=None
+            If provided, it will be used to create the plot's title. If `None`,
+            the name passed during initialization is used.
+
         estimator_name : str, default=None
             If provided, it will be used to create the plot's title. If `None`,
             the name passed during initialization is used.
