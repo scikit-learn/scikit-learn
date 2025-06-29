@@ -62,7 +62,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
     "sphinx_gallery.gen_gallery",
-    "sphinx-prompt",
+    "sphinx_prompt",
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "matplotlib.sphinxext.plot_directive",
