@@ -404,12 +404,13 @@ Tips on Practical Use
 
 * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
   choice.  If you have a lot of noisy observations you should decrease it:
-  decreasing C corresponds to more regularization.
+  decreasing C corresponds to more regularization (see example below).
 
   :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
   it becomes large, and prediction results stop improving after a certain
   threshold. Meanwhile, larger ``C`` values will take more time to train,
   sometimes up to 10 times longer, as shown in [#3]_.
+
 
 * Support Vector Machine algorithms are not scale invariant, so **it
   is highly recommended to scale your data**. For example, scale each
@@ -468,6 +469,9 @@ Tips on Practical Use
   The ``C`` value that yields a "null" model (all weights equal to zero) can
   be calculated using :func:`l1_min_c`.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_hyperplane_margin.py`
 
 .. _svm_kernels:
 
@@ -632,7 +636,11 @@ indicates a perfect prediction. But problems are usually not always perfectly
 separable with a hyperplane, so we allow some samples to be at a distance :math:`\zeta_i` from
 their correct margin boundary. The penalty term `C` controls the strength of
 this penalty, and as a result, acts as an inverse regularization parameter
-(see note below).
+(see the figure below). Also please refer to the note below.
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_hyperplane_margin_001.png
+   :align: center
+   :scale: 75
 
 The dual problem to the primal is
 
