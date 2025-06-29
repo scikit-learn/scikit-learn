@@ -1782,6 +1782,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     LogisticRegression : Logistic regression without tuning the
         hyperparameter `C`.
 
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
+    
     Examples
     --------
     >>> from sklearn.datasets import load_iris
