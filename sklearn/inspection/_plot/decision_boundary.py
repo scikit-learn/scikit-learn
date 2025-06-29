@@ -247,14 +247,10 @@ class DecisionBoundaryDisplay:
             _, ax = plt.subplots()
 
         estimator_name_to_display = (
-            estimator_name
-            if estimator_name is not None
-            else self.estimator_name
+            estimator_name if estimator_name is not None else self.estimator_name
         )
         response_method_to_display = (
-            response_method
-            if response_method is not None
-            else self.response_method
+            response_method if response_method is not None else self.response_method
         )
 
         if estimator_name_to_display or response_method_to_display:
