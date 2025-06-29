@@ -1799,6 +1799,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     (2, 3)
     >>> clf.score(X, y)
     0.98...
+
+    For a comparison of the LogisticRegression with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    .. minigallery:: sklearn.linear_model.LogisticRegression
+        :add-heading: Examples using `LogisticRegression`
+
     """
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
