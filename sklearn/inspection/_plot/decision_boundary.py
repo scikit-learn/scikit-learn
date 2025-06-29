@@ -106,6 +106,12 @@ class DecisionBoundaryDisplay:
 
         .. versionadded:: 1.7
 
+    response_method : str, default=None
+        The response method to display in the plot's title.
+
+    estimator_name : str, default=None
+        The estimator name to display in the plot's title.
+
     xlabel : str, default=None
         Default label to place on x axis.
 
@@ -170,19 +176,19 @@ class DecisionBoundaryDisplay:
         xx1,
         response,
         multiclass_colors=None,
+        response_method=None,
+        estimator_name=None,
         xlabel=None,
         ylabel=None,
-        response_method_used=None,
-        estimator_name=None,
     ):
         self.xx0 = xx0
         self.xx1 = xx1
         self.response = response
         self.multiclass_colors = multiclass_colors
+        self.response_method = response_method
+        self.estimator_name = estimator_name
         self.xlabel = xlabel
         self.ylabel = ylabel
-        self.response_method_used_ = response_method_used
-        self.estimator_name_ = estimator_name
 
     def plot(
         self,
@@ -190,7 +196,7 @@ class DecisionBoundaryDisplay:
         ax=None,
         xlabel=None,
         ylabel=None,
-        response_method_used=None,
+        response_method=None,
         estimator_name=None,
         **kwargs,
     ):
@@ -215,11 +221,9 @@ class DecisionBoundaryDisplay:
         ylabel : str, default=None
             Overwrite the y-axis label.
 
-        response_method_used : str, default=None
-            If provided, it will be used to create the plot's title.
-
         estimator_name : str, default=None
-            If provided, it will be used to create the plot's title.
+            If provided, it will be used to create the plot's title. If `None`,
+            the name passed during initialization is used.
 
         **kwargs : dict
             Additional keyword arguments to be passed to the `plot_method`.
@@ -243,18 +247,17 @@ class DecisionBoundaryDisplay:
             _, ax = plt.subplots()
 
         estimator_name_to_display = (
-            estimator_name if estimator_name is not None else self.estimator_name_
+            estimator_name if estimator_name is not None else self.estimator_name
         )
         response_method_to_display = (
-            response_method_used
-            if response_method_used is not None
-            else self.response_method_used_
+            response_method
+            if response_method is not None
+            else self.response_method
         )
 
         if estimator_name_to_display or response_method_to_display:
             ax.set_title(
-                f"Boundary: {estimator_name_to_display} "
-                f"Method: {response_method_to_display}"
+                f'{estimator_name_to_display} using "{response_method_to_display}" method'
             )
 
         plot_func = getattr(ax, plot_method)
@@ -343,6 +346,7 @@ class DecisionBoundaryDisplay:
         xlabel=None,
         ylabel=None,
         ax=None,
+        name=None,
         **kwargs,
     ):
         """Plot decision boundary given an estimator.
@@ -428,6 +432,10 @@ class DecisionBoundaryDisplay:
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        name : str, default=None
+            Name for the estimator. If `None`, the estimator's class name is
+            used.
 
         **kwargs : dict
             Additional keyword arguments to be passed to the
@@ -543,7 +551,7 @@ class DecisionBoundaryDisplay:
             estimator, response_method, class_of_interest
         )
         try:
-            response, _, response_method_used = _get_response_values(
+            response, _, response_method = _get_response_values(
                 estimator,
                 X_grid,
                 response_method=prediction_method,
@@ -562,7 +570,7 @@ class DecisionBoundaryDisplay:
             raise
 
         # convert classes predictions into integers
-        if response_method_used == "predict" and hasattr(estimator, "classes_"):
+        if response_method == "predict" and hasattr(estimator, "classes_"):
             encoder = LabelEncoder()
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
@@ -588,6 +596,8 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
+        estimator_name = estimator.__class__.__name__ if name is None else name
+
         display = cls(
             xx0=xx0,
             xx1=xx1,
@@ -595,8 +605,8 @@ class DecisionBoundaryDisplay:
             multiclass_colors=multiclass_colors,
             xlabel=xlabel,
             ylabel=ylabel,
-            response_method_used=response_method_used,
-            estimator_name=estimator.__class__.__name__,
+            response_method=response_method,
+            estimator_name=estimator_name,
         )
 
         return display.plot(ax=ax, plot_method=plot_method, **kwargs)
