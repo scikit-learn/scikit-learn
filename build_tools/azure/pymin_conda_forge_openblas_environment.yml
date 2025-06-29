@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python=3.10
   - numpy
-  - blas[build=mkl]
+  - blas[build=openblas]
   - scipy
   - cython
   - joblib
