@@ -1777,7 +1777,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         has feature names that are all strings.
 
         .. versionadded:: 1.0
-
     See Also
     --------
     LogisticRegression : Logistic regression without tuning the
@@ -1787,6 +1786,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     Examples
     --------
+
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
