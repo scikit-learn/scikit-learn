@@ -1864,6 +1864,7 @@ See concept :term:`sample property`.
         .. FIXME: Is this interpretation always the case in practice? We have no common tests.
 
         Some estimators, such as decision trees, support negative weights.
+        
         .. FIXME: This feature or its absence may not be tested or documented in many estimators.
 
         This is not entirely the case where other parameters of the model
