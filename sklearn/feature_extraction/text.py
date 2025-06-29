@@ -2134,3 +2134,6 @@ class TfidfVectorizer(CountVectorizer):
         tags.input_tags.two_d_array = False
         tags._skip_test = True
         return tags
+
+    def _more_tags(self):
+        return {"requires_fit": False}
