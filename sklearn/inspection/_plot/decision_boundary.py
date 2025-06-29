@@ -247,7 +247,9 @@ class DecisionBoundaryDisplay:
             _, ax = plt.subplots()
 
         estimator_name_to_display = (
-            estimator_name if estimator_name is not None else self.estimator_name
+            estimator_name
+            if estimator_name is not None
+            else self.estimator_name
         )
         response_method_to_display = (
             response_method
@@ -256,9 +258,11 @@ class DecisionBoundaryDisplay:
         )
 
         if estimator_name_to_display or response_method_to_display:
-            ax.set_title(
-                f'{estimator_name_to_display} using "{response_method_to_display}" method'
+            title = (
+                f"{estimator_name_to_display} using "
+                f'"{response_method_to_display}" method'
             )
+            ax.set_title(title)
 
         plot_func = getattr(ax, plot_method)
         if self.response.ndim == 2:
