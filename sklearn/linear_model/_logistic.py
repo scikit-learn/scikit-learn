@@ -1123,6 +1123,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    For a visualization of the L1 regularization path and how it influences
+    model sparsity in Logistic Regression, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
+
     """
 
     _parameter_constraints: dict = {
@@ -1775,11 +1780,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     See Also
     --------
-    LogisticRegression : Logistic regression without tuning the
-        hyperparameter `C`.
+    LogisticRegression : Logistic regression without tuning the hyperparameter `C`.
+    plot_logistic_path : Visualize the effect of regularization on coefficients.
 
     Examples
     --------
+
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
@@ -1790,6 +1796,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     (2, 3)
     >>> clf.score(X, y)
     0.98...
+
+    For a comparison of the LogisticRegression with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    .. minigallery:: sklearn.linear_model.LogisticRegression
+        :add-heading: Examples using `LogisticRegression`
+
     """
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
