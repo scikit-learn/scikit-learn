@@ -1776,16 +1776,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
-     .. versionadded:: 1.0
+    .. versionadded:: 1.0
+
     See Also
     --------
     LogisticRegression : Logistic regression without tuning the
         hyperparameter `C`.
 
-    plot_logistic_path : Visualize the effect of regularization on coefficients — https://scikit-learn.org/stable/auto_examples/linear_model/plot_logistic_path.html
+    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
+        Visualize the effect of regularization on coefficients.
 
     Examples
     --------
+
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
