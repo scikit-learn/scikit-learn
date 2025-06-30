@@ -317,15 +317,15 @@ def test_roc_curve_toydata():
     # Binary classification
     y_true = [0, 1]
     y_score = [0, 1]
-    fpr, tpr, _ = roc_curve(y_true, y_score)
+    tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
-    assert_array_almost_equal(tpr, [0, 1, 1])
-    assert_array_almost_equal(fpr, [0, 0, 1])
+    assert_array_almost_equal(tpr, [0, 0, 1])
+    assert_array_almost_equal(fpr, [0, 1, 1])
     assert_almost_equal(roc_auc, 1.0)
 
     y_true = [0, 1]
     y_score = [1, 0]
-    fpr, tpr, _ = roc_curve(y_true, y_score)
+    tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0, 1, 1])
     assert_array_almost_equal(fpr, [0, 0, 1])
@@ -333,7 +333,7 @@ def test_roc_curve_toydata():
 
     y_true = [1, 0]
     y_score = [1, 1]
-    fpr, tpr, _ = roc_curve(y_true, y_score)
+    tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0, 1])
     assert_array_almost_equal(fpr, [0, 1])
@@ -341,15 +341,15 @@ def test_roc_curve_toydata():
 
     y_true = [1, 0]
     y_score = [1, 0]
-    fpr, tpr, _ = roc_curve(y_true, y_score)
+    tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0, 0, 1])
-    assert_array_almost_equal(fpr, [0, 0, 1])
+    assert_array_almost_equal(fpr, [0, 1, 1])
     assert_almost_equal(roc_auc, 1.0)
 
     y_true = [1, 0]
     y_score = [0.5, 0.5]
-    fpr, tpr, _ = roc_curve(y_true, y_score)
+    tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0, 1])
     assert_array_almost_equal(fpr, [0, 1])
@@ -363,9 +363,9 @@ def test_roc_curve_toydata():
         "No positive samples in y_true, true positive value should be meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        fpr, tpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
-    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+    assert_array_almost_equal(tpr, [0.0, 1.0])
+    assert_array_almost_equal(fpr, [np.nan, np.nan])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -382,9 +382,9 @@ def test_roc_curve_toydata():
         "No negative samples in y_true, false positive value should be meaningless"
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        fpr, tpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
-    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+    assert_array_almost_equal(tpr, [np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.0, 1.0])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -431,13 +431,13 @@ def test_roc_curve_drop_intermediate():
     # Test that drop_intermediate drops the correct thresholds
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
-    fpr, tpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.7, 0.0])
+    tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
+    assert_array_almost_equal(thresholds, [np.inf, 0.7, 0.0])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
     y_score = [0.0, 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
-    fpr, tpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
+    tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
     assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.9, 0.7, 0.6, 0.0])
 
 
