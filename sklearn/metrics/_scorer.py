@@ -40,7 +40,7 @@ from ..utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from ..utils.validation import _check_response_method
+from ..utils.validation import _check_response_method, _deprecate_positional_args
 from . import (
     accuracy_score,
     average_precision_score,
@@ -261,7 +261,9 @@ class _BaseScorer(_MetadataRequester):
             f"{response_method_string}{kwargs_string})"
         )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
+    # TODO (1.9): remove in 1.9
+    @_deprecate_positional_args(version="1.9")
+    def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -354,6 +356,27 @@ class _BaseScorer(_MetadataRequester):
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
+
+    def get_metadata_routing(self):
+        """Get requested data properties.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        request : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+        """
+        if hasattr(self, "_metadata_request"):
+            requests = get_routing_for_object(self._metadata_request)
+        else:
+            requests = self._get_default_requests(
+                score_method=self._score_func,
+                ignore_params={"y_true", "y_pred"},
+            )
+
+        return requests
 
 
 class _Scorer(_BaseScorer):
