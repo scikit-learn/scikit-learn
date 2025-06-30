@@ -313,7 +313,9 @@ def _dask_wrap(
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
         scheduler = CountingDaskScheduler(n, msg)
-        with dask.config.set({"scheduler": scheduler}):  # pyright: ignore[reportPrivateImportUsage]
+        with dask.config.set(
+            {"scheduler": scheduler}
+        ):  # pyright: ignore[reportPrivateImportUsage]
             out = func(*args, **kwargs)
 
         # Block until the graph materializes and reraise exceptions. This allows

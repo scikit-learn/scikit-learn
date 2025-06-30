@@ -1,10 +1,11 @@
-from cupy.linalg import * # noqa: F403
+from cupy.linalg import *  # noqa: F403
+
 # cupy.linalg doesn't have __all__. If it is added, replace this with
 #
 # from cupy.linalg import __all__ as linalg_all
 _n = {}
-exec('from cupy.linalg import *', _n)
-del _n['__builtins__']
+exec("from cupy.linalg import *", _n)
+del _n["__builtins__"]
 linalg_all = list(_n)
 del _n
 
@@ -14,7 +15,7 @@ from .._internal import get_xp
 import cupy as cp
 
 # These functions are in both the main and linalg namespaces
-from ._aliases import matmul, matrix_transpose, tensordot, vecdot # noqa: F401
+from ._aliases import matmul, matrix_transpose, tensordot, vecdot  # noqa: F401
 
 cross = get_xp(cp)(_linalg.cross)
 outer = get_xp(cp)(_linalg.outer)
@@ -36,7 +37,7 @@ trace = get_xp(cp)(_linalg.trace)
 
 # These functions are completely new here. If the library already has them
 # (i.e., numpy 2.0), use the library version instead of our wrapper.
-if hasattr(cp.linalg, 'vector_norm'):
+if hasattr(cp.linalg, "vector_norm"):
     vector_norm = cp.linalg.vector_norm
 else:
     vector_norm = get_xp(cp)(_linalg.vector_norm)

@@ -74,7 +74,9 @@ finfo = get_xp(np)(_aliases.finfo)
 iinfo = get_xp(np)(_aliases.iinfo)
 
 
-def _supports_buffer_protocol(obj: object) -> TypeIs[Buffer]:  # pyright: ignore[reportUnusedFunction]
+def _supports_buffer_protocol(
+    obj: object,
+) -> TypeIs[Buffer]:  # pyright: ignore[reportUnusedFunction]
     try:
         memoryview(obj)  # pyright: ignore[reportArgumentType]
     except TypeError:
@@ -134,7 +136,9 @@ def count_nonzero(
 ) -> Array:
     # NOTE: this is currently incorrectly typed in numpy, but will be fixed in
     # numpy 2.2.5 and 2.3.0: https://github.com/numpy/numpy/pull/28750
-    result = cast("Any", np.count_nonzero(x, axis=axis, keepdims=keepdims))  # pyright: ignore[reportArgumentType, reportCallIssue]
+    result = cast(
+        "Any", np.count_nonzero(x, axis=axis, keepdims=keepdims)
+    )  # pyright: ignore[reportArgumentType, reportCallIssue]
     if axis is None and not keepdims:
         return np.asarray(result)
     return result
@@ -180,7 +184,7 @@ __all__ = [
     "concat",
     "count_nonzero",
     "pow",
-    "take_along_axis"
+    "take_along_axis",
 ]
 __all__ += _aliases.__all__
 _all_ignore = ["np", "get_xp"]

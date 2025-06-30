@@ -68,9 +68,12 @@ iinfo = get_xp(cp)(_aliases.iinfo)
 # asarray also adds the copy keyword, which is not present in numpy 1.0.
 def asarray(
     obj: (
-        Array 
-        | bool | int | float | complex 
-        | NestedSequence[bool | int | float | complex] 
+        Array
+        | bool
+        | int
+        | float
+        | complex
+        | NestedSequence[bool | int | float | complex]
         | SupportsBufferProtocol
     ),
     /,
@@ -92,7 +95,9 @@ def asarray(
         else:
             res = cp.array(obj, dtype=dtype, copy=copy, **kwargs)
             if not copy and res is not obj:
-                raise ValueError("Unable to avoid copy while creating an array as requested")
+                raise ValueError(
+                    "Unable to avoid copy while creating an array as requested"
+                )
             return res
 
 
@@ -111,17 +116,13 @@ def astype(
 
 
 # cupy.count_nonzero does not have keepdims
-def count_nonzero(
-    x: Array,
-    axis=None,
-    keepdims=False
-) -> Array:
-   result = cp.count_nonzero(x, axis)
-   if keepdims:
-       if axis is None:
-            return cp.reshape(result, [1]*x.ndim)
-       return cp.expand_dims(result, axis)
-   return result
+def count_nonzero(x: Array, axis=None, keepdims=False) -> Array:
+    result = cp.count_nonzero(x, axis)
+    if keepdims:
+        if axis is None:
+            return cp.reshape(result, [1] * x.ndim)
+        return cp.expand_dims(result, axis)
+    return result
 
 
 # take_along_axis: axis defaults to -1 but in cupy (and numpy) axis is a required arg
@@ -131,26 +132,41 @@ def take_along_axis(x: Array, indices: Array, /, *, axis: int = -1):
 
 # These functions are completely new here. If the library already has them
 # (i.e., numpy 2.0), use the library version instead of our wrapper.
-if hasattr(cp, 'vecdot'):
+if hasattr(cp, "vecdot"):
     vecdot = cp.vecdot
 else:
     vecdot = get_xp(cp)(_aliases.vecdot)
 
-if hasattr(cp, 'isdtype'):
+if hasattr(cp, "isdtype"):
     isdtype = cp.isdtype
 else:
     isdtype = get_xp(cp)(_aliases.isdtype)
 
-if hasattr(cp, 'unstack'):
+if hasattr(cp, "unstack"):
     unstack = cp.unstack
 else:
     unstack = get_xp(cp)(_aliases.unstack)
 
-__all__ = _aliases.__all__ + ['__array_namespace_info__', 'asarray', 'astype',
-                              'acos', 'acosh', 'asin', 'asinh', 'atan',
-                              'atan2', 'atanh', 'bitwise_left_shift',
-                              'bitwise_invert', 'bitwise_right_shift',
-                              'bool', 'concat', 'count_nonzero', 'pow', 'sign',
-                              'take_along_axis']
+__all__ = _aliases.__all__ + [
+    "__array_namespace_info__",
+    "asarray",
+    "astype",
+    "acos",
+    "acosh",
+    "asin",
+    "asinh",
+    "atan",
+    "atan2",
+    "atanh",
+    "bitwise_left_shift",
+    "bitwise_invert",
+    "bitwise_right_shift",
+    "bool",
+    "concat",
+    "count_nonzero",
+    "pow",
+    "sign",
+    "take_along_axis",
+]
 
-_all_ignore = ['cp', 'get_xp']
+_all_ignore = ["cp", "get_xp"]

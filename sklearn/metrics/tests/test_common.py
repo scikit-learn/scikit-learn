@@ -1005,8 +1005,7 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
 @pytest.mark.parametrize(
     "y_true, y_score",
-    invalids_nan_inf
-    +
+    invalids_nan_inf +
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809

@@ -38,7 +38,9 @@ class JustInt(Protocol):
     @property
     def __class__(self, /) -> type[int]: ...
     @__class__.setter
-    def __class__(self, value: type[int], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __class__(
+        self, value: type[int], /
+    ) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 
 @final
@@ -46,7 +48,9 @@ class JustFloat(Protocol):
     @property
     def __class__(self, /) -> type[float]: ...
     @__class__.setter
-    def __class__(self, value: type[float], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __class__(
+        self, value: type[float], /
+    ) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 
 @final
@@ -54,7 +58,9 @@ class JustComplex(Protocol):
     @property
     def __class__(self, /) -> type[complex]: ...
     @__class__.setter
-    def __class__(self, value: type[complex], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __class__(
+        self, value: type[complex], /
+    ) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 
 #

@@ -105,9 +105,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_shared(url, has_gzip_header, expected_prefix, suffix):
-        assert url.startswith(expected_prefix), (
-            f"{expected_prefix!r} does not match {url!r}"
-        )
+        assert url.startswith(
+            expected_prefix
+        ), f"{expected_prefix!r} does not match {url!r}"
 
         data_file_name = _file_name(url, suffix)
         data_file_path = resources.files(data_module) / data_file_name
@@ -156,9 +156,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_data_list(url, has_gzip_header):
-        assert url.startswith(url_prefix_data_list), (
-            f"{url_prefix_data_list!r} does not match {url!r}"
-        )
+        assert url.startswith(
+            url_prefix_data_list
+        ), f"{url_prefix_data_list!r} does not match {url!r}"
 
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name

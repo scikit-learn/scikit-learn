@@ -4,11 +4,12 @@ from typing import Union, Sequence, Literal
 
 import torch
 import torch.fft
-from torch.fft import * # noqa: F403
+from torch.fft import *  # noqa: F403
 
 from ._typing import Array
 
 # Several torch fft functions do not map axes to dim
+
 
 def fftn(
     x: Array,
@@ -21,6 +22,7 @@ def fftn(
 ) -> Array:
     return torch.fft.fftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
+
 def ifftn(
     x: Array,
     /,
@@ -31,6 +33,7 @@ def ifftn(
     **kwargs,
 ) -> Array:
     return torch.fft.ifftn(x, s=s, dim=axes, norm=norm, **kwargs)
+
 
 def rfftn(
     x: Array,
@@ -43,6 +46,7 @@ def rfftn(
 ) -> Array:
     return torch.fft.rfftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
+
 def irfftn(
     x: Array,
     /,
@@ -54,6 +58,7 @@ def irfftn(
 ) -> Array:
     return torch.fft.irfftn(x, s=s, dim=axes, norm=norm, **kwargs)
 
+
 def fftshift(
     x: Array,
     /,
@@ -62,6 +67,7 @@ def fftshift(
     **kwargs,
 ) -> Array:
     return torch.fft.fftshift(x, dim=axes, **kwargs)
+
 
 def ifftshift(
     x: Array,
@@ -82,4 +88,4 @@ __all__ = torch.fft.__all__ + [
     "ifftshift",
 ]
 
-_all_ignore = ['torch']
+_all_ignore = ["torch"]

@@ -872,9 +872,9 @@ def test_ridge_loo_cv_asym_scoring():
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_), (
-        f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
-    )
+    assert gcv_ridge.alpha_ == pytest.approx(
+        loo_ridge.alpha_
+    ), f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
@@ -1534,9 +1534,9 @@ def test_ridgecv_alphas_conversion(Estimator):
     X = rng.randn(n_samples, n_features)
 
     ridge_est = Estimator(alphas=alphas)
-    assert ridge_est.alphas is alphas, (
-        f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
-    )
+    assert (
+        ridge_est.alphas is alphas
+    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
 
     ridge_est.fit(X, y)
     assert_array_equal(ridge_est.alphas, np.asarray(alphas))

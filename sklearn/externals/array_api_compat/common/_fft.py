@@ -10,6 +10,7 @@ _Norm: TypeAlias = Literal["backward", "ortho", "forward"]
 # Note: NumPy fft functions improperly upcast float32 and complex64 to
 # complex128, which is why we require wrapping them all here.
 
+
 def fft(
     x: Array,
     /,
@@ -23,6 +24,7 @@ def fft(
     if x.dtype in [xp.float32, xp.complex64]:
         return res.astype(xp.complex64)
     return res
+
 
 def ifft(
     x: Array,
@@ -38,6 +40,7 @@ def ifft(
         return res.astype(xp.complex64)
     return res
 
+
 def fftn(
     x: Array,
     /,
@@ -51,6 +54,7 @@ def fftn(
     if x.dtype in [xp.float32, xp.complex64]:
         return res.astype(xp.complex64)
     return res
+
 
 def ifftn(
     x: Array,
@@ -66,6 +70,7 @@ def ifftn(
         return res.astype(xp.complex64)
     return res
 
+
 def rfft(
     x: Array,
     /,
@@ -79,6 +84,7 @@ def rfft(
     if x.dtype == xp.float32:
         return res.astype(xp.complex64)
     return res
+
 
 def irfft(
     x: Array,
@@ -94,6 +100,7 @@ def irfft(
         return res.astype(xp.float32)
     return res
 
+
 def rfftn(
     x: Array,
     /,
@@ -107,6 +114,7 @@ def rfftn(
     if x.dtype == xp.float32:
         return res.astype(xp.complex64)
     return res
+
 
 def irfftn(
     x: Array,
@@ -122,6 +130,7 @@ def irfftn(
         return res.astype(xp.float32)
     return res
 
+
 def hfft(
     x: Array,
     /,
@@ -136,6 +145,7 @@ def hfft(
         return res.astype(xp.float32)
     return res
 
+
 def ihfft(
     x: Array,
     /,
@@ -149,6 +159,7 @@ def ihfft(
     if x.dtype in [xp.float32, xp.complex64]:
         return res.astype(xp.complex64)
     return res
+
 
 def fftfreq(
     n: int,
@@ -166,6 +177,7 @@ def fftfreq(
         return res.astype(dtype)
     return res
 
+
 def rfftfreq(
     n: int,
     /,
@@ -182,15 +194,18 @@ def rfftfreq(
         return res.astype(dtype)
     return res
 
+
 def fftshift(
     x: Array, /, xp: Namespace, *, axes: int | Sequence[int] | None = None
 ) -> Array:
     return xp.fft.fftshift(x, axes=axes)
 
+
 def ifftshift(
     x: Array, /, xp: Namespace, *, axes: int | Sequence[int] | None = None
 ) -> Array:
     return xp.fft.ifftshift(x, axes=axes)
+
 
 __all__ = [
     "fft",
@@ -208,6 +223,7 @@ __all__ = [
     "fftshift",
     "ifftshift",
 ]
+
 
 def __dir__() -> list[str]:
     return __all__

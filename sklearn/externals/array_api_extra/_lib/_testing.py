@@ -117,7 +117,9 @@ def xp_assert_equal(actual: Array, desired: Array, err_msg: str = "") -> None:
         # JAX/Dask arrays work with `np.testing`
         actual_np = actual if actual_np is None else actual_np
         desired_np = desired if desired_np is None else desired_np
-        np.testing.assert_array_equal(actual_np, desired_np, err_msg=err_msg)  # pyright: ignore[reportUnknownArgumentType]
+        np.testing.assert_array_equal(
+            actual_np, desired_np, err_msg=err_msg
+        )  # pyright: ignore[reportUnknownArgumentType]
 
 
 def xp_assert_close(

@@ -168,7 +168,9 @@ def asarray(
             if copy is False:
                 raise ValueError("Unable to avoid copy when changing dtype")
             obj = obj.astype(dtype)
-        return obj.copy() if copy else obj  # pyright: ignore[reportAttributeAccessIssue]
+        return (
+            obj.copy() if copy else obj
+        )  # pyright: ignore[reportAttributeAccessIssue]
 
     if copy is False:
         raise ValueError(

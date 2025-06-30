@@ -1,10 +1,11 @@
-from cupy.fft import * # noqa: F403
+from cupy.fft import *  # noqa: F403
+
 # cupy.fft doesn't have __all__. If it is added, replace this with
 #
 # from cupy.fft import __all__ as linalg_all
 _n = {}
-exec('from cupy.fft import *', _n)
-del _n['__builtins__']
+exec("from cupy.fft import *", _n)
+del _n["__builtins__"]
 fft_all = list(_n)
 del _n
 

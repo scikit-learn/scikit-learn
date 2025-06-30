@@ -2422,9 +2422,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise, (
-            attr_message
-        )
+        assert (
+            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
+        ), attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():

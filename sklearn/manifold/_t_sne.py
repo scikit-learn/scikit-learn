@@ -949,9 +949,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
             assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(P <= 1), (
-                "All probabilities should be less or then equal to one"
-            )
+            assert np.all(
+                P <= 1
+            ), "All probabilities should be less or then equal to one"
 
         else:
             # Compute the number of nearest neighbors to find.

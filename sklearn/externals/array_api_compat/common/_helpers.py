@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     # TODO: import from typing (requires Python >=3.13)
     from typing_extensions import TypeIs, TypeVar
 
-    _SizeT = TypeVar("_SizeT", bound = int | None)
+    _SizeT = TypeVar("_SizeT", bound=int | None)
 
     _ZeroGradientArray: TypeAlias = npt.NDArray[np.void]
     _CupyArray: TypeAlias = Any  # cupy has no py.typed
@@ -91,6 +91,7 @@ def _is_jax_zero_gradient_array(x: object) -> TypeGuard[_ZeroGradientArray]:
         return False
 
     import jax
+
     # jax.float0 is a np.dtype([('float0', 'V')])
     return dtype == jax.float0
 
@@ -119,7 +120,7 @@ def is_numpy_array(x: object) -> TypeGuard[npt.NDArray[Any]]:
     # TODO: Should we reject ndarray subclasses?
     cls = cast(Hashable, type(x))
     return (
-        _issubclass_fast(cls, "numpy", "ndarray") 
+        _issubclass_fast(cls, "numpy", "ndarray")
         or _issubclass_fast(cls, "numpy", "generic")
     ) and not _is_jax_zero_gradient_array(x)
 
@@ -266,7 +267,9 @@ def is_pydata_sparse_array(x: object) -> TypeIs[sparse.SparseArray]:
     return _issubclass_fast(cls, "sparse", "SparseArray")
 
 
-def is_array_api_obj(x: object) -> TypeIs[_ArrayApiObj]:  # pyright: ignore[reportUnknownParameterType]
+def is_array_api_obj(
+    x: object,
+) -> TypeIs[_ArrayApiObj]:  # pyright: ignore[reportUnknownParameterType]
     """
     Return True if `x` is an array API compatible array object.
 
@@ -281,9 +284,8 @@ def is_array_api_obj(x: object) -> TypeIs[_ArrayApiObj]:  # pyright: ignore[repo
     is_dask_array
     is_jax_array
     """
-    return (
-        hasattr(x, '__array_namespace__') 
-        or _is_array_api_cls(cast(Hashable, type(x)))
+    return hasattr(x, "__array_namespace__") or _is_array_api_cls(
+        cast(Hashable, type(x))
     )
 
 
@@ -657,7 +659,9 @@ def array_namespace(
 get_namespace = array_namespace
 
 
-def _check_device(bare_xp: Namespace, device: Device) -> None:  # pyright: ignore[reportUnusedFunction]
+def _check_device(
+    bare_xp: Namespace, device: Device
+) -> None:  # pyright: ignore[reportUnusedFunction]
     """
     Validate dummy device on device-less array backends.
 
@@ -869,7 +873,9 @@ def to_device(x: Array, device: Device, /, *, stream: int | Any | None = None) -
         # cupy does not yet have to_device
         return _cupy_to_device(x, device, stream=stream)
     elif is_torch_array(x):
-        return _torch_to_device(x, device, stream=stream)  # pyright: ignore[reportArgumentType]
+        return _torch_to_device(
+            x, device, stream=stream
+        )  # pyright: ignore[reportArgumentType]
     elif is_dask_array(x):
         if stream is not None:
             raise ValueError("The stream argument to to_device() is not supported")
@@ -948,7 +954,7 @@ def is_writeable_array(x: object) -> bool:
     res = _is_writeable_cls(cls)
     if res is not None:
         return res
-    return hasattr(x, '__array_namespace__')
+    return hasattr(x, "__array_namespace__")
 
 
 @lru_cache(100)
@@ -967,7 +973,7 @@ def _is_lazy_cls(cls: type) -> bool | None:
         or _issubclass_fast(cls, "ndonnx", "Array")
     ):
         return True
-    return  None
+    return None
 
 
 def is_lazy_array(x: object) -> bool:
@@ -1052,7 +1058,8 @@ __all__ = [
     "to_device",
 ]
 
-_all_ignore = ['lru_cache', 'sys', 'math', 'inspect', 'warnings']
+_all_ignore = ["lru_cache", "sys", "math", "inspect", "warnings"]
+
 
 def __dir__() -> list[str]:
     return __all__

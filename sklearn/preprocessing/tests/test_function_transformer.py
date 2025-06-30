@@ -36,13 +36,13 @@ def test_delegate_to_func():
     )
 
     # The function should only have received X.
-    assert args_store == [X], (
-        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
-    )
+    assert args_store == [
+        X
+    ], "Incorrect positional arguments passed to func: {args}".format(args=args_store)
 
-    assert not kwargs_store, (
-        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
-    )
+    assert (
+        not kwargs_store
+    ), "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
 
     # reset the argument stores.
     args_store[:] = []
@@ -56,13 +56,13 @@ def test_delegate_to_func():
     )
 
     # The function should have received X
-    assert args_store == [X], (
-        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
-    )
+    assert args_store == [
+        X
+    ], "Incorrect positional arguments passed to func: {args}".format(args=args_store)
 
-    assert not kwargs_store, (
-        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
-    )
+    assert (
+        not kwargs_store
+    ), "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
 
 
 def test_np_log():

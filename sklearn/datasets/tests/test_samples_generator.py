@@ -138,17 +138,17 @@ def test_make_classification_informative_features():
             signs = signs.view(dtype="|S{0}".format(signs.strides[0])).ravel()
             unique_signs, cluster_index = np.unique(signs, return_inverse=True)
 
-            assert len(unique_signs) == n_clusters, (
-                "Wrong number of clusters, or not in distinct quadrants"
-            )
+            assert (
+                len(unique_signs) == n_clusters
+            ), "Wrong number of clusters, or not in distinct quadrants"
 
             clusters_by_class = defaultdict(set)
             for cluster, cls in zip(cluster_index, y):
                 clusters_by_class[cls].add(cluster)
             for clusters in clusters_by_class.values():
-                assert len(clusters) == n_clusters_per_class, (
-                    "Wrong number of clusters per class"
-                )
+                assert (
+                    len(clusters) == n_clusters_per_class
+                ), "Wrong number of clusters per class"
             assert len(clusters_by_class) == n_classes, "Wrong number of classes"
 
             assert_array_almost_equal(
@@ -412,9 +412,9 @@ def test_make_blobs_n_samples_list():
     X, y = make_blobs(n_samples=n_samples, n_features=2, random_state=0)
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
-    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), (
-        "Incorrect number of samples per blob"
-    )
+    assert all(
+        np.bincount(y, minlength=len(n_samples)) == n_samples
+    ), "Incorrect number of samples per blob"
 
 
 def test_make_blobs_n_samples_list_with_centers(global_random_seed):
@@ -429,9 +429,9 @@ def test_make_blobs_n_samples_list_with_centers(global_random_seed):
     )
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
-    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), (
-        "Incorrect number of samples per blob"
-    )
+    assert all(
+        np.bincount(y, minlength=len(n_samples)) == n_samples
+    ), "Incorrect number of samples per blob"
     for i, (ctr, std) in enumerate(zip(centers, cluster_stds)):
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
@@ -444,9 +444,9 @@ def test_make_blobs_n_samples_centers_none(n_samples):
     X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
-    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), (
-        "Incorrect number of samples per blob"
-    )
+    assert all(
+        np.bincount(y, minlength=len(n_samples)) == n_samples
+    ), "Incorrect number of samples per blob"
 
 
 def test_make_blobs_return_centers():
@@ -688,9 +688,9 @@ def test_make_moons(global_random_seed):
 
 def test_make_moons_unbalanced():
     X, y = make_moons(n_samples=(7, 5))
-    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, (
-        "Number of samples in a moon is wrong"
-    )
+    assert (
+        np.sum(y == 0) == 7 and np.sum(y == 1) == 5
+    ), "Number of samples in a moon is wrong"
     assert X.shape == (12, 2), "X shape mismatch"
     assert y.shape == (12,), "y shape mismatch"
 

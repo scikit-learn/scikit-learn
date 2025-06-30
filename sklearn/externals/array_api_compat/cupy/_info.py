@@ -7,6 +7,7 @@ https://data-apis.org/array-api/latest/API_specification/inspection.html for
 more details.
 
 """
+
 from cupy import (
     dtype,
     cuda,
@@ -59,7 +60,7 @@ class __array_namespace_info__:
 
     """
 
-    __module__ = 'cupy'
+    __module__ = "cupy"
 
     def capabilities(self):
         """
