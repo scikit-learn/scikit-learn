@@ -5,6 +5,8 @@ import math
 import numbers
 from contextlib import suppress
 
+import numpy as np
+
 
 def is_scalar_nan(x):
     """Test if x is NaN.
@@ -66,3 +68,44 @@ def is_pandas_na(x):
         return x is NA
 
     return False
+
+
+def array_like_has_any_na(x):
+    """Test if x is list, tuple or set and have pd.NA o NaN
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
+    if isinstance(x, (list, set, tuple)):
+        return any(is_scalar_nan(v) or is_pandas_na(v) for v in x)
+    return False
+
+
+def has_only_number_or_none(x):
+    """Test if x is number or none, or if x is list, tuple or set
+    that has only numbers or None
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
+    if isinstance(x, (list, set, tuple)):
+        return any(isinstance(v, numbers.Real) or v is None for v in x)
+    return isinstance(x, numbers.Real) or x is None
+
+
+try:
+    import pandas
+
+    is_pandas_na_only = np.frompyfunc(lambda a: a is pandas.NA or a is pandas.NaT, 1, 1)
+except ImportError:
+    is_pandas_na_only = lambda a: False

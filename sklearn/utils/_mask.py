@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from contextlib import suppress
+from functools import reduce
 
 import numpy as np
 from scipy import sparse as sp
 
-from ._missing import is_scalar_nan
+from ._missing import is_pandas_na_only, is_scalar_nan
 from ._param_validation import validate_params
 from .fixes import _object_dtype_isnan
 
@@ -26,6 +27,9 @@ def _get_dense_mask(X, value_to_mask):
         elif X.dtype.kind in ("i", "u"):
             # can't have NaNs in integer array.
             Xt = np.zeros(X.shape, dtype=bool)
+        elif X.dtype.kind == "O":
+            Xt = np.where(is_pandas_na_only(X), False, X)
+            Xt = _object_dtype_isnan(Xt)
         else:
             # np.isnan does not work on object dtypes.
             Xt = _object_dtype_isnan(X)
@@ -65,6 +69,29 @@ def _get_mask(X, value_to_mask):
     )
 
     return Xt_sparse
+
+
+def _get_mask_from_many_values(X, values_to_mask):
+    """Compute the boolean mask X == values_to_mask or X in values_to_mask.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        Input data, where ``n_samples`` is the number of samples and
+        ``n_features`` is the number of features.
+
+    value_to_mask : {int, float, List|Set|Tuple[int|float]}
+        The values which is to be masked in X.
+
+    Returns
+    -------
+    X_mask : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        Missing mask.
+    """
+
+    if isinstance(values_to_mask, (list, set, tuple)):
+        return reduce(lambda a, b: a | b, [_get_mask(X, v) for v in values_to_mask])
+    return _get_mask(X, values_to_mask)
 
 
 @validate_params(
