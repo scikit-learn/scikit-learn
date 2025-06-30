@@ -1072,22 +1072,32 @@ def precision_recall_curve(
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
-def collinear_free_mask(fps_np, tps_np, tolerance=1e-12):
-    """Return indices of non-collinear points preserving endpoints."""
-    if len(fps_np) <= 2:
-        return np.arange(len(fps_np))
+def _roc_collinear_free_mask_xp(fps, tps, xp, device, tolerance=1e-12):
+    """Return indices of non-collinear points preserving endpoints using array API."""
+    n = fps.shape[0]
+    if n <= 2:
+        return xp.arange(n)
+
     # Compute segment vectors
-    dx0 = fps_np[1:-1] - fps_np[:-2]
-    dy0 = tps_np[1:-1] - tps_np[:-2]
-    dx1 = fps_np[2:] - fps_np[1:-1]
-    dy1 = tps_np[2:] - tps_np[1:-1]
+    dx0 = fps[1:-1] - fps[:-2]
+    dy0 = tps[1:-1] - tps[:-2]
+    dx1 = fps[2:] - fps[1:-1]
+    dy1 = tps[2:] - tps[1:-1]
+
     # Cross-product test
     cross = dx0 * dy1 - dy0 * dx1
-    is_collinear = np.abs(cross) < tolerance
-    # Always keep endpoints, drop only true collinear
-    keep = np.ones(len(fps_np), dtype=bool)
-    keep[1:-1] = ~is_collinear
-    return np.flatnonzero(keep)
+    is_collinear = xp.abs(cross) < tolerance
+
+    # Build keep mask with endpoints preserved
+    keep = xp.concat(
+        [
+            xp.ones(1, dtype=xp.bool, device=device),
+            xp.logical_not(is_collinear),
+            xp.ones(1, dtype=xp.bool, device=device),
+        ]
+    )
+
+    return xp.nonzero(keep)[0]
 
 
 @validate_params(
@@ -1220,17 +1230,7 @@ def roc_curve(
     )
     # Drop intermediate collinear points if requested
     if drop_intermediate and fps.shape[0] > 2:
-        # Convert to numpy arrays for mask computation
-        if hasattr(xp, "asnumpy"):
-            fps_cpu = xp.asnumpy(fps)
-            tps_cpu = xp.asnumpy(tps)
-        else:
-            fps_cpu = fps.cpu().numpy() if hasattr(fps, "cpu") else np.asarray(fps)
-            tps_cpu = tps.cpu().numpy() if hasattr(tps, "cpu") else np.asarray(tps)
-
-        # Identify indices to keep
-        keep_idx = collinear_free_mask(fps_cpu, tps_cpu)
-        # Apply mask using original array API
+        keep_idx = _roc_collinear_free_mask_xp(fps, tps, xp, device)
         fps = fps[keep_idx]
         tps = tps[keep_idx]
         thresholds = thresholds[keep_idx]
