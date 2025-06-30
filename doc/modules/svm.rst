@@ -48,6 +48,10 @@ data. For optimal performance, use C-ordered ``numpy.ndarray`` (dense) or
 
 .. _svm_classification:
 
+An important factor influencing the prediction latency and accuracy of SVM models is the number of support vectors used.
+For more detailed insights on how model complexity affects computational performance and predictive power, see the example:
+:ref:`plot_model_complexity_influence.py <sphx_glr_auto_examples_applications_plot_model_complexity_influence.py>`.
+
 Classification
 ==============
 

@@ -146,6 +146,9 @@ formats. Most of the time the ``CSR`` and ``CSC`` formats work best.
 
 Influence of the Model Complexity
 ..................................
+This section demonstrates how model complexity influences both prediction accuracy and
+computational performance, as illustrated in
+:ref:`sphx_glr_auto_examples_applications_plot_model_complexity_influence.py`.
 
 Generally speaking, when model complexity increases, predictive power and
 latency are supposed to increase. Increasing predictive power is usually
