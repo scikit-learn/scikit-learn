@@ -318,9 +318,13 @@ def lasso_path(
 
     Notes
     -----
-    For an example, see
+    For an example, see:
     :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
+
+    For a visual example of computing and plotting the Lasso coordinate
+    descent path, see:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -355,6 +359,7 @@ def lasso_path(
     >>> print(coef_path_continuous([5., 1., .5]))
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
+
     """
     return enet_path(
         X,
