@@ -1212,7 +1212,7 @@ def roc_curve(
     # Prepend start of curve
     fps = xp.concat([xp.asarray([0.0], device=device), fps])
     tps = xp.concat([xp.asarray([0.0], device=device), tps])
-    thresholds = xp.concatenate(
+    thresholds = xp.concat(
         [
             xp.asarray([xp.inf], device=device),
             xp.astype(thresholds, _max_precision_float_dtype(xp, device)),
