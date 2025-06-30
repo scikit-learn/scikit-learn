@@ -1,128 +1,105 @@
 """
 ===========================================================
-Hierarchical clustering: structured vs unstructured ward
+Hierarchical clustering: structured vs unstructured Ward
 ===========================================================
 
-Example builds a swiss roll dataset and runs
-hierarchical clustering on their position.
+This example demonstrates hierarchical clustering with and without
+connectivity constraints. It compares standard Ward clustering with a
+structured variant that enforces k-Nearest Neighbors connectivity.
 
-For more information, see :ref:`hierarchical_clustering`.
+Without connectivity constraints, the clustering is based purely on distance,
+while with constraints, the clustering respects local structure.
 
-In a first step, the hierarchical clustering is performed without connectivity
-constraints on the structure and is solely based on distance, whereas in
-a second step the clustering is restricted to the k-Nearest Neighbors
-graph: it's a hierarchical clustering with structure prior.
-
-Some of the clusters learned without connectivity constraints do not
-respect the structure of the swiss roll and extend across different folds of
-the manifolds. On the opposite, when opposing connectivity constraints,
-the clusters form a nice parcellation of the swiss roll.
-
+In the limit of a small number of clusters, hierarchical clustering methods
+tend to create a few very large clusters while leaving others almost empty.
+This effect is particularly noticeable when using connectivity constraints,
+as they enforce locality in cluster formation, reducing the tendency of clusters
+to grow arbitrarily large. (See the discussion in Hierarchical clustering:
+structured vs unstructured Ward).
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import time as time
+import time
 
-# The following import is required
-# for 3D projection to work with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
+import matplotlib.pyplot as plt
 import numpy as np
+
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import make_swiss_roll
+from sklearn.neighbors import kneighbors_graph
 
 # %%
 # Generate data
 # -------------
-#
-# We start by generating the Swiss Roll dataset.
-from sklearn.datasets import make_swiss_roll
-
+# Generate the Swiss Roll dataset.
 n_samples = 1500
 noise = 0.05
 X, _ = make_swiss_roll(n_samples, noise=noise)
-# Make it thinner
-X[:, 1] *= 0.5
+X[:, 1] *= 0.5  # Make the roll thinner
 
 # %%
-# Compute clustering
-# ------------------
-#
-# We perform AgglomerativeClustering which comes under Hierarchical Clustering
-# without any connectivity constraints.
-
-from sklearn.cluster import AgglomerativeClustering
-
+# Compute clustering without connectivity constraints
+# --------------------------------------------------
 print("Compute unstructured hierarchical clustering...")
 st = time.time()
-ward = AgglomerativeClustering(n_clusters=6, linkage="ward").fit(X)
-elapsed_time = time.time() - st
-label = ward.labels_
-print(f"Elapsed time: {elapsed_time:.2f}s")
-print(f"Number of points: {label.size}")
+ward_unstructured = AgglomerativeClustering(n_clusters=6, linkage="ward").fit(X)
+elapsed_time_unstructured = time.time() - st
+label_unstructured = ward_unstructured.labels_
+print(f"Elapsed time: {elapsed_time_unstructured:.2f}s")
+print(f"Number of points: {label_unstructured.size}")
 
 # %%
-# Plot result
-# -----------
-# Plotting the unstructured hierarchical clusters.
-
-import matplotlib.pyplot as plt
-
+# Plot unstructured clustering results
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111, projection="3d", elev=7, azim=-80)
 ax1.set_position([0, 0, 0.95, 1])
-for l in np.unique(label):
+for l in np.unique(label_unstructured):
     ax1.scatter(
-        X[label == l, 0],
-        X[label == l, 1],
-        X[label == l, 2],
-        color=plt.cm.jet(float(l) / np.max(label + 1)),
+        X[label_unstructured == l, 0],
+        X[label_unstructured == l, 1],
+        X[label_unstructured == l, 2],
+        color=plt.cm.jet(float(l) / np.max(label_unstructured + 1)),
         s=20,
         edgecolor="k",
     )
-_ = fig1.suptitle(f"Without connectivity constraints (time {elapsed_time:.2f}s)")
+fig1.suptitle(
+    f"Without connectivity constraints (time {elapsed_time_unstructured:.2f}s)"
+)
 
 # %%
-# We are defining k-Nearest Neighbors with 10 neighbors
-# -----------------------------------------------------
-
-from sklearn.neighbors import kneighbors_graph
-
+# Compute connectivity graph
+# --------------------------
 connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
 
 # %%
-# Compute clustering
-# ------------------
-#
-# We perform AgglomerativeClustering again with connectivity constraints.
-
+# Compute clustering with connectivity constraints
+# ------------------------------------------------
 print("Compute structured hierarchical clustering...")
 st = time.time()
-ward = AgglomerativeClustering(
+ward_structured = AgglomerativeClustering(
     n_clusters=6, connectivity=connectivity, linkage="ward"
 ).fit(X)
-elapsed_time = time.time() - st
-label = ward.labels_
-print(f"Elapsed time: {elapsed_time:.2f}s")
-print(f"Number of points: {label.size}")
+elapsed_time_structured = time.time() - st
+label_structured = ward_structured.labels_
+print(f"Elapsed time: {elapsed_time_structured:.2f}s")
+print(f"Number of points: {label_structured.size}")
 
 # %%
-# Plot result
-# -----------
-#
-# Plotting the structured hierarchical clusters.
-
+# Plot structured clustering results
 fig2 = plt.figure()
-ax2 = fig2.add_subplot(121, projection="3d", elev=7, azim=-80)
+ax2 = fig2.add_subplot(111, projection="3d", elev=7, azim=-80)
 ax2.set_position([0, 0, 0.95, 1])
-for l in np.unique(label):
+for l in np.unique(label_structured):
     ax2.scatter(
-        X[label == l, 0],
-        X[label == l, 1],
-        X[label == l, 2],
-        color=plt.cm.jet(float(l) / np.max(label + 1)),
+        X[label_structured == l, 0],
+        X[label_structured == l, 1],
+        X[label_structured == l, 2],
+        color=plt.cm.jet(float(l) / np.max(label_structured + 1)),
         s=20,
         edgecolor="k",
     )
-fig2.suptitle(f"With connectivity constraints (time {elapsed_time:.2f}s)")
+fig2.suptitle(f"With connectivity constraints (time {elapsed_time_structured:.2f}s)")
 
 plt.show()
