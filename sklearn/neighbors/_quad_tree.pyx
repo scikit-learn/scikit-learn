@@ -1,5 +1,5 @@
-# Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
-# Author: Olivier Grisel <olivier.grisel@ensta.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject

@@ -14,11 +14,11 @@ from scipy.sparse.linalg import eigsh, svds
 from ..base import BaseEstimator, BiclusterMixin, _fit_context
 from ..utils import check_random_state, check_scalar
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
+from ..utils.extmath import _randomized_svd, make_nonnegative, safe_sparse_dot
 from ..utils.validation import assert_all_finite, validate_data
 from ._kmeans import KMeans, MiniBatchKMeans
 
-__all__ = ["SpectralCoclustering", "SpectralBiclustering"]
+__all__ = ["SpectralBiclustering", "SpectralCoclustering"]
 
 
 def _scale_normalize(X):
@@ -36,7 +36,7 @@ def _scale_normalize(X):
         n_rows, n_cols = X.shape
         r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
         c = dia_matrix((col_diag, [0]), shape=(n_cols, n_cols))
-        an = r * X * c
+        an = r @ X @ c
     else:
         an = row_diag[:, np.newaxis] * X * col_diag
     return an, row_diag, col_diag
@@ -144,7 +144,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             kwargs = {}
             if self.n_svd_vecs is not None:
                 kwargs["n_oversamples"] = self.n_svd_vecs
-            u, _, vt = randomized_svd(
+            u, _, vt = _randomized_svd(
                 array, n_components, random_state=self.random_state, **kwargs
             )
 
@@ -195,16 +195,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_dtypes": "raises nan error",
-            "check_fit2d_1sample": "_scale_normalize fails",
-            "check_fit2d_1feature": "raises apply_along_axis error",
-            "check_estimator_sparse_matrix": "does not fail gracefully",
-            "check_estimator_sparse_array": "does not fail gracefully",
-            "check_methods_subset_invariance": "empty array passed inside",
-            "check_dont_overwrite_parameters": "empty array passed inside",
-            "check_fit2d_predict1d": "empty array passed inside",
-        }
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -316,6 +307,9 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
+
+    For a more detailed example, see the following:
+    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`.
     """
 
     _parameter_constraints: dict = {
@@ -361,17 +355,6 @@ class SpectralCoclustering(BaseSpectral):
         self.columns_ = np.vstack(
             [self.column_labels_ == c for c in range(self.n_clusters)]
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-                # while a minimum of 1 is required.
-                "check_dict_unchanged": "FIXME",
-            }
-        )
-        return tags
 
 
 class SpectralBiclustering(BaseSpectral):

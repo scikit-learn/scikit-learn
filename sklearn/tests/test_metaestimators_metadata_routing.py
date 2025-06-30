@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import is_classifier
+from sklearn.base import BaseEstimator, is_classifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
@@ -17,8 +17,8 @@ from sklearn.ensemble import (
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.feature_selection import (
     RFE,
@@ -119,7 +119,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": ClassifierChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "classifier",
         "X": X,
         "y": y_multi,
@@ -127,7 +127,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": RegressorChain,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "regressor",
         "X": X,
         "y": y_multi,
@@ -329,7 +329,18 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": False,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": [
+            ("fit", ["metadata"]),
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+        ],
+        "method_mapping": {
+            "predict": ["predict", "predict_proba"],
+            "predict_proba": ["predict", "predict_proba"],
+            "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
+        },
     },
     {
         "metaestimator": BaggingRegressor,
@@ -338,7 +349,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "preserves_metadata": False,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": [("fit", ["metadata"]), "predict"],
     },
     {
         "metaestimator": RidgeCV,
@@ -448,7 +459,13 @@ The keys are as follows:
 - X: X-data to fit and predict
 - y: y-data to fit
 - estimator_routing_methods: list of all methods to check for routing metadata
-  to the sub-estimator
+  to the sub-estimator. Each value is either a str or a tuple:
+    - str: the name of the method, all metadata in this method must be routed to the
+      sub-estimator
+    - tuple: the name of the method, the second element is a list of metadata keys
+      to be passed to the sub-estimator. This is useful if certain metadata such as
+      `sample_weight` are never routed and only consumed, such as in `BaggingClassifier`
+      and `BaggingRegressor`.
 - preserves_metadata:
     - True (default): the metaestimator passes the metadata to the
       sub-estimator without modification. We check that the values recorded by
@@ -551,13 +568,39 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     )
 
 
-def set_requests(estimator, *, method_mapping, methods, metadata_name, value=True):
+def filter_metadata_in_routing_methods(estimator_routing_methods):
+    """Process estimator_routing_methods and return a dict.
+
+    Parameters
+    ----------
+    estimator_routing_methods : list of str or tuple
+        The estimator_routing_methods info from METAESTIMATORS.
+
+    Returns
+    -------
+    routing_methods : dict
+        The dictionary is of the form {"method": ["metadata", ...]}.
+        It specifies the list of metadata keys for each routing method.
+        By default the list includes `sample_weight` and `metadata`.
+    """
+    res = dict()
+    for method_spec in estimator_routing_methods:
+        if isinstance(method_spec, str):
+            method = method_spec
+            metadata = ["sample_weight", "metadata"]
+        else:
+            method, metadata = method_spec
+        res[method] = metadata
+    return res
+
+
+def set_requests(obj, *, method_mapping, methods, metadata_name, value=True):
     """Call `set_{method}_request` on a list of methods from the sub-estimator.
 
     Parameters
     ----------
-    estimator : BaseEstimator
-        The estimator for which `set_{method}_request` methods are called.
+    obj : BaseEstimator
+        The object for which `set_{method}_request` methods are called.
 
     method_mapping : dict
         The method mapping in the form of `{caller: [callee, ...]}`.
@@ -577,9 +620,13 @@ def set_requests(estimator, *, method_mapping, methods, metadata_name, value=Tru
     """
     for caller in methods:
         for callee in method_mapping.get(caller, [caller]):
-            set_request_for_method = getattr(estimator, f"set_{callee}_request")
+            set_request_for_method = getattr(obj, f"set_{callee}_request")
             set_request_for_method(**{metadata_name: value})
-            if is_classifier(estimator) and callee == "partial_fit":
+            if (
+                isinstance(obj, BaseEstimator)
+                and is_classifier(obj)
+                and callee == "partial_fit"
+            ):
                 set_request_for_method(classes=True)
 
 
@@ -647,10 +694,12 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
-    routing_methods = metaestimator["estimator_routing_methods"]
+    routing_methods = filter_metadata_in_routing_methods(
+        metaestimator["estimator_routing_methods"]
+    )
 
-    for method_name in routing_methods:
-        for key in ["sample_weight", "metadata"]:
+    for method_name, metadata_keys in routing_methods.items():
+        for key in metadata_keys:
             kwargs, (estimator, _), (scorer, _), *_ = get_init_args(
                 metaestimator, sub_estimator_consumes=True
             )
@@ -706,12 +755,14 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
-    routing_methods = metaestimator["estimator_routing_methods"]
+    routing_methods = filter_metadata_in_routing_methods(
+        metaestimator["estimator_routing_methods"]
+    )
     method_mapping = metaestimator.get("method_mapping", {})
     preserves_metadata = metaestimator.get("preserves_metadata", True)
 
-    for method_name in routing_methods:
-        for key in ["sample_weight", "metadata"]:
+    for method_name, metadata_keys in routing_methods.items():
+        for key in metadata_keys:
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
 
@@ -782,8 +833,9 @@ def test_non_consuming_estimator_works(metaestimator):
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
-    routing_methods = metaestimator["estimator_routing_methods"]
-
+    routing_methods = filter_metadata_in_routing_methods(
+        metaestimator["estimator_routing_methods"]
+    )
     for method_name in routing_methods:
         kwargs, (estimator, _), (_, _), (_, _) = get_init_args(
             metaestimator, sub_estimator_consumes=False

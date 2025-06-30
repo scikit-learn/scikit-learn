@@ -16,6 +16,8 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.utils import metadata_routing
+
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
 from ..exceptions import NotFittedError
 from ..preprocessing import normalize
@@ -26,9 +28,9 @@ from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 
 __all__ = [
-    "HashingVectorizer",
-    "CountVectorizer",
     "ENGLISH_STOP_WORDS",
+    "CountVectorizer",
+    "HashingVectorizer",
     "TfidfTransformer",
     "TfidfVectorizer",
     "strip_accents_ascii",
@@ -1118,6 +1120,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
 
+    # raw_documents should not be in the routing mechanism. It should have been
+    # called X in the first place.
+    __metadata_request__fit = {"raw_documents": metadata_routing.UNUSED}
+    __metadata_request__transform = {"raw_documents": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
@@ -1426,7 +1433,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X_inv : list of arrays of shape (n_samples,)
+        X_original : list of arrays of shape (n_samples,)
             List of arrays of terms.
         """
         self._check_vocabulary()

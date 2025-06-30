@@ -19,6 +19,7 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _check_feature_names,
+    _estimator_has,
     _num_features,
     check_is_fitted,
     check_scalar,
@@ -34,11 +35,18 @@ def _calculate_threshold(estimator, importances, threshold):
         est_name = estimator.__class__.__name__
         is_l1_penalized = hasattr(estimator, "penalty") and estimator.penalty == "l1"
         is_lasso = "Lasso" in est_name
-        is_elasticnet_l1_penalized = "ElasticNet" in est_name and (
-            (hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0))
-            or (hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0))
+        is_elasticnet_l1_penalized = est_name == "ElasticNet" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
         )
-        if is_l1_penalized or is_lasso or is_elasticnet_l1_penalized:
+        is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
+            hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
+        )
+        if (
+            is_l1_penalized
+            or is_lasso
+            or is_elasticnet_l1_penalized
+            or is_elasticnetcv_l1_penalized
+        ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:
@@ -74,25 +82,6 @@ def _calculate_threshold(estimator, importances, threshold):
         threshold = float(threshold)
 
     return threshold
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check the
-    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
 
 
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
@@ -222,9 +211,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> y = [0, 1, 0, 1]
     >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
     >>> selector.estimator_.coef_
-    array([[-0.3252...,  0.8345...,  0.4976...]])
+    array([[-0.3252,  0.8345,  0.4976]])
     >>> selector.threshold_
-    np.float64(0.55249...)
+    np.float64(0.55249)
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X)
@@ -519,5 +508,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags

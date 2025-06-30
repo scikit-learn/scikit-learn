@@ -139,7 +139,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         sample_weight = _check_sample_weight(
-            sample_weight, X, np.float64, copy=True, ensure_non_negative=True
+            sample_weight, X, dtype=np.float64, copy=True, ensure_non_negative=True
         )
         sample_weight /= sample_weight.sum()
 
@@ -312,6 +312,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "feature_importances_ attribute"
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
@@ -471,13 +476,13 @@ class AdaBoostClassifier(
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.96...
+    0.96
 
     For a detailed example of using AdaBoost to fit a sequence of DecisionTrees
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
 
-    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    For a detailed example of using AdaBoost to fit a non-linearly separable
     classification dataset composed of two Gaussian quantiles clusters, please
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
@@ -858,16 +863,6 @@ class AdaBoostClassifier(
         """
         return np.log(self.predict_proba(X))
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
@@ -978,9 +973,9 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([4.7972...])
+    array([4.7972])
     >>> regr.score(X, y)
-    0.9771...
+    0.9771
 
     For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
     to fit a sequence of decision trees as weak learners, please refer to
@@ -1176,13 +1171,3 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
