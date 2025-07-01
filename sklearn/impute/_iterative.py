@@ -398,7 +398,20 @@ class IterativeImputer(_BaseImputer):
             X = X.reshape(-1, 1)
 
         if hasattr(X, "dtypes"):  # pandas DataFrame
-            return X.dtypes == "object" | X.dtypes.name == "category"
+            # Check for object or category dtypes, but exclude nullable integer types
+            categorical_mask = np.zeros(len(X.dtypes), dtype=bool)
+            for i, dtype in enumerate(X.dtypes):
+                if dtype == "object" or dtype.name == "category":
+                    categorical_mask[i] = True
+                # Don't treat nullable integer types (Int8, Int16, Int32, Int64)
+                # as categorical
+                elif (
+                    hasattr(dtype, "name")
+                    and dtype.name.startswith(("Int", "Float"))
+                    and dtype.name[1:].isdigit()
+                ):
+                    categorical_mask[i] = False
+            return categorical_mask
         else:
             # For numpy arrays, check if dtype is object or string
             if X.dtype.kind in ["O", "U", "S"]:
