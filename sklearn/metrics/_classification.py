@@ -3739,14 +3739,21 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     },
     prefer_skip_nested_validation=True,
 )
-def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
+def d2_brier_score(
+    y_true,
+    y_proba,
+    *,
+    sample_weight=None,
+    pos_label=None,
+    labels=None,
+    scale_by_half="auto",
+):
     """
     :math:`D^2` score function, fraction of brier score explained.
 
     Best possible score is 1.0 and it can be negative (because the model can
-    be arbitrarily worse). A model that always uses the proportion of the
-    positive class of `y_true` as a constant prediction, disregarding the
-    input features, gets a D^2 score of 0.0.
+    be arbitrarily worse). A model that always predicts the per-class proportions
+    of `y_true`, disregarding the input features, gets a D^2 score of 0.0.
 
     Read more in the :ref:`User Guide <d2_score_classification>`.
 
@@ -3755,8 +3762,13 @@ def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
     y_true : array-like of shape (n_samples,)
         True targets.
 
-    y_proba : array-like of shape (n_samples,)
-        Probabilities of the positive class.
+    y_proba : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Predicted probabilities. If `y_proba.shape = (n_samples,)`
+        the probabilities provided are assumed to be that of the
+        positive class. If `y_proba.shape = (n_samples, n_classes)`
+        the columns in `y_proba` are assumed to correspond to the
+        labels in alphabetical order, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3770,6 +3782,16 @@ def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
           `pos_label` should be explicitly specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
+
+    labels : array-like of shape (n_classes,), default=None
+        Class labels when `y_proba.shape = (n_samples, n_classes)`.
+        If not provided, labels will be inferred from `y_true`.
+
+    scale_by_half : bool or "auto", default="auto"
+        When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
+        of the [0, 2] range. The default "auto" option implements the rescaling to
+        [0, 1] only for binary classification (as customary) but keeps the
+        original [0, 2] range for multiclass classification.
 
     Returns
     -------
@@ -3792,34 +3814,25 @@ def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
         y_proba=y_proba,
         sample_weight=sample_weight,
         pos_label=pos_label,
+        labels=labels,
+        scale_by_half=scale_by_half,
     )
 
     # brier score of the reference or baseline model
     y_true = column_or_1d(y_true)
-    positive_label = _get_positive_label_for_brier_score(y_true, pos_label)
     weights = _check_sample_weight(sample_weight, y_true)
-    positive_prob = np.sum((y_true == positive_label) * weights) / np.sum(weights)
-    y_proba_ref = np.full(y_true.shape, positive_prob)
+    labels = np.unique(y_true if labels is None else labels)
+
+    mask = y_true[None, :] == labels[:, None]
+    label_counts = (mask * weights).sum(axis=1)
+    y_prob = label_counts / weights.sum()
+    y_proba_ref = np.tile(y_prob, (len(y_true), 1))
     brier_score_ref = brier_score_loss(
         y_true=y_true,
         y_proba=y_proba_ref,
         sample_weight=sample_weight,
         pos_label=pos_label,
+        labels=labels,
     )
 
     return 1 - brier_score / brier_score_ref
-
-
-def _get_positive_label_for_brier_score(y_true, pos_label=None):
-    try:
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-    except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
-            pos_label = classes[-1]
-        else:
-            raise
-
-    return pos_label
