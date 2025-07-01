@@ -19,7 +19,7 @@ from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
 from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
-    _fill_or_add_to_diagonal,
+    _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
@@ -70,6 +70,15 @@ def _return_float_dtype(X, Y):
         dtype = float
 
     return X, Y, dtype
+
+
+def _find_floating_dtype_allow_sparse(X, Y, xp=None):
+    """Find matching floating type, allowing for sparse input."""
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    return X, Y, dtype_float
 
 
 def check_pairwise_arrays(
@@ -177,10 +186,7 @@ def check_pairwise_arrays(
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     xp, _ = get_namespace(X, Y)
-    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
-        X, Y, dtype_float = _return_float_dtype(X, Y)
-    else:
-        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
     if dtype == "infer_float":
@@ -433,7 +439,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
+        _fill_diagonal(distances, 0, xp=xp)
 
     if squared:
         return distances
@@ -1171,7 +1177,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
+        _fill_diagonal(S, 0.0, xp)
     return S
 
 
@@ -1943,40 +1949,48 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
+    dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them using multithreading."""
+    xp, _, device = get_namespace_and_device(X, Y)
+    X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
     if Y is None:
         Y = X
-    X, Y, dtype = _return_float_dtype(X, Y)
 
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
-    fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
+    fd = delayed(_transposed_dist_wrapper)
+    # Transpose `ret` such that a given thread writes its ouput to a contiguous chunk.
+    # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
+    # https://github.com/data-apis/array-api/issues/571 for details.
+    # We assume that currently (April 2025) all array API compatible namespaces
+    # allocate 2D arrays using the C-contiguity convention by default.
+    ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s], **kwds)
+        fd(func, ret, s, X, Y[s, ...], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
 
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        np.fill_diagonal(ret, 0)
+        _fill_diagonal(ret, 0, xp=xp)
 
-    return ret
+    # Transform output back
+    return ret.T
 
 
 def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
+    xp, _, device = get_namespace_and_device(X)
     X, Y = check_pairwise_arrays(
         X,
         Y,
@@ -1985,16 +1999,28 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # No input dimension checking done for custom metrics (left to user)
         ensure_2d=False,
     )
+    _, _, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
+
+    def _get_slice(array, index):
+        # TODO: below 2 lines can be removed once min scipy >= 1.14. Support for
+        # 1D shapes in scipy sparse arrays (COO, DOK and CSR formats) only
+        # added in 1.14. We must return 2D array until min scipy 1.14.
+        if issparse(array):
+            return array[[index], :]
+        # When `metric` is a callable, 1D input arrays allowed, in which case
+        # scalar should be returned.
+        if array.ndim == 1:
+            return array[index]
+        else:
+            return array[index, ...]
 
     if X is Y:
         # Only calculate metric for upper triangle
-        out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
+        out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float, device=device)
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            # scipy has not yet implemented 1D sparse slices; once implemented this can
-            # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
-            y = Y[[j], :] if issparse(Y) else Y[j]
+            x = _get_slice(X, i)
+            y = _get_slice(Y, j)
             out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
@@ -2004,20 +2030,16 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            # scipy has not yet implemented 1D sparse slices; once implemented this can
-            # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
+            x = _get_slice(X, i)
             out[i, i] = metric(x, x, **kwds)
 
     else:
         # Calculate all cells
-        out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
+        out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            # scipy has not yet implemented 1D sparse slices; once implemented this can
-            # be removed and `arr[ind]` can be simply used.
-            x = X[[i], :] if issparse(X) else X[i]
-            y = Y[[j], :] if issparse(Y) else Y[j]
+            x = _get_slice(X, i)
+            y = _get_slice(Y, j)
             out[i, j] = metric(x, y, **kwds)
 
     return out
