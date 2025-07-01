@@ -3501,10 +3501,20 @@ def test_d2_brier_score():
     d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
     assert d2_score == 0
 
-    # Also confirm that the order of the labels does not affect the d2_score
+    # Also confirm that the order of the labels does not affect the d2 score
     labels = [2, 0, 1]
     new_d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
     assert new_d2_score == pytest.approx(d2_score)
+
+    # Test a model which gives wrong predictions and gives a negative d2 score
+    y_proba = [
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 0, 0],
+    ]
+    neg_d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
+    assert pytest.approx(neg_d2_score) == -3
 
 
 def test_d2_brier_score_raises():

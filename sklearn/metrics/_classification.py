@@ -3737,7 +3737,6 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
         "labels": ["array-like", None],
-        "scale_by_half": ["boolean", StrOptions({"auto"})],
     },
     prefer_skip_nested_validation=True,
 )
@@ -3748,14 +3747,15 @@ def d2_brier_score(
     sample_weight=None,
     pos_label=None,
     labels=None,
-    scale_by_half="auto",
 ):
     """
-    :math:`D^2` score function, fraction of brier score explained.
+    :math:`D^2` score function, fraction of Brier score explained.
 
-    Best possible score is 1.0 and it can be negative (because the model can
-    be arbitrarily worse). A model that always predicts the per-class proportions
-    of `y_true`, disregarding the input features, gets a D^2 score of 0.0.
+    Best possible score is 1.0 and it can be negative because the model can
+    be arbitrarily worse than the null model. The null model, also known as the
+    optimal intercept model, is a model that constantly predicts the per-class
+    proportions of `y_true`, disregarding the input features. The null model
+    gets a D^2 score of 0.0.
 
     Read more in the :ref:`User Guide <d2_score_classification>`.
 
@@ -3789,12 +3789,6 @@ def d2_brier_score(
         Class labels when `y_proba.shape = (n_samples, n_classes)`.
         If not provided, labels will be inferred from `y_true`.
 
-    scale_by_half : bool or "auto", default="auto"
-        When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
-        of the [0, 2] range. The default "auto" option implements the rescaling to
-        [0, 1] only for binary classification (as customary) but keeps the
-        original [0, 2] range for multiclass classification.
-
     Returns
     -------
     d2 : float
@@ -3817,7 +3811,6 @@ def d2_brier_score(
         sample_weight=sample_weight,
         pos_label=pos_label,
         labels=labels,
-        scale_by_half=scale_by_half,
     )
 
     # brier score of the reference or baseline model
