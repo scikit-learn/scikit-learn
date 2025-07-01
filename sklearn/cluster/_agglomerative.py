@@ -1124,6 +1124,10 @@ class FeatureAgglomeration(
     Recursively merges pair of clusters of features.
 
     Refer to
+    :ref:`sphx_glr_auto_examples_cluster_plot_digits_agglomeration.py`
+    for an example showing how similar features are merged together.
+
+    Refer to
     :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
     for an example comparison of :class:`FeatureAgglomeration` strategy with a
     univariate feature selection strategy (based on ANOVA).
