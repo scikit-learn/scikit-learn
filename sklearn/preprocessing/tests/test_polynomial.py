@@ -1405,5 +1405,5 @@ def test_polynomial_features_array_api_raises_on_order_F(
         if _is_numpy_namespace(xp):  # Numpy should not raise
             pf.transform(X_xp)
         else:
-            with pytest.raises(AttributeError, match=msg):
+            with pytest.raises(ValueError, match=msg):
                 pf.transform(X_xp)
