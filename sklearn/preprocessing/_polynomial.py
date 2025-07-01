@@ -507,7 +507,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             if _is_numpy_namespace(xp=xp):
                 order_kwargs["order"] = self.order
             elif self.order == "F":
-                raise AttributeError(
+                raise ValueError(
                     "PolynomialFeatures does not support order='F' for non-numpy arrays"
                 )
 
