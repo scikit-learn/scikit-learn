@@ -117,6 +117,7 @@ Estimators
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
+- :class:`preprocessing.PolynomialFeatures`
 - :class:`mixture.GaussianMixture` (with `init_params="random"` or
   `init_params="random_from_data"` and `warm_start=False`)
 
