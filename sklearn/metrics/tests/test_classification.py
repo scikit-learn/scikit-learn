@@ -3488,7 +3488,8 @@ def test_d2_brier_score():
     assert d2_score > 0.5
 
     # Check when labels are provided and some labels may not be present inside
-    # y_true, the d2 score is 0 when we use label proportions according to y_true
+    # y_true, the d2 score is 0, when we use the label proportions based on
+    # y_true as the predictions
     y_true = [0, 2, 0, 2]
     labels = [0, 1, 2]
     y_proba = [
