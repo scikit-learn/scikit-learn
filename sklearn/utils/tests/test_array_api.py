@@ -783,19 +783,15 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
 @pytest.mark.parametrize(
     ("namespace", "device_", "expected_types"),
     [
-        ("numpy", None, ("float64", "float32", "<class 'numpy.float16'>")),
-        (
-            "array_api_strict",
-            None,
-            ("array_api_strict.float64", "array_api_strict.float32"),
-        ),
-        ("torch", "cpu", ("torch.float64", "torch.float32", "torch.float16")),
-        ("torch", "cuda", ("torch.float64", "torch.float32", "torch.float16")),
-        ("torch", "mps", ("torch.float32", "torch.float16")),
+        ("numpy", None, ("float64", "float32", "float16")),
+        ("array_api_strict", None, ("float64", "float32")),
+        ("torch", "cpu", ("float64", "float32", "float16")),
+        ("torch", "cuda", ("float64", "float32", "float16")),
+        ("torch", "mps", ("float32", "float16")),
     ],
 )
 def test_supported_float_types(namespace, device_, expected_types):
     xp = _array_api_for_tests(namespace, device_)
     float_types = supported_float_dtypes(xp, device=device_)
-    float_types = tuple(str(float_type) for float_type in float_types)
-    assert float_types == expected_types
+    expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
+    assert float_types == expected
