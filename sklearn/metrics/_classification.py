@@ -3733,9 +3733,11 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_proba": ["array-like", Hidden(None)],
+        "y_proba": ["array-like"],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
+        "labels": ["array-like", None],
+        "scale_by_half": ["boolean", StrOptions({"auto"})],
     },
     prefer_skip_nested_validation=True,
 )
