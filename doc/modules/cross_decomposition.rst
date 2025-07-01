@@ -30,7 +30,7 @@ the samples are first projected into a lower-dimensional subspace, and the
 targets `y` are predicted using `transformed(X)`. One issue with PCR is that
 the dimensionality reduction is unsupervised, and may lose some important
 variables: PCR would keep the features with the most variance, but it's
-possible that features with a small variances are relevant from predicting
+possible that features with small variances are relevant for predicting
 the target. In a way, PLS allows for the same kind of dimensionality
 reduction, but by taking into account the targets `y`. An illustration of
 this fact is given in the following example:
@@ -88,7 +88,7 @@ Note that the scores matrices :math:`\Xi` and :math:`\Omega` correspond to
 the projections of the training data :math:`X` and :math:`Y`, respectively.
 
 Step *a)* may be performed in two ways: either by computing the whole SVD of
-:math:`C` and only retain the singular vectors with the biggest singular
+:math:`C` and only retaining the singular vectors with the biggest singular
 values, or by directly computing the singular vectors using the power method (cf section 11.3 in [1]_),
 which corresponds to the `'nipals'` option of the `algorithm` parameter.
 

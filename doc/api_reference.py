@@ -123,7 +123,6 @@ API_REFERENCE = {
                     "is_classifier",
                     "is_clusterer",
                     "is_regressor",
-                    "is_transformer",
                     "is_outlier_detector",
                 ],
             }
@@ -550,7 +549,7 @@ API_REFERENCE = {
         ],
     },
     "sklearn.kernel_approximation": {
-        "short_summary": "Isotonic regression.",
+        "short_summary": "Kernel approximation.",
         "description": _get_guide("kernel_approximation"),
         "sections": [
             {
@@ -1350,9 +1349,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {
-    "1.7": [
-        "utils.parallel_backend",
-        "utils.register_parallel_backend",
-    ]
-}  # type: ignore
+DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]

@@ -1,3 +1,0 @@
-- In :class:`linear_model.Ridge` and :class:`linear_model.RidgeCV`, after `fit`,
-  the `coef_` attribute is now of shape `(n_samples,)` like other linear models.
-  By :user:`Maxwell Liu<MaxwellLZH>`, `Guillaume Lemaitre`_, and `Adrin Jalali`_

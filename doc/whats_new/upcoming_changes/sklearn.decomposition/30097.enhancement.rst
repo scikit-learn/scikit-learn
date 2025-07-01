@@ -1,6 +1,0 @@
-- :class:`~sklearn.decomposition.LatentDirichletAllocation` now has a
-  ``normalize`` parameter in
-  :meth:`~sklearn.decomposition.LatentDirichletAllocation.transform` and
-  :meth:`~sklearn.decomposition.LatentDirichletAllocation.fit_transform`
-  methods to control whether the document topic distribution is normalized.
-  By `Adrin Jalali`_

@@ -151,7 +151,7 @@ _ = plt.title(
 # Looking at the kernel hyperparameters, we see that the best combination found
 # has a smaller noise level and shorter length scale than the first model.
 #
-# We can inspect the Log-Marginal-Likelihood (LML) of
+# We can inspect the negative Log-Marginal-Likelihood (LML) of
 # :class:`~sklearn.gaussian_process.GaussianProcessRegressor`
 # for different hyperparameters to get a sense of the local minima.
 from matplotlib.colors import LogNorm
@@ -181,7 +181,7 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel("Length-scale")
 plt.ylabel("Noise-level")
-plt.title("Log-marginal-likelihood")
+plt.title("Negative log-marginal-likelihood")
 plt.show()
 
 # %%

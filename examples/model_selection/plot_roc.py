@@ -129,7 +129,7 @@ display = RocCurveDisplay.from_predictions(
     y_onehot_test[:, class_id],
     y_score[:, class_id],
     name=f"{class_of_interest} vs the rest",
-    color="darkorange",
+    curve_kwargs=dict(color="darkorange"),
     plot_chance_level=True,
     despine=True,
 )
@@ -152,20 +152,20 @@ _ = display.ax_.set(
 #
 # We can briefly demo the effect of :func:`numpy.ravel`:
 
-print(f"y_score:\n{y_score[0:2,:]}")
+print(f"y_score:\n{y_score[0:2, :]}")
 print()
-print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
+print(f"y_score.ravel():\n{y_score[0:2, :].ravel()}")
 
 # %%
 # In a multi-class classification setup with highly imbalanced classes,
 # micro-averaging is preferable over macro-averaging. In such cases, one can
-# alternatively use a weighted macro-averaging, not demoed here.
+# alternatively use a weighted macro-averaging, not demonstrated here.
 
 display = RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
     y_score.ravel(),
     name="micro-average OvR",
-    color="darkorange",
+    curve_kwargs=dict(color="darkorange"),
     plot_chance_level=True,
     despine=True,
 )
@@ -218,6 +218,12 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['micro']:.2f}")
 # Obtaining the macro-average requires computing the metric independently for
 # each class and then taking the average over them, hence treating all classes
 # equally a priori. We first aggregate the true/false positive rates per class:
+#
+# :math:`TPR=\frac{1}{C}\sum_{c}\frac{TP_c}{TP_c + FN_c}` ;
+#
+# :math:`FPR=\frac{1}{C}\sum_{c}\frac{FP_c}{FP_c + TN_c}` .
+#
+# where `C` is the total number of classes.
 
 for i in range(n_classes):
     fpr[i], tpr[i], _ = roc_curve(y_onehot_test[:, i], y_score[:, i])
@@ -284,7 +290,7 @@ for class_id, color in zip(range(n_classes), colors):
         y_onehot_test[:, class_id],
         y_score[:, class_id],
         name=f"ROC curve for {target_names[class_id]}",
-        color=color,
+        curve_kwargs=dict(color=color),
         ax=ax,
         plot_chance_level=(class_id == 2),
         despine=True,
@@ -353,7 +359,7 @@ for ix, (label_a, label_b) in enumerate(pair_list):
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score :.2f})",
+        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score:.2f})",
         linestyle=":",
         linewidth=4,
     )
@@ -441,7 +447,17 @@ _ = ax.set(
 # global performance of a classifier can still be summarized via a given
 # averaging strategy.
 #
-# Micro-averaged OvR ROC is dominated by the more frequent class, since the
-# counts are pooled. The macro-averaged alternative better reflects the
-# statistics of the less frequent classes, and then is more appropriate when
-# performance on all the classes is deemed equally important.
+# When dealing with imbalanced datasets, choosing the appropriate metric based on
+# the business context or problem you are addressing is crucial.
+# It is also essential to select an appropriate averaging method (micro vs. macro)
+# depending on the desired outcome:
+#
+# - Micro-averaging aggregates metrics across all instances, treating each
+#   individual instance equally, regardless of its class. This approach is useful
+#   when evaluating overall performance, but note that it can be dominated by
+#   the majority class in imbalanced datasets.
+#
+# - Macro-averaging calculates metrics for each class independently and then
+#   averages them, giving equal weight to each class. This is particularly useful
+#   when you want under-represented classes to be considered as important as highly
+#   populated classes.

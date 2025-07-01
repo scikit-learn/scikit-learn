@@ -2,6 +2,9 @@
 Testing for the partial dependence module.
 """
 
+import re
+import warnings
+
 import numpy as np
 import pytest
 
@@ -19,6 +22,7 @@ from sklearn.ensemble import (
     RandomForestRegressor,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
 from sklearn.inspection import partial_dependence
 from sklearn.inspection._partial_dependence import (
     _grid_from_X,
@@ -29,6 +33,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression, MultiTask
 from sklearn.metrics import r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
+    OneHotEncoder,
     PolynomialFeatures,
     RobustScaler,
     StandardScaler,
@@ -83,7 +88,10 @@ iris = load_iris()
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
 @pytest.mark.parametrize("kind", ("average", "individual", "both"))
-def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_output_shape(
+    Estimator, method, data, grid_resolution, features, kind, use_custom_values
+):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -100,6 +108,11 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     (X, y), n_targets = data
     n_instances = X.shape[0]
 
+    custom_values = None
+    if use_custom_values:
+        grid_resolution = 5
+        custom_values = {f: X[:grid_resolution, f] for f in features}
+
     est.fit(X, y)
     result = partial_dependence(
         est,
@@ -108,6 +121,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         method=method,
         kind=kind,
         grid_resolution=grid_resolution,
+        custom_values=custom_values,
     )
     pdp, axes = result, result["grid_values"]
 
@@ -139,7 +153,7 @@ def test_grid_from_X():
     grid_resolution = 100
     is_categorical = [False, False]
     X = np.asarray([[1, 2], [3, 4]])
-    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
     assert_array_equal(grid, [[1, 2], [1, 4], [3, 2], [3, 4]])
     assert_array_equal(axes, X.T)
 
@@ -151,22 +165,77 @@ def test_grid_from_X():
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
     grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
+        X,
+        percentiles,
+        is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={},
     )
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
+    assert grid.dtype == X.dtype
 
     # n_unique_values < grid_resolution, will use actual values
     n_unique_values = 12
     X[n_unique_values - 1 :, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
     grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
+        X,
+        percentiles,
+        is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={},
     )
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
+    assert grid.dtype == X.dtype
+
+    # Check that uses custom_range
+    X = rng.normal(size=(20, 2))
+    X[n_unique_values - 1 :, 0] = 12345
+    col_1_range = [0, 2, 3]
+    grid, axes = _grid_from_X(
+        X,
+        percentiles,
+        is_categorical=is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={1: col_1_range},
+    )
+    assert grid.shape == (n_unique_values * len(col_1_range), X.shape[1])
+    # axes is a list of arrays of different shapes
+    assert axes[0].shape == (n_unique_values,)
+    assert axes[1].shape == (len(col_1_range),)
+    assert grid.dtype == X.dtype
+
+    # Check that grid_resolution does not impact custom_range
+    X = rng.normal(size=(20, 2))
+    col_0_range = [0, 2, 3, 4, 5, 6]
+    grid_resolution = 5
+    grid, axes = _grid_from_X(
+        X,
+        percentiles,
+        is_categorical=is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={0: col_0_range},
+    )
+    assert grid.shape == (grid_resolution * len(col_0_range), X.shape[1])
+    # axes is a list of arrays of different shapes
+    assert axes[0].shape == (len(col_0_range),)
+    assert axes[1].shape == (grid_resolution,)
+    assert grid.dtype == np.result_type(X, np.asarray(col_0_range).dtype)
+
+    X = np.array([[0, "a"], [1, "b"], [2, "c"]])
+
+    grid, axes = _grid_from_X(
+        X,
+        percentiles,
+        is_categorical=is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={1: ["a", "b", "c"]},
+    )
+    assert grid.dtype == object
 
 
 @pytest.mark.parametrize(
@@ -185,7 +254,11 @@ def test_grid_from_X_with_categorical(grid_resolution):
     is_categorical = [True]
     X = pd.DataFrame({"cat_feature": ["A", "B", "C", "A", "B", "D", "E"]})
     grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
+        X,
+        percentiles,
+        is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={},
     )
     assert grid.shape == (5, X.shape[1])
     assert axes[0].shape == (5,)
@@ -208,7 +281,11 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
     nunique = X.nunique()
 
     grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
+        X,
+        percentiles,
+        is_categorical,
+        grid_resolution=grid_resolution,
+        custom_values={},
     )
     if grid_resolution == 3:
         assert grid.shape == (15, 2)
@@ -236,7 +313,7 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
     is_categorical = [False]
     with pytest.raises(ValueError, match=err_msg):
-        _grid_from_X(X, percentiles, is_categorical, grid_resolution)
+        _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values={})
 
 
 @pytest.mark.parametrize("target_feature", range(5))
@@ -524,6 +601,14 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
             {"features": [0], "method": "recursion"},
             "Only the following estimators support the 'recursion' method:",
         ),
+        (
+            LinearRegression(),
+            {"features": [0, 1], "custom_values": {0: [1, 2, 3], 1: np.ones((3, 3))}},
+            (
+                "The custom grid for some features is not a one-dimensional array. "
+                "Feature 1: 2 dimensions"
+            ),
+        ),
     ],
 )
 def test_partial_dependence_error(estimator, params, err_msg):
@@ -657,6 +742,100 @@ def test_partial_dependence_pipeline():
 
 
 @pytest.mark.parametrize(
+    "features, grid_resolution, n_vals_expected",
+    [
+        (["a"], 10, 10),
+        (["a"], 2, 2),
+    ],
+)
+def test_partial_dependence_binary_model_grid_resolution(
+    features, grid_resolution, n_vals_expected
+):
+    pd = pytest.importorskip("pandas")
+    model = DummyClassifier()
+
+    rng = np.random.RandomState(0)
+    X = pd.DataFrame(
+        {
+            "a": rng.randint(0, 10, size=100).astype(np.float64),
+            "b": rng.randint(0, 10, size=100).astype(np.float64),
+        }
+    )
+    y = pd.Series(rng.randint(0, 2, size=100))
+    model.fit(X, y)
+
+    part_dep = partial_dependence(
+        model,
+        X,
+        features=features,
+        grid_resolution=grid_resolution,
+        kind="average",
+    )
+    assert part_dep["average"].size == n_vals_expected
+
+
+@pytest.mark.parametrize(
+    "features, custom_values, n_vals_expected",
+    [
+        (["a"], {"a": [1.0, 2.0, 3.0, 4.0]}, 4),
+        (["a"], {"a": [1.0, 2.0]}, 2),
+        (["a"], {"a": [1.0]}, 1),
+    ],
+)
+def test_partial_dependence_binary_model_custom_values(
+    features, custom_values, n_vals_expected
+):
+    pd = pytest.importorskip("pandas")
+    model = DummyClassifier()
+
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0], "b": [6.0, 7.0, 8.0, 9.0]})
+    y = pd.Series([0, 1, 0, 1])
+    model.fit(X, y)
+
+    part_dep = partial_dependence(
+        model,
+        X,
+        features=features,
+        grid_resolution=3,
+        custom_values=custom_values,
+        kind="average",
+    )
+    assert part_dep["average"].size == n_vals_expected
+
+
+@pytest.mark.parametrize(
+    "features, custom_values, n_vals_expected",
+    [
+        (["b"], {"b": ["a", "b"]}, 2),
+        (["b"], {"b": ["a"]}, 1),
+        (["a", "b"], {"a": [1.0, 2.0], "b": ["a", "b"]}, 4),
+    ],
+)
+def test_partial_dependence_pipeline_custom_values(
+    features, custom_values, n_vals_expected
+):
+    pd = pytest.importorskip("pandas")
+    pl = make_pipeline(
+        SimpleImputer(strategy="most_frequent"), OneHotEncoder(), DummyClassifier()
+    )
+
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0], "b": ["a", "b", "a", "b"]})
+    y = pd.Series([0, 1, 0, 1])
+    pl.fit(X, y)
+
+    X_holdout = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0], "b": ["a", "b", "a", None]})
+    part_dep = partial_dependence(
+        pl,
+        X_holdout,
+        features=features,
+        grid_resolution=3,
+        custom_values=custom_values,
+        kind="average",
+    )
+    assert part_dep["average"].size == n_vals_expected
+
+
+@pytest.mark.parametrize(
     "estimator",
     [
         LogisticRegression(max_iter=1000, random_state=0),
@@ -728,17 +907,43 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
 
 @pytest.mark.parametrize(
-    "features, expected_pd_shape",
+    "features, custom_values, expected_pd_shape",
     [
-        (0, (3, 10)),
-        (iris.feature_names[0], (3, 10)),
-        ([0, 2], (3, 10, 10)),
-        ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
-        ([True, False, True, False], (3, 10, 10)),
+        (0, None, (3, 10)),
+        (0, {0: [1.0, 2.0, 3.0]}, (3, 3)),
+        (iris.feature_names[0], None, (3, 10)),
+        (iris.feature_names[0], {iris.feature_names[0]: np.array([1.0, 2.0])}, (3, 2)),
+        ([0, 2], None, (3, 10, 10)),
+        ([0, 2], {2: [7, 8, 9, 10]}, (3, 10, 4)),
+        ([iris.feature_names[i] for i in (0, 2)], None, (3, 10, 10)),
+        (
+            [iris.feature_names[i] for i in (0, 2)],
+            {iris.feature_names[2]: [1, 2, 3, 10]},
+            (3, 10, 4),
+        ),
+        ([iris.feature_names[i] for i in (0, 2)], {2: [1, 2, 3, 10]}, (3, 10, 10)),
+        (
+            [iris.feature_names[i] for i in (0, 2, 3)],
+            {iris.feature_names[2]: [1, 10]},
+            (3, 10, 2, 10),
+        ),
+        ([True, False, True, False], None, (3, 10, 10)),
     ],
-    ids=["scalar-int", "scalar-str", "list-int", "list-str", "mask"],
+    ids=[
+        "scalar-int",
+        "scalar-int-custom-values",
+        "scalar-str",
+        "scalar-str-custom-values",
+        "list-int",
+        "list-int-custom-values",
+        "list-str",
+        "list-str-custom-values",
+        "list-str-custom-values-incorrect",
+        "list-str-three-features",
+        "mask",
+    ],
 )
-def test_partial_dependence_feature_type(features, expected_pd_shape):
+def test_partial_dependence_feature_type(features, custom_values, expected_pd_shape):
     # check all possible features type supported in PDP
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
@@ -752,7 +957,12 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
     )
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10, kind="average"
+        pipe,
+        df,
+        features=features,
+        grid_resolution=10,
+        kind="average",
+        custom_values=custom_values,
     )
     assert pdp_pipe["average"].shape == expected_pd_shape
     assert len(pdp_pipe["grid_values"]) == len(pdp_pipe["average"].shape) - 1
@@ -928,3 +1138,80 @@ def test_mixed_type_categorical():
     ).fit(X, y)
     with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
         partial_dependence(clf, X, features=[0])
+
+
+def test_reject_array_with_integer_dtype():
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([0, 1, 0, 1])
+    clf = DummyClassifier()
+    clf.fit(X, y)
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    ):
+        partial_dependence(clf, X, features=0)
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 1 contains integer data.")
+    ):
+        partial_dependence(clf, X, features=[1], categorical_features=[0])
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    ):
+        partial_dependence(clf, X, features=[0, 1])
+
+    # The following should not raise as we do not compute numerical partial
+    # dependence on integer columns.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        partial_dependence(clf, X, features=1, categorical_features=[1])
+
+
+def test_reject_pandas_with_integer_dtype():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        {
+            "a": [1.0, 2.0, 3.0],
+            "b": [1, 2, 3],
+            "c": [1, 2, 3],
+        }
+    )
+    y = np.array([0, 1, 0])
+    clf = DummyClassifier()
+    clf.fit(X, y)
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    ):
+        partial_dependence(clf, X, features="c")
+
+    with pytest.warns(
+        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    ):
+        partial_dependence(clf, X, features=["a", "c"])
+
+    # The following should not raise as we do not compute numerical partial
+    # dependence on integer columns.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        partial_dependence(clf, X, features=["a"])
+        partial_dependence(clf, X, features=["c"], categorical_features=["c"])
+
+
+def test_partial_dependence_empty_categorical_features():
+    """Check that we raise the proper exception when `categorical_features`
+    is an empty list"""
+    clf = make_pipeline(StandardScaler(), LogisticRegression())
+    clf.fit(iris.data, iris.target)
+
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Passing an empty list (`[]`) to `categorical_features` is not "
+            "supported. Use `None` instead to indicate that there are no "
+            "categorical features."
+        ),
+    ):
+        partial_dependence(
+            estimator=clf, X=iris.data, features=[0], categorical_features=[]
+        )

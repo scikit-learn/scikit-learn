@@ -215,7 +215,7 @@ def test_default_requests():
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
-        }  # type: ignore
+        }  # type: ignore[var-annotated]
 
     odd_request = get_routing_for_object(OddEstimator())
     assert odd_request.fit.requests == {"sample_weight": True}
@@ -425,7 +425,7 @@ def test_nested_routing_conflict():
                 "In WeightedMetaRegressor, there is a conflict on sample_weight between"
                 " what is requested for this estimator and what is requested by its"
                 " children. You can resolve this conflict by using an alias for the"
-                " child estimator(s) requested metadata."
+                " child estimators' requested metadata."
             )
         ),
     ):
