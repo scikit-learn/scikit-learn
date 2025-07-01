@@ -33,6 +33,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     indexing_dtype,
     np_compat,
+    supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -777,3 +778,24 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
         res_xp_2 = _logsumexp(array_xp_2, axis=axis)
         res_xp_2 = _convert_to_numpy(res_xp_2, xp)
         assert_allclose(res_np_2, res_xp_2, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    ("namespace", "device_", "expected_types"),
+    [
+        ("numpy", None, ("float64", "float32", "<class 'numpy.float16'>")),
+        (
+            "array_api_strict",
+            None,
+            ("array_api_strict.float64", "array_api_strict.float32"),
+        ),
+        ("torch", "cpu", ("torch.float64", "torch.float32", "torch.float16")),
+        ("torch", "cuda", ("torch.float64", "torch.float32", "torch.float16")),
+        ("torch", "mps", ("torch.float32", "torch.float16")),
+    ],
+)
+def test_supported_float_types(namespace, device_, expected_types):
+    xp = _array_api_for_tests(namespace, device_)
+    float_types = supported_float_dtypes(xp, device=device_)
+    float_types = tuple(str(float_type) for float_type in float_types)
+    assert float_types == expected_types
