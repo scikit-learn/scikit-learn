@@ -1076,7 +1076,7 @@ def _roc_collinear_free_mask_xp(fps, tps, xp, device, tolerance=1e-12):
     """Return indices of non-collinear points preserving endpoints using array API."""
     n = fps.shape[0]
     if n <= 2:
-        return xp.arange(n)
+        return xp.arange(n, device=device)
 
     # Compute segment vectors
     dx0 = fps[1:-1] - fps[:-2]
