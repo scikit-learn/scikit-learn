@@ -858,4 +858,4 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred = gpr.predict(X, return_cov=False, return_std=False)
 
-    assert_almost_equal(y_pred, y)
+    assert_allclose(y_pred, y)

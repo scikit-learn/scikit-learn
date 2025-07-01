@@ -470,7 +470,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_cov = np.squeeze(y_cov, axis=2)
 
                 return y_mean, y_cov
-            elif return_std:
+            else:  # return_std
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
