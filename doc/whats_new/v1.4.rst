@@ -34,7 +34,7 @@ Changed models
 
 - |API| The `tree_.value` attribute in :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
-  :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
+  :class:`tree.ExtraTreeRegressor` changed from a weighted absolute count
   of number of samples to a weighted fraction of the total number of samples.
   :pr:`27639` by :user:`Samuel Ronsin <samronsin>`.
 
@@ -123,7 +123,7 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| :class:`compose.ColumnTransformer` now transform into a polars dataframe when
+- |Fix| :class:`compose.ColumnTransformer` now transforms into a polars dataframe when
   `verbose_feature_names_out=True` and the transformers internally used several times
   the same columns. Previously, it would raise a due to duplicated column names.
   :pr:`28262` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -223,7 +223,7 @@ random sampling procedures.
   solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
   for the coefficients depending on the specified `tol`. Additionally, lbfgs can
   make better use of `tol`, i.e., stop sooner or reach higher precision.
-  Note: The lbfgs is the default solver, so this change might effect many models.
+  Note: The lbfgs is the default solver, so this change might affect many models.
   This change also means that with this new version of scikit-learn, the resulting
   coefficients `coef_` and `intercept_` of your models will change for these two
   solvers (when fit on the same data again). The amount of change depends on the
@@ -240,7 +240,7 @@ Changes impacting all modules
   `set_output(transform="polars")`.
   :pr:`27315` by `Thomas Fan`_.
 
-- |Enhancement| All estimators now recognizes the column names from any dataframe
+- |Enhancement| All estimators now recognize the column names from any dataframe
   that adopts the
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
   Dataframes that return a correct representation through `np.asarray(df)` is expected
@@ -261,7 +261,7 @@ Changes impacting all modules
 Metadata Routing
 ----------------
 
-The following models now support metadata routing in one or more or their
+The following models now support metadata routing in one or more of their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
@@ -393,7 +393,7 @@ Support for Array API
 ---------------------
 
 Several estimators and functions support the
-`Array API <https://data-apis.org/array-api/latest/>`_. Such changes allows for using
+`Array API <https://data-apis.org/array-api/latest/>`_. Such changes allow for using
 the estimators and functions with other libraries such as JAX, CuPy, and PyTorch.
 This therefore enables some GPU-accelerated computations.
 
@@ -487,7 +487,7 @@ Changelog
 
 - |Fix| Fixes a bug in :class:`cluster.OPTICS` where the cluster correction based
   on predecessor was not using the right indexing. It would lead to inconsistent results
-  depedendent on the order of the data.
+  dependent on the order of the data.
   :pr:`26459` by :user:`Haoying Zhang <stevezhang1999>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -554,8 +554,8 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Enhancement| :func:`datasets.make_sparse_spd_matrix` now uses a more memory-
-  efficient sparse layout. It also accepts a new keyword `sparse_format` that allows
+- |Enhancement| :func:`datasets.make_sparse_spd_matrix` now uses a more memory-efficient
+  sparse layout. It also accepts a new keyword `sparse_format` that allows
   specifying the output format of the sparse matrix. By default `sparse_format=None`,
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
@@ -615,7 +615,7 @@ Changelog
   :pr:`26391` by `Thomas Fan`_.
 
 - |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` supports
+  :class:`ensemble.HistGradientBoostingRegressor` support
   `categorical_features="from_dtype"`, which treats columns with Pandas or
   Polars Categorical dtype as categories in the algorithm.
   `categorical_features="from_dtype"` will become the default in v1.6.
@@ -740,7 +740,7 @@ Changelog
   type for subclasses.
   :pr:`27675` by :user:`John Cant <johncant>`.
 
-- |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
+- |API| :class:`inspection.DecisionBoundaryDisplay` raises an `AttributeError` instead
   of a `ValueError` when an estimator does not implement the requested response method.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -802,8 +802,8 @@ Changelog
 
 - |Enhancement| Improve the rendering of the plot obtained with the
   :class:`metrics.PrecisionRecallDisplay` and :class:`metrics.RocCurveDisplay`
-  classes. the x- and y-axis limits are set to [0, 1] and the aspect ratio between
-  both axis is set to be 1 to get a square plot.
+  classes. The x- and y-axis limits are set to [0, 1] and the aspect ratio between
+  both axes is set to be 1 to get a square plot.
   :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
 
 - |Enhancement| Added `neg_root_mean_squared_log_error_scorer` as scorer
@@ -826,7 +826,7 @@ Changelog
 
 - |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
   scorer requesting a non-thresholded decision function (from `decision_function` or
-  `predict_proba`). Such scorer are specific to classification.
+  `predict_proba`). Such scorers are specific to classification.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :meth:`metrics.DetCurveDisplay.from_predictions`,
@@ -887,7 +887,7 @@ Changelog
   :pr:`23317` by :user:`Bharat Raghunathan <bharatr21>`.
 
 - |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
-  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
+  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raise an error when the
   weights of all neighbors of some sample are zero. This can happen when `weights`
   is a user-defined function.
   :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`.
@@ -989,7 +989,7 @@ Changelog
   when the input is a Series instead of a DataFrame.
   :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
+- |API| :func:`sklearn.utils.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
 
@@ -1010,7 +1010,7 @@ David Brochart, Deborah L. Haar, DevanshKyada27, Dimitri Papadopoulos Orfanos,
 Dmitry Nesterov, DUONG, Edoardo Abati, Eitan Hemed, Elabonga Atuo, Elisabeth
 Günther, Emma Carballal, Emmanuel Ferdman, epimorphic, Erwan Le Floch, Fabian
 Egli, Filip Karlo Došilović, Florian Idelberger, Franck Charras, Gael
-Varoquaux, Ganesh Tata, Gleb Levitski, Guillaume Lemaitre, Haoying Zhang,
+Varoquaux, Ganesh Tata, Hleb Levitski, Guillaume Lemaitre, Haoying Zhang,
 Harmanan Kohli, Ily, ioangatop, IsaacTrost, Isaac Virshup, Iwona Zdzieblo,
 Jakub Kaczmarzyk, James McDermott, Jarrod Millman, JB Mountford, Jérémie du
 Boisberranger, Jérôme Dockès, Jiawei Zhang, Joel Nothman, John Cant, John

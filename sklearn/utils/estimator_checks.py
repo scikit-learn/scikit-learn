@@ -105,7 +105,6 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -165,10 +164,8 @@ def _yield_checks(estimator):
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
             yield check_sample_weight_equivalence_on_dense_data
-            # FIXME: filter on tags.input_tags.sparse
-            # (estimator accepts sparse arrays)
-            # once issue #30139 is fixed.
-            yield check_sample_weight_equivalence_on_sparse_data
+            if tags.input_tags.sparse:
+                yield check_sample_weight_equivalence_on_sparse_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -192,6 +189,7 @@ def _yield_checks(estimator):
     if hasattr(estimator, "sparsify"):
         yield check_sparsify_coefficients
 
+    yield check_estimator_sparse_tag
     yield check_estimator_sparse_array
     yield check_estimator_sparse_matrix
 
@@ -508,6 +506,13 @@ def estimator_checks_generator(
 ):
     """Iteratively yield all check callables for an estimator.
 
+    This function is used by
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` and
+    :func:`~sklearn.utils.estimator_checks.check_estimator` to yield all check callables
+    for an estimator. In most cases, these functions should be used instead. When
+    implementing a custom equivalent, please refer to their source code to
+    understand how `estimator_checks_generator` is intended to be used.
+
     .. versionadded:: 1.6
 
     Parameters
@@ -534,7 +539,7 @@ def estimator_checks_generator(
     if mark == "xfail":
         import pytest
     else:
-        pytest = None  # type: ignore
+        pytest = None  # type: ignore[assignment]
 
     name = type(estimator).__name__
     # First check that the estimator is cloneable which is needed for the rest
@@ -834,7 +839,8 @@ def check_estimator(
     if generate_only:
         warnings.warn(
             "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks` instead.",
+            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
+            "instead.",
             FutureWarning,
         )
         return estimator_checks_generator(
@@ -890,7 +896,6 @@ def check_estimator(
                 # as xfail.
                 check_result["status"] = "xfail"
             else:
-                failed = True
                 check_result["status"] = "failed"
 
             if on_fail == "warn":
@@ -1113,6 +1118,41 @@ def check_array_api_input(
         "transform",
     )
 
+    try:
+        np.asarray(X_xp)
+        np.asarray(y_xp)
+        # TODO There are a few errors in SearchCV with array-api-strict because
+        # we end up doing X[train_indices] where X is an array-api-strict array
+        # and train_indices is a numpy array. array-api-strict insists
+        # train_indices should be an array-api-strict array. On the other hand,
+        # all the array API libraries (PyTorch, jax, CuPy) accept indexing with a
+        # numpy array. This is probably not worth doing anything about for
+        # now since array-api-strict seems a bit too strict ...
+        numpy_asarray_works = xp.__name__ != "array_api_strict"
+
+    except (TypeError, RuntimeError, ValueError):
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # array-api-strict chose to raise RuntimeError instead. NumPy emits
+        # a ValueError if `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
+        numpy_asarray_works = False
+
+    if numpy_asarray_works:
+        # In this case, array_api_dispatch is disabled and we rely on np.asarray
+        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
+        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+        # We only do a smoke test for now, in order to avoid complicating the
+        # test function even further.
+        for method_name in methods:
+            method = getattr(est_fitted_with_as_array, method_name, None)
+            if method is None:
+                continue
+
+            if method_name == "score":
+                method(X_xp, y_xp)
+            else:
+                method(X_xp)
+
     for method_name in methods:
         method = getattr(est, method_name, None)
         if method is None:
@@ -1197,6 +1237,58 @@ def check_array_api_input_and_values(
     )
 
 
+def check_estimator_sparse_tag(name, estimator_orig):
+    """Check that estimator tag related with accepting sparse data is properly set."""
+    estimator = clone(estimator_orig)
+
+    rng = np.random.RandomState(0)
+    n_samples = 15 if name == "SpectralCoclustering" else 40
+    X = rng.uniform(size=(n_samples, 3))
+    X[X < 0.6] = 0
+    y = rng.randint(0, 3, size=n_samples)
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+    X = sparse.csr_array(X)
+
+    tags = get_tags(estimator)
+    if tags.input_tags.sparse:
+        try:
+            estimator.fit(X, y)  # should pass
+        except Exception as e:
+            err_msg = (
+                f"Estimator {name} raised an exception. "
+                f"The tag self.input_tags.sparse={tags.input_tags.sparse} "
+                "might not be consistent with the estimator's ability to "
+                "handle sparse data (i.e. controlled by the parameter `accept_sparse`"
+                " in `validate_data` or `check_array` functions)."
+            )
+            raise AssertionError(err_msg) from e
+    else:
+        err_msg = (
+            f"Estimator {name} raised an exception. "
+            "The estimator failed when fitted on sparse data in accordance "
+            f"with its tag self.input_tags.sparse={tags.input_tags.sparse} "
+            "but didn't raise the appropriate error: error message should "
+            "state explicitly that sparse input is not supported if this is "
+            "not the case, e.g. by using check_array(X, accept_sparse=False)."
+        )
+        try:
+            estimator.fit(X, y)  # should fail with appropriate error
+        except (ValueError, TypeError) as e:
+            if re.search("[Ss]parse", str(e)):
+                # Got the right error type and mentioning sparse issue
+                return
+            raise AssertionError(err_msg) from e
+        except Exception as e:
+            raise AssertionError(err_msg) from e
+        raise AssertionError(
+            f"Estimator {name} didn't fail when fitted on sparse data "
+            "but should have according to its tag "
+            f"self.input_tags.sparse={tags.input_tags.sparse}. "
+            f"The tag is inconsistent and must be fixed."
+        )
+
+
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
@@ -1256,8 +1348,7 @@ def check_estimator_sparse_matrix(name, estimator_orig):
 
 
 def check_estimator_sparse_array(name, estimator_orig):
-    if SPARSE_ARRAY_PRESENT:
-        _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
+    _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
 def check_f_contiguous_array_estimator(name, estimator_orig):
@@ -1487,15 +1578,7 @@ def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
 
 
 def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
-    if SPARSE_ARRAY_PRESENT:
-        sparse_container = sparse.csr_array
-    else:
-        sparse_container = sparse.csr_matrix
-    # FIXME: remove the catch once issue #30139 is fixed.
-    try:
-        _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
-    except TypeError:
-        return
+    _check_sample_weight_equivalence(name, estimator_orig, sparse.csr_array)
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
@@ -2231,7 +2314,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = _enforce_estimator_tags_y(e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]))
-    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* " "is required."
+    msg = r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* is required."
     with raises(ValueError, match=msg):
         e.fit(X_zero_features, y)
 
@@ -3848,7 +3931,7 @@ def _enforce_estimator_tags_y(estimator, y):
         and not tags.classifier_tags.multi_class
         and y.size > 0
     ):
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
+        y = np.where(y == y.min(), y, y.min() + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if tags.target_tags.multi_output and not tags.target_tags.single_output:
@@ -3914,7 +3997,10 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 0)
     X = _enforce_estimator_tags_X(estimator, X)
-    X -= X.mean()
+    # Make sure that the dtype of X stays unchanged: for instance estimator
+    # that expect categorical inputs typically expected integer-based encoded
+    # categories.
+    X -= X.mean().astype(X.dtype)
 
     if tags.input_tags.positive_only:
         with raises(ValueError, match="Negative values in data"):
@@ -3925,7 +4011,7 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
             estimator.fit(X, y)
         except Exception as e:
             err_msg = (
-                f"Estimator {repr(name)} raised {e.__class__.__name__} unexpectedly."
+                f"Estimator {name!r} raised {e.__class__.__name__} unexpectedly."
                 " This happens when passing negative input values as X."
                 " If negative values are not supported for this estimator instance,"
                 " then the tags.input_tags.positive_only tag needs to be set to True."
@@ -4322,7 +4408,14 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            raise ve
+            raise ValueError(
+                "Your estimator raised a ValueError, but with the incorrect or "
+                "incomplete error message to be considered a graceful fail. "
+                "The expected message in the ValueError should contain one of "
+                f"these literal strings:\n{expected_err_msgs}. "
+                f"For example, you could have `ValueError('{expected_err_msgs[0]}')`.\n"
+                f"This is the error message in your exception:\n{ve}"
+            )
 
 
 @ignore_warnings(category=FutureWarning)
@@ -4683,9 +4776,9 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     else:
         n_features_out = X_transform.shape[1]
 
-    assert (
-        len(feature_names_out) == n_features_out
-    ), f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
+    assert len(feature_names_out) == n_features_out, (
+        f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
+    )
 
 
 def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
@@ -4740,9 +4833,9 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
     else:
         n_features_out = X_transform.shape[1]
 
-    assert (
-        len(feature_names_out_default) == n_features_out
-    ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+    assert len(feature_names_out_default) == n_features_out, (
+        f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+    )
 
 
 def check_param_validation(name, estimator_orig):
@@ -5253,9 +5346,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
                 'Only binary classification is supported. The type of the target '
                 f'is {{y_type}}.'
         )
-    """.format(
-        name=name
-    )
+    """.format(name=name)
     err_msg = textwrap.dedent(err_msg)
 
     with raises(

@@ -16,16 +16,15 @@ from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
 from .utils import Bunch
-from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
+from .utils._repr_html.estimator import _VisualBlock
 from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,
 )
 from .utils._tags import get_tags
 from .utils._user_interface import _print_elapsed_time
-from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -38,7 +37,7 @@ from .utils.metaestimators import _BaseComposition, available_if
 from .utils.parallel import Parallel, delayed
 from .utils.validation import check_is_fitted, check_memory
 
-__all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
+__all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
 
 
 @contextmanager
@@ -1096,7 +1095,7 @@ class Pipeline(_BaseComposition):
         return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
-    def inverse_transform(self, X=None, *, Xt=None, **params):
+    def inverse_transform(self, X, **params):
         """Apply `inverse_transform` for each step in a reverse order.
 
         All estimators in the pipeline must support `inverse_transform`.
@@ -1108,15 +1107,6 @@ class Pipeline(_BaseComposition):
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
             ``inverse_transform`` method.
-
-        Xt : array-like of shape (n_samples, n_transformed_features)
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features. Must fulfill
-            input requirements of last step of pipeline's
-            ``inverse_transform`` method.
-
-            .. deprecated:: 1.5
-                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
@@ -1130,15 +1120,13 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed data, that is, data in the original feature
             space.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _raise_or_warn_if_not_fitted(self):
             _raise_for_params(params, self, "inverse_transform")
-
-            X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
             # we don't have to branch here, since params is only non-empty if
             # enable_metadata_routing=True.
@@ -1226,6 +1214,15 @@ class Pipeline(_BaseComposition):
                 tags.input_tags.pairwise = get_tags(
                     self.steps[0][1]
                 ).input_tags.pairwise
+            # WARNING: the sparse tag can be incorrect.
+            # Some Pipelines accepting sparse data are wrongly tagged sparse=False.
+            # For example Pipeline([PCA(), estimator]) accepts sparse data
+            # even if the estimator doesn't as PCA outputs a dense array.
+            tags.input_tags.sparse = all(
+                get_tags(step).input_tags.sparse
+                for name, step in self.steps
+                if step is not None and step != "passthrough"
+            )
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
@@ -1315,15 +1312,15 @@ class Pipeline(_BaseComposition):
             return False
 
     def _sk_visual_block_(self):
-        _, estimators = zip(*self.steps)
-
         def _get_name(name, est):
             if est is None or est == "passthrough":
                 return f"{name}: passthrough"
             # Is an estimator
             return f"{name}: {est.__class__.__name__}"
 
-        names = [_get_name(name, est) for name, est in self.steps]
+        names, estimators = zip(
+            *[(_get_name(name, est), est) for name, est in self.steps]
+        )
         name_details = [str(est) for est in estimators]
         return _VisualBlock(
             "serial",
@@ -1497,7 +1494,7 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
     )
 
 
-def _transform_one(transformer, X, y, weight, params=None):
+def _transform_one(transformer, X, y, weight, params):
     """Call transform and apply weight to output.
 
     Parameters
@@ -1651,12 +1648,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[-1.5       ,  3.0..., -0.8...],
-           [ 1.5       ,  5.7...,  0.4...]])
+    array([[-1.5       ,  3.04, -0.872],
+           [ 1.5       ,  5.72,  0.463]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[-1.5       ,  3.0...],
-           [ 1.5       ,  5.7...]])
+    array([[-1.5       ,  3.04],
+           [ 1.5       ,  5.72]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
@@ -2115,8 +2112,25 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        try:
+            tags.input_tags.sparse = all(
+                get_tags(trans).input_tags.sparse
+                for name, trans in self.transformer_list
+                if trans not in {"passthrough", "drop"}
+            )
+        except Exception:
+            # If `transformer_list` does not comply with our API (list of tuples)
+            # then it will fail. In this case, we assume that `sparse` is False
+            # but the parameter validation will raise an error during `fit`.
+            pass  # pragma: no cover
+        return tags
 
-def make_union(*transformers, n_jobs=None, verbose=False):
+
+def make_union(
+    *transformers, n_jobs=None, verbose=False, verbose_feature_names_out=True
+):
     """Construct a :class:`FeatureUnion` from the given transformers.
 
     This is a shorthand for the :class:`FeatureUnion` constructor; it does not
@@ -2142,6 +2156,10 @@ def make_union(*transformers, n_jobs=None, verbose=False):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+    verbose_feature_names_out : bool, default=True
+        If True, the feature names generated by `get_feature_names_out` will
+        include prefixes derived from the transformer names.
+
     Returns
     -------
     f : FeatureUnion
@@ -2161,4 +2179,9 @@ def make_union(*transformers, n_jobs=None, verbose=False):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
+    return FeatureUnion(
+        _name_estimators(transformers),
+        n_jobs=n_jobs,
+        verbose=verbose,
+        verbose_feature_names_out=verbose_feature_names_out,
+    )

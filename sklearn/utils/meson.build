@@ -16,23 +16,23 @@ utils_cython_tree = [
 
 utils_extension_metadata = {
   'sparsefuncs_fast':
-    {'sources': ['sparsefuncs_fast.pyx']},
-  '_cython_blas': {'sources': ['_cython_blas.pyx']},
-  'arrayfuncs': {'sources': ['arrayfuncs.pyx'], 'dependencies': [openmp_dep]},
+    {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
+  '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx')]},
+  'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
   'murmurhash': {
-      'sources': ['murmurhash.pyx', 'src' / 'MurmurHash3.cpp'],
+      'sources': [cython_gen.process('murmurhash.pyx'), 'src' / 'MurmurHash3.cpp'],
   },
   '_fast_dict':
-    {'sources': ['_fast_dict.pyx'], 'override_options': ['cython_language=cpp']},
-  '_openmp_helpers': {'sources': ['_openmp_helpers.pyx'], 'dependencies': [openmp_dep]},
-  '_random': {'sources': ['_random.pyx']},
-  '_typedefs': {'sources': ['_typedefs.pyx']},
-  '_heap': {'sources': ['_heap.pyx']},
-  '_sorting': {'sources': ['_sorting.pyx']},
+    {'sources': [cython_gen_cpp.process('_fast_dict.pyx')]},
+  '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
+  '_random': {'sources': [cython_gen.process('_random.pyx')]},
+  '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
+  '_heap': {'sources': [cython_gen.process('_heap.pyx')]},
+  '_sorting': {'sources': [cython_gen.process('_sorting.pyx')]},
   '_vector_sentinel':
-    {'sources': ['_vector_sentinel.pyx'], 'override_options': ['cython_language=cpp'],
+    {'sources': [cython_gen_cpp.process('_vector_sentinel.pyx')],
      'dependencies': [np_dep]},
-  '_isfinite': {'sources': ['_isfinite.pyx']},
+  '_isfinite': {'sources': [cython_gen.process('_isfinite.pyx')]},
 }
 
 foreach ext_name, ext_dict : utils_extension_metadata
@@ -40,8 +40,6 @@ foreach ext_name, ext_dict : utils_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
-    override_options : ext_dict.get('override_options', []),
-    cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true
   )
@@ -54,7 +52,7 @@ foreach name: util_extension_names
     name + '_pxd',
     output: name + '.pxd',
     input: name + '.pxd.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
   )
   utils_cython_tree += [pxd]
 
@@ -62,7 +60,7 @@ foreach name: util_extension_names
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
     # TODO in principle this should go in py.exension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
@@ -70,8 +68,7 @@ foreach name: util_extension_names
   )
   py.extension_module(
     name,
-    pyx,
-    cython_args: cython_args,
+    cython_gen.process(pyx),
     subdir: 'sklearn/utils',
     install: true
    )

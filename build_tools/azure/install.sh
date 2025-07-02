@@ -67,17 +67,7 @@ python_environment_install_and_activate() {
     fi
 
     # Install additional packages on top of the lock-file in specific cases
-    if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
-        # TODO We install scipy and cython from
-        # scientific-python-nightly-wheels. When there are conda-forge packages
-        # for scipy and cython, we can update
-        # build_tools/update_environments_and_lock_files.py and remove the
-        # lines below
-        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="scipy Cython"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
-
-    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy pandas Cython"

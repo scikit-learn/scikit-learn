@@ -40,7 +40,7 @@ prevalence of the positive class.
 from sklearn.datasets import make_classification
 
 X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
-print(f"Percentage of people carrying the disease: {100*y.mean():.2f}%")
+print(f"Percentage of people carrying the disease: {100 * y.mean():.2f}%")
 
 # %%
 # A machine learning model is built to diagnose if a person with some given
@@ -61,7 +61,7 @@ from sklearn.metrics import class_likelihood_ratios
 
 estimator = LogisticRegression().fit(X_train, y_train)
 y_pred = estimator.predict(X_test)
-pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred)
+pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, replace_undefined_by=1.0)
 print(f"LR+: {pos_LR:.3f}")
 
 # %%
@@ -81,7 +81,7 @@ import pandas as pd
 
 def scoring(estimator, X, y):
     y_pred = estimator.predict(X)
-    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, raise_warning=False)
+    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, replace_undefined_by=1.0)
     return {"positive_likelihood_ratio": pos_lr, "negative_likelihood_ratio": neg_lr}
 
 

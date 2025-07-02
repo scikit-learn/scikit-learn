@@ -11,7 +11,7 @@ jobs:
 - job: git_commit
   displayName: Get Git Commit
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - bash: python build_tools/azure/get_commit_message.py
       name: commit
@@ -27,15 +27,15 @@ jobs:
     )
   displayName: Linting
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.9'
+        versionSpec: '3.12'
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
+        pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
@@ -49,7 +49,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -84,49 +84,16 @@ jobs:
       )
     matrix:
       pylatest_free_threaded:
-        PYTHON_GIL: '0'
         DISTRIB: 'conda-free-threaded'
         LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
-
-- job: Linux_Nightly_Pyodide
-  pool:
-    vmImage: ubuntu-22.04
-  variables:
-    # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For example, for Pyodide version 0.25.1, see
-    # https://github.com/pyodide/pyodide/blob/0.25.1/Makefile.envs
-    PYODIDE_VERSION: '0.26.0'
-    EMSCRIPTEN_VERSION: '3.1.58'
-    PYTHON_VERSION: '3.12.1'
-
-  dependsOn: [git_commit, linting]
-  condition: |
-    and(
-      succeeded(),
-      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-      or(eq(variables['Build.Reason'], 'Schedule'),
-         contains(dependencies['git_commit']['outputs']['commit.message'], '[pyodide]'
-        )
-      )
-    )
-  steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: $(PYTHON_VERSION)
-        addToPath: true
-
-    - bash: bash build_tools/azure/install_pyodide.sh
-      displayName: Build Pyodide wheel
-
-    - bash: bash build_tools/azure/test_script_pyodide.sh
-      displayName: Test Pyodide wheel
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit]
     condition: |
       and(
@@ -173,7 +140,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Ubuntu_Atlas
-    vmImage: ubuntu-22.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -183,8 +150,8 @@ jobs:
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
-      # versions of numpy, scipy with ATLAS that comes with Ubuntu Jammy Jellyfish 22.04
-      # i.e. numpy 1.21.5 and scipy 1.8.0
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04 Noble Numbat
+      # i.e. numpy 1.26.4 and scipy 1.11.4
       ubuntu_atlas:
         DISTRIB: 'ubuntu'
         LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
@@ -194,7 +161,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -203,7 +170,7 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      # Linux + Python 3.9 build with minimum supported version of dependencies
+      # Linux build with minimum supported version of dependencies
       pymin_conda_forge_openblas_min_dependencies:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'
@@ -232,7 +199,7 @@ jobs:
 - template: build_tools/azure/posix-docker.yml
   parameters:
     name: Linux_Docker
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -286,9 +253,9 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      pymin_conda_forge_mkl:
+      pymin_conda_forge_openblas:
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_mkl_win-64_conda.lock
+        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_openblas_win-64_conda.lock
         SKLEARN_WARNINGS_AS_ERRORS: '1'
         # The Azure Windows runner is typically much slower than other CI
         # runners due to the lack of compiler cache. Running the tests with

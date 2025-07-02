@@ -423,6 +423,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.classifier_tags.poor_score = True
         tags.no_validation = True
         return tags
@@ -581,7 +582,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.constant_ = np.median(y, axis=0)
             else:
                 self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=50.0)
+                    _weighted_percentile(y[:, k], sample_weight, percentile_rank=50.0)
                     for k in range(self.n_outputs_)
                 ]
 
@@ -591,12 +592,14 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     "When using `strategy='quantile', you have to specify the desired "
                     "quantile in the range [0, 1]."
                 )
-            percentile = self.quantile * 100.0
+            percentile_rank = self.quantile * 100.0
             if sample_weight is None:
-                self.constant_ = np.percentile(y, axis=0, q=percentile)
+                self.constant_ = np.percentile(y, axis=0, q=percentile_rank)
             else:
                 self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=percentile)
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile_rank=percentile_rank
+                    )
                     for k in range(self.n_outputs_)
                 ]
 
@@ -662,6 +665,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.regressor_tags.poor_score = True
         tags.no_validation = True
         return tags
