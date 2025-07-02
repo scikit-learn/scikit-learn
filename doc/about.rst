@@ -93,6 +93,7 @@ Emeritus Maintainers Team
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
+.. rst-class:: grid-list-three-columns
 .. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
