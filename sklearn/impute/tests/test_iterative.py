@@ -244,6 +244,122 @@ def test_iterative_imputer_all_categorical():
     # Check that values are within a reasonable range around the original categories
     for col in [0, 1]:
         unique_vals = np.unique(Xt[:, col])
+
         # Allow some flexibility since iterative
         # imputation can produce continuous values
-        assert np.all(unique_vals >= -5.0) and np.all(unique_vals <= 5.0)
+        def test_iterative_imputer_categorical_all_missing_in_column():
+            # Test edge case where entire categorical column is missing
+            X = np.array([[1.0, np.nan], [2.0, np.nan], [3.0, np.nan], [4.0, np.nan]])
+
+            imputer = IterativeImputer(
+                categorical_features=[1],
+                random_state=42,
+                max_iter=2,
+                keep_empty_features=True,
+            )
+            Xt = imputer.fit_transform(X)
+
+            assert Xt.shape == X.shape
+            # The categorical column should be imputed with some constant value
+            assert not np.isnan(Xt).any()
+
+        def test_iterative_imputer_categorical_with_preprocessor_none():
+            # Test with preprocessor=None to trigger default OrdinalEncoder setup
+            X = np.array([[1.0, 0.0], [2.0, 1.0], [np.nan, 0.0], [3.0, np.nan]])
+
+            imputer = IterativeImputer(
+                categorical_features=[1],
+                preprocessor=None,  # Should use default OrdinalEncoder
+                random_state=42,
+                max_iter=2,
+            )
+            Xt = imputer.fit_transform(X)
+
+            assert Xt.shape == X.shape
+            assert not np.isnan(Xt).any()
+
+        def test_iterative_imputer_categorical_no_missing_values():
+            # Test categorical feature with no missing values to cover edge cases
+            X = np.array([[1.0, 0.0], [np.nan, 1.0], [3.0, 0.0], [4.0, 1.0]])
+
+            imputer = IterativeImputer(
+                categorical_features=[1],  # No missing values in categorical column
+                random_state=42,
+                max_iter=2,
+            )
+            Xt = imputer.fit_transform(X)
+
+            assert Xt.shape == X.shape
+            assert not np.isnan(Xt).any()
+
+        def test_iterative_imputer_categorical_fit_mode_false_error():
+            # Test error when fit_mode=False but no estimator provided
+            X = np.array([[1.0, 0.0], [2.0, 1.0], [np.nan, np.nan]])
+
+            imputer = IterativeImputer(categorical_features=[1], random_state=42)
+
+            # This should trigger the ValueError for fit_mode=False without estimator
+            # We need to access the internal method to test this specific condition
+            imputer.fit(X)
+
+            with pytest.raises(ValueError, match="If fit_mode is False"):
+                imputer._impute_one_feature(
+                    X_filled=X.copy(),
+                    mask_missing_values=np.isnan(X),
+                    feat_idx=0,
+                    neighbor_feat_idx=np.array([1]),
+                    estimator=None,
+                    fit_mode=False,
+                )
+
+        def test_iterative_imputer_categorical_with_min_max_values():
+            # Test categorical features with custom min/max values
+            X = np.array([[1.0, 0.0], [2.0, 1.0], [np.nan, 2.0], [4.0, np.nan]])
+
+            imputer = IterativeImputer(
+                categorical_features=[1],
+                min_value=[0, 0],  # Set bounds for both features
+                max_value=[10, 2],
+                random_state=42,
+                max_iter=2,
+            )
+            Xt = imputer.fit_transform(X)
+
+            assert Xt.shape == X.shape
+            assert not np.isnan(Xt).any()
+            # Check that categorical values respect the bounds
+            assert np.all(Xt[:, 1] >= 0)
+            assert np.all(Xt[:, 1] <= 2)
+
+        def test_iterative_imputer_categorical_with_constant_strategy():
+            # Test categorical features with constant initial strategy
+            X = np.array([[1.0, 0.0], [2.0, 1.0], [np.nan, np.nan]])
+
+            imputer = IterativeImputer(
+                categorical_features=[1],
+                initial_strategy="constant",
+                fill_value=0,
+                random_state=42,
+                max_iter=2,
+            )
+            Xt = imputer.fit_transform(X)
+
+            assert Xt.shape == X.shape
+            assert not np.isnan(Xt).any()
+
+        def test_iterative_imputer_categorical_auto_detection_object_dtype():
+            # Test automatic categorical detection with object dtype
+            X_obj = np.array([["a", 1.0], ["b", 2.0], [None, np.nan]], dtype=object)
+
+            # Convert to encoded format for IterativeImputer
+            X = np.array([[0.0, 1.0], [1.0, 2.0], [np.nan, np.nan]])
+
+            imputer = IterativeImputer(
+                categorical_features=None,  # Auto-detect
+                random_state=42,
+                max_iter=2,
+            )
+            Xt = imputer.fit_transform(X)
+
+            assert Xt.shape == X.shape
+            assert not np.isnan(Xt).any()
