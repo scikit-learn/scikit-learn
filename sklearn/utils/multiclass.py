@@ -225,7 +225,7 @@ def check_classification_targets(y):
         )
 
 
-def type_of_target(y, input_name="", raise_unknown=False, suppress_warning=False):
+def type_of_target(y, input_name="", raise_unknown=False):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -414,11 +414,7 @@ def type_of_target(y, input_name="", raise_unknown=False, suppress_warning=False
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
     classes = cached_unique(y)
-    if (
-        not suppress_warning
-        and y.shape[0] > 20
-        and classes.shape[0] > round(0.5 * y.shape[0])
-    ):
+    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
         # Only raise the warning when we have at least 20 samples.
         warnings.warn(
             "The number of unique classes is greater than 50% of the number "
