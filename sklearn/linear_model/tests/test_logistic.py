@@ -2086,7 +2086,7 @@ def test_single_feature_newton_cg():
     LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)
 
 
-def test_liblinear_not_stuck():
+def test_liblinear_not_stuck(global_random_seed):
     # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
     X = iris.data.copy()
     y = iris.target.copy()
@@ -2101,7 +2101,7 @@ def test_liblinear_not_stuck():
         tol=1e-6,
         max_iter=100,
         intercept_scaling=10000.0,
-        random_state=0,
+        random_state=global_random_seed,
         C=C,
     )
 
