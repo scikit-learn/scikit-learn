@@ -30,7 +30,7 @@ data structures and automatically dispatch operations to the underlying namespac
 instead of relying on NumPy.
 
 At this stage, this support is **considered experimental** and must be enabled
-explicitly as explained in the following.
+explicitly by the `array_api_dispatch` configuration. See below for details.
 
 .. note::
     Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
@@ -45,7 +45,13 @@ and how it facilitates interoperability between array libraries:
 Example usage
 =============
 
-Here is an example code snippet to demonstrate how to use `CuPy
+The configuration `array_api_dispatch=True` needs to be set to `True` to enable array
+API support. We recommend setting this configuration globally to ensure consistent
+behaviour and prevent accidental mixing of array namespaces.
+Note that we set it with :func:`config_context` below to avoid having to call
+:func:`set_config(array_api_dispatch=False)` at the end of every code snippet
+that uses the array API.
+The example code snippet below demonstrates how to use `CuPy
 <https://cupy.dev/>`_ to run
 :class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
 
@@ -82,8 +88,7 @@ transfers an estimator attributes from Array API to a ndarray::
 PyTorch Support
 ---------------
 
-PyTorch Tensors are supported by setting `array_api_dispatch=True` and passing in
-the tensors directly::
+PyTorch Tensors can also be passed directly::
 
     >>> import torch
     >>> X_torch = torch.asarray(X_np, device="cuda", dtype=torch.float32)
