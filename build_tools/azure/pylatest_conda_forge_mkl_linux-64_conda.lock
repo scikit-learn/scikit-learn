@@ -42,7 +42,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libuv-1.51.0-hb9d3cd8_0.conda#13
 https://conda.anaconda.org/conda-forge/linux-64/libwebp-base-1.5.0-h851e524_0.conda#63f790534398730f59e1b899c3644d4a
 https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.1-hb9d3cd8_2.conda#edb0dca6bc32e4f4789199455a1dbeb8
 https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda#47e340acb35de30501a76c7c799c41d7
-https://conda.anaconda.org/conda-forge/linux-64/openssl-3.5.0-h7b32b05_1.conda#de356753cfdbffcde5bb1e86e3aa6cd0
+https://conda.anaconda.org/conda-forge/linux-64/openssl-3.5.1-h7b32b05_0.conda#c87df2ab1448ba69169652ab9547082d
 https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda#b3c17d95b5a10c6e64a21fa17573e70e
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libice-1.1.2-hb9d3cd8_0.conda#fb901ff28063514abb6046c9ec2c4a45
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxau-1.0.12-hb9d3cd8_0.conda#f6ebe2cb3f82ba6c057dde5d9debe4f7
@@ -225,8 +225,8 @@ https://conda.anaconda.org/conda-forge/linux-64/qt6-main-6.9.1-h0384650_1.conda#
 https://conda.anaconda.org/conda-forge/linux-64/libarrow-acero-20.0.0-hcb10f89_8_cpu.conda#a9d337e1f407c5d92e609cb39c803343
 https://conda.anaconda.org/conda-forge/linux-64/liblapacke-3.9.0-32_hbc6e62b_mkl.conda#1524bf380c8b6a65a856a335feb4984e
 https://conda.anaconda.org/conda-forge/linux-64/libparquet-20.0.0-h081d1f1_8_cpu.conda#d64065a5ab0a8d466b7431049e531995
-https://conda.anaconda.org/conda-forge/linux-64/libtorch-2.7.1-cpu_mkl_hb1c5dc7_100.conda#80bf999d61d95328cb37391ccdb9f03d
-https://conda.anaconda.org/conda-forge/linux-64/numpy-2.3.0-py313h17eae1a_0.conda#db18a34466bef0863e9301b518a75e8f
+https://conda.anaconda.org/conda-forge/linux-64/libtorch-2.7.1-cpu_mkl_h783a78b_101.conda#90179580db57d1e9a5cc83dc5cf1a7ea
+https://conda.anaconda.org/conda-forge/linux-64/numpy-2.3.1-py313h17eae1a_0.conda#3a155f4d1e110a7330c17ccdce55d315
 https://conda.anaconda.org/conda-forge/linux-64/pyarrow-core-20.0.0-py313he5f92c8_0_cpu.conda#2afdef63d9fbc2cd0e52f8e8f3472404
 https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.9.1-py313h7dabd7a_0.conda#42a24d0f4fe3a2e8307de3838e162452
 https://conda.anaconda.org/conda-forge/noarch/array-api-strict-2.4-pyhe01879c_1.conda#61d4f8b95dac300a1b7f665bcc79653a
@@ -235,7 +235,7 @@ https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.3.2-py313h33d0bda_0.
 https://conda.anaconda.org/conda-forge/linux-64/libarrow-dataset-20.0.0-hcb10f89_8_cpu.conda#14bb8eeeff090f873056fa629d2d82b5
 https://conda.anaconda.org/conda-forge/linux-64/pandas-2.3.0-py313ha87cce1_0.conda#8664b4fa9b5b23b0d1cdc55c7195fcfe
 https://conda.anaconda.org/conda-forge/linux-64/polars-default-1.31.0-py39hfac2b71_0.conda#412f48979db22009a89706d57384756e
-https://conda.anaconda.org/conda-forge/linux-64/pytorch-2.7.1-cpu_mkl_py313_hea9ba1b_100.conda#a8cdf83059e79fa51d107c6ac69680ad
+https://conda.anaconda.org/conda-forge/linux-64/pytorch-2.7.1-cpu_mkl_py313_he78a34b_101.conda#a6978680053949bcfbfb40ba6cd58754
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.16.0-py313h86fcf2b_0.conda#8c60fe574a5abab59cd365d32e279872
 https://conda.anaconda.org/conda-forge/noarch/scipy-doctest-1.8.0-pyhe01879c_0.conda#5bc3f4bc1e027aa4ba6fdad1a84b5d3c
 https://conda.anaconda.org/conda-forge/linux-64/blas-2.132-mkl.conda#b8b0988c5e1abbb5f05c7f086f76b6bd
@@ -243,6 +243,6 @@ https://conda.anaconda.org/conda-forge/linux-64/libarrow-substrait-20.0.0-h1bed2
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.10.3-py313h129903b_0.conda#4f8816d006b1c155ec416bcf7ff6cee2
 https://conda.anaconda.org/conda-forge/linux-64/polars-1.31.0-default_h1650462_0.conda#2372c82ef3c85bc1cc94025b9bf4d329
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-5.2.1-py313hf0ab243_1.conda#4c769bf3858f424cb2ecf952175ec600
-https://conda.anaconda.org/conda-forge/linux-64/pytorch-cpu-2.7.1-cpu_mkl_hc60beec_100.conda#49ec7c13fcf27497f40471ae86979432
+https://conda.anaconda.org/conda-forge/linux-64/pytorch-cpu-2.7.1-cpu_mkl_hc60beec_101.conda#a577b17285c64266209b9f4b6562c4e8
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.10.3-py313h78bf25f_0.conda#cc9324e614a297fdf23439d887d3513d
 https://conda.anaconda.org/conda-forge/linux-64/pyarrow-20.0.0-py313h78bf25f_0.conda#6b8d388845ce750fe2ad8436669182f3
