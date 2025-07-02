@@ -48,8 +48,8 @@ Example usage
 The configuration `array_api_dispatch=True` needs to be set to `True` to enable array
 API support. Note that we set it with :func:`config_context` below to avoid
 inadvertent affects when building our documentation but we recommend setting
-this configuration globally to prevent accidentally forgetting to enable it
-in downstream code.
+this configuration globally to ensure consistent behaviour and prevent accidental
+mixing of array namespaces.
 The example code snippet below demonstrates how to use `CuPy
 <https://cupy.dev/>`_ to run
 :class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
