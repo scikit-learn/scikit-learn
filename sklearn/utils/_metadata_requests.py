@@ -338,8 +338,8 @@ class MethodMetadataRequest:
 
     Parameters
     ----------
-    owner : str
-        A display name for the object owning these requests.
+    owner : object
+        The object owning these requests.
 
     method : str
         The name of the method to which these requests belong.
@@ -573,8 +573,8 @@ class MetadataRequest:
 
     Parameters
     ----------
-    owner : str
-        The name of the object to which these requests belong.
+    owner : object
+        The object to which these requests belong.
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -836,8 +836,8 @@ class MetadataRouter:
 
     Parameters
     ----------
-    owner : str
-        The name of the object to which these requests belong.
+    owner : object
+        The object to which these requests belong.
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -1431,13 +1431,13 @@ class _MetadataRequester:
         """
         try:
             for method in SIMPLE_METHODS:
-                method_metadata_args = cls._get_metadata_args_and_aliases(method)
-                if not method_metadata_args:
+                requests = cls._get_class_level_metadata_request_values(method)
+                if not requests:
                     continue
                 setattr(
                     cls,
                     f"set_{method}_request",
-                    RequestMethod(method, sorted(method_metadata_args)),
+                    RequestMethod(method, sorted(requests)),
                 )
         except Exception:
             # if there are any issues here, it will be raised when
@@ -1447,8 +1447,16 @@ class _MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _get_metadata_args_and_aliases(cls, method: str):
-        """Get the metadata arguments for a method."""
+    def _get_class_level_metadata_request_values(cls, method: str):
+        """Get class level metadata request values.
+
+        This method first checks the `method`'s signature to check which metadata are
+        available, and then it checks the `__metadata_request__*` class attributes to
+        get the metadata request values set at class level.
+
+        This method (being a class-method), does not take request values set at
+        instance level into account.
+        """
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
         if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
@@ -1483,7 +1491,7 @@ class _MetadataRequester:
                     continue
                 for prop, alias in value.items():
                     # Here we add request values specified via those class attributes
-                    # to the `MetadataRequest` object. Adding a request which already
+                    # to the result dictionary (params). Adding a request which already
                     # exists will override the previous one. Since we go through the
                     # MRO in reverse order, the one specified by the lowest most classes
                     # in the inheritance tree are the ones which take effect.
@@ -1506,8 +1514,6 @@ class _MetadataRequester:
 
         Parameters
         ----------
-        router : MetadataRequest
-            The parent object for the created `MethodMetadataRequest`.
         method : str
             The name of the method.
 
@@ -1517,7 +1523,7 @@ class _MetadataRequester:
             The prepared request using the method's signature.
         """
         mmr = MethodMetadataRequest(owner=self, method=method)
-        method_metadata_args = self._get_metadata_args_and_aliases(method)
+        method_metadata_args = self._get_class_level_metadata_request_values(method)
         for param, alias in method_metadata_args.items():
             mmr.add_request(param=param, alias=alias)
         return mmr
