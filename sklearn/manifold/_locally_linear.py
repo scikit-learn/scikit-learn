@@ -222,9 +222,9 @@ def _locally_linear_embedding(
         raise ValueError(
             "output dimension must be less than or equal to input dimension"
         )
-    if n_neighbors > N:
+    if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            "Expected n_neighbors < n_samples, but n_samples = %d, n_neighbors = %d"
             % (N, n_neighbors)
         )
 
