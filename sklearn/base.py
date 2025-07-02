@@ -872,7 +872,7 @@ class TransformerMixin(_SetOutputMixin):
         # For that, we calculate routing and check if anything would be routed
         # to `transform` if we were to route them.
         if _routing_enabled():
-            transform_params = self.get_metadata_routing().consumes(
+            transform_params = self._get_metadata_request().consumes(
                 method="transform", params=fit_params.keys()
             )
             if transform_params:
@@ -1101,7 +1101,7 @@ class OutlierMixin:
         # For that, we calculate routing and check if anything would be routed
         # to `predict` if we were to route them.
         if _routing_enabled():
-            transform_params = self.get_metadata_routing().consumes(
+            transform_params = self._get_metadata_request().consumes(
                 method="predict", params=kwargs.keys()
             )
             if transform_params:

@@ -17,15 +17,17 @@ consumers and which metadata they had requested and the actual metadata values. 
 routing method (such as `fit` in a meta-estimator) can now provide the metadata to the
 relevant consuming method (such as `fit` in a sub-estimator).
 
-The ``MetadataRequest`` and ``MetadataRouter`` objects are constructed via a
-``get_metadata_routing`` method, which all scikit-learn estimators provide.
-This method is automatically implemented via ``BaseEstimator`` for all simple
-estimators, but needs a custom implementation for meta-estimators.
+The ``MetadataRequest`` objects are constructed via the `_get_metadata_request` method
+which is automatically implemented via ``BaseEstimator`` for all simple estimators.
+
+The ``MetadataRouter`` objects are constructed via a `get_metadata_routing` method,
+which all scikit-learn estimators provide. Developers of a custom or third party library
+meta-estimator need to implement this method to make metadata routing work.
 
 MetadataRequest
 ~~~~~~~~~~~~~~~
 
-In non-routing consumers, the simplest case, e.g. ``SVM``, ``get_metadata_routing``
+In non-routing consumers, the simplest case, e.g. ``SVM``, ``_get_metadata_request``
 returns a ``MetadataRequest`` object  which is assigned to the consumer's
 `_metadata_request` attribute. It stores which metadata is required by each method of
 the consumer by including one ``MethodMetadataRequest`` per method in ``METHODS``
@@ -91,8 +93,7 @@ The ``set_{method}_request`` methods are dynamically generated for estimators
 which inherit from ``BaseEstimator``. This is done by attaching instances
 of the ``RequestMethod`` descriptor to classes, which is done in the
 ``_MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
-This mixin also implements the ``get_metadata_routing``, which meta-estimators
-need to override, but it works for simple consumers as is.
+This mixin also implements the ``_get_metadata_request``.
 """
 
 # Authors: The scikit-learn developers
@@ -545,8 +546,10 @@ class MetadataRequest:
     Instances of `MethodMetadataRequest` are used in this class for each
     available method under `metadatarequest.{method}`.
 
-    Consumer-only classes such as simple estimators return a serialized
-    version of this class as the output of `get_metadata_routing()`.
+    Consumers of metadata return a serialized version of this class as the output of
+    `_get_metadata_request()`.
+    # TODO:Check if `_get_metadata_request` should be a public method; otherwise, we
+    # should not expose a private method here.
 
     .. versionadded:: 1.3
 
@@ -714,7 +717,7 @@ class MetadataRequest:
         return str(repr(self))
 
 
-# Metadata Request for Routers
+# Metadata Routing for Routers
 # ============================
 # This section includes all objects required for MetadataRouter which is used
 # in routers, returned by their ``get_metadata_routing``.
@@ -733,7 +736,7 @@ MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 class MethodMapping:
     """Stores the mapping between caller and callee methods for a :term:`router`.
 
-    This class is primarily used in a ``get_metadata_routing()`` of a router
+    This class is primarily used in the``get_metadata_routing()`` method of a router
     object when defining the mapping between the router's methods and a sub-object (a
     sub-estimator or a scorer).
 
@@ -807,8 +810,7 @@ class MetadataRouter:
     dictionary-like structure of the form ``{"object_name":
     RouterMappingPair(mapping, router)}``, where ``mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
-    ``router`` is either a
-    :class:`~sklearn.utils.metadata_routing.MetadataRequest` or another
+    ``router`` is a
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
 
     .. versionadded:: 1.3
@@ -833,6 +835,8 @@ class MetadataRouter:
         self._self_request = None
         self.owner = owner
 
+    # TODO: check how to take apart this functionality; we now have
+    # `_get_metadata_request`also for routers and can use it to set self requests
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
@@ -1184,6 +1188,9 @@ def get_routing_for_object(obj=None):
     if hasattr(obj, "get_metadata_routing"):
         return deepcopy(obj.get_metadata_routing())
 
+    if hasattr(obj, "_get_metadata_request"):
+        return deepcopy(obj._get_metadata_request())
+
     elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
         return deepcopy(obj)
 
@@ -1412,7 +1419,7 @@ class _MetadataRequester:
             requests = cls._get_default_requests()
         except Exception:
             # if there are any issues in the default values, it will be raised
-            # when ``get_metadata_routing`` is called. Here we are going to
+            # when ``_get_metadata_request`` is called. Here we are going to
             # ignore all the issues such as bad defaults etc.
             super().__init_subclass__(**kwargs)
             return
@@ -1512,7 +1519,7 @@ class _MetadataRequester:
         return requests
 
     def _get_metadata_request(self):
-        """Get requested metadata for the instance.
+        """Get requested metadata for this instance.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
@@ -1524,24 +1531,27 @@ class _MetadataRequester:
         """
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
+            # TODO: check if the following now works without recursion, if so
+            # get_routing_for_object can also be simplified
+            # requests = get_routing_for_object(self)
         else:
             requests = self._get_default_requests()
 
         return requests
 
-    def get_metadata_routing(self):
-        """Get metadata routing of this object.
+    # def get_metadata_routing(self):
+    #     """Get metadata routing of this object.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+    #     Please check :ref:`User Guide <metadata_routing>` on how the routing
+    #     mechanism works.
 
-        Returns
-        -------
-        routing : MetadataRequest
-            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
-            routing information.
-        """
-        return self._get_metadata_request()
+    #     Returns
+    #     -------
+    #     routing : MetadataRequest
+    #         A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
+    #         routing information.
+    #     """
+    #     return self._get_metadata_request()
 
 
 # Process Routing in Routers
@@ -1609,7 +1619,11 @@ def process_routing(_obj, _method, /, **kwargs):
 
         return EmptyRequest()
 
-    if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
+    if not (
+        hasattr(_obj, "get_metadata_routing")
+        or hasattr(_obj, "_get_metadata_request")
+        or isinstance(_obj, MetadataRouter)
+    ):
         raise AttributeError(
             f"The given object ({_obj.__class__.__name__!r}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"

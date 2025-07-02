@@ -210,19 +210,19 @@ def test_request_type_is_valid(val, res):
 
 
 @config_context(enable_metadata_routing=True)
-def test_default_requests():
-    class OddEstimator(BaseEstimator):
+def test_class_level_requests():
+    class SimpleEstimator(BaseEstimator):
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
         }  # type: ignore[var-annotated]
 
-    odd_request = get_routing_for_object(OddEstimator())
+    odd_request = get_routing_for_object(SimpleEstimator())
     assert odd_request.fit.requests == {"sample_weight": True}
 
     # check other test estimators
     assert not len(get_routing_for_object(NonConsumingClassifier()).fit.requests)
-    assert_request_is_empty(NonConsumingClassifier().get_metadata_routing())
+    assert_request_is_empty(NonConsumingClassifier()._get_metadata_request())
 
     trs_request = get_routing_for_object(ConsumingTransformer())
     assert trs_request.fit.requests == {
@@ -485,7 +485,7 @@ def test_get_metadata_routing():
     with pytest.raises(
         AttributeError, match="'MetadataRequest' object has no attribute 'other_method'"
     ):
-        TestDefaultsBadMethodName().get_metadata_routing()
+        TestDefaultsBadMethodName()._get_metadata_request()
 
     expected = {
         "score": {
@@ -499,7 +499,7 @@ def test_get_metadata_routing():
         },
         "predict": {"my_param": True},
     }
-    assert_request_equal(TestDefaults().get_metadata_routing(), expected)
+    assert_request_equal(TestDefaults()._get_metadata_request(), expected)
 
     est = TestDefaults().set_score_request(my_param="other_param")
     expected = {
@@ -514,7 +514,7 @@ def test_get_metadata_routing():
         },
         "predict": {"my_param": True},
     }
-    assert_request_equal(est.get_metadata_routing(), expected)
+    assert_request_equal(est._get_metadata_request(), expected)
 
     est = TestDefaults().set_fit_request(sample_weight=True)
     expected = {
@@ -529,7 +529,7 @@ def test_get_metadata_routing():
         },
         "predict": {"my_param": True},
     }
-    assert_request_equal(est.get_metadata_routing(), expected)
+    assert_request_equal(est._get_metadata_request(), expected)
 
 
 @config_context(enable_metadata_routing=True)
@@ -575,7 +575,7 @@ def test_setting_default_requests():
 
     for Klass, requests in test_cases.items():
         assert get_routing_for_object(Klass()).fit.requests == requests
-        assert_request_is_empty(Klass().get_metadata_routing(), exclude="fit")
+        assert_request_is_empty(Klass()._get_metadata_request(), exclude="fit")
         Klass().fit(None, None)  # for coverage
 
 
@@ -592,7 +592,7 @@ def test_removing_non_existing_param_raises():
             return self
 
     with pytest.raises(ValueError, match="Trying to remove parameter"):
-        InvalidRequestRemoval().get_metadata_routing()
+        InvalidRequestRemoval()._get_metadata_request()
 
 
 @config_context(enable_metadata_routing=True)
@@ -812,8 +812,8 @@ def test_metadatarouter_add_self_request():
     # one can add an estimator as self
     est = ConsumingRegressor().set_fit_request(sample_weight="my_weights")
     router = MetadataRouter(owner="test").add_self_request(obj=est)
-    assert str(router._self_request) == str(est.get_metadata_routing())
-    assert router._self_request is not est.get_metadata_routing()
+    assert str(router._self_request) == str(est._get_metadata_request())
+    assert router._self_request is not est._get_metadata_request()
 
     # adding a consumer+router as self should only add the consumer part
     est = WeightedMetaRegressor(
@@ -1019,33 +1019,36 @@ def test_composite_methods():
     est = SimpleEstimator()
     # Since no request is set for fit or predict or transform, the request for
     # fit_transform and fit_predict should also be empty.
-    assert est.get_metadata_routing().fit_transform.requests == {
+    assert est._get_metadata_request().fit_transform.requests == {
         "bar": None,
         "foo": None,
         "other_param": None,
     }
-    assert est.get_metadata_routing().fit_predict.requests == {"bar": None, "foo": None}
+    assert est._get_metadata_request().fit_predict.requests == {
+        "bar": None,
+        "foo": None,
+    }
 
     # setting the request on only one of them should raise an error
     est.set_fit_request(foo=True, bar="test")
     with pytest.raises(ValueError, match="Conflicting metadata requests for"):
-        est.get_metadata_routing().fit_predict
+        est._get_metadata_request().fit_predict
 
     # setting the request on the other one should fail if not the same as the
     # first method
     est.set_predict_request(bar=True)
     with pytest.raises(ValueError, match="Conflicting metadata requests for"):
-        est.get_metadata_routing().fit_predict
+        est._get_metadata_request().fit_predict
 
     # now the requests are consistent and getting the requests for fit_predict
     # shouldn't raise.
     est.set_predict_request(foo=True, bar="test")
-    est.get_metadata_routing().fit_predict
+    est._get_metadata_request().fit_predict
 
     # setting the request for a none-overlapping parameter would merge them
     # together.
     est.set_transform_request(other_param=True)
-    assert est.get_metadata_routing().fit_transform.requests == {
+    assert est._get_metadata_request().fit_transform.requests == {
         "bar": "test",
         "foo": True,
         "other_param": True,
