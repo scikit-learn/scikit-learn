@@ -689,7 +689,7 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
 
     glm1 = GLMEstimator(**glm_params).fit(X, y, sample_weight=sample_weight_1)
     glm2 = GLMEstimator(**glm_params).fit(X2, y2, sample_weight=None)
-    assert_allclose(glm1.coef_, glm2.coef_, **tols)
+    assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-10, atol=1e-14)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
