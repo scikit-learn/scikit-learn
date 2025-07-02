@@ -747,6 +747,10 @@ class GaussianMixture(BaseMixture):
 
     For a comparison of Gaussian Mixture with other clustering algorithms, see
     :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+
+    Gaussian Mixture Models are commonly used for probability density estimation and
+    modeling multi-modal distributions. For a visualization, see
+    :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py`
     """
 
     _parameter_constraints: dict = {
