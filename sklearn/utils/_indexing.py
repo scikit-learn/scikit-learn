@@ -10,6 +10,8 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
+
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
@@ -131,7 +133,17 @@ def _pyarrow_indexing(X, key, key_dtype, axis):
         key = np.asarray(key)
 
     if key_dtype == "bool":
+        # TODO(pyarrow): remove version checking and following if-branch when
+        # pyarrow==17.0.0 is the minimal version, see pyarrow issue
+        # https://github.com/apache/arrow/issues/42013 for more info
+        if PYARROW_VERSION_BELOW_17:
+            import pyarrow
+
+            if not isinstance(key, pyarrow.BooleanArray):
+                key = pyarrow.array(key, type=pyarrow.bool_())
+
         X_indexed = X.filter(key)
+
     else:
         X_indexed = X.take(key)
 
