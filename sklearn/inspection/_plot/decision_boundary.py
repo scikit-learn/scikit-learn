@@ -389,7 +389,7 @@ class DecisionBoundaryDisplay:
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
-        
+
         xlim : tuple of float, default=None
             The x-axis limits for the plot. If None, limits are determined
             from the data range. Should be a tuple of (min, max) values.
