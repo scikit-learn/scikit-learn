@@ -146,8 +146,8 @@ def _routing_repr(obj):
     This is most usable for Scorers which can give a nice representation of what they
     are. This is done by implementing a `_routing_repr` method on the object.
 
-    Since the `owner` object used to be the type name (str), we return that string if
-    the given `obj` is a string, otherwise we return the object's type name.
+    Since the `owner` object could potentially be the type name (str), we return that
+    string if the given `obj` is a string, otherwise we return the object's type name.
 
     .. versionadded:: 1.8
     """
@@ -1462,23 +1462,25 @@ class _MetadataRequester:
         if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
             return dict()
         # ignore the first parameter of the method, which is usually "self"
-        params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
+        signature_items = list(
+            inspect.signature(getattr(cls, method)).parameters.items()
+        )[1:]
         params = defaultdict(
             str,
             {
-                pname: None
-                for pname, param in params
-                if pname not in {"X", "y", "Y", "Xt", "yt"}
-                and param.kind not in {param.VAR_POSITIONAL, param.VAR_KEYWORD}
+                param_name: None
+                for param_name, param_info in signature_items
+                if param_name not in {"X", "y", "Y", "Xt", "yt"}
+                and param_info.kind
+                not in {param_info.VAR_POSITIONAL, param_info.VAR_KEYWORD}
             },
         )
-
         # Then overwrite those defaults with the ones provided in
         # __metadata_request__* attributes. Defaults set in
         # __metadata_request__* attributes take precedence over signature
         # sniffing.
 
-        # need to go through the MRO since this is a class attribute and
+        # need to go through the MRO since this is a classmethod and
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
