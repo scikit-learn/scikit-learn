@@ -21,7 +21,7 @@ jobs:
         uses: pypa/cibuildwheel@5f22145df44122af0f5a201f93cf0207171beca7
         env:
           CIBW_BUILD: cp313-manylinux_x86_64
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
