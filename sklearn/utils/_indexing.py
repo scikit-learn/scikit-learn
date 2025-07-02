@@ -290,8 +290,9 @@ def _safe_indexing(X, indices, *, axis=0):
     indices_dtype = _determine_key_type(indices)
 
     if axis == 0 and indices_dtype == "str":
-          raise ValueError(
-            f"String indexing (indices={indices}) is not supported with 'axis=0'. Did you mean to use axis=1 for column selection?"
+        raise ValueError(
+            f"String indexing (indices={indices}) is not supported with 'axis=0'. "
+            "Did you mean to use axis=1 for column selection?"
         )
 
     if axis == 1 and isinstance(X, list):
