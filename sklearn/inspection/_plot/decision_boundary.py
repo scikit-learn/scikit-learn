@@ -302,6 +302,8 @@ class DecisionBoundaryDisplay:
         xlabel=None,
         ylabel=None,
         ax=None,
+        xlim=None,
+        ylim=None,
         **kwargs,
     ):
         """Plot decision boundary given an estimator.
@@ -387,6 +389,14 @@ class DecisionBoundaryDisplay:
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+        
+        xlim : tuple of float, default=None
+            The x-axis limits for the plot. If None, limits are determined
+            from the data range. Should be a tuple of (min, max) values.
+
+        ylim : tuple of float, default=None
+            The y-axis limits for the plot. If None, limits are determined
+            from the data range. Should be a tuple of (min, max) values.
 
         **kwargs : dict
             Additional keyword arguments to be passed to the
@@ -479,10 +489,26 @@ class DecisionBoundaryDisplay:
                         f"Matplotlib colormap. Got: {multiclass_colors}"
                     )
 
+        if xlim is not None:
+            if not isinstance(xlim, tuple) or len(xlim) != 2 or xlim[0] >= xlim[1]:
+                raise ValueError("xlim must be a tuple of (min, max) with min < max")
+
+        if ylim is not None:
+            if not isinstance(ylim, tuple) or len(ylim) != 2 or ylim[0] >= ylim[1]:
+                raise ValueError("ylim must be a tuple of (min, max) with min < max")
+
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
-        x0_min, x0_max = x0.min() - eps, x0.max() + eps
-        x1_min, x1_max = x1.min() - eps, x1.max() + eps
+        # Use provided xlim/ylim params or calculate from data
+        if xlim is not None:
+            x0_min, x0_max = xlim
+        else:
+            x0_min, x0_max = x0.min() - eps, x0.max() + eps
+
+        if ylim is not None:
+            x1_min, x1_max = ylim
+        else:
+            x1_min, x1_max = x1.min() - eps, x1.max() + eps
 
         xx0, xx1 = np.meshgrid(
             np.linspace(x0_min, x0_max, grid_resolution),
