@@ -59,14 +59,13 @@ Website: https://scikit-learn.org
 Installation
 ------------
 
-**Important‼️**
-scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
+**⚠️Important:** scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
 See the complete list below before installing. 
 
 Dependencies
 ~~~~~~~~~~~~
 
-**Core Requirements**
+**Core Requirements✅**
 
 - Python (>= |PythonMinVersion|)
 - NumPy (>= |NumPyMinVersion|)
@@ -74,9 +73,9 @@ Dependencies
 - joblib (>= |JoblibMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
-**Tips ✅**
-Optional Requirements for Plotting
+**Optional Requirements for Plotting**
 - Matplotlib (>= |MatplotlibMinVersion|)
+- scikit-image, pandas, seaborn, plotly, etc. for specific examples
 
 =======
 
@@ -99,9 +98,8 @@ or ``conda``::
 
     conda install -c conda-forge scikit-learn
 
-.. note::
-   Need help? Check our detailed `installation guide <https://scikit-learn.org/stable/install.html>`_
-   for troubleshooting and advanced options.
+**Need help?** Check our detailed `installation guide <https://scikit-learn.org/stable/install.html`_ 
+for troubleshooting and advanced options.
 
 Changelog
 ---------
@@ -112,11 +110,11 @@ for a history of notable changes to scikit-learn.
 Development
 -----------
 
-We welcome new contributors of all experience levels. The scikit-learn
-community goals are to be helpful, welcoming, and effective. The
-`Development Guide <https://scikit-learn.org/stable/developers/index.html>`_
-has detailed information about contributing code, documentation, tests, and
-more. We've included some basic information in this README.
+**🤝New contributors Welcome!** We welcome contributors of all experience levels. The
+scikit-learn community goals are to be helpful, welcoming, and effective.
+
+**Before Contributing** Please read our `Development Guide <https://scikit-learn.org/stable/developers/index.html>`_
+which has detailed information about contributing code, documentation, tests, and more.
 
 Important links
 ~~~~~~~~~~~~~~~
@@ -135,13 +133,9 @@ You can check the latest sources with the command::
 Contributing
 ~~~~~~~~~~~~
 
-We welcome contributions of all experience levels! The scikit-learn community
-goals are to be helpful, welcoming, and effective. 
+**📚Learn More:** To make a contribution to scikit-learn, please see our `Contributing guide <https://scikit-learn.org/dev/developers/contributing.html`_.
 
-**Wrarinig ⚠️**
-To learn more about making a contribution to scikit-learn, please see our
-`Contributing guide
-<https://scikit-learn.org/dev/developers/contributing.html>`_.
+**Good First Issues:** Look for issues labeled `"good first issue" <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_ to get started.
 
 Testing
 ~~~~~~~
