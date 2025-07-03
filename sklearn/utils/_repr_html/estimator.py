@@ -327,6 +327,7 @@ def _write_estimator_html(
                 estimator, "_get_params_html"
             ):
                 params = estimator._get_params_html(deep=False)._repr_html_inner()
+                methods = estimator._get_methods_html()
             else:
                 params = ""
 
@@ -384,6 +385,7 @@ def _write_estimator_html(
     elif est_block.kind == "single":
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
+            methods = estimator._get_methods_html()
         else:
             params = ""
 
