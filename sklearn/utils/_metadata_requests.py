@@ -17,15 +17,12 @@ consumers and which metadata they had requested and the actual metadata values. 
 routing method (such as `fit` in a meta-estimator) can now provide the metadata to the
 relevant consuming method (such as `fit` in a sub-estimator).
 
-The ``MetadataRequest`` objects are constructed via the `_get_metadata_request` method
-which is automatically implemented via ``BaseEstimator`` for all simple estimators.
-
-The ``MetadataRouter`` objects are constructed via a `get_metadata_routing` method,
-which all scikit-learn estimators provide. Developers of a custom or third party library
-meta-estimator need to implement this method to make metadata routing work.
-
 MetadataRequest
 ~~~~~~~~~~~~~~~
+
+The ``MetadataRequest`` objects are constructed via the `_get_metadata_request` method
+which is automatically implemented via ``BaseEstimator`` for all estimators that inherit
+from it.
 
 In non-routing consumers, the simplest case, e.g. ``SVM``, ``_get_metadata_request``
 returns a ``MetadataRequest`` object  which is assigned to the consumer's
@@ -48,15 +45,20 @@ used by the end users.
 MetadataRouter
 ~~~~~~~~~~~~~~
 
+The ``MetadataRouter`` objects are constructed via a `get_metadata_routing` method,
+which all scikit-learn estimators provide. Developers of a custom or third party library
+meta-estimator need to implement this method to make metadata routing work.
+
 In routers (such as meta-estimators or multi metric scorers), ``get_metadata_routing``
 returns a ``MetadataRouter`` object. It provides information about which method, from
 the router object, calls which method in a consumer's object, and also, which metadata
 had been requested by the consumer's methods, thus specifying how metadata is to be
-passed. If a sub-estimator is a router as well, their routing information is also stored
-in the meta-estimators router.
+passed. If a sub-estimator that is used inside a router is a router on their own, their
+routing information is also stored in the meta-estimator's `MetadataRouter`.
 
 Conceptually, this information looks like:
 
+# TODO: check if we can de-tangle MetadataRequest and MetadataRouter:
 ```
 {
     "sub_estimator1": (
@@ -72,9 +74,9 @@ the object's `get_metadata_routing` method is called.
 
 An object that is both a router and a consumer, e.g. a meta-estimator which
 consumes ``sample_weight`` and routes ``sample_weight`` to its sub-estimators
-also returns a ``MetadataRouter`` object. Its routing information includes both
+can also return a ``MetadataRouter`` object. Its routing information includes both
 information about what metadata is required by the object itself (added via
-``MetadataRouter.add_self_request``), as well as the routing information for its
+``MetadataRouter.add_self_request``), and the routing information for its
 sub-estimators (added via ``MetadataRouter.add``).
 
 Implementation Details
@@ -245,7 +247,7 @@ class _RoutingNotSupportedMixin:
 # ==============
 # Each request value needs to be one of the following values, or an alias.
 
-# this is used in `__metadata_request__*` attributes to indicate that a
+# this is used in `__metadata_request__{method}` class attributes to indicate that a
 # metadata is not present even though it may be present in the
 # corresponding method's signature.
 UNUSED = "$UNUSED$"
@@ -722,8 +724,8 @@ class MetadataRequest:
 # This section includes all objects required for MetadataRouter which is used
 # in routers, returned by their ``get_metadata_routing``.
 
-# `RouterMappingPair` is used to store a (mapping, router) tuple where `mapping` is a
-# `MethodMapping` object and `router` is the output of `get_metadata_routing`.
+# `RouterMappingPair` is used to store a `(mapping, router)` tuple where `mapping` is a
+# `MethodMapping` object and `router` is the output of `_get_metadata_request`.
 # `MetadataRouter` stores a collection of `RouterMappingPair` objects in its
 # `_route_mappings` attribute.
 RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
@@ -811,7 +813,11 @@ class MetadataRouter:
     RouterMappingPair(mapping, router)}``, where ``mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``router`` is a
-    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance (or another
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance if the
+    sub-estimator also acts as a router).
+
+    # TODO: check if we can de-tangle MetadataRequest and MetadataRouter
 
     .. versionadded:: 1.3
 
@@ -835,8 +841,9 @@ class MetadataRouter:
         self._self_request = None
         self.owner = owner
 
-    # TODO: check how to take apart this functionality; we now have
-    # `_get_metadata_request`also for routers and can use it to set self requests
+    # TODO: check if it is possible and within scope of this PR to take apart this
+    # functionality; we can use `_get_metadata_request` also for routers and can use it
+    # to set self requests
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
@@ -1403,10 +1410,10 @@ class _MetadataRequester:
 
         This uses PEP-487 [1]_ to set the ``set_{method}_request`` methods. It
         looks for the information available in the set default values which are
-        set using ``__metadata_request__*`` class attributes, or inferred
+        set using ``__metadata_request__{method}`` class attributes, or inferred
         from method signatures.
 
-        The ``__metadata_request__*`` class attributes are used when a method
+        The ``__metadata_request__{method}`` class attributes are used when a method
         does not explicitly accept a metadata through its arguments or if the
         developer would like to specify a request value for those metadata
         which are different from the default ``None``.
@@ -1478,7 +1485,7 @@ class _MetadataRequester:
     def _get_default_requests(cls):
         """Collect default request values.
 
-        This method combines the information present in ``__metadata_request__*``
+        This method combines the information present in ``__metadata_request__{method}``
         class attributes, as well as determining request keys from method
         signatures.
         """
@@ -1492,8 +1499,8 @@ class _MetadataRequester:
             )
 
         # Then overwrite those defaults with the ones provided in
-        # __metadata_request__* attributes. Defaults set in
-        # __metadata_request__* attributes take precedence over signature
+        # `__metadata_request__{method}` class attributes. Defaults set in
+        # `__metadata_request__{method}` class attributes take precedence over signature
         # sniffing.
 
         # need to go through the MRO since this is a class attribute and
