@@ -8,11 +8,16 @@ from sklearn.linear_model import LogisticRegression
 
 class TestDecisionBoundaryDisplayLimits:
     """Test xlim and ylim params for DecisionBoundaryDisplay.from_estimator"""
+
     def setup_method(self):
         """Set up test data and classifier"""
         X, y = make_classification(
-            n_samples=100, n_features=2, n_redundant=0, n_informative=2,
-            random_state=42, n_clusters_per_class=1
+            n_samples=100,
+            n_features=2,
+            n_redundant=0,
+            n_informative=2,
+            random_state=42,
+            n_clusters_per_class=1,
         )
         self.X = X
         self.y = y
@@ -89,8 +94,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_xlim_validation_not_tuple(self):
         """Test xlim validation: must be tuple"""
         with pytest.raises(
-            ValueError,
-            match="xlim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="xlim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -102,8 +106,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_ylim_validation_not_tuple(self):
         """Test ylim validation: must be tuple"""
         with pytest.raises(
-            ValueError,
-            match="ylim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="ylim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -115,8 +118,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_xlim_validation_wrong_length(self):
         """Test xlim validation: must have exactly 2 values"""
         with pytest.raises(
-            ValueError,
-            match="xlim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="xlim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -128,8 +130,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_ylim_validation_wrong_length(self):
         """Test ylim validation: must have exactly 2 values"""
         with pytest.raises(
-            ValueError,
-            match="ylim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="ylim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -141,8 +142,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_xlim_validation_min_greater_than_max(self):
         """Test xlim validation: min must be less than max"""
         with pytest.raises(
-            ValueError,
-            match="xlim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="xlim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -154,8 +154,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_ylim_validation_min_greater_than_max(self):
         """Test ylim validation: min must be less than max"""
         with pytest.raises(
-            ValueError,
-            match="ylim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="ylim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -167,8 +166,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_xlim_validation_min_equal_to_max(self):
         """Test xlim validation: min must be strictly less than max"""
         with pytest.raises(
-            ValueError,
-            match="xlim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="xlim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -180,8 +178,7 @@ class TestDecisionBoundaryDisplayLimits:
     def test_ylim_validation_min_equal_to_max(self):
         """Test ylim validation: min must be strictly less than max"""
         with pytest.raises(
-            ValueError,
-            match="ylim must be a tuple of \\(min, max\\) with min < max"
+            ValueError, match="ylim must be a tuple of \\(min, max\\) with min < max"
         ):
             DecisionBoundaryDisplay.from_estimator(
                 self.classifier,
@@ -215,18 +212,10 @@ class TestDecisionBoundaryDisplayLimits:
 
         # Both should have the same grid bounds
         for display in [display_proba, display_decision]:
-            assert display.xx0.min() == pytest.approx(
-                custom_xlim[0], abs=1e-10
-            )
-            assert display.xx0.max() == pytest.approx(
-                custom_xlim[1], abs=1e-10
-            )
-            assert display.xx1.min() == pytest.approx(
-                custom_ylim[0], abs=1e-10
-            )
-            assert display.xx1.max() == pytest.approx(
-                custom_ylim[1], abs=1e-10
-            )
+            assert display.xx0.min() == pytest.approx(custom_xlim[0], abs=1e-10)
+            assert display.xx1.min() == pytest.approx(custom_ylim[0], abs=1e-10)
+            assert display.xx0.max() == pytest.approx(custom_xlim[1], abs=1e-10)
+            assert display.xx1.max() == pytest.approx(custom_ylim[1], abs=1e-10)
 
         plt.close("all")
 
@@ -247,18 +236,10 @@ class TestDecisionBoundaryDisplayLimits:
         )
 
         # Bounds should not be affected by eps
-        assert display_with_limits.xx0.min() == pytest.approx(
-            custom_xlim[0], abs=1e-10
-        )
-        assert display_with_limits.xx0.max() == pytest.approx(
-            custom_xlim[1], abs=1e-10
-        )
-        assert display_with_limits.xx1.min() == pytest.approx(
-            custom_ylim[0], abs=1e-10
-        )
-        assert display_with_limits.xx1.max() == pytest.approx(
-            custom_ylim[1], abs=1e-10
-        )
+        assert display_with_limits.xx0.min() == pytest.approx(custom_xlim[0], abs=1e-10)
+        assert display_with_limits.xx0.max() == pytest.approx(custom_xlim[1], abs=1e-10)
+        assert display_with_limits.xx1.min() == pytest.approx(custom_ylim[0], abs=1e-10)
+        assert display_with_limits.xx1.max() == pytest.approx(custom_ylim[1], abs=1e-10)
 
         plt.close("all")
 
@@ -278,18 +259,10 @@ class TestDecisionBoundaryDisplayLimits:
             )
 
             # Grid bounds should be the same regardless of resolution
-            assert display.xx0.min() == pytest.approx(
-                custom_xlim[0], abs=1e-10
-            )
-            assert display.xx0.max() == pytest.approx(
-                custom_xlim[1], abs=1e-10
-            )
-            assert display.xx1.min() == pytest.approx(
-                custom_ylim[0], abs=1e-10
-            )
-            assert display.xx1.max() == pytest.approx(
-                custom_ylim[1], abs=1e-10
-            )
+            assert display.xx0.min() == pytest.approx(custom_xlim[0], abs=1e-10)
+            assert display.xx0.max() == pytest.approx(custom_xlim[1], abs=1e-10)
+            assert display.xx1.min() == pytest.approx(custom_ylim[0], abs=1e-10)
+            assert display.xx1.max() == pytest.approx(custom_ylim[1], abs=1e-10)
 
             # But grid shape should change
             assert display.xx0.shape == (grid_res, grid_res)
@@ -329,11 +302,7 @@ def test_limits_integration_with_real_plot():
 
     # Create synthetic data
     X, y = make_classification(
-        n_samples=50,
-        n_features=2,
-        n_redundant=0,
-        n_informative=2,
-        random_state=42
+        n_samples=50, n_features=2, n_redundant=0, n_informative=2, random_state=42
     )
 
     classifier = SVC(kernel="rbf", random_state=42)
