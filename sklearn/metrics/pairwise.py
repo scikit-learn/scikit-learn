@@ -2329,9 +2329,8 @@ def pairwise_distances(
     - From :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
-      See the documentation for :mod:`scipy.spatial.distance` for details on these
-      metrics. These metrics do not support sparse matrix inputs.
+      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'].
+      These metrics do not support sparse matrix inputs.
 
     .. note::
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
