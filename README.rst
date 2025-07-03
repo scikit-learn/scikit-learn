@@ -59,16 +59,26 @@ Website: https://scikit-learn.org
 Installation
 ------------
 
+.. important::
+   scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
+   See the complete list below before installing. 
+
 Dependencies
 ~~~~~~~~~~~~
 
-scikit-learn requires:
+.. note::
+   **Core Requirements**
 
-- Python (>= |PythonMinVersion|)
-- NumPy (>= |NumPyMinVersion|)
-- SciPy (>= |SciPyMinVersion|)
-- joblib (>= |JoblibMinVersion|)
-- threadpoolctl (>= |ThreadpoolctlMinVersion|)
+  - Python (>= |PythonMinVersion|)
+  - NumPy (>= |NumPyMinVersion|)
+  - SciPy (>= |SciPyMinVersion|)
+  - joblib (>= |JoblibMinVersion|)
+  - threadpoolctl (>= |ThreadpoolctlMinVersion|)
+
+.. tips::
+   **Optional Requirements for Plotting**
+
+   - Matplotlib (>= |MatplotlibMinVersion|)
 
 =======
 
@@ -91,8 +101,9 @@ or ``conda``::
 
     conda install -c conda-forge scikit-learn
 
-The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
-
+.. note::
+   Need help? Check our detailed `installation guide <https://scikit-learn.org/stable/install.html>`_
+   for troubleshooting and advanced options.
 
 Changelog
 ---------
@@ -126,9 +137,13 @@ You can check the latest sources with the command::
 Contributing
 ~~~~~~~~~~~~
 
-To learn more about making a contribution to scikit-learn, please see our
-`Contributing guide
-<https://scikit-learn.org/dev/developers/contributing.html>`_.
+We welcome contributions of all experience levels! The scikit-learn community
+goals are to be helpful, welcoming, and effective. 
+
+.. warning::
+  To learn more about making a contribution to scikit-learn, please see our
+  `Contributing guide
+  <https://scikit-learn.org/dev/developers/contributing.html>`_.
 
 Testing
 ~~~~~~~
