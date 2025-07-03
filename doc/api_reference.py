@@ -691,10 +691,10 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
-                    "ClassicalMDS",
                     "SpectralEmbedding",
                     "TSNE",
                     "locally_linear_embedding",
