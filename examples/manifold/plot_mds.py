@@ -76,7 +76,7 @@ X_nmds = nmds.fit_transform(distances)
 
 cmds = manifold.ClassicalMDS(
     n_components=2,
-    dissimilarity="precomputed",
+    metric="precomputed",
 )
 X_cmds = cmds.fit_transform(distances)
 
