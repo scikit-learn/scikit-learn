@@ -128,7 +128,6 @@ class TestDecisionBoundaryDisplayLimits:
         assert_allclose(display.xx1, xx1)
         assert_allclose(display.response, expected_response)
 
-
     def test_multiclass_with_limits(self):
         """Test multiclass classification with custom limits"""
         X, y = make_classification(
