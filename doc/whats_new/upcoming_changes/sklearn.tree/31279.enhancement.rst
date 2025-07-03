@@ -1,0 +1,6 @@
+- :class:`tree.Tree` now has a method that allows passing test samples
+  to compute a test score and feature importance measure.
+  The public method `compute_unbiased_feature_importance` is used in forest
+  estimators to compute out-of-bag predictions and unbiased feature importance
+  measures but can be used in any tree ensemble.
+  By :user:`Gaétan de Castellane <GaetandeCast>`.

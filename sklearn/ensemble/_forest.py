@@ -526,11 +526,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
 
             if callable(self.oob_score):
-                self._set_oob_score_and_attributes(
-                    X, y, scoring_function=self.oob_score
+                self._set_oob_score_and_ufi_attributes(
+                    X, y, sample_weight, scoring_function=self.oob_score
                 )
             else:
-                self._set_oob_score_and_attributes(X, y)
+                self._set_oob_score_and_ufi_attributes(X, y, sample_weight)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -540,8 +540,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
-        """Compute and set the OOB score and attributes.
+    def _set_oob_score_and_ufi_attributes(
+        self, X, y, sample_weight, scoring_function=None
+    ):
+        """Compute and set the OOB score, unbiased feature importance and set their
+        corresponding attributes.
 
         Parameters
         ----------
@@ -549,77 +552,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
         scoring_function : callable, default=None
             Scoring function for OOB score. Default depends on whether
             this is a regression (R2 score) or classification problem
             (accuracy score).
         """
-
-    def _compute_oob_predictions(self, X, y):
-        """Compute and set the OOB score.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data matrix.
-        y : ndarray of shape (n_samples, n_outputs)
-            The target matrix.
-
-        Returns
-        -------
-        oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
-                (n_samples, 1, n_outputs)
-            The OOB predictions.
-        """
-        # Prediction requires X to be in CSR format
-        if issparse(X):
-            X = X.tocsr()
-
-        n_samples = y.shape[0]
-        n_outputs = self.n_outputs_
-        if is_classifier(self) and hasattr(self, "n_classes_"):
-            # n_classes_ is a ndarray at this stage
-            # all the supported type of target will have the same number of
-            # classes in all outputs
-            oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
-        else:
-            # for regression, n_classes_ does not exist and we create an empty
-            # axis to be consistent with the classification case and make
-            # the array operations compatible with the 2 settings
-            oob_pred_shape = (n_samples, 1, n_outputs)
-
-        oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
-        n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples,
-            self.max_samples,
-        )
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state,
-                n_samples,
-                n_samples_bootstrap,
-            )
-
-            y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
-            oob_pred[unsampled_indices, ...] += y_pred
-            n_oob_pred[unsampled_indices, :] += 1
-
-        for k in range(n_outputs):
-            if (n_oob_pred == 0).any():
-                warn(
-                    (
-                        "Some inputs do not have OOB scores. This probably means "
-                        "too few trees were used to compute any reliable OOB "
-                        "estimates."
-                    ),
-                    UserWarning,
-                )
-                n_oob_pred[n_oob_pred == 0] = 1
-            oob_pred[..., k] /= n_oob_pred[..., [k]]
-
-        return oob_pred
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -658,7 +597,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
         Returns
         -------
@@ -667,10 +609,17 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
+        all_importances = self._unnormalized_feature_importances
+        if not all_importances.any():
+            return np.zeros(all_importances.shape, dtype=np.float64)
+        return all_importances / all_importances.sum()
+
+    @property
+    def _unnormalized_feature_importances(self):
         check_is_fitted(self)
 
         all_importances = Parallel(n_jobs=self.n_jobs, prefer="threads")(
-            delayed(getattr)(tree, "feature_importances_")
+            delayed(getattr)(tree, "_unnormalized_feature_importances")
             for tree in self.estimators_
             if tree.tree_.node_count > 1
         )
@@ -679,7 +628,78 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             return np.zeros(self.n_features_in_, dtype=np.float64)
 
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
-        return all_importances / np.sum(all_importances)
+        return all_importances
+
+    def _compute_ufi_and_oob_pred_per_tree(self, tree, X, y, sample_weight):
+        n_samples = X.shape[0]
+        if sample_weight is None:
+            sample_weight = np.ones((n_samples,), dtype=np.float64)
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples,
+            self.max_samples,
+        )
+        oob_indices = _generate_unsampled_indices(
+            tree.random_state, n_samples, n_samples_bootstrap
+        )
+        X_oob = X[oob_indices]
+        y_oob = y[oob_indices]
+        sample_weight_test = sample_weight[oob_indices]
+
+        oob_pred = np.zeros(
+            (n_samples, self.estimators_[0].tree_.max_n_classes, self.n_outputs_),
+            dtype=np.float64,
+        )
+        n_oob_pred = np.zeros((n_samples, self.n_outputs_), dtype=np.intp)
+
+        importances, y_pred = tree.compute_unbiased_feature_importance(
+            X_test=X_oob,
+            y_test=y_oob,
+            sample_weight=sample_weight_test,
+        )
+        oob_pred[oob_indices, :, :] += y_pred
+        n_oob_pred[oob_indices, :] += 1
+        return (importances, oob_pred, n_oob_pred)
+
+    def _compute_ufi_and_oob_pred(self, X, y, sample_weight):
+        check_is_fitted(self)
+        # Importance computations require X to be in CSR format
+        if issparse(X):
+            X = X.tocsr()
+
+        n_samples, n_features = X.shape
+        max_n_classes = self.estimators_[0].tree_.max_n_classes
+        results = Parallel(n_jobs=self.n_jobs, prefer="threads", return_as="generator")(
+            delayed(self._compute_ufi_and_oob_pred_per_tree)(tree, X, y, sample_weight)
+            for tree in self.estimators_
+            if tree.tree_.node_count > 1
+        )
+
+        importances = np.zeros(n_features, dtype=np.float64)
+        oob_pred = np.zeros(
+            (n_samples, max_n_classes, self.n_outputs_), dtype=np.float64
+        )
+        n_oob_pred = np.zeros((n_samples, self.n_outputs_), dtype=np.intp)
+
+        for importances_i, oob_pred_i, n_oob_pred_i in results:
+            oob_pred += oob_pred_i
+            n_oob_pred += n_oob_pred_i
+            importances += importances_i
+
+        importances /= self.n_estimators
+
+        if (n_oob_pred == 0).any():
+            warn(
+                (
+                    "Some inputs do not have OOB scores. This probably means "
+                    "too few trees were used to compute any reliable OOB "
+                    "estimates."
+                ),
+                UserWarning,
+            )
+            n_oob_pred[n_oob_pred == 0] = 1
+        oob_pred /= n_oob_pred[:, np.newaxis, :]
+
+        return importances, oob_pred
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -774,36 +794,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples,
         )
 
-    @staticmethod
-    def _get_oob_predictions(tree, X):
-        """Compute the OOB predictions for an individual tree.
-
-        Parameters
-        ----------
-        tree : DecisionTreeClassifier object
-            A single decision tree classifier.
-        X : ndarray of shape (n_samples, n_features)
-            The OOB samples.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples, n_classes, n_outputs)
-            The OOB associated predictions.
-        """
-        y_pred = tree.predict_proba(X, check_input=False)
-        y_pred = np.asarray(y_pred)
-        if y_pred.ndim == 2:
-            # binary and multiclass
-            y_pred = y_pred[..., np.newaxis]
-        else:
-            # Roll the first `n_outputs` axis to the last axis. We will reshape
-            # from a shape of (n_outputs, n_samples, n_classes) to a shape of
-            # (n_samples, n_classes, n_outputs).
-            y_pred = np.rollaxis(y_pred, axis=0, start=3)
-        return y_pred
-
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
-        """Compute and set the OOB score and attributes.
+    def _set_oob_score_and_ufi_attributes(
+        self, X, y, sample_weight, scoring_function=None
+    ):
+        """Compute and set the OOB score, unbiased feature importance and set their
+        corresponding attributes.
 
         Parameters
         ----------
@@ -811,20 +806,69 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `accuracy_score`.
         """
-        self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
+        if scoring_function is None:
+            scoring_function = accuracy_score
+
+        unbiased_feature_importances, self.oob_decision_function_ = (
+            self._compute_ufi_and_oob_pred(X, y, sample_weight)
+        )
+
+        if self.criterion == "gini":
+            self._unbiased_feature_importances = unbiased_feature_importances
+
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
 
-        if scoring_function is None:
-            scoring_function = accuracy_score
-
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
+
+    @property
+    def unbiased_feature_importances_(self):
+        """
+        An unbiased impurity-based feature importance measure.
+
+        The higher, the more important the feature.
+
+        Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
+        [UFI2020]_.
+
+        It is only available if the chosen split criterion is `gini` and if fit was
+        performed with `oob_score=True`.
+
+        .. versionadded:: 1.8.0
+
+        Returns
+        -------
+        unbiased_feature_importances_ : ndarray of shape (n_features,)
+            Contrary to `feature_importances_`, the values of this array do not sum to 1
+            . If all trees are single node trees consisting of only the root node,
+            it will be an array of zeros. If you want them to sum to 1, please divide by
+            `unbiased_feature_importances_.sum()`.
+
+        References
+        ----------
+        .. [UFI2020] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+           Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
+        """
+        if not self.oob_score:
+            raise AttributeError(
+                "Unbiased feature importance is computed during `fit` when"
+                " `oob_score=True`. Please re-fit the model with `oob_score=True`"
+                " to access this attribute."
+            )
+        if self.criterion != "gini":
+            raise AttributeError(
+                "Unbiased feature importance is only available for the gini"
+                " impurity criterion in classification."
+            )
+        return self._unbiased_feature_importances
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
@@ -1084,33 +1128,11 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return y_hat
 
-    @staticmethod
-    def _get_oob_predictions(tree, X):
-        """Compute the OOB predictions for an individual tree.
-
-        Parameters
-        ----------
-        tree : DecisionTreeRegressor object
-            A single decision tree regressor.
-        X : ndarray of shape (n_samples, n_features)
-            The OOB samples.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples, 1, n_outputs)
-            The OOB associated predictions.
-        """
-        y_pred = tree.predict(X, check_input=False)
-        if y_pred.ndim == 1:
-            # single output regression
-            y_pred = y_pred[:, np.newaxis, np.newaxis]
-        else:
-            # multioutput regression
-            y_pred = y_pred[:, np.newaxis, :]
-        return y_pred
-
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
-        """Compute and set the OOB score and attributes.
+    def _set_oob_score_and_ufi_attributes(
+        self, X, y, sample_weight, scoring_function=None
+    ):
+        """Compute and set the OOB score, unbiased feature importance and set their
+        corresponding attributes.
 
         Parameters
         ----------
@@ -1118,18 +1140,63 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
         scoring_function : callable, default=None
             Scoring function for OOB score. Defaults to `r2_score`.
         """
-        self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(axis=1)
+        if scoring_function is None:
+            scoring_function = r2_score
+
+        unbiased_feature_importances, self.oob_prediction_ = (
+            self._compute_ufi_and_oob_pred(X, y, sample_weight)
+        )
+
+        if self.criterion in ["squared_error", "friedman_mse"]:
+            self._unbiased_feature_importances = unbiased_feature_importances
+
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
 
-        if scoring_function is None:
-            scoring_function = r2_score
+        # Drop the n_classes axis of size 1 in regression
+        self.oob_prediction_ = self.oob_prediction_.squeeze(axis=1)
 
         self.oob_score_ = scoring_function(y, self.oob_prediction_)
+
+    @property
+    def unbiased_feature_importances_(self):
+        """
+        An unbiased impurity-based feature importance measure.
+
+        The higher, the more important the feature.
+
+        Corrected version of the Mean Decrease Impurity, proposed by Zhou and Hooker in
+        "Unbiased Measurement of Feature Importance in Tree-Based Methods".
+
+        It is only available if the chosen split criterion is `squared_error` or
+        `friedman_mse` and if fit was performed with `oob_score=True`.
+
+        Returns
+        -------
+        unbiased_feature_importances_ : ndarray of shape (n_features,)
+            Contrary to `feature_importances_`, the values of this array do not sum to 1
+            . If all trees are single node trees consisting of only the root node,
+            it will be an array of zeros. If you want them to sum to 1, please divide by
+            `unbiased_feature_importances_.sum()`.
+        """
+        if not self.oob_score:
+            raise AttributeError(
+                "Unbiased feature importance is computed during `fit` when"
+                " `oob_score=True`. Please re-fit the model with `oob_score=True`"
+                " to access this attribute."
+            )
+        if self.criterion not in ["squared_error", "friedman_mse"]:
+            raise AttributeError(
+                "Unbiased feature importance is only available for the `squared_error`"
+                " and `friedman_mse` impurity criteria in regression."
+            )
+        return self._unbiased_feature_importances
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -1433,7 +1500,19 @@ class RandomForestClassifier(ForestClassifier):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``gini``.
+
+        .. versionadded:: 1.8.0
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1479,7 +1558,10 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests" <10.1023/A:1010933404324>`,
+        Machine Learning, 45(1), 5-32, 2001.
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
     Examples
     --------
@@ -1796,7 +1878,19 @@ class RandomForestRegressor(ForestRegressor):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``squared_error`` or ``friedman_mse``.
+
+        .. versionadded:: 1.8.0
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1852,14 +1946,18 @@ class RandomForestRegressor(ForestRegressor):
 
     The default value ``max_features=1.0`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
-    [1], whereas the former was more recently justified empirically in [2].
+    [1], whereas the former was more recently justified empirically in [3].
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests" <10.1023/A:1010933404324>`,
+        Machine Learning, 45(1), 5-32, 2001.
 
-    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-           trees", Machine Learning, 63(1), 3-42, 2006.
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
+
+    .. [3] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+        trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -2185,7 +2283,19 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``gini``.
+
+        .. versionadded:: 1.8.0
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2237,6 +2347,9 @@ class ExtraTreesClassifier(ForestClassifier):
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
+
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
     Examples
     --------
@@ -2546,7 +2659,19 @@ class ExtraTreesRegressor(ForestRegressor):
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
-        :func:`sklearn.inspection.permutation_importance` as an alternative.
+        :func:`sklearn.inspection.permutation_importance` and the attribute
+        `unbiased_feature_importances_` of forest estimators as alternatives.
+        These two alternatives are compared in the example
+        :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
+    unbiased_feature_importances_ : ndarray of shape (n_features,)
+        Corrected version of the Mean Decrease Impurity (``feature_importances``),
+        proposed by Zhou and Hooker in [2].
+
+        This attribute exists only when ``oob_score`` is True and the chosen split
+        criterion is ``squared_error`` or ``friedman_mse``.
+
+        .. versionadded:: 1.8.0
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2594,6 +2719,9 @@ class ExtraTreesRegressor(ForestRegressor):
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
+
+    .. [2] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based
+        Methods" <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
     Examples
     --------
@@ -2920,7 +3048,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.sparse_output = sparse_output
 
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
+    def _set_oob_score_and_ufi_attributes(self, X, y, scoring_function=None):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
