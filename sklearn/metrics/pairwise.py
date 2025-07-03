@@ -299,7 +299,7 @@ def euclidean_distances(
     However, this is not the most precise way of doing this computation,
     because this equation potentially suffers from "catastrophic cancellation".
     Also, the distance matrix returned by this function may not be exactly
-    symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
+    symmetric as required by, e.g., :mod:`scipy.spatial.distance` functions.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -751,7 +751,7 @@ def pairwise_distances_argmin_min(
 
     metric : str or callable, default='euclidean'
         Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        or :mod:`scipy.spatial.distance` can be used.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -766,13 +766,13 @@ def pairwise_distances_argmin_min(
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
           'manhattan', 'nan_euclidean']
 
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
-        See the documentation for scipy.spatial.distance for details on these
+        See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
 
         .. note::
@@ -899,7 +899,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     metric : str or callable, default="euclidean"
         Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        or :mod:`scipy.spatial.distance` can be used.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -914,13 +914,13 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
           'manhattan', 'nan_euclidean']
 
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
-        See the documentation for scipy.spatial.distance for details on these
+        See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
 
         .. note::
@@ -2124,7 +2124,7 @@ def pairwise_distances_chunked(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter,
+        allowed by :func:`scipy.spatial.distance.pdist` for its metric parameter,
         or a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on
@@ -2148,7 +2148,7 @@ def pairwise_distances_chunked(
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
-        If using a scipy.spatial.distance metric, the parameters are still
+        If using a :mod:`scipy.spatial.distance` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
 
     Yields
@@ -2304,12 +2304,11 @@ def pairwise_distances(
       'manhattan', 'nan_euclidean']. All metrics support sparse matrix
       inputs except 'nan_euclidean'.
 
-    - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+    - From :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
-      See the documentation for scipy.spatial.distance for details on these
-      metrics. These metrics do not support sparse matrix inputs.
+      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'].
+      These metrics do not support sparse matrix inputs.
 
     .. note::
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
@@ -2318,7 +2317,7 @@ def pairwise_distances(
         `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
-    valid scipy.spatial.distance metrics), the scikit-learn implementation
+    valid :mod:`scipy.spatial.distance` metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
     for 'cityblock'). For a verbose description of the metrics from
     scikit-learn, see :func:`sklearn.metrics.pairwise.distance_metrics`
@@ -2341,7 +2340,7 @@ def pairwise_distances(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        allowed by :func:`scipy.spatial.distance.pdist` for its metric parameter, or
         a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``.
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on each
