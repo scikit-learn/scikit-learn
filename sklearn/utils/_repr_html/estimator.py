@@ -210,7 +210,7 @@ def _write_label_html(
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
-        if params:  # FIX: can there be methods without params?
+        if params:
             fmt_str = "".join([fmt_str, f"{params}{methods}</div>"])
         elif name_details and ("Pipeline" not in name):
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
