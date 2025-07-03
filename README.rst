@@ -76,6 +76,7 @@ Dependencies
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 **Optional Requirements for Plotting**
+
 - Matplotlib (>= |MatplotlibMinVersion|)
 - scikit-image, pandas, seaborn, plotly, etc. for specific examples
 
@@ -100,7 +101,7 @@ or ``conda``::
 
     conda install -c conda-forge scikit-learn
 
-**Need help?** Check our detailed `installation guide <https://scikit-learn.org/stable/install.html`_ 
+**Need help?** Check our detailed `installation guide <https://scikit-learn.org/stable/install.html>`_ 
 for troubleshooting and advanced options.
 
 Changelog
@@ -135,7 +136,7 @@ You can check the latest sources with the command::
 Contributing
 ~~~~~~~~~~~~
 
-**📚Learn More:** To make a contribution to scikit-learn, please see our `Contributing guide <https://scikit-learn.org/dev/developers/contributing.html`_.
+**📚Learn More:** To make a contribution to scikit-learn, please see our `Contributing guide <https://scikit-learn.org/dev/developers/contributing.html>`_.
 
 **Good First Issues:** Look for issues labeled `"good first issue" <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_ to get started.
 
