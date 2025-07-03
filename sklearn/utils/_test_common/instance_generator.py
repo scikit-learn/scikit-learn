@@ -666,6 +666,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     NeighborhoodComponentsAnalysis: {
         "check_dict_unchanged": dict(max_iter=5, n_components=1)
     },
+    NuSVC: {"check_dict_unchanged": dict(nu=0.5)},
     Nystroem: {"check_dict_unchanged": dict(n_components=1)},
     PCA: {"check_dict_unchanged": dict(n_components=1)},
     PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
@@ -1053,7 +1054,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     NuSVC: {
-        "check_class_weight_classifiers": "class_weight is ignored.",
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
         # see meta-issue #16298
