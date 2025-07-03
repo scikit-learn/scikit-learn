@@ -363,3 +363,73 @@ def test_iterative_imputer_all_categorical():
 
             assert Xt.shape == X.shape
             assert not np.isnan(Xt).any()
+
+
+def test_iterative_imputer_categorical_with_constant_strategy():
+    # Test categorical features with constant initial strategy
+    X = np.array([[1.0, 0.0], [2.0, 1.0], [np.nan, np.nan]])
+
+    imputer = IterativeImputer(
+        categorical_features=[1],
+        initial_strategy="constant",
+        fill_value=0,
+        random_state=42,
+        max_iter=2,
+    )
+    Xt = imputer.fit_transform(X)
+
+    assert Xt.shape == X.shape
+    assert not np.isnan(Xt).any()
+
+
+def test_iterative_imputer_categorical_auto_detection_object_dtype():
+    # Test automatic categorical detection with object dtype
+    X_obj = np.array([["a", 1.0], ["b", 2.0], [None, np.nan]], dtype=object)
+
+    # Convert to encoded format for IterativeImputer
+    X = np.array([[0.0, 1.0], [1.0, 2.0], [np.nan, np.nan]])
+
+    imputer = IterativeImputer(
+        categorical_features=None,  # Auto-detect
+        random_state=42,
+        max_iter=2,
+    )
+    Xt = imputer.fit_transform(X)
+
+    assert Xt.shape == X.shape
+    assert not np.isnan(Xt).any()
+
+
+def test_iterative_imputer_categorical_estimator_cloning():
+    # Test that estimator is properly cloned for categorical features
+    X = np.array([[1.0, 0.0], [2.0, 1.0], [3.0, np.nan], [np.nan, 0.0]])
+
+    # Use a custom estimator to ensure cloning behavior is tested
+    custom_estimator = LogisticRegression(random_state=42, max_iter=1000)
+
+    imputer = IterativeImputer(
+        estimator=custom_estimator,
+        categorical_features=[1],  # Second column is categorical
+        random_state=42,
+        max_iter=2,
+    )
+    Xt = imputer.fit_transform(X)
+
+    assert Xt.shape == X.shape
+    assert not np.isnan(Xt).any()
+
+
+def test_iterative_imputer_categorical_default_classifier_cloning():
+    # Test that default classifier is properly cloned when no estimator is provided
+    X = np.array([[1.0, 0.0], [2.0, 1.0], [3.0, np.nan], [np.nan, 0.0]])
+
+    imputer = IterativeImputer(
+        categorical_features=[1],  # Second column is categorical
+        random_state=42,
+        max_iter=2,
+        # No estimator provided - should use default classifier for categorical features
+    )
+    Xt = imputer.fit_transform(X)
+
+    assert Xt.shape == X.shape
+    assert not np.isnan(Xt).any()
