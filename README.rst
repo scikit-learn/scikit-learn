@@ -59,26 +59,24 @@ Website: https://scikit-learn.org
 Installation
 ------------
 
-.. important::
-   scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
-   See the complete list below before installing. 
+**Important‼️**
+scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
+See the complete list below before installing. 
 
 Dependencies
 ~~~~~~~~~~~~
 
-.. note::
-   **Core Requirements**
+**Core Requirements**
 
-  - Python (>= |PythonMinVersion|)
-  - NumPy (>= |NumPyMinVersion|)
-  - SciPy (>= |SciPyMinVersion|)
-  - joblib (>= |JoblibMinVersion|)
-  - threadpoolctl (>= |ThreadpoolctlMinVersion|)
+- Python (>= |PythonMinVersion|)
+- NumPy (>= |NumPyMinVersion|)
+- SciPy (>= |SciPyMinVersion|)
+- joblib (>= |JoblibMinVersion|)
+- threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
-.. tips::
-   **Optional Requirements for Plotting**
-
-   - Matplotlib (>= |MatplotlibMinVersion|)
+**Tips ✅**
+Optional Requirements for Plotting
+- Matplotlib (>= |MatplotlibMinVersion|)
 
 =======
 
@@ -140,10 +138,10 @@ Contributing
 We welcome contributions of all experience levels! The scikit-learn community
 goals are to be helpful, welcoming, and effective. 
 
-.. warning::
-  To learn more about making a contribution to scikit-learn, please see our
-  `Contributing guide
-  <https://scikit-learn.org/dev/developers/contributing.html>`_.
+**Wrarinig ⚠️**
+To learn more about making a contribution to scikit-learn, please see our
+`Contributing guide
+<https://scikit-learn.org/dev/developers/contributing.html>`_.
 
 Testing
 ~~~~~~~
