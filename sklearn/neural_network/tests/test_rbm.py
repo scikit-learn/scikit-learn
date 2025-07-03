@@ -177,6 +177,33 @@ def test_rbm_verbose():
         sys.stdout = old_stdout
 
 
+def test_rbm_pseudolikelihood():
+    X1 = np.ones([11, 100])
+    rbm1 = BernoulliRBM(n_iter=5, random_state=42, normalize=False)
+    rbm1.fit(X1)
+    score1 = rbm1.score_samples(X1, normalize=False).mean()
+
+    X2 = np.ones([11, 1000])
+    rbm2 = BernoulliRBM(n_iter=5, random_state=42, normalize=False)
+    rbm2.fit(X2)
+    score2 = rbm2.score_samples(X2, normalize=False).mean()
+
+    X3 = np.ones([11, 100])
+    rbm3 = BernoulliRBM(n_iter=5, random_state=42, normalize=True)
+    rbm3.fit(X3)
+    score3 = rbm3.score_samples(X3, normalize=True).mean()
+
+    X4 = np.ones([11, 1000])
+    rbm4 = BernoulliRBM(n_iter=5, random_state=42, normalize=True)
+    rbm4.fit(X4)
+    score4 = rbm4.score_samples(X4, normalize=True).mean()
+
+    assert score1 < score3
+    assert score2 < score4
+    assert abs(score1) > abs(score3) * 10
+    assert abs(score2) > abs(score4) * 10
+
+
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_sparse_and_verbose(csc_container):
     # Make sure RBM works with sparse input when verbose=True
