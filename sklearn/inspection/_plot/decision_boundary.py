@@ -491,7 +491,9 @@ class DecisionBoundaryDisplay:
 
         for lim, name in [(xlim, "xlim"), (ylim, "ylim")]:
             if lim is not None:
-                if not isinstance(lim, tuple) or len(lim) != 2 or lim[0] >= lim[1]:
+                if not isinstance(lim, tuple) or \
+                   len(lim) != 2 or \
+                   lim[0] >= lim[1]:
                     raise ValueError(
                         f"{name} must be a tuple of (min, max) with min < max"
                     )
