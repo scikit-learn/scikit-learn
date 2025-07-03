@@ -643,7 +643,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     )
     estimator.fit(X, y)
 
-    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples, None)
     n_samples_test = X.shape[0] // 4
     oob_pred = np.zeros([n_samples_test, 2])
     for sample_idx, sample in enumerate(X[:n_samples_test]):
@@ -651,7 +651,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
             oob_unsampled_indices = _generate_unsampled_indices(
-                tree.random_state, len(X), n_samples_bootstrap
+                tree.random_state, len(X), n_samples_bootstrap, None
             )
             if sample_idx in oob_unsampled_indices:
                 n_samples_oob += 1
@@ -1167,7 +1167,7 @@ def test_class_weights(name):
 
     # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target)
+    clf1.fit(iris.data, iris.target, sample_weight=np.ones_like(iris.target))
     clf2 = ForestClassifier(class_weight="balanced", random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1537,6 +1537,15 @@ def test_max_samples_bootstrap(name):
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, y)
+    est.set_params(bootstrap=True)
+    n_samples = len(y)
+    sample_weight = np.full(n_samples, 0.1 / n_samples)
+    err_msg = (
+        f"The total sum of sample weights is {sample_weight.sum()}, which prevents "
+        "resampling with a fractional value for max_samples"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y, sample_weight)
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)

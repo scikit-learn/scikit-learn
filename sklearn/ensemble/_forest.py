@@ -38,7 +38,7 @@ Single and multi-output problems are both handled.
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
-from warnings import catch_warnings, simplefilter, warn
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import hstack as sparse_hstack
@@ -63,7 +63,7 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DOUBLE, DTYPE
-from ..utils import check_random_state, compute_sample_weight
+from ..utils import check_random_state, compute_class_weight, compute_sample_weight
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._tags import get_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
@@ -88,7 +88,7 @@ __all__ = [
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _get_n_samples_bootstrap(n_samples, max_samples):
+def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     """
     Get the number of samples in a bootstrap sample.
 
@@ -96,12 +96,17 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     ----------
     n_samples : int
         Number of samples in the dataset.
+
     max_samples : int or float
-        The maximum number of samples to draw from the total available:
-            - if float, this indicates a fraction of the total and should be
-              the interval `(0.0, 1.0]`;
-            - if int, this indicates the exact number of samples;
-            - if None, this indicates the total number of samples.
+        The maximum number of samples to draw.
+
+        - If None, then draw `n_samples` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * n_samples` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
+
+    sample_weight : array of shape (n_samples,) or None
+        Sample weights.
 
     Returns
     -------
@@ -118,26 +123,47 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, Real):
-        return max(round(n_samples * max_samples), 1)
+        if sample_weight is None:
+            return max(int(max_samples * n_samples), 1)
+        else:
+            sw_sum = np.sum(sample_weight)
+            if sw_sum <= 1:
+                raise ValueError(
+                    f"The total sum of sample weights is {sw_sum}, which prevents "
+                    f"resampling with a fractional value for {max_samples=}. Either"
+                    " pass max_samples as an integer or use a larger sample_weight."
+                )
+            return max(int(max_samples * sw_sum), 1)
 
 
-def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_sample_indices(
+    random_state, n_samples, n_samples_bootstrap, sample_weight
+):
     """
     Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(
-        0, n_samples, n_samples_bootstrap, dtype=np.int32
-    )
-
+    if sample_weight is None:
+        sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+    else:
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        sample_indices = random_instance.choice(
+            n_samples,
+            n_samples_bootstrap,
+            replace=True,
+            p=normalized_sample_weight,
+        )
+    sample_indices = sample_indices.astype(np.int32)
     return sample_indices
 
 
-def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_unsampled_indices(
+    random_state, n_samples, n_samples_bootstrap, sample_weight
+):
     """
     Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(
-        random_state, n_samples, n_samples_bootstrap
+        random_state, n_samples, n_samples_bootstrap, sample_weight
     )
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
@@ -167,28 +193,21 @@ def _parallel_build_trees(
 
     if bootstrap:
         n_samples = X.shape[0]
-        if sample_weight is None:
-            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
-        else:
-            curr_sample_weight = sample_weight.copy()
-
         indices = _generate_sample_indices(
-            tree.random_state, n_samples, n_samples_bootstrap
+            tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
-        sample_counts = np.bincount(indices, minlength=n_samples)
-        curr_sample_weight *= sample_counts
-
-        if class_weight == "subsample":
-            with catch_warnings():
-                simplefilter("ignore", DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight("auto", y, indices=indices)
-        elif class_weight == "balanced_subsample":
-            curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
+        # Row sampling by setting sample_weight in tree
+        sample_weight_tree = np.bincount(indices, minlength=n_samples)
+        if class_weight == "balanced_subsample":
+            expanded_class_weight = compute_sample_weight(
+                "balanced", y, indices=indices
+            )
+            sample_weight_tree = sample_weight_tree * expanded_class_weight
 
         tree._fit(
             X,
             y,
-            sample_weight=curr_sample_weight,
+            sample_weight=sample_weight_tree,
             check_input=False,
             missing_values_in_feature_mask=missing_values_in_feature_mask,
         )
@@ -415,16 +434,23 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         self._n_samples, self.n_outputs_ = y.shape
 
-        y, expanded_class_weight = self._validate_y_class_weight(y)
+        y, expanded_class_weight = self._validate_y_class_weight(y, sample_weight)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        if expanded_class_weight is not None:
-            if sample_weight is not None:
-                sample_weight = sample_weight * expanded_class_weight
-            else:
-                sample_weight = expanded_class_weight
+        # Combined _sample_weight = sample_weight * expanded_class_weight
+        # used in _parallel_build_trees to draw indices (bootstrap=True)
+        # or passed to the trees (bootstrap=False)
+        if sample_weight is None:
+            _sample_weight = expanded_class_weight
+        elif expanded_class_weight is None:
+            _sample_weight = sample_weight
+        else:
+            _sample_weight = sample_weight * expanded_class_weight
+
+        # storing _sample_weight (needed by _get_estimators_indices)
+        self._sample_weight = _sample_weight
 
         if not self.bootstrap and self.max_samples is not None:
             raise ValueError(
@@ -434,7 +460,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         elif self.bootstrap:
             n_samples_bootstrap = _get_n_samples_bootstrap(
-                n_samples=X.shape[0], max_samples=self.max_samples
+                X.shape[0], self.max_samples, sample_weight
             )
         else:
             n_samples_bootstrap = None
@@ -493,7 +519,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     self.bootstrap,
                     X,
                     y,
-                    sample_weight,
+                    _sample_weight,
                     i,
                     len(trees),
                     verbose=self.verbose,
@@ -590,16 +616,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         oob_pred = np.zeros(shape=oob_pred_shape, dtype=np.float64)
         n_oob_pred = np.zeros((n_samples, n_outputs), dtype=np.int64)
-
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples,
-            self.max_samples,
-        )
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state,
                 n_samples,
-                n_samples_bootstrap,
+                self._n_samples_bootstrap,
+                self._sample_weight,
             )
 
             y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
@@ -621,7 +643,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return oob_pred
 
-    def _validate_y_class_weight(self, y):
+    def _validate_y_class_weight(self, y, sample_weight):
         # Default implementation
         return y, None
 
@@ -694,7 +716,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 # Operations accessing random_state must be performed identically
                 # to those in `_parallel_build_trees()`
                 yield _generate_sample_indices(
-                    seed, self._n_samples, self._n_samples_bootstrap
+                    seed,
+                    self._n_samples,
+                    self._n_samples_bootstrap,
+                    self._sample_weight,
                 )
 
     @property
@@ -826,7 +851,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
 
-    def _validate_y_class_weight(self, y):
+    def _validate_y_class_weight(self, y, sample_weight):
         check_classification_targets(y)
 
         y = np.copy(y)
@@ -870,11 +895,34 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                         "class_weight parameter."
                     )
 
-            if self.class_weight != "balanced_subsample" or not self.bootstrap:
-                if self.class_weight == "balanced_subsample":
-                    class_weight = "balanced"
-                else:
-                    class_weight = self.class_weight
+            # User defined class_weight (dict or list)
+            if isinstance(self.class_weight, (dict, list)):
+                class_weight = self.class_weight
+            # Computing class_weight (dict or list) for the "balanced" option.
+            # The "balanced_subsample" option without subsampling (bootstrap=False)
+            # is equivalent to the "balanced" option.
+            elif (self.class_weight == "balanced") or (
+                self.class_weight == "balanced_subsample" and not self.bootstrap
+            ):
+                class_weight = []
+                for k in range(self.n_outputs_):
+                    class_weight_k_vect = compute_class_weight(
+                        "balanced",
+                        classes=self.classes_[k],
+                        y=y_original[:, k],
+                        sample_weight=sample_weight,
+                    )
+                    class_weight_k = {
+                        key: val
+                        for (key, val) in zip(self.classes_[k], class_weight_k_vect)
+                    }
+                    class_weight.append(class_weight_k)
+                if self.n_outputs_ == 1:
+                    class_weight = class_weight[0]
+
+            # For the "balanced_subsample" option with subsampling (bootstrap=True),
+            # class_weight will be computed on the bootstrap sample for each tree.
+            if not (self.class_weight == "balanced_subsample" and self.bootstrap):
                 expanded_class_weight = compute_sample_weight(class_weight, y_original)
 
         return y, expanded_class_weight
@@ -1366,8 +1414,8 @@ class RandomForestClassifier(ForestClassifier):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max(round(n_samples * max_samples), 1)` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
@@ -1754,8 +1802,8 @@ class RandomForestRegressor(ForestRegressor):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max(round(n_samples * max_samples), 1)` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
@@ -2132,8 +2180,8 @@ class ExtraTreesClassifier(ForestClassifier):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
@@ -2504,8 +2552,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
         - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0.0, 1.0]`.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
 
