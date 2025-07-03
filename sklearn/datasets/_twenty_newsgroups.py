@@ -35,6 +35,7 @@ import tarfile
 from contextlib import suppress
 from numbers import Integral, Real
 
+import sys
 import joblib
 import numpy as np
 import scipy.sparse as sp
@@ -84,7 +85,11 @@ def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
         # Use filter="data" to prevent the most dangerous security issues.
         # For more details, see
         # https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
-        fp.extractall(path=target_dir, filter="data")
+        
+        if sys.version_info >= (3, 12):
+            fp.extractall(path=target_dir, filter="data")
+        else:
+            fp.extractall(path=target_dir)
 
     with suppress(FileNotFoundError):
         os.remove(archive_path)
