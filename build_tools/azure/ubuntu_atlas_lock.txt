@@ -27,15 +27,15 @@ packaging==25.0
     #   pytest
 pluggy==1.6.0
     # via pytest
-pygments==2.19.2
+pygments==2.19.1
     # via pytest
 pyproject-metadata==0.9.1
     # via meson-python
-pytest==8.4.1
+pytest==8.4.0
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
-pytest-xdist==3.8.0
+pytest-xdist==3.7.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 threadpoolctl==3.1.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt

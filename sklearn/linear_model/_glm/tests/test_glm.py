@@ -656,7 +656,6 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     glm_params = dict(alpha=alpha, fit_intercept=fit_intercept)
-    tols = dict(rtol=1e-12, atol=1e-14)
 
     glm = GLMEstimator(**glm_params).fit(X, y)
     coef = glm.coef_.copy()
@@ -664,12 +663,12 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, **tols)
+    assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # sample_weight are normalized to 1 so, scaling them has no effect
     sample_weight = 2 * np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, **tols)
+    assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # setting one element of sample_weight to 0 is equivalent to removing
     # the corresponding sample
@@ -678,7 +677,7 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     glm.fit(X, y, sample_weight=sample_weight)
     coef1 = glm.coef_.copy()
     glm.fit(X[:-1], y[:-1])
-    assert_allclose(glm.coef_, coef1, **tols)
+    assert_allclose(glm.coef_, coef1, rtol=1e-12)
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
@@ -688,8 +687,9 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     sample_weight_1[: n_samples // 2] = 2
 
     glm1 = GLMEstimator(**glm_params).fit(X, y, sample_weight=sample_weight_1)
+
     glm2 = GLMEstimator(**glm_params).fit(X2, y2, sample_weight=None)
-    assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-10, atol=1e-14)
+    assert_allclose(glm1.coef_, glm2.coef_)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
