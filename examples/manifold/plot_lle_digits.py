@@ -101,6 +101,7 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.manifold import (
     MDS,
     TSNE,
+    ClassicalMDS,
     Isomap,
     LocallyLinearEmbedding,
     SpectralEmbedding,
@@ -131,6 +132,10 @@ embeddings = {
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
     "MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, eps=1e-6),
+    "Non-metric MDS embedding": MDS(
+        n_components=2, n_init=1, max_iter=120, eps=1e-6, metric=False
+    ),
+    "Classical MDS embedding": ClassicalMDS(n_components=2),
     "Random Trees embedding": make_pipeline(
         RandomTreesEmbedding(n_estimators=200, max_depth=5, random_state=0),
         TruncatedSVD(n_components=2),
