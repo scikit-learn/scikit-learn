@@ -30,11 +30,11 @@ https://conda.anaconda.org/conda-forge/win-64/libiconv-1.18-h135ad9c_1.conda#21f
 https://conda.anaconda.org/conda-forge/win-64/libjpeg-turbo-3.1.0-h2466b09_0.conda#7c51d27540389de84852daa1cdb9c63c
 https://conda.anaconda.org/conda-forge/win-64/liblzma-5.8.1-h2466b09_2.conda#c15148b2e18da456f5108ccb5e411446
 https://conda.anaconda.org/conda-forge/win-64/libopenblas-0.3.30-pthreads_ha4fe6b2_0.conda#c09864590782cb17fee135db4796bdcb
-https://conda.anaconda.org/conda-forge/win-64/libsqlite-3.50.2-hf5d6505_0.conda#e1e6cac409e95538acdc3d33a0f34d6a
+https://conda.anaconda.org/conda-forge/win-64/libsqlite-3.50.1-hf5d6505_6.conda#c01fd2d0873bdc8d35bfa3c6eb2f54e5
 https://conda.anaconda.org/conda-forge/win-64/libwebp-base-1.5.0-h3b0e114_0.conda#33f7313967072c6e6d8f865f5493c7ae
 https://conda.anaconda.org/conda-forge/win-64/libzlib-1.3.1-h2466b09_2.conda#41fbfac52c601159df6c01f875de31b9
 https://conda.anaconda.org/conda-forge/win-64/ninja-1.13.0-h79cd779_0.conda#fb5cb20bc807076f05ac18a628322fd7
-https://conda.anaconda.org/conda-forge/win-64/openssl-3.5.1-h725018a_0.conda#d124fc2fd7070177b5e2450627f8fc1a
+https://conda.anaconda.org/conda-forge/win-64/openssl-3.5.0-ha4e3fda_1.conda#72c07e46b6766bb057018a9a74861b89
 https://conda.anaconda.org/conda-forge/win-64/pixman-0.46.2-had0cd8c_0.conda#2566a45fb15e2f540eff14261f1242af
 https://conda.anaconda.org/conda-forge/win-64/qhull-2020.2-hc790b64_5.conda#854fbdff64b572b5c0b470f334d34c11
 https://conda.anaconda.org/conda-forge/win-64/tk-8.6.13-h2c6b04d_2.conda#ebd0e761de9aa879a51d22cc721bd095
@@ -94,7 +94,7 @@ https://conda.anaconda.org/conda-forge/win-64/numpy-2.2.6-py310h4987827_0.conda#
 https://conda.anaconda.org/conda-forge/win-64/openjpeg-2.5.3-h4d64b90_0.conda#fc050366dd0b8313eb797ed1ffef3a29
 https://conda.anaconda.org/conda-forge/noarch/pip-25.1.1-pyh8b19718_0.conda#32d0781ace05105cc99af55d36cbec7c
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.9.1-pyhd8ed1ab_0.conda#22ae7c6ea81e0c8661ef32168dda929b
-https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda#5b8d21249ff20967101ffa321cab24e8
+https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhff2d567_1.conda#5ba79d7c71f03c678c8ead841f347d6e
 https://conda.anaconda.org/conda-forge/win-64/blas-devel-3.9.0-32_hc0f8095_openblas.conda#c07c54d62ee5a9886933051e10ad4b1e
 https://conda.anaconda.org/conda-forge/win-64/contourpy-1.3.2-py310hc19bc0b_0.conda#039416813b5290e7d100a05bb4326110
 https://conda.anaconda.org/conda-forge/win-64/fonttools-4.58.4-py310h38315fa_0.conda#f7a8769f5923bebdc10acbbb41d28628
@@ -110,6 +110,6 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-cov-6.2.1-pyhd8ed1ab_0.cond
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.7.0-pyhd8ed1ab_0.conda#15353a2a0ea6dfefaa52fc5ab5b98f41
 https://conda.anaconda.org/conda-forge/win-64/cairo-1.18.4-h5782bbf_0.conda#20e32ced54300292aff690a69c5e7b97
 https://conda.anaconda.org/conda-forge/win-64/harfbuzz-11.2.1-h8796e6f_0.conda#bccea58fbf7910ce868b084f27ffe8bd
-https://conda.anaconda.org/conda-forge/win-64/qt6-main-6.9.1-h02ddd7d_1.conda#fc796cf6c16db38d44c2efefbe6afcea
+https://conda.anaconda.org/conda-forge/win-64/qt6-main-6.9.1-h02ddd7d_0.conda#feaaaae25a51188fb0544aca8b26ef4d
 https://conda.anaconda.org/conda-forge/win-64/pyside6-6.9.1-py310h2d19612_0.conda#01b830c0fd6ca7ab03c85a008a6f4a2d
 https://conda.anaconda.org/conda-forge/win-64/matplotlib-3.10.3-py310h5588dad_0.conda#103adee33db124a0263d0b4551e232e3

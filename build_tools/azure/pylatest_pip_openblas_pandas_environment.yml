@@ -24,7 +24,7 @@ dependencies:
     - pytest-cov
     - coverage
     - sphinx
-    - numpydoc<1.9.0
+    - numpydoc
     - lightgbm
     - scikit-image
     - array-api-strict
