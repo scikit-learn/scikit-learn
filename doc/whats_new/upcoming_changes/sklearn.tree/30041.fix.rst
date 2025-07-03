@@ -1,0 +1,2 @@
+- Make :func:`tree.export_text` thread-safe.
+  By :user:`Olivier Grisel <ogrisel>`.
