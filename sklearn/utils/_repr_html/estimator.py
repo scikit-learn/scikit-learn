@@ -108,6 +108,7 @@ class _VisualBlock:
 def _write_label_html(
     out,
     params,
+    methods,
     name,
     name_details,
     name_caption=None,
@@ -209,8 +210,8 @@ def _write_label_html(
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
-        if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>"])
+        if params:  # FIX: can there be methods without params?
+            fmt_str = "".join([fmt_str, f"{params}{methods}</div>"])
         elif name_details and ("Pipeline" not in name):
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
@@ -385,13 +386,14 @@ def _write_estimator_html(
     elif est_block.kind == "single":
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
-            methods = estimator._get_methods_html()
+            methods = estimator._get_methods_html()._repr_html_inner()
         else:
             params = ""
 
         _write_label_html(
             out,
             params,
+            methods,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,

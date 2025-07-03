@@ -21,6 +21,7 @@ from .utils._missing import is_scalar_nan
 from .utils._param_validation import validate_parameter_constraints
 from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from .utils._repr_html.estimator import estimator_html_repr
+from .utils._repr_html.methods import MethodsDict
 from .utils._repr_html.params import ParamsDict
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
@@ -317,13 +318,23 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     def _get_methods_html(self, deep=True):
         init_func = getattr(self.__init__, "deprecated_original", self)
 
-        methods = {
-            name: getattr(init_func, name).__doc__
-            for name in dir(self)
-            if (callable(getattr(init_func, name)) and not name.startswith("_"))
-        }
+        # methods = {
+        #
+        #    name: inspect.getdoc(getattr(init_func, name))
+        #    for name in dir(init_func)
+        #    if (callable(getattr(init_func, name)) and not name.startswith("_"))
+        # }
 
-        return methods
+        methods = {}
+        for name in dir(init_func):
+            method = getattr(init_func, name)
+            if callable(method) and not name.startswith("_"):
+                methods[name] = str(inspect.signature(method))
+                # "docs": inspect.getdoc(method),
+
+                # "estimator" : init_func.__class__,
+
+        return MethodsDict(methods)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
