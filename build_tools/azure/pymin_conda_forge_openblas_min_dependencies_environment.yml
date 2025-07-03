@@ -24,3 +24,4 @@ dependencies:
   - coverage
   - ccache
   - polars=0.20.30  # min
+  - pyarrow=12.0.0  # min

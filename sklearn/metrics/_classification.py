@@ -3539,7 +3539,7 @@ def brier_score_loss(
         When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
         of the [0, 2] range. The default "auto" option implements the rescaling to
         [0, 1] only for binary classification (as customary) but keeps the
-        original [0, 2] range for multiclasss classification.
+        original [0, 2] range for multiclass classification.
 
         .. versionadded:: 1.7
 

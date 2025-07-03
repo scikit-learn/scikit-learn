@@ -1,0 +1,3 @@
+- make :class:`GaussianProcessRegressor.predict` faster when `return_cov` and
+  `return_std` are both `False`.
+  By :user:`Rafael Ayllón Gavilán <RafaAyGar>`.
