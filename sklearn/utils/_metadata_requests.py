@@ -1539,20 +1539,6 @@ class _MetadataRequester:
 
         return requests
 
-    # def get_metadata_routing(self):
-    #     """Get metadata routing of this object.
-
-    #     Please check :ref:`User Guide <metadata_routing>` on how the routing
-    #     mechanism works.
-
-    #     Returns
-    #     -------
-    #     routing : MetadataRequest
-    #         A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
-    #         routing information.
-    #     """
-    #     return self._get_metadata_request()
-
 
 # Process Routing in Routers
 # ==========================

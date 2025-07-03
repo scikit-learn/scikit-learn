@@ -211,14 +211,14 @@ def test_request_type_is_valid(val, res):
 
 @config_context(enable_metadata_routing=True)
 def test_class_level_requests():
-    class SimpleEstimator(BaseEstimator):
+    class StubEstimator(BaseEstimator):
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
         }  # type: ignore[var-annotated]
 
-    odd_request = get_routing_for_object(SimpleEstimator())
-    assert odd_request.fit.requests == {"sample_weight": True}
+    request = get_routing_for_object(StubEstimator())
+    assert request.fit.requests == {"sample_weight": True}
 
     # check other test estimators
     assert not len(get_routing_for_object(NonConsumingClassifier()).fit.requests)
