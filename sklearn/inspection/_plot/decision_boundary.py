@@ -295,6 +295,8 @@ class DecisionBoundaryDisplay:
         *,
         grid_resolution=100,
         eps=1.0,
+        xlim=None,
+        ylim=None,
         plot_method="contourf",
         response_method="auto",
         class_of_interest=None,
@@ -302,8 +304,6 @@ class DecisionBoundaryDisplay:
         xlabel=None,
         ylabel=None,
         ax=None,
-        xlim=None,
-        ylim=None,
         **kwargs,
     ):
         """Plot decision boundary given an estimator.
@@ -325,7 +325,15 @@ class DecisionBoundaryDisplay:
 
         eps : float, default=1.0
             Extends the minimum and maximum values of X for evaluating the
-            response function.
+            response function. Ignored if both `xlim` and `ylim` are provided.
+
+        xlim : tuple of float, default=None
+            The x-axis limits for the plot. If None, limits are determined
+            from the data range. Should be a tuple of (min, max) values.
+
+        ylim : tuple of float, default=None
+            The y-axis limits for the plot. If None, limits are determined
+            from the data range. Should be a tuple of (min, max) values.
 
         plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
             Plotting method to call when plotting the response. Please refer
@@ -389,14 +397,6 @@ class DecisionBoundaryDisplay:
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
-
-        xlim : tuple of float, default=None
-            The x-axis limits for the plot. If None, limits are determined
-            from the data range. Should be a tuple of (min, max) values.
-
-        ylim : tuple of float, default=None
-            The y-axis limits for the plot. If None, limits are determined
-            from the data range. Should be a tuple of (min, max) values.
 
         **kwargs : dict
             Additional keyword arguments to be passed to the
@@ -489,13 +489,12 @@ class DecisionBoundaryDisplay:
                         f"Matplotlib colormap. Got: {multiclass_colors}"
                     )
 
-        if xlim is not None:
-            if not isinstance(xlim, tuple) or len(xlim) != 2 or xlim[0] >= xlim[1]:
-                raise ValueError("xlim must be a tuple of (min, max) with min < max")
-
-        if ylim is not None:
-            if not isinstance(ylim, tuple) or len(ylim) != 2 or ylim[0] >= ylim[1]:
-                raise ValueError("ylim must be a tuple of (min, max) with min < max")
+        for lim, name in [(xlim, "xlim"), (ylim, "ylim")]:
+            if lim is not None:
+                if not isinstance(lim, tuple) or len(lim) != 2 or lim[0] >= lim[1]:
+                    raise ValueError(
+                        f"{name} must be a tuple of (min, max) with min < max"
+                    )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
