@@ -940,8 +940,11 @@ Class APIs and Estimator Types
         :class:`ensemble.BaggingClassifier`.
 
         In a meta-estimator's :term:`fit` method, any contained estimators
-        should be :term:`cloned` before they are fit (although FIXME: Pipeline
-        and FeatureUnion do not do this currently). An exception to this is
+        should be :term:`cloned` before they are fit. 
+        
+        .. FIXME: Pipeline and FeatureUnion do not do this currently
+        
+        An exception to this is
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
@@ -1590,8 +1593,7 @@ functions or non-estimator constructors.
         estimators: some, but not all, use it to mean a single epoch (i.e. a
         pass over every sample in the data).
 
-        FIXME perhaps we should have some common tests about the relationship
-        between ConvergenceWarning and max_iter.
+        .. FIXME: perhaps we should have some common tests about the relationship between ConvergenceWarning and max_iter.
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
@@ -1859,12 +1861,11 @@ See concept :term:`sample property`.
         the weight.  Weights may be specified as floats, so that sample weights
         are usually equivalent up to a constant positive scaling factor.
 
-        FIXME  Is this interpretation always the case in practice? We have no
-        common tests.
+        .. FIXME: Is this interpretation always the case in practice? We have no common tests.
 
         Some estimators, such as decision trees, support negative weights.
-        FIXME: This feature or its absence may not be tested or documented in
-        many estimators.
+        
+        .. FIXME: This feature or its absence may not be tested or documented in many estimators.
 
         This is not entirely the case where other parameters of the model
         consider the number of samples in a region, as with ``min_samples`` in
