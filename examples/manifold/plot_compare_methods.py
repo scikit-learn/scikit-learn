@@ -192,9 +192,9 @@ fig, axs = plt.subplots(
 fig.suptitle("Multidimensional scaling", size=16)
 
 mds_methods = [
-    ("Metric MDS", S_standard),
-    ("Non-metric MDS", S_ltsa),
-    ("Classical MDS", S_hessian),
+    ("Metric MDS", S_scaling_metric),
+    ("Non-metric MDS", S_scaling_nonmetric),
+    ("Classical MDS", S_scaling_classical),
 ]
 for ax, method in zip(axs.flat, mds_methods):
     name, points = method
