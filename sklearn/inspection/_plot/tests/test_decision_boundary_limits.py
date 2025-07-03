@@ -44,9 +44,7 @@ class TestXlimYlimValidation:
     def test_invalid_xlim_ylim(self, pyplot, fitted_clf, xlim, ylim, expected_error):
         """Test that invalid xlim/ylim values raise ValueError."""
         with pytest.raises(ValueError, match=expected_error):
-            DecisionBoundaryDisplay.from_estimator(
-                fitted_clf, X, xlim=xlim, ylim=ylim
-            )
+            DecisionBoundaryDisplay.from_estimator(fitted_clf, X, xlim=xlim, ylim=ylim)
 
     def test_valid_xlim_ylim(self, pyplot, fitted_clf):
         """Test that valid xlim/ylim values don't raise errors."""
@@ -255,7 +253,7 @@ class TestXlimYlimFunctionality:
             ylim=ylim,
             grid_resolution=15,
             plot_method="contour",
-            response_method="predict_proba"
+            response_method="predict_proba",
         )
 
         # Verify xlim/ylim are respected
@@ -321,11 +319,7 @@ class TestXlimYlimDocstringExamples:
         """Test basic usage example for documentation."""
         # Example: Setting custom plot boundaries
         disp = DecisionBoundaryDisplay.from_estimator(
-            fitted_clf,
-            X,
-            xlim=(-3, 3),
-            ylim=(-2, 2),
-            grid_resolution=50
+            fitted_clf, X, xlim=(-3, 3), ylim=(-2, 2), grid_resolution=50
         )
 
         # Verify the plot uses the specified boundaries
