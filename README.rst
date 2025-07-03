@@ -59,7 +59,13 @@ Website: https://scikit-learn.org
 Installation
 ------------
 
+<<<<<<< HEAD
 **⚠️Important:** scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
+=======
+**Important‼️**
+
+scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
+>>>>>>> 7761c20d5384624ebe74148680f5898aaefed603
 See the complete list below before installing. 
 
 Dependencies
@@ -73,7 +79,13 @@ Dependencies
 - joblib (>= |JoblibMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
+<<<<<<< HEAD
 **Optional Requirements for Plotting**
+=======
+**Tips ✅**
+
+Optional Requirements for Plotting
+>>>>>>> 7761c20d5384624ebe74148680f5898aaefed603
 - Matplotlib (>= |MatplotlibMinVersion|)
 - scikit-image, pandas, seaborn, plotly, etc. for specific examples
 
@@ -135,7 +147,15 @@ Contributing
 
 **📚Learn More:** To make a contribution to scikit-learn, please see our `Contributing guide <https://scikit-learn.org/dev/developers/contributing.html`_.
 
+<<<<<<< HEAD
 **Good First Issues:** Look for issues labeled `"good first issue" <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_ to get started.
+=======
+**Wrarinig ⚠️**
+
+To learn more about making a contribution to scikit-learn, please see our
+`Contributing guide
+<https://scikit-learn.org/dev/developers/contributing.html>`_.
+>>>>>>> 7761c20d5384624ebe74148680f5898aaefed603
 
 Testing
 ~~~~~~~
