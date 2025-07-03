@@ -103,6 +103,8 @@ Finally, we have a full-fledged example of
 :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. It is aimed at
 providing a starting point for people wanting to build out-of-core learning
 systems and demonstrates most of the notions discussed above.
+For a benchmark comparing the prediction latency of various estimators, see
+:ref:`sphx_glr_auto_examples_benchmarks_plot_prediction_latency.py`.
 
 Furthermore, it also shows the evolution of the performance of different
 algorithms with the number of processed examples.
@@ -118,6 +120,9 @@ vectorization is much more expensive than learning itself. From the different
 algorithms, ``MultinomialNB`` is the most expensive, but its overhead can be
 mitigated by increasing the size of the mini-batches (exercise: change
 ``minibatch_size`` to 100 and 10000 in the program and compare).
+
+For a comparison of the prediction latency for various estimators,
+see :ref:`sphx_glr_auto_examples_benchmarks_plot_prediction_latency.py`.
 
 .. |computation_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_003.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html

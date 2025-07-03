@@ -891,6 +891,9 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   For a full-fledged example of out-of-core scaling in a text classification
   task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
 
+  For prediction latency comparisons of different text classification approaches, see
+  :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`.
+
 
 Customizing the vectorizer classes
 ----------------------------------

@@ -65,6 +65,9 @@ distribution can be independently estimated as a one dimensional distribution.
 This in turn helps to alleviate problems stemming from the curse of
 dimensionality.
 
+For detailed prediction latency comparisons, see
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`.
+
 On the flip side, although naive Bayes is known as a decent classifier,
 it is known to be a bad estimator, so the probability outputs from
 ``predict_proba`` are not to be taken too seriously.
