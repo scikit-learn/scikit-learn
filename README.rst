@@ -60,6 +60,7 @@ Installation
 ------------
 
 **Important‼️**
+
 scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
 See the complete list below before installing. 
 
@@ -75,6 +76,7 @@ Dependencies
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 **Tips ✅**
+
 Optional Requirements for Plotting
 - Matplotlib (>= |MatplotlibMinVersion|)
 
@@ -139,6 +141,7 @@ We welcome contributions of all experience levels! The scikit-learn community
 goals are to be helpful, welcoming, and effective. 
 
 **Wrarinig ⚠️**
+
 To learn more about making a contribution to scikit-learn, please see our
 `Contributing guide
 <https://scikit-learn.org/dev/developers/contributing.html>`_.
