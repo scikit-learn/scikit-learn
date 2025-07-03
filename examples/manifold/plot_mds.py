@@ -49,7 +49,7 @@ np.fill_diagonal(noise, 0)
 distances += noise
 
 # %%
-# Here we compute metric and non-metric MDS of the noisy distance matrix.
+# Here we compute metric, non-metric, and classical MDS of the noisy distance matrix.
 
 mds = manifold.MDS(
     n_components=2,
