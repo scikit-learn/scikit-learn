@@ -72,7 +72,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing the roc auc
-        metrics. Used for labelling the axes. If `None` not included in labels.
+        metrics. Used for labelling the axes. If `None`, not included in labels.
 
         .. versionadded:: 0.24
 
