@@ -183,7 +183,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     While this preprocessing step can be an optimization, it is important
     to note the array returned by ``inverse_transform`` will have an internal type
     of ``np.float64`` or ``np.float32``, denoted by the ``dtype`` input argument.
-    This can drastically increase the memory usage of the array. See the example on
+    This can drastically increase the memory usage of the array. See the
     :ref:`sphx_glr_auto_examples_cluster_plot_face_compress.py`
     where `KBinsDescretizer` is used to cluster the image into bins and increases
     the size of the image by 8x.
