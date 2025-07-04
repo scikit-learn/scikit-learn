@@ -572,7 +572,12 @@ class MetadataRequest:
             )
 
     def consumes(self, method, params):
-        """Return the subset of given `params` consumed by the given `method`.
+        """Return params consumed as metadata in a :term:`consumer`.
+
+        This method returns the subset of given `params` that are consumed by the
+        given `method`. It can be used to check if parameters are used as metadata in
+        the specified method of the :term:`consumer` that owns this `MetadataRequest`
+        instance.
 
         .. versionadded:: 1.4
 
@@ -901,11 +906,12 @@ class MetadataRouter:
         return self
 
     def consumes(self, method, params):
-        """Return the subset of given `params` consumed by the given `method`.
+        """Return params consumed as metadata in a :term:`router` or its sub-estimators.
 
-        A `param` is considered consumed if it is used by the :term:`router` itself,
-        or by any sub-estimator (or their sub-estimators) that this router delegates
-        metadata to via the specified `method`.
+        This method returns the subset of given `params` that are consumed by the
+        given `method`. A `param` is considered consumed if it is used in the specified
+        method of the :term:`router` itself or any of its sub-estimators (or their
+        sub-estimators).
 
         .. versionadded:: 1.4
 
