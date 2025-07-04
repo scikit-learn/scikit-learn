@@ -52,21 +52,26 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     # If sample_weight is not None and 0-weighted values exist, we need to
     # remove those before calculating the distinct points.
     if sample_weight is not None:
-        col_data_non_null = col_data[sample_weight != 0]
-        distinct_values = np.unique(col_data_non_null).astype(X_DTYPE)
-    else:
-        distinct_values = np.unique(col_data).astype(X_DTYPE)
+        sample_weight = sample_weight[~missing_mask]
+        nnz_sw = sample_weight != 0
+        col_data = col_data[nnz_sw]
+        sample_weight = sample_weight[nnz_sw]
 
     # The data will be sorted anyway in np.unique and again in percentile, so we do it
     # here. Sorting also returns a contiguous array.
     sort_idx = np.argsort(col_data)
     col_data = col_data[sort_idx]
+    if sample_weight is not None:
+        sample_weight = sample_weight[sort_idx]
 
-    # Calculate midpoints if distinct values <= max_bins
+    distinct_values = np.unique(col_data).astype(X_DTYPE)
+
     if len(distinct_values) <= max_bins:
-        midpoints = distinct_values[:-1] + distinct_values[1:]
-        bin_thresholds = midpoints * 0.5
+        # Calculate midpoints if distinct values <= max_bins
+        bin_thresholds = 0.5 * (distinct_values[:-1] + distinct_values[1:])
     elif sample_weight is None:
+        # We compute approximate midpoint percentiles using the output of
+        # np.percentile with averaged_inverted_cdf
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         bin_thresholds = np.percentile(
@@ -74,14 +79,8 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     else:
-        # We could compute approximate midpoint percentiles using the output of
-        # np.unique(col_data, return_counts) instead but this is more
-        # work and the performance benefit will be limited because we
-        # work on a fixed-size subsample of the full data.
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
-        sample_weight = sample_weight[~missing_mask]
-        sample_weight = sample_weight[sort_idx]
         bin_thresholds = np.array(
             [
                 _averaged_weighted_percentile(col_data, sample_weight, percentile)
@@ -225,13 +224,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
-
-        subsampling_probabilities = None
-        if sample_weight is not None:
-            subsampling_probabilities = sample_weight / np.sum(sample_weight)
-
         rng = check_random_state(self.random_state)
         if self.subsample is not None and X.shape[0] > self.subsample:
+            subsampling_probabilities = None
+            if sample_weight is not None:
+                subsampling_probabilities = sample_weight / np.sum(sample_weight)
             subset = rng.choice(
                 X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
             )
