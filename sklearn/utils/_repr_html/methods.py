@@ -1,9 +1,85 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import re
 from collections import UserDict
+from urllib.parse import quote
 
 from sklearn.utils._repr_html.base import ReprHTMLMixin
+
+CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
+
+
+def get_module_doc_link(estimator_class, method_name):
+    """URL to the relevant section of the docstring using a Text Fragment
+    https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
+    """
+
+    import sklearn
+
+    if hasattr(estimator_class, "__module__"):
+        module_name = estimator_class.__module__
+    else:
+        module_name = None
+
+    if module_name is None or not module_name.startswith("sklearn."):
+        # Not a scikit-learn estimator. Do not link to the scikit-learn
+        # documentation.
+        return None
+
+    if ".dev" in sklearn.__version__:
+        doc_version = "dev"
+    else:
+        doc_version = ".".join(sklearn.__version__.split(".")[:2])
+    class_doc_base_url = CLASS_DOC_URL_PREFIX.format(doc_version=doc_version)
+
+    # Strip private submodule component if any:
+    if "._" in module_name:
+        module_name = module_name.split("._")[0]
+
+    class_name = estimator_class.__qualname__
+
+    docstring = estimator_class.__doc__
+
+    m = re.search(f"{module_name} : (.+)\\n", docstring)
+    if m is None:
+        # No match found in the docstring, return None to indicate that we
+        # cannot link.
+        return None
+
+    # Extract the first word of the type information as disambiguation suffix
+    # to build the fragment
+    param_type = m.group(1)
+
+    base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
+    text_fragment = f"{quote(method_name)},-{quote(method_name)}"
+
+    return f"{base_url}#:~:text={text_fragment}"
+
+
+def _doc_row(estimator_class, method_name):
+    """
+    Generate an HTML table row containing a link to the online
+    documentation for a specific parameter of an estimator.
+    If the link cannot be generated, an empty string is returned.
+    """
+
+    link = get_module_doc_link(estimator_class, method_name)
+
+    if link:
+        link_string = (
+            f'rel="noreferrer" target="_blank" href='
+            f"{link} "
+            f'style="color: white; background: black;">?<span>Online `{method_name}` '
+            f"documentation</span>"
+        )
+    else:
+        link_string = (
+            f'style="color: white; background: black;">?<span>Online documentation'
+            f" for `{method_name}` not found </span>"
+        )
+
+    return link_string
 
 
 def _methods_html_repr(methods):
@@ -29,12 +105,17 @@ def _methods_html_repr(methods):
        <tr class="default">
            <td>{name}&nbsp;</td>
            <td>{signature}</td>
-
+           <td><a class="sk-estimator-doc-link
+                                 {doc_link}
+                                </a>
+            </td>
        </tr>
     """
     # Add this <td>{doclink}</td>
     rows = [
-        ROW_TEMPLATE.format(name=name, signature=signature)  # Fix me: doclink=doclink)
+        ROW_TEMPLATE.format(
+            name=name, signature=signature, doc_link=_doc_row(methods.estimator, name)
+        )  # Fix me: doclink=doclink)
         for name, signature in methods.items()
     ]
 
