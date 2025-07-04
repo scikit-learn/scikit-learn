@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -369,3 +371,22 @@ def test_get_response_values_multilabel_indicator(response_method):
         assert (y_pred > 1).sum() > 0
     else:  # response_method == "predict"
         assert np.logical_or(y_pred == 0, y_pred == 1).all()
+
+
+def test_response_values_type_of_target_on_classes_no_warning():
+    """
+    Ensure that _get_response_values doesn't raise the "unique classes > 50% of samples"
+    warning when calling `type_of_target(classes_)`.
+
+    non-regression test for issue #31583.
+    """
+    X = np.random.RandomState(0).randn(120, 3)
+    # 30 classes, less than 50% of number of samples
+    y = np.repeat(np.arange(30), 4)
+
+    clf = LogisticRegression().fit(X, y)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+
+        _get_response_values(clf, X, response_method="predict_proba")
