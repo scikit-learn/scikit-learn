@@ -501,7 +501,7 @@ class MethodMetadataRequest:
         return res
 
     def _consumes(self, params):
-        """Return the subset of given `params` consumed by the method that owns this
+        """Return the subset of `params` that are consumed by the method that owns this
         instance.
 
         Parameters
