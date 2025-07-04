@@ -404,13 +404,12 @@ Tips on Practical Use
 
 * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
   choice.  If you have a lot of noisy observations you should decrease it:
-  decreasing C corresponds to more regularization (see example below).
+  decreasing C corresponds to more regularization.
 
   :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
   it becomes large, and prediction results stop improving after a certain
   threshold. Meanwhile, larger ``C`` values will take more time to train,
   sometimes up to 10 times longer, as shown in [#3]_.
-
 
 * Support Vector Machine algorithms are not scale invariant, so **it
   is highly recommended to scale your data**. For example, scale each
@@ -635,7 +634,7 @@ misclassified or within the margin boundary. Ideally, the value :math:`y_i
 indicates a perfect prediction. But problems are usually not always perfectly
 separable with a hyperplane, so we allow some samples to be at a distance :math:`\zeta_i` from
 their correct margin boundary. The penalty term `C` controls the strength of
-this penalty, and as a result, acts as an inverse regularization parameter
+this penalty, and as a result, acts as an inverse regularization parameter:
 (see the figure below). Also please refer to the note below.
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_hyperplane_margin_001.png
