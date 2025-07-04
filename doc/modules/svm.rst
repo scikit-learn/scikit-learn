@@ -635,7 +635,6 @@ indicates a perfect prediction. But problems are usually not always perfectly
 separable with a hyperplane, so we allow some samples to be at a distance :math:`\zeta_i` from
 their correct margin boundary. The penalty term `C` controls the strength of
 this penalty, and as a result, acts as an inverse regularization parameter:
-(see the figure below). Also please refer to the note below.
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_hyperplane_margin_001.png
    :align: center
