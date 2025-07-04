@@ -1,10 +1,12 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from collections import UserDict
+
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
-def _methods_html_repr(methods_dict):
+def _methods_html_repr(methods):
     """Generate HTML representation of estimator methods.
     Creates an HTML table with methods names, signature
     and link to its documentation. It is wrapped in a collapsible
@@ -33,11 +35,15 @@ def _methods_html_repr(methods_dict):
     # Add this <td>{doclink}</td>
     rows = [
         ROW_TEMPLATE.format(name=name, signature=signature)  # Fix me: doclink=doclink)
-        for name, signature in methods_dict.items()
+        for name, signature in methods.items()
     ]
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
 
-class MethodsDict(ReprHTMLMixin, dict):
+class MethodsDict(ReprHTMLMixin, UserDict):
     _html_repr = _methods_html_repr
+
+    def __init__(self, methods, estimator_class):
+        super().__init__(methods)
+        self.estimator = estimator_class

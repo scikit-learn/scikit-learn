@@ -318,13 +318,15 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     def _get_methods_html(self, deep=True):
         init_func = getattr(self.__init__, "deprecated_original", self)
 
-        methods = {}
-        for name in dir(init_func):
-            method = getattr(init_func, name)
-            if callable(method) and not name.startswith("_"):
-                methods[name] = str(inspect.signature(method))
+        methods = {
+            name: str(inspect.signature(getattr(init_func, name)))
+            for name in dir(init_func)
+            if callable(getattr(init_func, name)) and not name.startswith("_")
+        }
 
-        return MethodsDict(methods)
+        estimator_class = init_func.__class__
+
+        return MethodsDict(methods, estimator_class)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
