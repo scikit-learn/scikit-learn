@@ -1236,10 +1236,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         tic = time()
         if is_training_data:
-            self._bin_mapper = self._bin_mapper.fit(
+            X_binned = self._bin_mapper.fit_transform(
                 X, sample_weight=sample_weight
             )  # F-aligned array
-            X_binned = self._bin_mapper.transform(X)
         else:
             X_binned = self._bin_mapper.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster

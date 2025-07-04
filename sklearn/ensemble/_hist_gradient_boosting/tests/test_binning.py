@@ -205,7 +205,10 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
     n_samples = 200
     X = rng.randn(n_samples, 3)
     if n_bins is None:
-        n_bins = np.unique(X[:, rng.randint(3)]).shape[0] + rng.randint(5)
+        # Set n_bins to a value strictly larger than the number of unique values in at
+        # least one of the data columns: in this case, the bin thresholds should
+        # be set to midpoints between successive unique values.
+        n_bins = np.unique(X[:, rng.randint(X.shape[1])]).shape[0] + rng.randint(5) + 1
 
     sw = rng.randint(0, 5, size=n_samples)
     X_repeated = np.repeat(X, sw, axis=0)

@@ -49,9 +49,8 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     if missing_mask.any():
         col_data = col_data[~missing_mask]
 
-    # if sample weight is not None and null values exist
-    # we need to remove those before calculating the
-    # distinct points
+    # If sample_weight is not None and 0-weighted values exist, we need to
+    # remove those before calculating the distinct points.
     if sample_weight is not None:
         col_data_non_null = col_data[sample_weight != 0]
         distinct_values = np.unique(col_data_non_null).astype(X_DTYPE)
@@ -81,7 +80,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
-        # TODO: check if there is a better way to implement this
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         sample_weight = sample_weight[~missing_mask]
@@ -95,7 +93,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         )
         assert bin_thresholds.shape[0] == max_bins - 1
 
-        # Remove duplicated midpoints if they exist and shift
+        # Remove duplicated thresholds if they exist.
         unique_bin_values = np.unique(bin_thresholds)
         if unique_bin_values.shape[0] != bin_thresholds.shape[0]:
             bin_thresholds = unique_bin_values
