@@ -847,3 +847,15 @@ def test_gpr_predict_input_not_modified():
     _, _ = gpr.predict(X2, return_std=True)
 
     assert_allclose(X2, X2_copy)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_gpr_predict_no_cov_no_std_return(kernel):
+    """
+    Check that only y_mean is returned when return_cov=False and
+    return_std=False.
+    """
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred = gpr.predict(X, return_cov=False, return_std=False)
+
+    assert_allclose(y_pred, y)
