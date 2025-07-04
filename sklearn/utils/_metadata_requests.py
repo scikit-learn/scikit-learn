@@ -501,26 +501,27 @@ class MethodMetadataRequest:
         return res
 
     def _consumes(self, params):
-        """Check whether the given metadata are consumed by this method.
+        """Return the subset of given `params` consumed by the method that owns this
+        instance.
 
         Parameters
         ----------
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameter names to test for consumption.
 
         Returns
         -------
-        consumed : set of str
-            A set of parameters which are consumed by this method.
+        method_consumes : set of str
+            A subset of parameters from `params` which are consumed by this method.
         """
         params = set(params)
-        res = set()
-        for prop, alias in self._requests.items():
-            if alias is True and prop in params:
-                res.add(prop)
+        method_consumes = set()
+        for metadata_name, alias in self._requests.items():
+            if alias is True and metadata_name in params:
+                method_consumes.add(metadata_name)
             elif isinstance(alias, str) and alias in params:
-                res.add(alias)
-        return res
+                method_consumes.add(alias)
+        return method_consumes
 
     def _serialize(self):
         """Serialize the object.
@@ -571,22 +572,22 @@ class MetadataRequest:
             )
 
     def consumes(self, method, params):
-        """Check whether the given metadata are consumed by the given method.
+        """Return the subset of given `params` consumed by the given `method`.
 
         .. versionadded:: 1.4
 
         Parameters
         ----------
         method : str
-            The name of the method to check.
+            The name of the method for which to determine consumed parameters.
 
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameter names to test for consumption.
 
         Returns
         -------
-        consumed : set of str
-            A set of parameters which are consumed by the given method.
+        method_consumes : set of str
+            A subset of parameters from `params` which are consumed by this method.
         """
         return getattr(self, method)._consumes(params=params)
 
@@ -900,35 +901,41 @@ class MetadataRouter:
         return self
 
     def consumes(self, method, params):
-        """Check whether the given metadata is consumed by the given method.
+        """Return the subset of given `params` consumed by the given `method`.
+
+        A `param` is considered consumed if it is used by the :term:`router` itself,
+        or by any sub-estimator (or their sub-estimators) that this router delegates
+        metadata to via the specified `method`.
 
         .. versionadded:: 1.4
 
         Parameters
         ----------
         method : str
-            The name of the method to check.
+            The name of the method for which to determine consumed parameters.
 
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameter names to test for consumption.
 
         Returns
         -------
-        consumed : set of str
-            A set of parameters which are consumed by the given method.
+        method_consumes : set of str
+            A subset of parameters from `params` which are consumed by this method.
         """
-        res = set()
+        method_consumes = set()
         if self._self_request:
-            res = res | self._self_request.consumes(method=method, params=params)
+            method_consumes.update(
+                self._self_request.consumes(method=method, params=params)
+            )
 
         for _, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
-                    res = res | route_mapping.router.consumes(
-                        method=callee, params=params
+                    method_consumes.update(
+                        route_mapping.router.consumes(method=callee, params=params)
                     )
 
-        return res
+        return method_consumes
 
     def _get_param_names(self, *, method, return_alias, ignore_self_request):
         """Get names of all metadata that can be consumed or routed by specified \
