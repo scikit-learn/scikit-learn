@@ -1,0 +1,118 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from collections import UserDict
+from urllib.parse import quote
+
+from sklearn.utils._repr_html.base import ReprHTMLMixin
+
+CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
+
+
+def get_module_doc_link(estimator_class, method_name):
+    """URL to the relevant section of the docstring using a Text Fragment
+    https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
+    """
+    import sklearn
+
+    if hasattr(estimator_class, "__module__"):
+        module_name = estimator_class.__module__
+    else:
+        module_name = None
+
+    if module_name is None or not module_name.startswith("sklearn."):
+        # Not a scikit-learn estimator. Do not link to the scikit-learn
+        # documentation.
+        return None
+
+    if ".dev" in sklearn.__version__:
+        doc_version = "dev"
+    else:
+        doc_version = ".".join(sklearn.__version__.split(".")[:2])
+    class_doc_base_url = CLASS_DOC_URL_PREFIX.format(doc_version=doc_version)
+
+    # Strip private submodule component if any:
+    if "._" in module_name:
+        module_name = module_name.split("._")[0]
+
+    class_name = estimator_class.__qualname__
+
+    docstring = getattr(estimator_class, method_name).__doc__
+
+    base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
+    method_fragment = f"{quote(module_name)}.{class_name}.{method_name}"
+
+    return f"{base_url}#{method_fragment}", docstring
+
+
+def _doc_row(estimator_class, method_name):
+    """
+    Generate an HTML table row containing a link to the online
+    documentation for a specific parameter of an estimator.
+    If the link cannot be generated, an empty string is returned.
+    """
+
+    link, docstring = get_module_doc_link(estimator_class, method_name)
+
+    if link:
+        link_string = (
+            f'rel="noreferrer" target="_blank" href='
+            f"{link} "
+            f'style="color: white; background: black;">?<span>Online `{docstring}` '
+            f"documentation</span>"
+        )
+    else:
+        link_string = (
+            f'style="color: white; background: black;">?<span>Online documentation'
+            f" for `{method_name}` not found </span>"
+        )
+
+    return link_string
+
+
+def _methods_html_repr(methods):
+    """Generate HTML representation of estimator methods.
+    Creates an HTML table with methods names, signature
+    and link to its documentation. It is wrapped in a collapsible
+    details element.
+    """
+
+    HTML_TEMPLATE = """
+       <div class="estimator-table">
+           <details>
+               <summary>Methods</summary>
+               <table class="body-table">
+                 <tbody>
+                   {rows}
+                 </tbody>
+               </table>
+           </details>
+       </div>
+    """
+    ROW_TEMPLATE = """
+       <tr class="default">
+           <td class="param">{name}&nbsp;</td>
+           <td class="value">{signature}</td>
+           <td><a class="sk-estimator-doc-link
+                                 {doc_link}
+                                </a>
+            </td>
+       </tr>
+    """
+
+    rows = [
+        ROW_TEMPLATE.format(
+            name=name, signature=signature, doc_link=_doc_row(methods.estimator, name)
+        )  # Fix me: doclink=doclink)
+        for name, signature in methods.items()
+    ]
+
+    return HTML_TEMPLATE.format(rows="\n".join(rows))
+
+
+class MethodsDict(ReprHTMLMixin, UserDict):
+    _html_repr = _methods_html_repr
+
+    def __init__(self, methods, estimator_class):
+        super().__init__(methods)
+        self.estimator = estimator_class

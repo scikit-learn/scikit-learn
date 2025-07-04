@@ -21,6 +21,7 @@ from .utils._missing import is_scalar_nan
 from .utils._param_validation import validate_parameter_constraints
 from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from .utils._repr_html.estimator import estimator_html_repr
+from .utils._repr_html.methods import MethodsDict
 from .utils._repr_html.params import ParamsDict
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
@@ -313,6 +314,19 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         )
 
         return ParamsDict(ordered_out, non_default=non_default_ls)
+
+    def _get_methods_html(self, deep=True):
+        init_func = getattr(self.__init__, "deprecated_original", self)
+
+        methods = {
+            name: str(inspect.signature(getattr(init_func, name)))
+            for name in dir(init_func)
+            if callable(getattr(init_func, name)) and not name.startswith("_")
+        }
+
+        estimator_class = init_func.__class__
+
+        return MethodsDict(methods, estimator_class)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
