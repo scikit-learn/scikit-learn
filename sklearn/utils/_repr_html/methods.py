@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import re
 from collections import UserDict
 from urllib.parse import quote
 
@@ -14,7 +13,6 @@ def get_module_doc_link(estimator_class, method_name):
     """URL to the relevant section of the docstring using a Text Fragment
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
-
     import sklearn
 
     if hasattr(estimator_class, "__module__"):
@@ -39,22 +37,12 @@ def get_module_doc_link(estimator_class, method_name):
 
     class_name = estimator_class.__qualname__
 
-    docstring = estimator_class.__doc__
-
-    m = re.search(f"{module_name} : (.+)\\n", docstring)
-    if m is None:
-        # No match found in the docstring, return None to indicate that we
-        # cannot link.
-        return None
-
-    # Extract the first word of the type information as disambiguation suffix
-    # to build the fragment
-    param_type = m.group(1)
+    docstring = getattr(estimator_class, method_name).__doc__
 
     base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
-    text_fragment = f"{quote(method_name)},-{quote(method_name)}"
+    method_fragment = f"{quote(module_name)}.{class_name}.{method_name}"
 
-    return f"{base_url}#:~:text={text_fragment}"
+    return f"{base_url}#{method_fragment}", docstring
 
 
 def _doc_row(estimator_class, method_name):
@@ -64,13 +52,13 @@ def _doc_row(estimator_class, method_name):
     If the link cannot be generated, an empty string is returned.
     """
 
-    link = get_module_doc_link(estimator_class, method_name)
+    link, docstring = get_module_doc_link(estimator_class, method_name)
 
     if link:
         link_string = (
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
-            f'style="color: white; background: black;">?<span>Online `{method_name}` '
+            f'style="color: white; background: black;">?<span>Online `{docstring}` '
             f"documentation</span>"
         )
     else:
@@ -103,15 +91,15 @@ def _methods_html_repr(methods):
     """
     ROW_TEMPLATE = """
        <tr class="default">
-           <td>{name}&nbsp;</td>
-           <td>{signature}</td>
+           <td class="param">{name}&nbsp;</td>
+           <td class="value">{signature}</td>
            <td><a class="sk-estimator-doc-link
                                  {doc_link}
                                 </a>
             </td>
        </tr>
     """
-    # Add this <td>{doclink}</td>
+
     rows = [
         ROW_TEMPLATE.format(
             name=name, signature=signature, doc_link=_doc_row(methods.estimator, name)
