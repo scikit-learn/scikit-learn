@@ -1102,7 +1102,7 @@ class OutlierMixin:
         # For that, we calculate routing and check if anything would be routed
         # to `predict` if we were to route them.
         if _routing_enabled():
-            transform_params = self._get_metadata_request().consumes(
+            transform_params = get_routing_for_object(self).consumes(
                 method="predict", params=kwargs.keys()
             )
             if transform_params:
