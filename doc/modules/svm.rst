@@ -411,7 +411,6 @@ Tips on Practical Use
   threshold. Meanwhile, larger ``C`` values will take more time to train,
   sometimes up to 10 times longer, as shown in [#3]_.
 
-
 * Support Vector Machine algorithms are not scale invariant, so **it
   is highly recommended to scale your data**. For example, scale each
   attribute on the input vector X to [0,1] or [-1,+1], or standardize it
