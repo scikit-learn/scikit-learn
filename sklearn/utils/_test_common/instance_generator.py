@@ -620,21 +620,26 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(solver="lbfgs"),
-            dict(solver="liblinear"),
-            dict(solver="newton-cg"),
-            dict(solver="newton-cholesky"),
-            dict(solver="newton-cholesky", class_weight="balanced"),
-        ]
-    },
-    LogisticRegressionCV: {
-        "check_sample_weight_equivalence": [
-            dict(solver="lbfgs"),
-            dict(solver="newton-cholesky"),
-            dict(solver="newton-cholesky", class_weight="balanced"),
+            dict(solver="lbfgs", C=1e6, max_iter=1_000),
+            dict(solver="liblinear", max_iter=1_000),
+            dict(solver="newton-cg", max_iter=1_000),
+            dict(solver="newton-cholesky", C=1e6, max_iter=1_000),
+            dict(solver="newton-cholesky", class_weight="balanced", max_iter=1_000),
+            dict(solver="saga", C=1e6, tol=1e-10, max_iter=10_000),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="liblinear"),
+            dict(solver="lbfgs", max_iter=1_000),
+            dict(solver="sag", C=1e6, tol=1e-10, max_iter=10_000),
+        ],
+    },
+    LogisticRegressionCV: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            dict(solver="lbfgs", max_iter=1_000),
+            dict(solver="newton-cholesky", max_iter=1_000),
+            dict(solver="newton-cholesky", class_weight="balanced", max_iter=1_000),
+        ],
+        "check_sample_weight_equivalence_on_sparse_data": [
+            dict(solver="liblinear", max_iter=1_000),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
@@ -1027,15 +1032,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     LinearSVR: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    LogisticRegression: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
