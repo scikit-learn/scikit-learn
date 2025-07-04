@@ -404,7 +404,7 @@ Tips on Practical Use
 
 * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
   choice.  If you have a lot of noisy observations you should decrease it:
-  decreasing C corresponds to more regularization (see example below).
+  decreasing C corresponds to more regularization.
 
   :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
   it becomes large, and prediction results stop improving after a certain
