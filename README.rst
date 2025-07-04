@@ -59,7 +59,7 @@ Website: https://scikit-learn.org
 Installation
 ------------
 
-**Important‼️**
+**Important**
 
 scikit-learn requires Python >= |PythonMinVersion| and several other dependencies.
 See the complete list below before installing. 
