@@ -1021,6 +1021,7 @@ def _convert_container(
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
+        array = array[:, None] if array.ndim == 1 else array
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
@@ -1042,6 +1043,9 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "pyarrow_array":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        return pa.array(container)
     elif constructor_name == "polars_series":
         pl = pytest.importorskip("polars", minversion=minversion)
         return pl.Series(values=container)
@@ -1338,6 +1342,17 @@ def _array_api_for_tests(array_namespace, device):
             raise SkipTest(
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
+            )
+    elif array_namespace == "torch" and device == "xpu":  # pragma: nocover
+        if not hasattr(xp, "xpu"):
+            # skip xpu testing for PyTorch <2.4
+            raise SkipTest(
+                "XPU is not available because the current PyTorch install was not "
+                "built with XPU support."
+            )
+        if not xp.xpu.is_available():
+            raise SkipTest(
+                "Skipping XPU device test because no XPU device is available"
             )
     elif array_namespace == "cupy":  # pragma: nocover
         import cupy

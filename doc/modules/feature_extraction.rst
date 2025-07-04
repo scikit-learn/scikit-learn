@@ -583,7 +583,7 @@ Again please see the :ref:`reference documentation
   attribute::
 
     >>> transformer.idf_
-    array([1. ..., 2.25..., 1.84...])
+    array([1., 2.25, 1.84])
 
   As tf-idf is very often used for text features, there is also another
   class called :class:`TfidfVectorizer` that combines all the options of

@@ -572,7 +572,7 @@ def partial_dependence(
     >>> gb = GradientBoostingClassifier(random_state=0).fit(X, y)
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
-    (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
+    (array([[-4.52,  4.52]]), [array([ 0.,  1.])])
     """
     check_is_fitted(estimator)
 

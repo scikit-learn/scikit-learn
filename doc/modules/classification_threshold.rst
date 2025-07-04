@@ -28,7 +28,7 @@ cut-off rules: a positive class is predicted when the conditional probability
 :math:`P(y|X)` is greater than 0.5 (obtained with :term:`predict_proba`) or if the
 decision score is greater than 0 (obtained with :term:`decision_function`).
 
-Here, we show an example that illustrates the relation between conditional
+Here, we show an example that illustrates the relatonship between conditional
 probability estimates :math:`P(y|X)` and class labels::
 
     >>> from sklearn.datasets import make_classification
@@ -38,8 +38,8 @@ probability estimates :math:`P(y|X)` and class labels::
     >>> classifier.predict_proba(X[:4])
     array([[0.94     , 0.06     ],
            [0.94     , 0.06     ],
-           [0.0416..., 0.9583...],
-           [0.0416..., 0.9583...]])
+           [0.0416, 0.9583],
+           [0.0416, 0.9583]])
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
@@ -112,10 +112,10 @@ a meaningful metric for their use case.
         >>> base_model = LogisticRegression()
         >>> model = TunedThresholdClassifierCV(base_model, scoring=scorer)
         >>> scorer(model.fit(X, y), X, y)
-        0.88...
+        0.88
         >>> # compare it with the internal score found by cross-validation
         >>> model.best_score_
-        np.float64(0.86...)
+        np.float64(0.86)
 
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
