@@ -66,7 +66,7 @@ def _check_zero_division(zero_division):
         return np.nan
 
 
-def _check_targets(y_true, y_pred):
+def _check_targets(y_true, y_pred, sample_weight=None):
     """Check that y_true and y_pred belong to the same classification task.
 
     This converts multiclass or binary types to a common shape, and raises a
@@ -83,6 +83,8 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array-like
 
+    sample_weight : array-like, default=None
+
     Returns
     -------
     type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
@@ -93,10 +95,11 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
-    xp, _ = get_namespace(y_true, y_pred)
-    check_consistent_length(y_true, y_pred)
+    xp, _ = get_namespace(y_true, y_pred, sample_weight)
+    check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
+    _check_sample_weight(sample_weight, y_true)
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -200,6 +203,8 @@ def _validate_multiclass_probabilistic_prediction(
         raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    _check_sample_weight(sample_weight, y_true)
+
     lb = LabelBinarizer()
 
     if labels is not None:
@@ -356,8 +361,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
@@ -464,7 +468,7 @@ def confusion_matrix(
     (0, 2, 1, 1)
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -484,8 +488,6 @@ def confusion_matrix(
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
         sample_weight = np.asarray(sample_weight)
-
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -655,10 +657,9 @@ def multilabel_confusion_matrix(
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     xp, _, device_ = get_namespace_and_device(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, device=device_)
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
@@ -1171,8 +1172,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
@@ -3134,8 +3134,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     0.75
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
 
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
 
