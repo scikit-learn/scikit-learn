@@ -67,7 +67,7 @@ See the complete list below before installing.
 Dependencies
 ~~~~~~~~~~~~
 
-**Core Requirements✅**
+**Core Requirements**
 
 - Python (>= |PythonMinVersion|)
 - NumPy (>= |NumPyMinVersion|)
@@ -113,7 +113,7 @@ for a history of notable changes to scikit-learn.
 Development
 -----------
 
-**🤝New contributors Welcome!** We welcome contributors of all experience levels. The
+**New contributors Welcome!** We welcome contributors of all experience levels. The
 scikit-learn community goals are to be helpful, welcoming, and effective.
 
 **Before Contributing** Please read our `Development Guide <https://scikit-learn.org/stable/developers/index.html>`_
@@ -136,7 +136,7 @@ You can check the latest sources with the command::
 Contributing
 ~~~~~~~~~~~~
 
-**📚Learn More:** To make a contribution to scikit-learn, please see our `Contributing guide <https://scikit-learn.org/dev/developers/contributing.html>`_.
+**Learn More:** To make a contribution to scikit-learn, please see our `Contributing guide <https://scikit-learn.org/dev/developers/contributing.html>`_.
 
 **Good First Issues:** Look for issues labeled `"good first issue" <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_ to get started.
 
