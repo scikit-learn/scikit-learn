@@ -66,7 +66,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     if len(distinct_values) <= max_bins:
         midpoints = distinct_values[:-1] + distinct_values[1:]
         bin_thresholds = midpoints * 0.5
-
     elif sample_weight is None:
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
@@ -74,7 +73,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
             col_data, percentiles, method="averaged_inverted_cdf"
         )
         assert bin_thresholds.shape[0] == max_bins - 1
-
     else:
         # We could compute approximate midpoint percentiles using the output of
         # np.unique(col_data, return_counts) instead but this is more
@@ -84,7 +82,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         percentiles = percentiles[1:-1]
         sample_weight = sample_weight[~missing_mask]
         sample_weight = sample_weight[sort_idx]
-
         bin_thresholds = np.array(
             [
                 _averaged_weighted_percentile(col_data, sample_weight, percentile)
@@ -92,7 +89,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
             ]
         )
         assert bin_thresholds.shape[0] == max_bins - 1
-
         # Remove duplicated thresholds if they exist.
         unique_bin_values = np.unique(bin_thresholds)
         if unique_bin_values.shape[0] != bin_thresholds.shape[0]:
