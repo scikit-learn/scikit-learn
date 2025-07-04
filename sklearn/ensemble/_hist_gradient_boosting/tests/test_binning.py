@@ -113,6 +113,17 @@ def test_map_to_bins(max_bins):
         assert binned[max_idx, feature_idx] == max_bins - 1
 
 
+def test_unique_bins_repeated_weighted():
+    col_data = np.asarray([1, 2, 3, 4, 5, 6]).reshape(-1, 1)
+    sample_weight = np.asarray([1000, 1, 1, 1, 1, 1])
+    col_data_repeated = np.asarray(([1] * 1000) + [2, 3, 4, 5, 6]).reshape(-1, 1)
+
+    binmapper = _BinMapper(n_bins=4).fit(col_data, sample_weight=sample_weight)
+    binmapper_repeated = _BinMapper(n_bins=4).fit(col_data_repeated)
+
+    assert_array_equal(binmapper.bin_thresholds_, binmapper_repeated.bin_thresholds_)
+
+
 @pytest.mark.parametrize("max_bins", [5, 10, 42])
 def test_bin_mapper_random_data(max_bins):
     n_samples, n_features = DATA.shape
