@@ -404,7 +404,11 @@ Tips on Practical Use
 
 * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
   choice.  If you have a lot of noisy observations you should decrease it:
-  decreasing C corresponds to more regularization.
+  decreasing C corresponds to more regularization. This behavior is 
+  demonstrated in the 
+  example :ref:`sphx_glr_auto_examples_svm_plot_svm_hyperplane_margin.py`, 
+  which illustrates how different values of ``C`` affect the margin width 
+  in a linear SVM.
 
   :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
   it becomes large, and prediction results stop improving after a certain
@@ -467,10 +471,6 @@ Tips on Practical Use
   Increasing ``C`` yields a more complex model (more features are selected).
   The ``C`` value that yields a "null" model (all weights equal to zero) can
   be calculated using :func:`l1_min_c`.
-
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_svm_plot_svm_hyperplane_margin.py`
 
 .. _svm_kernels:
 
