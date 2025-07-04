@@ -246,6 +246,8 @@ class Pipeline(_BaseComposition):
     }
 
     def __init__(self, steps, *, transform_input=None, memory=None, verbose=False):
+        if not steps:
+            raise ValueError("Please add steps to Pipeline")
         self.steps = steps
         self.transform_input = transform_input
         self.memory = memory
