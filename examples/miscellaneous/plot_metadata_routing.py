@@ -84,7 +84,7 @@ def check_metadata(obj, **kwargs):
 # %%
 # A utility function to nicely print the routing information of an object:
 def print_routing(obj):
-    pprint(obj.get_metadata_routing()._serialize())
+    pprint(get_routing_for_object(obj)._serialize())
 
 
 # %%

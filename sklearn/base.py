@@ -32,6 +32,7 @@ from .utils._tags import (
     get_tags,
 )
 from .utils.fixes import _IS_32BIT
+from .utils.metadata_routing import get_routing_for_object
 from .utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
@@ -872,7 +873,7 @@ class TransformerMixin(_SetOutputMixin):
         # For that, we calculate routing and check if anything would be routed
         # to `transform` if we were to route them.
         if _routing_enabled():
-            transform_params = self._get_metadata_request().consumes(
+            transform_params = get_routing_for_object(self).consumes(
                 method="transform", params=fit_params.keys()
             )
             if transform_params:

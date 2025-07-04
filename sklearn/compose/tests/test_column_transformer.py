@@ -2769,7 +2769,3 @@ def test_unused_transformer_request_present():
     )
     router = ct.get_metadata_routing()
     assert router.consumes("fit", ["metadata"]) == set(["metadata"])
-
-
-# End of Metadata Routing Tests
-# =============================

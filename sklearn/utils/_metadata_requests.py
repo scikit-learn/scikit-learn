@@ -814,7 +814,7 @@ class MetadataRouter:
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``router`` is a
     :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance (or another
-    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance if the
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance if a
     sub-estimator also acts as a router).
 
     # TODO: check if we can de-tangle MetadataRequest and MetadataRouter
