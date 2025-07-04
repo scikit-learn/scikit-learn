@@ -637,6 +637,7 @@ their correct margin boundary. The penalty term `C` controls the strength of
 this penalty, and as a result, acts as an inverse regularization parameter:
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_hyperplane_margin_001.png
+   :target: ../auto_examples/examples/svm/plot_svm_hyperplane_margin.py
    :align: center
    :scale: 75
 
