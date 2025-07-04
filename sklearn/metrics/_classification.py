@@ -99,7 +99,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
-    _check_sample_weight(sample_weight, y_true)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true)
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -203,7 +204,8 @@ def _validate_multiclass_probabilistic_prediction(
         raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
-    _check_sample_weight(sample_weight, y_true)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true)
 
     lb = LabelBinarizer()
 
@@ -3439,6 +3441,8 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     assert_all_finite(y_prob)
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
