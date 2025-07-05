@@ -58,7 +58,6 @@ routing information is also stored in the meta-estimator's `MetadataRouter`.
 
 Conceptually, this information looks like:
 
-# TODO: check if we can de-tangle MetadataRequest and MetadataRouter:
 ```
 {
     "sub_estimator1": (
@@ -543,15 +542,13 @@ class MethodMetadataRequest:
 
 
 class MetadataRequest:
-    """Contains the metadata request info of a consumer.
+    """Contains the metadata request info of a :term:`consumer`.
 
     Instances of `MethodMetadataRequest` are used in this class for each
     available method under `metadatarequest.{method}`.
 
-    Consumers of metadata return a serialized version of this class as the output of
-    `_get_metadata_request()`.
-    # TODO:Check if `_get_metadata_request` should be a public method; otherwise, we
-    # should not expose a private method here.
+    A serialised output of this class is returned when calling
+    `get_routing_for_object(instance)` on a consumer instance.
 
     .. versionadded:: 1.3
 
@@ -719,9 +716,9 @@ class MetadataRequest:
         return str(repr(self))
 
 
-# Metadata Routing for Routers
-# ============================
-# This section includes all objects required for MetadataRouter which is used
+# Building a MetadataRouter
+# =========================
+# This section includes all objects required for building a MetadataRouter which is used
 # in routers, returned by their ``get_metadata_routing``.
 
 # `RouterMappingPair` is used to store a `(mapping, router)` tuple where `mapping` is a
@@ -817,8 +814,6 @@ class MetadataRouter:
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance if a
     sub-estimator also acts as a router).
 
-    # TODO: check if we can de-tangle MetadataRequest and MetadataRouter
-
     .. versionadded:: 1.3
 
     Parameters
@@ -841,9 +836,6 @@ class MetadataRouter:
         self._self_request = None
         self.owner = owner
 
-    # TODO: check if it is possible and within scope of this PR to take apart this
-    # functionality; we can use `_get_metadata_request` also for routers and can use it
-    # to set self requests
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
@@ -890,7 +882,7 @@ class MetadataRouter:
         Parameters
         ----------
         method_mapping : MethodMapping
-            The mapping between the child (:term:`consumer`) and the parent's
+            The mapping between the child's (:term:`consumer`'s) and the parent's
             (:term:`router`'s) methods.
 
         **objs : dict
@@ -1538,9 +1530,6 @@ class _MetadataRequester:
         """
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
-            # TODO: check if the following now works without recursion, if so
-            # get_routing_for_object can also be simplified
-            # requests = get_routing_for_object(self)
         else:
             requests = self._get_default_requests()
 
