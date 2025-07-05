@@ -13,8 +13,8 @@ from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
-    load_iris,
     load_diabetes,
+    load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
@@ -1671,23 +1671,23 @@ def test_f1_score_multiclass_pos_label_ignored():
     data = load_iris()
     X = data.data
     y = np.array([data.target_names[label] for label in data.target])
-    
+
     # This should not raise an error
     f1_scorer = make_scorer(f1_score, average='micro', pos_label=1)
     classifier = LogisticRegression(random_state=0, max_iter=1000)
-    
+
     scores = cross_val_score(classifier, X, y, cv=3, scoring=f1_scorer)
     assert len(scores) == 3
     assert all(~np.isnan(scores))
 
 
 def test_multiclass_scorers_ignore_pos_label():
-    """Check that multiclass averages ignore pos_label for f1, precision, recall."""    
+    """Check that multiclass averages ignore pos_label for f1, precision, recall."""
     data = load_iris()
     X = data.data
     y = np.array([data.target_names[label] for label in data.target])
     classifier = LogisticRegression(random_state=0, max_iter=1000)
-    
+
     # This should not raise an error
     for metric in [f1_score, precision_score, recall_score]:
         for avg in ['micro', 'macro', 'weighted']:
@@ -1701,9 +1701,9 @@ def test_binary_classification_pos_label_still_works():
     """Check that pos_label still works for binary classification."""
     X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
     y = np.array(['class_a', 'class_b'])[y]
-    
+
     classifier = LogisticRegression(random_state=0)
-    
+
     # This should work with valid pos_label
     scorer = make_scorer(f1_score, pos_label='class_a')
     scores = cross_val_score(classifier, X, y, cv=3, scoring=scorer)
