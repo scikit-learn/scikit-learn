@@ -1665,6 +1665,7 @@ def test_make_scorer_reponse_method_default_warning():
         warnings.simplefilter("error", FutureWarning)
         make_scorer(accuracy_score)
 
+
 def test_f1_score_multiclass_pos_label_ignored():
     """Check that pos_label is ignored for multiclass f1_score with micro average."""
     data = load_iris()

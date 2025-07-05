@@ -721,7 +721,7 @@ def make_scorer(
     if hasattr(score_func, "__name__") and score_func.__name__ in [
         "f1_score",
         "precision_score",
-        "recall_score"
+        "recall_score",
     ]:
         if "average" in kwargs and "pos_label" in kwargs:
             avg = kwargs["average"]
