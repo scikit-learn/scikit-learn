@@ -1,0 +1,301 @@
+Trader_ID,Age_Group,Investment_Type,Investment_Amount_INR,Loss_Percentage,Holding_Period,Platform_Used,Source_of_Advice,Reason_for_Loss,Recovery_Action,Emotional_State_After_Loss,Loss_Year
+T0001,20-30,Stock,398786,37.0,1-3 Months,Upstox,Financial Advisor,FOMO,Exited,Indifferent,2022
+T0002,20-30,Stock,59123,32.49,>1 Year,ICICI Direct,YouTube,Bad Timing,Averaged Down,Indifferent,2022
+T0003,31-40,Mutual Fund,318944,37.26,<1 Month,Upstox,Financial Advisor,Pump & Dump,Still Holding,Motivated to Learn,2020
+T0004,31-40,Futures & Options,63587,22.42,<1 Month,Groww,Instagram,Bad Timing,Still Holding,Panic,2024
+T0005,51+,IPO,75444,92.85,6-12 Months,Zerodha,Self,No Stop Loss,Still Holding,Indifferent,2020
+T0006,20-30,Stock,356692,33.23,3-6 Months,Zerodha,Telegram,FOMO,Shifted to Mutual Funds,Motivated to Learn,2022
+T0007,41-50,Crypto,204081,43.42,3-6 Months,5Paisa,Financial Advisor,Poor Research,Exited,Indifferent,2024
+T0008,31-40,IPO,392272,34.58,6-12 Months,Angel One,Instagram,Poor Research,Averaged Down,Motivated to Learn,2019
+T0009,31-40,Stock,432075,40.24,3-6 Months,Zerodha,Telegram,Bad Timing,Still Holding,Depression,2024
+T0010,51+,Mutual Fund,473828,88.16,6-12 Months,Upstox,Instagram,Leverage,Averaged Down,Indifferent,2023
+T0011,41-50,IPO,234622,86.83,6-12 Months,Groww,Telegram,Leverage,Shifted to Mutual Funds,Panic,2019
+T0012,20-30,Crypto,338962,27.8,6-12 Months,ICICI Direct,YouTube,Pump & Dump,Shifted to Mutual Funds,Indifferent,2022
+T0013,41-50,IPO,461296,90.39,<1 Month,5Paisa,Self,No Stop Loss,Still Holding,Panic,2021
+T0014,51+,Crypto,247881,15.26,3-6 Months,ICICI Direct,Telegram,Bad Timing,Exited,Motivated to Learn,2024
+T0015,31-40,Crypto,206038,76.0,>1 Year,ICICI Direct,YouTube,Bad Timing,Still Holding,Blamed Market,2019
+T0016,20-30,Futures & Options,470703,93.83,3-6 Months,Upstox,YouTube,Leverage,Exited,Panic,2024
+T0017,51+,Stock,408774,57.62,1-3 Months,Upstox,Financial Advisor,Pump & Dump,Averaged Down,Motivated to Learn,2023
+T0018,51+,Crypto,497018,58.14,1-3 Months,5Paisa,Instagram,Pump & Dump,Still Holding,Blamed Market,2023
+T0019,51+,Stock,139973,32.98,3-6 Months,Zerodha,Self,Bad Timing,Averaged Down,Indifferent,2020
+T0020,20-30,Stock,381112,65.49,1-3 Months,Zerodha,YouTube,No Stop Loss,Exited,Indifferent,2020
+T0021,41-50,Mutual Fund,122321,58.14,>1 Year,ICICI Direct,Friends,Leverage,Shifted to Mutual Funds,Blamed Market,2020
+T0022,20-30,Stock,355496,49.48,6-12 Months,Angel One,Friends,Poor Research,Exited,Panic,2019
+T0023,51+,Futures & Options,429741,83.93,1-3 Months,Upstox,Telegram,Bad Timing,Shifted to Mutual Funds,Depression,2022
+T0024,31-40,Futures & Options,252550,34.98,<1 Month,Angel One,Self,FOMO,Exited,Indifferent,2019
+T0025,20-30,Crypto,97194,47.51,6-12 Months,Upstox,Friends,FOMO,Averaged Down,Blamed Market,2019
+T0026,51+,Futures & Options,495762,77.73,6-12 Months,Groww,Friends,Poor Research,Shifted to Mutual Funds,Depression,2020
+T0027,41-50,Crypto,40662,61.33,>1 Year,Zerodha,Financial Advisor,No Stop Loss,Exited,Panic,2023
+T0028,51+,IPO,492023,83.22,1-3 Months,Zerodha,Self,FOMO,Averaged Down,Panic,2023
+T0029,20-30,Crypto,221694,24.59,>1 Year,Upstox,Self,Bad Timing,Exited,Indifferent,2019
+T0030,51+,IPO,306341,56.82,3-6 Months,Upstox,Financial Advisor,Poor Research,Still Holding,Depression,2021
+T0031,51+,Crypto,362159,66.64,6-12 Months,Groww,YouTube,FOMO,Shifted to Mutual Funds,Indifferent,2023
+T0032,20-30,Stock,291875,32.05,3-6 Months,Upstox,Instagram,FOMO,Averaged Down,Motivated to Learn,2021
+T0033,31-40,Mutual Fund,447122,58.46,3-6 Months,ICICI Direct,Financial Advisor,Bad Timing,Exited,Indifferent,2021
+T0034,20-30,Crypto,148656,24.23,<1 Month,5Paisa,Self,Leverage,Still Holding,Motivated to Learn,2023
+T0035,31-40,Futures & Options,116743,70.0,3-6 Months,ICICI Direct,Friends,No Stop Loss,Exited,Panic,2024
+T0036,51+,Futures & Options,33114,15.28,1-3 Months,5Paisa,Instagram,Leverage,Shifted to Mutual Funds,Indifferent,2024
+T0037,51+,IPO,15069,23.95,1-3 Months,ICICI Direct,YouTube,No Stop Loss,Averaged Down,Blamed Market,2020
+T0038,20-30,Futures & Options,201182,86.92,<1 Month,Groww,Telegram,Poor Research,Averaged Down,Panic,2021
+T0039,51+,IPO,402942,27.36,1-3 Months,Upstox,Telegram,Pump & Dump,Exited,Depression,2024
+T0040,41-50,Mutual Fund,430602,68.59,1-3 Months,Groww,Telegram,Poor Research,Exited,Blamed Market,2019
+T0041,51+,Crypto,114633,80.33,6-12 Months,Groww,Instagram,Leverage,Averaged Down,Panic,2024
+T0042,31-40,Mutual Fund,182103,37.29,<1 Month,Groww,Instagram,Poor Research,Shifted to Mutual Funds,Indifferent,2021
+T0043,20-30,Stock,469820,92.63,1-3 Months,ICICI Direct,Instagram,FOMO,Exited,Indifferent,2022
+T0044,41-50,Futures & Options,238796,63.5,>1 Year,Zerodha,Friends,Bad Timing,Averaged Down,Motivated to Learn,2019
+T0045,51+,Stock,282587,89.05,>1 Year,5Paisa,Financial Advisor,Poor Research,Averaged Down,Motivated to Learn,2022
+T0046,20-30,Futures & Options,336712,40.11,<1 Month,5Paisa,Instagram,Bad Timing,Still Holding,Blamed Market,2021
+T0047,51+,Futures & Options,300671,25.18,6-12 Months,5Paisa,Friends,Poor Research,Averaged Down,Indifferent,2023
+T0048,41-50,Mutual Fund,297276,81.7,3-6 Months,Groww,Telegram,Pump & Dump,Still Holding,Blamed Market,2022
+T0049,51+,Crypto,278002,52.85,1-3 Months,5Paisa,YouTube,No Stop Loss,Still Holding,Panic,2020
+T0050,41-50,Crypto,432871,30.93,<1 Month,Zerodha,Telegram,Pump & Dump,Exited,Blamed Market,2022
+T0051,31-40,Mutual Fund,269196,46.97,1-3 Months,5Paisa,Financial Advisor,FOMO,Exited,Blamed Market,2020
+T0052,31-40,IPO,253557,19.02,1-3 Months,Zerodha,Friends,Leverage,Shifted to Mutual Funds,Indifferent,2023
+T0053,41-50,Mutual Fund,331206,80.2,>1 Year,Angel One,Self,Pump & Dump,Averaged Down,Blamed Market,2022
+T0054,41-50,Crypto,450330,66.01,>1 Year,Angel One,Financial Advisor,Leverage,Still Holding,Blamed Market,2019
+T0055,41-50,Crypto,152456,41.87,>1 Year,Zerodha,Telegram,Leverage,Averaged Down,Blamed Market,2024
+T0056,31-40,Crypto,43674,48.19,3-6 Months,ICICI Direct,Friends,Pump & Dump,Exited,Depression,2022
+T0057,51+,IPO,374654,16.56,>1 Year,Angel One,Friends,FOMO,Still Holding,Motivated to Learn,2022
+T0058,51+,IPO,401913,73.77,>1 Year,Upstox,Friends,Leverage,Still Holding,Blamed Market,2022
+T0059,20-30,Mutual Fund,186228,68.51,6-12 Months,5Paisa,Telegram,Pump & Dump,Averaged Down,Indifferent,2023
+T0060,20-30,Mutual Fund,320322,60.15,<1 Month,Zerodha,Financial Advisor,Pump & Dump,Averaged Down,Blamed Market,2020
+T0061,20-30,Futures & Options,208759,41.19,6-12 Months,Groww,Instagram,Pump & Dump,Still Holding,Blamed Market,2021
+T0062,20-30,Mutual Fund,20162,74.92,<1 Month,Groww,Telegram,Poor Research,Exited,Panic,2019
+T0063,31-40,Crypto,449997,16.63,1-3 Months,Upstox,Telegram,Pump & Dump,Exited,Indifferent,2020
+T0064,51+,Futures & Options,412075,44.51,>1 Year,ICICI Direct,Financial Advisor,Poor Research,Exited,Depression,2021
+T0065,20-30,IPO,23462,89.31,>1 Year,5Paisa,Friends,Pump & Dump,Averaged Down,Panic,2023
+T0066,31-40,Stock,375529,76.8,>1 Year,Zerodha,Self,FOMO,Still Holding,Indifferent,2022
+T0067,41-50,Stock,275269,66.8,<1 Month,Angel One,Friends,FOMO,Shifted to Mutual Funds,Motivated to Learn,2024
+T0068,51+,Crypto,238320,29.09,>1 Year,5Paisa,Instagram,Bad Timing,Shifted to Mutual Funds,Blamed Market,2022
+T0069,41-50,Futures & Options,456542,34.64,<1 Month,Groww,Friends,Leverage,Shifted to Mutual Funds,Indifferent,2023
+T0070,51+,Futures & Options,25047,54.54,3-6 Months,Upstox,Friends,Leverage,Still Holding,Motivated to Learn,2021
+T0071,41-50,IPO,377622,85.41,>1 Year,Zerodha,Self,Leverage,Exited,Depression,2024
+T0072,51+,Mutual Fund,301072,75.65,6-12 Months,5Paisa,Financial Advisor,Pump & Dump,Shifted to Mutual Funds,Panic,2019
+T0073,41-50,Crypto,222022,70.34,3-6 Months,5Paisa,Self,No Stop Loss,Shifted to Mutual Funds,Indifferent,2023
+T0074,41-50,Mutual Fund,401084,59.03,3-6 Months,5Paisa,Friends,No Stop Loss,Still Holding,Motivated to Learn,2020
+T0075,20-30,Crypto,175438,24.56,>1 Year,5Paisa,Telegram,Leverage,Averaged Down,Blamed Market,2021
+T0076,41-50,Stock,446537,30.53,1-3 Months,Groww,Telegram,No Stop Loss,Exited,Indifferent,2020
+T0077,41-50,Stock,38587,59.27,1-3 Months,5Paisa,Friends,FOMO,Exited,Indifferent,2021
+T0078,51+,Mutual Fund,240932,42.26,<1 Month,Groww,Friends,FOMO,Exited,Blamed Market,2022
+T0079,20-30,IPO,340010,69.92,1-3 Months,Upstox,Self,No Stop Loss,Exited,Depression,2019
+T0080,51+,IPO,322542,78.26,1-3 Months,ICICI Direct,Friends,Pump & Dump,Shifted to Mutual Funds,Motivated to Learn,2023
+T0081,51+,Futures & Options,308125,64.68,>1 Year,5Paisa,YouTube,Leverage,Averaged Down,Motivated to Learn,2024
+T0082,20-30,Crypto,135758,28.91,<1 Month,Upstox,YouTube,Pump & Dump,Shifted to Mutual Funds,Indifferent,2022
+T0083,41-50,Stock,131360,38.05,3-6 Months,5Paisa,Friends,FOMO,Averaged Down,Motivated to Learn,2024
+T0084,31-40,Mutual Fund,70175,58.56,1-3 Months,Groww,Telegram,FOMO,Exited,Depression,2021
+T0085,41-50,Mutual Fund,75197,52.5,3-6 Months,5Paisa,Friends,No Stop Loss,Shifted to Mutual Funds,Blamed Market,2019
+T0086,20-30,Mutual Fund,395107,40.79,3-6 Months,Zerodha,YouTube,Leverage,Exited,Motivated to Learn,2023
+T0087,20-30,Crypto,256677,56.52,6-12 Months,Groww,Telegram,Bad Timing,Shifted to Mutual Funds,Blamed Market,2019
+T0088,51+,Futures & Options,224092,41.66,<1 Month,Upstox,Instagram,Pump & Dump,Shifted to Mutual Funds,Motivated to Learn,2024
+T0089,51+,IPO,29239,51.39,3-6 Months,Groww,Instagram,FOMO,Shifted to Mutual Funds,Indifferent,2019
+T0090,51+,Mutual Fund,38418,30.01,3-6 Months,ICICI Direct,Friends,Poor Research,Shifted to Mutual Funds,Panic,2020
+T0091,41-50,IPO,78688,89.21,6-12 Months,5Paisa,Friends,FOMO,Exited,Indifferent,2020
+T0092,31-40,Futures & Options,298798,16.09,6-12 Months,Zerodha,Telegram,FOMO,Shifted to Mutual Funds,Panic,2024
+T0093,31-40,Mutual Fund,498978,72.33,>1 Year,5Paisa,Instagram,Pump & Dump,Shifted to Mutual Funds,Blamed Market,2020
+T0094,51+,IPO,85834,45.69,>1 Year,ICICI Direct,Financial Advisor,Leverage,Exited,Motivated to Learn,2022
+T0095,41-50,IPO,150075,80.64,3-6 Months,5Paisa,Instagram,Bad Timing,Shifted to Mutual Funds,Depression,2022
+T0096,51+,Futures & Options,184294,59.15,>1 Year,Angel One,Friends,No Stop Loss,Averaged Down,Depression,2023
+T0097,51+,Crypto,458797,77.04,<1 Month,Groww,Financial Advisor,Pump & Dump,Shifted to Mutual Funds,Blamed Market,2024
+T0098,31-40,Mutual Fund,29408,25.1,>1 Year,Groww,YouTube,Pump & Dump,Exited,Indifferent,2022
+T0099,20-30,Crypto,224946,84.67,1-3 Months,Zerodha,Friends,No Stop Loss,Still Holding,Indifferent,2024
+T0100,51+,Stock,456570,41.29,>1 Year,Angel One,Instagram,Poor Research,Shifted to Mutual Funds,Indifferent,2019
+T0101,20-30,Crypto,340910,69.75,3-6 Months,Upstox,Financial Advisor,FOMO,Shifted to Mutual Funds,Panic,2024
+T0102,20-30,Mutual Fund,97223,70.52,<1 Month,Zerodha,Instagram,FOMO,Still Holding,Motivated to Learn,2021
+T0103,51+,Crypto,138029,57.49,>1 Year,5Paisa,Telegram,Leverage,Averaged Down,Panic,2023
+T0104,51+,IPO,368159,34.27,>1 Year,Upstox,Telegram,Pump & Dump,Still Holding,Blamed Market,2021
+T0105,20-30,Mutual Fund,482493,38.01,>1 Year,Upstox,YouTube,Pump & Dump,Still Holding,Indifferent,2021
+T0106,51+,Futures & Options,249513,82.62,1-3 Months,Angel One,Friends,FOMO,Averaged Down,Blamed Market,2023
+T0107,41-50,IPO,165122,94.42,3-6 Months,Zerodha,Financial Advisor,Pump & Dump,Still Holding,Panic,2023
+T0108,20-30,IPO,400684,54.74,3-6 Months,Upstox,Self,No Stop Loss,Averaged Down,Depression,2023
+T0109,41-50,Crypto,339382,22.77,<1 Month,Groww,Friends,FOMO,Still Holding,Depression,2019
+T0110,41-50,Futures & Options,401895,48.24,1-3 Months,Upstox,Self,No Stop Loss,Still Holding,Depression,2021
+T0111,51+,Futures & Options,401412,84.63,<1 Month,Angel One,YouTube,Leverage,Averaged Down,Blamed Market,2023
+T0112,41-50,Stock,424545,46.57,3-6 Months,ICICI Direct,YouTube,Pump & Dump,Still Holding,Motivated to Learn,2023
+T0113,51+,Futures & Options,66804,68.99,6-12 Months,Zerodha,Self,Bad Timing,Still Holding,Indifferent,2020
+T0114,20-30,Mutual Fund,486781,71.09,6-12 Months,Zerodha,Telegram,FOMO,Exited,Motivated to Learn,2022
+T0115,20-30,Stock,133102,85.98,1-3 Months,Angel One,Friends,No Stop Loss,Shifted to Mutual Funds,Indifferent,2024
+T0116,31-40,Mutual Fund,353367,22.92,6-12 Months,ICICI Direct,Friends,No Stop Loss,Exited,Motivated to Learn,2020
+T0117,51+,Mutual Fund,133791,83.44,<1 Month,5Paisa,Instagram,Bad Timing,Still Holding,Panic,2022
+T0118,41-50,Crypto,74046,90.92,6-12 Months,Zerodha,Financial Advisor,Leverage,Exited,Panic,2021
+T0119,31-40,Crypto,422603,60.17,<1 Month,ICICI Direct,Telegram,Bad Timing,Averaged Down,Depression,2021
+T0120,31-40,IPO,11486,37.18,1-3 Months,Upstox,Self,No Stop Loss,Averaged Down,Panic,2024
+T0121,20-30,Crypto,17791,43.66,1-3 Months,ICICI Direct,Instagram,FOMO,Averaged Down,Motivated to Learn,2019
+T0122,31-40,Mutual Fund,285820,24.09,<1 Month,Angel One,Friends,No Stop Loss,Exited,Blamed Market,2023
+T0123,31-40,IPO,32735,73.18,>1 Year,Groww,Friends,Poor Research,Exited,Panic,2022
+T0124,51+,Mutual Fund,369712,23.64,6-12 Months,Zerodha,YouTube,No Stop Loss,Averaged Down,Panic,2020
+T0125,41-50,IPO,341914,61.83,3-6 Months,Angel One,Self,Bad Timing,Still Holding,Blamed Market,2023
+T0126,51+,Stock,425810,71.14,>1 Year,5Paisa,Telegram,Pump & Dump,Shifted to Mutual Funds,Depression,2022
+T0127,41-50,Mutual Fund,219049,48.28,<1 Month,Groww,Friends,No Stop Loss,Still Holding,Motivated to Learn,2020
+T0128,51+,Stock,57828,81.54,<1 Month,Angel One,YouTube,Poor Research,Still Holding,Depression,2023
+T0129,20-30,IPO,304433,59.93,<1 Month,Angel One,Instagram,Poor Research,Shifted to Mutual Funds,Panic,2021
+T0130,41-50,Futures & Options,64316,61.23,1-3 Months,Upstox,Financial Advisor,Pump & Dump,Averaged Down,Panic,2021
+T0131,41-50,Stock,409824,37.29,1-3 Months,Angel One,Self,Bad Timing,Exited,Indifferent,2024
+T0132,41-50,Stock,104589,36.86,3-6 Months,Groww,Instagram,FOMO,Averaged Down,Depression,2023
+T0133,51+,Stock,84383,74.28,<1 Month,Zerodha,Financial Advisor,Bad Timing,Averaged Down,Blamed Market,2022
+T0134,51+,Futures & Options,92527,44.6,3-6 Months,ICICI Direct,Self,FOMO,Exited,Depression,2020
+T0135,20-30,Stock,152660,50.45,6-12 Months,Angel One,Self,Pump & Dump,Shifted to Mutual Funds,Motivated to Learn,2020
+T0136,20-30,Futures & Options,235398,23.87,>1 Year,Angel One,Self,Poor Research,Still Holding,Panic,2020
+T0137,51+,IPO,38721,15.61,3-6 Months,Upstox,Telegram,No Stop Loss,Still Holding,Motivated to Learn,2019
+T0138,20-30,Mutual Fund,401650,49.45,1-3 Months,Angel One,Self,Poor Research,Averaged Down,Indifferent,2023
+T0139,41-50,Stock,218179,83.94,<1 Month,Angel One,YouTube,Pump & Dump,Exited,Motivated to Learn,2023
+T0140,51+,IPO,222034,71.76,6-12 Months,Groww,YouTube,Pump & Dump,Exited,Motivated to Learn,2020
+T0141,51+,Futures & Options,56205,49.94,<1 Month,Upstox,Friends,Bad Timing,Shifted to Mutual Funds,Indifferent,2019
+T0142,51+,Futures & Options,401016,42.16,3-6 Months,Upstox,YouTube,Bad Timing,Exited,Indifferent,2023
+T0143,31-40,Futures & Options,194077,73.19,1-3 Months,Upstox,YouTube,Leverage,Still Holding,Depression,2020
+T0144,31-40,Stock,102875,91.1,6-12 Months,Angel One,Self,Bad Timing,Shifted to Mutual Funds,Indifferent,2024
+T0145,41-50,Futures & Options,89145,50.18,6-12 Months,Angel One,Financial Advisor,No Stop Loss,Still Holding,Indifferent,2019
+T0146,41-50,IPO,48897,39.83,6-12 Months,Zerodha,YouTube,No Stop Loss,Still Holding,Panic,2024
+T0147,20-30,IPO,321468,55.57,6-12 Months,ICICI Direct,Self,Poor Research,Exited,Blamed Market,2023
+T0148,31-40,Futures & Options,327197,53.05,1-3 Months,Zerodha,Friends,FOMO,Still Holding,Panic,2023
+T0149,31-40,Stock,139889,71.61,6-12 Months,ICICI Direct,Self,Bad Timing,Averaged Down,Motivated to Learn,2021
+T0150,41-50,Mutual Fund,224312,76.96,>1 Year,Zerodha,Financial Advisor,Poor Research,Still Holding,Panic,2021
+T0151,20-30,IPO,365666,45.93,3-6 Months,5Paisa,Financial Advisor,Bad Timing,Averaged Down,Motivated to Learn,2019
+T0152,31-40,Futures & Options,172650,92.42,6-12 Months,Upstox,Self,Poor Research,Exited,Motivated to Learn,2023
+T0153,51+,Futures & Options,436343,25.22,>1 Year,Zerodha,Financial Advisor,Poor Research,Shifted to Mutual Funds,Indifferent,2021
+T0154,20-30,Futures & Options,171934,29.42,1-3 Months,Groww,Friends,Leverage,Averaged Down,Depression,2020
+T0155,20-30,Futures & Options,452723,78.05,>1 Year,ICICI Direct,Financial Advisor,Bad Timing,Exited,Motivated to Learn,2023
+T0156,31-40,IPO,207509,27.34,1-3 Months,5Paisa,Self,Leverage,Shifted to Mutual Funds,Panic,2022
+T0157,41-50,Crypto,242888,63.85,6-12 Months,Upstox,Self,Leverage,Still Holding,Blamed Market,2020
+T0158,41-50,IPO,240999,51.93,3-6 Months,Angel One,Self,Bad Timing,Shifted to Mutual Funds,Depression,2020
+T0159,31-40,Futures & Options,37357,66.29,3-6 Months,ICICI Direct,YouTube,Poor Research,Exited,Motivated to Learn,2019
+T0160,31-40,Futures & Options,245572,87.42,1-3 Months,Angel One,YouTube,Leverage,Shifted to Mutual Funds,Motivated to Learn,2019
+T0161,51+,Stock,217856,55.16,1-3 Months,Angel One,YouTube,No Stop Loss,Averaged Down,Panic,2021
+T0162,20-30,Futures & Options,424911,26.68,<1 Month,Groww,Friends,Poor Research,Averaged Down,Blamed Market,2022
+T0163,20-30,Stock,19963,35.47,1-3 Months,ICICI Direct,Financial Advisor,Bad Timing,Shifted to Mutual Funds,Panic,2021
+T0164,31-40,Futures & Options,73883,18.82,6-12 Months,5Paisa,Self,Pump & Dump,Exited,Panic,2022
+T0165,20-30,IPO,311490,34.36,1-3 Months,Groww,Friends,FOMO,Still Holding,Depression,2023
+T0166,51+,Crypto,358321,68.46,>1 Year,Groww,YouTube,Bad Timing,Exited,Blamed Market,2022
+T0167,20-30,Mutual Fund,205717,35.29,<1 Month,Groww,YouTube,No Stop Loss,Averaged Down,Panic,2023
+T0168,41-50,Crypto,33244,43.18,3-6 Months,5Paisa,Telegram,Poor Research,Shifted to Mutual Funds,Blamed Market,2024
+T0169,31-40,Crypto,43082,72.28,6-12 Months,Zerodha,Instagram,Leverage,Exited,Depression,2019
+T0170,41-50,Futures & Options,280209,46.86,>1 Year,Angel One,Instagram,FOMO,Averaged Down,Motivated to Learn,2021
+T0171,20-30,Futures & Options,153244,24.96,3-6 Months,Angel One,Friends,Poor Research,Shifted to Mutual Funds,Blamed Market,2021
+T0172,31-40,Mutual Fund,372843,54.8,>1 Year,Groww,YouTube,Poor Research,Shifted to Mutual Funds,Panic,2022
+T0173,31-40,IPO,164018,40.7,<1 Month,Groww,Financial Advisor,No Stop Loss,Still Holding,Blamed Market,2023
+T0174,51+,Crypto,371635,50.51,6-12 Months,Zerodha,Financial Advisor,No Stop Loss,Shifted to Mutual Funds,Motivated to Learn,2024
+T0175,20-30,Stock,361893,66.0,3-6 Months,ICICI Direct,Financial Advisor,Poor Research,Averaged Down,Panic,2020
+T0176,51+,Stock,76180,20.38,3-6 Months,Groww,Friends,Bad Timing,Exited,Indifferent,2020
+T0177,51+,Futures & Options,205042,50.52,<1 Month,ICICI Direct,Telegram,Bad Timing,Still Holding,Blamed Market,2021
+T0178,41-50,Crypto,69479,17.07,1-3 Months,Angel One,Self,Pump & Dump,Exited,Motivated to Learn,2021
+T0179,51+,Crypto,330799,37.85,6-12 Months,Upstox,YouTube,Leverage,Exited,Blamed Market,2020
+T0180,51+,Stock,434942,69.55,3-6 Months,5Paisa,Instagram,Poor Research,Exited,Indifferent,2023
+T0181,41-50,Futures & Options,456358,27.6,1-3 Months,Groww,Self,Leverage,Exited,Depression,2020
+T0182,31-40,Mutual Fund,23780,43.87,>1 Year,Groww,Friends,Bad Timing,Averaged Down,Indifferent,2019
+T0183,20-30,Futures & Options,218750,94.97,6-12 Months,ICICI Direct,Friends,Pump & Dump,Exited,Depression,2021
+T0184,20-30,Mutual Fund,254230,69.41,3-6 Months,Upstox,Self,Poor Research,Averaged Down,Depression,2022
+T0185,20-30,Stock,281634,27.24,1-3 Months,Upstox,Instagram,Poor Research,Averaged Down,Motivated to Learn,2023
+T0186,41-50,Stock,141389,30.7,>1 Year,Groww,Telegram,Poor Research,Still Holding,Indifferent,2023
+T0187,20-30,IPO,346062,28.49,>1 Year,Upstox,Telegram,Poor Research,Still Holding,Indifferent,2019
+T0188,20-30,Stock,33835,90.88,>1 Year,Groww,Financial Advisor,Leverage,Shifted to Mutual Funds,Indifferent,2024
+T0189,20-30,Mutual Fund,476090,65.17,3-6 Months,5Paisa,Instagram,Pump & Dump,Averaged Down,Blamed Market,2021
+T0190,51+,Stock,371031,19.79,6-12 Months,Angel One,Friends,Pump & Dump,Averaged Down,Motivated to Learn,2023
+T0191,31-40,Futures & Options,461666,72.47,3-6 Months,Angel One,Telegram,No Stop Loss,Exited,Motivated to Learn,2020
+T0192,51+,Stock,150232,50.97,1-3 Months,Zerodha,YouTube,No Stop Loss,Shifted to Mutual Funds,Indifferent,2022
+T0193,31-40,Crypto,436496,41.19,>1 Year,5Paisa,Instagram,Leverage,Averaged Down,Blamed Market,2023
+T0194,51+,Mutual Fund,470888,39.68,<1 Month,Zerodha,Friends,Bad Timing,Shifted to Mutual Funds,Depression,2020
+T0195,41-50,Stock,36497,37.51,>1 Year,5Paisa,Financial Advisor,Pump & Dump,Still Holding,Indifferent,2019
+T0196,20-30,Mutual Fund,80220,85.6,3-6 Months,Angel One,Instagram,FOMO,Shifted to Mutual Funds,Panic,2023
+T0197,31-40,Futures & Options,300048,38.09,6-12 Months,ICICI Direct,Friends,Bad Timing,Still Holding,Indifferent,2024
+T0198,20-30,Crypto,60688,46.51,3-6 Months,ICICI Direct,Instagram,Leverage,Averaged Down,Indifferent,2023
+T0199,51+,IPO,31105,18.62,1-3 Months,5Paisa,Instagram,Pump & Dump,Shifted to Mutual Funds,Depression,2023
+T0200,31-40,Futures & Options,498305,64.05,1-3 Months,Angel One,Self,Poor Research,Still Holding,Indifferent,2021
+T0201,51+,IPO,167176,52.99,<1 Month,Groww,Instagram,Poor Research,Exited,Blamed Market,2023
+T0202,41-50,Stock,322952,52.97,>1 Year,ICICI Direct,Telegram,Poor Research,Exited,Indifferent,2022
+T0203,31-40,IPO,339790,72.69,6-12 Months,Upstox,Financial Advisor,Leverage,Exited,Indifferent,2024
+T0204,20-30,Crypto,19928,50.28,6-12 Months,Upstox,Friends,Poor Research,Averaged Down,Blamed Market,2023
+T0205,51+,Stock,380029,26.05,1-3 Months,ICICI Direct,Instagram,Poor Research,Shifted to Mutual Funds,Indifferent,2022
+T0206,41-50,Crypto,250996,87.97,3-6 Months,ICICI Direct,Instagram,Poor Research,Still Holding,Indifferent,2022
+T0207,31-40,Crypto,156279,59.65,1-3 Months,Groww,Instagram,Poor Research,Averaged Down,Blamed Market,2021
+T0208,51+,Futures & Options,303856,89.7,3-6 Months,Groww,YouTube,Bad Timing,Shifted to Mutual Funds,Blamed Market,2021
+T0209,31-40,Futures & Options,32054,38.01,<1 Month,Groww,Friends,Poor Research,Still Holding,Blamed Market,2020
+T0210,31-40,IPO,152151,89.64,3-6 Months,Upstox,YouTube,Bad Timing,Averaged Down,Depression,2019
+T0211,31-40,Crypto,37520,23.02,3-6 Months,5Paisa,Friends,FOMO,Averaged Down,Panic,2023
+T0212,31-40,Mutual Fund,352303,89.8,6-12 Months,Angel One,Financial Advisor,Leverage,Still Holding,Motivated to Learn,2021
+T0213,20-30,Stock,351992,60.93,>1 Year,5Paisa,Financial Advisor,FOMO,Averaged Down,Blamed Market,2020
+T0214,20-30,Mutual Fund,423118,54.63,3-6 Months,Zerodha,YouTube,No Stop Loss,Exited,Motivated to Learn,2021
+T0215,51+,IPO,284893,54.51,1-3 Months,ICICI Direct,Friends,No Stop Loss,Averaged Down,Panic,2021
+T0216,31-40,Mutual Fund,349888,35.58,1-3 Months,Zerodha,Financial Advisor,No Stop Loss,Still Holding,Indifferent,2024
+T0217,31-40,Crypto,330316,83.49,6-12 Months,Angel One,Self,No Stop Loss,Exited,Blamed Market,2024
+T0218,20-30,Crypto,83721,53.2,1-3 Months,Zerodha,Instagram,Pump & Dump,Averaged Down,Blamed Market,2021
+T0219,41-50,Futures & Options,315377,72.83,<1 Month,Groww,Financial Advisor,No Stop Loss,Averaged Down,Panic,2024
+T0220,20-30,Mutual Fund,170854,27.78,>1 Year,5Paisa,Instagram,Poor Research,Exited,Motivated to Learn,2021
+T0221,31-40,Crypto,80028,53.25,6-12 Months,5Paisa,Self,No Stop Loss,Shifted to Mutual Funds,Indifferent,2022
+T0222,31-40,Crypto,366695,75.38,<1 Month,ICICI Direct,Friends,Bad Timing,Still Holding,Panic,2023
+T0223,20-30,Stock,444516,58.81,>1 Year,Upstox,Self,Bad Timing,Averaged Down,Depression,2021
+T0224,51+,Stock,366670,31.43,>1 Year,Angel One,YouTube,Bad Timing,Shifted to Mutual Funds,Panic,2022
+T0225,31-40,IPO,227802,51.54,<1 Month,ICICI Direct,Friends,Poor Research,Still Holding,Panic,2022
+T0226,41-50,Stock,401016,32.43,<1 Month,Zerodha,Friends,No Stop Loss,Exited,Indifferent,2019
+T0227,20-30,Mutual Fund,26638,37.97,1-3 Months,Upstox,Financial Advisor,Poor Research,Shifted to Mutual Funds,Motivated to Learn,2022
+T0228,51+,Mutual Fund,206946,21.42,>1 Year,Upstox,Financial Advisor,No Stop Loss,Exited,Depression,2023
+T0229,51+,IPO,76766,73.23,1-3 Months,Zerodha,YouTube,No Stop Loss,Shifted to Mutual Funds,Indifferent,2022
+T0230,51+,Crypto,139767,51.85,1-3 Months,Groww,Telegram,Poor Research,Exited,Panic,2024
+T0231,51+,IPO,411632,89.9,<1 Month,Upstox,Telegram,FOMO,Exited,Indifferent,2019
+T0232,51+,IPO,362333,71.26,<1 Month,Upstox,Financial Advisor,FOMO,Shifted to Mutual Funds,Blamed Market,2020
+T0233,31-40,Stock,83471,55.31,3-6 Months,Upstox,Financial Advisor,Bad Timing,Still Holding,Indifferent,2023
+T0234,41-50,Crypto,168211,85.1,>1 Year,Upstox,Friends,No Stop Loss,Still Holding,Panic,2023
+T0235,31-40,Mutual Fund,301425,54.65,3-6 Months,5Paisa,Financial Advisor,Pump & Dump,Still Holding,Blamed Market,2022
+T0236,31-40,Futures & Options,207373,29.71,>1 Year,Angel One,Telegram,Leverage,Still Holding,Depression,2022
+T0237,20-30,IPO,226361,92.42,>1 Year,ICICI Direct,Telegram,Pump & Dump,Averaged Down,Motivated to Learn,2020
+T0238,41-50,Stock,493512,50.98,3-6 Months,Zerodha,Self,Poor Research,Averaged Down,Panic,2021
+T0239,51+,IPO,326104,18.16,<1 Month,Upstox,Self,Poor Research,Averaged Down,Blamed Market,2020
+T0240,41-50,Futures & Options,486574,16.23,1-3 Months,5Paisa,YouTube,Poor Research,Shifted to Mutual Funds,Depression,2024
+T0241,31-40,Mutual Fund,489789,34.15,3-6 Months,Groww,Friends,Pump & Dump,Still Holding,Motivated to Learn,2021
+T0242,41-50,IPO,472847,54.78,<1 Month,5Paisa,Friends,No Stop Loss,Averaged Down,Motivated to Learn,2021
+T0243,51+,Stock,304924,84.13,1-3 Months,Zerodha,Instagram,Bad Timing,Shifted to Mutual Funds,Motivated to Learn,2020
+T0244,31-40,Futures & Options,130596,45.39,1-3 Months,Angel One,Self,Poor Research,Still Holding,Motivated to Learn,2022
+T0245,51+,Mutual Fund,98202,73.62,3-6 Months,Upstox,Telegram,Poor Research,Shifted to Mutual Funds,Depression,2023
+T0246,20-30,IPO,27733,82.13,<1 Month,5Paisa,YouTube,FOMO,Shifted to Mutual Funds,Depression,2024
+T0247,31-40,Stock,380760,27.08,1-3 Months,ICICI Direct,Friends,No Stop Loss,Exited,Indifferent,2024
+T0248,51+,Mutual Fund,18247,15.53,>1 Year,Angel One,YouTube,FOMO,Still Holding,Indifferent,2021
+T0249,20-30,IPO,436328,70.83,6-12 Months,Upstox,YouTube,FOMO,Averaged Down,Depression,2020
+T0250,41-50,Futures & Options,150155,78.59,<1 Month,Groww,Friends,Pump & Dump,Averaged Down,Depression,2021
+T0251,20-30,Stock,59021,47.42,6-12 Months,ICICI Direct,Friends,FOMO,Exited,Depression,2019
+T0252,51+,Mutual Fund,348117,77.75,>1 Year,Zerodha,Self,FOMO,Averaged Down,Depression,2024
+T0253,51+,Futures & Options,34411,88.93,3-6 Months,ICICI Direct,Self,Poor Research,Exited,Depression,2021
+T0254,20-30,Crypto,317775,26.54,6-12 Months,Zerodha,Instagram,Leverage,Averaged Down,Indifferent,2022
+T0255,41-50,Mutual Fund,406156,74.18,<1 Month,ICICI Direct,Financial Advisor,No Stop Loss,Exited,Panic,2022
+T0256,31-40,Stock,188568,63.41,>1 Year,ICICI Direct,Friends,No Stop Loss,Exited,Motivated to Learn,2022
+T0257,51+,Crypto,196547,59.24,6-12 Months,Angel One,Telegram,Poor Research,Shifted to Mutual Funds,Panic,2023
+T0258,41-50,Crypto,383874,20.88,3-6 Months,Upstox,Friends,Poor Research,Averaged Down,Blamed Market,2021
+T0259,41-50,Stock,57983,15.42,3-6 Months,Angel One,Instagram,No Stop Loss,Exited,Depression,2019
+T0260,31-40,Mutual Fund,245323,59.56,>1 Year,Angel One,YouTube,FOMO,Exited,Motivated to Learn,2023
+T0261,20-30,IPO,323547,77.76,6-12 Months,Zerodha,Instagram,Pump & Dump,Shifted to Mutual Funds,Panic,2024
+T0262,31-40,IPO,283208,28.57,6-12 Months,Upstox,Telegram,No Stop Loss,Still Holding,Motivated to Learn,2022
+T0263,31-40,Stock,97664,49.77,6-12 Months,Groww,Friends,FOMO,Still Holding,Motivated to Learn,2020
+T0264,51+,IPO,333312,30.64,<1 Month,Upstox,Instagram,FOMO,Shifted to Mutual Funds,Motivated to Learn,2023
+T0265,51+,Futures & Options,240803,41.78,>1 Year,Upstox,Instagram,No Stop Loss,Averaged Down,Blamed Market,2021
+T0266,31-40,Mutual Fund,177320,38.32,6-12 Months,ICICI Direct,Telegram,No Stop Loss,Shifted to Mutual Funds,Motivated to Learn,2022
+T0267,41-50,Stock,498671,60.11,>1 Year,ICICI Direct,Telegram,Poor Research,Exited,Blamed Market,2024
+T0268,31-40,Mutual Fund,428216,38.31,<1 Month,Angel One,Financial Advisor,Pump & Dump,Averaged Down,Motivated to Learn,2020
+T0269,41-50,Crypto,384989,48.85,6-12 Months,Zerodha,Friends,Bad Timing,Shifted to Mutual Funds,Indifferent,2022
+T0270,51+,IPO,29275,78.26,3-6 Months,5Paisa,Self,Bad Timing,Exited,Panic,2020
+T0271,41-50,Crypto,349214,64.01,>1 Year,5Paisa,Financial Advisor,Poor Research,Shifted to Mutual Funds,Motivated to Learn,2022
+T0272,20-30,Stock,61698,35.7,>1 Year,5Paisa,Self,Bad Timing,Averaged Down,Blamed Market,2021
+T0273,51+,Mutual Fund,414929,69.36,>1 Year,Upstox,Instagram,FOMO,Shifted to Mutual Funds,Panic,2021
+T0274,51+,Stock,70853,81.51,1-3 Months,Groww,Instagram,No Stop Loss,Shifted to Mutual Funds,Depression,2023
+T0275,51+,Futures & Options,259646,22.81,6-12 Months,Groww,YouTube,No Stop Loss,Exited,Panic,2019
+T0276,41-50,Stock,365016,79.0,1-3 Months,ICICI Direct,Telegram,Bad Timing,Averaged Down,Motivated to Learn,2023
+T0277,51+,Mutual Fund,131559,78.82,1-3 Months,Upstox,Financial Advisor,Poor Research,Shifted to Mutual Funds,Blamed Market,2019
+T0278,31-40,Mutual Fund,320485,49.36,<1 Month,5Paisa,Telegram,Leverage,Still Holding,Panic,2023
+T0279,20-30,IPO,108020,44.26,1-3 Months,Angel One,YouTube,No Stop Loss,Shifted to Mutual Funds,Indifferent,2024
+T0280,41-50,IPO,213758,63.9,>1 Year,Zerodha,Instagram,No Stop Loss,Shifted to Mutual Funds,Indifferent,2020
+T0281,41-50,IPO,319418,21.78,1-3 Months,Groww,YouTube,Leverage,Still Holding,Panic,2020
+T0282,41-50,Crypto,277819,46.08,>1 Year,Upstox,Self,Pump & Dump,Shifted to Mutual Funds,Depression,2022
+T0283,31-40,IPO,97485,54.17,1-3 Months,Upstox,Instagram,Pump & Dump,Exited,Motivated to Learn,2019
+T0284,51+,Crypto,112303,80.22,>1 Year,ICICI Direct,Financial Advisor,Pump & Dump,Shifted to Mutual Funds,Blamed Market,2022
+T0285,51+,Mutual Fund,97688,21.61,<1 Month,Upstox,Instagram,FOMO,Still Holding,Depression,2023
+T0286,41-50,Crypto,419332,51.59,6-12 Months,ICICI Direct,Self,FOMO,Exited,Motivated to Learn,2023
+T0287,41-50,IPO,441285,75.54,6-12 Months,ICICI Direct,Telegram,Pump & Dump,Exited,Depression,2021
+T0288,20-30,Mutual Fund,147790,42.89,<1 Month,Angel One,YouTube,Leverage,Averaged Down,Indifferent,2024
+T0289,41-50,IPO,341754,49.25,>1 Year,Upstox,Telegram,Leverage,Exited,Indifferent,2021
+T0290,41-50,IPO,292469,28.47,3-6 Months,Groww,Self,No Stop Loss,Exited,Depression,2022
+T0291,20-30,Futures & Options,464582,67.47,1-3 Months,Upstox,Telegram,Poor Research,Still Holding,Depression,2024
+T0292,51+,Mutual Fund,84538,61.19,3-6 Months,5Paisa,Friends,Pump & Dump,Shifted to Mutual Funds,Panic,2024
+T0293,20-30,Mutual Fund,280329,74.98,3-6 Months,Angel One,Friends,No Stop Loss,Exited,Panic,2024
+T0294,51+,Futures & Options,455700,20.07,>1 Year,Angel One,Telegram,Pump & Dump,Averaged Down,Blamed Market,2021
+T0295,41-50,Futures & Options,187080,58.78,1-3 Months,ICICI Direct,Friends,No Stop Loss,Exited,Panic,2019
+T0296,51+,Stock,75136,89.35,1-3 Months,Angel One,Friends,FOMO,Shifted to Mutual Funds,Depression,2024
+T0297,31-40,Futures & Options,93349,84.95,3-6 Months,Zerodha,Financial Advisor,No Stop Loss,Still Holding,Panic,2021
+T0298,31-40,Stock,217797,65.05,1-3 Months,Angel One,Financial Advisor,FOMO,Exited,Panic,2020
+T0299,51+,Stock,79572,62.49,>1 Year,5Paisa,Friends,FOMO,Exited,Motivated to Learn,2019
+T0300,51+,Crypto,260452,20.67,6-12 Months,Zerodha,Financial Advisor,FOMO,Exited,Motivated to Learn,2021
