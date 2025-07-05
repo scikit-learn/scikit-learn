@@ -456,7 +456,7 @@ def test_invalid_metadata():
 
 
 @config_context(enable_metadata_routing=True)
-def test_get_metadata_routing():
+def test__get_metadata_request():
     class TestDefaultsBadMethodName(_MetadataRequester):
         __metadata_request__fit = {
             "sample_weight": None,

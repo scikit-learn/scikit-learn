@@ -21,8 +21,8 @@ MetadataRequest
 ~~~~~~~~~~~~~~~
 
 The ``MetadataRequest`` objects are constructed via the `_get_metadata_request` method
-which is automatically implemented via ``BaseEstimator`` for all estimators that inherit
-from it.
+which is automatically implemented for all scikit-learn estimators by inheritance via
+``BaseEstimator``.
 
 In non-routing consumers, the simplest case, e.g. ``SVM``, ``_get_metadata_request``
 returns a ``MetadataRequest`` object  which is assigned to the consumer's
@@ -94,7 +94,7 @@ The ``set_{method}_request`` methods are dynamically generated for estimators
 which inherit from ``BaseEstimator``. This is done by attaching instances
 of the ``RequestMethod`` descriptor to classes, which is done in the
 ``_MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
-This mixin also implements the ``_get_metadata_request``.
+This mixin also implements a ``_get_metadata_request`` method.
 """
 
 # Authors: The scikit-learn developers
@@ -546,9 +546,6 @@ class MetadataRequest:
 
     Instances of `MethodMetadataRequest` are used in this class for each
     available method under `metadatarequest.{method}`.
-
-    A serialised output of this class is returned when calling
-    `get_routing_for_object(instance)` on a consumer instance.
 
     .. versionadded:: 1.3
 
