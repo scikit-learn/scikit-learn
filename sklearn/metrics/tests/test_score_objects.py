@@ -1665,7 +1665,6 @@ def test_make_scorer_reponse_method_default_warning():
         warnings.simplefilter("error", FutureWarning)
         make_scorer(accuracy_score)
 
-
 def test_f1_score_multiclass_pos_label_ignored():
     """Check that pos_label is ignored for multiclass f1_score with micro average."""
     data = load_iris()
@@ -1673,7 +1672,7 @@ def test_f1_score_multiclass_pos_label_ignored():
     y = np.array([data.target_names[label] for label in data.target])
 
     # This should not raise an error
-    f1_scorer = make_scorer(f1_score, average='micro', pos_label=1)
+    f1_scorer = make_scorer(f1_score, average="micro", pos_label=1)
     classifier = LogisticRegression(random_state=0, max_iter=1000)
 
     scores = cross_val_score(classifier, X, y, cv=3, scoring=f1_scorer)
@@ -1690,7 +1689,7 @@ def test_multiclass_scorers_ignore_pos_label():
 
     # This should not raise an error
     for metric in [f1_score, precision_score, recall_score]:
-        for avg in ['micro', 'macro', 'weighted']:
+        for avg in ["micro", "macro", "weighted"]:
             scorer = make_scorer(metric, average=avg, pos_label=1)
             scores = cross_val_score(classifier, X, y, cv=3, scoring=scorer)
             assert len(scores) == 3
@@ -1700,12 +1699,12 @@ def test_multiclass_scorers_ignore_pos_label():
 def test_binary_classification_pos_label_still_works():
     """Check that pos_label still works for binary classification."""
     X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
-    y = np.array(['class_a', 'class_b'])[y]
+    y = np.array(["class_a", "class_b"])[y]
 
     classifier = LogisticRegression(random_state=0)
 
     # This should work with valid pos_label
-    scorer = make_scorer(f1_score, pos_label='class_a')
+    scorer = make_scorer(f1_score, pos_label="class_a")
     scores = cross_val_score(classifier, X, y, cv=3, scoring=scorer)
     assert len(scores) == 3
     assert all(~np.isnan(scores))
