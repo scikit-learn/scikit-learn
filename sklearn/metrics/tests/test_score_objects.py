@@ -1022,7 +1022,7 @@ def string_labeled_classification_problem():
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
     X, y = X[idx_selected], y[idx_selected]
-    X, y = shuffle(X, y, random_state=0)
+    X, y = shuffle(X, y, random_state=42)
     # only use 2 features to make the problem even harder
     X = X[:, :2]
     y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)

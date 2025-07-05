@@ -719,8 +719,8 @@ def make_scorer(
 
     # Ignore pos_label for multiclass averages
     if hasattr(score_func, "__name__") and score_func.__name__ in [
-        "f1_score", 
-        "precision_score", 
+        "f1_score",
+        "precision_score",
         "recall_score"
     ]:
         if "average" in kwargs and "pos_label" in kwargs:
