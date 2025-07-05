@@ -1,0 +1,4 @@
+- :func:`metrics.make_scorer` now correctly ignores `pos_label` parameter for multiclass 
+ metrics (`f1_score`, `precision_score`, `recall_score`) when using averages 'micro', 
+ 'macro', 'weighted', or 'samples'. Previously raised ValueError with invalid pos_label.
+ By :user:`ShauryaDusht <ShauryaDusht>` :pr:`#31709`.
