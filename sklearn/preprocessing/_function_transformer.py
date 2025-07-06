@@ -380,7 +380,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
               arguments, `self` and `input_features`, and its return value is
               returned by this method.
             - If `feature_names_out` is None and the output container is set to
-              `pandas` or `polars`, then dataframe columns from output are used.
+              a non-`"default"`, then dataframe columns from output are used.
         """
         if self.feature_names_out is None and hasattr(self, "_dataframe_feature_names"):
             return self._dataframe_feature_names
