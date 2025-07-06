@@ -1191,7 +1191,7 @@ Target Types
         :term:`multiclass` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
-        XXX: For simplicity, we may not always support string class labels
+        Note: For simplicity, we may not always support string class labels
         for multiclass multioutput, and integer class labels should be used.
 
         :mod:`~sklearn.multioutput` provides estimators which estimate multi-output
@@ -1384,7 +1384,7 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
-        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+        Note: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
@@ -1613,7 +1613,7 @@ functions or non-estimator constructors.
         for some algorithms, an improper distance metric (one that does not
         obey the triangle inequality, such as Cosine Distance) may be used.
 
-        XXX: hierarchical clustering uses ``affinity`` with this meaning.
+        Note: Hierarchical clustering uses ``affinity`` with this meaning.
 
         We also use *metric* to refer to :term:`evaluation metrics`, but avoid
         using this sense as a parameter name.
