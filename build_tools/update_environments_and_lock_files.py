@@ -83,7 +83,11 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
+    # and released.
+    "numpydoc": "<1.9.0",
+}
 
 
 def remove_from(alist, to_remove):
@@ -170,7 +174,7 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies + ["ccache", "polars"],
+        "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
         "package_constraints": {
             "python": "3.10",
             "blas": "[build=openblas]",
@@ -184,6 +188,7 @@ build_metadata_list = [
             "pandas": "min",
             "polars": "min",
             "pyamg": "min",
+            "pyarrow": "min",
         },
     },
     {
@@ -294,7 +299,7 @@ build_metadata_list = [
         ],
     },
     {
-        "name": "pymin_conda_forge_mkl",
+        "name": "pymin_conda_forge_openblas",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
@@ -307,7 +312,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.10",
-            "blas": "[build=mkl]",
+            "blas": "[build=openblas]",
         },
     },
     {

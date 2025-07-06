@@ -224,7 +224,7 @@ def _locally_linear_embedding(
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            "Expected n_neighbors < n_samples, but n_samples = %d, n_neighbors = %d"
             % (N, n_neighbors)
         )
 

@@ -18,5 +18,5 @@ dependencies:
     - coverage
     - pooch
     - sphinx
-    - numpydoc
+    - numpydoc<1.9.0
     - python-dateutil
