@@ -221,10 +221,10 @@ build_metadata_list = [
             + docstring_test_dependencies
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
-            # doctests dependencies
-            + ["scipy-doctest"]
             # Test array API on CPU without PyTorch
             + ["array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
     },
     {
