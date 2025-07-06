@@ -6,10 +6,6 @@ channels:
 dependencies:
   - python
   - ccache
-  - sphinx
-  - numpydoc
-  - lightgbm
-  - scikit-image
   - pip
   - pip:
     - numpy
@@ -27,5 +23,9 @@ dependencies:
     - meson-python
     - pytest-cov
     - coverage
-    - scipy-doctest
+    - sphinx
+    - numpydoc<1.9.0
+    - lightgbm
+    - scikit-image
     - array-api-strict
+    - scipy-doctest
