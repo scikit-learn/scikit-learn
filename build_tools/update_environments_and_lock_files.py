@@ -165,7 +165,7 @@ build_metadata_list = [
             # channel.
             "scipy": "<1.12",
         },
-        "pip_dependencies": ["meson"],
+        "pip_dependencies": [],
     },
     {
         "name": "pymin_conda_forge_openblas_min_dependencies",
@@ -215,14 +215,12 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["defaults"],
-        "conda_dependencies": (
-            ["python", "ccache"]
+        "conda_dependencies": ["python", "ccache"],
+        "pip_dependencies": (
+            remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
-        ),
-        "pip_dependencies": (
-            remove_from(common_dependencies, ["python", "blas", "pip"])
             # doctests dependencies
             + ["scipy-doctest"]
             # Test array API on CPU without PyTorch
@@ -236,15 +234,7 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["defaults"],
-        "conda_dependencies": [
-            "python",
-            "ccache",
-            "threadpoolctl",
-            "meson-python",
-            "pytest",
-            "pytest-xdist",
-            "ninja",
-        ],
+        "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
                 common_dependencies,
@@ -253,11 +243,6 @@ build_metadata_list = [
                     "blas",
                     "matplotlib",
                     "pyamg",
-                    "pytest",
-                    "meson-python",
-                    "threadpoolctl",
-                    "pytest-xdist",
-                    "ninja",
                     # all the dependencies below have a development version
                     # installed in the CI, so they can be removed from the
                     # environment.yml
