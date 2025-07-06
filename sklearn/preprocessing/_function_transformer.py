@@ -352,7 +352,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Get output feature names for transformation.
 
         This method is only defined if `feature_names_out` is not None
-         or if `set_output` is called with "pandas" or "polars".
+         or if `set_output` is called with a non-`"default"`.
 
         Parameters
         ----------
