@@ -248,7 +248,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             self.func
             and not self.feature_names_out
             and hasattr(self, "_sklearn_output_config")
-            and self._sklearn_output_config["transform"] in {"pandas", "polars"}
+            and self._sklearn_output_config["transform"] != "default"
         ):
             self._set_dataframe_feature_names(X)
 
