@@ -227,6 +227,8 @@ Scoring string name                    Function                                 
 'precision' etc.                       :func:`metrics.precision_score`                    suffixes apply as with 'f1'
 'recall' etc.                          :func:`metrics.recall_score`                       suffixes apply as with 'f1'
 'jaccard' etc.                         :func:`metrics.jaccard_score`                      suffixes apply as with 'f1'
+'specificity' etc.                     :func:`metrics.specificity_score`                  suffixes apply as with 'f1'
+'npv' etc.                             :func:`metrics.npv_score`                          suffixes apply as with 'f1'
 'roc_auc'                              :func:`metrics.roc_auc_score`
 'roc_auc_ovr'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
@@ -536,6 +538,8 @@ Some also work in the multilabel case:
    precision_recall_fscore_support
    precision_score
    recall_score
+   specificity_score
+   npv_score
    roc_auc_score
    zero_one_loss
    d2_log_loss_score
@@ -602,7 +606,6 @@ Accuracy score
 The :func:`accuracy_score` function computes the
 `accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, either the fraction
 (default) or the count (normalize=False) of correct predictions.
-
 
 In multilabel classification, the function returns the subset accuracy. If
 the entire set of predicted labels for a sample strictly match with the true
@@ -742,7 +745,7 @@ or *informedness*.
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
       [Guyon2015]_ adopt the adjusted version to ensure that random predictions
-      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
@@ -854,6 +857,42 @@ false negatives and true positives as follows::
 * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
   for an example of using a confusion matrix to classify text
   documents.
+
+.. _tpr_fpr_tnr_fnr_score:
+
+TPR FPR TNR FNR score
+---------------------
+
+The :func:`tpr_fpr_tnr_fnr_score` function computes the true positive rate (TPR),
+false positive rate (FPR), true negative rate (TNR) and false negative rate (FNR)
+of predictions, based on the `confusion matrix <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
+The rates are defined as
+
+.. math::
+
+  \texttt{TPR} = \frac{TP}{P}} = \frac{TP}{TP + FN}} = 1 - FNR
+
+  \texttt{FPR} = \frac{FP}{N}} = \frac{FP}{TN + FP}} = 1 - TNR
+
+  \texttt{TNR} = \frac{TN}{N}} = \frac{TN}{TN + FP}} = 1 - FPR
+
+  \texttt{FNR} = \frac{FN}{P}} = \frac{FN}{TP + FN}} = 1 - TPR
+
+  >>> from sklearn.metrics import tpr_fpr_tnr_fnr_score
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> tpr_fpr_tnr_fnr_score(y_true, y_pred)
+  (array([1.        , 0.        , 0.66666667]),
+  array([0.25      , 0.        , 0.33333333]),
+  array([0.75      , 1.        , 0.66666667]),
+  array([0.        , 1.        , 0.33333333]))
+
+.. note::
+
+    * True positive rate (TPR) is also called recall, sensitivity, or hit rate.
+    * False positive rate (FPR) is also called fall-out.
+    * True negative rate (TNR) is also called specificity, or selectivity.
+    * false negative rate (FNR) is also called miss rate.
 
 .. _classification_report:
 
@@ -1006,6 +1045,18 @@ precision-recall curve as follows.
         :scale: 75
         :align: center
 
+Precision can also be referred to as the `positive predictive value (PPV)
+<https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_,
+e.g. in the context of bioscience. A closely related metric is
+`negative predictive value (NPV) <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_
+, implemented by the :func:`npv_score`.
+
+Recall can also be called the hit rate, or true positive rate (TPR). Especially
+in biostatistics, it is also known as `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+, which is related to `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_.
+In turn, specificity is also referred to as selectivity, or true negative rate (TNR),
+and is implemented by the :func:`specificity_score`.
+
 .. rubric:: Examples
 
 * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
@@ -1044,10 +1095,10 @@ following table:
 +-------------------+------------------------------------------------+
 |                   |    Actual class (observation)                  |
 +-------------------+---------------------+--------------------------+
-|   Predicted class | tp (true positive)  | fp (false positive)      |
+|   Predicted class | TP (true positive)  | FP (false positive)      |
 |   (expectation)   | Correct result      | Unexpected result        |
 |                   +---------------------+--------------------------+
-|                   | fn (false negative) | tn (true negative)       |
+|                   | FN (false negative) | TN (true negative)       |
 |                   | Missing result      | Correct absence of result|
 +-------------------+---------------------+--------------------------+
 
@@ -1117,10 +1168,9 @@ Here are some small examples in binary classification::
   >>> average_precision_score(y_true, y_scores)
   0.83
 
-
-
 Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 In a multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
@@ -2016,6 +2066,59 @@ the same does a lower Brier score loss always mean better calibration"
 .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
   and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
   Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
+
+.. _true_negatives_metrics:
+
+Specificity and negative predictive value (NPV)
+-----------------------------------------------
+
+`Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(also called selectivity or true negative rate) and
+`NPV <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_
+are both ratios of true negatives to, respectively, actual negatives and
+predicted negatives in a classification task.
+
+Binary classification
+^^^^^^^^^^^^^^^^^^^^^
+
+In a binary classification task, specificity and NPV are defined simply as
+
+..math::
+
+  \text{specificity} = \frac{TN}{N}} = \frac{TN}{TN + FP}}
+
+  \text{NPV} = \frac{TN}{TN + FN}}
+
+Multiclass and multilabel classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In a multiclass or multilabel classification task, the notions of specificity
+and NPV can be applied to each label independently. There are a few ways
+to combine results across labels, specified by the ``average`` argument
+to the :func:`specificity_score` and :func:`npv_score` functions, as described
+:ref:`above <average>`.
+
+To make this more explicit, consider the following examples:
+  >>> from sklearn.metrics import specificity_score
+  >>> from sklearn.metrics import npv_score
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> specificity_score(y_true, y_pred, average=None)
+  array([0.75      , 1.        , 0.66666667])
+  >>> npv_score(y_true, y_pred, average=None)
+  array([1.        , 0.83333333, 0.66666667])
+  >>> specificity_score(y_true, y_pred, average='macro')
+  0.805...
+  >>> npv_score(y_true, y_pred, average='macro')
+  0.83...
+  >>> specificity_score(y_true, y_pred, average='micro')
+  0.83...
+  >>> npv_score(y_true, y_pred, average='micro')
+  0.83...
+  >>> specificity_score(y_true, y_pred, average='weighted')
+  0.75
+  >>> npv_score(y_true, y_pred, average='weighted')
+  0.805...
 
 .. _class_likelihood_ratios:
 
