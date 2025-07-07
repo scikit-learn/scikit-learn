@@ -38,7 +38,9 @@ def get_module_doc_link(estimator_class, method_name):
 
     class_name = estimator_class.__qualname__
 
-    docstring = getattr(estimator_class, method_name).__doc__
+    r = reprlib.Repr()
+    r.maxstring = 100
+    docstring = r.repr(getattr(estimator_class, method_name).__doc__)
 
     base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
     method_fragment = f"{quote(module_name)}.{class_name}.{method_name}"
@@ -59,13 +61,12 @@ def _doc_row(estimator_class, method_name):
         link_string = (
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
-            f'style="color: white; background: black;">?<span>Online `{docstring}` '
-            f"documentation</span>"
+            f'style="color: white; background: black;">?<span>{docstring}</span>'
         )
     else:
         link_string = (
             f'style="color: white; background: black;">?<span>Online documentation'
-            f" for `{method_name}` not found </span>"
+            f"for `{method_name}`not found </span>"
         )
 
     return link_string
