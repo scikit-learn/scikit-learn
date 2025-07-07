@@ -107,9 +107,9 @@ def _methods_html_repr(methods):
     rows = [
         ROW_TEMPLATE.format(
             name=name,
-            signature=r.repr(signature),
+            signature=r.repr(signature).replace("'", ""),
             doc_link=_doc_row(methods.estimator, name),
-        )  # Fix me: doclink=doclink)
+        )
         for name, signature in methods.items()
     ]
 
