@@ -78,8 +78,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         if n_features and features[0].startswith(qid_prefix):
             _, value = features[0].split(COLON, 1)
             if query_id:
-                query.resize(len(query) + 1)
-                query[len(query) - 1] = np.int64(value)
+                query = np.append(query, np.int64(value))
             features.pop(0)
             n_features -= 1
 
