@@ -501,8 +501,7 @@ class MethodMetadataRequest:
         return res
 
     def _consumes(self, params):
-        """Return the subset of `params` that are consumed by the method that owns this
-        instance.
+        """Return subset of `params` consumed by the method that owns this instance.
 
         Parameters
         ----------
@@ -592,7 +591,7 @@ class MetadataRequest:
         Returns
         -------
         method_consumes : set of str
-            A subset of parameters from `params` which are consumed by this method.
+            A subset of parameters from `params` which are consumed by the given method.
         """
         return getattr(self, method)._consumes(params=params)
 
@@ -908,8 +907,8 @@ class MetadataRouter:
     def consumes(self, method, params):
         """Return params consumed as metadata in a :term:`router` or its sub-estimators.
 
-        This method returns the subset of given `params` that are consumed by the
-        given `method`. A `param` is considered consumed if it is used in the specified
+        This method returns the subset of `params` that are consumed by the
+        `method`. A `param` is considered consumed if it is used in the specified
         method of the :term:`router` itself or any of its sub-estimators (or their
         sub-estimators).
 
