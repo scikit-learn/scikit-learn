@@ -302,7 +302,7 @@ def test_type_of_target_too_many_unique_classes():
     We need to check that we don't raise if we have less than 20 samples.
     """
 
-    y = np.concat((np.arange(20), [0]))
+    y = np.hstack((np.arange(20), [0]))
     msg = r"The number of unique classes is greater than 50% of the number of samples."
     with pytest.warns(UserWarning, match=msg):
         type_of_target(y)
