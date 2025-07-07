@@ -6,7 +6,7 @@ set -o nounset
 set -o errexit
 
 URL="https://github.com/data-apis/array-api-compat.git"
-VERSION="1.11.2"
+VERSION="1.12"
 
 ROOT_DIR=sklearn/externals/array_api_compat
 
