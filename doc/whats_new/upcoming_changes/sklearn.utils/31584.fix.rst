@@ -1,0 +1,3 @@
+- Fixed a spurious warning in :func:`utils.multiclass.type_of_target` that could be triggered
+  when called with `estimator.classes_` in certain classification setups.
+  By :user:`Sascha D. Krauss <saskra>`
