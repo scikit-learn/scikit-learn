@@ -305,7 +305,7 @@ def set_random_state(estimator, random_state=0):
 
 def _is_numpydoc():
     try:
-        import numpydoc  # noqa
+        import numpydoc  # noqa: F401
     except (ImportError, AssertionError):
         return False
     else:
@@ -686,12 +686,42 @@ def _get_diff_msg(docstrings_grouped):
 
 
 def _check_consistency_items(
-    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+    items_docs,
+    type_or_desc,
+    section,
+    n_objects,
+    descr_regex_pattern="",
+    ignore_types=tuple(),
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
     If item is not present in all objects, checking is skipped and warning raised.
     If `regex` provided, match descriptions to all descriptions.
+
+    Parameters
+    ----------
+    items_doc : dict of dict of str
+        Dictionary where the key is the string type or description, value is
+        a dictionary where the key is "type description" or "description"
+        and the value is a list of object names with the same string type or
+        description.
+
+    type_or_desc : {"type description", "description"}
+        Whether to check type description or description between objects.
+
+    section : {"Parameters", "Attributes", "Returns"}
+        Name of the section type.
+
+    n_objects : int
+        Total number of objects.
+
+    descr_regex_pattern : str, default=""
+        Regex pattern to match for description of all objects.
+        Ignored when `type_or_desc="type description".
+
+    ignore_types : tuple of str, default=()
+        Tuple of parameter/attribute/return names for which type description
+        matching is ignored. Ignored when `type_or_desc="description".
     """
     skipped = []
     for item_name, docstrings_grouped in items_docs.items():
@@ -710,6 +740,9 @@ def _check_consistency_items(
                     f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
                 )
                 raise AssertionError(msg)
+        # Skip type checking for items in `ignore_types`
+        elif type_or_desc == "type specification" and item_name in ignore_types:
+            continue
         # Otherwise, if more than one key, docstrings not consistent between objects
         elif len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
@@ -738,6 +771,7 @@ def assert_docstring_consistency(
     include_returns=False,
     exclude_returns=None,
     descr_regex_pattern=None,
+    ignore_types=tuple(),
 ):
     r"""Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -785,6 +819,10 @@ def assert_docstring_consistency(
         Regular expression to match to all descriptions of included
         parameters/attributes/returns. If None, will revert to default behavior
         of comparing descriptions between objects.
+
+    ignore_types : tuple of str, default=tuple()
+        Tuple of parameter/attribute/return names to exclude from type description
+        matching between objects.
 
     Examples
     --------
@@ -849,7 +887,13 @@ def assert_docstring_consistency(
                     type_items[item_name][type_def].append(obj_name)
                     desc_items[item_name][desc].append(obj_name)
 
-        _check_consistency_items(type_items, "type specification", section, n_objects)
+        _check_consistency_items(
+            type_items,
+            "type specification",
+            section,
+            n_objects,
+            ignore_types=ignore_types,
+        )
         _check_consistency_items(
             desc_items,
             "description",
@@ -977,6 +1021,7 @@ def _convert_container(
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
+        array = array[:, None] if array.ndim == 1 else array
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
@@ -998,6 +1043,9 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "pyarrow_array":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        return pa.array(container)
     elif constructor_name == "polars_series":
         pl = pytest.importorskip("polars", minversion=minversion)
         return pl.Series(values=container)
@@ -1295,6 +1343,17 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
+    elif array_namespace == "torch" and device == "xpu":  # pragma: nocover
+        if not hasattr(xp, "xpu"):
+            # skip xpu testing for PyTorch <2.4
+            raise SkipTest(
+                "XPU is not available because the current PyTorch install was not "
+                "built with XPU support."
+            )
+        if not xp.xpu.is_available():
+            raise SkipTest(
+                "Skipping XPU device test because no XPU device is available"
+            )
     elif array_namespace == "cupy":  # pragma: nocover
         import cupy
 
@@ -1306,9 +1365,9 @@ def _array_api_for_tests(array_namespace, device):
 def _get_warnings_filters_info_list():
     @dataclass
     class WarningInfo:
-        action: "warnings._ActionKind"
-        message: str = ""
-        category: type[Warning] = Warning
+        action: "warnings._ActionKind"  # type: ignore[annotation-unchecked]
+        message: str = ""  # type: ignore[annotation-unchecked]
+        category: type[Warning] = Warning  # type: ignore[annotation-unchecked]
 
         def to_filterwarning_str(self):
             if self.category.__module__ == "builtins":

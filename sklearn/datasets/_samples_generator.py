@@ -739,13 +739,13 @@ def make_regression(
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
     >>> X
-    array([[ 0.4967..., -0.1382... ],
-        [ 0.6476...,  1.523...],
-        [-0.2341..., -0.2341...],
-        [-0.4694...,  0.5425...],
-        [ 1.579...,  0.7674...]])
+    array([[ 0.4967, -0.1382 ],
+        [ 0.6476,  1.523],
+        [-0.2341, -0.2341],
+        [-0.4694,  0.5425],
+        [ 1.579,  0.7674]])
     >>> y
-    array([  6.737...,  37.79..., -10.27...,   0.4017...,   42.22...])
+    array([  6.737,  37.79, -10.27,   0.4017,   42.22])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -1228,7 +1228,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [np.float64(16.8...), np.float64(5.8...), np.float64(9.4...)]
+    [np.float64(16.8), np.float64(5.87), np.float64(9.46)]
     """
     generator = check_random_state(random_state)
 
@@ -1310,7 +1310,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [np.float64(1229.4...), np.float64(27.0...), np.float64(65.6...)]
+    [np.float64(1229.4), np.float64(27.0), np.float64(65.6)]
     """
     generator = check_random_state(random_state)
 
@@ -1394,7 +1394,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [np.float64(1.5...), np.float64(0.9...), np.float64(0.4...)]
+    [np.float64(1.54), np.float64(0.956), np.float64(0.414)]
     """
     generator = check_random_state(random_state)
 
@@ -1718,8 +1718,8 @@ def make_spd_matrix(n_dim, *, random_state=None):
     --------
     >>> from sklearn.datasets import make_spd_matrix
     >>> make_spd_matrix(n_dim=2, random_state=42)
-    array([[2.09..., 0.34...],
-           [0.34..., 0.21...]])
+    array([[2.093, 0.346],
+           [0.346, 0.218]])
     """
     generator = check_random_state(random_state)
 
@@ -1863,6 +1863,8 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
+
+    Adapted with permission from Stephen Marsland's code [1].
 
     Parameters
     ----------

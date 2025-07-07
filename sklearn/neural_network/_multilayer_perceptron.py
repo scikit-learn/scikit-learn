@@ -31,6 +31,7 @@ from ..utils import (
 )
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import _get_additional_lbfgs_options_dict
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import (
     _check_partial_fit_first_call,
@@ -585,8 +586,8 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             options={
                 "maxfun": self.max_fun,
                 "maxiter": self.max_iter,
-                "iprint": iprint,
                 "gtol": self.tol,
+                **_get_additional_lbfgs_options_dict("iprint", iprint),
             },
             args=(
                 X,
@@ -668,6 +669,12 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                     test_size=self.validation_fraction,
                     stratify=stratify,
                 )
+            if X_val.shape[0] < 2:
+                raise ValueError(
+                    "The validation set is too small. Increase 'validation_fraction' "
+                    "or the size of your dataset."
+                )
+
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
@@ -1137,7 +1144,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     ...                                                     random_state=1)
     >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
     >>> clf.predict_proba(X_test[:1])
-    array([[0.038..., 0.961...]])
+    array([[0.0383, 0.961]])
     >>> clf.predict(X_test[:5, :])
     array([1, 0, 1, 0, 1])
     >>> clf.score(X_test, y_test)
@@ -1656,9 +1663,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     >>> regr.fit(X_train, y_train)
     MLPRegressor(max_iter=2000, random_state=1, tol=0.1)
     >>> regr.predict(X_test[:2])
-    array([  28..., -290...])
+    array([  28.98, -291])
     >>> regr.score(X_test, y_test)
-    0.98...
+    0.98
     """
 
     _parameter_constraints: dict = {

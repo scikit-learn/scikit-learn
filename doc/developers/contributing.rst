@@ -188,8 +188,10 @@ Contributing code
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
-  so far. In order to claim an issue for yourself, please comment exactly
-  ``/take`` on it for the CI to automatically assign the issue to you.
+  so far. If you'd like to work on such issue, leave a comment with your idea of
+  how you plan to approach it, and start working on it. If somebody else has
+  already said they'd be working on the issue in the past 2-3 weeks, please let
+  them finish their work, otherwise consider it stalled and take it over.
 
 To maintain the quality of the codebase and ease the review process, any
 contribution must conform to the project's :ref:`coding guidelines
@@ -269,7 +271,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
+        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 .. _upstream:
 
@@ -726,6 +728,19 @@ We are glad to accept any sort of documentation:
 
 .. dropdown:: Guidelines for writing docstrings
 
+  * You can use `pytest` to test docstrings, e.g. assuming the
+    `RandomForestClassifier` docstring has been modified, the following command
+    would test its docstring compliance:
+
+    .. prompt:: bash
+
+      pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
+
+  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples.
+    See the `numpydoc documentation
+    <https://numpydoc.readthedocs.io/en/latest/format.html#sections>`_ for
+    information on other possible sections.
+
   * When documenting the parameters and attributes, here is a list of some
     well-formatted examples
 
@@ -791,7 +806,15 @@ We are glad to accept any sort of documentation:
       SelectKBest : Select features based on the k highest scores.
       SelectFpr : Select features based on a false positive rate test.
 
-  * Add one or two snippets of code in "Example" section to show how it can be used.
+  * The "Notes" section is optional. It is meant to provide information on
+    specific behavior of a function/class/classmethod/method.
+
+  * A `Note` can also be added to an attribute, but in that case it requires
+    using the `.. rubric:: Note` directive.
+
+  * Add one or two **snippets** of code in "Example" section to show how it can
+    be used. The code should be runable as is, i.e. it should include all
+    required imports. Keep this section as brief as possible.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
@@ -1565,7 +1588,7 @@ make this task easier and faster (in no particular order).
     variable) in the code base.
 
 - Configure `git blame` to ignore the commit that migrated the code style to
-  `black`.
+  `black` and then `ruff`.
 
   .. prompt:: bash
 

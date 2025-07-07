@@ -129,7 +129,7 @@ display = RocCurveDisplay.from_predictions(
     y_onehot_test[:, class_id],
     y_score[:, class_id],
     name=f"{class_of_interest} vs the rest",
-    color="darkorange",
+    curve_kwargs=dict(color="darkorange"),
     plot_chance_level=True,
     despine=True,
 )
@@ -152,9 +152,9 @@ _ = display.ax_.set(
 #
 # We can briefly demo the effect of :func:`numpy.ravel`:
 
-print(f"y_score:\n{y_score[0:2,:]}")
+print(f"y_score:\n{y_score[0:2, :]}")
 print()
-print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
+print(f"y_score.ravel():\n{y_score[0:2, :].ravel()}")
 
 # %%
 # In a multi-class classification setup with highly imbalanced classes,
@@ -165,7 +165,7 @@ display = RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
     y_score.ravel(),
     name="micro-average OvR",
-    color="darkorange",
+    curve_kwargs=dict(color="darkorange"),
     plot_chance_level=True,
     despine=True,
 )
@@ -290,7 +290,7 @@ for class_id, color in zip(range(n_classes), colors):
         y_onehot_test[:, class_id],
         y_score[:, class_id],
         name=f"ROC curve for {target_names[class_id]}",
-        color=color,
+        curve_kwargs=dict(color=color),
         ax=ax,
         plot_chance_level=(class_id == 2),
         despine=True,
@@ -359,7 +359,7 @@ for ix, (label_a, label_b) in enumerate(pair_list):
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score :.2f})",
+        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score:.2f})",
         linestyle=":",
         linewidth=4,
     )
