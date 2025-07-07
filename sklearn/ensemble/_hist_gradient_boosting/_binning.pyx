@@ -4,7 +4,7 @@
 from cython.parallel import prange
 from libc.math cimport isnan
 
-from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
+from ...utils._bitset cimport X_DTYPE_C, X_BINNED_DTYPE_C
 from ...utils._typedefs cimport uint8_t
 
 
