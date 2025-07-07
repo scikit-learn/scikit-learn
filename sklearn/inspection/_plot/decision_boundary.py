@@ -493,7 +493,7 @@ class DecisionBoundaryDisplay:
             if lim is not None:
                 if not isinstance(lim, tuple) or len(lim) != 2 or lim[0] >= lim[1]:
                     raise ValueError(
-                        f"{name} must be a tuple of (min, max) with min < max"
+                        f"`{name}` must be a tuple of (min, max) with min < max"
                     )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)

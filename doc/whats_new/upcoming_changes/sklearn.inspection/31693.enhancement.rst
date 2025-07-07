@@ -1,3 +1,5 @@
-
-- :meth:`inspection.DecisionBoundaryDisplay.from_estimator` now accepts ``xlim`` and ``ylim`` parameters to override the automatic data-based plot limits. This allows users to set custom x-axis and y-axis limits for the decision boundary visualization.
+- :meth:`inspection.DecisionBoundaryDisplay.from_estimator` now accepts
+  ``xlim`` and ``ylim`` parameters to override the automatic data-based
+  plot limits. This allows users to set custom x-axis and y-axis limits
+  for the decision boundary visualization.
   By :user:`ShauryaDusht`.

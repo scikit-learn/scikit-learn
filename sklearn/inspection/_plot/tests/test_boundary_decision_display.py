@@ -683,3 +683,108 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+@pytest.mark.parametrize(
+    "xlim, ylim, expected_xlim, expected_ylim",
+    [
+        ((-2, 2), (-3, 3), (-2, 2), (-3, 3)),
+        ((-1, 1), None, (-1, 1), None),
+        (None, (-2, 2), None, (-2, 2)),
+        ((-0.5, 0.5), (-1, 1), (-0.5, 0.5), (-1, 1)),
+    ],
+)
+def test_xlim_ylim_ranges(pyplot, fitted_clf, xlim, ylim, expected_xlim, expected_ylim):
+    """Check that xlim and ylim parameters correctly set the plot ranges."""
+    eps = 1.0
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
+    )
+
+    if expected_xlim is not None:
+        assert disp.xx0.min() == pytest.approx(expected_xlim[0])
+        assert disp.xx0.max() == pytest.approx(expected_xlim[1])
+    else:
+        x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
+        assert disp.xx0.min() == pytest.approx(x0_min)
+        assert disp.xx0.max() == pytest.approx(x0_max)
+
+    if expected_ylim is not None:
+        assert disp.xx1.min() == pytest.approx(expected_ylim[0])
+        assert disp.xx1.max() == pytest.approx(expected_ylim[1])
+    else:
+        x1_min, x1_max = X[:, 1].min() - eps, X[:, 1].max() + eps
+        assert disp.xx1.min() == pytest.approx(x1_min)
+        assert disp.xx1.max() == pytest.approx(x1_max)
+
+
+@pytest.mark.parametrize(
+    "xlim, ylim, error_msg",
+    [
+        ([1, 2], None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, [1, 2], r"`ylim` must be a tuple of \(min, max\) with min < max"),
+        ((2, 1), None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, (3, 1), r"`ylim` must be a tuple of \(min, max\) with min < max"),
+        ((1, 1), None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, (2, 2), r"`ylim` must be a tuple of \(min, max\) with min < max"),
+        ((1, 2, 3), None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, (1,), r"`ylim` must be a tuple of \(min, max\) with min < max"),
+    ],
+)
+def test_xlim_ylim_validation_errors(pyplot, fitted_clf, xlim, ylim, error_msg):
+    """Check input validation for xlim and ylim parameters."""
+    with pytest.raises(ValueError, match=error_msg):
+        DecisionBoundaryDisplay.from_estimator(fitted_clf, X, xlim=xlim, ylim=ylim)
+
+
+def test_xlim_ylim_overrides_eps(pyplot, fitted_clf):
+    """Check that xlim and ylim override eps parameter."""
+    eps = 5.0
+    xlim = (-1, 1)
+    ylim = (-2, 2)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
+    )
+
+    assert disp.xx0.min() == pytest.approx(xlim[0])
+    assert disp.xx0.max() == pytest.approx(xlim[1])
+    assert disp.xx1.min() == pytest.approx(ylim[0])
+    assert disp.xx1.max() == pytest.approx(ylim[1])
+
+
+def test_xlim_ylim_with_regressor(pyplot):
+    """Check that xlim and ylim work with regressors."""
+    X_reg, y_reg = load_diabetes(return_X_y=True)
+    X_reg = X_reg[:, :2]
+    tree = DecisionTreeRegressor().fit(X_reg, y_reg)
+
+    xlim = (-0.1, 0.1)
+    ylim = (-0.15, 0.15)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        tree, X_reg, xlim=xlim, ylim=ylim, grid_resolution=10
+    )
+
+    assert disp.xx0.min() == pytest.approx(xlim[0])
+    assert disp.xx0.max() == pytest.approx(xlim[1])
+    assert disp.xx1.min() == pytest.approx(ylim[0])
+    assert disp.xx1.max() == pytest.approx(ylim[1])
+
+
+def test_xlim_ylim_with_multiclass(pyplot):
+    """Check that xlim and ylim work with multiclass classification."""
+    X_iris, y_iris = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X_iris, y_iris)
+
+    xlim = (-2, 2)
+    ylim = (-1.5, 1.5)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf, X_iris, xlim=xlim, ylim=ylim, grid_resolution=10
+    )
+
+    assert disp.xx0.min() == pytest.approx(xlim[0])
+    assert disp.xx0.max() == pytest.approx(xlim[1])
+    assert disp.xx1.min() == pytest.approx(ylim[0])
+    assert disp.xx1.max() == pytest.approx(ylim[1])
