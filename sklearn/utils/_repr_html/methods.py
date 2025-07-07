@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import reprlib
 from collections import UserDict
 from urllib.parse import quote
 
@@ -99,10 +100,15 @@ def _methods_html_repr(methods):
             </td>
        </tr>
     """
-
+    r = reprlib.Repr()
+    r.maxlist = 2  # Show only first 2 items of lists
+    r.maxtuple = 1  # Show only first item of tuples
+    r.maxstring = 50  # Limit string length
     rows = [
         ROW_TEMPLATE.format(
-            name=name, signature=signature, doc_link=_doc_row(methods.estimator, name)
+            name=name,
+            signature=r.repr(signature),
+            doc_link=_doc_row(methods.estimator, name),
         )  # Fix me: doclink=doclink)
         for name, signature in methods.items()
     ]
