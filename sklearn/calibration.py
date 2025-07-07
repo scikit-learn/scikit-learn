@@ -1103,6 +1103,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
     pos_label : int, float, bool or str, default=None
         The positive class when computing the calibration curve.
+        If not `None`, this value is displayed in the x- and y-axes labels.
         By default, `pos_label` is set to `estimators.classes_[1]` when using
         `from_estimator` and set to 1 when using `from_predictions`.
 

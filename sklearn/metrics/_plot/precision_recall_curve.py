@@ -40,8 +40,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, then the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The class considered as the positive class. If None, the class will not
-        be shown in the legend.
+        The class considered as the positive class. If not `None`, this value is
+        displayed in the x- and y-axes labels.
 
         .. versionadded:: 0.24
 
