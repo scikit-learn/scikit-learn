@@ -180,6 +180,8 @@ else:
     check: true
     ).stdout().strip()
 
+cython_program = find_program(cython.cmd_array()[0])
+
 scikit_learn_cython_args = [
   '-X language_level=3', '-X boundscheck=' + boundscheck, '-X wraparound=False',
   '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
@@ -191,12 +193,11 @@ scikit_learn_cython_args = [
 cython_args += scikit_learn_cython_args
 
 if cython.version().version_compare('>=3.1.0')
-  cy = find_program(cython.cmd_array()[0])
   cython_shared_src = custom_target(
     install: false,
     output: '_cyutility.c',
     command: [
-      cy, '-3', '--fast-fail',
+      cython_program, '-3', '--fast-fail',
       '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
     ],
   )
@@ -210,8 +211,6 @@ if cython.version().version_compare('>=3.1.0')
 
   cython_args += ['--shared=sklearn._cyutility']
 endif
-
-cython_program = find_program(cython.cmd_array()[0])
 
 cython_gen = generator(cython_program,
   arguments : cython_args + ['@INPUT@', '--output-file', '@OUTPUT@'],
