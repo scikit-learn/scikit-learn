@@ -692,6 +692,7 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
         ((-1, 1), None, (-1, 1), None),
         (None, (-2, 2), None, (-2, 2)),
         ((-0.5, 0.5), (-1, 1), (-0.5, 0.5), (-1, 1)),
+        ((-5, -1), (-3, -0.5), (-5, -1), (-3, -0.5)),
     ],
 )
 def test_xlim_ylim_ranges(pyplot, fitted_clf, xlim, ylim, expected_xlim, expected_ylim):
@@ -788,3 +789,39 @@ def test_xlim_ylim_with_multiclass(pyplot):
     assert disp.xx0.max() == pytest.approx(xlim[1])
     assert disp.xx1.min() == pytest.approx(ylim[0])
     assert disp.xx1.max() == pytest.approx(ylim[1])
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_xlim_ylim_with_response_methods(pyplot, fitted_clf, response_method):
+    """Check xlim and ylim work with different response methods."""
+    xlim = (-1, 1)
+    ylim = (-1.5, 1.5)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf,
+        X,
+        xlim=xlim,
+        ylim=ylim,
+        response_method=response_method,
+        grid_resolution=10,
+    )
+
+    assert disp.xx0.min() == pytest.approx(xlim[0])
+    assert disp.xx0.max() == pytest.approx(xlim[1])
+    assert disp.xx1.min() == pytest.approx(ylim[0])
+    assert disp.xx1.max() == pytest.approx(ylim[1])
+
+
+def test_xlim_ylim_grid_shape(pyplot, fitted_clf):
+    """Check that xlim and ylim don't affect grid resolution."""
+    xlim = (-10, 10)
+    ylim = (-5, 5)
+    grid_resolution = 15
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, X, xlim=xlim, ylim=ylim, grid_resolution=grid_resolution
+    )
+
+    assert disp.xx0.shape == (grid_resolution, grid_resolution)
+    assert disp.xx1.shape == (grid_resolution, grid_resolution)
+    assert disp.response.shape == (grid_resolution, grid_resolution)
