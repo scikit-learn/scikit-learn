@@ -510,17 +510,17 @@ class MethodMetadataRequest:
 
         Returns
         -------
-        method_consumes : set of str
+        consumed_params : set of str
             A subset of parameters from `params` which are consumed by this method.
         """
         params = set(params)
-        method_consumes = set()
+        consumed_params = set()
         for metadata_name, alias in self._requests.items():
             if alias is True and metadata_name in params:
-                method_consumes.add(metadata_name)
+                consumed_params.add(metadata_name)
             elif isinstance(alias, str) and alias in params:
-                method_consumes.add(alias)
-        return method_consumes
+                consumed_params.add(alias)
+        return consumed_params
 
     def _serialize(self):
         """Serialize the object.
@@ -590,7 +590,7 @@ class MetadataRequest:
 
         Returns
         -------
-        method_consumes : set of str
+        consumed_params : set of str
             A subset of parameters from `params` which are consumed by the given method.
         """
         return getattr(self, method)._consumes(params=params)
@@ -924,23 +924,23 @@ class MetadataRouter:
 
         Returns
         -------
-        method_consumes : set of str
+        consumed_params : set of str
             A subset of parameters from `params` which are consumed by this method.
         """
-        method_consumes = set()
+        consumed_params = set()
         if self._self_request:
-            method_consumes.update(
+            consumed_params.update(
                 self._self_request.consumes(method=method, params=params)
             )
 
         for _, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
-                    method_consumes.update(
+                    consumed_params.update(
                         route_mapping.router.consumes(method=callee, params=params)
                     )
 
-        return method_consumes
+        return consumed_params
 
     def _get_param_names(self, *, method, return_alias, ignore_self_request):
         """Get names of all metadata that can be consumed or routed by specified \
