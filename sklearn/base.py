@@ -321,7 +321,9 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         methods = {
             name: str(inspect.signature(getattr(init_func, name)))
             for name in dir(init_func)
-            if callable(getattr(init_func, name)) and not name.startswith("_")
+            if hasattr(init_func, name)
+            and callable(getattr(init_func, name))
+            and not name.startswith("_")
         }
 
         estimator_class = init_func.__class__
