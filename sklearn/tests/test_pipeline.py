@@ -287,7 +287,7 @@ def test_empty_pipeline():
     y = iris.target
 
     pipe = Pipeline([])
-    msg = "Please add steps to Pipeline"
+    msg = "The pipeline is empty. Please add steps."
     with pytest.raises(ValueError, match=msg):
         pipe.fit(X, y)
 

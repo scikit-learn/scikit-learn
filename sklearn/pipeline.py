@@ -321,7 +321,7 @@ class Pipeline(_BaseComposition):
 
     def _validate_steps(self):
         if not self.steps:
-            raise ValueError("Please add steps to Pipeline")
+            raise ValueError("The pipeline is empty. Please add steps.")
         names, estimators = zip(*self.steps)
 
         # validate names
