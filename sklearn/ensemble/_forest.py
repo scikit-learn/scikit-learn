@@ -196,7 +196,7 @@ def _parallel_build_trees(
         indices = _generate_sample_indices(
             tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
-        # Row sampling by setting sample_weight in tree
+        # Simulate row-wise sampling by passing sample_weight in trees.
         sample_weight_tree = np.bincount(indices, minlength=n_samples)
         if class_weight == "balanced_subsample":
             expanded_class_weight = compute_sample_weight(
@@ -449,7 +449,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             _sample_weight = sample_weight * expanded_class_weight
 
-        # storing _sample_weight (needed by _get_estimators_indices)
+        # Storing _sample_weight (needed by _get_estimators_indices).
         self._sample_weight = _sample_weight
 
         if not self.bootstrap and self.max_samples is not None:
