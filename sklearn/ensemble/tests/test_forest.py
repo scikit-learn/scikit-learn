@@ -1192,10 +1192,16 @@ def test_class_weights(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
     # Iris is balanced, so no effect expected for using 'balanced' weights
+    # Using the class_weight="balanced" option is then equivalent to fit with
+    # all ones sample_weight. However we cannot guarantee the same fit for
+    # sample_weight = None vs all ones, because the indices are drawn by
+    # different rng functions (choice vs randint). Thus we explicitly pass
+    # the sample_weight as all ones in clf1 fit.
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target, sample_weight=np.ones_like(iris.target))
     clf2 = ForestClassifier(class_weight="balanced", random_state=0)
     clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf2._sample_weight, 1)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Make a multi-output problem with three copies of Iris
