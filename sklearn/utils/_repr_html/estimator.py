@@ -328,13 +328,18 @@ def _write_estimator_html(
                 estimator, "_get_params_html"
             ):
                 params = estimator._get_params_html(deep=False)._repr_html_inner()
-                methods = estimator._get_methods_html()
             else:
                 params = ""
+
+            if hasattr(estimator, "_get_methods_html"):
+                methods = estimator._get_methods_html(deep=False)._repr_html_inner()
+            else:
+                methods = ""
 
             _write_label_html(
                 out,
                 params,
+                methods,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
@@ -386,9 +391,12 @@ def _write_estimator_html(
     elif est_block.kind == "single":
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
-            methods = estimator._get_methods_html()._repr_html_inner()
         else:
             params = ""
+        if hasattr(estimator, "_get_methods_html"):
+            methods = estimator._get_methods_html()._repr_html_inner()
+        else:
+            methods = ""
 
         _write_label_html(
             out,
