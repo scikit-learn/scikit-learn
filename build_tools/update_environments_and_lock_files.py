@@ -165,7 +165,6 @@ build_metadata_list = [
             # channel.
             "scipy": "<1.12",
         },
-        "pip_dependencies": [],
     },
     {
         "name": "pymin_conda_forge_openblas_min_dependencies",
