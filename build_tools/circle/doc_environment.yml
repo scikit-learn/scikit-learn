@@ -37,8 +37,8 @@ dependencies:
   - sphinx-design
   - pydata-sphinx-theme
   - towncrier
+  - jupyterlite-sphinx
+  - jupyterlite-pyodide-kernel
   - pip
   - pip:
-    - jupyterlite-sphinx
-    - jupyterlite-pyodide-kernel
     - sphinxcontrib-sass
