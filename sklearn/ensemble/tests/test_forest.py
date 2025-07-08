@@ -1191,7 +1191,7 @@ def test_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    # Iris is balanced, so no effect expected for using 'balanced' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights.
     # Using the class_weight="balanced" option is then equivalent to fit with
     # all ones sample_weight. However we cannot guarantee the same fit for
     # sample_weight = None vs all ones, because the indices are drawn by
