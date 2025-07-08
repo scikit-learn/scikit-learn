@@ -686,33 +686,33 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
 
 
 @pytest.mark.parametrize(
-    "xlim, ylim, expected_xlim, expected_ylim",
+    "xlim, ylim",
     [
-        ((-2, 2), (-3, 3), (-2, 2), (-3, 3)),
-        ((-1, 1), None, (-1, 1), None),
-        (None, (-2, 2), None, (-2, 2)),
-        ((-0.5, 0.5), (-1, 1), (-0.5, 0.5), (-1, 1)),
-        ((-5, -1), (-3, -0.5), (-5, -1), (-3, -0.5)),
+        ((-2, 2), (-3, 3)),
+        ((-1, 1), None),
+        (None, (-2, 2)),
+        ((-0.5, 0.5), (-1, 1)),
+        ((-5, -1), (-3, -0.5)),
     ],
 )
-def test_xlim_ylim_ranges(pyplot, fitted_clf, xlim, ylim, expected_xlim, expected_ylim):
+def test_xlim_ylim_ranges(pyplot, fitted_clf, xlim, ylim):
     """Check that xlim and ylim parameters correctly set the plot ranges."""
     eps = 1.0
     disp = DecisionBoundaryDisplay.from_estimator(
         fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
     )
 
-    if expected_xlim is not None:
-        assert disp.xx0.min() == pytest.approx(expected_xlim[0])
-        assert disp.xx0.max() == pytest.approx(expected_xlim[1])
+    if xlim is not None:
+        assert disp.xx0.min() == pytest.approx(xlim[0])
+        assert disp.xx0.max() == pytest.approx(xlim[1])
     else:
         x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
         assert disp.xx0.min() == pytest.approx(x0_min)
         assert disp.xx0.max() == pytest.approx(x0_max)
 
-    if expected_ylim is not None:
-        assert disp.xx1.min() == pytest.approx(expected_ylim[0])
-        assert disp.xx1.max() == pytest.approx(expected_ylim[1])
+    if ylim is not None:
+        assert disp.xx1.min() == pytest.approx(ylim[0])
+        assert disp.xx1.max() == pytest.approx(ylim[1])
     else:
         x1_min, x1_max = X[:, 1].min() - eps, X[:, 1].max() + eps
         assert disp.xx1.min() == pytest.approx(x1_min)
