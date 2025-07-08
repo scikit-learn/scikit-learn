@@ -25,7 +25,7 @@ from sklearn.utils._testing import (
 )
 
 
-def test_graphical_lassos(global_random_seed):
+def test_graphical_lassos(random_state=1):
     """Test the graphical lasso solvers.
 
     This checks is unstable for some random seeds where the covariance found with "cd"
@@ -34,7 +34,7 @@ def test_graphical_lassos(global_random_seed):
     # Sample data from a sparse multivariate normal
     dim = 20
     n_samples = 100
-    random_state = check_random_state(global_random_seed)
+    random_state = check_random_state(random_state)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -74,9 +74,9 @@ def test_graphical_lassos(global_random_seed):
     assert_array_almost_equal(precs[0], precs[1])
 
 
-def test_graphical_lasso_when_alpha_equals_0():
+def test_graphical_lasso_when_alpha_equals_0(global_random_seed):
     """Test graphical_lasso's early return condition when alpha=0."""
-    X = np.random.randn(100, 10)
+    X = np.random.RandomState(global_random_seed).randn(100, 10)
     emp_cov = empirical_covariance(X, assume_centered=True)
 
     model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
@@ -174,7 +174,7 @@ def test_graphical_lasso_cv(global_random_seed):
     # Sample data from a sparse multivariate normal
     dim = 5
     n_samples = 6
-    random_state = check_random_state(global_random_seed)
+    random_state = np.random.RandomState(global_random_seed)
     prec = make_sparse_spd_matrix(dim, alpha=0.96, random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -237,7 +237,7 @@ def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
         GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-def test_graphical_lasso_cv_scores():
+def test_graphical_lasso_cv_scores(global_random_seed):
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -249,7 +249,7 @@ def test_graphical_lasso_cv_scores():
             [0.0, 0.0, 0.1, 0.7],
         ]
     )
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
     cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
         X
