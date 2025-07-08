@@ -60,7 +60,7 @@ def _doc_row(estimator_class, method_name):
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
             f'style="color: white; background: black;">?<span>{docstring}... '
-            f"<br> link to documentation</span>"
+            f"<br> click to see online documentation</span>"
         )
     else:
         link_string = (
