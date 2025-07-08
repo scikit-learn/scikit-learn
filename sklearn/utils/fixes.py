@@ -361,6 +361,17 @@ else:
     )
 
 
+# TODO: Remove when Python min version >= 3.12.
+def tarfile_extractall(tarfile, path):
+    try:
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
+        tarfile.extractall(path, filter="data")
+    except TypeError:
+        tarfile.extractall(path)
+
+
 def _in_unstable_openblas_configuration():
     """Return True if in an unstable configuration for OpenBLAS"""
 
