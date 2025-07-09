@@ -330,13 +330,13 @@ class SimpleImputer(_BaseImputer):
                 isinstance(elem, str) for row in X for elem in row
             ):
                 dtype = object
-            elif ((hasattr(X, "dtype") and X.dtype.kind == "b") or 
+            elif ((hasattr(X, "dtype") and X.dtype.kind == "b") or
             (hasattr(X, "dtypes") and all(type == bool for type in X.dtypes))):
                 dtype = bool
             else:
                 dtype = None
         else:
-            if ((hasattr(X, "dtype") and X.dtype.kind == "b") or 
+            if ((hasattr(X, "dtype") and X.dtype.kind == "b") or
             (hasattr(X, "dtypes") and all(type == bool for type in X.dtypes))):
                 dtype = bool
             else:

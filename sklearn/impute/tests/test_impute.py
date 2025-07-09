@@ -1839,7 +1839,7 @@ def test_bool_array_most_frequent_with_nan():
 def test_bool_array_most_frequent_without_nan():
     X = np.array([[True], [False], [True]], dtype=bool)
     imputer = SimpleImputer(strategy="most_frequent")
-    result = imputer.fit_transform(X)    
+    result = imputer.fit_transform(X)
     assert result.dtype == bool
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
@@ -1910,7 +1910,7 @@ def test_pandas_boolean_constant_with_pandas_na():
 def test_numpy_boolean_mean_without_nan():
     X = np.array([[True], [False], [True]], dtype=bool)
     imputer = SimpleImputer(strategy="mean")
-    result = imputer.fit_transform(X)    
+    result = imputer.fit_transform(X)
     assert result.dtype == bool
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
@@ -1921,7 +1921,7 @@ def test_pandas_boolean_mean_without_nan():
         'flag': pd.Series([True, False, True])
     })
     imputer = SimpleImputer(strategy="mean")
-    result = imputer.fit_transform(df)    
+    result = imputer.fit_transform(df)
     assert result.dtype == bool
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
