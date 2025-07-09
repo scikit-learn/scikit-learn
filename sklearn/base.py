@@ -201,7 +201,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     _html_repr = estimator_html_repr
 
-    def _get_fitted_attr_html(self, deep=True):
+    def _get_fitted_attr_html(self):
         """Get fitted attributes of the estimator."""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
