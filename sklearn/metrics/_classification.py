@@ -94,13 +94,15 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     y_true : array or indicator matrix
 
     y_pred : array or indicator matrix
+
+    sample_weight : array or None
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight)
     check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -152,7 +154,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             y_pred = csr_matrix(y_pred)
         y_type = "multilabel-indicator"
 
-    return y_type, y_true, y_pred
+    return y_type, y_true, y_pred, sample_weight
 
 
 def _validate_multiclass_probabilistic_prediction(
@@ -363,7 +365,9 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
@@ -470,7 +474,9 @@ def confusion_matrix(
     (0, 2, 1, 1)
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -659,7 +665,9 @@ def multilabel_confusion_matrix(
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     xp, _, device_ = get_namespace_and_device(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight, device=device_)
 
@@ -1174,7 +1182,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
@@ -1761,7 +1771,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         raise ValueError("average has to be one of " + str(average_options))
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
     present_labels = _tolist(unique_labels(y_true, y_pred))
@@ -2229,7 +2239,9 @@ def class_likelihood_ratios(
     # remove `FutureWarning`, and the Warns section in the docstring should not mention
     # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type != "binary":
         raise ValueError(
             "class_likelihood_ratios only supports binary classification "
@@ -2947,7 +2959,9 @@ def classification_report(
     """
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -3136,7 +3150,9 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     0.75
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
 
