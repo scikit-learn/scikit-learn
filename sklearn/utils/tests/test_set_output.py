@@ -6,7 +6,9 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context, get_config
-from sklearn.preprocessing import StandardScaler
+from sklearn.compose import make_column_transformer
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.utils._set_output import (
     ADAPTERS_MANAGER,
     ContainerAdapterProtocol,
@@ -88,6 +90,27 @@ def test_pandas_adapter():
     assert X_output is X_df
     assert list(X_df.columns) == ["a", "b"]
     assert list(X_output.columns) == ["a", "b"]
+
+
+def test_pandas_adapter_with_column_transformer():
+    """Check index handling when both pd.Series and
+    pd.DataFrame slices are used in ColumnTransformer.
+    """
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "dict_col": [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}],
+            "dummy_col": [1, 2],
+        },
+        index=[1, 2],
+    )
+    t = make_column_transformer(
+        (DictVectorizer(sparse=False), "dict_col"),
+        (FunctionTransformer(), ["dummy_col"]),
+    )
+    t.set_output(transform="pandas")
+    X = t.fit_transform(df)
+    assert list(X.index) == [1, 2]
 
 
 def test_polars_adapter():
