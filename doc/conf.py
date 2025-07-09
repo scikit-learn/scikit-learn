@@ -537,7 +537,7 @@ latex_elements = {
 # [howto/manual]).
 latex_documents = [
     (
-        "contents",
+        root_doc,
         "user_guide.tex",
         "scikit-learn user guide",
         "scikit-learn developers",
