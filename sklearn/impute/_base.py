@@ -39,7 +39,7 @@ def _check_inputs_dtype(X, missing_values):
 
 
 def _most_frequent(array, extra_value, n_repeat):
-    """Compute the most frequent value in a 1d array extended with
+     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
     of the array."""
     # Compute the most frequent value in array only
@@ -49,16 +49,15 @@ def _most_frequent(array, extra_value, n_repeat):
             # Python Counter is more efficient
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
-            # tie breaking similarly to scipy.stats.mode
+            # Use safe tie-breaking with hash and type
             most_frequent_value = min(
-                value
-                for value, count in counter.items()
-                if count == most_frequent_count
+                (value for value, count in counter.items() if count == most_frequent_count),
+                key=lambda x: (str(type(x)), hash(x))
             )
         else:
-            mode = _mode(array)
-            most_frequent_value = mode[0][0]
-            most_frequent_count = mode[1][0]
+            unique, counts = np.unique(array, return_counts=True)
+            most_frequent_count = counts.max()
+            most_frequent_value = unique[counts.argmax()]
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -72,7 +71,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return most_frequent_value
     elif most_frequent_count == n_repeat:
         # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        return min([most_frequent_value, extra_value], key=lambda x: (str(type(x)), hash(x)))
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
