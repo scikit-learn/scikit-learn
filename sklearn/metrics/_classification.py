@@ -494,8 +494,6 @@ def confusion_matrix(
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-    else:
-        sample_weight = np.asarray(sample_weight)
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -3159,7 +3157,6 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     if sample_weight is None:
         weight_average = 1.0
     else:
-        sample_weight = xp.asarray(sample_weight, device=device)
         weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
