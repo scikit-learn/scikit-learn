@@ -31,6 +31,7 @@ from ..utils import (
 )
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import _get_additional_lbfgs_options_dict
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import (
     _check_partial_fit_first_call,
@@ -585,8 +586,8 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             options={
                 "maxfun": self.max_fun,
                 "maxiter": self.max_iter,
-                "iprint": iprint,
                 "gtol": self.tol,
+                **_get_additional_lbfgs_options_dict("iprint", iprint),
             },
             args=(
                 X,
