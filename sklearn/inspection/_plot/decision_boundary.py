@@ -248,7 +248,6 @@ class DecisionBoundaryDisplay:
                     if not hasattr(cmap, "colors"):
                         # For LinearSegmentedColormap
                         colors = cmap(np.linspace(0, 1, n_responses))
-                        print("linear segmented")
                     else:
                         colors = cmap.colors
             elif isinstance(self.multiclass_colors, list):
