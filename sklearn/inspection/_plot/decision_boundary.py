@@ -222,11 +222,6 @@ class DecisionBoundaryDisplay:
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
             if self.multiclass_colors is None:
-                if "cmap" in kwargs and "colors" in kwargs:
-                    raise ValueError(
-                        "Cannot specify both 'cmap' and 'colors' in kwargs. "
-                        "Please use only one of them."
-                    )
                 if "cmap" in kwargs:
                     cmap = plt.get_cmap(kwargs.pop("cmap"), n_responses)
                     if not hasattr(cmap, "colors"):
