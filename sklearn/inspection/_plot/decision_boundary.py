@@ -222,10 +222,18 @@ class DecisionBoundaryDisplay:
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
             if "cmap" in kwargs:
-                warnings.warn("'cmap' is ignored in multiclass case.")
+                warnings.warn(
+                    "'cmap' is ignored in favor of 'multiclass_colors' "
+                    "in the multiclass case when the response method is "
+                    "'decision_function' or 'predict_proba'."
+                )
                 del kwargs["cmap"]
             if "colors" in kwargs:
-                warnings.warn("'colors' is ignored in multiclass case.")
+                warnings.warn(
+                    "'colors' is ignored in favor of 'multiclass_colors' "
+                    "in the multiclass case when the response method is "
+                    "'decision_function' or 'predict_proba'."
+                )
                 del kwargs["colors"]
 
             if self.multiclass_colors is None or isinstance(
