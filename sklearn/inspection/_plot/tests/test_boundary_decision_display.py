@@ -673,7 +673,7 @@ def test_cmap_and_colors_logic(pyplot):
 
     with pytest.warns(
         UserWarning,
-        match="'cmap' is ignored in multiclass case.",
+        match="'cmap' is ignored in favor of 'multiclass_colors'",
     ):
         DecisionBoundaryDisplay.from_estimator(
             clf,
@@ -684,7 +684,7 @@ def test_cmap_and_colors_logic(pyplot):
 
     with pytest.warns(
         UserWarning,
-        match="'colors' is ignored in multiclass case.",
+        match="'colors' is ignored in favor of 'multiclass_colors'",
     ):
         DecisionBoundaryDisplay.from_estimator(
             clf,
