@@ -2178,7 +2178,7 @@ of 0.0.
 
   .. math::
 
-    \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
+    \text{dev}(y, \hat{y}) = \text{log\_loss}(y, \hat{y}).
 
   Here are some usage examples of the :func:`d2_log_loss_score` function::
 
