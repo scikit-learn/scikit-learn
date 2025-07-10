@@ -160,10 +160,6 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
-            # TODO: release scipy constraint when 1.13 is available in the "default"
-            # channel.
-            "scipy": "<1.12",
         },
     },
     {

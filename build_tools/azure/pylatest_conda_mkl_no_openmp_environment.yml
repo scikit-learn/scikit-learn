@@ -7,7 +7,7 @@ dependencies:
   - python
   - numpy
   - blas[build=mkl]
-  - scipy<1.12
+  - scipy
   - cython
   - joblib
   - threadpoolctl
