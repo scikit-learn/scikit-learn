@@ -39,7 +39,7 @@ def _check_inputs_dtype(X, missing_values):
 
 
 def _most_frequent(array, extra_value, n_repeat):
-     """Compute the most frequent value in a 1d array extended with
+    """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
     of the array."""
     # Compute the most frequent value in array only
@@ -69,7 +69,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return extra_value
     elif most_frequent_count > n_repeat:
         return most_frequent_value
-    elif most_frequent_count == n_repeat:
+    else: # most_frequent_count == n_repeat
         # tie breaking similarly to scipy.stats.mode
         return min([most_frequent_value, extra_value], key=lambda x: (str(type(x)), hash(x)))
 
