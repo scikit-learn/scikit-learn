@@ -221,33 +221,16 @@ class DecisionBoundaryDisplay:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
+            if "cmap" in kwargs:
+                warnings.warn("'cmap' is ignored in multiclass case.")
+                del kwargs["cmap"]
+            if "colors" in kwargs:
+                warnings.warn("'colors' is ignored in multiclass case.")
+                del kwargs["colors"]
             if self.multiclass_colors is None:
-                if "cmap" in kwargs:
-                    cmap = plt.get_cmap(kwargs.pop("cmap"), n_responses)
-                    if not hasattr(cmap, "colors"):
-                        # For LinearSegmentedColormap
-                        colors = cmap(np.linspace(0, 1, n_responses))
-                    else:
-                        colors = cmap.colors
-                elif "colors" in kwargs:
-                    if isinstance(kwargs["colors"], str):
-                        colors = mpl.colors.to_rgba(kwargs.pop("colors"))
-                        colors = [colors for _ in range(n_responses)]
-                    else:
-                        colors = kwargs.pop("colors")
-                        colors = [mpl.colors.to_rgba(color) for color in colors]
-                else:
-                    cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
-                    colors = plt.get_cmap(cmap, n_responses).colors
+                cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
+                colors = plt.get_cmap(cmap, n_responses).colors
             else:
-                if "cmap" in kwargs:
-                    warnings.warn("'cmap' is ignored when 'multiclass_colors' is set.")
-                    del kwargs["cmap"]
-                if "colors" in kwargs:
-                    warnings.warn(
-                        "'colors' is ignored when 'multiclass_colors' is set."
-                    )
-                    del kwargs["colors"]
                 if isinstance(self.multiclass_colors, str):
                     cmap = plt.get_cmap(self.multiclass_colors, n_responses)
                     if not hasattr(cmap, "colors"):
