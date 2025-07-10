@@ -245,36 +245,23 @@ def plot_performance_tradeoff(results, title):
         )
 
     ax.set_xscale("log")
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    log_start = np.log10(xlim[0])
-    log_end = np.log10(xlim[1])
 
     nticks = 7
-    ticks = np.logspace(log_start, log_end, nticks)
+    x0, x1 = np.log10(ax.get_xlim())
+    ticks = np.logspace(x0, x1, nticks)
     ax.set_xticks(ticks)
     ax.get_xaxis().set_major_formatter(CustomLogFormatter())
     ax.tick_params(axis="x", which="minor", labelbottom=False)
     ax.minorticks_off()
 
-    log_xlim = np.log10(xlim)
-    x_log_range = log_xlim[1] - log_xlim[0]
-    y_range = ylim[1] - ylim[0]
-    arrow_tip_x_log = log_xlim[0] + 0.05 * x_log_range
-    arrow_tip_y = ylim[0] + 0.05 * y_range
-    arrow_start_x_log = arrow_tip_x_log + 0.04 * x_log_range
-    arrow_start_y = arrow_tip_y + 0.12 * y_range
-    arrow_tip_x = np.power(10, arrow_tip_x_log)
-    arrow_start_x = np.power(10, arrow_start_x_log)
-
     ax.annotate(
         "  best\nmodels",
-        xy=(arrow_tip_x, arrow_tip_y),
-        xytext=(arrow_start_x, arrow_start_y),
+        xy=(0.05, 0.05),
+        xycoords="axes fraction",
+        xytext=(0.15, 0.15),
+        textcoords="axes fraction",
         arrowprops=dict(arrowstyle="->", lw=1.5),
-        fontsize=9,
     )
-
     ax.set_xlabel("Time to fit (seconds)")
     ax.set_ylabel("Mean Absolute Percentage Error")
     ax.set_title(title)
