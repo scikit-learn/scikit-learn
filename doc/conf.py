@@ -518,7 +518,7 @@ html_context["is_devrelease"] = parsed_version.is_devrelease
 
 
 # -- Options for LaTeX output ------------------------------------------------
-latex_engine = 'lualatex'
+latex_engine = "lualatex"
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
