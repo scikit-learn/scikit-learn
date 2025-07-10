@@ -231,6 +231,10 @@ For regression with a squared loss and a :math:`L_2` penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
 Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
 
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`
+
 .. _sgd_online_one_class_svm:
 
 Online One-Class SVM
@@ -401,7 +405,7 @@ Mathematical formulation
 We describe here the mathematical details of the SGD procedure. A good
 overview with convergence rates can be found in [#6]_.
 
-Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
+Given a set of training examples :math:`\{(x_1, y_1), \ldots, (x_n, y_n)\}` where
 :math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathbf{R}`
 (:math:`y_i \in \{-1, 1\}` for classification),
 our goal is to learn a linear scoring function
@@ -510,9 +514,9 @@ For regression the default learning rate schedule is inverse scaling
 
 .. math::
 
-    \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
+    \eta^{(t)} = \frac{\eta_0}{t^{power\_t}}
 
-where :math:`eta_0` and :math:`power\_t` are hyperparameters chosen by the
+where :math:`\eta_0` and :math:`power\_t` are hyperparameters chosen by the
 user via ``eta0`` and ``power_t``, respectively.
 
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
