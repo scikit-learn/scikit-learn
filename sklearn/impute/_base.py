@@ -38,7 +38,7 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
-def _most_frequent(array, extra_value, n_repeat):
+def _most_frequent(array: np.ndarray, extra_value, n_repeat: int)):
     """Compute the most frequent value in a 1D array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
     of the array.
@@ -53,7 +53,7 @@ def _most_frequent(array, extra_value, n_repeat):
             # Use safe tie-breaking with hash and type
             most_frequent_value = min(
                 (value for value, count in counter.items() if count == most_frequent_count),
-                key=lambda x: (str(type(x)), hash(x)),
+                key=lambda x: (str(type(x)), hash(x))
             )
         else:
             unique, counts = np.unique(array, return_counts=True)
