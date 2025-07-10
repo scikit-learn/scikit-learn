@@ -286,12 +286,17 @@ the regressor that will be used for prediction, and the transformer that will
 be applied to the target variable::
 
   >>> import numpy as np
-  >>> from sklearn.datasets import fetch_california_housing
+  >>> from sklearn.datasets import make_regression
   >>> from sklearn.compose import TransformedTargetRegressor
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> # create a synthetic dataset
+  >>> X, y = make_regression(n_samples=20640,
+  ...                        n_features=8,
+  ...                        noise=100.0,
+  ...                        random_state=0)
+  >>> y = np.exp( 1 + (y - y.min()) * (4 / (y.max() - y.min())))
   >>> X, y = X[:2000, :], y[:2000]  # select a subset of data
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
@@ -300,11 +305,11 @@ be applied to the target variable::
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.61
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: 0.67
   >>> raw_target_regr = LinearRegression().fit(X_train, y_train)
-  >>> print('R2 score: {0:.2f}'.format(raw_target_regr.score(X_test, y_test)))
-  R2 score: 0.59
+  >>> print(f"R2 score: {raw_target_regr.score(X_test, y_test):.2f}")
+  R2 score: 0.64
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
@@ -321,8 +326,8 @@ Subsequently, the object is created as::
   ...                                   inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.51
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: 0.67
 
 By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
@@ -336,8 +341,8 @@ each other. However, it is possible to bypass this checking by setting
   ...                                   check_inverse=False)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: -1.57
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: -3.02
 
 .. note::
 
@@ -504,10 +509,10 @@ on data type or column name::
   ...       OneHotEncoder(),
   ...       make_column_selector(pattern='city', dtype_include=object))])
   >>> ct.fit_transform(X)
-  array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
-         [-1.507...,  1.414...,  1. ,  0. ,  0. ],
-         [-0.301...,  0.      ,  0. ,  1. ,  0. ],
-         [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
+  array([[ 0.904,  0.      ,  1. ,  0. ,  0. ],
+         [-1.507,  1.414,  1. ,  0. ,  0. ],
+         [-0.301,  0.      ,  0. ,  1. ,  0. ],
+         [ 0.904, -1.414,  0. ,  0. ,  1. ]])
 
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
@@ -571,9 +576,9 @@ will use the column names to select the columns::
   >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
   ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
   >>> ct.transform(X_new)
-  array([[ 0.9...],
-         [ 2.1...],
-         [-3.9...]])
+  array([[ 0.9],
+         [ 2.1],
+         [-3.9]])
 
 .. _visualizing_composite_estimators:
 
