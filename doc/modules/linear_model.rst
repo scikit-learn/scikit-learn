@@ -383,7 +383,7 @@ scikit-learn.
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
   where :math:`\sigma^2` is an estimate of the noise variance,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
