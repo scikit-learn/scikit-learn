@@ -227,23 +227,34 @@ class DecisionBoundaryDisplay:
             if "colors" in kwargs:
                 warnings.warn("'colors' is ignored in multiclass case.")
                 del kwargs["colors"]
-            if self.multiclass_colors is None:
-                cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
-                colors = plt.get_cmap(cmap, n_responses).colors
-            else:
-                if isinstance(self.multiclass_colors, str):
-                    cmap = plt.get_cmap(self.multiclass_colors, n_responses)
+
+            if self.multiclass_colors is None or isinstance(
+                self.multiclass_colors, str
+            ):
+                if self.multiclass_colors is None:
+                    cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
+                else:
+                    cmap = self.multiclass_colors
+
+                # Special case for the tab10 and tab20 colormaps that encode a
+                # discrete set of colors that are easily distinguishable
+                # contrary to other colormaps that are continuous.
+                if cmap == "tab10" and n_responses <= 10:
+                    colors = plt.get_cmap("tab10", 10).colors[:n_responses]
+                elif cmap == "tab20" and n_responses <= 20:
+                    colors = plt.get_cmap("tab20", 20).colors[:n_responses]
+                else:
+                    cmap = plt.get_cmap(cmap, n_responses)
                     if not hasattr(cmap, "colors"):
                         # For LinearSegmentedColormap
                         colors = cmap(np.linspace(0, 1, n_responses))
+                        print("linear segmented")
                     else:
                         colors = cmap.colors
-                elif isinstance(self.multiclass_colors, list):
-                    colors = [
-                        mpl.colors.to_rgba(color) for color in self.multiclass_colors
-                    ]
-                else:
-                    raise ValueError("'multiclass_colors' must be a list or a str.")
+            elif isinstance(self.multiclass_colors, list):
+                colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
+            else:
+                raise ValueError("'multiclass_colors' must be a list or a str.")
 
             self.multiclass_colors_ = colors
             if plot_method == "contour":
