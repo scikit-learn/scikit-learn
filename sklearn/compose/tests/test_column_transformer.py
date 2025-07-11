@@ -20,6 +20,7 @@ from sklearn.compose import (
     make_column_transformer,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import (
     FunctionTransformer,
@@ -2617,6 +2618,29 @@ def test_column_transformer_auto_memmap():
         Xt = transformer.fit_transform(X)
 
     assert_allclose(Xt, StandardScaler().fit_transform(X[:, [0]]))
+
+
+def test_column_transformer_non_default_index():
+    """Check index handling when both pd.Series and pd.DataFrame slices are used in
+    ColumnTransformer.
+
+    Non-regression test for issue #31546.
+    """
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "dict_col": [{"foo": 1, "bar": 2}, {"foo": 3, "baz": 1}],
+            "dummy_col": [1, 2],
+        },
+        index=[1, 2],
+    )
+    t = make_column_transformer(
+        (DictVectorizer(sparse=False), "dict_col"),
+        (FunctionTransformer(), ["dummy_col"]),
+    )
+    t.set_output(transform="pandas")
+    X = t.fit_transform(df)
+    assert list(X.index) == [1, 2]
 
 
 # Metadata Routing Tests

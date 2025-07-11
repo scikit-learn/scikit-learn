@@ -1,0 +1,3 @@
+- :class:`compose.ColumnTransformer` now correctly preserves non-default index
+  when mixing pandas Series and Dataframes.
+  By :user:`Nicolas Bolle <nicolas-bolle>`.
