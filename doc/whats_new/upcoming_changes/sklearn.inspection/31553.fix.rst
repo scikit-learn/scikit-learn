@@ -1,0 +1,7 @@
+- Fix multiple issues in the multiclass setting of :class:`inspection.DecisionBoundaryDisplay`:
+
+  - `contour` plotting now correctly shows the decision boundary.
+  - `cmap` and `colors` are now properly ignored in favor of `multiclass_colors`.
+  - Linear segmented colormaps are now fully supported.
+
+  By :user:`Yunjie Lin <jshn9515>`

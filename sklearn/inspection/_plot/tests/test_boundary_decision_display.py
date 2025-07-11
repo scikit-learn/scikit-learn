@@ -169,6 +169,10 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
 @pytest.mark.parametrize(
     "kwargs, error_msg",
     [
+        (
+            {"multiclass_colors": {"dict": "not_list"}},
+            "'multiclass_colors' must be a list or a str.",
+        ),
         ({"multiclass_colors": "not_cmap"}, "it must be a valid Matplotlib colormap"),
         ({"multiclass_colors": ["red", "green"]}, "it must be of the same length"),
         (
@@ -617,6 +621,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     "multiclass_colors",
     [
         "plasma",
+        "Blues",
         ["red", "green", "blue"],
     ],
 )
@@ -642,31 +647,51 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
 
     if multiclass_colors == "plasma":
         colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
+    elif multiclass_colors == "Blues":
+        cmap = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_))
+        colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    cmaps = [
-        mpl.colors.LinearSegmentedColormap.from_list(
-            f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-        )
-        for class_idx, (r, g, b, _) in enumerate(colors)
-    ]
+    if plot_method != "contour":
+        cmaps = [
+            mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            for class_idx, (r, g, b, _) in enumerate(colors)
+        ]
+        for idx, quad in enumerate(disp.surface_):
+            assert quad.cmap == cmaps[idx]
+    else:
+        assert_allclose(disp.surface_.colors, colors)
 
-    for idx, quad in enumerate(disp.surface_):
-        assert quad.cmap == cmaps[idx]
 
-
-def test_multiclass_plot_max_class_cmap_kwarg(pyplot):
-    """Check `cmap` kwarg ignored when using plotting max multiclass class."""
+def test_cmap_and_colors_logic(pyplot):
+    """Check the handling logic for `cmap` and `colors`."""
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
 
-    msg = (
-        "Plotting max class of multiclass 'decision_function' or 'predict_proba', "
-        "thus 'multiclass_colors' used and 'cmap' kwarg ignored."
-    )
-    with pytest.warns(UserWarning, match=msg):
-        DecisionBoundaryDisplay.from_estimator(clf, X, cmap="viridis")
+    with pytest.warns(
+        UserWarning,
+        match="'cmap' is ignored in favor of 'multiclass_colors'",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            multiclass_colors="plasma",
+            cmap="Blues",
+        )
+
+    with pytest.warns(
+        UserWarning,
+        match="'colors' is ignored in favor of 'multiclass_colors'",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            multiclass_colors="plasma",
+            colors="blue",
+        )
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):
