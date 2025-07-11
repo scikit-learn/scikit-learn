@@ -221,20 +221,14 @@ class DecisionBoundaryDisplay:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
-            if "cmap" in kwargs:
-                warnings.warn(
-                    "'cmap' is ignored in favor of 'multiclass_colors' "
-                    "in the multiclass case when the response method is "
-                    "'decision_function' or 'predict_proba'."
-                )
-                del kwargs["cmap"]
-            if "colors" in kwargs:
-                warnings.warn(
-                    "'colors' is ignored in favor of 'multiclass_colors' "
-                    "in the multiclass case when the response method is "
-                    "'decision_function' or 'predict_proba'."
-                )
-                del kwargs["colors"]
+            for kwarg in ("cmap", "colors"):
+                if kwarg in kwargs:
+                    warnings.warn(
+                        f"'{kwarg}' is ignored in favor of 'multiclass_colors' "
+                        "in the multiclass case when the response method is "
+                        "'decision_function' or 'predict_proba'."
+                    )
+                    del kwargs[kwarg]
 
             if self.multiclass_colors is None or isinstance(
                 self.multiclass_colors, str
