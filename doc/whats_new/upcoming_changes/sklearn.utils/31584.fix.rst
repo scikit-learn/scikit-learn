@@ -1,3 +1,14 @@
-- Fixed a spurious warning in :func:`utils.multiclass.type_of_target` that could be triggered
-  when called with `estimator.classes_` in certain classification setups.
+- Fixed a spurious warning that could occur when passing ``estimator.classes_``
+  or similar arrays with many unique values to classification utilities.
+  The warning came from :func:`sklearn.utils.multiclass.type_of_target` and has
+  now been suppressed when the input is not a true target vector.
+  The warning message was: "The number of unique classes is greater than 50%
+  of the number of samples."
+  This could appear in tools that internally validate classification outputs,
+  such as :class:`~sklearn.model_selection.GridSearchCV`,
+  :func:`~sklearn.model_selection.cross_val_score`,
+  :func:`~sklearn.metrics.make_scorer`,
+  :class:`~sklearn.multioutput.MultiOutputClassifier`,
+  and :class:`~sklearn.calibration.CalibratedClassifierCV`.
+
   By :user:`Sascha D. Krauss <saskra>`
