@@ -375,10 +375,12 @@ def test_get_response_values_multilabel_indicator(response_method):
 
 def test_response_values_type_of_target_on_classes_no_warning():
     """
-    Ensure that _get_response_values doesn't raise the "unique classes > 50% of samples"
-    warning when calling `type_of_target(classes_)`.
+    Ensure `_get_response_values` doesn't raise spurious warning.
+    
+    "The number of unique classes is greater than > 50% of samples"
+    warning should not be raised when calling `type_of_target(classes_)`.
 
-    non-regression test for issue #31583.
+    Non-regression test for issue #31583.
     """
     X = np.random.RandomState(0).randn(120, 3)
     # 30 classes, less than 50% of number of samples
