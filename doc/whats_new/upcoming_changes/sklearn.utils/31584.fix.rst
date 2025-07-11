@@ -1,0 +1,4 @@
+- Fixed a spurious warning (about the number of unique classes being
+  greater than 50% of the number of samples) that could occur when
+  passing `classes` :func:`utils.multiclass.type_of_target`.
+  By :user:`Sascha D. Krauss <saskra>`.
