@@ -34,7 +34,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class.
+        The label of the positive class. If not `None`, this value is displayed in
+        the x- and y-axes labels.
 
     Attributes
     ----------
