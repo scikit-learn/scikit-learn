@@ -282,6 +282,16 @@ def test_pipeline_invalid_parameters():
     assert params == params2
 
 
+def test_empty_pipeline():
+    X = iris.data
+    y = iris.target
+
+    pipe = Pipeline([])
+    msg = "The pipeline is empty. Please add steps."
+    with pytest.raises(ValueError, match=msg):
+        pipe.fit(X, y)
+
+
 def test_pipeline_init_tuple():
     # Pipeline accepts steps as tuple
     X = np.array([[1, 2]])
