@@ -376,7 +376,7 @@ def test_get_response_values_multilabel_indicator(response_method):
 def test_response_values_type_of_target_on_classes_no_warning():
     """
     Ensure `_get_response_values` doesn't raise spurious warning.
-    
+
     "The number of unique classes is greater than > 50% of samples"
     warning should not be raised when calling `type_of_target(classes_)`.
 
