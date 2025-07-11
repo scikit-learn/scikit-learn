@@ -1,5 +1,7 @@
 # Workflow to update lock files
 name: Update lock files
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -25,9 +27,6 @@ jobs:
           - name: free-threaded
             update_script_args: "--select-tag free-threaded"
             additional_commit_message: "[free-threaded]"
-          - name: cirrus-arm
-            update_script_args: "--select-tag arm"
-            additional_commit_message: "[cirrus arm]"
           - name: array-api
             update_script_args: "--select-tag cuda"
 
@@ -37,6 +36,7 @@ jobs:
         run: |
           source build_tools/shared.sh
           source $CONDA/bin/activate
+          conda update -n base --all
           conda install -n base conda conda-libmamba-solver -y
           conda config --set solver libmamba
           conda install -c conda-forge "$(get_dep conda-lock min)" -y

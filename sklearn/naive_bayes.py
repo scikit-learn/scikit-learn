@@ -33,10 +33,10 @@ from .utils.validation import (
 
 __all__ = [
     "BernoulliNB",
+    "CategoricalNB",
+    "ComplementNB",
     "GaussianNB",
     "MultinomialNB",
-    "ComplementNB",
-    "CategoricalNB",
 ]
 
 
@@ -1433,6 +1433,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.categorical = True
         tags.input_tags.sparse = False
         tags.input_tags.positive_only = True
         return tags

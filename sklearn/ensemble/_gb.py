@@ -64,7 +64,7 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    # This is used for classifiers where the denominator might become zero exatly.
+    # This is used for classifiers where the denominator might become zero exactly.
     # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
     # denominator = hessian = 0, and we should set the node value in the line search to
     # zero as there is no improvement of the loss possible.
@@ -1152,6 +1152,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         There is a trade-off between learning_rate and n_estimators.
         Values must be in the range `[0.0, inf)`.
 
+        For an example of the effects of this parameter and its interaction with
+        ``subsample``, see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
+
     n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
@@ -1450,7 +1454,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
-    0.913...
+    0.913
     """
 
     _parameter_constraints: dict = {
@@ -2048,7 +2052,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> reg.fit(X_train, y_train)
     GradientBoostingRegressor(random_state=0)
     >>> reg.predict(X_test[1:2])
-    array([-61...])
+    array([-61.1])
     >>> reg.score(X_test, y_test)
     0.4...
 

@@ -7,8 +7,8 @@ import argparse
 from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
-NUMPY_MIN_VERSION = "1.19.5"
-SCIPY_MIN_VERSION = "1.6.0"
+NUMPY_MIN_VERSION = "1.22.0"
+SCIPY_MIN_VERSION = "1.8.0"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "3.1.0"
 PYTEST_MIN_VERSION = "7.1.2"
@@ -24,25 +24,24 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "meson-python": ("0.16.0", "build"),
-    "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
-    "scikit-image": ("0.17.2", "docs, examples, tests"),
-    "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
+    "meson-python": ("0.17.1", "build"),
+    "matplotlib": ("3.5.0", "benchmark, docs, examples, tests"),
+    "scikit-image": ("0.19.0", "docs, examples, tests"),
+    "pandas": ("1.4.0", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.5.1", "tests"),
-    "black": ("24.3.0", "tests"),
-    "mypy": ("1.9", "tests"),
-    "pyamg": ("4.0.0", "tests"),
+    "ruff": ("0.11.7", "tests"),
+    "mypy": ("1.15", "tests"),
+    "pyamg": ("4.2.1", "tests"),
     "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
-    "Pillow": ("7.1.2", "docs"),
+    "Pillow": ("8.4.0", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),
     "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
@@ -54,7 +53,7 @@ dependent_packages = {
     "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.5.6", "maintenance"),
+    "conda-lock": ("3.0.1", "maintenance"),
 }
 
 

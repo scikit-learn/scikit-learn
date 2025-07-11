@@ -72,8 +72,8 @@ from .utils.validation import (
 )
 
 __all__ = [
-    "OneVsRestClassifier",
     "OneVsOneClassifier",
+    "OneVsRestClassifier",
     "OutputCodeClassifier",
 ]
 
@@ -553,8 +553,10 @@ class OneVsRestClassifier(
             Y = np.concatenate(((1 - Y), Y), axis=1)
 
         if not self.multilabel_:
-            # Then, probabilities should be normalized to 1.
-            Y /= np.sum(Y, axis=1)[:, np.newaxis]
+            # Then, (nonzero) sample probability distributions should be normalized.
+            row_sums = np.sum(Y, axis=1)[:, np.newaxis]
+            np.divide(Y, row_sums, out=Y, where=row_sums != 0)
+
         return Y
 
     @available_if(_estimators_has("decision_function"))

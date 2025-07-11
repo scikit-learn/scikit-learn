@@ -225,10 +225,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     ('linearsvc', LinearSVC(random_state=0, tol=1e-05))])
 
     >>> print(clf.named_steps['linearsvc'].coef_)
-    [[0.141...   0.526... 0.679... 0.493...]]
+    [[0.141   0.526 0.679 0.493]]
 
     >>> print(clf.named_steps['linearsvc'].intercept_)
-    [0.1693...]
+    [0.1693]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
@@ -496,11 +496,11 @@ class LinearSVR(RegressorMixin, LinearModel):
                     ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
 
     >>> print(regr.named_steps['linearsvr'].coef_)
-    [18.582... 27.023... 44.357... 64.522...]
+    [18.582 27.023 44.357 64.522]
     >>> print(regr.named_steps['linearsvr'].intercept_)
-    [-4...]
+    [-4.]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-2.384...]
+    [-2.384]
     """
 
     _parameter_constraints: dict = {
@@ -843,7 +843,7 @@ class SVC(BaseSVC):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    For a comaprison of the SVC with other classifiers see:
+    For a comparison of the SVC with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
@@ -1662,7 +1662,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
-    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+    array([1.7798, 2.0547, 2.0556, 2.0561, 1.7332])
 
     For a more extended example,
     see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`

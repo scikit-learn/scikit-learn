@@ -6,7 +6,6 @@ functions to validate the model.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import time
 import warnings
@@ -46,11 +45,11 @@ from ..utils.validation import _check_method_params, _num_samples
 from ._split import check_cv
 
 __all__ = [
-    "cross_validate",
-    "cross_val_score",
     "cross_val_predict",
-    "permutation_test_score",
+    "cross_val_score",
+    "cross_validate",
     "learning_curve",
+    "permutation_test_score",
     "validation_curve",
 ]
 
@@ -168,15 +167,15 @@ def cross_validate(
             ``cross_validate(..., params={'groups': groups})``.
 
     scoring : str, callable, list, tuple, or dict, default=None
-        Strategy to evaluate the performance of the cross-validated model on
-        the test set. If `None`, the
-        :ref:`default evaluation criterion <scoring_api_overview>` of the estimator
-        is used.
+        Strategy to evaluate the performance of the `estimator` across cross-validation
+        splits.
 
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
+        - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value.
+        - `None`, the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -287,8 +286,8 @@ def cross_validate(
             set for each cv split.
         ``score_time``
             The time for scoring the estimator on the test set for each
-            cv split. (Note time for scoring on the train set is not
-            included even if ``return_train_score`` is set to ``True``
+            cv split. (Note: time for scoring on the train set is not
+            included even if ``return_train_score`` is set to ``True``).
         ``estimator``
             The estimator objects for each cv split.
             This is available only if ``return_estimator`` parameter
@@ -336,7 +335,7 @@ def cross_validate(
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])
-    [-3635.5... -3573.3... -6114.7...]
+    [-3635.5 -3573.3 -6114.7]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
@@ -378,19 +377,8 @@ def cross_validate(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to cross validation but are not"
-                    " explicitly set as requested or not requested for cross_validate's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("cross_validate.fit", "cross_validate"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -588,13 +576,18 @@ def cross_val_score(
             ``cross_val_score(..., params={'groups': groups})``.
 
     scoring : str or callable, default=None
-        A str (see :ref:`scoring_parameter`) or a scorer callable object / function with
-        signature ``scorer(estimator, X, y)`` which should return only a single value.
+        Strategy to evaluate the performance of the `estimator` across cross-validation
+        splits.
 
-        Similar to :func:`cross_validate`
-        but only a single metric is permitted.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``, which should return only a single value.
+          See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-        If `None`, the estimator's default scorer (if available) is used.
+        Similar to the use of `scoring` in :func:`cross_validate` but only a
+        single metric is permitted.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -825,9 +818,9 @@ def _fit_and_score(
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
+            progress_msg = f" {split_progress[0] + 1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
+            progress_msg += f"; {candidate_progress[0] + 1}/{candidate_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
@@ -1169,6 +1162,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
+
+    For a detailed example of using ``cross_val_predict`` to visualize
+    prediction errors, please see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
@@ -1179,7 +1176,7 @@ def cross_val_predict(
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
         router = (
-            MetadataRouter(owner="cross_validate")
+            MetadataRouter(owner="cross_val_predict")
             .add(
                 splitter=cv,
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
@@ -1197,18 +1194,8 @@ def cross_val_predict(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `cross_val_predict` but are"
-                    " not explicitly set as requested or not requested for"
-                    f" cross_validate's estimator: {estimator.__class__.__name__} Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you want to use and"
-                    " `metadata=False` for not using it. See the Metadata Routing User"
-                    " guide <https://scikit-learn.org/stable/metadata_routing.html>"
-                    " for more information."
-                ),
+                message=str(e).replace("cross_val_predict.fit", "cross_val_predict"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -1487,7 +1474,7 @@ def permutation_test_score(
     independent.
 
     The p-value represents the fraction of randomized data sets where the
-    estimator performed as well or better than in the original data. A small
+    estimator performed as well or better than on the original data. A small
     p-value suggests that there is a real dependency between features and
     targets which has been used by the estimator to give good predictions.
     A large p-value may be due to lack of real dependency between features
@@ -1563,10 +1550,14 @@ def permutation_test_score(
         The verbosity level.
 
     scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring_callable`) to evaluate the predictions on the test set.
+        Scoring method to use to evaluate the predictions on the validation set.
 
-        If `None` the estimator's score method is used.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``, which should return only a single value.
+          See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
@@ -1668,19 +1659,9 @@ def permutation_test_score(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `permutation_test_score`"
-                    " but are not explicitly set as requested or not requested"
-                    " for permutation_test_score's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
+                message=str(e).replace(
+                    "permutation_test_score.fit", "permutation_test_score"
                 ),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
@@ -1866,8 +1847,13 @@ def learning_curve(
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : str or callable, default=None
-        A str (see :ref:`scoring_parameter`) or a scorer callable object / function with
-        signature ``scorer(estimator, X, y)``.
+        Scoring method to use to evaluate the training and test sets.
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     exploit_incremental_learning : bool, default=False
         If the estimator supports incremental learning, this will be
@@ -1947,6 +1933,11 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See Also
+    --------
+    LearningCurveDisplay.from_estimator : Plot a learning curve using an
+        estimator and data.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -2015,19 +2006,8 @@ def learning_curve(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `learning_curve` but are not"
-                    " explicitly set as requested or not requested for learning_curve's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("learning_curve.fit", "learning_curve"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -2362,8 +2342,13 @@ def validation_curve(
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : str or callable, default=None
-        A str (see :ref:`scoring_parameter`) or a scorer callable object / function with
-        signature ``scorer(estimator, X, y)``.
+        Scoring method to use to evaluate the training and test sets.
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
@@ -2414,6 +2399,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----
@@ -2466,19 +2456,8 @@ def validation_curve(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `validation_curve` but are not"
-                    " explicitly set as requested or not requested for"
-                    f" validation_curve's estimator: {estimator.__class__.__name__}."
-                    " Call `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("validation_curve.fit", "validation_curve"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )

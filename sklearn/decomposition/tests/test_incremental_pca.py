@@ -1,5 +1,6 @@
 """Tests for Incremental PCA."""
 
+import itertools
 import warnings
 
 import numpy as np
@@ -86,9 +87,9 @@ def test_incremental_pca_sparse(sparse_container):
         ipca.partial_fit(X_sparse)
 
 
-def test_incremental_pca_check_projection():
+def test_incremental_pca_check_projection(global_random_seed):
     # Test that the projection of data is correct.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 100, 3
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5])
@@ -107,9 +108,9 @@ def test_incremental_pca_check_projection():
     assert_almost_equal(np.abs(Yt[0][0]), 1.0, 1)
 
 
-def test_incremental_pca_inverse():
+def test_incremental_pca_inverse(global_random_seed):
     # Test that the projection of data can be inverted.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
@@ -216,9 +217,9 @@ def test_incremental_pca_num_features_change():
         ipca.partial_fit(X2)
 
 
-def test_incremental_pca_batch_signs():
+def test_incremental_pca_batch_signs(global_random_seed):
     # Test that components_ sign is stable over batch sizes.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 3
     X = rng.randn(n_samples, n_features)
@@ -228,7 +229,7 @@ def test_incremental_pca_batch_signs():
         ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
+    for i, j in itertools.pairwise(all_components):
         assert_almost_equal(np.sign(i), np.sign(j), decimal=6)
 
 
@@ -253,9 +254,9 @@ def test_incremental_pca_partial_fit_small_batch():
     assert_allclose(pca.components_, pipca.components_, atol=1e-3)
 
 
-def test_incremental_pca_batch_values():
+def test_incremental_pca_batch_values(global_random_seed):
     # Test that components_ values are stable over batch sizes.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 3
     X = rng.randn(n_samples, n_features)
@@ -265,7 +266,7 @@ def test_incremental_pca_batch_values():
         ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
+    for i, j in itertools.pairwise(all_components):
         assert_almost_equal(i, j, decimal=1)
 
 
@@ -281,13 +282,13 @@ def test_incremental_pca_batch_rank():
         ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for components_i, components_j in zip(all_components[:-1], all_components[1:]):
+    for components_i, components_j in itertools.pairwise(all_components):
         assert_allclose_dense_sparse(components_i, components_j)
 
 
-def test_incremental_pca_partial_fit():
+def test_incremental_pca_partial_fit(global_random_seed):
     # Test that fit and partial_fit get equivalent results.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
@@ -300,7 +301,7 @@ def test_incremental_pca_partial_fit():
     pipca = IncrementalPCA(n_components=2, batch_size=batch_size)
     # Add one to make sure endpoint is included
     batch_itr = np.arange(0, n + 1, batch_size)
-    for i, j in zip(batch_itr[:-1], batch_itr[1:]):
+    for i, j in itertools.pairwise(batch_itr):
         pipca.partial_fit(X[i:j, :])
     assert_almost_equal(ipca.components_, pipca.components_, decimal=3)
 
@@ -315,9 +316,9 @@ def test_incremental_pca_against_pca_iris():
     assert_almost_equal(np.abs(Y_pca), np.abs(Y_ipca), 1)
 
 
-def test_incremental_pca_against_pca_random_data():
+def test_incremental_pca_against_pca_random_data(global_random_seed):
     # Test that IncrementalPCA and PCA are approximate (to a sign flip).
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 3
     X = rng.randn(n_samples, n_features) + 5 * rng.rand(1, n_features)
@@ -347,10 +348,10 @@ def test_explained_variances():
         assert_almost_equal(pca.noise_variance_, ipca.noise_variance_, decimal=prec)
 
 
-def test_singular_values():
+def test_singular_values(global_random_seed):
     # Check that the IncrementalPCA output has the correct singular values
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     n_features = 100
 
@@ -359,7 +360,7 @@ def test_singular_values():
     )
 
     pca = PCA(n_components=10, svd_solver="full", random_state=rng).fit(X)
-    ipca = IncrementalPCA(n_components=10, batch_size=100).fit(X)
+    ipca = IncrementalPCA(n_components=10, batch_size=150).fit(X)
     assert_array_almost_equal(pca.singular_values_, ipca.singular_values_, 2)
 
     # Compare to the Frobenius norm
@@ -381,7 +382,7 @@ def test_singular_values():
     )
 
     # Set the singular values and see what we get back
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 110
 

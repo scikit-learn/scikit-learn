@@ -19,7 +19,7 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 from ..tree import DecisionTreeRegressor
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
-from ..utils._optional_dependencies import check_matplotlib_support  # noqa
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa: F401
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -100,7 +100,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     custom_values = {k: _convert_custom_values(v) for k, v in custom_values.items()}
     if any(v.ndim != 1 for v in custom_values.values()):
         error_string = ", ".join(
-            f"Feature {str(k)}: {v.ndim} dimensions"
+            f"Feature {k}: {v.ndim} dimensions"
             for k, v in custom_values.items()
             if v.ndim != 1
         )
@@ -385,7 +385,9 @@ def partial_dependence(
     the average response of an estimator for each possible value of the
     feature.
 
-    Read more in the :ref:`User Guide <partial_dependence>`.
+    Read more in
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+    and the :ref:`User Guide <partial_dependence>`.
 
     .. warning::
 
@@ -570,7 +572,7 @@ def partial_dependence(
     >>> gb = GradientBoostingClassifier(random_state=0).fit(X, y)
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
-    (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
+    (array([[-4.52,  4.52]]), [array([ 0.,  1.])])
     """
     check_is_fitted(estimator)
 
@@ -671,6 +673,12 @@ def partial_dependence(
         is_categorical = [False] * len(features_indices)
     else:
         categorical_features = np.asarray(categorical_features)
+        if categorical_features.size == 0:
+            raise ValueError(
+                "Passing an empty list (`[]`) to `categorical_features` is not "
+                "supported. Use `None` instead to indicate that there are no "
+                "categorical features."
+            )
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:

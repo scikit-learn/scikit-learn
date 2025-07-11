@@ -8,7 +8,7 @@ Generalized Linear Models.
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-from numbers import Integral
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -32,6 +32,7 @@ from ..utils._array_api import (
     indexing_dtype,
     supported_float_dtypes,
 )
+from ..utils._param_validation import Interval
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -472,6 +473,15 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
+    tol : float, default=1e-6
+        The precision of the solution (`coef_`) is determined by `tol` which
+        specifies a different convergence criterion for the `lsqr` solver.
+        `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
+        fitting on sparse training data. This parameter has no effect when fitting
+        on dense data.
+
+        .. versionadded:: 1.7
+
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
         speedup in case of sufficiently large problems, that is if firstly
@@ -483,6 +493,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive. This
         option is only supported for dense arrays.
+
+        For a comparison between a linear regression model with positive constraints
+        on the regression coefficients and a linear regression without such constraints,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`.
 
         .. versionadded:: 0.24
 
@@ -545,7 +559,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    np.float64(3.0...)
+    np.float64(3.0)
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
@@ -555,6 +569,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         "copy_X": ["boolean"],
         "n_jobs": [None, Integral],
         "positive": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -562,11 +577,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         copy_X=True,
+        tol=1e-6,
         n_jobs=None,
         positive=False,
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
+        self.tol = tol
         self.n_jobs = n_jobs
         self.positive = positive
 
@@ -668,11 +685,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                self.coef_ = lsqr(X_centered, y)[0]
+                self.coef_ = lsqr(X_centered, y, atol=self.tol, btol=self.tol)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(lsqr)(X_centered, y[:, j].ravel())
+                    delayed(lsqr)(
+                        X_centered, y[:, j].ravel(), atol=self.tol, btol=self.tol
+                    )
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
