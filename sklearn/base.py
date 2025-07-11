@@ -318,6 +318,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     def _get_methods_html(self, deep=True):
         init_func = getattr(self.__init__, "deprecated_original", self)
 
+        # Pipeline fails without this check
+        if hasattr(init_func, "steps") and not len(init_func.steps):
+            return MethodsDict("", "")
+
         params = self.get_params(deep=deep)
 
         methods = {
