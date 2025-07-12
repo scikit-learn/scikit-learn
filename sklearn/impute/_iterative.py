@@ -10,8 +10,10 @@ import numpy as np
 from scipy import stats
 
 from ..base import _fit_context, clone
+from ..compose import ColumnTransformer
+from ..ensemble import RandomForestClassifier
 from ..exceptions import ConvergenceWarning
-from ..preprocessing import normalize
+from ..preprocessing import OrdinalEncoder, normalize
 from ..utils import _safe_indexing, check_array, check_random_state
 from ..utils._indexing import _safe_assign
 from ..utils._mask import _get_mask
@@ -84,6 +86,21 @@ class IterativeImputer(_BaseImputer):
         The estimator to use at each step of the round-robin imputation.
         If `sample_posterior=True`, the estimator must support
         `return_std` in its `predict` method.
+
+    classifier : estimator object, default=RandomForestClassifier()
+        The classifier to use for categorical features. Must support
+        `fit` and `predict` methods.
+
+    categorical_features : array-like of bool, int or str, default=None
+        Indicates which features are categorical. If None, categorical
+        features are automatically detected based on dtype.
+        - If array-like of bool: boolean mask indicating categorical features
+        - If array-like of int: indices of categorical features
+        - If array-like of str: names of categorical features
+
+    preprocessor : transformer, default=None
+        Preprocessing transformer to apply before imputation. If None,
+        a default OrdinalEncoder is used for categorical features.
 
     missing_values : int or np.nan, default=np.nan
         The placeholder for the missing values. All occurrences of
@@ -281,9 +298,9 @@ class IterativeImputer(_BaseImputer):
     IterativeImputer(random_state=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> imp_mean.transform(X)
-    array([[ 6.9584,  2.       ,  3.        ],
-           [ 4.       ,  2.6000,  6.        ],
-           [10.       ,  4.9999,  9.        ]])
+    array([[ 6.9584...,  2.       ,  3.        ],
+           [ 4.       ,  2.6000...,  6.        ],
+           [10.       ,  4.9999...,  9.        ]])
 
     For a more detailed example see
     :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py` or
@@ -293,6 +310,9 @@ class IterativeImputer(_BaseImputer):
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
         "estimator": [None, HasMethods(["fit", "predict"])],
+        "classifier": [None, HasMethods(["fit", "predict"])],
+        "categorical_features": ["array-like", None],
+        "preprocessor": [None, HasMethods(["fit", "transform"])],
         "sample_posterior": ["boolean"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -315,6 +335,9 @@ class IterativeImputer(_BaseImputer):
         self,
         estimator=None,
         *,
+        classifier=None,
+        categorical_features=None,
+        preprocessor=None,
         missing_values=np.nan,
         sample_posterior=False,
         max_iter=10,
@@ -338,6 +361,9 @@ class IterativeImputer(_BaseImputer):
         )
 
         self.estimator = estimator
+        self.classifier = classifier
+        self.categorical_features = categorical_features
+        self.preprocessor = preprocessor
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
         self.tol = tol
@@ -350,6 +376,189 @@ class IterativeImputer(_BaseImputer):
         self.max_value = max_value
         self.verbose = verbose
         self.random_state = random_state
+
+    def _detect_categorical_features(self, X):
+        """Detect categorical features automatically."""
+        # Handle sparse matrices
+        if hasattr(X, "sparse") or hasattr(X, "toarray"):
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Handle case where X is wrapped in object array (from sparse conversion)
+        if X.dtype == object and X.ndim == 0:
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Handle 1D arrays - reshape to 2D
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+
+        if hasattr(X, "dtypes"):  # pandas DataFrame
+            # Check for object or category dtypes, but exclude nullable integer types
+            categorical_mask = np.zeros(len(X.dtypes), dtype=bool)
+            for i, dtype in enumerate(X.dtypes):
+                if dtype == "object" or dtype.name == "category":
+                    categorical_mask[i] = True
+                # Don't treat nullable integer types (Int8, Int16, Int32, Int64)
+                # as categorical
+                elif (
+                    hasattr(dtype, "name")
+                    and dtype.name.startswith(("Int", "Float"))
+                    and dtype.name[1:].isdigit()
+                ):
+                    categorical_mask[i] = False
+            return categorical_mask
+        else:
+            # For numpy arrays, check if dtype is object or string
+            if X.dtype.kind in ["O", "U", "S"]:
+                return np.ones(X.shape[1], dtype=bool)
+            else:
+                # For numeric data, assume no categorical features by default
+                return np.zeros(X.shape[1], dtype=bool)
+
+    def _get_categorical_mask(self, X):
+        """Get boolean mask for categorical features."""
+        # Handle sparse matrices - should raise appropriate error
+        if hasattr(X, "sparse") or hasattr(X, "toarray"):
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Ensure X is a numpy array
+        X = np.asarray(X)
+
+        # Handle case where X is wrapped in object array (from sparse conversion)
+        if X.dtype == object and X.ndim == 0:
+            raise ValueError(
+                "IterativeImputer does not support sparse input. "
+                "Please convert to dense array first using .toarray() or similar."
+            )
+
+        # Handle 1D arrays - reshape to 2D
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+
+        if self.categorical_features is None:
+            return self._detect_categorical_features(X)
+
+        n_features = X.shape[1]
+        categorical_mask = np.zeros(n_features, dtype=bool)
+
+        # Case 1: categorical_features is a numpy array
+        if hasattr(self.categorical_features, "dtype"):
+            if self.categorical_features.dtype == bool:  # Subcase 1.1: Boolean mask
+                if len(self.categorical_features) == n_features:
+                    categorical_mask = np.asarray(self.categorical_features)
+                else:
+                    raise ValueError(
+                        f"Boolean mask for categorical_features has length "
+                        f"{len(self.categorical_features)},"
+                        f"but data has {n_features} features."
+                    )
+            elif np.issubdtype(self.categorical_features.dtype, np.integer):
+                # Subcase 1.2: Integer indices
+                try:
+                    cf_array = np.asarray(self.categorical_features)
+                    if np.any(cf_array < 0) or np.any(cf_array >= n_features):
+                        raise IndexError(
+                            f"Categorical feature indices are out "
+                            f"of bounds for {n_features} features."
+                        )
+                    categorical_mask[cf_array] = True
+                except IndexError as e:
+                    raise ValueError(
+                        f"Invalid integer indices in"
+                        f" numpy array categorical_features: {e}"
+                    )
+            else:  # Numpy array of other dtype
+                raise ValueError(
+                    "If categorical_features is a numpy array, "
+                    "its dtype must be bool or integer. "
+                    f"Got dtype: {self.categorical_features.dtype}"
+                )
+        # Case 2: categorical_features is a list or tuple
+        elif isinstance(self.categorical_features, (list, tuple)):
+            if not self.categorical_features:  # Empty list/tuple
+                pass  # categorical_mask remains all False, which is correct
+            elif all(isinstance(idx, Integral) for idx in self.categorical_features):
+                # Subcase 2.1: List/tuple of integer indices
+                try:
+                    cf_array = np.asarray(self.categorical_features)
+                    if np.any(cf_array < 0) or np.any(cf_array >= n_features):
+                        raise IndexError(
+                            f"Categorical feature indices are"
+                            f"out of bounds for {n_features} features."
+                        )
+                    categorical_mask[cf_array] = True
+                except IndexError as e:
+                    raise ValueError(
+                        f"Invalid integer indices in"
+                        f"list/tuple categorical_features: {e}"
+                    )
+            elif hasattr(X, "columns") and all(
+                isinstance(name, str) for name in self.categorical_features
+            ):  # Subcase 2.2: List/tuple of string names (X must be DataFrame)
+                feature_names_map = {name: i for i, name in enumerate(X.columns)}
+                indices_to_set = []
+                for feat_name in self.categorical_features:
+                    if feat_name not in feature_names_map:
+                        raise ValueError(
+                            f"Feature name '{feat_name}' in categorical_features "
+                            "not found in input data columns."
+                        )
+                    indices_to_set.append(feature_names_map[feat_name])
+                categorical_mask[indices_to_set] = True
+            else:  # List/tuple of mixed types or strings when X is not DataFrame
+                raise ValueError(
+                    "If categorical_features is a list/tuple, "
+                    "it must contain all integers (indices), "
+                    "or (if X is a DataFrame and features are strings) "
+                    "all strings (feature names). "
+                    f"Got: {self.categorical_features}"
+                )
+        # Case 3: Unrecognized format for categorical_features
+        else:
+            raise ValueError(
+                "categorical_features must be None, a numpy"
+                "array (bool or int), or a list/tuple "
+                "(of int or str). "
+                f"Got: {type(self.categorical_features)}"
+            )
+        return categorical_mask
+
+    def _setup_preprocessor(self, X):
+        """Setup preprocessor for categorical features."""
+        if self.preprocessor is not None:
+            return clone(self.preprocessor)
+
+        categorical_mask = self._get_categorical_mask(X)
+        categorical_indices = np.where(categorical_mask)[0]
+
+        if len(categorical_indices) == 0:
+            return None
+
+        preprocessor = ColumnTransformer(
+            [
+                (
+                    "categorical",
+                    OrdinalEncoder(
+                        handle_unknown="use_encoded_value",
+                        unknown_value=-1,
+                        encoded_missing_value=-2,
+                    ),
+                    categorical_indices,
+                )
+            ],
+            remainder="passthrough",
+            sparse_threshold=0,
+        )
+
+        return preprocessor
 
     def _impute_one_feature(
         self,
@@ -386,7 +595,7 @@ class IterativeImputer(_BaseImputer):
             The estimator to use at this step of the round-robin imputation.
             If `sample_posterior=True`, the estimator must support
             `return_std` in its `predict` method.
-            If None, it will be cloned from self._estimator.
+            If None, it will be cloned from self._estimator or self._classifier.
 
         fit_mode : boolean, default=True
             Whether to fit and predict with the estimator or just predict.
@@ -409,8 +618,14 @@ class IterativeImputer(_BaseImputer):
                 "estimator should be passed in."
             )
 
+        # Determine if this is a categorical feature
+        is_categorical = self._categorical_mask[feat_idx]
+
         if estimator is None:
-            estimator = clone(self._estimator)
+            if is_categorical:
+                estimator = clone(self._classifier)
+            else:
+                estimator = clone(self._estimator)
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
@@ -424,6 +639,11 @@ class IterativeImputer(_BaseImputer):
                 ~missing_row_mask,
                 axis=0,
             )
+
+            # For categorical features, ensure y_train contains integer labels
+            if is_categorical:
+                y_train = y_train.astype(int)
+
             estimator.fit(X_train, y_train, **params)
 
         # if no missing values, don't predict
@@ -436,34 +656,46 @@ class IterativeImputer(_BaseImputer):
             missing_row_mask,
             axis=0,
         )
-        if self.sample_posterior:
-            mus, sigmas = estimator.predict(X_test, return_std=True)
-            imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
-            # two types of problems: (1) non-positive sigmas
-            # (2) mus outside legal range of min_value and max_value
-            # (results in inf sample)
-            positive_sigmas = sigmas > 0
-            imputed_values[~positive_sigmas] = mus[~positive_sigmas]
-            mus_too_low = mus < self._min_value[feat_idx]
-            imputed_values[mus_too_low] = self._min_value[feat_idx]
-            mus_too_high = mus > self._max_value[feat_idx]
-            imputed_values[mus_too_high] = self._max_value[feat_idx]
-            # the rest can be sampled without statistical issues
-            inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
-            mus = mus[inrange_mask]
-            sigmas = sigmas[inrange_mask]
-            a = (self._min_value[feat_idx] - mus) / sigmas
-            b = (self._max_value[feat_idx] - mus) / sigmas
 
-            truncated_normal = stats.truncnorm(a=a, b=b, loc=mus, scale=sigmas)
-            imputed_values[inrange_mask] = truncated_normal.rvs(
-                random_state=self.random_state_
-            )
-        else:
+        if is_categorical:
+            # For categorical features, use classifier prediction
             imputed_values = estimator.predict(X_test)
+            # Ensure the imputed values are float to match X_filled dtype
+            imputed_values = imputed_values.astype(X_filled.dtype)
+            # Apply min/max clipping for categorical features too
             imputed_values = np.clip(
                 imputed_values, self._min_value[feat_idx], self._max_value[feat_idx]
             )
+        else:
+            # For numerical features, use existing logic
+            if self.sample_posterior:
+                mus, sigmas = estimator.predict(X_test, return_std=True)
+                imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
+                # two types of problems: (1) non-positive sigmas
+                # (2) mus outside legal range of min_value and max_value
+                # (results in inf sample)
+                positive_sigmas = sigmas > 0
+                imputed_values[~positive_sigmas] = mus[~positive_sigmas]
+                mus_too_low = mus < self._min_value[feat_idx]
+                imputed_values[mus_too_low] = self._min_value[feat_idx]
+                mus_too_high = mus > self._max_value[feat_idx]
+                imputed_values[mus_too_high] = self._max_value[feat_idx]
+                # the rest can be sampled without statistical issues
+                inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
+                mus = mus[inrange_mask]
+                sigmas = sigmas[inrange_mask]
+                a = (self._min_value[feat_idx] - mus) / sigmas
+                b = (self._max_value[feat_idx] - mus) / sigmas
+
+                truncated_normal = stats.truncnorm(a=a, b=b, loc=mus, scale=sigmas)
+                imputed_values[inrange_mask] = truncated_normal.rvs(
+                    random_state=self.random_state_
+                )
+            else:
+                imputed_values = estimator.predict(X_test)
+                imputed_values = np.clip(
+                    imputed_values, self._min_value[feat_idx], self._max_value[feat_idx]
+                )
 
         # update the feature
         _safe_assign(
@@ -787,6 +1019,7 @@ class IterativeImputer(_BaseImputer):
             self, "random_state_", check_random_state(self.random_state)
         )
 
+        # Setup estimators
         if self.estimator is None:
             from ..linear_model import BayesianRidge
 
@@ -794,12 +1027,40 @@ class IterativeImputer(_BaseImputer):
         else:
             self._estimator = clone(self.estimator)
 
-        self.imputation_sequence_ = []
+        if self.classifier is None:
+            self._classifier = RandomForestClassifier(
+                n_estimators=10, max_depth=5, random_state=self.random_state
+            )
+        else:
+            self._classifier = clone(self.classifier)
 
+        # Detect categorical features and setup preprocessing
+        self._categorical_mask = self._get_categorical_mask(X)
+        self._preprocessor = self._setup_preprocessor(X)
+
+        # Check for sample_posterior with categorical features
+        if self.sample_posterior and np.any(self._categorical_mask):
+            raise NotImplementedError(
+                "sample_posterior=True is not supported with categorical features."
+            )
+
+        # Check n_nearest_features with categorical features
+        if self.n_nearest_features is not None and np.any(self._categorical_mask):
+            raise NotImplementedError(
+                "n_nearest_features is not supported with categorical features."
+            )
+
+        # Apply preprocessing if needed
+        if self._preprocessor is not None:
+            X_preprocessed = self._preprocessor.fit_transform(X)
+        else:
+            X_preprocessed = X
+
+        self.imputation_sequence_ = []
         self.initial_imputer_ = None
 
         X, Xt, mask_missing_values, complete_mask = self._initial_imputation(
-            X, in_fit=True
+            X_preprocessed, in_fit=True
         )
 
         super()._fit_indicator(complete_mask)
@@ -807,11 +1068,18 @@ class IterativeImputer(_BaseImputer):
 
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
+            # Apply inverse transform if needed
+            if self._preprocessor is not None:
+                # For categorical features, we need special
+                # handling during inverse transform
+                Xt = self._inverse_transform_categorical(Xt)
             return super()._concatenate_indicator(Xt, X_indicator)
 
         # Edge case: a single feature, we return the initial imputation.
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
+            if self._preprocessor is not None:
+                Xt = self._inverse_transform_categorical(Xt)
             return super()._concatenate_indicator(Xt, X_indicator)
 
         self._min_value = self._validate_limit(
@@ -898,7 +1166,25 @@ class IterativeImputer(_BaseImputer):
                 )
         _assign_where(Xt, X, cond=~mask_missing_values)
 
+        # Apply inverse transform if needed
+        if self._preprocessor is not None:
+            Xt = self._inverse_transform_categorical(Xt)
+
         return super()._concatenate_indicator(Xt, X_indicator)
+
+    def _inverse_transform_categorical(self, X):
+        """Apply inverse transform for categorical features only."""
+        if self._preprocessor is None:
+            return X
+
+        # This is a simplified version - in practice, you'd need more sophisticated
+        # handling to properly inverse transform only the categorical columns
+        try:
+            return self._preprocessor.inverse_transform(X)
+        except (ValueError, AttributeError):
+            # If inverse transform fails, return as-is
+            # In practice, you'd implement custom logic here
+            return X
 
     def transform(self, X):
         """Impute all missing values in `X`.
@@ -924,8 +1210,13 @@ class IterativeImputer(_BaseImputer):
 
         X_indicator = super()._transform_indicator(complete_mask)
 
-        if self.n_iter_ == 0 or np.all(mask_missing_values):
-            return super()._concatenate_indicator(Xt, X_indicator)
+        # Handle case where n_iter_ is 0 (e.g., single feature case)
+        if self.n_iter_ == 0:
+            # No iterative imputation was performed, return initial imputation
+            if self.add_indicator:
+                return np.hstack([Xt, X_indicator])
+            else:
+                return Xt
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0

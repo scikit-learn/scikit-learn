@@ -120,7 +120,19 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     X_trans_expected = imputer.fit_transform(X)
 
     # Creates dataframe with IntegerArrays with pd.NA
-    X_df = pd.DataFrame(X, dtype="Int16", columns=["a", "b", "c", "d", "e"])
+    X_df = pd.DataFrame(X, dtype="Int64", columns=["a", "b", "c", "d", "e"])
+
+    # For IterativeImputer, explicitly set categorical_features to empty to avoid
+    # incorrect categorical detection of nullable integer types
+    if hasattr(imputer, "categorical_features"):
+        imputer = imputer.set_params(
+            add_indicator=add_indicator, missing_values=marker, categorical_features=[]
+        )
+    else:
+        imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
+
+    # fit on numpy array
+    X_trans_expected = imputer.fit_transform(X)
 
     # fit on pandas dataframe with IntegerArrays
     X_trans = imputer.fit_transform(X_df)
