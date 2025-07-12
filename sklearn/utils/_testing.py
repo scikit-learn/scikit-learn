@@ -55,9 +55,9 @@ from sklearn.utils.fixes import (
 )
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
-    _is_arrow_df,
     _is_pandas_df_or_series,
     _is_polars_df_or_series,
+    _is_pyarrow_data,
     check_array,
     check_is_fitted,
     check_X_y,
@@ -1020,7 +1020,7 @@ def _convert_container(
 
         - "pandas" supports `constructor_type`s "dataframe", "series", and "index"
         - "polars" supports "dataframe" and "series"
-        - "pyarrow" supports "dataframe" (i.e., Table)
+        - "pyarrow" supports "dataframe" (Table) and "series" (Array)
 
     minversion : str, default=None
         Minimum version for package to install. Only applies when `constructor_lib` is
@@ -1145,7 +1145,7 @@ def _convert_container_to_dataframe(
         container_lib = "pandas"
     elif _is_polars_df_or_series(container):
         container_lib = "polars"
-    elif _is_arrow_df(container):
+    elif _is_pyarrow_data(container):
         container_lib = "pyarrow"
     else:
         # Non-dataframe containers are converted to numpy array first
@@ -1219,18 +1219,16 @@ def _convert_container_to_dataframe(
 
         # Convert to pyarrow Table with the specified dtype and column names (if any)
         if container_lib is not None:
-            if container_lib != "pyarrow":
-                container = pytest.importorskip("pyarrow.interchange").from_dataframe(
-                    container
+            if container_lib == "pandas":
+                container = pa.Table.from_pandas(container)
+            elif container_lib == "polars":
+                container = container.to_arrow()
+            if dtype is not None:
+                container = container.cast(
+                    pa.schema([field.with_type(dtype) for field in container.schema])
                 )
-            if dtype is not None or column_names is not None:
-                new_schema = container.schema
-                if dtype is not None:
-                    for i, field in enumerate(container.schema):
-                        new_schema = new_schema.set(i, field.with_type(dtype))
-                    container = container.cast(new_schema)
-                if column_names is not None:
-                    container = container.rename_columns(column_names)
+            if column_names is not None:
+                container = container.rename_columns(column_names)
         else:
             if column_names is None:
                 column_names = [f"col{i}" for i in range(container.shape[1])]
@@ -1244,19 +1242,16 @@ def _convert_container_to_dataframe(
 
         # Deal with categorical feature names
         if categorical_feature_names is not None:
-            for col_idx, col_name in enumerate(container.column_names):
-                if col_name in categorical_feature_names:
-                    container = container.set_column(
-                        col_idx,
-                        col_name,
-                        container.column(col_name).dictionary_encode(),
-                    )
+            for col_name in categorical_feature_names:
+                col_idx = container.schema.get_field_index(col_name)
+                col_encoded = container.column(col_name).dictionary_encode()
+                container = container.set_column(col_idx, col_name, col_encoded)
         return container
 
 
 def _convert_container_to_series(container, dtype, constructor_lib, minversion):
     """Helper for `_convert_container` when `constructor_type` is "series"."""
-    if constructor_lib not in ("pandas", "polars"):
+    if constructor_lib not in ("pandas", "polars", "pyarrow"):
         raise ValueError(f"{constructor_lib=} is incompatible with series")
 
     container_lib = None  # None if not series, otherwise the library
@@ -1264,6 +1259,8 @@ def _convert_container_to_series(container, dtype, constructor_lib, minversion):
         container_lib = "pandas"
     elif _is_polars_df_or_series(container):
         container_lib = "polars"
+    elif _is_pyarrow_data(container):
+        container_lib = "pyarrow"
     else:
         # Non-series containers are converted to numpy array first
         container = np.asarray(container)
@@ -1279,6 +1276,8 @@ def _convert_container_to_series(container, dtype, constructor_lib, minversion):
         if container_lib is not None:
             if container_lib == "polars":
                 container = pd.Series(container.to_numpy())
+            elif container_lib == "pyarrow":
+                container = container.to_pandas()
             if dtype is not None:
                 container = container.astype(dtype)
         else:
@@ -1290,10 +1289,25 @@ def _convert_container_to_series(container, dtype, constructor_lib, minversion):
         if container_lib is not None:
             if container_lib == "pandas":
                 container = pl.from_pandas(container)
+            elif container_lib == "pyarrow":
+                container = pl.from_arrow(container)
             if dtype is not None:
                 container = container.cast(dtype)
         else:
             container = pl.Series(container, dtype=dtype)
+        return container
+
+    if constructor_lib == "pyarrow":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        if container_lib is not None:
+            if container_lib == "pandas":
+                container = pa.Array.from_pandas(container)
+            elif container_lib == "polars":
+                container = container.to_arrow()
+            if dtype is not None:
+                container = container.cast(dtype)
+        else:
+            container = pa.array(container, type=dtype)
         return container
 
 
