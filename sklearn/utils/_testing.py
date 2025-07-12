@@ -974,14 +974,14 @@ def _convert_container(
     container,
     constructor_type,
     dtype=None,
-    sparse_container=None,
-    sparse_format="csr",
-    constructor_lib="pandas",
+    constructor_lib=None,
     minversion=None,
+    sparse_container="matrix",
+    sparse_format="csr",
     column_names=None,
     categorical_feature_names=None,
 ):
-    """Convert a given container to a specific array-like with a dtype.
+    """Convert a given container to another specified container type.
 
     Parameters
     ----------
@@ -1001,30 +1001,34 @@ def _convert_container(
         Force the dtype of the container. Does not apply when `constructor_type` is
         "slice".
 
-    sparse_container : {"matrix", "array"}, default=None
-        The sparse container to use. Only applies when `constructor_type` is "array"`.
-        Note that if this parameter is not `None` and `container` is 1D of length n,
-        then the converted container will be 2D of shape (1, n).
+    constructor_lib : {"numpy", "scipy", "pandas", "polars", "pyarrow"}, default=None
+        The library to use. Only applies when `constructor_type` is one of "array",
+        "dataframe", "series", and "index". Skip the test if the specified library is
+        not available.
+
+        - "numpy" supports "array"
+        - "scipy" supports "array"
+        - "pandas" supports "dataframe", "series", and "index"
+        - "polars" supports "dataframe" and "series"
+        - "pyarrow" supports "array" and "dataframe"
+
+    minversion : str, default=None
+        Minimum version for package to install. Only applies when `constructor_lib` is
+        applicable.
+
+    sparse_container : {"matrix", "array"}, default="matrix"
+        The sparse container to use. Only applies when `constructor_type` is "array"
+        and `constructor_lib` is "scipy". Note that if this parameter is not `None` and
+        `container` is 1D of length n, then the converted container will be 2D of shape
+        (1, n).
 
         - `None` returns a dense numpy array
         - "matrix" returns a sparse matrix
         - "array" returns a sparse array and skip test if scipy < 1.8
 
-    sparse_format : {"csc", "csr"}, default="csr"
+    sparse_format : {"csr", "csc"}, default="csr"
         The sparse format to use. Only applies when `constructor_type` is "array" and
-        `sparse_container` is not `None`.
-
-    constructor_lib : {"pandas", "polars", "pyarrow"}, default="pandas"
-        The library to use. Only applies when `constructor_type` is one of "dataframe",
-        "series", and "index". Skip the test if the specified library is not available.
-
-        - "pandas" supports `constructor_type`s "dataframe", "series", and "index"
-        - "polars" supports "dataframe" and "series"
-        - "pyarrow" supports "dataframe" (i.e., Table)
-
-    minversion : str, default=None
-        Minimum version for package to install. Only applies when `constructor_lib` is
-        applicable.
+        `constructor_lib` is "scipy".
 
     column_names : index or array-like, default=None
         The column names of the container. Only applies when `constructor_type` is
@@ -1039,7 +1043,7 @@ def _convert_container(
     converted_container
     """
     if sp.sparse.issparse(container) and not (
-        constructor_type == "array" and sparse_container is not None
+        constructor_type == "array" and constructor_lib == "scipy"
     ):
         # If the container is sparse but the target is not sparse, convert to dense
         # array in the first place; otherwise `np.asarray` may complain
@@ -1064,6 +1068,8 @@ def _convert_container(
         return _convert_container_to_array(
             container,
             dtype,
+            constructor_lib or "numpy",
+            minversion,
             sparse_container,
             sparse_format,
         )
@@ -1072,7 +1078,7 @@ def _convert_container(
         return _convert_container_to_dataframe(
             container,
             dtype,
-            constructor_lib,
+            constructor_lib or "pandas",
             minversion,
             column_names,
             categorical_feature_names,
@@ -1082,7 +1088,7 @@ def _convert_container(
         return _convert_container_to_series(
             container,
             dtype,
-            constructor_lib,
+            constructor_lib or "pandas",
             minversion,
         )
 
@@ -1090,42 +1096,56 @@ def _convert_container(
         return _convert_container_to_index(
             container,
             dtype,
-            constructor_lib,
+            constructor_lib or "pandas",
             minversion,
         )
 
 
-def _convert_container_to_array(container, dtype, sparse_container, sparse_format):
+def _convert_container_to_array(
+    container,
+    dtype,
+    constructor_lib,
+    minversion,
+    sparse_container,
+    sparse_format,
+):
     """Helper for `_convert_container` when `constructor_type` is "array"."""
-    if sparse_container is None:
-        # Convert to dense numpy array
+    if constructor_lib not in ("numpy", "scipy", "pyarrow"):
+        raise ValueError(f"{constructor_lib=} is incompatible with array")
+
+    if constructor_lib == "numpy":
         return np.asarray(container, dtype=dtype)
 
-    if sp_version < parse_version("1.8") and sparse_container == "array":
-        pytest.skip("Sparse arrays require scipy >= 1.8")
+    if constructor_lib == "pyarrow":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        return pa.array(container, type=dtype)
 
-    if not sp.sparse.issparse(container):
-        # For scipy >= 1.13, sparse array constructed from 1d array may be
-        # 1d or raise an exception. To avoid this, we make sure that the
-        # input container is 2d. For more details, see
-        # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
-        container = np.atleast_2d(container)
+    if constructor_lib == "scipy":
+        if sp_version < parse_version("1.8") and sparse_container == "array":
+            pytest.skip("Sparse arrays require scipy >= 1.8")
 
-    supported_sparse_containers = ("matrix", "array")
-    if sparse_container not in supported_sparse_containers:
-        raise ValueError(
-            f"Invalid {sparse_container=}; expected one of"
-            f" {supported_sparse_containers}"
-        )
+        if not sp.sparse.issparse(container):
+            # For scipy >= 1.13, sparse array constructed from 1d array may be
+            # 1d or raise an exception. To avoid this, we make sure that the
+            # input container is 2d. For more details, see
+            # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
+            container = np.atleast_2d(container)
 
-    supported_sparse_formats = ("csr", "csc")
-    if sparse_format not in supported_sparse_formats:
-        raise ValueError(
-            f"Invalid {sparse_format=}; expected one of {supported_sparse_formats}"
-        )
+        supported_sparse_containers = ("matrix", "array")
+        if sparse_container not in supported_sparse_containers:
+            raise ValueError(
+                f"Invalid {sparse_container=}; expected one of"
+                f" {supported_sparse_containers}"
+            )
 
-    sparse_constructor = getattr(sp.sparse, f"{sparse_format}_{sparse_container}")
-    return sparse_constructor(container, dtype=dtype)
+        supported_sparse_formats = ("csr", "csc")
+        if sparse_format not in supported_sparse_formats:
+            raise ValueError(
+                f"Invalid {sparse_format=}; expected one of {supported_sparse_formats}"
+            )
+
+        sparse_constructor = getattr(sp.sparse, f"{sparse_format}_{sparse_container}")
+        return sparse_constructor(container, dtype=dtype)
 
 
 def _convert_container_to_dataframe(

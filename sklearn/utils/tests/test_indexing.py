@@ -34,61 +34,115 @@ X_toy = np.arange(9).reshape((3, 3))
 
 
 def _convert_container_kwargs(
-    *constructor_types, include_sparse=False, dataframe_libs=None, series_libs=None
+    *,
+    include_list=False,
+    include_tuple=False,
+    include_slice=False,
+    include_array=False,
+    include_dataframe=False,
+    include_series=False,
+    include_index=False,
 ):
     """
     This is for generating parametrization kwargs for `_convert_container`.
 
     Parameters
     ----------
-    constructor_types : str
-        The container types to be used in the `_convert_container` function.
+    include_list : bool, default=False
+        If True, include the "list" constructor type.
 
-    include_sparse : bool, default=False
-        Whether to include sparse containers when "array" is in `constructor_types`.
+    include_tuple : bool, default=False
+        If True, include the "tuple" constructor type.
 
-    dataframe_libs : list of str or None, default=None
-        The libraries to be used in the `_convert_container` function when "dataframe"
-        is in `constructor_types`. None means all available libraries.
+    include_slice : bool, default=False
+        If True, include the "slice" constructor type.
 
-    series_libs : list of str or None, default=None
-        The libraries to be used in the `_convert_container` function when "series"
-        is in `constructor_types`. None means all available libraries.
+    include_array : bool or list of str, default=False
+        If False, do not include the "array" constructor type. If True, include the
+        "array" constructor type with all available array libraries. If a list of str,
+        specify the array libraries to include. Note that "scipy" will include all
+        possible combinations of array containers and formats.
+
+    include_dataframe : bool or list of str, default=False
+        If False, do not include the "dataframe" constructor type. If True, include the
+        "dataframe" constructor type with all available dataframe libraries. If a list
+        of str, specify the dataframe libraries to include.
+
+    include_series : bool or list of str, default=False
+        If False, do not include the "series" constructor type. If True, include the
+        "series" constructor type with all available series libraries. If a list of str,
+        specify the series libraries to include.
+
+    include_index : bool, default=False
+        If False, do not include the "index" constructor type. If True, include the
+        "index" constructor type with all available index libraries. If a list of str,
+        specify the index libraries to include.
     """
-    for constructor_type in constructor_types:
-        if constructor_type in ("list", "tuple", "slice", "index"):
-            yield {"constructor_type": constructor_type}
-        elif constructor_type == "array":
-            yield {"constructor_type": "array"}
-            if include_sparse:
-                for sparse_container, sparse_format in product(
-                    ("matrix", "array"), ("csr", "csc")
-                ):
-                    yield {
-                        "constructor_type": "array",
-                        "sparse_container": sparse_container,
-                        "sparse_format": sparse_format,
-                    }
-        elif constructor_type == "dataframe":
-            if dataframe_libs is None:
-                dataframe_libs = ["pandas", "polars"]
-            for dataframe_lib in dataframe_libs:
+    if include_list:
+        yield {"constructor_type": "list"}
+    if include_tuple:
+        yield {"constructor_type": "tuple"}
+    if include_slice:
+        yield {"constructor_type": "slice"}
+
+    array_libs = []
+    if isinstance(include_array, list):
+        array_libs = include_array
+    elif include_array:
+        array_libs = ["numpy", "scipy", "pyarrow"]
+
+    for array_lib in array_libs:
+        if array_lib == "scipy":
+            for sparse_container, sparse_format in product(
+                ("matrix", "array"), ("csr", "csc")
+            ):
                 yield {
-                    "constructor_type": "dataframe",
-                    "constructor_lib": dataframe_lib,
-                }
-        elif constructor_type == "series":
-            if series_libs is None:
-                series_libs = ["pandas", "polars"]
-            for series_lib in series_libs:
-                yield {
-                    "constructor_type": "series",
-                    "constructor_lib": series_lib,
+                    "constructor_type": "array",
+                    "constructor_lib": "scipy",
+                    "sparse_container": sparse_container,
+                    "sparse_format": sparse_format,
                 }
         else:
-            raise ValueError(
-                f"Invalid constructor type: {constructor_type}"
-            )  # pragma: no cover
+            yield {
+                "constructor_type": "array",
+                "constructor_lib": array_lib,
+            }
+
+    dataframe_libs = []
+    if isinstance(include_dataframe, list):
+        dataframe_libs = include_dataframe
+    elif include_dataframe:
+        dataframe_libs = ["pandas", "polars", "pyarrow"]
+
+    for dataframe_lib in dataframe_libs:
+        yield {
+            "constructor_type": "dataframe",
+            "constructor_lib": dataframe_lib,
+        }
+
+    series_libs = []
+    if isinstance(include_series, list):
+        series_libs = include_series
+    elif include_series:
+        series_libs = ["pandas", "polars"]
+
+    for series_lib in series_libs:
+        yield {
+            "constructor_type": "series",
+            "constructor_lib": series_lib,
+        }
+
+    index_libs = []
+    if isinstance(include_index, list):
+        index_libs = include_index
+    elif include_index:
+        index_libs = ["pandas", "polars"]
+
+    for index_lib in index_libs:
+        yield {
+            "constructor_type": "index",
+            "constructor_lib": index_lib,
+        }
 
 
 def test_polars_indexing():
@@ -192,15 +246,22 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
                 _determine_key_type(complex_array_key)
 
 
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs",
-    _convert_container_kwargs("list", "array", "dataframe", include_sparse=True),
+    _convert_container_kwargs(
+        include_list=True,
+        include_array=True,
+        include_dataframe=True,
+    ),
 )
 @pytest.mark.parametrize(
     "indices_kwargs",
     _convert_container_kwargs(
-        "list", "tuple", "array", "slice", "series", series_libs=["pandas"]
+        include_list=True,
+        include_tuple=True,
+        include_slice=True,
+        include_array=["numpy"],
+        include_series=["pandas"],
     ),
 )
 def test_safe_indexing_2d_container_axis_0(array_kwargs, indices_kwargs):
@@ -215,14 +276,22 @@ def test_safe_indexing_2d_container_axis_0(array_kwargs, indices_kwargs):
     )
 
 
-# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("list", "array", "series")
+    "array_kwargs",
+    _convert_container_kwargs(
+        include_list=True,
+        include_array=["numpy", "pyarrow"],
+        include_series=True,
+    ),
 )
 @pytest.mark.parametrize(
     "indices_kwargs",
     _convert_container_kwargs(
-        "list", "tuple", "array", "series", "slice", series_libs=["pandas"]
+        include_list=True,
+        include_tuple=True,
+        include_slice=True,
+        include_array=["numpy"],
+        include_series=["pandas"],
     ),
 )
 def test_safe_indexing_1d_container(array_kwargs, indices_kwargs):
@@ -235,14 +304,21 @@ def test_safe_indexing_1d_container(array_kwargs, indices_kwargs):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
+    "array_kwargs",
+    _convert_container_kwargs(
+        include_array=True,
+        include_dataframe=["pandas"],
+    ),
 )
 @pytest.mark.parametrize(
     "indices_kwargs",
     _convert_container_kwargs(
-        "list", "tuple", "array", "series", "slice", series_libs=["pandas"]
+        include_list=True,
+        include_tuple=True,
+        include_slice=True,
+        include_array=["numpy"],
+        include_series=["pandas"],
     ),
 )
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
@@ -275,13 +351,19 @@ def test_safe_indexing_2d_container_axis_1(array_kwargs, indices_kwargs, indices
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
+    "array_kwargs",
+    _convert_container_kwargs(
+        include_array=True,
+        include_dataframe=True,
+    ),
 )
 @pytest.mark.parametrize(
     "indices_kwargs",
-    _convert_container_kwargs("array", "series", series_libs=["pandas"]),
+    _convert_container_kwargs(
+        include_array=["numpy"],
+        include_series=["pandas"],
+    ),
 )
 @pytest.mark.parametrize(
     "axis, expected_array", [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
@@ -308,14 +390,21 @@ def test_safe_indexing_2d_read_only_axis_1(
     )
 
 
-# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("list", "array", "series")
+    "array_kwargs",
+    _convert_container_kwargs(
+        include_list=True,
+        include_array=["numpy", "pyarrow"],
+        include_series=True,
+    ),
 )
 @pytest.mark.parametrize(
     "indices_kwargs",
     _convert_container_kwargs(
-        "list", "tuple", "array", "series", series_libs=["pandas"]
+        include_list=True,
+        include_tuple=True,
+        include_array=["numpy"],
+        include_series=["pandas"],
     ),
 )
 def test_safe_indexing_1d_container_mask(array_kwargs, indices_kwargs):
@@ -326,14 +415,20 @@ def test_safe_indexing_1d_container_mask(array_kwargs, indices_kwargs):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
+    "array_kwargs",
+    _convert_container_kwargs(
+        include_array=True,
+        include_dataframe=True,
+    ),
 )
 @pytest.mark.parametrize(
     "indices_kwargs",
     _convert_container_kwargs(
-        "list", "tuple", "array", "series", series_libs=["pandas"]
+        include_list=True,
+        include_tuple=True,
+        include_array=["numpy"],
+        include_series=["pandas"],
     ),
 )
 @pytest.mark.parametrize(
@@ -355,13 +450,25 @@ def test_safe_indexing_2d_mask(array_kwargs, indices_kwargs, axis, expected_subs
     )
 
 
-# TODO(Charlie-XIAO): add (pyarrow, pyarrow_array)
 @pytest.mark.parametrize(
     "array_kwargs, expected_output_kwargs",
-    zip(
-        _convert_container_kwargs("list", "array", "dataframe", include_sparse=True),
-        _convert_container_kwargs("list", "array", "series", include_sparse=True),
-    ),
+    [
+        ({"constructor_type": "list"}, {"constructor_type": "list"}),
+        ({"constructor_type": "array"}, {"constructor_type": "array"}),
+        (
+            {"constructor_type": "array", "constructor_lib": "scipy"},
+            {"constructor_type": "array", "constructor_lib": "scipy"},
+        ),
+        ({"constructor_type": "dataframe"}, {"constructor_type": "series"}),
+        (
+            {"constructor_type": "dataframe", "constructor_lib": "polars"},
+            {"constructor_type": "series", "constructor_lib": "polars"},
+        ),
+        (
+            {"constructor_type": "dataframe", "constructor_lib": "pyarrow"},
+            {"constructor_type": "array", "constructor_lib": "pyarrow"},
+        ),
+    ],
 )
 def test_safe_indexing_2d_scalar_axis_0(array_kwargs, expected_output_kwargs):
     array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], **array_kwargs)
@@ -371,9 +478,13 @@ def test_safe_indexing_2d_scalar_axis_0(array_kwargs, expected_output_kwargs):
     assert_allclose_dense_sparse(subset, expected_array)
 
 
-# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("list", "array", "series")
+    "array_kwargs",
+    _convert_container_kwargs(
+        include_list=True,
+        include_array=["numpy", "pyarrow"],
+        include_series=True,
+    ),
 )
 def test_safe_indexing_1d_scalar(array_kwargs):
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], **array_kwargs)
@@ -382,13 +493,25 @@ def test_safe_indexing_1d_scalar(array_kwargs):
     assert subset == 3
 
 
-# TODO(Charlie-XIAO): add (pyarrow, pyarrow_array)
 @pytest.mark.parametrize(
     "array_kwargs, expected_output_kwargs",
-    zip(
-        _convert_container_kwargs("array", "dataframe", include_sparse=True),
-        _convert_container_kwargs("array", "series", include_sparse=True),
-    ),
+    [
+        ({"constructor_type": "list"}, {"constructor_type": "list"}),
+        ({"constructor_type": "array"}, {"constructor_type": "array"}),
+        (
+            {"constructor_type": "array", "constructor_lib": "scipy"},
+            {"constructor_type": "array", "constructor_lib": "scipy"},
+        ),
+        ({"constructor_type": "dataframe"}, {"constructor_type": "series"}),
+        (
+            {"constructor_type": "dataframe", "constructor_lib": "polars"},
+            {"constructor_type": "series", "constructor_lib": "polars"},
+        ),
+        (
+            {"constructor_type": "dataframe", "constructor_lib": "pyarrow"},
+            {"constructor_type": "array", "constructor_lib": "pyarrow"},
+        ),
+    ],
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_kwargs, expected_output_kwargs, indices):
@@ -415,7 +538,7 @@ def test_safe_indexing_2d_scalar_axis_1(array_kwargs, expected_output_kwargs, in
 
 
 @pytest.mark.parametrize(
-    "array_kwargs", _convert_container_kwargs("list", "array", include_sparse=True)
+    "array_kwargs", _convert_container_kwargs(include_list=True, include_array=True)
 )
 def test_safe_indexing_None_axis_0(array_kwargs):
     X = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], **array_kwargs)
@@ -506,7 +629,8 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
 @pytest.mark.parametrize(
     "array_kwargs",
     _convert_container_kwargs(
-        "array", "dataframe", include_sparse=True, dataframe_libs=["pandas"]
+        include_array=True,
+        include_dataframe=["pandas"],
     ),
 )
 def test_safe_assign(array_kwargs):
