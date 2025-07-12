@@ -895,7 +895,6 @@ def test_create_memmap_backed_data(monkeypatch):
             (
                 {
                     "constructor_type": "array",
-                    "constructor_lib": "scipy",
                     "sparse_container": sparse_container,
                     "sparse_format": "csr",
                 }
@@ -917,20 +916,12 @@ def test_create_memmap_backed_data(monkeypatch):
         # Use a lambda function to delay the import of optional dependencies to within
         # the function to only skip a specific test instead of the whole file
         (
-            {"constructor_type": "array", "constructor_lib": "pyarrow"},
-            lambda: pytest.importorskip("pyarrow").Array,
-        ),
-        (
             {"constructor_type": "dataframe", "constructor_lib": "pandas"},
             lambda: pytest.importorskip("pandas").DataFrame,
         ),
         (
             {"constructor_type": "dataframe", "constructor_lib": "polars"},
             lambda: pytest.importorskip("polars").DataFrame,
-        ),
-        (
-            {"constructor_type": "dataframe", "constructor_lib": "pyarrow"},
-            lambda: pytest.importorskip("pyarrow").Table,
         ),
         (
             {"constructor_type": "series", "constructor_lib": "pandas"},
@@ -980,7 +971,7 @@ def test_convert_container(
     right data type and shape.
     """
     constructor_type = constructor_kwargs["constructor_type"]
-    if callable(expected_output_type):
+    if constructor_type in ("dataframe", "series", "index"):
         # Run the lambda function to import the library or skip
         expected_output_type = expected_output_type()
 
@@ -1083,7 +1074,6 @@ def test_convert_container_invalid_sparse_options():
         _convert_container(
             container,
             constructor_type="array",
-            constructor_lib="scipy",
             sparse_container="array",
             sparse_format="dok",
         )
@@ -1091,14 +1081,11 @@ def test_convert_container_invalid_sparse_options():
     msg = "Invalid sparse_container='series'; expected one of ('matrix', 'array')"
     with pytest.raises(ValueError, match=re.escape(msg)):
         _convert_container(
-            container,
-            constructor_type="array",
-            constructor_lib="scipy",
-            sparse_container="series",
+            container, constructor_type="array", sparse_container="series"
         )
 
 
-@pytest.mark.parametrize("constructor_type", ["array", "dataframe", "series", "index"])
+@pytest.mark.parametrize("constructor_type", ["dataframe", "series", "index"])
 def test_convert_container_invalid_library(constructor_type):
     """Check that incompatible library raises the correct error."""
     if constructor_type == "dataframe":
@@ -1106,13 +1093,10 @@ def test_convert_container_invalid_library(constructor_type):
     else:
         container = [0, 1]
 
-    constructor_lib = "some_invalid_lib"
-    msg = f"constructor_lib='{constructor_lib}' is incompatible with {constructor_type}"
+    msg = f"constructor_lib='scipy' is incompatible with {constructor_type}"
     with pytest.raises(ValueError, match=re.escape(msg)):
         _convert_container(
-            container,
-            constructor_type=constructor_type,
-            constructor_lib=constructor_lib,
+            container, constructor_type=constructor_type, constructor_lib="scipy"
         )
 
 
@@ -1152,7 +1136,6 @@ def test_convert_container_sparse_to_sparse(
     X_converted = _convert_container(
         X_sparse,
         constructor_type="array",
-        constructor_lib="scipy",
         sparse_container=sparse_container,
         sparse_format=sparse_format,
     )
