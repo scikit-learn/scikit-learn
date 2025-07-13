@@ -46,14 +46,18 @@ def _convert_container_kwargs(
 
     include_sparse : bool, default=False
         Whether to include sparse containers when "array" is in `constructor_types`.
+        Note that if True, this will include all possible combinations of sparse
+        containers and sparse formats.
 
     dataframe_libs : list of str or None, default=None
         The libraries to be used in the `_convert_container` function when "dataframe"
-        is in `constructor_types`. None means all available libraries.
+        is in `constructor_types`. None means all available dataframe libraries, i.e.,
+        "pandas", "polars", and "pyarrow".
 
     series_libs : list of str or None, default=None
         The libraries to be used in the `_convert_container` function when "series"
-        is in `constructor_types`. None means all available libraries.
+        is in `constructor_types`. None means all available series libraries, i.e.,
+        "pandas", "polars", and "pyarrow".
     """
     for constructor_type in constructor_types:
         if constructor_type in ("list", "tuple", "slice", "index"):
@@ -71,7 +75,7 @@ def _convert_container_kwargs(
                     }
         elif constructor_type == "dataframe":
             if dataframe_libs is None:
-                dataframe_libs = ["pandas", "polars"]
+                dataframe_libs = ["pandas", "polars", "pyarrow"]
             for dataframe_lib in dataframe_libs:
                 yield {
                     "constructor_type": "dataframe",
@@ -79,7 +83,7 @@ def _convert_container_kwargs(
                 }
         elif constructor_type == "series":
             if series_libs is None:
-                series_libs = ["pandas", "polars"]
+                series_libs = ["pandas", "polars", "pyarrow"]
             for series_lib in series_libs:
                 yield {
                     "constructor_type": "series",
@@ -192,7 +196,6 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
                 _determine_key_type(complex_array_key)
 
 
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs",
     _convert_container_kwargs("list", "array", "dataframe", include_sparse=True),
@@ -215,7 +218,6 @@ def test_safe_indexing_2d_container_axis_0(array_kwargs, indices_kwargs):
     )
 
 
-# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
@@ -235,7 +237,6 @@ def test_safe_indexing_1d_container(array_kwargs, indices_kwargs):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
@@ -275,7 +276,6 @@ def test_safe_indexing_2d_container_axis_1(array_kwargs, indices_kwargs, indices
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
@@ -308,7 +308,6 @@ def test_safe_indexing_2d_read_only_axis_1(
     )
 
 
-# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
@@ -326,7 +325,6 @@ def test_safe_indexing_1d_container_mask(array_kwargs, indices_kwargs):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
-# TODO(Charlie-XIAO): add pyarrow
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
@@ -355,7 +353,6 @@ def test_safe_indexing_2d_mask(array_kwargs, indices_kwargs, axis, expected_subs
     )
 
 
-# TODO(Charlie-XIAO): add (pyarrow, pyarrow_array)
 @pytest.mark.parametrize(
     "array_kwargs, expected_output_kwargs",
     zip(
@@ -371,7 +368,6 @@ def test_safe_indexing_2d_scalar_axis_0(array_kwargs, expected_output_kwargs):
     assert_allclose_dense_sparse(subset, expected_array)
 
 
-# TODO(Charlie-XIAO): add pyarrow_array
 @pytest.mark.parametrize(
     "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
@@ -382,7 +378,6 @@ def test_safe_indexing_1d_scalar(array_kwargs):
     assert subset == 3
 
 
-# TODO(Charlie-XIAO): add (pyarrow, pyarrow_array)
 @pytest.mark.parametrize(
     "array_kwargs, expected_output_kwargs",
     zip(
