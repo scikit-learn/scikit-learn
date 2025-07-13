@@ -168,9 +168,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.extmath import safe_sparse_dot
-    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> X = csr_array([[1, 2], [3, 4], [5, 6]])
     >>> dot_product = safe_sparse_dot(X, X.T)
     >>> dot_product.toarray()
     array([[ 5, 11, 17],
@@ -546,7 +546,7 @@ def _randomized_svd(
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(type(M).__name__),
+            "CSR format is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
         )
 

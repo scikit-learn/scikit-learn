@@ -166,13 +166,13 @@ else:
         value = np.compress(mask, value)
 
         if axis == 0:
-            res = scipy.sparse.coo_matrix(
+            res = scipy.sparse.coo_array(
                 (value, (np.zeros(len(value)), major_index)),
                 dtype=X.dtype,
                 shape=(1, M),
             )
         else:
-            res = scipy.sparse.coo_matrix(
+            res = scipy.sparse.coo_array(
                 (value, (major_index, np.zeros(len(value)))),
                 dtype=X.dtype,
                 shape=(M, 1),
