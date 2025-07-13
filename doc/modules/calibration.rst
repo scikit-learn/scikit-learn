@@ -103,7 +103,7 @@ difficulty making predictions near 0 and 1 because variance in the
 underlying base models will bias predictions that should be near zero or one
 away from these values. Because predictions are restricted to the interval
 [0,1], errors caused by variance tend to be one-sided near zero and one. For
-example, if a model should predict p = 0 for a case, the only way bagging
+example, if a model should predict :math:`p = 0` for a case, the only way bagging
 can achieve this is if all bagged trees predict zero. If we add noise to the
 trees that bagging is averaging over, this noise will cause some trees to
 predict values larger than 0 for this case, thus moving the average
@@ -146,7 +146,7 @@ Usage
 The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
 :class:`CalibratedClassifierCV` uses a cross-validation approach to ensure
-unbiased data is always used to fit the calibrator. The data is split into k
+unbiased data is always used to fit the calibrator. The data is split into :math:`k`
 `(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
 (default), the following procedure is repeated independently for each
 cross-validation split:
@@ -157,13 +157,13 @@ cross-validation split:
    regressor) (when the data is multiclass, a calibrator is fit for every class)
 
 This results in an
-ensemble of k `(classifier, calibrator)` couples where each calibrator maps
+ensemble of :math:`k` `(classifier, calibrator)` couples where each calibrator maps
 the output of its corresponding classifier into [0, 1]. Each couple is exposed
 in the `calibrated_classifiers_` attribute, where each entry is a calibrated
 classifier with a :term:`predict_proba` method that outputs calibrated
 probabilities. The output of :term:`predict_proba` for the main
 :class:`CalibratedClassifierCV` instance corresponds to the average of the
-predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
+predicted probabilities of the :math:`k` estimators in the `calibrated_classifiers_`
 list. The output of :term:`predict` is the class that has the highest
 probability.
 
@@ -193,11 +193,11 @@ The main advantage of using `ensemble=False` is computational: it reduces the
 overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
-Alternatively an already fitted classifier can be calibrated by setting
-`cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user to
-make sure that the data used for fitting the classifier is disjoint from the
-data used for fitting the regressor.
+Alternatively an already fitted classifier can be calibrated by using a
+:class:`~sklearn.frozen.FrozenEstimator` as
+``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+It is up to the user to make sure that the data used for fitting the classifier
+is disjoint from the data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two regression techniques
 for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
@@ -244,12 +244,12 @@ subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
 :math:`f_i \geq f_j`. :math:`y_i` is the true
 label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
 calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
-This method is more general when compared to 'sigmoid' as the only restriction
+This method is more general when compared to `'sigmoid'` as the only restriction
 is that the mapping function is monotonically increasing. It is thus more
 powerful as it can correct any monotonic distortion of the un-calibrated model.
 However, it is more prone to overfitting, especially on small datasets [6]_.
 
-Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
+Overall, `'isotonic'` will perform as well as or better than `'sigmoid'` when
 there is enough data (greater than ~ 1000 samples) to avoid overfitting [3]_.
 
 .. note:: Impact on ranking metrics like AUC
@@ -292,7 +292,7 @@ one, a postprocessing is performed to normalize them.
 
 .. [2] `On the combination of forecast probabilities for
        consecutive precipitation periods.
-       <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
+       <https://doi.org/10.1175/1520-0434(1990)005%3C0640:OTCOFP%3E2.0.CO;2>`_
        Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
 
 .. [3] `Predicting Good Probabilities with Supervised Learning

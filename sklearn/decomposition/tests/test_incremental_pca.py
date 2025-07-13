@@ -1,5 +1,6 @@
 """Tests for Incremental PCA."""
 
+import itertools
 import re
 import warnings
 
@@ -84,9 +85,9 @@ def test_incremental_pca_sparse(sparse_container, svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_incremental_pca_check_projection(svd_solver):
+def test_incremental_pca_check_projection(svd_solver, global_random_seed):
     # Test that the projection of data is correct.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 100, 3
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5])
@@ -106,9 +107,9 @@ def test_incremental_pca_check_projection(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_incremental_pca_inverse(svd_solver):
+def test_incremental_pca_inverse(svd_solver, global_random_seed):
     # Test that the projection of data can be inverted.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
@@ -139,14 +140,13 @@ def test_incremental_pca_validation(svd_solver):
     ):
         IncrementalPCA(n_components, batch_size=10, svd_solver=svd_solver).fit(X)
 
-    # Tests that n_components is also <= n_samples.
+    # Test that n_components is also <= n_samples in first call to partial fit.
     n_components = 3
     with pytest.raises(
         ValueError,
         match=(
-            "n_components={} must be"
-            " less or equal to the batch number of"
-            " samples {}".format(n_components, n_samples)
+            f"n_components={n_components} must be less or equal to the batch "
+            f"number of samples {n_samples} for the first partial_fit call."
         ),
     ):
         IncrementalPCA(n_components=n_components, svd_solver=svd_solver).fit(X)
@@ -237,9 +237,9 @@ def test_incremental_pca_num_features_change(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_incremental_pca_batch_signs(svd_solver):
+def test_incremental_pca_batch_signs(svd_solver, global_random_seed):
     # Test that components_ sign is stable over batch sizes.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 3
     X = rng.randn(n_samples, n_features)
@@ -251,14 +251,35 @@ def test_incremental_pca_batch_signs(svd_solver):
         ).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
+    for i, j in itertools.pairwise(all_components):
         assert_almost_equal(np.sign(i), np.sign(j), decimal=6)
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_incremental_pca_batch_values(svd_solver):
-    # Test that components_ values are stable over batch sizes.
+def test_incremental_pca_partial_fit_small_batch(svd_solver):
+    # Test that there is no minimum batch size after the first partial_fit
+    # Non-regression test
     rng = np.random.RandomState(1999)
+    n, p = 50, 3
+    X = rng.randn(n, p)  # spherical data
+    X[:, 1] *= 0.00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
+
+    n_components = p
+    pipca = IncrementalPCA(n_components=n_components)
+    pipca.partial_fit(X[:n_components])
+    for idx in range(n_components, n):
+        pipca.partial_fit(X[idx : idx + 1])
+
+    pca = PCA(n_components=n_components)
+    pca.fit(X)
+
+    assert_allclose(pca.components_, pipca.components_, atol=1e-3)
+
+
+def test_incremental_pca_batch_values(global_random_seed):
+    # Test that components_ values are stable over batch sizes.
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 3
     X = rng.randn(n_samples, n_features)
@@ -270,7 +291,7 @@ def test_incremental_pca_batch_values(svd_solver):
         ).fit(X)
         all_components.append(ipca.components_)
 
-    for i, j in zip(all_components[:-1], all_components[1:]):
+    for i, j in itertools.pairwise(all_components):
         assert_almost_equal(i, j, decimal=1)
 
 
@@ -286,15 +307,15 @@ def test_incremental_pca_batch_rank():
         ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
         all_components.append(ipca.components_)
 
-    for components_i, components_j in zip(all_components[:-1], all_components[1:]):
+    for components_i, components_j in itertools.pairwise(all_components):
         assert_allclose_dense_sparse(components_i, components_j)
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
 @pytest.mark.parametrize("container", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS)
-def test_incremental_pca_partial_fit(svd_solver, container):
+def test_incremental_pca_partial_fit(svd_solver, container, global_random_seed):
     # Test that fit and partial_fit get equivalent results.
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
@@ -321,7 +342,7 @@ def test_incremental_pca_partial_fit(svd_solver, container):
     ipca.fit(X)
     # Add one to make sure endpoint is included
     batch_itr = np.arange(0, n + 1, batch_size)
-    for i, j in zip(batch_itr[:-1], batch_itr[1:]):
+    for i, j in itertools.pairwise(batch_itr):
         pipca.partial_fit(X[i:j, :])
     assert_almost_equal(ipca.components_, pipca.components_, decimal=3)
 
@@ -342,11 +363,11 @@ def test_incremental_pca_against_pca_iris(svd_solver, container):
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
 @pytest.mark.parametrize("container", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS)
-def test_incremental_pca_against_pca_random_data(svd_solver, container):
+def test_incremental_pca_against_pca_random_data(svd_solver, container, global_random_seed):
     # Test that IncrementalPCA and PCA are approximate (to a sign flip).
-    rng = np.random.RandomState(1999)
-    n_samples = 30
-    n_features = 5
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 100
+    n_features = 3
     X = rng.randn(n_samples, n_features) + 5 * rng.rand(1, n_features)
 
     Y_pca = PCA(n_components=3, svd_solver=svd_solver).fit_transform(X)
@@ -379,9 +400,9 @@ def test_explained_variances(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_singular_values(svd_solver):
+def test_singular_values(svd_solver, global_random_seed):
     # Check that the IncrementalPCA output has the correct singular values
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     n_features = 100
 
@@ -391,7 +412,7 @@ def test_singular_values(svd_solver):
 
     pca = PCA(n_components=10, svd_solver=svd_solver, random_state=rng).fit(X)
     ipca = IncrementalPCA(
-        n_components=10, batch_size=100, svd_solver=svd_solver, random_state=rng
+        n_components=10, batch_size=150, svd_solver=svd_solver, random_state=rng
     ).fit(X)
     assert_array_almost_equal(pca.singular_values_, ipca.singular_values_, 2)
 
@@ -414,7 +435,7 @@ def test_singular_values(svd_solver):
     )
 
     # Set the singular values and see what we get back
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 110
 

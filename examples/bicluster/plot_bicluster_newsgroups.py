@@ -147,7 +147,7 @@ for idx, cluster in enumerate(best_idx):
 
     # words
     out_of_cluster_docs = cocluster.row_labels_ != cluster
-    out_of_cluster_docs = np.where(out_of_cluster_docs)[0]
+    out_of_cluster_docs = out_of_cluster_docs.nonzero()[0]
     word_col = X[:, cluster_words]
     word_scores = np.array(
         word_col[cluster_docs, :].sum(axis=0)

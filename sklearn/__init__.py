@@ -16,6 +16,7 @@
 #
 # See https://scikit-learn.org for complete documentation.
 
+import importlib as _importlib
 import logging
 import os
 import random
@@ -41,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.6.dev0"
+__version__ = "1.8.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -72,7 +73,7 @@ from . import (  # noqa: F401 E402
 from .base import clone  # noqa: E402
 from .utils._show_versions import show_versions  # noqa: E402
 
-__all__ = [
+_submodules = [
     "calibration",
     "cluster",
     "covariance",
@@ -86,6 +87,7 @@ __all__ = [
     "externals",
     "feature_extraction",
     "feature_selection",
+    "frozen",
     "gaussian_process",
     "inspection",
     "isotonic",
@@ -110,6 +112,9 @@ __all__ = [
     "discriminant_analysis",
     "impute",
     "compose",
+]
+
+__all__ = _submodules + [
     # Non-modules:
     "clone",
     "get_config",
@@ -118,13 +123,19 @@ __all__ = [
     "show_versions",
 ]
 
-_BUILT_WITH_MESON = False
-try:
-    import sklearn._built_with_meson  # noqa: F401
 
-    _BUILT_WITH_MESON = True
-except ModuleNotFoundError:
-    pass
+def __dir__():
+    return __all__
+
+
+def __getattr__(name):
+    if name in _submodules:
+        return _importlib.import_module(f"sklearn.{name}")
+    else:
+        try:
+            return globals()[name]
+        except KeyError:
+            raise AttributeError(f"Module 'sklearn' has no attribute '{name}'")
 
 
 def setup_module(module):

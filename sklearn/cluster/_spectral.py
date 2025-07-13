@@ -165,7 +165,7 @@ def discretize(
                 shape=(n_samples, n_components),
             )
 
-            t_svd = vectors_discrete.T * vectors
+            t_svd = vectors_discrete.T @ vectors
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
@@ -287,7 +287,9 @@ def spectral_clustering(
         The cluster_qr method [5]_ directly extracts clusters from eigenvectors
         in spectral clustering. In contrast to k-means and discretization, cluster_qr
         has no tuning parameters and is not an iterative method, yet may outperform
-        k-means and discretization in terms of both quality and speed.
+        k-means and discretization in terms of both quality and speed. For a detailed
+        comparison of clustering strategies, refer to the following example:
+        :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
 
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
@@ -599,6 +601,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     >>> clustering
     SpectralClustering(assign_labels='discretize', n_clusters=2,
         random_state=0)
+
+    For a comparison of Spectral clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -792,6 +797,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.pairwise = self.affinity in [
             "precomputed",
             "precomputed_nearest_neighbors",

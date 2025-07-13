@@ -153,7 +153,7 @@ In general, it is about to learn a rough, close frontier delimiting
 the contour of the initial observations distribution, plotted in
 embedding :math:`p`-dimensional space. Then, if further observations
 lay within the frontier-delimited subspace, they are considered as
-coming from the same population than the initial
+coming from the same population as the initial
 observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
@@ -230,7 +230,7 @@ points, ignoring points outside the central mode.
 For instance, assuming that the inlier data are Gaussian distributed, it
 will estimate the inlier location and covariance in a robust way (i.e.
 without being influenced by outliers). The Mahalanobis distances
-obtained from this estimate is used to derive a measure of outlyingness.
+obtained from this estimate are used to derive a measure of outlyingness.
 This strategy is illustrated below.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
@@ -340,16 +340,14 @@ average local density of its k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 
-The number k of neighbors considered, (alias parameter n_neighbors) is typically
-chosen 1) greater than the minimum number of objects a cluster has to contain,
-so that other objects can be local outliers relative to this cluster, and 2)
-smaller than the maximum number of close by objects that can potentially be
-local outliers.
-In practice, such information is generally not available, and taking
-n_neighbors=20 appears to work well in general.
-When the proportion of outliers is high (i.e. greater than 10 \%, as in the
-example below), n_neighbors should be greater (n_neighbors=35 in the example
-below).
+The number k of neighbors considered, (alias parameter `n_neighbors`) is
+typically chosen 1) greater than the minimum number of objects a cluster has to
+contain, so that other objects can be local outliers relative to this cluster,
+and 2) smaller than the maximum number of close by objects that can potentially
+be local outliers. In practice, such information is generally not available, and
+taking `n_neighbors=20` appears to work well in general. When the proportion of
+outliers is high (i.e. greater than 10 \%, as in the example below),
+`n_neighbors` should be greater (`n_neighbors=35` in the example below).
 
 The strength of the LOF algorithm is that it takes both local and global
 properties of datasets into consideration: it can perform well even in datasets
@@ -404,7 +402,7 @@ set to ``True`` before fitting the estimator::
 
 Note that ``fit_predict`` is not available in this case to avoid inconsistencies.
 
-.. warning:: **Novelty detection with Local Outlier Factor`**
+.. warning:: **Novelty detection with Local Outlier Factor**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
@@ -413,7 +411,8 @@ Note that ``fit_predict`` is not available in this case to avoid inconsistencies
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
-Novelty detection with Local Outlier Factor is illustrated below.
+Novelty detection with :class:`neighbors.LocalOutlierFactor` is illustrated below
+(see :ref:`sphx_glr_auto_examples_neighbors_plot_lof_novelty_detection.py`).
 
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html

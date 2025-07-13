@@ -605,7 +605,7 @@ def test_densify_rows(csr_container):
 
 def test_inplace_column_scale():
     rng = np.random.RandomState(0)
-    X = sp.rand(100, 200, 0.05)
+    X = sp.random(100, 200, density=0.05)
     Xr = X.tocsr()
     Xc = X.tocsc()
     XA = X.toarray()
@@ -637,7 +637,7 @@ def test_inplace_column_scale():
 
 def test_inplace_row_scale():
     rng = np.random.RandomState(0)
-    X = sp.rand(100, 200, 0.05)
+    X = sp.random(100, 200, density=0.05)
     Xr = X.tocsr()
     Xc = X.tocsc()
     XA = X.toarray()
