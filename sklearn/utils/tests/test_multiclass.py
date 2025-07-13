@@ -302,9 +302,10 @@ def test_type_of_target_too_many_unique_classes():
     We need to check that we don't raise if we have less than 20 samples.
     """
 
-    # Create a label array where each class appears only once, except '0' appears twice.
-    # This simulates misuse of `type_of_target` with unique class labels,
-    # ensuring it doesn't raise a warning in such cases.
+    # Create array of unique labels, except '0', which appears twice.
+    # This does raise a warning.
+    # Note warning would not be raised if we passed only unique
+    # labels, which happens when `type_of_target` is passed `classes_`.
     y = np.hstack((np.arange(20), [0]))
     msg = r"The number of unique classes is greater than 50% of the number of samples."
     with pytest.warns(UserWarning, match=msg):
