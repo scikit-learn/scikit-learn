@@ -149,7 +149,7 @@ def test_incremental_pca_validation(svd_solver):
             f"number of samples {n_samples} for the first partial_fit call."
         ),
     ):
-        IncrementalPCA(n_components=n_components, svd_solver=svd_solver).fit(X)
+        IncrementalPCA(n_components=n_components, svd_solver=svd_solver).partial_fit(X)
 
     # Test that with the ARPACK solver n_components must be strictly less than
     # min(n_features, n_samples)
