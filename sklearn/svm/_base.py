@@ -13,6 +13,7 @@ from ..exceptions import ConvergenceWarning, NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._sparse import _align_api_if_sparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import _ovr_decision_function, check_classification_targets
@@ -179,7 +180,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Notes
         -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
-        X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
+        X is not a sparse CSR format, X and/or y may be copied.
 
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
@@ -408,13 +409,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
         if not n_SV:
-            self.dual_coef_ = sp.csr_matrix([])
+            self.dual_coef_ = _align_api_if_sparse(sp.csr_array([]))
         else:
             dual_coef_indptr = np.arange(
                 0, dual_coef_indices.size + 1, dual_coef_indices.size / n_class
             )
-            self.dual_coef_ = sp.csr_matrix(
-                (dual_coef_data, dual_coef_indices, dual_coef_indptr), (n_class, n_SV)
+            self.dual_coef_ = _align_api_if_sparse(
+                sp.csr_array(
+                    (dual_coef_data, dual_coef_indices, dual_coef_indptr),
+                    (n_class, n_SV),
+                )
             )
 
     def predict(self, X):
@@ -472,7 +476,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
 
     def _sparse_predict(self, X):
-        # Precondition: X is a csr_matrix of dtype np.float64.
+        # Precondition: X is CSR sparse of dtype np.float64.
         kernel = self.kernel
         if callable(kernel):
             kernel = "precomputed"
@@ -621,9 +625,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 reset=False,
             )
 
-        if self._sparse and not sp.issparse(X):
-            X = sp.csr_matrix(X)
         if self._sparse:
+            if not sp.issparse(X):
+                X = _align_api_if_sparse(sp.csr_array(X))
             X.sort_indices()
 
         if sp.issparse(X) and not self._sparse and not callable(self.kernel):
