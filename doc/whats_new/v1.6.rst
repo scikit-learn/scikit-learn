@@ -377,19 +377,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   no longer face this restriction.
   By :user:`Thomas Gessey-Jones <ThomasGesseyJonesPX>` :pr:`30224`
 
-:mod:`sklearn.decomposition`
-............................
-
-- |Feature| :class:`decomposition.IncrementalPCA` now have a `svd_solver` parameter
-  that supports `"full"` (full SVD, the original behavior) and `"arpack"` (truncated
-  SVD using ARPACK). In particular, the `"arpack"` solver will not densify sparse
-  inputs as the `"full"` solver does, thus being faster and more memory efficient. When
-  used on sparse data like :func:`datasets.fetch_20newsgroups_vectorized`, this can lead
-  to speed-ups of TODO (single threaded) and TODO lower memory usage. Moreover, the
-  :meth:`~decomposition.IncrementalPCA.partial_fit` method now supports sparse inputs
-  when using the `"arpack"` solver.
-  :pr:`29512` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.discriminant_analysis`
 ------------------------------------
 

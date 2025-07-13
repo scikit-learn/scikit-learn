@@ -266,7 +266,7 @@ def test_incremental_pca_partial_fit_small_batch(svd_solver):
     X += [5, 4, 3]  # make a large mean
 
     n_components = p
-    pipca = IncrementalPCA(n_components=n_components)
+    pipca = IncrementalPCA(n_components=n_components, svd_solver=svd_solver)
     pipca.partial_fit(X[:n_components])
     for idx in range(n_components, n):
         pipca.partial_fit(X[idx : idx + 1])
@@ -277,7 +277,8 @@ def test_incremental_pca_partial_fit_small_batch(svd_solver):
     assert_allclose(pca.components_, pipca.components_, atol=1e-3)
 
 
-def test_incremental_pca_batch_values(global_random_seed):
+@pytest.mark.parametrize("svd_solver", ["full", "arpack"])
+def test_incremental_pca_batch_values(svd_solver, global_random_seed):
     # Test that components_ values are stable over batch sizes.
     rng = np.random.RandomState(global_random_seed)
     n_samples = 100
@@ -363,7 +364,9 @@ def test_incremental_pca_against_pca_iris(svd_solver, container):
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
 @pytest.mark.parametrize("container", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS)
-def test_incremental_pca_against_pca_random_data(svd_solver, container, global_random_seed):
+def test_incremental_pca_against_pca_random_data(
+    svd_solver, container, global_random_seed
+):
     # Test that IncrementalPCA and PCA are approximate (to a sign flip).
     rng = np.random.RandomState(global_random_seed)
     n_samples = 100
