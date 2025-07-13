@@ -509,7 +509,7 @@ def test_randomized_svd_sparse_warnings(sparse_container):
 
     X = sparse_container(X)
     warn_msg = (
-        "Calculating SVD of a {} is expensive. csr_matrix is more efficient.".format(
+        "Calculating SVD of a {} is expensive. CSR format is more efficient.".format(
             sparse_container.__name__
         )
     )

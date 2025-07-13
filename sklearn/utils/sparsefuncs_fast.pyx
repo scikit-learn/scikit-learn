@@ -487,13 +487,13 @@ def inplace_csr_row_normalize_l1(X):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
     >>> import numpy as np
     >>> indptr = np.array([0, 2, 3, 4])
     >>> indices = np.array([0, 1, 2, 3])
     >>> data = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
+    >>> X = csr_array((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -549,13 +549,13 @@ def inplace_csr_row_normalize_l2(X):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
     >>> import numpy as np
     >>> indptr = np.array([0, 2, 3, 4])
     >>> indices = np.array([0, 1, 2, 3])
     >>> data = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
+    >>> X = csr_array((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -611,7 +611,7 @@ def assign_rows_csr(
 
     Parameters
     ----------
-    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csr_array, shape=(n_samples, n_features)
     X_rows : array, dtype=np.intp, shape=n_rows
     out_rows : array, dtype=np.intp, shape=n_rows
     out : array, shape=(arbitrary, n_features)

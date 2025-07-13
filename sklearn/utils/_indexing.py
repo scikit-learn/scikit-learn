@@ -570,8 +570,8 @@ def resample(
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
@@ -581,7 +581,7 @@ def resample(
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 4 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
@@ -728,8 +728,8 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
@@ -739,7 +739,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 3 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
