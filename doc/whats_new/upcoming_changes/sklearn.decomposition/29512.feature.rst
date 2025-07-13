@@ -5,4 +5,4 @@
   data like :func:`datasets.fetch_20newsgroups_vectorized`, this can lead to speed-ups
   of TODO (single threaded) and TODO lower memory usage. Moreover, the
   :meth:`~decomposition.IncrementalPCA.partial_fit` method now supports sparse inputs
-  when using the `"arpack"` solver. :pr:`29512` by :user:`Yao Xiao <Charlie-XIAO>`.
+  when using the `"arpack"` solver. By :user:`Yao Xiao <Charlie-XIAO>`.

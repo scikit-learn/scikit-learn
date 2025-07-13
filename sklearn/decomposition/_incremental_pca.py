@@ -81,7 +81,7 @@ class IncrementalPCA(_BasePCA):
           `0 < n_components < min(X.shape)`. This solver is recommended for sparse
           inputs to avoid densifying the input data.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.8
 
     copy : bool, default=True
         If False, X will be overwritten. ``copy=False`` can be used to
@@ -97,7 +97,7 @@ class IncrementalPCA(_BasePCA):
         Used when the `"arpack"` solver is used. Pass an int for reproducible results
         across multiple function calls. See :term:`Glossary <random_state>`.
 
-        .. versionadded:: 1.6
+        .. versionadded:: 1.8
 
     Attributes
     ----------
