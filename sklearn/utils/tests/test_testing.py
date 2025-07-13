@@ -924,12 +924,20 @@ def test_create_memmap_backed_data(monkeypatch):
             lambda: pytest.importorskip("polars").DataFrame,
         ),
         (
+            {"constructor_type": "dataframe", "constructor_lib": "pyarrow"},
+            lambda: pytest.importorskip("pyarrow").Table,
+        ),
+        (
             {"constructor_type": "series", "constructor_lib": "pandas"},
             lambda: pytest.importorskip("pandas").Series,
         ),
         (
             {"constructor_type": "series", "constructor_lib": "polars"},
             lambda: pytest.importorskip("polars").Series,
+        ),
+        (
+            {"constructor_type": "series", "constructor_lib": "pyarrow"},
+            lambda: pytest.importorskip("pyarrow").Array,
         ),
         (
             {"constructor_type": "index", "constructor_lib": "pandas"},
@@ -949,12 +957,32 @@ def test_create_memmap_backed_data(monkeypatch):
     ],
 )
 @pytest.mark.parametrize(
-    "dtype, superdtype, polars_dtype",
+    "dtype, superdtype, polars_dtype, pyarrow_dtype",
     [
-        (np.int32, np.integer, lambda: pytest.importorskip("polars").Int32),
-        (np.int64, np.integer, lambda: pytest.importorskip("polars").Int64),
-        (np.float32, np.floating, lambda: pytest.importorskip("polars").Float32),
-        (np.float64, np.floating, lambda: pytest.importorskip("polars").Float64),
+        (
+            np.int32,
+            np.integer,
+            lambda: pytest.importorskip("polars").Int32,
+            lambda: pytest.importorskip("pyarrow").int32(),
+        ),
+        (
+            np.int64,
+            np.integer,
+            lambda: pytest.importorskip("polars").Int64,
+            lambda: pytest.importorskip("pyarrow").int64(),
+        ),
+        (
+            np.float32,
+            np.floating,
+            lambda: pytest.importorskip("polars").Float32,
+            lambda: pytest.importorskip("pyarrow").float32(),
+        ),
+        (
+            np.float64,
+            np.floating,
+            lambda: pytest.importorskip("polars").Float64,
+            lambda: pytest.importorskip("pyarrow").float64(),
+        ),
     ],
 )
 def test_convert_container(
@@ -965,6 +993,7 @@ def test_convert_container(
     dtype,
     superdtype,
     polars_dtype,
+    pyarrow_dtype,
 ):
     """
     Check that we convert the container to the right type of array with the
@@ -978,8 +1007,11 @@ def test_convert_container(
     container = np.arange(12).reshape(input_shape)
 
     target_dtype = dtype
-    if constructor_kwargs.get("constructor_lib") == "polars":
+    constructor_lib = constructor_kwargs.get("constructor_lib")
+    if constructor_lib == "polars":
         target_dtype = polars_dtype()
+    elif constructor_lib == "pyarrow":
+        target_dtype = pyarrow_dtype()
 
     # Certain constructor types require specific-dimensional input containers
     # None stands for no constraint
@@ -1011,17 +1043,20 @@ def test_convert_container(
     # Check output data type and shape
     assert isinstance(container_converted, expected_output_type)
     if constructor_type in ("list", "tuple"):
-        # list and tuple does not have a shape attribute
+        # list and tuple do not have a shape attribute
         if len(input_shape) == 1:
             assert len(container_converted) == container.size
         else:
             assert len(container_converted) == container.shape[0]
             assert len(container_converted[0]) == container.shape[1]
+    elif constructor_type == "series" and constructor_lib == "pyarrow":
+        # pyarrow.Array does not have a shape attribute
+        assert len(container_converted) == container.size
     elif (
         constructor_type == "dataframe"
         or constructor_kwargs.get("sparse_container") is not None
     ) and len(input_shape) == 1:
-        # sparse containers will convert to 2-dimensional
+        # dataframe and sparse container will convert to 2-dimensional
         assert container_converted.shape == (1, container.size)
     else:
         assert container_converted.shape == container.shape
@@ -1037,7 +1072,11 @@ def test_convert_container(
         assert np.issubdtype(type(first_element), superdtype)
     else:
         # Determine the dtype of the converted container
-        if hasattr(container_converted, "dtype"):
+        if constructor_type == "dataframe" and constructor_lib == "pyarrow":
+            converted_dtype = container_converted.schema.types[0]
+        elif constructor_type == "series" and constructor_lib == "pyarrow":
+            converted_dtype = container_converted.type
+        elif hasattr(container_converted, "dtype"):
             converted_dtype = container_converted.dtype
         elif hasattr(container_converted, "dtypes"):
             converted_dtype = container_converted.dtypes[0]
