@@ -11,6 +11,7 @@ from itertools import chain, islice
 
 import numpy as np
 from scipy import sparse
+import pandas as pd  # 新增导入 pandas
 
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
@@ -2036,16 +2037,29 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return self._hstack(Xs)
 
-    def _hstack(self, Xs):
-        adapter = _get_container_adapter("transform", self)
-        if adapter and all(adapter.is_supported_container(X) for X in Xs):
-            return adapter.hstack(Xs)
+    # def _hstack(self, Xs):
+    #     adapter = _get_container_adapter("transform", self)
+    #     if adapter and all(adapter.is_supported_container(X) for X in Xs):
+    #         return adapter.hstack(Xs)
 
+    #     if any(sparse.issparse(f) for f in Xs):
+    #         Xs = sparse.hstack(Xs).tocsr()
+    #     else:
+    #         Xs = np.hstack(Xs)
+    #     return Xs
+
+    def _hstack(self, Xs):
+        # 如果所有输出都是pandas Series 或 DataFrame，则使用 pd.concat 拼接
+        if all(isinstance(x, (pd.Series, pd.DataFrame)) for x in Xs):
+            return pd.concat(Xs, axis=1)
+
+        # 旧逻辑：如果有稀疏矩阵，使用sparse拼接
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        # 默认使用numpy拼接
+        return np.hstack(Xs)
+
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
