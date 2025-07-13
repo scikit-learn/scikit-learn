@@ -316,7 +316,9 @@ def test_type_of_target_too_many_unique_classes():
         warnings.simplefilter("error")
         type_of_target(y)
 
-    # More than 20 samples but only unique classes, no warning should be raised
+    # More than 20 samples but only unique classes, simulating passing
+    # `classes_` to `type_of_target` (when number of classes is large).
+    # No warning should be raised
     y = np.arange(25)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
