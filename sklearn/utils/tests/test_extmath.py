@@ -716,7 +716,7 @@ def test_incremental_weighted_mean_and_variance_array_api(
 
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
-    sample_weight = rng.rand(X.shape[0]) * mult
+    sample_weight = rng.rand(X.shape[0]).astype(dtype) * mult
     mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
 
     X_xp = xp.asarray(X, device=device)
@@ -737,8 +737,8 @@ def test_incremental_weighted_mean_and_variance_array_api(
     mean_xp = _convert_to_numpy(mean_xp, xp=xp)
     var_xp = _convert_to_numpy(var_xp, xp=xp)
 
-    assert_almost_equal(mean, mean_xp)
-    assert_almost_equal(var, var_xp)
+    assert_allclose(mean, mean_xp)
+    assert_allclose(var, var_xp)
 
 
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])

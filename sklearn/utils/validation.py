@@ -2139,10 +2139,9 @@ def _check_sample_weight(
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
-    Therefore, in some cases, you may want to protect the call with::
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(...)
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
 
     Parameters
     ----------
@@ -2181,7 +2180,6 @@ def _check_sample_weight(
     )
 
     n_samples = _num_samples(X)
-    xp, _, X_device = get_namespace_and_device(X)
 
     max_float_type = _max_precision_float_dtype(xp, device)
     float_dtypes = (
@@ -2209,7 +2207,7 @@ def _check_sample_weight(
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        if tuple(sample_weight.shape) != (n_samples,):
+        if sample_weight.shape != (n_samples,):
             raise ValueError(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)
