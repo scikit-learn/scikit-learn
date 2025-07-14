@@ -1065,11 +1065,11 @@ def _convert_container(
 
         if constructor_name in ("sparse", "sparse_csr"):
             # sparse and sparse_csr are equivalent for legacy reasons
-            return _align_api_if_sparse(sp.sparse.csr_matrix(container, dtype=dtype))
+            return _align_api_if_sparse(sp.sparse.csr_array(container, dtype=dtype))
         elif constructor_name == "sparse_csr_array":
             return sp.sparse.csr_array(container, dtype=dtype)
         elif constructor_name == "sparse_csc":
-            return _align_api_if_sparse(sp.sparse.csc_matrix(container, dtype=dtype))
+            return _align_api_if_sparse(sp.sparse.csc_array(container, dtype=dtype))
         elif constructor_name == "sparse_csc_array":
             return sp.sparse.csc_array(container, dtype=dtype)
 
