@@ -721,7 +721,6 @@ def make_scorer(
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
 neg_max_error_scorer = make_scorer(max_error, greater_is_better=False)
-max_error_scorer = make_scorer(max_error, greater_is_better=False)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error, greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(
     mean_squared_log_error, greater_is_better=False
