@@ -2204,7 +2204,7 @@ def _check_sample_weight(
     elif isinstance(sample_weight, numbers.Number):
         sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
-        if dtype is None:
+        if not allow_non_float and dtype is None:
             dtype = float_dtypes
         sample_weight = check_array(
             sample_weight,
