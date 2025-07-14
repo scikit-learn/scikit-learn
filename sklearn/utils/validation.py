@@ -2169,8 +2169,8 @@ def _check_sample_weight(
         be `np.float64`.
 
     allow_non_float : bool, default=False
-        Wheter to allow `X` to be a non-float dtype, when `dtype` explicitly
-        passed (i.e. not None).
+        Whether to allow `X` to be a non-float dtype, when `dtype` is a non-float
+        dtype or None.
 
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
