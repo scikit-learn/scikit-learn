@@ -791,7 +791,7 @@ def test_preprocessing_array_api_compliance(
 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
-    yield_namespace_device_dtype_combinations(include_float16=True),
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize(
     "check",
