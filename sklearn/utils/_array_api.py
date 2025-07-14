@@ -56,9 +56,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         yield array_namespace
 
 
-def yield_namespace_device_dtype_combinations(
-    include_numpy_namespaces=True, include_float16=False
-):
+def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
@@ -69,9 +67,6 @@ def yield_namespace_device_dtype_combinations(
     ----------
     include_numpy_namespaces : bool, default=True
         If True, also yield numpy namespaces.
-
-    include_float16: bool, default=False
-        If True, yield float16 dtypes with torch namespaces.
 
     Returns
     -------
@@ -583,7 +578,6 @@ def get_namespace_and_device(
         Always False when array_api_dispatch=False.
     device : device
         `device` object (see the "Device Support" section of the array API spec).
-        Will be `None` if the array-api dispatch is disabled.
     """
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
