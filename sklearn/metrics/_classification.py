@@ -102,7 +102,9 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
     if sample_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, y_true)
+        sample_weight = _check_sample_weight(
+            sample_weight, y_true, dytpe=sample_weight.dtype
+        )
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
