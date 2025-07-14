@@ -84,7 +84,8 @@ def _is_constant_feature(var, mean, n_samples):
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.
-    eps = np.finfo(np.float64).eps
+    xp, _ = get_namespace(var, mean)
+    eps = xp.finfo(xp.float64).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
     return var <= upper_bound
@@ -1096,9 +1097,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 inplace_column_scale(X, 1 / self.scale_)
         else:
             if self.with_mean:
-                X -= self.mean_
+                X -= xp.astype(self.mean_, X.dtype)
             if self.with_std:
-                X /= self.scale_
+                X /= xp.astype(self.scale_, X.dtype)
         return X
 
     def inverse_transform(self, X, copy=None):
@@ -1140,9 +1141,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 inplace_column_scale(X, self.scale_)
         else:
             if self.with_std:
-                X *= self.scale_
+                X *= xp.astype(self.scale_, X.dtype)
             if self.with_mean:
-                X += self.mean_
+                X += xp.astype(self.mean_, X.dtype)
         return X
 
     def __sklearn_tags__(self):

@@ -1153,7 +1153,9 @@ def _incremental_mean_and_var(
     max_float_dtype = _max_precision_float_dtype(xp, device=X_device)
     # Promoting int -> float is not guaranteed by the array-api, so we cast manually.
     # (Also, last_sample_count may be a python scalar)
-    last_sample_count = xp.asarray(last_sample_count, dtype=max_float_dtype)
+    last_sample_count = xp.asarray(
+        last_sample_count, dtype=max_float_dtype, device=X_device
+    )
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
@@ -1166,7 +1168,7 @@ def _incremental_mean_and_var(
         new_sum = _safe_accumulator_op(
             xp.matmul,
             sample_weight,
-            xp.where(X_nan_mask, xp.asarray(0, dtype=X.dtype), X),
+            xp.where(X_nan_mask, 0, X),
         )
         new_sample_count = _safe_accumulator_op(
             xp.sum,
@@ -1176,7 +1178,9 @@ def _incremental_mean_and_var(
     else:
         new_sum = _safe_accumulator_op(sum_op, X, axis=0)
         n_samples = X.shape[0]
-        new_sample_count = n_samples - _safe_accumulator_op(sum_op, X_nan_mask, axis=0)
+        new_sample_count = n_samples - _safe_accumulator_op(
+            sum_op, xp.astype(X_nan_mask, X.dtype), axis=0
+        )
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -1193,13 +1197,13 @@ def _incremental_mean_and_var(
             correction = _safe_accumulator_op(
                 xp.matmul,
                 sample_weight,
-                xp.where(X_nan_mask, xp.asarray(0, dtype=temp.dtype), temp),
+                xp.where(X_nan_mask, 0, temp),
             )
             temp **= 2
             new_unnormalized_variance = _safe_accumulator_op(
                 xp.matmul,
                 sample_weight,
-                xp.where(X_nan_mask, xp.asarray(0, dtype=temp.dtype), temp),
+                xp.where(X_nan_mask, 0, temp),
             )
         else:
             correction = _safe_accumulator_op(sum_op, temp, axis=0)

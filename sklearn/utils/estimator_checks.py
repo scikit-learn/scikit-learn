@@ -1042,6 +1042,17 @@ def check_supervised_y_no_nan(name, estimator_orig):
             estimator.fit(X, y)
 
 
+def _check_attributes_dtype_with_array_api(estimator_name, device):
+    # Some estimators which internally use the highest precision dtype to
+    # compute and store the attributes, will have differences when the `mps`
+    # device is being used which supports `float32` as the maximum dtype. On
+    # the other hand the comparisons are made with `numpy` which supports
+    # `float64`.
+    if device == "mps" and estimator_name in ("StandardScaler",):
+        return False
+    return True
+
+
 def check_array_api_input(
     name,
     estimator_orig,
@@ -1115,7 +1126,10 @@ def check_array_api_input(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            assert attribute.dtype == est_xp_param_np.dtype
+            if _check_attributes_dtype_with_array_api(
+                estimator_name=name, device=device
+            ):
+                assert attribute.dtype == est_xp_param_np.dtype
 
     # Check estimator methods, if supported, give the same results
     methods = (

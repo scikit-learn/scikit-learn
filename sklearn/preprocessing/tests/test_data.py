@@ -178,9 +178,9 @@ def test_standard_scaler_sample_weight_array_api(
     xp = _array_api_for_tests(namespace, dev)
 
     X = np.array(X).astype(dtype, copy=False)
-    y = np.ones(X.shape[0])
+    y = np.ones(X.shape[0]).astype(dtype, copy=False)
     Xw = np.array(Xw).astype(dtype, copy=False)
-    yw = np.ones(Xw.shape[0])
+    yw = np.ones(Xw.shape[0]).astype(dtype, copy=False)
     X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype, copy=False)
 
     scaler = StandardScaler()
@@ -203,8 +203,8 @@ def test_standard_scaler_sample_weight_array_api(
         w_mean = _convert_to_numpy(scaler_w_xp.mean_, xp=xp)
         w_var = _convert_to_numpy(scaler_w_xp.var_, xp=xp)
 
-    assert_almost_equal(scaler_w.mean_, w_mean)
-    assert_almost_equal(scaler_w.var_, w_var)
+    assert_allclose(scaler_w.mean_, w_mean)
+    assert_allclose(scaler_w.var_, w_var)
 
     # unweighted, but with repeated samples
     scaler_xp = StandardScaler()
@@ -213,14 +213,14 @@ def test_standard_scaler_sample_weight_array_api(
         uw_mean = _convert_to_numpy(scaler_xp.mean_, xp=xp)
         uw_var = _convert_to_numpy(scaler_xp.var_, xp=xp)
 
-    assert_almost_equal(scaler.mean_, uw_mean)
-    assert_almost_equal(scaler.var_, uw_var)
+    assert_allclose(scaler.mean_, uw_mean)
+    assert_allclose(scaler.var_, uw_var)
 
     # Check that both array-api outputs match.
-    assert_almost_equal(uw_mean, w_mean)
-    assert_almost_equal(uw_var, w_var)
+    assert_allclose(uw_mean, w_mean)
+    assert_allclose(uw_var, w_var)
     with config_context(array_api_dispatch=True):
-        assert_almost_equal(
+        assert_allclose(
             _convert_to_numpy(scaler_xp.transform(X_test_xp), xp=xp),
             _convert_to_numpy(scaler_w_xp.transform(X_test_xp), xp=xp),
         )
