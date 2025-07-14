@@ -7,8 +7,13 @@ from ..utils._array_api import (
 )
 
 
-def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
-    """Compute the weighted percentile with method 'inverted_cdf'.
+def _weighted_percentile(
+    array, sample_weight, percentile_rank=50, average=False, xp=None
+):
+    """Compute the weighted percentile.
+
+    Uses 'inverted_cdf' method when `average=False` (default) and
+    'averaged_inverted_cdf' when `average=True`.
 
     When the percentile lies between two data points of `array`, the function returns
     the lower value.
@@ -37,6 +42,13 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     percentile_rank: int or float, default=50
         The probability level of the percentile to compute, in percent. Must be between
         0 and 100.
+
+    average : bool, default=False
+        If `True`, uses the "averaged_inverted_cdf" quantile method, otherwise
+        defaults to "inverted_cdf". "averaged_inverted_cdf" is symmetrical such that
+        the total of `sample_weights` below or equal to
+        `_weighted_percentile(percentile_rank)` is the same as the total of
+        `sample_weights` above or equal to `_weighted_percentile(100-percentile_rank).
 
     xp : array_namespace, default=None
         The standard-compatible namespace for `array`. Default: infer.
@@ -109,6 +121,12 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
 
     result = array[percentile_in_sorted, col_indices]
+
+    if average:
+        rev_idx_in_sorted = sorted_idx[1 + percentile_indices, col_indices]
+
+        rev_result = array[rev_idx_in_sorted, col_indices]
+        result = (result + rev_result) / 2
 
     return result[0] if n_dim == 1 else result
 
