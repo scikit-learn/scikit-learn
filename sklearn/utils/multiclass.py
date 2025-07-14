@@ -414,7 +414,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
     classes = cached_unique(y)
-    if y.shape[0] > 20 and classes.shape[0] > round(0.5 * y.shape[0]):
+    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
         # Only raise the warning when we have at least 20 samples.
         warnings.warn(
             "The number of unique classes is greater than 50% of the number "
