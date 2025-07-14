@@ -212,7 +212,7 @@ random sampling procedures.
   and :class:`cluster.MiniBatchKMeans`.
   This change will break backward compatibility, since numbers generated
   from same random seeds will be different.
-  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :pr:`25752` by :user:`Hleb Levitski <glevv>`,
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -409,7 +409,7 @@ Changelog
   and :class:`cluster.MiniBatchKMeans`.
   This change will break backward compatibility, since numbers generated
   from same random seeds will be different.
-  :pr:`25752` by :user:`Gleb Levitski <glevv>`,
+  :pr:`25752` by :user:`Hleb Levitski <glevv>`,
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -421,7 +421,7 @@ Changelog
 - |API| The `sample_weight` parameter in `predict` for
   :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
   is now deprecated and will be removed in v1.5.
-  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+  :pr:`25251` by :user:`Hleb Levitski <glevv>`.
 
 - |API| The `Xred` argument in :func:`cluster.FeatureAgglomeration.inverse_transform`
   is renamed to `Xt` and will be removed in v1.5. :pr:`26503` by `Adrin Jalali`_.
@@ -770,7 +770,7 @@ Changelog
   :func:`model_selection.validation_curve`.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| The parameter `log_scale` in the class
+- |API| The parameter `log_scale` in the method `plot` of the class
   :class:`model_selection.LearningCurveDisplay` has been deprecated in 1.3 and
   will be removed in 1.5. The default scale can be overridden by setting it
   directly on the `ax` object and will be set automatically from the spacing
@@ -876,7 +876,7 @@ Changelog
   `sample_weight` for each sample to be used while fitting. The option is only
   available when `strategy` is set to `quantile` and `kmeans`.
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
-  :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
+  :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Hleb Levitski <glevv>`.
 
 - |Enhancement| Subsampling through the `subsample` parameter can now be used in
   :class:`preprocessing.KBinsDiscretizer` regardless of the strategy used.
@@ -904,7 +904,7 @@ Changelog
 
 - |API| `dual` parameter now accepts `auto` option for
   :class:`svm.LinearSVC` and :class:`svm.LinearSVR`.
-  :pr:`26093` by :user:`Gleb Levitski <glevv>`.
+  :pr:`26093` by :user:`Hleb Levitski <glevv>`.
 
 :mod:`sklearn.tree`
 ...................
@@ -977,7 +977,7 @@ crispinlogan, Da-Lan, DanGonite57, Dave Berenbaum, davidblnc, david-cortes,
 Dayne, Dea María Léon, Denis, Dimitri Papadopoulos Orfanos, Dimitris
 Litsidis, Dmitry Nesterov, Dominic Fox, Dominik Prodinger, Edern, Ekaterina
 Butyugina, Elabonga Atuo, Emir, farhan khan, Felipe Siola, futurewarning, Gael
-Varoquaux, genvalen, Gleb Levitski, Guillaume Lemaitre, gunesbayir, Haesun
+Varoquaux, genvalen, Hleb Levitski, Guillaume Lemaitre, gunesbayir, Haesun
 Park, hujiahong726, i-aki-y, Ian Thompson, Ido M, Ily, Irene, Jack McIvor,
 jakirkham, James Dean, JanFidor, Jarrod Millman, JB Mountford, Jérémie du
 Boisberranger, Jessicakk0711, Jiawei Zhang, Joey Ortiz, JohnathanPi, John

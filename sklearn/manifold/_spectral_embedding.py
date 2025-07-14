@@ -3,7 +3,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from numbers import Integral, Real
 
@@ -333,9 +332,8 @@ def _spectral_embedding(
     laplacian, dd = csgraph_laplacian(
         adjacency, normed=norm_laplacian, return_diag=True
     )
-    if (
-        eigen_solver == "arpack"
-        or eigen_solver != "lobpcg"
+    if eigen_solver == "arpack" or (
+        eigen_solver != "lobpcg"
         and (not sparse.issparse(laplacian) or n_nodes < 5 * n_components)
     ):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes

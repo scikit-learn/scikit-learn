@@ -7,8 +7,8 @@ from functools import partial
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._set_output import (
     _get_adapter_from_container,
     _get_output_config,
@@ -142,8 +142,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[0.       , 0.6931...],
-           [1.0986..., 1.3862...]])
+    array([[0.       , 0.6931],
+           [1.0986, 1.3862]])
     """
 
     _parameter_constraints: dict = {
@@ -262,7 +262,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if hasattr(out, "columns") and self.feature_names_out is not None:
             # check the consistency between the column provided by `transform` and
-            # the the column names provided by `get_feature_names_out`.
+            # the column names provided by `get_feature_names_out`.
             feature_names_out = self.get_feature_names_out()
             if list(out.columns) != list(feature_names_out):
                 # we can override the column names of the output if it is inconsistent
@@ -325,7 +325,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_out : array-like, shape (n_samples, n_features)
+        X_original : array-like, shape (n_samples, n_features)
             Transformed input.
         """
         if self.validate:

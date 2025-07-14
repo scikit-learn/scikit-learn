@@ -9,12 +9,12 @@ at which the fix is no longer needed.
 
 import platform
 import struct
-import sys
 
 import numpy as np
 import scipy
 import scipy.sparse.linalg
 import scipy.stats
+from scipy import optimize
 
 try:
     import pandas as pd
@@ -34,66 +34,25 @@ sp_base_version = parse_version(sp_version.base_version)
 
 # TODO: We can consider removing the containers and importing
 # directly from SciPy when sparse matrices will be deprecated.
-CSR_CONTAINERS = [scipy.sparse.csr_matrix]
-CSC_CONTAINERS = [scipy.sparse.csc_matrix]
-COO_CONTAINERS = [scipy.sparse.coo_matrix]
-LIL_CONTAINERS = [scipy.sparse.lil_matrix]
-DOK_CONTAINERS = [scipy.sparse.dok_matrix]
-BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
-DIA_CONTAINERS = [scipy.sparse.dia_matrix]
-
-if parse_version(scipy.__version__) >= parse_version("1.8"):
-    # Sparse Arrays have been added in SciPy 1.8
-    # TODO: When SciPy 1.8 is the minimum supported version,
-    # those list can be created directly without this condition.
-    # See: https://github.com/scikit-learn/scikit-learn/issues/27090
-    CSR_CONTAINERS.append(scipy.sparse.csr_array)
-    CSC_CONTAINERS.append(scipy.sparse.csc_array)
-    COO_CONTAINERS.append(scipy.sparse.coo_array)
-    LIL_CONTAINERS.append(scipy.sparse.lil_array)
-    DOK_CONTAINERS.append(scipy.sparse.dok_array)
-    BSR_CONTAINERS.append(scipy.sparse.bsr_array)
-    DIA_CONTAINERS.append(scipy.sparse.dia_array)
-
+CSR_CONTAINERS = [scipy.sparse.csr_matrix, scipy.sparse.csr_array]
+CSC_CONTAINERS = [scipy.sparse.csc_matrix, scipy.sparse.csc_array]
+COO_CONTAINERS = [scipy.sparse.coo_matrix, scipy.sparse.coo_array]
+LIL_CONTAINERS = [scipy.sparse.lil_matrix, scipy.sparse.lil_array]
+DOK_CONTAINERS = [scipy.sparse.dok_matrix, scipy.sparse.dok_array]
+BSR_CONTAINERS = [scipy.sparse.bsr_matrix, scipy.sparse.bsr_array]
+DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
 # Remove when minimum scipy version is 1.11.0
 try:
-    from scipy.sparse import sparray  # noqa
+    from scipy.sparse import sparray  # noqa: F401
 
     SPARRAY_PRESENT = True
 except ImportError:
     SPARRAY_PRESENT = False
 
 
-# Remove when minimum scipy version is 1.8
-try:
-    from scipy.sparse import csr_array  # noqa
-
-    SPARSE_ARRAY_PRESENT = True
-except ImportError:
-    SPARSE_ARRAY_PRESENT = False
-
-
-try:
-    from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
-except ImportError:  # SciPy < 1.8
-    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
-
-
 def _object_dtype_isnan(X):
     return X != X
-
-
-# Rename the `method` kwarg to `interpolation` for NumPy < 1.22, because
-# `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
-def _percentile(a, q, *, method="linear", **kwargs):
-    return np.percentile(a, q, interpolation=method, **kwargs)
-
-
-if np_version < parse_version("1.22"):
-    percentile = _percentile
-else:  # >= 1.22
-    from numpy import percentile  # type: ignore  # noqa
 
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
@@ -120,6 +79,38 @@ else:
         if "atol" not in kwargs:
             kwargs["atol"] = "legacy"
         return scipy.sparse.linalg.cg(A, b, **kwargs)
+
+
+# TODO : remove this when required minimum version of scipy >= 1.9.0
+def _yeojohnson_lambda(_neg_log_likelihood, x):
+    """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
+
+    This function provides a compatibility workaround for versions of SciPy
+    older than 1.9.0, where `scipy.stats.yeojohnson` did not return
+    the estimated lambda directly.
+
+    Parameters
+    ----------
+    _neg_log_likelihood : callable
+        A function that computes the negative log-likelihood of the Yeo-Johnson
+        transformation for a given lambda. Used only for SciPy versions < 1.9.0.
+
+    x : array-like
+        Input data to estimate the Yeo-Johnson transformation parameter.
+
+    Returns
+    -------
+    lmbda : float
+        The estimated lambda parameter for the Yeo-Johnson transformation.
+    """
+    min_scipy_version = "1.9.0"
+
+    if sp_version < parse_version(min_scipy_version):
+        # choosing bracket -2, 2 like for boxcox
+        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+    _, lmbda = scipy.stats.yeojohnson(x, lmbda=None)
+    return lmbda
 
 
 # TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
@@ -186,7 +177,7 @@ else:
                 dtype=X.dtype,
                 shape=(M, 1),
             )
-        return res.A.ravel()
+        return res.toarray().ravel()
 
     def _sparse_min_or_max(X, axis, min_or_max):
         if axis is None:
@@ -224,7 +215,10 @@ else:
 if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+    from numpy import (  # noqa: F401
+        ComplexWarning,
+        VisibleDeprecationWarning,
+    )
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -294,7 +288,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     type that can hold the data in the arrays.
 
     This function returns `np.int64` if it either required by `maxval` or based on the
-    largest precision of the dtype of the arrays passed as argument, or by the their
+    largest precision of the dtype of the arrays passed as argument, or by their
     contents (when `check_contents is True`). If none of the condition requires
     `np.int64` then this function returns `np.int32`.
 
@@ -360,18 +354,19 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
+    from ..externals._scipy.sparse.csgraph import laplacian
 else:
-    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
+    from scipy.sparse.csgraph import (
+        laplacian,  # noqa: F401  # pragma: no cover
+    )
 
 
-# TODO: Remove when we drop support for Python 3.9. Note the filter argument has
-# been back-ported in 3.9.17 but we can not assume anything about the micro
-# version, see
-# https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
-# for more details
+# TODO: Remove when Python min version >= 3.12.
 def tarfile_extractall(tarfile, path):
     try:
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
         tarfile.extractall(path, filter="data")
     except TypeError:
         tarfile.extractall(path)
@@ -381,8 +376,8 @@ def _in_unstable_openblas_configuration():
     """Return True if in an unstable configuration for OpenBLAS"""
 
     # Import libraries which might load OpenBLAS.
-    import numpy  # noqa
-    import scipy  # noqa
+    import numpy  # noqa: F401
+    import scipy  # noqa: F401
 
     modules_info = _get_threadpool_controller().info()
 
@@ -391,7 +386,7 @@ def _in_unstable_openblas_configuration():
         return False
 
     # OpenBLAS 0.3.16 fixed instability for arm64, see:
-    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
+    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
         if info["internal_api"] != "openblas":
@@ -410,26 +405,23 @@ def _in_unstable_openblas_configuration():
     return False
 
 
-# TODO: remove when pandas >= 1.4 is the minimum supported version
-if pd is not None and parse_version(pd.__version__) < parse_version("1.4"):
-
-    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
-        pl = sys.modules.get("polars")
-        if pl is None or not isinstance(X, pl.DataFrame):
-            return pd.DataFrame(X, index=index, copy=copy)
-
-        # Bug in pandas<1.4: when constructing a pandas DataFrame from a polars
-        # DataFrame, the data is transposed ...
-        return pd.DataFrame(X.to_numpy(), index=index, copy=copy)
-
-else:
-
-    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
-        return pd.DataFrame(X, index=index, copy=copy)
+# TODO: Remove when Scipy 1.15 is the minimum supported version. In scipy 1.15,
+# the internal info details (via 'iprint' and 'disp' options) were dropped,
+# following the LBFGS rewrite from Fortran to C, see
+# https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035. For
+# scipy 1.15, 'iprint' and 'disp' have no effect and for scipy >= 1.16 a
+# DeprecationWarning is emitted.
+def _get_additional_lbfgs_options_dict(key, value):
+    return {} if sp_version >= parse_version("1.15") else {key: value}
 
 
-# TODO: Remove when python>=3.10 is the minimum supported version
-def _dataclass_args():
-    if sys.version_info < (3, 10):
-        return {}
-    return {"slots": True}
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
+PYARROW_VERSION_BELOW_17 = False
+try:
+    import pyarrow
+
+    pyarrow_version = parse_version(pyarrow.__version__)
+    if pyarrow_version < parse_version("17.0.0"):
+        PYARROW_VERSION_BELOW_17 = True
+except ModuleNotFoundError:  # pragma: no cover
+    pass

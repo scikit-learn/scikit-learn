@@ -54,8 +54,6 @@ from sklearn.utils.fixes import (
     DIA_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.validation import check_random_state
 
@@ -85,7 +83,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
-)  # type: ignore
+)
 
 P = (1, 2, 3, 4, np.inf)
 
@@ -120,13 +118,13 @@ def _generate_test_params_for(metric: str, n_features: int):
     rng = np.random.RandomState(1)
 
     if metric == "minkowski":
-        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
-        if sp_version >= parse_version("1.8.0.dev0"):
-            # TODO: remove the test once we no longer support scipy < 1.8.0.
-            # Recent scipy versions accept weights in the Minkowski metric directly:
-            # type: ignore
-            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-        return minkowski_kwargs
+        return [
+            dict(p=1.5),
+            dict(p=2),
+            dict(p=3),
+            dict(p=np.inf),
+            dict(p=3, w=rng.rand(n_features)),
+        ]
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
@@ -165,7 +163,7 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore # noqa
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 def test_unsupervised_kneighbors(
     global_dtype,
     n_samples,
@@ -250,7 +248,7 @@ def test_unsupervised_kneighbors(
         (1000, 5, 100),
     ],
 )
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore # noqa
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
@@ -658,7 +656,7 @@ def test_unsupervised_radius_neighbors(
             assert_allclose(
                 np.concatenate(list(results[i][0])),
                 np.concatenate(list(results[i + 1][0])),
-            ),
+            )
             assert_allclose(
                 np.concatenate(list(results[i][1])),
                 np.concatenate(list(results[i + 1][1])),

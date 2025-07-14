@@ -16,9 +16,12 @@ import numpy as np
 from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
-from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
+from .utils._missing import is_scalar_nan
 from .utils._param_validation import validate_parameter_constraints
+from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
+from .utils._repr_html.estimator import estimator_html_repr
+from .utils._repr_html.params import ParamsDict
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     ClassifierTags,
@@ -30,14 +33,11 @@ from .utils._tags import (
 )
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
-    _check_feature_names,
     _check_feature_names_in,
-    _check_n_features,
     _generate_get_feature_names_out,
     _is_fitted,
     check_array,
     check_is_fitted,
-    validate_data,
 )
 
 
@@ -110,8 +110,8 @@ def _clone_parametrized(estimator, *, safe=True):
             if isinstance(estimator, type):
                 raise TypeError(
                     "Cannot clone object. "
-                    + "You should provide an instance of "
-                    + "scikit-learn estimator instead of a class."
+                    "You should provide an instance of "
+                    "scikit-learn estimator instead of a class."
                 )
             else:
                 raise TypeError(
@@ -153,7 +153,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
+class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Inheriting from this class provides default implementations of:
@@ -196,6 +196,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     >>> estimator.set_params(param=3).fit(X, y).predict(X)
     array([3, 3, 3])
     """
+
+    _html_repr = estimator_html_repr
 
     @classmethod
     def _get_param_names(cls):
@@ -251,6 +253,66 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
         return out
+
+    def _get_params_html(self, deep=True):
+        """
+        Get parameters for this estimator with a specific HTML representation.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : ParamsDict
+            Parameter names mapped to their values. We return a `ParamsDict`
+            dictionary, which renders a specific HTML representation in table
+            form.
+        """
+        out = self.get_params(deep=deep)
+
+        init_func = getattr(self.__init__, "deprecated_original", self.__init__)
+        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = {
+            name: param.default for name, param in init_default_params.items()
+        }
+
+        def is_non_default(param_name, param_value):
+            """Finds the parameters that have been set by the user."""
+            if param_name not in init_default_params:
+                # happens if k is part of a **kwargs
+                return True
+            if init_default_params[param_name] == inspect._empty:
+                # k has no default value
+                return True
+            # avoid calling repr on nested estimators
+            if isinstance(param_value, BaseEstimator) and type(param_value) is not type(
+                init_default_params[param_name]
+            ):
+                return True
+            if not np.array_equal(
+                param_value, init_default_params[param_name]
+            ) and not (
+                is_scalar_nan(init_default_params[param_name])
+                and is_scalar_nan(param_value)
+            ):
+                return True
+
+            return False
+
+        # reorder the parameters from `self.get_params` using the `__init__`
+        # signature
+        remaining_params = [name for name in out if name not in init_default_params]
+        ordered_out = {name: out[name] for name in init_default_params if name in out}
+        ordered_out.update({name: out[name] for name in remaining_params})
+
+        non_default_ls = tuple(
+            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        )
+
+        return ParamsDict(ordered_out, non_default=non_default_ls)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
@@ -389,33 +451,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         except AttributeError:
             self.__dict__.update(state)
 
-    # TODO(1.7): Remove this method
-    def _more_tags(self):
-        """This code should never be reached since our `get_tags` will fallback on
-        `__sklearn_tags__` implemented below. We keep it for backward compatibility.
-        It is tested in `test_base_estimator_more_tags` in
-        `sklearn/utils/testing/test_tags.py`."""
-        from sklearn.utils._tags import _to_old_tags, default_tags
-
-        warnings.warn(
-            "The `_more_tags` method is deprecated in 1.6 and will be removed in "
-            "1.7. Please implement the `__sklearn_tags__` method.",
-            category=DeprecationWarning,
-        )
-        return _to_old_tags(default_tags(self))
-
-    # TODO(1.7): Remove this method
-    def _get_tags(self):
-        from sklearn.utils._tags import _to_old_tags, get_tags
-
-        warnings.warn(
-            "The `_get_tags` method is deprecated in 1.6 and will be removed in "
-            "1.7. Please implement the `__sklearn_tags__` method.",
-            category=DeprecationWarning,
-        )
-
-        return _to_old_tags(get_tags(self))
-
     def __sklearn_tags__(self):
         return Tags(
             estimator_type=None,
@@ -438,65 +473,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.get_params(deep=False),
             caller_name=self.__class__.__name__,
         )
-
-    @property
-    def _repr_html_(self):
-        """HTML representation of estimator.
-
-        This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favored in the long term, `_repr_html_` is only
-        implemented for consumers who do not interpret `_repr_mimbundle_`.
-        """
-        if get_config()["display"] != "diagram":
-            raise AttributeError(
-                "_repr_html_ is only defined when the "
-                "'display' configuration option is set to "
-                "'diagram'"
-            )
-        return self._repr_html_inner
-
-    def _repr_html_inner(self):
-        """This function is returned by the @property `_repr_html_` to make
-        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
-        on `get_config()["display"]`.
-        """
-        return estimator_html_repr(self)
-
-    def _repr_mimebundle_(self, **kwargs):
-        """Mime bundle used by jupyter kernels to display estimator"""
-        output = {"text/plain": repr(self)}
-        if get_config()["display"] == "diagram":
-            output["text/html"] = estimator_html_repr(self)
-        return output
-
-    # TODO(1.7): Remove this method
-    def _validate_data(self, *args, **kwargs):
-        warnings.warn(
-            "`BaseEstimator._validate_data` is deprecated in 1.6 and will be removed "
-            "in 1.7. Use `sklearn.utils.validation.validate_data` instead. This "
-            "function becomes public and is part of the scikit-learn developer API.",
-            FutureWarning,
-        )
-        return validate_data(self, *args, **kwargs)
-
-    # TODO(1.7): Remove this method
-    def _check_n_features(self, *args, **kwargs):
-        warnings.warn(
-            "`BaseEstimator._check_n_features` is deprecated in 1.6 and will be "
-            "removed in 1.7. Use `sklearn.utils.validation._check_n_features` instead.",
-            FutureWarning,
-        )
-        _check_n_features(self, *args, **kwargs)
-
-    # TODO(1.7): Remove this method
-    def _check_feature_names(self, *args, **kwargs):
-        warnings.warn(
-            "`BaseEstimator._check_feature_names` is deprecated in 1.6 and will be "
-            "removed in 1.7. Use `sklearn.utils.validation._check_feature_names` "
-            "instead.",
-            FutureWarning,
-        )
-        _check_feature_names(self, *args, **kwargs)
 
 
 class ClassifierMixin:

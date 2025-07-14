@@ -7,17 +7,17 @@ maintainers = [
     {name = "scikit-learn developers", email="scikit-learn@python.org"},
 ]
 dependencies = [
-  "numpy>=1.19.5",
-  "scipy>=1.6.0",
+  "numpy>=1.22.0",
+  "scipy>=1.8.0",
   "joblib>=1.2.0",
   "threadpoolctl>=3.1.0",
 ]
-requires-python = ">=3.9"
-license = {file = "COPYING"}
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["COPYING"]
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: BSD License",
   "Programming Language :: C",
   "Programming Language :: Python",
   "Topic :: Software Development",
@@ -28,7 +28,6 @@ classifiers=[
   "Operating System :: Unix",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -44,20 +43,20 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.16.0"]
-install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
-benchmark = ["matplotlib>=3.3.4", "pandas>=1.2.0", "memory_profiler>=0.57.0"]
+build = ["numpy>=1.22.0", "scipy>=1.8.0", "cython>=3.0.10", "meson-python>=0.17.1"]
+install = ["numpy>=1.22.0", "scipy>=1.8.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
+benchmark = ["matplotlib>=3.5.0", "pandas>=1.4.0", "memory_profiler>=0.57.0"]
 docs = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.2.0",
+    "matplotlib>=3.5.0",
+    "scikit-image>=0.19.0",
+    "pandas>=1.4.0",
     "seaborn>=0.9.0",
     "memory_profiler>=0.57.0",
     "sphinx>=7.3.7",
     "sphinx-copybutton>=0.5.2",
     "sphinx-gallery>=0.17.1",
     "numpydoc>=1.2.0",
-    "Pillow>=7.1.2",
+    "Pillow>=8.4.0",
     "pooch>=1.6.0",
     "sphinx-prompt>=1.4.0",
     "sphinxext-opengraph>=0.9.1",
@@ -71,29 +70,28 @@ docs = [
     "towncrier>=24.8.0",
 ]
 examples = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.2.0",
+    "matplotlib>=3.5.0",
+    "scikit-image>=0.19.0",
+    "pandas>=1.4.0",
     "seaborn>=0.9.0",
     "pooch>=1.6.0",
     "plotly>=5.14.0",
 ]
 tests = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.2.0",
+    "matplotlib>=3.5.0",
+    "scikit-image>=0.19.0",
+    "pandas>=1.4.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.5.1",
-    "black>=24.3.0",
-    "mypy>=1.9",
-    "pyamg>=4.0.0",
+    "ruff>=0.11.7",
+    "mypy>=1.15",
+    "pyamg>=4.2.1",
     "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
     "pooch>=1.6.0",
 ]
-maintenance = ["conda-lock==2.5.7"]
+maintenance = ["conda-lock==3.0.1"]
 
 [build-system]
 build-backend = "mesonpy"
@@ -102,40 +100,31 @@ requires = [
     "meson-python>=0.16.0",
     "Cython>=3.0.10",
     "numpy>=2",
-    "scipy>=1.6.0",
+    "scipy>=1.8.0",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ['py39', 'py310', 'py311']
-preview = true
-exclude = '''
-/(
-    \.eggs         # exclude a few common directories in the
-  | \.git          # root of the project
-  | \.mypy_cache
-  | \.vscode
-  | build
-  | dist
-  | doc/_build
-  | doc/auto_examples
-  | sklearn/externals
-  | asv_benchmarks/env
-)/
-'''
+[tool.pytest.ini_options]
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+testpaths = "sklearn"
+addopts = [
+    "--disable-pytest-warnings",
+    "--color=yes",
+    "--import-mode=importlib",
+]
 
 [tool.ruff]
-# max line length for black
 line-length = 88
-target-version = "py38"
 exclude=[
+    ".eggs",
     ".git",
+    ".mypy_cache",
+    ".vscode",
     "__pycache__",
+    "build",
     "dist",
     "sklearn/externals",
     "doc/_build",
     "doc/auto_examples",
-    "build",
     "asv_benchmarks/env",
     "asv_benchmarks/html",
     "asv_benchmarks/results",
@@ -147,22 +136,40 @@ exclude=[
 preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I", "CPY001"]
+# all rules can be found here: https://docs.astral.sh/ruff/rules/
+extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF"]
 ignore=[
-    # space before : (needed for how black formats slicing)
-    "E203",
     # do not assign a lambda expression, use a def
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
-    # E721 is in preview (july 2024) and gives many false positives.
+    # E721 gives many false positives.
     # Use `is` and `is not` for type comparisons, or `isinstance()` for
     # isinstance checks
     "E721",
-    # F841 is in preview (july 2024), and we don't care much about it.
+    # We don't care much about F841.
     # Local variable ... is assigned to but never used
     "F841",
+    # some RUF rules trigger too many changes
+    "RUF002",
+    "RUF003",
+    "RUF005",
+    "RUF012",
+    "RUF015",
+    "RUF021",
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
 ]
 
 [tool.ruff.lint.flake8-copyright]
@@ -187,7 +194,16 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 "examples/svm/plot_rbf_parameters.py"=["CPY001"]
 # __all__ has un-imported names
 "sklearn/__init__.py"=["F822"]
+"sklearn/utils/_metadata_requests.py"=["CPY001"]
 
+[tool.mypy]
+ignore_missing_imports = true
+allow_redefinition = true
+exclude = "^sklearn/externals"
+
+[[tool.mypy.overrides]]
+module = ["joblib.*", "sklearn.externals.*"]
+follow_imports = "skip"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
@@ -196,8 +212,6 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 ignore = [
     # multiple spaces/tab after comma
     'E24',
-    # space before : (needed for how black formats slicing)
-    'E203',
     # line too long
     'E501',
     # do not assign a lambda expression, use a def
@@ -262,9 +276,13 @@ package = "sklearn"  # name of your package
         changelog_noop_label = "No Changelog Needed"
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
+[tool.codespell]
+skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./build_tools/wheels/LICENSE_windows.txt", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+ignore-words = "build_tools/codespell_ignore_words.txt"
+
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.7.rst"
+    filename = "doc/whats_new/v1.8.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"

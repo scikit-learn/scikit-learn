@@ -575,10 +575,6 @@ class BrokenArrayAPI(BaseEstimator):
 
 def test_check_array_api_input():
     try:
-        importlib.import_module("array_api_compat")
-    except ModuleNotFoundError:
-        raise SkipTest("array_api_compat is required to run this test")
-    try:
         importlib.import_module("array_api_strict")
     except ModuleNotFoundError:  # pragma: nocover
         raise SkipTest("array-api-strict is required to run this test")
@@ -667,7 +663,7 @@ def test_check_dict_unchanged():
 def test_check_sample_weights_pandas_series():
     # check that sample_weights in fit accepts pandas.Series type
     try:
-        from pandas import Series  # noqa
+        from pandas import Series  # noqa: F401
 
         msg = (
             "Estimator NoSampleWeightPandasSeriesType raises error if "
@@ -1377,8 +1373,8 @@ def test_check_estimator_callback():
     expected_failed_checks = _get_expected_failed_checks(est)
     # This is to make sure we test a class that has some expected failures
     assert len(expected_failed_checks) > 0
-    with warnings.catch_warnings(record=True) as records:
-        logs = check_estimator(
+    with warnings.catch_warnings(record=True):
+        check_estimator(
             est,
             expected_failed_checks=expected_failed_checks,
             on_fail=None,
@@ -1440,6 +1436,27 @@ def test_check_requires_y_none():
 
     # no warnings are raised
     assert not [r.message for r in record]
+
+    # Make an estimator that throws the wrong error to make sure we catch it
+    class EstimatorWithWrongError(BaseEstimator):
+        def fit(self, X, y):
+            try:
+                X, y = check_X_y(X, y)
+            except ValueError as ve:
+                # This assertion is just to make sure we are catching the value error
+                # that comes from wrong y (=None) and not some other value error
+                assert str(ve) == (
+                    "estimator requires y to be passed, but the target y is None"
+                )
+                # Override the error message force fail
+                raise ValueError("This is the wrong message that raises error")
+
+    err_msg = (
+        "Your estimator raised a ValueError, but with the incorrect or "
+        "incomplete error message to be considered a graceful fail."
+    )
+    with raises(ValueError, match=err_msg):
+        check_requires_y_none("estimator", EstimatorWithWrongError())
 
 
 def test_non_deterministic_estimator_skip_tests():
