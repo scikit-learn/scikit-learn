@@ -561,7 +561,7 @@ def confusion_matrix(
             UserWarning,
         )
 
-    return cm
+    return xp.asarray(cm)
 
 
 @validate_params(
