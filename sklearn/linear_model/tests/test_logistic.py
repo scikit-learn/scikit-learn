@@ -1568,10 +1568,10 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
     # penalties, and compute the elasticnet objective. That of a should be
     # greater than that of b (both objectives are convex).
     X, y = make_classification(
-        n_samples=1000,
+        n_samples=2000,
         n_classes=2,
         n_features=20,
-        n_informative=10,
+        n_informative=20,
         n_redundant=0,
         n_repeated=0,
         random_state=global_random_seed,
@@ -1585,8 +1585,6 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
         C=C,
         l1_ratio=l1_ratio,
         fit_intercept=False,
-        max_iter=1000,
-        tol=1e-6,
     )
     lr_l2 = LogisticRegression(
         penalty="l2",
@@ -1594,8 +1592,6 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
         random_state=global_random_seed,
         C=C,
         fit_intercept=False,
-        max_iter=1000,
-        tol=1e-6,
     )
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
