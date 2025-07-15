@@ -15,32 +15,58 @@ from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
 
 
-def test_averaged_weighted_median():
-    y = np.array([0, 1, 2, 3, 4, 5])
-    sw = np.array([1, 1, 1, 1, 1, 1])
+def test_aa():
+    y1 = np.arange(6)
+    sw = np.ones_like(y1)
+    print("fwd")
+    _weighted_percentile(y1, sw, 30)
+    print("reverse")
+    _weighted_percentile(-y1, sw, 70)
 
-    score = _averaged_weighted_percentile(y, sw, 50)
+
+# param odd and even
+# param average and no average = note that fail for even not averaged
+def test_averaged_weighted_median():
+    y = np.array([0, 1, 2, 3, 4, 5, 6])
+    sw = np.array([1, 1, 1, 1, 1, 1, 1])
+
+    score = _weighted_percentile(y, sw, 50, average=True)
 
     assert score == np.median(y)
 
 
-def test_averaged_weighted_percentile(global_random_seed):
+# test for 2D
+@pytest.mark.parametrize("percentile_rank", [20, 51, 75])
+@pytest.mark.parametrize("size", [10, 15, 21, 40])
+def test_averaged_weighted_percentile(global_random_seed, size, percentile_rank):
+    """Check `_weighted_percentile` with unit weights is correct.
+
+    Results should be the same as np.percentile/quantile's 'averaged_inverted_cdf'.
+    """
     rng = np.random.RandomState(global_random_seed)
-    y = rng.randint(20, size=10)
+    y = rng.randint(20, size=size)
 
-    sw = np.ones(10)
+    sw = np.ones_like(y)
+    # y = np.arange(10)
+    # score = _averaged_weighted_percentile(y, sw, 20)
+    score = _weighted_percentile(y, sw, percentile_rank)
+    print(f"fwd score {score}")
+    score = _weighted_percentile(-y, sw, percentile_rank)
+    print(f"back score {score}")
 
-    score = _averaged_weighted_percentile(y, sw, 20)
+    print("new method:")
+    score = _weighted_percentile(y, sw, percentile_rank, average=True)
 
-    assert score == np.percentile(y, 20, method="averaged_inverted_cdf")
+    assert score == np.percentile(y, percentile_rank, method="averaged_inverted_cdf")
 
 
 def test_averaged_and_weighted_percentile():
+    """Check `_weighted_percentile`"""
     y = np.array([0, 1, 2])
     sw = np.array([5, 1, 5])
     q = 50
 
-    score_averaged = _averaged_weighted_percentile(y, sw, q)
+    score_averaged = _weighted_percentile(y, sw, q, average=True)
     score = _weighted_percentile(y, sw, q)
 
     assert score_averaged == score
@@ -61,23 +87,22 @@ def test_weighted_percentile():
 
 def test_weighted_percentile_equal():
     """Check `weighted_percentile` with all weights equal to 1."""
-    y = np.empty(102, dtype=np.float64)
-    y.fill(0.0)
+    y = np.zeros(102, dtype=np.float64)
     sw = np.ones(102, dtype=np.float64)
     score = _weighted_percentile(y, sw, 50)
     assert approx(score) == 0
 
 
+# this should probably warn/error
 def test_weighted_percentile_zero_weight():
     """Check `weighted_percentile` with all weights equal to 0."""
-    y = np.empty(102, dtype=np.float64)
-    y.fill(1.0)
-    sw = np.ones(102, dtype=np.float64)
-    sw.fill(0.0)
+    y = np.ones(102, dtype=np.float64)
+    sw = np.zeros(102, dtype=np.float64)
     value = _weighted_percentile(y, sw, 50)
     assert approx(value) == 1.0
 
 
+# param average
 def test_weighted_percentile_zero_weight_zero_percentile():
     """Check `weighted_percentile(percentile_rank=0)` behaves correctly.
 
@@ -96,6 +121,7 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(value) == 4
 
 
+# delete?
 def test_weighted_median_equal_weights(global_random_seed):
     """Checks `_weighted_percentile(percentile_rank=50)` is the same as `np.median`.
 
@@ -126,6 +152,7 @@ def test_weighted_median_integer_weights(global_random_seed):
     assert median == approx(w_median)
 
 
+# param
 def test_weighted_percentile_2d(global_random_seed):
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(global_random_seed)
@@ -234,6 +261,7 @@ def test_weighted_percentile_array_api_consistency(
         assert result_xp_np.dtype == np.float64
 
 
+# paam
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
 def test_weighted_percentile_nan_filtered(sample_weight_ndim, global_random_seed):
     """Test that calling _weighted_percentile on an array with nan values returns

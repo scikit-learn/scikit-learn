@@ -45,10 +45,11 @@ def _weighted_percentile(
 
     average : bool, default=False
         If `True`, uses the "averaged_inverted_cdf" quantile method, otherwise
-        defaults to "inverted_cdf". "averaged_inverted_cdf" is symmetrical such that
-        the total of `sample_weights` below or equal to
+        defaults to "inverted_cdf". "averaged_inverted_cdf" is symmetrical with
+        unit `sample_weight`, such that the total of `sample_weight` below or equal to
         `_weighted_percentile(percentile_rank)` is the same as the total of
-        `sample_weights` above or equal to `_weighted_percentile(100-percentile_rank).
+        `sample_weight` above or equal to `_weighted_percentile(100-percentile_rank).
+        This symmetry is not guaranteed with non-unit weights.
 
     xp : array_namespace, default=None
         The standard-compatible namespace for `array`. Default: infer.
@@ -120,13 +121,28 @@ def _weighted_percentile(
     col_indices = xp.arange(array.shape[1], device=device)
     percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
 
-    result = array[percentile_in_sorted, col_indices]
-
     if average:
-        rev_idx_in_sorted = sorted_idx[1 + percentile_indices, col_indices]
+        # From Hyndman and Fan (1996), `fraction_above` is `g`
+        fraction_above = (
+            weight_cdf[col_indices, percentile_indices] - adjusted_percentile_rank
+        )
+        # Alternatively, could use
+        # `is_exact_percentile = fraction_above <= xp.finfo(floating_dtype).eps`
+        # but that seems harder to read
+        is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
+        percentile_plus_one_in_sorted = sorted_idx[percentile_indices + 1, col_indices]
 
-        rev_result = array[rev_idx_in_sorted, col_indices]
-        result = (result + rev_result) / 2
+        result = xp.where(
+            is_fraction_above,
+            array[percentile_in_sorted, col_indices],
+            (
+                array[percentile_in_sorted, col_indices]
+                + array[percentile_plus_one_in_sorted, col_indices]
+            )
+            / 2,
+        )
+    else:
+        result = array[percentile_in_sorted, col_indices]
 
     return result[0] if n_dim == 1 else result
 
