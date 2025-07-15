@@ -25,8 +25,7 @@ def test_incremental_pca(svd_solver):
     # Incremental PCA on dense arrays.
     X = iris.data
     batch_size = X.shape[0] // 3
-    kwargs = {"batch_size": batch_size, "svd_solver": svd_solver, "random_state": 0}
-    ipca = IncrementalPCA(n_components=2, **kwargs)
+    ipca = IncrementalPCA(n_components=2, batch_size=batch_size, svd_solver=svd_solver)
     pca = PCA(n_components=2)
     pca.fit_transform(X)
 
@@ -41,7 +40,9 @@ def test_incremental_pca(svd_solver):
 
     max_n_components = X.shape[1] - 1 if svd_solver == "arpack" else X.shape[1]
     for n_components in [1, 2, max_n_components]:
-        ipca = IncrementalPCA(n_components, **kwargs)
+        ipca = IncrementalPCA(
+            n_components, batch_size=batch_size, svd_solver=svd_solver
+        )
         ipca.fit(X)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
@@ -55,12 +56,11 @@ def test_incremental_pca(svd_solver):
 def test_incremental_pca_sparse(sparse_container, svd_solver):
     # Incremental PCA on sparse arrays.
     X = iris.data
-    pca = PCA(n_components=2, random_state=0)
+    pca = PCA(n_components=2)
     pca.fit_transform(X)
     X_sparse = sparse_container(X)
     batch_size = X_sparse.shape[0] // 3
-    kwargs = {"batch_size": batch_size, "svd_solver": svd_solver, "random_state": 0}
-    ipca = IncrementalPCA(n_components=2, **kwargs)
+    ipca = IncrementalPCA(n_components=2, batch_size=batch_size, svd_solver=svd_solver)
 
     X_transformed = ipca.fit_transform(X_sparse)
 
@@ -75,7 +75,9 @@ def test_incremental_pca_sparse(sparse_container, svd_solver):
         X_sparse.shape[1] - 1 if svd_solver == "arpack" else X_sparse.shape[1]
     )
     for n_components in [1, 2, max_n_components]:
-        ipca = IncrementalPCA(n_components, **kwargs)
+        ipca = IncrementalPCA(
+            n_components, batch_size=batch_size, svd_solver=svd_solver
+        )
         ipca.fit(X_sparse)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
@@ -117,7 +119,7 @@ def test_incremental_pca_inverse(svd_solver, global_random_seed):
 
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
-    ipca = IncrementalPCA(n_components=2, svd_solver=svd_solver, batch_size=10).fit(X)
+    ipca = IncrementalPCA(n_components=2, batch_size=10, svd_solver=svd_solver).fit(X)
     Y = ipca.transform(X)
     Y_inverse = ipca.inverse_transform(Y)
     assert_almost_equal(X, Y_inverse, decimal=3)
@@ -204,7 +206,7 @@ def test_incremental_pca_set_params(svd_solver):
     # Test that components_ sign is stable over batch sizes.
     rng = np.random.RandomState(1999)
     n_samples = 100
-    n_features = 30
+    n_features = 21
     X = rng.randn(n_samples, n_features)
     X2 = rng.randn(n_samples, n_features)
     X3 = rng.randn(n_samples, n_features)
@@ -256,22 +258,22 @@ def test_incremental_pca_batch_signs(svd_solver, global_random_seed):
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_incremental_pca_partial_fit_small_batch(svd_solver):
+def test_incremental_pca_partial_fit_small_batch(svd_solver, global_random_seed):
     # Test that there is no minimum batch size after the first partial_fit
     # Non-regression test
-    rng = np.random.RandomState(1999)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
     X += [5, 4, 3]  # make a large mean
 
-    n_components = p
+    n_components = p - 1 if svd_solver == "arpack" else p
     pipca = IncrementalPCA(n_components=n_components, svd_solver=svd_solver)
-    pipca.partial_fit(X[:n_components])
-    for idx in range(n_components, n):
+    pipca.partial_fit(X[:p])
+    for idx in range(p, n):
         pipca.partial_fit(X[idx : idx + 1])
 
-    pca = PCA(n_components=n_components)
+    pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
 
     assert_allclose(pca.components_, pipca.components_, atol=1e-3)
@@ -373,9 +375,9 @@ def test_incremental_pca_against_pca_random_data(
     n_features = 3
     X = rng.randn(n_samples, n_features) + 5 * rng.rand(1, n_features)
 
-    Y_pca = PCA(n_components=3, svd_solver=svd_solver).fit_transform(X)
+    Y_pca = PCA(n_components=2, svd_solver=svd_solver).fit_transform(X)
     Y_ipca = IncrementalPCA(
-        n_components=3, svd_solver=svd_solver, random_state=1999
+        n_components=2, batch_size=25, svd_solver=svd_solver
     ).fit_transform(container(X))
 
     assert_almost_equal(np.abs(Y_pca), np.abs(Y_ipca), 1)
