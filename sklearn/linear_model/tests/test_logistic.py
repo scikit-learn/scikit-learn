@@ -2214,31 +2214,6 @@ def test_passing_params_without_enabling_metadata_routing():
             lr_cv.score(X, y, **params)
 
 
-# TODO(1.8): remove
-def test_multi_class_deprecated():
-    """Check `multi_class` parameter deprecated."""
-    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
-    lr = LogisticRegression(multi_class="ovr")
-    msg = "'multi_class' was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-    lrCV = LogisticRegressionCV(multi_class="ovr")
-    with pytest.warns(FutureWarning, match=msg):
-        lrCV.fit(X, y)
-
-    # Special warning for "binary multinomial"
-    X, y = make_classification(n_classes=2, n_samples=50, n_informative=6)
-    lr = LogisticRegression(multi_class="multinomial")
-    msg = "'multi_class' was deprecated.*binary problems"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-    lrCV = LogisticRegressionCV(multi_class="multinomial")
-    with pytest.warns(FutureWarning, match=msg):
-        lrCV.fit(X, y)
-
-
 def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     # Wide data matrix should lead to a rank-deficient Hessian matrix
     # hence make the Newton-Cholesky solver raise a warning and fallback to
