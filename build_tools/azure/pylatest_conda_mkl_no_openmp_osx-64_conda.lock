@@ -41,7 +41,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/python-3.12.11-he8d2d4c_0.conda#9783e
 https://repo.anaconda.com/pkgs/main/osx-64/brotli-python-1.0.9-py312h6d0c2b6_9.conda#425936421fe402074163ac3ffe33a060
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-7.6.9-py312h46256e1_0.conda#f8c1547bbf522a600ee795901240a7b0
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
-https://repo.anaconda.com/pkgs/main/osx-64/cython-3.0.11-py312h46256e1_1.conda#44443579c3f4ae02940aeefb77e6115e
+https://repo.anaconda.com/pkgs/main/osx-64/cython-3.0.12-py312h46256e1_0.conda#fa2e1e199a4bef20f43c572f361083c7
 https://repo.anaconda.com/pkgs/main/noarch/execnet-2.1.1-pyhd3eb1b0_0.conda#b3cb797432ee4657d5907b91a5dc65ad
 https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#e40edff2c5708f342cef43c7f280c507
 https://repo.anaconda.com/pkgs/main/osx-64/joblib-1.4.2-py312hecd8cb5_0.conda#8ab03dfa447b4e0bfa0bd3d25930f3b6
@@ -55,7 +55,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.5.0-py312hecd8cb5_0.conda#ca
 https://repo.anaconda.com/pkgs/main/osx-64/pygments-2.19.1-py312hecd8cb5_0.conda#ca4be8769d62deee6127c0bf3703b0f6
 https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-3.2.0-py312hecd8cb5_0.conda#e4086daaaed13f68cc8d5b9da7db73cc
 https://repo.anaconda.com/pkgs/main/noarch/python-tzdata-2025.2-pyhd3eb1b0_0.conda#5ac858f05dbf9d3cdb04d53516901247
-https://repo.anaconda.com/pkgs/main/osx-64/pytz-2024.1-py312hecd8cb5_0.conda#2b28ec0e0d07f5c0c701f75200b1e8b6
+https://repo.anaconda.com/pkgs/main/osx-64/pytz-2025.2-py312hecd8cb5_0.conda#37f5d42a57b8fe2932b20a243e867680
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-78.1.1-py312hecd8cb5_0.conda#76b66b96a1564cb76011408c1eb8df3e
 https://repo.anaconda.com/pkgs/main/osx-64/six-1.17.0-py312hecd8cb5_0.conda#aadd782bc06426887ae0835eedd98ceb
 https://repo.anaconda.com/pkgs/main/noarch/threadpoolctl-2.2.0-pyh0d69192_0.conda#bbfdbae4934150b902f97daaf287efe2
