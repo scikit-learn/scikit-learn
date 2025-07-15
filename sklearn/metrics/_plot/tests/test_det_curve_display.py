@@ -37,9 +37,9 @@ def test_det_curve_display(
 
     lr = LogisticRegression()
     lr.fit(X, y)
-    y_pred = getattr(lr, response_method)(X)
-    if y_pred.ndim == 2:
-        y_pred = y_pred[:, 1]
+    y_score = getattr(lr, response_method)(X)
+    if y_score.ndim == 2:
+        y_score = y_score[:, 1]
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
@@ -54,11 +54,11 @@ def test_det_curve_display(
     if constructor_name == "from_estimator":
         disp = DetCurveDisplay.from_estimator(lr, X, y, **common_kwargs)
     else:
-        disp = DetCurveDisplay.from_predictions(y, y_pred, **common_kwargs)
+        disp = DetCurveDisplay.from_predictions(y, y_score, **common_kwargs)
 
     fpr, fnr, _ = det_curve(
         y,
-        y_pred,
+        y_score,
         sample_weight=sample_weight,
         drop_intermediate=drop_intermediate,
         pos_label=pos_label,
@@ -103,12 +103,12 @@ def test_det_curve_display_default_name(
     X, y = X[y < 2], y[y < 2]
 
     lr = LogisticRegression().fit(X, y)
-    y_pred = lr.predict_proba(X)[:, 1]
+    y_score = lr.predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         disp = DetCurveDisplay.from_estimator(lr, X, y)
     else:
-        disp = DetCurveDisplay.from_predictions(y, y_pred)
+        disp = DetCurveDisplay.from_predictions(y, y_score)
 
     assert disp.estimator_name == expected_clf_name
     assert disp.line_.get_label() == expected_clf_name
