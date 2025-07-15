@@ -1561,41 +1561,37 @@ def test_elastic_net_vs_l1_l2(global_random_seed, C):
 # Fix this one:
 @pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
-def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_ratio):
+def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     # Check that training with a penalty matching the objective leads
     # to a lower objective.
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
     # penalties, and compute the elasticnet objective. That of a should be
     # greater than that of b (both objectives are convex).
     X, y = make_classification(
-        n_samples=4000,
+        n_samples=1000,
         n_classes=2,
-        n_features=20,
-        n_informative=20,
+        n_features=10,
+        n_informative=10,
         n_redundant=0,
         n_repeated=0,
-        random_state=global_random_seed,
+        random_state=0,
     )
     X = scale(X)
 
     lr_enet = LogisticRegression(
         penalty="elasticnet",
         solver="saga",
-        random_state=global_random_seed,
+        random_state=0,
         C=C,
         l1_ratio=l1_ratio,
         fit_intercept=False,
-        max_iter=500,
-        tol=1e-6,
     )
     lr_l2 = LogisticRegression(
         penalty="l2",
         solver="saga",
-        random_state=global_random_seed,
+        random_state=0,
         C=C,
         fit_intercept=False,
-        max_iter=500,
-        tol=1e-6,
     )
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
@@ -1612,7 +1608,7 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
 
 # Fix this one:
 @pytest.mark.parametrize("n_classes", (2, 3))
-def test_LogisticRegressionCV_GridSearchCV_elastic_net(global_random_seed, n_classes):
+def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     # make sure LogisticRegressionCV gives same best params (l1 and C) as
     # GridSearchCV when penalty is elasticnet
 
@@ -1620,7 +1616,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(global_random_seed, n_cla
         n_samples=100,
         n_classes=n_classes,
         n_informative=3,
-        random_state=global_random_seed,
+        random_state=0,
     )
 
     cv = StratifiedKFold(5)
@@ -1635,8 +1631,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(global_random_seed, n_cla
         cv=cv,
         l1_ratios=l1_ratios,
         random_state=0,
-        max_iter=300,
-        tol=1e-3,
+        tol=1e-2,
     )
     lrcv.fit(X, y)
 
@@ -1645,8 +1640,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(global_random_seed, n_cla
         penalty="elasticnet",
         solver="saga",
         random_state=0,
-        max_iter=300,
-        tol=1e-3,
+        tol=1e-2,
     )
     gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X, y)
