@@ -112,3 +112,35 @@ def test_det_curve_display_default_name(
 
     assert disp.estimator_name == expected_clf_name
     assert disp.line_.get_label() == expected_clf_name
+
+
+# TODO(1.9): remove
+def test_y_score_and_y_pred_specified_error():
+    """Check that an error is raised when both y_score and y_pred are specified."""
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    y_pred = np.array([0.2, 0.3, 0.5, 0.1])
+
+    with pytest.raises(
+        ValueError, match="`y_pred` and `y_score` cannot be both specified"
+    ):
+        DetCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
+
+
+# TODO(1.9): remove
+def test_y_pred_deprecation_warning(pyplot):
+    """Check that a warning is raised when y_pred is specified."""
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+
+    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+        display_y_pred = DetCurveDisplay.from_predictions(y_true, y_pred=y_score)
+
+    assert_allclose(
+        display_y_pred.fpr, [5.000000e-01, 5.000000e-01, 5.000000e-01, 2.220446e-16]
+    )
+
+    display_y_score = DetCurveDisplay.from_predictions(y_true, y_score)
+    assert_allclose(
+        display_y_score.fpr, [5.000000e-01, 5.000000e-01, 5.000000e-01, 2.220446e-16]
+    )

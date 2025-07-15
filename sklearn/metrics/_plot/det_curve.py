@@ -205,7 +205,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_score,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=True,
