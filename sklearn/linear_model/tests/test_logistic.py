@@ -937,7 +937,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in SOLVERS:
-        params = dict(solver=solver, max_iter=1000, random_stage=global_random_seed)
+        params = dict(solver=solver, max_iter=1000, random_state=global_random_seed)
 
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
