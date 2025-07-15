@@ -6,6 +6,10 @@
 Metrics and scoring: quantifying the quality of predictions
 ===========================================================
 
+.. contents:: Section Navigation
+   :local:
+   :depth: 2
+
 .. _which_scoring_function:
 
 Which scoring function should I use?
