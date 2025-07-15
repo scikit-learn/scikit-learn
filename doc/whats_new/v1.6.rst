@@ -640,6 +640,11 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   pipeline to be rendered correctly.
   By :user:`Gennaro Daniele Acciaro <gdacciaro>` :pr:`30203`
 
+- |Fix| ``FeatureUnion`` now handles transformers that return a pandas
+  ``Series`` instead of a ``DataFrame`` without raising
+  :class:`~sklearn.exceptions.ValueError`. (:gh:`31759`
+  by :user:`@Kalyan1210`)
+
 :mod:`sklearn.preprocessing`
 ----------------------------
 
