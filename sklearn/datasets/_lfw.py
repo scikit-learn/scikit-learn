@@ -119,6 +119,7 @@ def _check_fetch_lfw(
         logger.debug("Decompressing the data archive to %s", data_folder_path)
         with tarfile.open(archive_path, "r:gz") as fp:
             tarfile_extractall(fp, path=lfw_home)
+
         remove(archive_path)
 
     return lfw_home, data_folder_path
@@ -511,11 +512,11 @@ def fetch_lfw_pairs(
     Features            real, between 0 and 255
     =================   =======================
 
-    In the official `README.txt`_ this task is described as the
-    "Restricted" task.  As I am not sure as to implement the
-    "Unrestricted" variant correctly, I left it as unsupported for now.
-
-    .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
+    In the `original paper <https://people.cs.umass.edu/~elm/papers/lfw.pdf>`_
+    the "pairs" version corresponds to the "restricted task", where
+    the experimenter should not use the name of a person to infer
+    the equivalence or non-equivalence of two face images that
+    are not explicitly given in the training set.
 
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.

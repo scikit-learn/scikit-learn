@@ -397,7 +397,7 @@ def orthogonal_mp(
     >>> coef.shape
     (100,)
     >>> X[:1,] @ coef
-    array([-78.68...])
+    array([-78.68])
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -575,7 +575,7 @@ def orthogonal_mp_gram(
     >>> coef.shape
     (100,)
     >>> X[:1,] @ coef
-    array([-78.68...])
+    array([-78.68])
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -727,9 +727,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuit().fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {
@@ -994,11 +994,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     ...                        noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.n_nonzero_coefs_
     np.int64(10)
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {

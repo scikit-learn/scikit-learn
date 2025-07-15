@@ -188,8 +188,10 @@ Contributing code
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
-  so far. In order to claim an issue for yourself, please comment exactly
-  ``/take`` on it for the CI to automatically assign the issue to you.
+  so far. If you'd like to work on such issue, leave a comment with your idea of
+  how you plan to approach it, and start working on it. If somebody else has
+  already said they'd be working on the issue in the past 2-3 weeks, please let
+  them finish their work, otherwise consider it stalled and take it over.
 
 To maintain the quality of the codebase and ease the review process, any
 contribution must conform to the project's :ref:`coding guidelines
@@ -269,7 +271,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
+        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 .. _upstream:
 
@@ -282,14 +284,20 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
-        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin	git@github.com:YourLogin/scikit-learn.git (push)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin    git@github.com:YourLogin/scikit-learn.git (push)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
@@ -531,7 +539,6 @@ Continuous Integration (CI)
 * CircleCI is used to build the docs for viewing.
 * Github Actions are used for various tasks, including building wheels and
   source distributions.
-* Cirrus CI is used to build on ARM.
 
 .. _commit_markers:
 
@@ -551,7 +558,6 @@ Commit Message Marker  Action Taken by CI
 [free-threaded]        Build & test with CPython 3.13 free-threaded
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
-[cirrus arm]           Run Cirrus CI ARM test
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
 [doc skip]             Docs are not built
 [doc quick]            Docs built, but excludes example gallery plots
@@ -722,6 +728,19 @@ We are glad to accept any sort of documentation:
 
 .. dropdown:: Guidelines for writing docstrings
 
+  * You can use `pytest` to test docstrings, e.g. assuming the
+    `RandomForestClassifier` docstring has been modified, the following command
+    would test its docstring compliance:
+
+    .. prompt:: bash
+
+      pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
+
+  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples.
+    See the `numpydoc documentation
+    <https://numpydoc.readthedocs.io/en/latest/format.html#sections>`_ for
+    information on other possible sections.
+
   * When documenting the parameters and attributes, here is a list of some
     well-formatted examples
 
@@ -787,7 +806,15 @@ We are glad to accept any sort of documentation:
       SelectKBest : Select features based on the k highest scores.
       SelectFpr : Select features based on a false positive rate test.
 
-  * Add one or two snippets of code in "Example" section to show how it can be used.
+  * The "Notes" section is optional. It is meant to provide information on
+    specific behavior of a function/class/classmethod/method.
+
+  * A `Note` can also be added to an attribute, but in that case it requires
+    using the `.. rubric:: Note` directive.
+
+  * Add one or two **snippets** of code in "Example" section to show how it can
+    be used. The code should be runable as is, i.e. it should include all
+    required imports. Keep this section as brief as possible.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
@@ -1561,7 +1588,7 @@ make this task easier and faster (in no particular order).
     variable) in the code base.
 
 - Configure `git blame` to ignore the commit that migrated the code style to
-  `black`.
+  `black` and then `ruff`.
 
   .. prompt:: bash
 

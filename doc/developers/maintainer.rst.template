@@ -25,6 +25,9 @@ We adopted the following release schedule:
 - Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been taken
   care of.
 
+- Make sure that the minimum supported versions of our dependencies have been bumped, see
+  :ref:`bumping_dependencies_guideline` for details.
+
 - For major/minor final releases, make sure that a *Release Highlights* page has been
   done as a runnable example and check that its HTML rendering looks correct. It should
   be linked from the what's new file for the new version of scikit-learn.
@@ -118,6 +121,9 @@ Reference Steps
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
         * [ ] Set the version number in the release branch
+        {% if key == "rc" -%}
+        * [ ] Set an upper bound on build dependencies in the release branch
+        {%- endif %}
         * [ ] Generate the changelog in the release branch
         * [ ] Check that the wheels for the release can be built successfully
         * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
@@ -136,7 +142,7 @@ Reference Steps
         {%- if key != "rc" %}
         * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
         {%- endif %}
-        * [ ] Announce on mailing list and on social media platforms (LinkedIn, Bluesky, etc.) 
+        * [ ] Announce on mailing list and on social media platforms (LinkedIn, Bluesky, etc.)
         {%- if key != "rc" %}
         * [ ] Update SECURITY.md in main branch
         {%- endif %}
@@ -158,6 +164,17 @@ Reference Steps
 
     - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
+
+    {% if key == "rc" %}
+    - Still in the release branch, set or update the upper bound on the build
+      dependencies in the `[build-system]` section of `pyproject.toml`. The goal is to
+      prevent future backward incompatible releases of the dependencies to break the
+      build in the maintenance branch.
+
+      The upper bounds should match the latest already-released minor versions of the
+      dependencies and should allow future micro (bug-fix) versions. For instance, if
+      numpy 2.2.5 is the most recent version, its upper bound should be set to <2.3.0.
+    {% endif %}
 
     - In the release branch, generate the changelog for the incoming version, i.e.,
       `doc/whats_new/{{ version_short }}.rst`.
@@ -352,6 +369,35 @@ following script and enter the token when prompted:
 
   cd build_tools
   make authors  # Enter the token when prompted
+
+.. _bumping_dependencies_guideline:
+
+Guideline for bumping minimum versions of our dependencies
+----------------------------------------------------------
+
+- **minimum Python version**: at the time of a minor scikit-learn release (`X.Y.0`),
+  we drop the Python version with an initial release date of more than 4 years
+  ago. In other words, our minimum Python version is between 3 and 4 years old.
+- **compiled dependencies** (numpy, scipy, as well as compiled optional
+  dependencies (pandas, matplotlib, pyamg, pillow, ...): we take the oldest minor
+  release (`X.Y.0`) that has wheels for our minimum Python version. In practice
+  this means that our minimum supported version is around 3 years old, maybe a
+  bit less.
+- **pure Python dependencies** (joblib, threadpoolctl): at the time of the
+  scikit-learn release our minimum supported version is the most recent minor
+  release (`X.Y.0`) that is at least 2 years old.
+- we may decide to be less conservative than this guideline in some edge cases.
+  These edge cases include: a security bugfix in one of our dependencies or a
+  critical bugfix in one of our dependencies makes it too costly to support it in
+  terms of maintenance.
+
+`maint_tools/bump-dependencies-versions.py` implements these rules and can be
+used to give the new minimum dependency versions. It takes as input the
+expected scikit-learn release date, for example:
+
+.. code:: bash
+
+    python maint_tools/bump-dependencies-versions.py 2025-12-01
 
 Merging Pull Requests
 ---------------------

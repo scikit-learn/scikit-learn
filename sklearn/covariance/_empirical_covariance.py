@@ -135,7 +135,7 @@ class EmpiricalCovariance(BaseEstimator):
         Estimated location, i.e. the estimated mean.
 
     covariance_ : ndarray of shape (n_features, n_features)
-        Estimated covariance matrix
+        Estimated covariance matrix.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
@@ -177,10 +177,10 @@ class EmpiricalCovariance(BaseEstimator):
     ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
     >>> cov.covariance_
-    array([[0.7569..., 0.2818...],
-           [0.2818..., 0.3928...]])
+    array([[0.7569, 0.2818],
+           [0.2818, 0.3928]])
     >>> cov.location_
-    array([0.0622..., 0.0193...])
+    array([0.0622, 0.0193])
     """
 
     # X_test should have been called X
@@ -342,6 +342,9 @@ class EmpiricalCovariance(BaseEstimator):
 
     def mahalanobis(self, X):
         """Compute the squared Mahalanobis distances of given observations.
+
+        For a detailed example of how outliers affects the Mahalanobis distance,
+        see :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`.
 
         Parameters
         ----------

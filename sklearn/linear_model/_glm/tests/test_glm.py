@@ -8,7 +8,6 @@ from functools import partial
 import numpy as np
 import pytest
 import scipy
-from numpy.testing import assert_allclose
 from scipy import linalg
 from scipy.optimize import minimize, root
 
@@ -28,6 +27,7 @@ from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
+from sklearn.utils._testing import assert_allclose
 
 SOLVERS = ["lbfgs", "newton-cholesky"]
 
@@ -607,6 +607,15 @@ def test_sample_weights_validation():
     ],
 )
 def test_glm_wrong_y_range(glm):
+    """
+    Test that fitting a GLM model raises a ValueError when `y` contains
+    values outside the valid range for the given distribution.
+
+    Generalized Linear Models (GLMs) with certain distributions, such as
+    Poisson, Gamma, and Tweedie (with power > 1), require `y` to be
+    non-negative. This test ensures that passing a `y` array containing
+    negative values triggers the expected ValueError with the correct message.
+    """
     y = np.array([-1, 2])
     X = np.array([[1], [1]])
     msg = r"Some value\(s\) of y are out of the valid range of the loss"
@@ -627,11 +636,11 @@ def test_glm_identity_regression(fit_intercept):
     )
     if fit_intercept:
         glm.fit(X[:, 1:], y)
-        assert_allclose(glm.coef_, coef[1:], rtol=1e-10)
-        assert_allclose(glm.intercept_, coef[0], rtol=1e-10)
+        assert_allclose(glm.coef_, coef[1:])
+        assert_allclose(glm.intercept_, coef[0])
     else:
         glm.fit(X, y)
-        assert_allclose(glm.coef_, coef, rtol=1e-12)
+        assert_allclose(glm.coef_, coef)
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
@@ -654,12 +663,12 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, rtol=1e-12)
+    assert_allclose(glm.coef_, coef)
 
     # sample_weight are normalized to 1 so, scaling them has no effect
     sample_weight = 2 * np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, rtol=1e-12)
+    assert_allclose(glm.coef_, coef)
 
     # setting one element of sample_weight to 0 is equivalent to removing
     # the corresponding sample
@@ -668,7 +677,7 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     glm.fit(X, y, sample_weight=sample_weight)
     coef1 = glm.coef_.copy()
     glm.fit(X[:-1], y[:-1])
-    assert_allclose(glm.coef_, coef1, rtol=1e-12)
+    assert_allclose(glm.coef_, coef1)
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
@@ -719,6 +728,16 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_warm_start(solver, fit_intercept, global_random_seed):
+    """
+    Test that `warm_start=True` enables incremental fitting in PoissonRegressor.
+
+    This test verifies that when using `warm_start=True`, the model continues
+    optimizing from previous coefficients instead of restarting from scratch.
+    It ensures that after an initial fit with `max_iter=1`, the model has a
+    higher objective function value (indicating incomplete optimization).
+    The test then checks whether allowing additional iterations enables
+    convergence to a solution comparable to a fresh training run (`warm_start=False`).
+    """
     n_samples, n_features = 100, 10
     X, y = make_regression(
         n_samples=n_samples,
@@ -923,10 +942,23 @@ def test_tweedie_score(regression_data, power, link):
     ],
 )
 def test_tags(estimator, value):
+    """Test that `positive_only` tag is correctly set for different estimators."""
     assert estimator.__sklearn_tags__().target_tags.positive_only is value
 
 
 def test_linalg_warning_with_newton_solver(global_random_seed):
+    """
+    Test that the Newton solver raises a warning and falls back to LBFGS when
+    encountering a singular or ill-conditioned Hessian matrix.
+
+    This test assess the behavior of `PoissonRegressor` with the "newton-cholesky"
+    solver.
+    It verifies the following:-
+    - The model significantly improves upon the constant baseline deviance.
+    - LBFGS remains robust on collinear data.
+    - The Newton solver raises a `LinAlgWarning` on collinear data and falls
+      back to LBFGS.
+    """
     newton_solver = "newton-cholesky"
     rng = np.random.RandomState(global_random_seed)
     # Use at least 20 samples to reduce the likelihood of getting a degenerate

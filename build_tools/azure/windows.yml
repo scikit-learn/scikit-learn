@@ -27,6 +27,22 @@ jobs:
     - bash: python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
+    - task: PowerShell@2
+      displayName: 'Get CPU Information'
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "=== CPU Information ==="
+          $cpu = Get-WmiObject -Class Win32_Processor
+          Write-Host "CPU Model: $($cpu.Name)"
+          Write-Host "Architecture: $($cpu.Architecture)"
+          Write-Host "Physical Cores: $($cpu.NumberOfCores)"
+          Write-Host "Logical Processors: $($cpu.NumberOfLogicalProcessors)"
+          Write-Host "Max Clock Speed: $($cpu.MaxClockSpeed) MHz"
+          Write-Host "Current Clock Speed: $($cpu.CurrentClockSpeed) MHz"
+          Write-Host "L2 Cache Size: $($cpu.L2CacheSize) KB"
+          Write-Host "L3 Cache Size: $($cpu.L3CacheSize) KB"
+          Write-Host "==========================="
     - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
       displayName: Add conda to PATH
       condition: startsWith(variables['DISTRIB'], 'conda')
@@ -83,3 +99,4 @@ jobs:
       retryCountOnTaskFailure: 5
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)
+        JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
