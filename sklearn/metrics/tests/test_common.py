@@ -65,6 +65,8 @@ from sklearn.metrics.pairwise import (
     linear_kernel,
     paired_cosine_distances,
     paired_euclidean_distances,
+    pairwise_distances,
+    pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
     sigmoid_kernel,
@@ -1612,6 +1614,19 @@ def test_regression_with_invalid_sample_weight(name):
     with pytest.raises(ValueError, match="Found input variables with inconsistent"):
         metric(y_true, y_pred, sample_weight=sample_weight)
 
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true[:3], y_pred[:3], sample_weight=sample_weight)
+
     sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
         (n_samples, 2)
     )
@@ -1928,11 +1943,19 @@ def check_array_api_metric(
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        assert_allclose(
-            _convert_to_numpy(xp.asarray(metric_xp), xp),
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
+        def _check_metric_matches(xp_val, np_val):
+            assert_allclose(
+                _convert_to_numpy(xp.asarray(xp_val), xp),
+                np_val,
+                atol=_atol_for_type(dtype_name),
+            )
+
+        # Handle cases where there are multiple return values, e.g. roc_curve:
+        if isinstance(metric_xp, tuple):
+            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
+                _check_metric_matches(metric_xp_val, metric_np_val)
+        else:
+            _check_metric_matches(metric_xp, metric_np)
 
 
 def check_array_api_binary_classification_metric(
@@ -2269,6 +2292,11 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    pairwise_kernels: [check_array_api_metric_pairwise],
+    roc_curve: [
+        check_array_api_binary_classification_metric,
+    ],
+    pairwise_distances: [check_array_api_metric_pairwise],
 }
 
 
