@@ -922,7 +922,7 @@ based on permutation of the features.
    Annals of Statistics, 29, 1189-1232.
 
 .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-   <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+   <https://doi.org/10.1016/S0167-9473(01)00065-2>`_.
    Computational Statistics & Data Analysis, 38, 367-378.
 
 .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
