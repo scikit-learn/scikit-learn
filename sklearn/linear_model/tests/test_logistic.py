@@ -2112,26 +2112,26 @@ def test_liblinear_not_stuck(global_random_seed):
 
 
 @config_context(enable_metadata_routing=True)
-def test_lr_cv_scores_differ_when_sample_weight_is_requested():
+def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed):
     """Test that `sample_weight` is correctly passed to the scorer in
     `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` by
     checking the difference in scores with the case when `sample_weight`
     is not requested.
     """
-    rng = np.random.RandomState(10)
-    X, y = make_classification(n_samples=10, random_state=rng)
-    X_t, y_t = make_classification(n_samples=10, random_state=rng)
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_classification(n_samples=2000, random_state=rng)
+    X_t, y_t = make_classification(n_samples=2000, random_state=rng)
     sample_weight = np.ones(len(y))
     sample_weight[: len(y) // 2] = 2
     kwargs = {"sample_weight": sample_weight}
 
     scorer1 = get_scorer("accuracy")
-    lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+    lr_cv1 = LogisticRegressionCV(scoring=scorer1, tol=3e-6)
     lr_cv1.fit(X, y, **kwargs)
 
     scorer2 = get_scorer("accuracy")
     scorer2.set_score_request(sample_weight=True)
-    lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+    lr_cv2 = LogisticRegressionCV(scoring=scorer2, tol=3e-6)
     lr_cv2.fit(X, y, **kwargs)
 
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
