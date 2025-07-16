@@ -13,7 +13,7 @@ if [[ -z "${CONDA}" ]]; then
 else
     # In most runners (in October 2024) conda is installed,
     # but in a system folder and we want it user writable
-    sudo chown -R $USER $CONDA || echo "no need to chown conda folder on Windows"
+    sudo chown -R $USER $CONDA
     # Need this to avoid CondaToSNonInteractiveError with miniconda
     conda tos accept -c defaults
 fi
