@@ -1570,7 +1570,7 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
     X, y = make_classification(
         n_samples=2000,
         n_classes=2,
-        n_features=10,
+        n_features=20,
         n_informative=10,
         n_redundant=0,
         n_repeated=0,
