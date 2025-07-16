@@ -1,7 +1,8 @@
-import pandas as pd
 import pytest
 
 from sklearn.pipeline import FeatureUnion, FunctionTransformer
+
+pd = pytest.importorskip("pandas")
 
 
 def _double(df):
