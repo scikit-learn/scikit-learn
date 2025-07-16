@@ -1,3 +1,5 @@
 - :func:`metrics._plot.det_curve.DetCurveDisplay.from_predictions` y_pred parameter is deprecated and will be removed
     in v1.9. It has been replaced by y_score.
+- :func:`metrics._plot.precision_recall_curve.PrecisionRecallDisplay.from_predictions` y_pred parameter is deprecated
+    and will be removed in v1.9. It has been replaced by y_score.
   By :user:`Luis <luiser1401>`

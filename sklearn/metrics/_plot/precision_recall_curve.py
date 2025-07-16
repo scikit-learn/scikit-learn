@@ -1,6 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
+import warnings
 from collections import Counter
 
 from ...utils._plotting import (
@@ -383,7 +383,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -394,7 +394,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return cls.from_predictions(
             y,
-            y_pred,
+            y_score,
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
@@ -410,7 +410,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=False,
@@ -420,6 +420,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -434,8 +435,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y_true : array-like of shape (n_samples,)
             True binary labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Estimated probabilities or output of decision function.
+
+            .. versionadded:: 1.7
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -476,6 +480,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
+        y_pred : array-like of shape (n_samples,)
+            Estimated probabilities or output of decision function.
+
+
+            .. deprecated:: 1.7
+                `y_pred` is deprecated and will be removed in 1.9. Use
+                `y_score` instead.
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -512,25 +524,43 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> y_pred = clf.predict_proba(X_test)[:, 1]
+        >>> y_score = clf.predict_proba(X_test)[:, 1]
         >>> PrecisionRecallDisplay.from_predictions(
-        ...    y_test, y_pred)
+        ...    y_test, y_score)
         <...>
         >>> plt.show()
         """
+        # TODO(1.9): remove after the end of the deprecation period of `y_pred`
+        if y_score is not None and not (
+            isinstance(y_pred, str) and y_pred == "deprecated"
+        ):
+            raise ValueError(
+                "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+                " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
+            )
+        if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+            warnings.warn(
+                (
+                    "y_pred is deprecated in 1.7 and will be removed in 1.9. "
+                    "Please use `y_score` instead."
+                ),
+                FutureWarning,
+            )
+            y_score = y_pred
+
         pos_label, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
         precision, recall, _ = precision_recall_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
 
         class_count = Counter(y_true)
