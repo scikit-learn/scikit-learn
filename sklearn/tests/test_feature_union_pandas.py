@@ -1,16 +1,18 @@
 import pandas as pd
+import pytest
 
 from sklearn.pipeline import FeatureUnion, FunctionTransformer
 
 
-def _double(x):
-    return (x["age"] * 2).rename("double")
+def _double(df):
+    return pd.DataFrame({"double_age": df["age"] * 2})
 
 
-def _triple(x):
-    return (x["age"] * 3).rename("triple")
+def _triple(df):
+    return pd.DataFrame({"triple_age": df["age"] * 3})
 
 
+@pytest.mark.filterwarnings("ignore:With transform")
 def test_feature_union_series_output():
     X = pd.DataFrame({"id": [1, 2, 1], "age": [10, 20, 30]})
 
@@ -22,5 +24,5 @@ def test_feature_union_series_output():
     ).set_output(transform="pandas")
 
     Xt = fu.fit_transform(X)
-    assert list(Xt.columns) == ["double", "triple"]
+    assert list(Xt.columns) == ["double_age", "triple_age"]
     assert Xt.iloc[0, 0] == 20 and Xt.iloc[0, 1] == 30
