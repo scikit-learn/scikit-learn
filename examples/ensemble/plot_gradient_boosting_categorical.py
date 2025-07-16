@@ -164,8 +164,10 @@ hist_native
 # %%
 # Model comparison
 # ----------------
-# Here we use :term:`cross validation` to compare the models performance in terms of
-# :func:`~metrics.mean_absolute_percentage_error` and fit times.
+# Here we use :term:`cross validation` to compare the models performance in
+# terms of :func:`~metrics.mean_absolute_percentage_error` and fit times. In the
+# upcoming plots, error bars represent 1 standard deviation as computed across
+# folds.
 
 from sklearn.model_selection import cross_validate
 
