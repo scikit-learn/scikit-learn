@@ -89,7 +89,7 @@ from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 # %%
-# First, let's get some insights by looking at the variables distribution and
+# First, let's get some insights by looking at the variables' distributions and
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
 #
