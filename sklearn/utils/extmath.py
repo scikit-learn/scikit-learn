@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import warnings
 from functools import partial
 from numbers import Integral
@@ -1077,9 +1078,9 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
         def convert_dtype(arr):
             return xp.astype(arr, target_dtype, copy=False)
 
-        try:
+        if "dtype" in inspect.signature(op).parameters:
             return op(x, *args, **kwargs, dtype=target_dtype)
-        except TypeError:
+        else:
             # This op doesn't support a dtype kwarg, it seems. Rely on manual
             # type promotion, at the cost of memory allocations.
             # xp.matmul is the most commonly used op that lacks a dtype kwarg at

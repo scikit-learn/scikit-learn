@@ -1116,6 +1116,7 @@ def check_array_api_input(
         else:
             assert attribute.shape == est_xp_param_np.shape
             if device == "mps" and np.issubdtype(est_xp_param_np.dtype, np.floating):
+                # for mps devices the maximum supported floating dtype is float32
                 assert est_xp_param_np.dtype == np.float32
             else:
                 assert est_xp_param_np.dtype == attribute.dtype
