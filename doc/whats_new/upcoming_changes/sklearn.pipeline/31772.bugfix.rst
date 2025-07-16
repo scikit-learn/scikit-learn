@@ -1,0 +1,2 @@
+Fixed ``FeatureUnion`` crash when sub‑transformers returned pandas ``Series`` while
+``set_output(transform="pandas")`` was active.
