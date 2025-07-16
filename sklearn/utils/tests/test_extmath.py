@@ -696,9 +696,8 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype, as_list):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(
-        X.tolist() if as_list else X, 0, 0, 0, sample_weight=sample_weight
-    )
+    X1 = X.tolist() if as_list else X
+    mean, var, _ = _incremental_mean_and_var(X1, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
