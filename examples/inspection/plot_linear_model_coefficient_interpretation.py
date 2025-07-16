@@ -775,8 +775,6 @@ plt.subplots_adjust(left=0.3)
 #   coefficients could significantly vary from one another.
 # * Inspecting coefficients across the folds of a cross-validation loop
 #   gives an idea of their stability.
-# * Coefficients are unlikely to have any causal meaning. They tend
-#   to be biased by unobserved confounders.
 # * Interpreting causality is difficult when there are confounding effects. If
 #   the relationship between two variables is also affected by something
 #   unobserved, we should be careful when making conclusions about causality.
