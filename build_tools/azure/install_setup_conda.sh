@@ -7,14 +7,15 @@ PLATFORM=$(uname)
 if [[ "$PLATFORM" =~ MINGW|MSYS ]]; then
     PLATFORM=Windows
 fi
-if [[ "$PLATFORM" == "Windows "]]; then
+if [[ "$PLATFORM" == "Windows" ]]; then
     EXTENSION="exe"
 else
     EXTENSION="sh"
 fi
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$PLATFORM-$(uname -m).$EXTENSION"
-curl -L ${MINIFORGE_URL} -o miniforge.sh
-bash miniforge.sh -b -u -p $HOME/miniforge3
+curl -L ${MINIFORGE_URL} -o miniforge
+chmod +x miniforge
+./miniforge -b -u -p $HOME/miniforge3
 CONDA="$HOME/miniforge3"
 
 # Add conda to the PATH so that it can be used in further Azure CI steps.
