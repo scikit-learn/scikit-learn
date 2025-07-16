@@ -17,11 +17,11 @@ MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download
 curl -L ${MINIFORGE_URL} -o "$INSTALLER"
 
 MINIFORGE_DIR="$HOME/miniforge3"
-if [[ "$PLATFORM" != "Windows" ]]; then
-    bash "$INSTALLER" -b -u -p $MINIFORGE_DIR
-else
+if [[ "$PLATFORM" == "Windows" ]]; then
     WIN_MINIFORGE_DIR=$(cygpath -w "$MINIFORGE_DIR")
     cmd "/C $INSTALLER /InstallationType=JustMe /RegisterPython=0 /S /D=$WIN_MINIFORGE_DIR"
+else
+    bash "$INSTALLER" -b -u -p $MINIFORGE_DIR
 fi
 
 # Add conda to the PATH so that it can be used in further Azure CI steps.
