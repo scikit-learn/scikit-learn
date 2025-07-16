@@ -1570,8 +1570,8 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
     X, y = make_classification(
         n_samples=2000,
         n_classes=2,
-        n_features=20,
-        n_informative=10,
+        n_features=30,
+        n_informative=15,
         n_redundant=0,
         n_repeated=0,
         random_state=global_random_seed,
@@ -1585,6 +1585,7 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
         C=C,
         l1_ratio=l1_ratio,
         fit_intercept=False,
+        tol=1e-8,
     )
     lr_l2 = LogisticRegression(
         penalty="l2",
@@ -1592,6 +1593,7 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
         random_state=global_random_seed,
         C=C,
         fit_intercept=False,
+        tol=1e-8,
     )
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
