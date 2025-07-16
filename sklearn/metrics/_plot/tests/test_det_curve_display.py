@@ -139,8 +139,14 @@ def test_y_pred_deprecation_warning(pyplot):
     assert_allclose(
         display_y_pred.fpr, [5.000000e-01, 5.000000e-01, 5.000000e-01, 2.220446e-16]
     )
+    assert_allclose(
+        display_y_pred.fnr, [2.220446e-16, 5.000000e-01, 1.000000e00, 1.000000e00]
+    )
 
     display_y_score = DetCurveDisplay.from_predictions(y_true, y_score)
     assert_allclose(
         display_y_score.fpr, [5.000000e-01, 5.000000e-01, 5.000000e-01, 2.220446e-16]
+    )
+    assert_allclose(
+        display_y_score.fnr, [2.220446e-16, 5.000000e-01, 1.000000e00, 1.000000e00]
     )
