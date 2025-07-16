@@ -115,7 +115,8 @@ def _cached_transform(
                 for element in param_value
             )
         else:
-            cache[param_name] = sub_pipeline.transform(param_value, **transform_params)
+            cache[param_name] = sub_pipeline.transform(
+                param_value, **transform_params)
 
     return cache[param_name]
 
@@ -715,7 +716,8 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed samples.
         """
-        routed_params = self._check_method_params(method="fit_transform", props=params)
+        routed_params = self._check_method_params(
+            method="fit_transform", props=params)
         Xt = self._fit(X, y, routed_params)
 
         last_step = self._final_estimator
@@ -847,7 +849,8 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
-        routed_params = self._check_method_params(method="fit_predict", props=params)
+        routed_params = self._check_method_params(
+            method="fit_predict", props=params)
         Xt = self._fit(X, y, routed_params)
 
         params_last_step = routed_params[self.steps[-1][0]]
@@ -948,7 +951,8 @@ class Pipeline(_BaseComposition):
 
             # not branching here since params is only available if
             # enable_metadata_routing=True
-            routed_params = process_routing(self, "decision_function", **params)
+            routed_params = process_routing(
+                self, "decision_function", **params)
 
             Xt = X
             for _, name, transform in self._iter(with_final=False):
@@ -1036,7 +1040,8 @@ class Pipeline(_BaseComposition):
                 return self.steps[-1][1].predict_log_proba(Xt, **params)
 
             # metadata routing enabled
-            routed_params = process_routing(self, "predict_log_proba", **params)
+            routed_params = process_routing(
+                self, "predict_log_proba", **params)
             for _, name, transform in self._iter(with_final=False):
                 Xt = transform.transform(Xt, **routed_params[name].transform)
             return self.steps[-1][1].predict_log_proba(
@@ -1132,7 +1137,8 @@ class Pipeline(_BaseComposition):
 
             # we don't have to branch here, since params is only non-empty if
             # enable_metadata_routing=True.
-            routed_params = process_routing(self, "inverse_transform", **params)
+            routed_params = process_routing(
+                self, "inverse_transform", **params)
             reverse_iter = reversed(list(self._iter()))
             for _, name, transform in reverse_iter:
                 X = transform.inverse_transform(
@@ -1237,7 +1243,8 @@ class Pipeline(_BaseComposition):
                 tags.target_tags.multi_output = last_step_tags.target_tags.multi_output
                 tags.classifier_tags = deepcopy(last_step_tags.classifier_tags)
                 tags.regressor_tags = deepcopy(last_step_tags.regressor_tags)
-                tags.transformer_tags = deepcopy(last_step_tags.transformer_tags)
+                tags.transformer_tags = deepcopy(
+                    last_step_tags.transformer_tags)
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
@@ -1268,7 +1275,8 @@ class Pipeline(_BaseComposition):
                     "Did you mean to call pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
-            feature_names_out = transform.get_feature_names_out(feature_names_out)
+            feature_names_out = transform.get_feature_names_out(
+                feature_names_out)
         return feature_names_out
 
     @property
@@ -1411,7 +1419,8 @@ def _name_estimators(estimators):
     """Generate names for estimators."""
 
     names = [
-        estimator if isinstance(estimator, str) else type(estimator).__name__.lower()
+        estimator if isinstance(estimator, str) else type(
+            estimator).__name__.lower()
         for estimator in estimators
     ]
     namecount = defaultdict(int)
@@ -1537,7 +1546,8 @@ def _fit_transform_one(
     params = params or {}
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
-            res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+            res = transformer.fit_transform(
+                X, y, **params.get("fit_transform", {}))
         else:
             res = transformer.fit(X, y, **params.get("fit", {})).transform(
                 X, **params.get("transform", {})
@@ -1814,7 +1824,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                     % (str(name), type(trans).__name__)
                 )
             feature_names_out = trans.get_feature_names_out(input_features)
-            transformer_with_feature_names_out.append((name, feature_names_out))
+            transformer_with_feature_names_out.append(
+                (name, feature_names_out))
 
         return self._add_prefix_for_feature_names_out(
             transformer_with_feature_names_out
@@ -1846,7 +1857,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         # verbose_feature_names_out is False
         # Check that names are all unique without a prefix
         feature_names_count = Counter(
-            chain.from_iterable(s for _, s in transformer_with_feature_names_out)
+            chain.from_iterable(
+                s for _, s in transformer_with_feature_names_out)
         )
         top_6_overlap = [
             name for name, count in feature_names_count.most_common(6) if count > 1
@@ -2028,7 +2040,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 routed_params[name] = Bunch(transform={})
 
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
+            delayed(_transform_one)(trans, X, None,
+                                    weight, params=routed_params[name])
             for name, trans, weight in self._iter()
         )
         if not Xs:
@@ -2038,15 +2051,21 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        Xs = [
+            X.to_frame(name=getattr(X, "name", None))
+            if getattr(X, "__class__", None).__name__ == "Series"
+            else X
+            for X in Xs
+        ]
+
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        return np.hstack(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
