@@ -13,7 +13,6 @@ from sklearn import datasets, svm
 from sklearn.base import config_context
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.externals.array_api_compat.common._helpers import is_numpy_namespace
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -41,6 +40,9 @@ from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
 from sklearn.utils._array_api import (
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -3419,11 +3421,4 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
     with config_context(array_api_dispatch=True):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
-
-        # Since the computation always happens with NumPy / SciPy on the CPU, this
-        # function is expected to return an array allocated on the CPU even when it does
-        # not match the input array's device.
-        assert is_numpy_namespace(xp) or str(result.device) in [
-            "cpu",
-            "array_api_strict.Device('CPU_DEVICE')",
-        ]
+        assert array_api_device(result) == array_api_device(y_pred)

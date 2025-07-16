@@ -464,7 +464,7 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
     """
-    xp, _ = get_namespace(y_true, y_pred, labels, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
     y_true = check_array(
         y_true,
         dtype=None,
@@ -489,10 +489,7 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        if not _is_numpy_namespace(get_namespace(labels)[0]):
-            labels = _convert_to_numpy(labels, xp)
-        else:
-            labels = np.asarray(labels)
+        labels = _convert_to_numpy(labels, xp)
         n_labels = labels.size
         if n_labels == 0:
             raise ValueError("'labels' should contain at least one label.")
@@ -561,7 +558,7 @@ def confusion_matrix(
             UserWarning,
         )
 
-    return xp.asarray(cm)
+    return xp.asarray(cm, device=device_)
 
 
 @validate_params(
