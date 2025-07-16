@@ -35,7 +35,7 @@ from .utils.metadata_routing import (
 )
 from .utils.metaestimators import _BaseComposition, available_if
 from .utils.parallel import Parallel, delayed
-from .utils.validation import check_is_fitted, check_memory
+from .utils.validation import _is_pandas_df_or_series, check_is_fitted, check_memory
 
 __all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
 
@@ -1451,7 +1451,9 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
         before fitting. Therefore, the transformer instance given to the
         pipeline cannot be inspected directly. Use the attribute ``named_steps``
         or ``steps`` to inspect estimators within the pipeline. Caching the
-        transformers is advantageous when fitting is time consuming.
+        transformers is advantageous when fitting is time consuming. See
+        :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`
+        for an example on how to enable caching.
 
     transform_input : list of str, default=None
         This enables transforming some input arguments to ``fit`` (other than ``X``)
@@ -2038,11 +2040,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
-        # GH#31318 guard: if a transformer returns a pandas Series,
-        # convert to DataFrame so stacking works as intended
-        for i, X in enumerate(Xs):
-            if hasattr(X, "to_frame"):
-                Xs[i] = X.to_frame()
+        # GH#31318 – Only when users request pandas output and the
+        # transformer produces a pandas Series, convert to DataFrame.
+        transformer_config = getattr(self, "_sklearn_output_config", {})
+        if transformer_config.get("transform") == "pandas":
+            for i, X in enumerate(Xs):
+                # Only convert if X is a pandas Series (not DataFrame)
+                if _is_pandas_df_or_series(X) and not hasattr(X, "columns"):
+                    Xs[i] = X.to_frame()
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
