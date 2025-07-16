@@ -234,9 +234,9 @@ jobs:
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
         SCIPY_ARRAY_API: '1'
-      pylatest_conda_mkl_no_openmp:
+      pylatest_conda_forge_mkl_no_openmp:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
