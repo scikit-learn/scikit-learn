@@ -10,12 +10,12 @@ performances of :class:`~ensemble.HistGradientBoostingRegressor` with
 different encoding strategies for categorical features. In
 particular, we will evaluate:
 
-- dropping the categorical features
-- using a :class:`~preprocessing.OneHotEncoder`
-- using an :class:`~preprocessing.OrdinalEncoder` and treat categories as
-  ordered, equidistant quantities
-- using an :class:`~preprocessing.OrdinalEncoder` and rely on the :ref:`native
-  category support <categorical_support_gbdt>` of the
+- "Dropped": dropping the categorical features;
+- "One Hot": using a :class:`~preprocessing.OneHotEncoder`;
+- "Ordinal": using an :class:`~preprocessing.OrdinalEncoder` and treat
+  categories as ordered, equidistant quantities;
+- "Native": using an :class:`~preprocessing.OrdinalEncoder` and rely on the
+  :ref:`native category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
 We will work with the Ames Iowa Housing dataset which consists of numerical
@@ -187,25 +187,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
-class CustomLogFormatter(ticker.Formatter):
-    def __call__(self, x, pos=None):
-        if x == 0:
-            return "0"
-        exponent = int(np.floor(np.log10(x)))
-        coeff = x / (10**exponent)
-        # Only show coefficient if it's not ~1
-        if np.isclose(coeff, 1.0):
-            coeff_str = ""
-        else:
-            coeff_str = f"{coeff:.1f}x"
-
-        # Format exponent using Unicode superscripts
-        superscripts = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
-        exponent_str = str(exponent).translate(superscripts)
-
-        return f"{coeff_str}10{exponent_str}"
-
-
 def plot_performance_tradeoff(results, title):
     fig, ax = plt.subplots()
     markers = ["s", "o", "^", "x"]
@@ -250,15 +231,14 @@ def plot_performance_tradeoff(results, title):
     x0, x1 = np.log10(ax.get_xlim())
     ticks = np.logspace(x0, x1, nticks)
     ax.set_xticks(ticks)
-    ax.get_xaxis().set_major_formatter(CustomLogFormatter())
-    ax.tick_params(axis="x", which="minor", labelbottom=False)
+    ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%1.1e"))
     ax.minorticks_off()
 
     ax.annotate(
-        "  best\nmodels",
+        "faster fitting\n lower error",
         xy=(0.05, 0.05),
         xycoords="axes fraction",
-        xytext=(0.15, 0.15),
+        xytext=(0.1, 0.15),
         textcoords="axes fraction",
         arrowprops=dict(arrowstyle="->", lw=1.5),
     )
