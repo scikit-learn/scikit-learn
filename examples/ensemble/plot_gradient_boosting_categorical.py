@@ -164,7 +164,7 @@ hist_native
 # %%
 # Model comparison
 # ----------------
-# Here we use cross validation to compare the models performance in terms of
+# Here we use :term:`cross validation` to compare the models performance in terms of
 # :func:`~metrics.mean_absolute_percentage_error` and fit times.
 
 from sklearn.model_selection import cross_validate
