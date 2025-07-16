@@ -14,6 +14,8 @@ else
     # In most runners (in October 2024) conda is installed,
     # but in a system folder and we want it user writable
     sudo chown -R $USER $CONDA
+    # Need this to avoid CondaToSNonInteractiveError with miniconda
+    conda tos accept --override-channels -c conda-forge -c defaults
 fi
 
 # Add conda to the PATH so that it can be used in further Azure CI steps.
