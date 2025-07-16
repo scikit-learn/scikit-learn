@@ -8,7 +8,7 @@ if [[ "$PLATFORM" =~ MINGW|MSYS ]]; then
     PLATFORM=Windows
 fi
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$PLATFORM-$(uname -m).sh"
-wget ${MINIFORGE_URL} -O miniforge.sh
+curl ${MINIFORGE_URL} -o miniforge.sh
 bash miniforge.sh -b -u -p $HOME/miniforge3
 CONDA="$HOME/miniforge3"
 
