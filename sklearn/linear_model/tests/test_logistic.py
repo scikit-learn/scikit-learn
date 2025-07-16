@@ -1561,27 +1561,27 @@ def test_elastic_net_vs_l1_l2(global_random_seed, C):
 # Fix this one:
 @pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
-def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
+def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_ratio):
     # Check that training with a penalty matching the objective leads
     # to a lower objective.
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
     # penalties, and compute the elasticnet objective. That of a should be
     # greater than that of b (both objectives are convex).
     X, y = make_classification(
-        n_samples=1000,
+        n_samples=2000,
         n_classes=2,
         n_features=10,
         n_informative=10,
         n_redundant=0,
         n_repeated=0,
-        random_state=0,
+        random_state=global_random_seed,
     )
     X = scale(X)
 
     lr_enet = LogisticRegression(
         penalty="elasticnet",
         solver="saga",
-        random_state=0,
+        random_state=global_random_seed,
         C=C,
         l1_ratio=l1_ratio,
         fit_intercept=False,
@@ -1589,7 +1589,7 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     lr_l2 = LogisticRegression(
         penalty="l2",
         solver="saga",
-        random_state=0,
+        random_state=global_random_seed,
         C=C,
         fit_intercept=False,
     )
