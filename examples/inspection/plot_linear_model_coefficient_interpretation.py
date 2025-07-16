@@ -148,9 +148,8 @@ preprocessor = make_column_transformer(
 )
 
 # %%
-# To describe the dataset as a linear model we use a ridge regressor
-# with a very small regularization and to model the logarithm of the WAGE.
-# this sentence above should be changed; I don't understand it
+# We use a ridge regressor
+# with a very small regularization to model the logarithm of the WAGE.
 
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.linear_model import Ridge
