@@ -292,8 +292,8 @@ plt.subplots_adjust(left=0.3)
 # .. note::
 #
 #   Why does the plot above suggest that an increase in age leads to a
-#   decrease in wage? Why the :ref:`initial pairplot
-#   <marginal_dependencies>` is telling the opposite?
+#   decrease in wage? Why is the :ref:`initial pairplot
+#   <marginal_dependencies>` telling the opposite?
 #   This difference is the difference between marginal and conditional dependence.
 #
 # The plot above tells us about dependencies between a specific feature and
