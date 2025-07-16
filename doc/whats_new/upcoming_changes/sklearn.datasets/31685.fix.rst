@@ -1,5 +1,0 @@
-- Fixed a regression preventing to extract the downloaded dataset in
-  :func:`datasets.fetch_20newsgroups`, :func:`datasets.fetch_20newsgroups_vectorized`,
-  :func:`datasets.fetch_lfw_people` and :func:`datasets.fetch_lfw_pairs`. This
-  only affects Python versions `>=3.10.0,<=3.10.11` and `>=3.11.0,<=3.11.3`.
-  By :user:`Jérémie du Boisberranger <jeremiedbb>`.
