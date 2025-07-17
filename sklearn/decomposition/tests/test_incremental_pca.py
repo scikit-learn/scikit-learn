@@ -242,7 +242,7 @@ def test_incremental_pca_num_features_change(svd_solver):
 def test_incremental_pca_batch_signs(svd_solver, global_random_seed):
     # Test that components_ sign is stable over batch sizes.
     rng = np.random.RandomState(global_random_seed)
-    n_samples = 100
+    n_samples = 200
     n_features = 3
     X = rng.randn(n_samples, n_features)
     all_components = []
@@ -283,7 +283,7 @@ def test_incremental_pca_partial_fit_small_batch(svd_solver, global_random_seed)
 def test_incremental_pca_batch_values(svd_solver, global_random_seed):
     # Test that components_ values are stable over batch sizes.
     rng = np.random.RandomState(global_random_seed)
-    n_samples = 100
+    n_samples = 200
     n_features = 3
     X = rng.randn(n_samples, n_features)
     all_components = []
@@ -371,7 +371,7 @@ def test_incremental_pca_against_pca_random_data(
 ):
     # Test that IncrementalPCA and PCA are approximate (to a sign flip).
     rng = np.random.RandomState(global_random_seed)
-    n_samples = 100
+    n_samples = 200
     n_features = 3
     X = rng.randn(n_samples, n_features) + 5 * rng.rand(1, n_features)
 
