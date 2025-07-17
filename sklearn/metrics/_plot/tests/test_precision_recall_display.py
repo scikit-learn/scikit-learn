@@ -385,7 +385,9 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
 
 # TODO(1.9): remove
 def test_y_score_and_y_pred_specified_error():
-    """Check that an error is raised when both y_score and y_pred are specified."""
+    """1. Check that an error is raised when both y_score and y_pred are specified.
+    2. Check that a warning is raised when y_pred is specified.
+    """
     y_true = np.array([0, 1, 1, 0])
     y_score = np.array([0.1, 0.4, 0.35, 0.8])
     y_pred = np.array([0.2, 0.3, 0.5, 0.1])
@@ -395,19 +397,12 @@ def test_y_score_and_y_pred_specified_error():
     ):
         PrecisionRecallDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
-
-# TODO(1.9): remove
-def test_y_pred_deprecation_warning(pyplot):
-    """Check that a warning is raised when y_pred is specified."""
-    y_true = np.array([1, 1, 1, 1])
-    y_score = np.array([1, 1, 1, 1])
-
     with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
         display_y_pred = PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
-
-    assert_allclose(display_y_pred.precision, [1.0, 1.0])
-    assert_allclose(display_y_pred.recall, [1.0, 0.0])
+    precision, recall, _ = precision_recall_curve(y_true, y_score)
+    assert_allclose(display_y_pred.precision, precision)
+    assert_allclose(display_y_pred.recall, recall)
 
     display_y_score = PrecisionRecallDisplay.from_predictions(y_true, y_score)
-    assert_allclose(display_y_score.precision, [1.0, 1.0])
-    assert_allclose(display_y_score.recall, [1.0, 0.0])
+    assert_allclose(display_y_score.precision, precision)
+    assert_allclose(display_y_score.recall, recall)
