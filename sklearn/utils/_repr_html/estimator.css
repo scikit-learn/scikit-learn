@@ -53,7 +53,7 @@
   border: 1px dashed var(--sklearn-color-line);
   margin: 0 0.4em 0.5em 0.4em;
   box-sizing: border-box;
-  padding-bottom: 0.4em;
+  padding-bottom: 1.4em;
   background-color: var(--sklearn-color-background);
 }
 
