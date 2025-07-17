@@ -65,6 +65,7 @@
      See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
   display: inline-block !important;
   position: relative;
+  padding-bottom: 1.4em;
 }
 
 #$id div.sk-text-repr-fallback {

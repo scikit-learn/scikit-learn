@@ -61,7 +61,7 @@ def _doc_row(estimator_class, method_name):
             f"{link} "
             f'style="color: white; background: black;">?'
             # style adds bottom space to hover box
-            f'<span style="bottom: 2rem;">{docstring}... '
+            f'<span style="bottom: 2rem; background-color:white;">{docstring}... '
             f"<br> click to see online documentation</span>"
         )
     else:
