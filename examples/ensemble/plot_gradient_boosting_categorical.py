@@ -237,7 +237,7 @@ def plot_performance_tradeoff(results, title):
     ax.minorticks_off()
 
     ax.annotate(
-        "faster fitting\n lower error",
+        "  best\nmodels",
         xy=(0.05, 0.05),
         xycoords="axes fraction",
         xytext=(0.1, 0.15),
@@ -254,6 +254,10 @@ def plot_performance_tradeoff(results, title):
 plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
 
 # %%
+# In the plot above, the "best models" are those that are closer to the
+# down-left corner, as indicated by the arrow. Those models would indeed
+# correspond to faster fitting and lower error.
+#
 # We see that the model with one-hot-encoded data is by far the slowest. This
 # is to be expected, since one-hot-encoding creates one additional feature per
 # category value (for each categorical feature), and thus more split points
