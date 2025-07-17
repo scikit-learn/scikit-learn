@@ -1455,6 +1455,14 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
     0.913
+    Examples
+    --------
+    You can find a usage example in:
+    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+
+    .. minigallery:: sklearn.ensemble.GradientBoostingClassifier
+        :add-heading: Examples using `GradientBoostingClassifier`
+
     """
 
     _parameter_constraints: dict = {
