@@ -10,7 +10,7 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
@@ -357,17 +357,20 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
                 else:
-                    # TODO: make _weighted_percentile and
-                    # _averaged_weighted_percentile accept an array of
+                    # TODO: make _weighted_percentile accept an array of
                     # quantiles instead of calling it multiple times and
                     # sorting the column multiple times as a result.
-                    percentile_func = {
-                        "inverted_cdf": _weighted_percentile,
-                        "averaged_inverted_cdf": _averaged_weighted_percentile,
-                    }[quantile_method]
+                    average = (
+                        True if quantile_method == "averaged_inverted_cdf" else False
+                    )
                     bin_edges[jj] = np.asarray(
                         [
-                            percentile_func(column, sample_weight, percentile_rank=p)
+                            _weighted_percentile(
+                                column,
+                                sample_weight,
+                                percentile_rank=p,
+                                average=average,
+                            )
                             for p in percentile_levels
                         ],
                         dtype=np.float64,

@@ -114,7 +114,8 @@ def _weighted_percentile(
             for feature_idx in range(weight_cdf.shape[0])
         ],
     )
-    # In rare cases, `percentile_indices` equals to `sorted_idx.shape[0]`
+    # `percentile_indices` may be equal to `sorted_idx.shape[0]` due to floating
+    # point error (see #11813)
     max_idx = sorted_idx.shape[0] - 1
     percentile_indices = xp.clip(percentile_indices, 0, max_idx)
 
@@ -131,6 +132,26 @@ def _weighted_percentile(
         # but that seems harder to read
         is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
         percentile_plus_one_in_sorted = sorted_idx[percentile_indices + 1, col_indices]
+        # Handle case when when next index ('plus one') has sample weight of 0
+        if xp.any(sample_weight[percentile_plus_one_in_sorted, col_indices] == 0):
+            for idx in col_indices:
+                if (
+                    sample_weight[percentile_plus_one_in_sorted[idx], col_indices[idx]]
+                    == 0
+                ):
+                    cdf_val = weight_cdf[col_indices[idx], percentile_indices[idx]]
+                    # Search for next index where `weighted_cdf` is greater
+                    next_cdf_index = xp.searchsorted(
+                        weight_cdf[idx, ...], cdf_val, side="right"
+                    )
+                    # To account for trailing 0 sample weights, use original
+                    # `percentile_indices` again
+                    if next_cdf_index >= max_idx:
+                        next_cdf_index = percentile_indices[idx]
+
+                    percentile_plus_one_in_sorted[idx] = sorted_idx[
+                        next_cdf_index, col_indices
+                    ]
 
         result = xp.where(
             is_fraction_above,
@@ -145,12 +166,3 @@ def _weighted_percentile(
         result = array[percentile_in_sorted, col_indices]
 
     return result[0] if n_dim == 1 else result
-
-
-# TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
-# sorting the input array twice.
-def _averaged_weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
-    return (
-        _weighted_percentile(array, sample_weight, percentile_rank, xp=xp)
-        - _weighted_percentile(-array, sample_weight, 100 - percentile_rank, xp=xp)
-    ) / 2
