@@ -419,7 +419,7 @@ def _check_param_lengths(required, optional, class_name):
         )
 
 
-# TODO(1.10): remove after the end of the deprecation period of `y_pred`
+# TODO(1.9): remove after the end of the deprecation period of `y_pred`
 def _deprecate_y_pred_parameter(y_score, y_pred):
     """Deprecate `y_pred` in favour of of `y_score`."""
     if y_score is not None and not (isinstance(y_pred, str) and y_pred == "deprecated"):
