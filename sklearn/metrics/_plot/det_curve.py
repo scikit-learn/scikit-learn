@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-import warnings
-
 import numpy as np
 import scipy as sp
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _deprecate_y_pred_parameter,
+)
 from .._ranking import det_curve
 
 
@@ -300,23 +301,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        # TODO(1.9): remove after the end of the deprecation period of `y_pred`
-        if y_score is not None and not (
-            isinstance(y_pred, str) and y_pred == "deprecated"
-        ):
-            raise ValueError(
-                "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
-                " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
-            )
-        if not (isinstance(y_pred, str) and y_pred == "deprecated"):
-            warnings.warn(
-                (
-                    "y_pred is deprecated in 1.7 and will be removed in 1.9. "
-                    "Please use `y_score` instead."
-                ),
-                FutureWarning,
-            )
-            y_score = y_pred
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred)
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )

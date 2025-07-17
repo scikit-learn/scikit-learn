@@ -417,3 +417,24 @@ def _check_param_lengths(required, optional, class_name):
             f"{params_formatted} from `{class_name}` initialization{or_plot}, "
             f"should all be lists of the same length. Got: {lengths_formatted}"
         )
+
+
+# TODO(1.10): remove after the end of the deprecation period of `y_pred`
+def _deprecate_y_pred_parameter(y_score, y_pred):
+    """Deprecate `y_pred` in favour of of `y_score`."""
+    if y_score is not None and not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        raise ValueError(
+            "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+            " only as `y_pred` is deprecated in 1.7 and will be removed in 1.10."
+        )
+    if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        warnings.warn(
+            (
+                "y_pred is deprecated in 1.7 and will be removed in 1.10. "
+                "Please use `y_score` instead."
+            ),
+            FutureWarning,
+        )
+        return y_pred
+
+    return y_score
