@@ -123,6 +123,23 @@ def _methods_html_repr(methods):
 
 
 class MethodsDict(ReprHTMLMixin, UserDict):
+    """
+    A dictionary-like object for storing methods of an estimator,
+    with an HTML representation.
+
+    This class extends `UserDict` to store methods and their signatures,
+    and provides an HTML representation for visualizing the methods in a
+    collapsible table format.
+
+    Parameters
+    ----------
+    methods : dict
+        A dictionary where keys are method names and values are their
+        signatures.
+    estimator_class : class
+        The class of the estimator whose methods are being represented.
+    """
+
     _html_repr = _methods_html_repr
 
     def __init__(self, methods, estimator_class):
