@@ -38,7 +38,11 @@ def get_module_doc_link(estimator_class, method_name):
 
     class_name = estimator_class.__qualname__
 
-    docstring = getattr(estimator_class, method_name).__doc__[:50]
+    doc = getattr(estimator_class, method_name).__doc__
+    if doc:
+        docstring = doc[:50]
+    else:
+        docstring = ""
 
     base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
     method_fragment = f"{quote(module_name)}.{class_name}.{method_name}"
