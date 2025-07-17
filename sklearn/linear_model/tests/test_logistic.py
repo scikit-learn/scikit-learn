@@ -1688,11 +1688,13 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+# Remove multi_class an change first element of the expected n_iter_.shape from
+# n_classes to 1 (according to the docstring).
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
 
-    n_classes = 1
+    n_classes = 3
     n_features = 20
     X, y = make_classification(
         n_samples=200,
