@@ -151,12 +151,12 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pylatest_conda_mkl_no_openmp",
+        "name": "pylatest_conda_forge_mkl_no_openmp",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -209,7 +209,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
@@ -228,7 +228,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(

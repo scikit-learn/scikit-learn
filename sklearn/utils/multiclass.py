@@ -418,7 +418,8 @@ def type_of_target(y, input_name="", raise_unknown=False):
         # Only raise the warning when we have at least 20 samples.
         warnings.warn(
             "The number of unique classes is greater than 50% of the number "
-            "of samples.",
+            "of samples. `y` could represent a regression problem, not a "
+            "classification problem.",
             UserWarning,
             stacklevel=2,
         )
