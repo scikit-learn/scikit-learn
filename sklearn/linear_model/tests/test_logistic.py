@@ -1381,7 +1381,7 @@ def test_saga_vs_liblinear(global_random_seed, csr_container):
 )
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_dtype_match(global_random_seed, solver, fit_intercept, csr_container):
+def test_dtype_match(solver, fit_intercept, csr_container):
     # Test that np.float32 input data is not cast to np.float64 when possible
     # and that the output is approximately the same no matter the input format.
 
@@ -1397,7 +1397,7 @@ def test_dtype_match(global_random_seed, solver, fit_intercept, csr_container):
 
     lr_templ = LogisticRegression(
         solver=solver,
-        random_state=global_random_seed,
+        random_state=42,
         tol=solver_tol,
         fit_intercept=fit_intercept,
     )
