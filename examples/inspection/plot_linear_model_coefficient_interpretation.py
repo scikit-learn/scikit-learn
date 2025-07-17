@@ -777,5 +777,3 @@ plt.subplots_adjust(left=0.3)
 # * Interpreting causality is difficult when there are confounding effects. If
 #   the relationship between two variables is also affected by something
 #   unobserved, we should be careful when making conclusions about causality.
-# * Inspecting the model may not necessarily provide insights on the true
-#   target generating process.
