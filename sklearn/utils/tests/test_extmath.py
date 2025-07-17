@@ -726,8 +726,8 @@ def test_incremental_weighted_mean_and_variance_array_api(
             X_xp, 0, 0, 0, sample_weight=sample_weight_xp
         )
 
-    # Should the returned dtype be the max precision? Or the same precision
-    # as X?
+    # The attributes like mean and var are computed and set with respect to the
+    # maximum supported float dtype
     assert array_device(mean_xp) == array_device(X_xp)
     assert mean_xp.dtype == _max_precision_float_dtype(xp, device=device)
     assert array_device(var_xp) == array_device(X_xp)

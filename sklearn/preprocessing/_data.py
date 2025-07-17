@@ -26,6 +26,7 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     size,
+    supported_float_dtypes,
 )
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -947,7 +948,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             accept_sparse=("csr", "csc"),
-            dtype=_array_api.supported_float_dtypes(xp, X_device),
+            dtype=supported_float_dtypes(xp, X_device),
             ensure_all_finite="allow-nan",
             reset=first_call,
         )
@@ -1082,7 +1083,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse="csr",
             copy=copy,
-            dtype=_array_api.supported_float_dtypes(xp, X_device),
+            dtype=supported_float_dtypes(xp, X_device),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1126,7 +1127,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            dtype=_array_api.supported_float_dtypes(xp, X_device),
+            dtype=supported_float_dtypes(xp, X_device),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
