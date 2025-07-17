@@ -147,7 +147,7 @@ def test_predict_3_classes(csr_container):
 @pytest.mark.parametrize(
     "clf",
     [
-        LogisticRegression(C=len(iris.data), solver="liblinear", multi_class="ovr"),
+        LogisticRegression(C=len(iris.data), solver="liblinear"),
         LogisticRegression(C=len(iris.data), solver="lbfgs"),
         LogisticRegression(C=len(iris.data), solver="newton-cg"),
         LogisticRegression(C=len(iris.data), solver="sag", tol=1e-2),
@@ -156,7 +156,11 @@ def test_predict_3_classes(csr_container):
     ],
 )
 def test_predict_iris(clf, global_random_seed):
-    """Test logistic regression with the iris dataset."""
+    """Test logistic regression with the iris dataset.
+
+    Test that both multinomial and OvR solvers handle multiclass data correctly and
+    give good accuracy score (>0.95) for the training data.
+    """
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
 
