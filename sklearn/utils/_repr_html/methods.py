@@ -60,6 +60,7 @@ def _doc_row(estimator_class, method_name):
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
             f'style="color: white; background: black;">?'
+            # style adds bottom space to hover box
             f'<span style="bottom: 2rem;">{docstring}... '
             f"<br> click to see online documentation</span>"
         )
