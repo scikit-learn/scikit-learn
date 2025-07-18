@@ -136,24 +136,22 @@ def _weighted_percentile(
             percentile_plus_one_indices, col_indices
         ]
         # Handle case when when next index ('plus one') has sample weight of 0
-        if xp.any(sample_weight[percentile_plus_one_in_sorted, col_indices] == 0):
-            for idx in col_indices:
-                if (
-                    sample_weight[percentile_plus_one_in_sorted[idx], col_indices[idx]]
-                    == 0
-                ):
-                    cdf_val = weight_cdf[col_indices[idx], percentile_indices[idx]]
-                    # Search for next index where `weighted_cdf` is greater
-                    next_cdf_index = xp.searchsorted(
-                        weight_cdf[idx, ...], cdf_val, side="right"
-                    )
-                    # This occurs when there are trailing 0 sample weight samples
-                    # and `percentage_rank=100`
-                    if next_cdf_index >= max_idx:
-                        # use original `percentile_indices` again
-                        next_cdf_index = percentile_indices[idx]
+        zero_weight_cols = col_indices[
+            sample_weight[percentile_plus_one_in_sorted, col_indices] == 0
+        ]
+        for col_idx in zero_weight_cols:
+            cdf_val = weight_cdf[col_idx, percentile_indices[col_idx]]
+            # Search for next index where `weighted_cdf` is greater
+            next_index = xp.searchsorted(
+                weight_cdf[col_idx, ...], cdf_val, side="right"
+            )
+            # Handle case where there are trailing 0 sample weight samples
+            # and `percentile_indices` is already max index
+            if next_index >= max_idx:
+                # use original `percentile_indices` again
+                next_index = percentile_indices[col_idx]
 
-                    percentile_plus_one_in_sorted[idx] = sorted_idx[next_cdf_index, idx]
+            percentile_plus_one_in_sorted[col_idx] = sorted_idx[next_index, col_idx]
 
         result = xp.where(
             is_fraction_above,

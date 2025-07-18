@@ -102,7 +102,7 @@ def test_weighted_percentile_equal():
 
 def test_weighted_percentile_all_zero_weights():
     """Check `weighted_percentile` with all weights equal to 0 returns last index."""
-    y = np.range(10)
+    y = np.arange(10)
     sw = np.zeros(10)
     value = _weighted_percentile(y, sw, 50)
     assert approx(value) == 9.0
