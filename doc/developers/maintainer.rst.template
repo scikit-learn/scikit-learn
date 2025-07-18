@@ -117,7 +117,7 @@ Reference Steps
 
       .. code-block:: markdown
 
-        {%- if key == "rc" %}
+        {% if key == "rc" -%}
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
         * [ ] Set the version number in the release branch
