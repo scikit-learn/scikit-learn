@@ -1301,6 +1301,11 @@ def test_max_iter(global_random_seed, max_iter, solver, message):
     assert lr.n_iter_[0] == max_iter
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
+)
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
@@ -1707,6 +1712,56 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     assert gs.best_params_["C"] == lrcv.C_[0]
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+# Maybe remove whole test after removal of the deprecated multi_class.
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
+    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # GridSearchCV when penalty is elasticnet and multiclass is ovr. We can't
+    # compare best_params like in the previous test because
+    # LogisticRegressionCV with multi_class='ovr' will have one C and one
+    # l1_param for each class, while LogisticRegression will share the
+    # parameters over the *n_classes* classifiers.
+
+    X, y = make_classification(
+        n_samples=100, n_classes=3, n_informative=3, random_state=0
+    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    cv = StratifiedKFold(5)
+
+    l1_ratios = np.linspace(0, 1, 3)
+    Cs = np.logspace(-4, 4, 3)
+
+    lrcv = LogisticRegressionCV(
+        penalty="elasticnet",
+        Cs=Cs,
+        solver="saga",
+        cv=cv,
+        l1_ratios=l1_ratios,
+        random_state=0,
+        multi_class="ovr",
+        tol=1e-2,
+    )
+    lrcv.fit(X_train, y_train)
+
+    param_grid = {"C": Cs, "l1_ratio": l1_ratios}
+    lr = LogisticRegression(
+        penalty="elasticnet",
+        solver="saga",
+        random_state=0,
+        multi_class="ovr",
+        tol=1e-2,
+    )
+    gs = GridSearchCV(lr, param_grid, cv=cv)
+    gs.fit(X_train, y_train)
+
+    # Check that predictions are 80% the same
+    assert (lrcv.predict(X_train) == gs.predict(X_train)).mean() >= 0.8
+    assert (lrcv.predict(X_test) == gs.predict(X_test)).mean() >= 0.8
+
+
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("penalty", ("l2", "elasticnet"))
 @pytest.mark.parametrize("multi_class", ("ovr", "multinomial", "auto"))
 def test_LogisticRegressionCV_no_refit(penalty, multi_class):
@@ -1872,6 +1927,11 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
+)
 @pytest.mark.parametrize(
     "est",
     [
@@ -2045,6 +2105,8 @@ def test_scores_attribute_layout_elasticnet(global_random_seed):
             assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "newton-cholesky"])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_intercept):
@@ -2089,6 +2151,8 @@ def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_int
         assert clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-11)
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial", "auto"])
 @pytest.mark.parametrize("class_weight", [{0: 1.0, 1: 10.0, 2: 1.0}, "balanced"])
 def test_sample_weight_not_modified(global_random_seed, multi_class, class_weight):
@@ -2266,6 +2330,31 @@ def test_passing_params_without_enabling_metadata_routing():
 
         with pytest.raises(ValueError, match=msg):
             lr_cv.score(X, y, **params)
+
+
+# TODO(1.8): remove
+def test_multi_class_deprecated():
+    """Check `multi_class` parameter deprecated."""
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
+    lr = LogisticRegression(multi_class="ovr")
+    msg = "'multi_class' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+    lrCV = LogisticRegressionCV(multi_class="ovr")
+    with pytest.warns(FutureWarning, match=msg):
+        lrCV.fit(X, y)
+
+    # Special warning for "binary multinomial"
+    X, y = make_classification(n_classes=2, n_samples=50, n_informative=6)
+    lr = LogisticRegression(multi_class="multinomial")
+    msg = "'multi_class' was deprecated.*binary problems"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+    lrCV = LogisticRegressionCV(multi_class="multinomial")
+    with pytest.warns(FutureWarning, match=msg):
+        lrCV.fit(X, y)
 
 
 def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
