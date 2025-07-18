@@ -743,6 +743,14 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   in the `__sklearn_tags__` method.
   By `Adrin Jalali`_ :pr:`30122`
 
+Documentation
+-------------
+
+- |Fix| Corrected the SVM narrative documentation: the default multi-class
+  strategy for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
+  is *one-vs-rest* (``'ovr'``), not *one-vs-one*.  (:gh:`29340`
+  by :user:`@Kalyan1210`)
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of

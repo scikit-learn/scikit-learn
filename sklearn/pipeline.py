@@ -2038,6 +2038,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        # GH#31318 guard: if a transformer returns a pandas Series,
+        # convert to DataFrame so stacking works as intended
+        for i, X in enumerate(Xs):
+            if hasattr(X, "to_frame"):
+                Xs[i] = X.to_frame()
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
