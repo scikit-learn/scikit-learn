@@ -2228,10 +2228,31 @@ This is also referred to as the Brier Skill Score (BSS).
 Here are some usage examples of the :func:`d2_brier_score` function::
 
   >>> from sklearn.metrics import d2_brier_score
-  >>> y_true = [0, 1, 1, 0]
-  >>> y_pred = [0.15, 0.9, 0.85, 0.25]
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
   >>> d2_brier_score(y_true, y_pred)
-  0.882...
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.98, 0.01, 0.01],
+  ...    [0.01, 0.98, 0.01],
+  ...    [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.9991
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  -0.370...
 
 |details-end|
 
