@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from numpy.testing import (
     assert_allclose,
+    assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
@@ -183,6 +184,8 @@ def test_predict_iris(clf, global_random_seed):
     assert np.mean(pred == target) > 0.95
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
@@ -231,6 +234,56 @@ def test_elasticnet_l1_ratio_err_helpful(LR):
     model = LR(penalty="elasticnet", solver="saga")
     with pytest.raises(ValueError, match=r".*l1_ratio.*"):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
+
+
+# TODO(1.8): remove whole test with deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
+def test_multinomial_binary(solver):
+    # Test multinomial LR on a binary problem.
+    target = (iris.target > 0).astype(np.intp)
+    target = np.array(["setosa", "not-setosa"])[target]
+
+    clf = LogisticRegression(
+        solver=solver, multi_class="multinomial", random_state=42, max_iter=2000
+    )
+    clf.fit(iris.data, target)
+
+    assert clf.coef_.shape == (1, iris.data.shape[1])
+    assert clf.intercept_.shape == (1,)
+    assert_array_equal(clf.predict(iris.data), target)
+
+    mlr = LogisticRegression(
+        solver=solver, multi_class="multinomial", random_state=42, fit_intercept=False
+    )
+    mlr.fit(iris.data, target)
+    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
+    assert np.mean(pred == target) > 0.9
+
+
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+# Maybe even remove this whole test as correctness of multinomial loss is tested
+# elsewhere.
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+def test_multinomial_binary_probabilities(global_random_seed):
+    # Test multinomial LR gives expected probabilities based on the
+    # decision function, for a binary problem.
+    X, y = make_classification(random_state=global_random_seed)
+    clf = LogisticRegression(
+        multi_class="multinomial",
+        solver="saga",
+        tol=1e-3,
+        random_state=global_random_seed,
+    )
+    clf.fit(X, y)
+
+    decision = clf.decision_function(X)
+    proba = clf.predict_proba(X)
+
+    expected_proba_class_1 = np.exp(decision) / (np.exp(decision) + np.exp(-decision))
+    expected_proba = np.c_[1 - expected_proba_class_1, expected_proba_class_1]
+
+    assert_almost_equal(proba, expected_proba)
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
