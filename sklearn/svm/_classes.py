@@ -1308,7 +1308,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     _impl = "epsilon_svr"
 
     _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
-    for unused_param in ["class_weight", "nu", "probability", "random_state"]:
+    for unused_param in {"class_weight", "nu", "probability", "random_state"}:
         _parameter_constraints.pop(unused_param)
 
     def __init__(
@@ -1495,7 +1495,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     _impl = "nu_svr"
 
     _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
-    for unused_param in ["class_weight", "epsilon", "probability", "random_state"]:
+    for unused_param in {"class_weight", "epsilon", "probability", "random_state"}:
         _parameter_constraints.pop(unused_param)
 
     def __init__(
@@ -1671,7 +1671,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     _impl = "one_class"
 
     _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
-    for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
+    for unused_param in {"C", "class_weight", "epsilon", "probability", "random_state"}:
         _parameter_constraints.pop(unused_param)
 
     def __init__(

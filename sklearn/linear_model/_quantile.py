@@ -235,7 +235,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
-        if self.solver in ["highs", "highs-ds", "highs-ipm"]:
+        if self.solver in {"highs", "highs-ds", "highs-ipm"}:
             # Note that highs methods always use a sparse CSC memory layout internally,
             # even for optimization problems parametrized using dense numpy arrays.
             # Therefore, we work with CSC matrices as early as possible to limit

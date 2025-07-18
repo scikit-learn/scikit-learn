@@ -205,7 +205,7 @@ def fetch_kddcup99(
         data = np.r_[normal_samples, abnormal_samples]
         target = np.r_[normal_targets, abnormal_targets]
 
-    if subset == "SF" or subset == "http" or subset == "smtp":
+    if subset in {"SF", "http", "smtp"}:
         # select all samples with positive logged_in attribute:
         s = data[:, 11] == 1
         data = np.c_[data[s, :11], data[s, 12:]]

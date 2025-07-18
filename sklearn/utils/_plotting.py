@@ -359,9 +359,9 @@ def _despine(ax):
     ax : matplotlib.axes.Axes
         The axes of the plot to despine.
     """
-    for s in ["top", "right"]:
+    for s in {"top", "right"}:
         ax.spines[s].set_visible(False)
-    for s in ["bottom", "left"]:
+    for s in {"bottom", "left"}:
         ax.spines[s].set_bounds(0, 1)
 
 

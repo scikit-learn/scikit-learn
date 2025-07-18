@@ -60,7 +60,7 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", None):
+    if solver not in {"liblinear", "saga"} and penalty not in ("l2", None):
         raise ValueError(
             f"Solver {solver} supports only 'l2' or None penalties, got {penalty} "
             "penalty."
@@ -282,7 +282,7 @@ def _logistic_regression_path(
             X,
             accept_sparse="csr",
             dtype=np.float64,
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+            accept_large_sparse=solver not in {"liblinear", "sag", "saga"},
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -339,7 +339,7 @@ def _logistic_regression_path(
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver in ["sag", "saga", "lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver in {"sag", "saga", "lbfgs", "newton-cg", "newton-cholesky"}:
             # SAG, lbfgs, newton-cg and newton-cholesky multinomial solvers need
             # LabelEncoder, not LabelBinarizer, i.e. y as a 1d-array of integers.
             # LabelEncoder also saves memory compared to LabelBinarizer, especially
@@ -364,7 +364,7 @@ def _logistic_regression_path(
     #     C * sum(pointwise_loss) + penalty
     # instead of (as LinearModelLoss does)
     #     mean(pointwise_loss) + 1/C * penalty
-    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+    if solver in {"lbfgs", "newton-cg", "newton-cholesky"}:
         # This needs to be calculated after sample_weight is multiplied by
         # class_weight. It is even tested that passing class_weight is equivalent to
         # passing sample_weights according to class_weight.
@@ -410,7 +410,7 @@ def _logistic_regression_path(
                 w0[:, : coef.shape[1]] = coef
 
     if multi_class == "multinomial":
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver in {"lbfgs", "newton-cg", "newton-cholesky"}:
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
@@ -540,7 +540,7 @@ def _logistic_regression_path(
             # in {-1, 1}, so we only take the first element of n_iter_i.
             n_iter_i = n_iter_i.item()
 
-        elif solver in ["sag", "saga"]:
+        elif solver in {"sag", "saga"}:
             if multi_class == "multinomial":
                 target = target.astype(X.dtype, copy=False)
                 loss = "multinomial"
@@ -582,7 +582,7 @@ def _logistic_regression_path(
 
         if multi_class == "multinomial":
             n_classes = max(2, classes.size)
-            if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+            if solver in {"lbfgs", "newton-cg", "newton-cholesky"}:
                 multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
             else:
                 multi_w0 = w0
@@ -1251,7 +1251,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             accept_sparse="csr",
             dtype=_dtype,
             order="C",
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+            accept_large_sparse=solver not in {"liblinear", "sag", "saga"},
         )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
@@ -1324,7 +1324,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             )
             return self
 
-        if solver in ["sag", "saga"]:
+        if solver in {"sag", "saga"}:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -1362,7 +1362,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
-        if solver in ["sag", "saga"]:
+        if solver in {"sag", "saga"}:
             prefer = "threads"
         else:
             prefer = "processes"
@@ -1371,7 +1371,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # and multinomial multiclass classification and use joblib only for the
         # one-vs-rest multiclass case.
         if (
-            solver in ["lbfgs", "newton-cg", "newton-cholesky"]
+            solver in {"lbfgs", "newton-cg", "newton-cholesky"}
             and len(classes_) == 1
             and effective_n_jobs(self.n_jobs) == 1
         ):
@@ -1454,8 +1454,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        ovr = self.multi_class in ["ovr", "warn"] or (
-            self.multi_class in ["auto", "deprecated"]
+        ovr = self.multi_class in {"ovr", "warn"} or (
+            self.multi_class in {"auto", "deprecated"}
             and (self.classes_.size <= 2 or self.solver == "liblinear")
         )
         if ovr:
@@ -1912,7 +1912,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_sparse="csr",
             dtype=np.float64,
             order="C",
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+            accept_large_sparse=solver not in {"liblinear", "sag", "saga"},
         )
         check_classification_targets(y)
 
@@ -1965,7 +1965,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             multi_class = "auto"
         multi_class = _check_multi_class(multi_class, solver, len(classes))
 
-        if solver in ["sag", "saga"]:
+        if solver in {"sag", "saga"}:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -2027,7 +2027,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
-        if self.solver in ["sag", "saga"]:
+        if self.solver in {"sag", "saga"}:
             prefer = "threads"
         else:
             prefer = "processes"
