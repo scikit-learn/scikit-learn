@@ -1212,8 +1212,8 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         X_ : ndarray of shape (n_samples, n_classes)
              The predicted data.
         """
-        X = _convert_to_logits(X)
-        return softmax(self.beta_ * X)
+        logits = _convert_to_logits(X)
+        return softmax(self.beta_ * logits)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
