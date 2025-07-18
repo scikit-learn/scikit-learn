@@ -117,11 +117,11 @@ Reference Steps
 
       .. code-block:: markdown
 
-        {% if key == "rc" -%}
+        {%- if key == "rc" %}
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
         * [ ] Set the version number in the release branch
-        {% if key == "rc" -%}
+        {%- if key == "rc" %}
         * [ ] Set an upper bound on build dependencies in the release branch
         {%- endif %}
         * [ ] Generate the changelog in the release branch
