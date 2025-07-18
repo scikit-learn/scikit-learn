@@ -5,6 +5,7 @@
 
 import inspect
 import warnings
+from contextlib import nullcontext
 from functools import partial
 from numbers import Integral
 
@@ -1222,7 +1223,13 @@ def _incremental_mean_and_var(
 
         last_unnormalized_variance = last_variance * last_sample_count
 
-        with np.errstate(divide="ignore", invalid="ignore"):
+        # There is no errstate equivalent for warning/error management in array API
+        context_manager = (
+            np.errstate(divide="ignore", invalid="ignore")
+            if _is_numpy_namespace(xp)
+            else nullcontext()
+        )
+        with context_manager:
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_unnormalized_variance
