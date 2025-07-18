@@ -428,7 +428,9 @@ def test_sigmoid_calibration():
 
 @pytest.mark.parametrize(
     "clf",
-    [DecisionTreeClassifier(random_state=42)],
+    [
+        DecisionTreeClassifier(random_state=7),
+    ],
 )
 @pytest.mark.parametrize(
     "n_classes",
