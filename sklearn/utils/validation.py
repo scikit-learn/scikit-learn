@@ -587,6 +587,10 @@ def _ensure_sparse_format(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+    accept_large_sparse : bool
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.

@@ -37,7 +37,7 @@ def test_feature_hasher_strings():
         assert X.shape[0] == len(raw_X)
         assert X.shape[1] == n_features
 
-        assert X[0].sum() == 4
+        assert X[[0], :].sum() == 4
         assert X[1].sum() == 3
 
         assert X.nnz == 6
