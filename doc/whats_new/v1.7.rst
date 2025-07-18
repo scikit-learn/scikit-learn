@@ -483,32 +483,32 @@ more details.
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.6, including:
 
-4hm3d, Aaron Schumacher, Abhijeetsingh Meena, Acciaro Gennaro Daniele, 
-Achraf Tasfaout, Adrien Linares, Adrin Jalali, Agriya Khetarpal, Aiden Frank, 
-Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alfredo Saucedo, 
-Anderson Chaves, Andres Guzman-Ballen, Aniruddha Saha, antoinebaker, Antony 
-Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash, Ashton Powell, 
-ayoub.agouzoul, Bagus Tris Atmaja, Benjamin Danek, Boney Patel, Camille 
-Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis, Christine P. 
-Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey Farwell, 
-Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha, 
-dependabot[bot], Dimitri Papadopoulos Orfanos, Dmitry Kobak, Domenico, Elham 
-Babaei, emelia-hdz, EmilyXinyi, Emma Carballal, Eric Larson, fabianhenning, 
-Gael Varoquaux, Gil Ramot, Gordon Grey, Goutam, G Sreeja, Guillaume Lemaitre, 
-Haesun Park, Hanjun Kim, Helder Geovane Gomes de Lima, Henri Bonamy, Hleb 
-Levitski, Hugo Boulenger, IlyaSolomatin, Irene, Jérémie du Boisberranger, 
-Jérôme Dockès, JoaoRodriguesIST, Joel Nothman, Josh, Kevin Klein, Loic 
-Esteve, Lucas Colley, Luc Rocher, Lucy Liu, Luis M. B. Varona, lunovian, Mamduh 
-Zabidi, Marc Bresson, Marco Edward Gorelli, Marco Maggi, Maren Westermann, 
-Marie Sacksick, Martin Jurča, Miguel González Duque, Mihir Waknis, Mohamed 
-Ali SRIR, Mohamed DHIFALLAH, mohammed benyamna, Mohit Singh Thakur, Mounir 
-Lbath, myenugula, Natalia Mokeeva, Olivier Grisel, omahs, Omar Salman, Pedro 
-Lopes, Pedro Olivares, Preyas Shah, Radovenchyk, Rahil Parikh, Rémi Flamary, 
-Reshama Shaikh, Rishab Saini, rolandrmgservices, SanchitD, Santiago Castro, 
-Santiago Víquez, scikit-learn-bot, Scott Huberty, Shruti Nath, Siddharth 
-Bansal, Simarjot Sidhu, Sortofamudkip, sotagg, Sourabh Kumar, Stefan, Stefanie 
-Senger, Stefano Gaspari, Stephen Pardy, Success Moses, Sylvain Combettes, Tahar 
-Allouche, Thomas J. Fan, Thomas Li, ThorbenMaa, Tim Head, Umberto Fasci, UV, 
-Vasco Pereira, Vassilis Margonis, Velislav Babatchev, Victoria Shevchenko, 
-viktor765, Vipsa Kamani, Virgil Chan, vpz, Xiao Yuan, Yaich Mohamed, Yair 
+4hm3d, Aaron Schumacher, Abhijeetsingh Meena, Acciaro Gennaro Daniele,
+Achraf Tasfaout, Adrien Linares, Adrin Jalali, Agriya Khetarpal, Aiden Frank,
+Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alfredo Saucedo,
+Anderson Chaves, Andres Guzman-Ballen, Aniruddha Saha, antoinebaker, Antony
+Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash, Ashton Powell,
+ayoub.agouzoul, Bagus Tris Atmaja, Benjamin Danek, Boney Patel, Camille
+Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis, Christine P.
+Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey Farwell,
+Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha,
+dependabot[bot], Dimitri Papadopoulos Orfanos, Dmitry Kobak, Domenico, Elham
+Babaei, emelia-hdz, EmilyXinyi, Emma Carballal, Eric Larson, fabianhenning,
+Gael Varoquaux, Gil Ramot, Gordon Grey, Goutam, G Sreeja, Guillaume Lemaitre,
+Haesun Park, Hanjun Kim, Helder Geovane Gomes de Lima, Henri Bonamy, Hleb
+Levitski, Hugo Boulenger, IlyaSolomatin, Irene, Jérémie du Boisberranger,
+Jérôme Dockès, JoaoRodriguesIST, Joel Nothman, Josh, Kevin Klein, Loic
+Esteve, Lucas Colley, Luc Rocher, Lucy Liu, Luis M. B. Varona, lunovian, Mamduh
+Zabidi, Marc Bresson, Marco Edward Gorelli, Marco Maggi, Maren Westermann,
+Marie Sacksick, Martin Jurča, Miguel González Duque, Mihir Waknis, Mohamed
+Ali SRIR, Mohamed DHIFALLAH, mohammed benyamna, Mohit Singh Thakur, Mounir
+Lbath, myenugula, Natalia Mokeeva, Olivier Grisel, omahs, Omar Salman, Pedro
+Lopes, Pedro Olivares, Preyas Shah, Radovenchyk, Rahil Parikh, Rémi Flamary,
+Reshama Shaikh, Rishab Saini, rolandrmgservices, SanchitD, Santiago Castro,
+Santiago Víquez, scikit-learn-bot, Scott Huberty, Shruti Nath, Siddharth
+Bansal, Simarjot Sidhu, Sortofamudkip, sotagg, Sourabh Kumar, Stefan, Stefanie
+Senger, Stefano Gaspari, Stephen Pardy, Success Moses, Sylvain Combettes, Tahar
+Allouche, Thomas J. Fan, Thomas Li, ThorbenMaa, Tim Head, Umberto Fasci, UV,
+Vasco Pereira, Vassilis Margonis, Velislav Babatchev, Victoria Shevchenko,
+viktor765, Vipsa Kamani, Virgil Chan, vpz, Xiao Yuan, Yaich Mohamed, Yair
 Shimony, Yao Xiao, Yaroslav Halchenko, Yulia Vilensky, Yuvi Panda
