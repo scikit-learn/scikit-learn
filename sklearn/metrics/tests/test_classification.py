@@ -3402,8 +3402,11 @@ def test_d2_log_loss_score_raises():
 
 
 def test_d2_brier_score():
-    sample_weight = [2, 2, 3, 1, 1, 1]
+    """Test that d2_brier_score gives expected outcomes in both the binary and
+    multiclass settings.
+    """
     # Binary targets
+    sample_weight = [2, 2, 3, 1, 1, 1]
     y_true = [0, 1, 1, 0, 0, 1]
     y_true_string = ["no", "yes", "yes", "no", "no", "yes"]
 
@@ -3441,19 +3444,24 @@ def test_d2_brier_score():
     assert d2_score == 0
 
     # Multiclass targets
-    y_true = [0, 2, 1, 3, 2, 0]
-    y_true_string = ["aa", "cc", "bb", "dd", "cc", "aa"]
+    sample_weight = [2, 1, 3, 1, 1, 2, 1, 4, 1, 4]
+    y_true = [3, 3, 2, 2, 2, 1, 1, 1, 1, 0]
+    y_true_string = ["dd", "dd", "cc", "cc", "cc", "bb", "bb", "bb", "bb", "aa"]
 
     # check that a model which gives a constant prediction equal to the
     # proportion of the given labels gives a d2 score of 0 when we also
     # provide sample weight
     y_proba = [
-        [0.3, 0.3, 0.3, 0.1],
-        [0.3, 0.3, 0.3, 0.1],
-        [0.3, 0.3, 0.3, 0.1],
-        [0.3, 0.3, 0.3, 0.1],
-        [0.3, 0.3, 0.3, 0.1],
-        [0.3, 0.3, 0.3, 0.1],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
     ]
     d2_score = d2_brier_score(
         y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
@@ -3469,11 +3477,15 @@ def test_d2_brier_score():
     # check that a model which gives generally good predictions has
     # a d2 score that is greater than 0.5
     y_proba = [
-        [0.5, 0.2, 0.2, 0.1],
+        [0.1, 0.2, 0.2, 0.5],
+        [0.1, 0.2, 0.2, 0.5],
+        [0.1, 0.2, 0.5, 0.2],
+        [0.1, 0.2, 0.5, 0.2],
         [0.1, 0.2, 0.5, 0.2],
         [0.2, 0.5, 0.2, 0.1],
-        [0.1, 0.2, 0.2, 0.5],
-        [0.2, 0.2, 0.5, 0.1],
+        [0.2, 0.5, 0.2, 0.1],
+        [0.2, 0.5, 0.2, 0.1],
+        [0.2, 0.5, 0.2, 0.1],
         [0.5, 0.2, 0.2, 0.1],
     ]
     d2_score = d2_brier_score(
@@ -3487,6 +3499,9 @@ def test_d2_brier_score():
     )
     assert d2_score > 0.5
 
+
+def test_d2_brier_score_with_labels():
+    """Test that d2_brier_score gives expected outcomes when labels are passed"""
     # Check when labels are provided and some labels may not be present inside
     # y_true, the d2 score is 0, when we use the label proportions based on
     # y_true as the predictions
@@ -3506,7 +3521,7 @@ def test_d2_brier_score():
     new_d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
     assert new_d2_score == pytest.approx(d2_score)
 
-    # Test a model which gives wrong predictions and gives a negative d2 score
+    # Check that a simple model with wrong predictions gives a negative d2 score
     y_proba = [
         [0, 0, 1],
         [1, 0, 0],
@@ -3517,84 +3532,79 @@ def test_d2_brier_score():
     assert pytest.approx(neg_d2_score) == -3
 
 
-def test_d2_brier_score_raises():
-    """Test that d2_brier_loss_score raises the appropriate errors
+@pytest.mark.parametrize(
+    "y_true, y_pred, labels, error_msg",
+    [
+        (
+            [1, 2, 1, 3],
+            [0.8, 0.6, 0.4, 0.2],
+            None,
+            "inferred from y_true is multiclass but should be binary",
+        ),
+        (
+            ["yes", "no", "yes", "no"],
+            [0.8, 0.6, 0.4, 0.2],
+            None,
+            "pos_label is not specified",
+        ),
+        (
+            [0, 1, 0, 0, 1, 1, 0],
+            [0.8, 0.6, 0.4, 0.2],
+            None,
+            "variables with inconsistent numbers of samples",
+        ),
+        (
+            [0, 1, 0, 1],
+            [1.8, 0.6, 0.4, 0.2],
+            None,
+            "y_prob contains values greater than 1",
+        ),
+        (
+            [0, 1, 0, 1],
+            [-0.8, 0.6, 0.4, 0.2],
+            None,
+            "y_prob contains values less than 0",
+        ),
+        (
+            [1, 1, 1],
+            [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]],
+            None,
+            "y_true contains only one label",
+        ),
+        (
+            [[1, 0, 1, 0], [2, 3, 3, 2]],
+            [[0.3, 0.3, 0.2, 0.2], [0.4, 0.1, 0.3, 0.2]],
+            None,
+            "Multioutput target data is not supported",
+        ),
+        (
+            [1, 2, 0],
+            [[0.5, 0.3, 0.2], [0.5, 0.3, 0.2], [0.5, 0.3, 0.2]],
+            [0, 2],
+            "not belonging to the passed labels",
+        ),
+        (
+            [0, 0, 0],
+            [[0.5, 0.3, 0.2], [0.5, 0.3, 0.2], [0.5, 0.3, 0.2]],
+            [0],
+            "labels array needs to contain at least two",
+        ),
+    ],
+)
+def test_d2_brier_score_raises(y_true, y_pred, labels, error_msg):
+    """Test that d2_brier_score raises the appropriate errors
     on invalid inputs."""
-    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    with pytest.raises(ValueError, match=error_msg):
+        d2_brier_score(y_true, y_pred, labels=labels)
 
-    # check an error is raised for y_true having more than 2 classes when
-    # y_pred represents binary predictions
-    y_true = np.array([1, 2, 1, 3])
-    error_message = "inferred from y_true is multiclass but should be binary"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
 
-    # check that an error is raised if y_true is not in {-1, 1} or {0, 1}
-    # and pos_label is not specified
-    y_true = np.array(["yes", "no", "yes", "no"])
-    error_message = "pos_label is not specified"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
-
-    # check that an error is raised if y_true and y_pred do not have a
-    # consistent length
-    y_true = np.array([0, 1, 0, 0, 1, 1, 0])
-    error_message = "variables with inconsistent numbers of samples"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
-
-    y_true = np.array([0, 1, 0, 1])
-    # check that an error is raised if y_pred has a value greater than 1
-    y_pred = np.array([1.8, 0.6, 0.4, 0.2])
-    error_message = "y_prob contains values greater than 1"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
-
-    # check that an error is raised if y_pred has a value less than 0
-    y_pred = np.array([-0.8, 0.6, 0.4, 0.2])
-    error_message = "y_prob contains values less than 0"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
-
-    # check that an error is raised when y_true only has 1 label
-    y_true = [1, 1, 1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
-    error_message = "y_true contains only one label"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
-
-    # check that an error is raised if y_true is not a 1d array
-    y_true = np.array([[1, 0, 1, 0], [2, 3, 3, 2]])
-    y_pred = np.array([[0.3, 0.3, 0.2, 0.2], [0.4, 0.1, 0.3, 0.2]])
-    error_message = "Multioutput target data is not supported"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred)
-
-    # check d2 score warning when there are fewer than 2 samples
+def test_d2_brier_score_warning_on_less_than_two_samples():
+    """Test that d2_brier_score emits a warning when there are less than
+    two samples"""
     y_true = np.array([1])
     y_pred = np.array([0.8])
     warning_message = "not well-defined with less than two samples"
     with pytest.warns(UndefinedMetricWarning, match=warning_message):
         d2_brier_score(y_true, y_pred)
-
-    # check that an error is raised when the y_true contains a value
-    # from outside the provided labels
-    y_true = np.array([1, 2, 0])
-    y_pred = np.array(
-        [
-            [0.5, 0.3, 0.2],
-            [0.5, 0.3, 0.2],
-            [0.5, 0.3, 0.2],
-        ]
-    )
-    labels = np.array([0, 2])
-    error_message = "not belonging to the passed labels"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred, labels=labels)
-
-    # check that an error is raised when the provided labels contain only 1 value
-    y_true = np.array([0, 0, 0])
-    labels = np.array([0])
-    error_message = "The labels array needs to contain at least two"
-    with pytest.raises(ValueError, match=error_message):
-        d2_brier_score(y_true, y_pred, labels=labels)

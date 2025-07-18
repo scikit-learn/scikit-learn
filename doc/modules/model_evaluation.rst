@@ -2166,8 +2166,7 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the per-class proportion of `y_true` in the case of the Log loss, the
-proportion of the positive class of `y_true` in the case of the Brier score).
+(e.g., the per-class proportion of `y_true` in the case of the Log loss and Brier score).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts
@@ -2214,7 +2213,7 @@ of 0.0.
 
 
 |details-start|
-**D2 brier score**
+**D2 Brier score**
 |details-split|
 
 The :func:`d2_brier_score` function implements the special case
