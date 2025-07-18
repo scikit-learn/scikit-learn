@@ -6,7 +6,6 @@
 import itertools
 import math
 import os
-from functools import wraps
 
 import numpy
 import scipy
@@ -244,100 +243,6 @@ def _union1d(a, b, xp):
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
 
-def isdtype(dtype, kind, *, xp):
-    """Return a boolean indicating whether a provided dtype is of type "kind".
-
-    Included in the v2022.12 of the Array API spec.
-    https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
-
-    Parameters
-    ----------
-    dtype : dtype
-        The input dtype (e.g. ``np.float32``, ``torch.int16``, ``xp.complex64``).
-
-    kind : str or dtype or tuple[str | dtype]
-        Data type kind.
-
-        - If ``kind`` is a dtype, then ``dtype`` is compared to the dtype specified
-          by ``kind``.
-        - If ``kind`` is a string, ``dtype`` is checked to be included in a set of
-          dtypes determined by ``kind``. ``kind`` must be one of:
-
-          - "bool": boolean data types (i.e. ``bool``).
-          - "signed integer": signed integer data types (e.g. ``int8``, ``int16``).
-          - "unsigned integer": unsigned integer data types (e.g. ``uint8``,
-            ``uint16``).
-          - "integral": integer data types. Shorthand for
-            ``("signed integer", "unsigned integer")``.
-          - "real floating": real-valued floating-point data types (i.e., ``float32``,
-            ``float64``). This will include ``float16`` if the array namespace ``xp``
-            supports it.
-          - "complex floating": complex floating-point data types (e.g. ``complex64``,
-            ``complex128``).
-          - "numeric": numeric data types. Shorthand for ``("integral",
-            "real floating", "complex floating")``. Note this excludes the ``bool``
-            data type.
-        - If ``kind`` is a tuple, the tuple is a union of dtypes and/or kinds, and
-          ``dtype`` is checked to be either equal to a specified dtype or
-          belongs to at least one specified data type kind.
-
-    xp : module
-        The array namespace to which ``dtype`` belongs.
-
-    Returns
-    -------
-    flag : bool
-        True if ``dtype`` is of type ``kind``, and False otherwise.
-
-    Notes
-    -----
-    Consumers outside the `utils._array_api` module should use `xp.isdtype` instead,
-    which will behave correctly for array namespaces which define a different
-    set of valid data types
-
-    E.g., `torch` does not have the standard ``uint16`` data type, but does include
-    the non-standard ``bfloat16`` data type.
-    """
-    if isinstance(kind, tuple):
-        return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
-    else:
-        return _isdtype_single(dtype, kind, xp=xp)
-
-
-def _isdtype_single(dtype, kind, *, xp):
-    if isinstance(kind, str):
-        if kind == "bool":
-            return dtype == xp.bool
-        elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
-        elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
-        elif kind == "integral":
-            return any(
-                _isdtype_single(dtype, k, xp=xp)
-                for k in ("signed integer", "unsigned integer")
-            )
-        elif kind == "real floating":
-            return dtype in supported_float_dtypes(xp)
-        elif kind == "complex floating":
-            # Some name spaces might not have support for complex dtypes.
-            complex_dtypes = set()
-            if hasattr(xp, "complex64"):
-                complex_dtypes.add(xp.complex64)
-            if hasattr(xp, "complex128"):
-                complex_dtypes.add(xp.complex128)
-            return dtype in complex_dtypes
-        elif kind == "numeric":
-            return any(
-                _isdtype_single(dtype, k, xp=xp)
-                for k in ("integral", "real floating", "complex floating")
-            )
-        else:
-            raise ValueError(f"Unrecognized data type kind: {kind!r}")
-    else:
-        return dtype == kind
-
-
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
@@ -412,20 +317,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-def _check_device_cpu(device):
-    if device not in {"cpu", None}:
-        raise ValueError(f"Unsupported device for NumPy: {device!r}")
-
-
-def _accept_device_cpu(func):
-    @wraps(func)
-    def wrapped_func(*args, **kwargs):
-        _check_device_cpu(kwargs.pop("device", None))
-        return func(*args, **kwargs)
-
-    return wrapped_func
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
