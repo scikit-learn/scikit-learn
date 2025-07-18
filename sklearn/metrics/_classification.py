@@ -831,8 +831,8 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         List of labels to index the matrix. This may be used to select a
         subset of labels. If `None`, all labels that appear at least once in
         ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be
-         present in `y1`, even though this function is otherwise agnostic to the order
-         of `y1` and `y2`.
+        present in `y1`, even though this function is otherwise agnostic to the order
+        of `y1` and `y2`.
 
     weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. `None` means not weighted;
@@ -3539,7 +3539,7 @@ def brier_score_loss(
         When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
         of the [0, 2] range. The default "auto" option implements the rescaling to
         [0, 1] only for binary classification (as customary) but keeps the
-        original [0, 2] range for multiclasss classification.
+        original [0, 2] range for multiclass classification.
 
         .. versionadded:: 1.7
 
