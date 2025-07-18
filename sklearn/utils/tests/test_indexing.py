@@ -362,7 +362,7 @@ def test_safe_indexing_1d_array_error(X_constructor):
 def test_safe_indexing_container_axis_0_unsupported_type():
     indices = ["col_1", "col_2"]
     array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    err_msg = "String indexing is not supported with 'axis=0'"
+    err_msg = r"String indexing.*is not supported with 'axis=0'"
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(array, indices, axis=0)
 

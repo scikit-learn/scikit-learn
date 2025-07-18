@@ -320,6 +320,8 @@ class Pipeline(_BaseComposition):
         return self
 
     def _validate_steps(self):
+        if not self.steps:
+            raise ValueError("The pipeline is empty. Please add steps.")
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -1289,7 +1291,6 @@ class Pipeline(_BaseComposition):
 
         An empty pipeline is considered fitted.
         """
-
         # First find the last step that is not 'passthrough'
         last_step = None
         for _, estimator in reversed(self.steps):
@@ -1312,15 +1313,15 @@ class Pipeline(_BaseComposition):
             return False
 
     def _sk_visual_block_(self):
-        _, estimators = zip(*self.steps)
-
         def _get_name(name, est):
             if est is None or est == "passthrough":
                 return f"{name}: passthrough"
             # Is an estimator
             return f"{name}: {est.__class__.__name__}"
 
-        names = [_get_name(name, est) for name, est in self.steps]
+        names, estimators = zip(
+            *[(_get_name(name, est), est) for name, est in self.steps]
+        )
         name_details = [str(est) for est in estimators]
         return _VisualBlock(
             "serial",
