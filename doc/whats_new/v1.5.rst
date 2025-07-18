@@ -349,9 +349,9 @@ Changelog
 
 - |API| Deprecates `Y` in favor of `y` in the methods `fit`, `transform` and
   `inverse_transform` of:
-  :class:`cross_decomposition.PLSRegression`, 
-  :class:`cross_decomposition.PLSCanonical`, 
-  and :class:`cross_decomposition.CCA`, 
+  :class:`cross_decomposition.PLSRegression`,
+  :class:`cross_decomposition.PLSCanonical`,
+  and :class:`cross_decomposition.CCA`,
   and methods `fit` and `transform` of:
   :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.

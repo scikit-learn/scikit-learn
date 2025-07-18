@@ -1,6 +1,8 @@
 import pandas as pd
+
 from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import FunctionTransformer
+
 
 def test_featureunion_series_output_set_output():
     X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -14,4 +16,4 @@ def test_featureunion_series_output_set_output():
 
     Xt = union.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
-    assert list(Xt.columns) == ["id__a"] 
+    assert list(Xt.columns) == ["id__a"]
