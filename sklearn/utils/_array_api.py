@@ -6,7 +6,6 @@
 import itertools
 import math
 import os
-from functools import wraps
 
 import numpy
 import scipy
@@ -294,20 +293,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-def _check_device_cpu(device):
-    if device not in {"cpu", None}:
-        raise ValueError(f"Unsupported device for NumPy: {device!r}")
-
-
-def _accept_device_cpu(func):
-    @wraps(func)
-    def wrapped_func(*args, **kwargs):
-        _check_device_cpu(kwargs.pop("device", None))
-        return func(*args, **kwargs)
-
-    return wrapped_func
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
