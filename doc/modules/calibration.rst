@@ -277,7 +277,7 @@ are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
 On the other hand, temperature scaling naturally supports multiclass
-predictions by applying the softmax function.
+predictions by working with logits and finally applying the softmax function.
 
 Temperature Scaling
 ^^^^^^^^^^^^^^^^^^^
@@ -287,18 +287,16 @@ For a multi-class classification problem with :math:`n` classes, temperature sca
 function with a temperature parameter :math:`T`:
 
 .. math::
-       \mathrm{softmax}\left( \left[ \frac{z_1}{T},
-       \cdots, \frac{z_n}{T} \right] \right) \,,
+       \mathrm{softmax}\left(\frac{z}{T}\right) \,,
 
-where :math:`\left[z_1, \cdots, z_n \right]` are the logits for each class produced
+where :math:`z` is the vector of logits for each class produced
 by the calibrating estimator for a given sample. In terms of scikit-learn's API,
 these correspond to the outputs of either :term:`decision_function` or
-:term:`predict_proba`. Probabilities are converted to logits by first adding a small
-positive constant to avoid taking the logarithm of zero, and then applying the natural
+:term:`predict_proba`. Probabilities are converted to logits by first adding a tiny
+positive constant to avoid numerical issues with logarithm of zero, and then applying the natural
 logarithm.
 
-Temperature scaling is equivalent to training a neural network with a single neuron
-activated by the softmax function. The parameter :math:`T` is learned by minimizing
+The parameter :math:`T` is learned by minimizing
 :func:`~sklearn.metrics.log_loss` (i.e. cross-entropy loss) on a validation set.
 In scikit-learn’s implementation, the inverse temperature `beta = 1 / T`
 is optimized instead, so that the calibrated probabilities are given by
@@ -308,21 +306,10 @@ Note that the temperature parameter :math:`T` (and hence `beta`) does not
 affect the location of the maximum in the softmax output. Therefore, temperature
 scaling does not alter the accuracy of the calibrating estimator.
 
-
-Advantages of temperature scaling include:
-
-1. It provides a natural way to obtain multi-class probabilities, avoiding the
-   common dilemma of choosing between "One-vs-One" and "One-vs-Rest" schemes.
-
-2. It offers a computationally efficient way to generate probability predictions.
-
-   For example, :class:`~sklearn.svm.SVC` requires the parameter `probability=True`
-   in order to use :term:`predict_proba`, which increases training time.
-   Similarly, :class:`~sklearn.linear_model.SGDClassifier` supports :term:`predict_proba`
-   only when the `loss` parameter is set to `log_loss` or `modified_huber`.
-
-   Temperature scaling, in contrast, requires training only a single scalar parameter
-   to produce probability estimates.
+The main advantage of temperature scaling over other calibration methods is that it
+provides a natural way to obtain (better) calibrated multi-class probabilities with
+just one free parameter in contrast to using a "One-vs-Rest" scheme that adds more
+parameters for each single class.
 
 .. rubric:: Examples
 
