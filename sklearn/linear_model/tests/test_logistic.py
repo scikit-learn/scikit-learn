@@ -1347,7 +1347,10 @@ def test_logreg_predict_proba_multinomial(global_random_seed):
     assert clf_wrong_loss > clf_multi_loss
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("max_iter", np.arange(1, 5))
+@pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(
     "solver, message",
     [
@@ -1365,10 +1368,13 @@ def test_logreg_predict_proba_multinomial(global_random_seed):
         ("newton-cholesky", "Newton solver did not converge after [0-9]* iterations"),
     ],
 )
-def test_max_iter(global_random_seed, max_iter, solver, message):
+def test_max_iter(global_random_seed, max_iter, multi_class, solver, message):
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
     y_bin[y_bin == 2] = 0
+
+    if solver in ("liblinear",) and multi_class == "multinomial":
+        pytest.skip("'multinomial' is not supported by liblinear")
 
     if solver == "newton-cholesky" and max_iter > 1:
         pytest.skip("solver newton-cholesky might converge very fast")
@@ -1521,14 +1527,20 @@ def test_saga_vs_liblinear(global_random_seed, csr_container):
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+@pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(
     "solver", ["liblinear", "newton-cg", "newton-cholesky", "saga"]
 )
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_dtype_match(solver, fit_intercept, csr_container):
+def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
     # Test that np.float32 input data is not cast to np.float64 when possible
     # and that the output is approximately the same no matter the input format.
+
+    if solver == "liblinear" and multi_class == "multinomial":
+        pytest.skip(f"Solver={solver} does not support multinomial logistic.")
 
     out32_type = np.float64 if solver == "liblinear" else np.float32
 
@@ -1596,6 +1608,7 @@ def test_dtype_match(solver, fit_intercept, csr_container):
 
 def test_warm_start_converge_LR(global_random_seed):
     # Test to see that the logistic regression converges on warm start,
+    # with multi_class='multinomial'. Non-regressive test for #10836
     # Non-regressive test for #10836
 
     rng = np.random.RandomState(global_random_seed)
@@ -1883,8 +1896,10 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
 # Remove multi_class an change first element of the expected n_iter_.shape from
 # n_classes to 1 (according to the docstring).
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
