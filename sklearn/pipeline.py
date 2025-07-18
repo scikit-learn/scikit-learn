@@ -2026,9 +2026,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             for name, _ in self.transformer_list:
                 routed_params[name] = Bunch(transform={})
 
-        # Get transformer names for hstack verbose error messages
-        transformer_names = set(name for name, _ in self.transformer_list)
-
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
             for name, trans, weight in self._iter()
@@ -2037,27 +2034,16 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return self._hstack(
-            Xs, transformer_names=transformer_names, n_samples=X.shape[0]
-        )
+        return self._hstack(Xs)
 
-    def _hstack(self, Xs, transformer_names=None, n_samples=None):
+    def _hstack(self, Xs):
         # Check if Xs dimensions are valid
-        for idx, X in enumerate(Xs):
-            if X.ndim != 2:
-                name = (
-                    transformer_names[idx]
-                    if transformer_names
-                    else f"transformer_{idx}"
-                )
+        for X, (name, _) in zip(Xs, self.transformer_list):
+            if hasattr(X, "shape") and len(X.shape) != 2:
                 raise ValueError(
-                    f"Transformer '{name}' returned an array with {X.ndim} dimensions, "
-                    "but expected 2 dimensions (n_samples, n_features)."
-                )
-            if n_samples is not None and X.shape[0] != n_samples:
-                raise ValueError(
-                    f"Transformer '{name}' returned an array with {X.shape[0]} "
-                    f"samples, but expected {n_samples} samples."
+                    f"Transformer '{name}' returned an array or dataframe with "
+                    f"{len(X.shape)} dimensions, but expected 2 dimensions "
+                    "(n_samples, n_features)."
                 )
 
         adapter = _get_container_adapter("transform", self)
@@ -2065,10 +2051,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        return np.hstack(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)

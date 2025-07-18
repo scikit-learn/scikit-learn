@@ -10,7 +10,6 @@ from tempfile import mkdtemp
 
 import joblib
 import numpy as np
-import pandas as pd
 import pytest
 
 from sklearn import config_context
@@ -1891,6 +1890,22 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
+def test_feature_union_1d_output():
+    """Test that FeatureUnion raises error for 1D transformer outputs."""
+    X = np.arange(6).reshape(3, 2)
+
+    with pytest.raises(
+        ValueError,
+        match="Transformer 'b' returned an array or dataframe with 1 dimensions",
+    ):
+        FeatureUnion(
+            [
+                ("a", FunctionTransformer(lambda X: X)),
+                ("b", FunctionTransformer(lambda X: X[:, 1])),
+            ]
+        ).fit_transform(X)
+
+
 # transform_input tests
 # =====================
 
@@ -2398,20 +2413,6 @@ def test_feature_union_metadata_routing(transformer):
                 parent="fit",
                 **kwargs,
             )
-
-
-@config_context(enable_metadata_routing=True)
-def test_feature_union_xs_dims():
-    """Test that FeatureUnion raises error for 1D transformer outputs."""
-    data = pd.DataFrame(dict(a=range(3), b=range(3)))
-
-    with pytest.raises(ValueError, match="returned an array with 1 dimensions"):
-        FeatureUnion(
-            [
-                ("a", FunctionTransformer(lambda df: df["a"])),
-                ("b", FunctionTransformer(lambda df: df["b"])),
-            ]
-        ).fit_transform(data)
 
 
 # End of routing tests
