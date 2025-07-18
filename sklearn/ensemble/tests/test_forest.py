@@ -1187,6 +1187,44 @@ def test_1d_input(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+def test_validate_y_class_weight(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(random_state=0)
+    # toy dataset with two classes
+    y = np.array([1, 1, 1, 0, 0, 0])
+    sw = np.array([1, 2, 3, 1, 1, 1])
+    weighted_frequency = np.array([sw[y == i].sum() / sw.sum() for i in [0, 1]])
+    balanced_class_weight = 1 / (2 * weighted_frequency)
+    # validation in fit reshapes y as (n_samples, 1)
+    y_reshaped = np.reshape(y, (-1, 1))
+    clf._n_samples, clf.n_outputs_ = y_reshaped.shape
+
+    # checking dict class_weight
+    class_weight = np.array([1, 7])
+    class_weight_dict = dict(enumerate(class_weight))
+    clf.set_params(class_weight=class_weight_dict)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, class_weight[y])
+
+    # checking class_weight="balanced"
+    clf.set_params(class_weight="balanced")
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, balanced_class_weight[y])
+
+    # checking class_weight="balanced_subsample" with bootstrap=False
+    # (should be equivalent to "balanced")
+    clf.set_params(class_weight="balanced_subsample", bootstrap=False)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, balanced_class_weight[y])
+
+    # checking class_weight="balanced_subsample" with bootstrap=True
+    # (should be None)
+    clf.set_params(class_weight="balanced_subsample", bootstrap=True)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert expanded_class_weight is None
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 def test_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
