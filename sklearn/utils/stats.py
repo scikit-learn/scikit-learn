@@ -131,7 +131,10 @@ def _weighted_percentile(
         # `is_exact_percentile = fraction_above <= xp.finfo(floating_dtype).eps`
         # but that seems harder to read
         is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
-        percentile_plus_one_in_sorted = sorted_idx[percentile_indices + 1, col_indices]
+        percentile_plus_one_indices = xp.clip(percentile_indices + 1, 0, max_idx)
+        percentile_plus_one_in_sorted = sorted_idx[
+            percentile_plus_one_indices, col_indices
+        ]
         # Handle case when when next index ('plus one') has sample weight of 0
         if xp.any(sample_weight[percentile_plus_one_in_sorted, col_indices] == 0):
             for idx in col_indices:
@@ -144,14 +147,13 @@ def _weighted_percentile(
                     next_cdf_index = xp.searchsorted(
                         weight_cdf[idx, ...], cdf_val, side="right"
                     )
-                    # To account for trailing 0 sample weights, use original
-                    # `percentile_indices` again
+                    # This occurs when there are trailing 0 sample weight samples
+                    # and `percentage_rank=100`
                     if next_cdf_index >= max_idx:
+                        # use original `percentile_indices` again
                         next_cdf_index = percentile_indices[idx]
 
-                    percentile_plus_one_in_sorted[idx] = sorted_idx[
-                        next_cdf_index, col_indices
-                    ]
+                    percentile_plus_one_in_sorted[idx] = sorted_idx[next_cdf_index, idx]
 
         result = xp.where(
             is_fraction_above,

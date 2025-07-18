@@ -72,17 +72,24 @@ def test_weighted_percentile_matches_numpy(
     assert score == np.percentile(y, percentile_rank, method=method)
 
 
-def test_weighted_percentile_zero_sample_weight():
-    """Check `weighted_percentile` on data with obvious median and a 0 weight."""
-    y = np.empty(102, dtype=np.float64)
-    y[:50] = 0
-    y[-51:] = 2
-    y[-1] = 100000
-    y[50] = 1
-    sw = np.ones_like(y, dtype=np.float64)
-    sw[-1] = 0.0
-    value = _weighted_percentile(y, sw, 50)
-    assert approx(value) == 1
+@pytest.mark.parametrize("percentile_rank", [50, 100])
+def test_weighted_percentile_plus_one_clip_max(percentile_rank):
+    """Check `j+1` index is clipped to max, when `average=True`.
+
+    `percentile_plus_one_indices` can exceed max index when `percentile_indices`
+    is already at max index.
+    Note that when `g` (Hyndman and Fan) / `fraction_above` greater than 0,
+    `j+1` (Hyndman and Fan) / `percentile_plus_one_indices` is calculated but
+    never used (so it does not matter what this value is).
+    When `g=0` and `percentile_indices` is at max index, we perfectly at 100
+    and take the average of 2x the max index.
+    """
+    # Note for both spercentile_rank`s`,`percentile_indices` is already at max index
+    y = np.array([[0, 0], [1, 1]])
+    sw = np.array([[0.1, 0.1], [2, 2]])
+    score = _weighted_percentile(y, sw, percentile_rank)
+    for idx in range(2):
+        assert score[idx] == approx(1.0)
 
 
 def test_weighted_percentile_equal():
@@ -117,8 +124,11 @@ def test_weighted_percentile_ignores_zero_weight(
     y = np.array([0, 1, 2, 3, 4, 5, 6])
     sw = np.array([0, 0, 1, 1, 0, 1, 0])
 
-    value = _weighted_percentile(y, sw, percentile_rank, average=average)
-    assert approx(value) == expected_value
+    value = _weighted_percentile(
+        np.vstack((y, y)).T, np.vstack((sw, sw)).T, percentile_rank, average=average
+    )
+    for idx in range(2):
+        assert approx(value[idx]) == expected_value
 
 
 @pytest.mark.parametrize("average", [True, False])
