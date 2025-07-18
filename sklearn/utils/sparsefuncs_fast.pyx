@@ -8,6 +8,7 @@ from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
+from ..utils._sparse import ensure_sparse_index_int32
 from ..utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
 
@@ -367,6 +368,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64, copy=False)
 
+    ensure_sparse_index_int32(X)
     return _incr_mean_variance_axis0(X.data,
                                      np.sum(weights),
                                      X.shape[1],
@@ -383,7 +385,7 @@ def _incr_mean_variance_axis0(
     const floating[:] X_data,
     floating n_samples,
     uint64_t n_features,
-    const integral[:] X_indices,
+    const int[:] X_indices,
     # X_indptr might be either int32 or int64
     const integral[:] X_indptr,
     str X_format,

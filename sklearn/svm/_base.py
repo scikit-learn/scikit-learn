@@ -58,9 +58,9 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
             sv2 = support_vectors[sv_locs[class2] : sv_locs[class2 + 1], :]
 
             # dual coef for class1 SVs:
-            alpha1 = dual_coef[class2 - 1, sv_locs[class1] : sv_locs[class1 + 1]]
+            alpha1 = dual_coef[[class2 - 1], sv_locs[class1] : sv_locs[class1 + 1]]
             # dual coef for class2 SVs:
-            alpha2 = dual_coef[class1, sv_locs[class2] : sv_locs[class2 + 1]]
+            alpha2 = dual_coef[[class1], sv_locs[class2] : sv_locs[class2 + 1]]
             # build weight for class1 vs class2
 
             coef.append(safe_sparse_dot(alpha1, sv1) + safe_sparse_dot(alpha2, sv2))
@@ -409,7 +409,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
         if not n_SV:
-            self.dual_coef_ = _align_api_if_sparse(sp.csr_array([]))
+            self.dual_coef_ = _align_api_if_sparse(sp.csr_array([[]]))
         else:
             dual_coef_indptr = np.arange(
                 0, dual_coef_indices.size + 1, dual_coef_indices.size / n_class
