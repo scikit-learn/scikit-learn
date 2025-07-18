@@ -750,13 +750,6 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
-    else:  # pragma: no cover
-        raise ValueError(
-            f"Invalid method '{method}'."
-            "Parameter method must be one of "
-            "{'sigmoid', 'isotonic', 'temperature'}."
-        )
-
     pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
     return pipeline
 
@@ -833,12 +826,6 @@ class _CalibratedClassifier:
                 )
         elif self.method == "temperature":
             proba = self.calibrators[0].predict(predictions)
-        else:  # pragma: no cover
-            raise ValueError(
-                f"Invalid method '{self.method}'."
-                "Parameter `method` must be one of "
-                "{'sigmoid', 'isotonic', 'temperature'}."
-            )
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
