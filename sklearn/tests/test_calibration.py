@@ -44,7 +44,7 @@ from sklearn.model_selection import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._tags import get_tags
@@ -290,7 +290,6 @@ def test_calibration_multiclass(method, ensemble, seed):
     cal_clf.fit(X_train, y_train)
     cal_clf_probs = cal_clf.predict_proba(X_test)
     calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=n_classes)
-    print(f"{calibrated_brier = }", f"{1.1 * uncalibrated_brier = }")
     assert calibrated_brier < 1.1 * uncalibrated_brier
 
 
@@ -429,9 +428,7 @@ def test_sigmoid_calibration():
 
 @pytest.mark.parametrize(
     "clf",
-    [
-        SVC(probability=True, kernel="rbf", C=0.05, random_state=42),
-    ],
+    [DecisionTreeClassifier(random_state=42)],
 )
 @pytest.mark.parametrize(
     "n_classes",
@@ -466,8 +463,7 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         calibrator = calibrated_classifier.calibrators[0]
         # Should not raise any error
         check_is_fitted(calibrator)
-        # The optimal inverse temperature parameter should always
-        # be positive
+        # The optimal inverse temperature parameter should always be positive
         assert calibrator.beta_ > 0
 
     if not ensemble:
@@ -487,8 +483,9 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         if n_classes == 2:
             y_scores = y_scores[:, 1]
             y_scores_cal = y_scores_cal[:, 1]
-        assert roc_auc_score(y_cal, y_scores, multi_class="ovr") <= roc_auc_score(
-            y_cal, y_scores_cal, multi_class="ovr"
+        assert_almost_equal(
+            roc_auc_score(y_cal, y_scores, multi_class="ovr"),
+            roc_auc_score(y_cal, y_scores_cal, multi_class="ovr"),
         )
 
 
