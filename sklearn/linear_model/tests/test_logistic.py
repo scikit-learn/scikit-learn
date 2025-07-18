@@ -145,13 +145,28 @@ def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(C=10), csr_container(X), Y2)
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
+)
 @pytest.mark.parametrize(
     "clf",
     [
         LogisticRegression(C=len(iris.data), solver="lbfgs"),
         LogisticRegression(C=len(iris.data), solver="newton-cg"),
-        LogisticRegression(C=len(iris.data), solver="sag", tol=1e-2),
-        LogisticRegression(C=len(iris.data), solver="saga", tol=1e-2),
+        LogisticRegression(
+            C=len(iris.data),
+            solver="sag",
+            tol=1e-2,
+            multi_class="ovr",
+        ),
+        LogisticRegression(
+            C=len(iris.data),
+            solver="saga",
+            tol=1e-2,
+            multi_class="ovr",
+        ),
         LogisticRegression(C=len(iris.data), solver="newton-cholesky"),
     ],
 )
@@ -612,6 +627,75 @@ def test_logistic_cv_sparse(global_random_seed, csr_container):
     assert clfs.C_ == clf.C_
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of multi_class
+# Best remove this whole test.
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
+def test_ovr_multinomial_iris():
+    # Test that OvR and multinomial are correct using the iris dataset.
+    train, target = iris.data, iris.target
+    n_samples, n_features = train.shape
+
+    # The cv indices from stratified kfold (where stratification is done based
+    # on the fine-grained iris classes, i.e, before the classes 0 and 1 are
+    # conflated) is used for both clf and clf1
+    n_cv = 2
+    cv = StratifiedKFold(n_cv)
+    precomputed_folds = list(cv.split(train, target))
+
+    # Train clf on the original dataset where classes 0 and 1 are separated
+    clf = LogisticRegressionCV(cv=precomputed_folds, multi_class="ovr")
+    clf.fit(train, target)
+
+    # Conflate classes 0 and 1 and train clf1 on this modified dataset
+    clf1 = LogisticRegressionCV(cv=precomputed_folds, multi_class="ovr")
+    target_copy = target.copy()
+    target_copy[target_copy == 0] = 1
+    clf1.fit(train, target_copy)
+
+    # Ensure that what OvR learns for class2 is same regardless of whether
+    # classes 0 and 1 are separated or not
+    assert_allclose(clf.scores_[2], clf1.scores_[2])
+    assert_allclose(clf.intercept_[2:], clf1.intercept_)
+    assert_allclose(clf.coef_[2][np.newaxis, :], clf1.coef_)
+
+    # Test the shape of various attributes.
+    assert clf.coef_.shape == (3, n_features)
+    assert_array_equal(clf.classes_, [0, 1, 2])
+    coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
+    assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+    assert clf.Cs_.shape == (10,)
+    scores = np.asarray(list(clf.scores_.values()))
+    assert scores.shape == (3, n_cv, 10)
+
+    # Test that for the iris data multinomial gives a better accuracy than OvR
+    for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
+        max_iter = 500 if solver in ["sag", "saga"] else 30
+        clf_multi = LogisticRegressionCV(
+            solver=solver,
+            max_iter=max_iter,
+            random_state=42,
+            tol=1e-3 if solver in ["sag", "saga"] else 1e-2,
+            cv=2,
+        )
+        if solver == "lbfgs":
+            # lbfgs requires scaling to avoid convergence warnings
+            train = scale(train)
+
+        clf_multi.fit(train, target)
+        multi_score = clf_multi.score(train, target)
+        ovr_score = clf.score(train, target)
+        assert multi_score > ovr_score
+
+        # Test attributes of LogisticRegressionCV
+        assert clf.coef_.shape == clf_multi.coef_.shape
+        assert_array_equal(clf_multi.classes_, [0, 1, 2])
+        coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
+        assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+        assert clf_multi.Cs_.shape == (10,)
+        scores = np.asarray(list(clf_multi.scores_.values()))
+        assert scores.shape == (3, n_cv, 10)
+
+
 def test_logistic_regression_solvers(global_random_seed):
     """Test solvers converge to the same result."""
     X, y = make_classification(
@@ -766,7 +850,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         class_weight=class_weight,
         tol=1e-8,
     )
-    clf_lbfgs = LogisticRegressionCV(**params)
+    clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
 
     # XXX: lbfgs' line search can fail and cause a ConvergenceWarning for some
     # 10% of the random seeds, but only on specific platforms (in particular
