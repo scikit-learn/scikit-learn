@@ -21,6 +21,7 @@ from ..base import (
 from ..utils import _array_api, check_array, resample
 from ..utils._array_api import (
     _find_matching_floating_dtype,
+    _max_precision_float_dtype,
     _modify_in_place_if_numpy,
     device,
     get_namespace,
@@ -85,8 +86,9 @@ def _is_constant_feature(var, mean, n_samples):
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.
-    xp, _ = get_namespace(var, mean)
-    eps = xp.finfo(xp.float64).eps
+    xp, _, device_ = get_namespace_and_device(var, mean)
+    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    eps = xp.finfo(max_float_dtype).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
     return var <= upper_bound

@@ -1071,7 +1071,11 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     This is usually float64, but may be float32 for some namespace/device pairs.
     """
     xp, _, x_device = get_namespace_and_device(x)
-    if xp.isdtype(x.dtype, "real floating") and xp.finfo(x.dtype).bits < 64:
+    max_float_dtype = _max_precision_float_dtype(xp, device=x_device)
+    if (
+        xp.isdtype(x.dtype, "real floating")
+        and xp.finfo(x.dtype).bits < xp.finfo(max_float_dtype).bits
+    ):
         # We need to upcast. Some ops support this natively; others don't.
         target_dtype = _max_precision_float_dtype(xp, device=x_device)
 
