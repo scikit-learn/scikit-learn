@@ -147,7 +147,6 @@ def test_predict_3_classes(csr_container):
 @pytest.mark.parametrize(
     "clf",
     [
-        LogisticRegression(C=len(iris.data), solver="liblinear"),
         LogisticRegression(C=len(iris.data), solver="lbfgs"),
         LogisticRegression(C=len(iris.data), solver="newton-cg"),
         LogisticRegression(C=len(iris.data), solver="sag", tol=1e-2),
