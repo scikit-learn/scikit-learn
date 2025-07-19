@@ -12,7 +12,7 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.utils import metadata_routing
+from sklearn.utils import _align_api_if_sparse, metadata_routing
 
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
@@ -1133,7 +1133,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     @property
     def sparse_coef_(self):
         """Sparse representation of the fitted `coef_`."""
-        return sparse.csr_matrix(self.coef_)
+        return _align_api_if_sparse(sparse.csr_array(np.atleast_2d(self.coef_)))
 
     def _decision_function(self, X):
         """Decision function of the linear model.
