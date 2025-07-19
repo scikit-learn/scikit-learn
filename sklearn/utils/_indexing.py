@@ -8,9 +8,9 @@ from collections import UserList
 from itertools import compress, islice
 
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import issparse, isspmatrix
 
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
+from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, parse_version, sp_base_version
 
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
@@ -33,8 +33,13 @@ def _array_indexing(array, key, key_dtype, axis):
     xp, is_array_api = get_namespace(array)
     if is_array_api:
         return xp.take(array, key, axis=axis)
-    if issparse(array) and key_dtype == "bool":
-        key = np.asarray(key)
+    if issparse(array):
+        if key_dtype == "bool":
+            key = np.asarray(key)
+        # TODO remove this clause when SciPy 1.15 is min supported version
+        elif sp_base_version < parse_version("1.15.0"):
+            if not isspmatrix(array) and key_dtype == "int":
+                key = list(key)
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
