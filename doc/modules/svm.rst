@@ -119,19 +119,17 @@ properties of these support vectors can be found in attributes
 Multi-class classification
 --------------------------
 
-:class:`SVC` and :class:`NuSVC` implement the "one-versus-one"
-approach for multi-class classification. In total,
-``n_classes * (n_classes - 1) / 2``
-classifiers are constructed and each one trains data from two classes.
-To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to monotonically transform the
-results of the "one-versus-one" classifiers to a "one-vs-rest" decision
-function of shape ``(n_samples, n_classes)``, which is the default setting
-of the parameter (default='ovr').
+:class:`SVC` and :class:`NuSVC` default to the one-vs-rest ("ovr") approach for multi-class classification since scikit-learn 0.19, via ``decision_function_shape='ovr'``. You can switch back to one-vs-one ("ovo") by setting ``decision_function_shape='ovo'``.
+
+    >>> from sklearn.svm import SVC
+    >>> SVC().decision_function_shape
+    'ovr'
+
+In total, ``n_classes * (n_classes - 1) / 2`` classifiers are constructed for the one-vs-one approach, each one trains data from two classes. To provide a consistent interface with other classifiers, the ``decision_function_shape`` option allows to monotonically transform the results of the "one-versus-one" classifiers to a "one-vs-rest" decision function of shape ``(n_samples, n_classes)``, which is the default setting of the parameter (default='ovr').
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
-    >>> clf = svm.SVC(decision_function_shape='ovo')
+    >>> clf = SVC(decision_function_shape='ovo')
     >>> clf.fit(X, Y)
     SVC(decision_function_shape='ovo')
     >>> dec = clf.decision_function([[1]])
