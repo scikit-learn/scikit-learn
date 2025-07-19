@@ -1352,8 +1352,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
             if self.clip:
-                X.data[X.data > 1.0] = 1.0
-                X.data[X.data < -1.0] = -1.0
+                if X.format == "coo":
+                    X = X.tocsr()
+                    X.data[X.data > 1.0] = 1.0
+                    X.data[X.data < -1.0] = -1.0
+                    X = X.tocoo()
+                else:
+                    X.data[X.data > 1.0] = 1.0
+                    X.data[X.data < -1.0] = -1.0
         else:
             X /= self.scale_
             if self.clip:
