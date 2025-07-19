@@ -2527,9 +2527,10 @@ def test_minmax_scaler_clip(feature_range):
     )
 
 
-def test_maxabs_scaler_clip():
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
+def test_maxabs_scaler_clip(sparse_container):
     # test behaviour of the parameter 'clip' in MaxAbsScaler
-    X = iris.data
+    X = sparse_container(iris.data) if sparse_container else iris.data
     # assertion will check that values will be less than
     max_abs_value = 1.0 + np.finfo(np.float64).eps
     scaler = MaxAbsScaler(clip=True).fit(X)
