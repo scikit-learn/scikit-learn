@@ -60,7 +60,7 @@ if sp_base_version >= parse_version("1.12.0"):
             random_state=rng or random_state,
             data_sampler=data_sampler,
         )
-        ensure_sparse_index_int32(X)
+        _ensure_sparse_index_int32(X)
         return X
 
 else:
@@ -96,7 +96,8 @@ else:
 ########### fixes for casting index arrays
 
 
-def ensure_sparse_index_int32(A):
+def _ensure_sparse_index_int32(A):
+    """Safely ensure that index arrays are int32."""
     if A.format in ("csc", "csr", "bsr"):
         A.indices, A.indptr = safely_cast_index_arrays(A)
     elif A.format == "coo":
@@ -111,6 +112,7 @@ def ensure_sparse_index_int32(A):
 
 
 # TODO: remove when SciPy 1.15 is minimal supported version
+#       (based on scipy.sparse._sputils.py function with same name)
 def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
     """Safely cast sparse array indices to `idx_dtype`.
 
