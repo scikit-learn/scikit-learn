@@ -2530,8 +2530,6 @@ def test_minmax_scaler_clip(feature_range):
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_maxabs_scaler_clip(sparse_container):
     X = sparse_container(iris.data) if sparse_container else iris.data
-    # assertion will check that values will be strictly less than 1 + eps
-    max_abs_value = 1.0 + np.finfo(np.float64).eps
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = (
@@ -2540,9 +2538,10 @@ def test_maxabs_scaler_clip(sparse_container):
         else [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
     )
     X_transformed = scaler.transform(X_test)
+    # assertion checks that absolute values are strictly less than 1 + eps
     assert_array_less(
         np.abs(X_transformed),
-        [[max_abs_value, max_abs_value, max_abs_value, max_abs_value]],
+        1.0 + np.finfo(np.float32).eps,
     )
 
 
