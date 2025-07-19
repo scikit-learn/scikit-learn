@@ -2535,7 +2535,11 @@ def test_maxabs_scaler_clip(sparse_container):
     max_abs_value = 1.0 + np.finfo(np.float64).eps
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
-    X_test = [np.r_[X_min.data[:2] - 10, X_max.data[2:] + 10]]
+    X_test = (
+        [np.r_[X_min.data[:2] - 10, X_max.data[2:] + 10]]
+        if sparse_container
+        else [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
+    )
     X_transformed = scaler.transform(X_test)
     assert_array_less(
         np.abs(X_transformed),
