@@ -904,19 +904,23 @@ def test_estimator_getstate_using_slots_error_message():
 
 
 @pytest.mark.parametrize(
-    "constructor_name, minversion",
+    "constructor_lib, minversion",
     [
-        ("dataframe", "1.5.0"),
+        ("pandas", "1.5.0"),
         ("pyarrow", "12.0.0"),
         ("polars", "0.20.23"),
     ],
 )
-def test_dataframe_protocol(constructor_name, minversion):
+def test_dataframe_protocol(constructor_lib, minversion):
     """Uses the dataframe exchange protocol to get feature names."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data,
+        "dataframe",
+        constructor_lib=constructor_lib,
+        column_names=columns,
+        minversion=minversion,
     )
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
@@ -932,13 +936,15 @@ def test_dataframe_protocol(constructor_name, minversion):
     assert_array_equal(no_op.feature_names_in_, columns)
     X_out = no_op.transform(df)
 
-    if constructor_name != "pyarrow":
+    if constructor_lib != "pyarrow":
         # pyarrow does not work with `np.asarray`
         # https://github.com/apache/arrow/issues/34886
         assert_allclose(df, X_out)
 
     bad_names = ["a", "b", "c"]
-    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    df_bad = _convert_container(
+        data, "dataframe", constructor_lib=constructor_lib, column_names=bad_names
+    )
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
 
