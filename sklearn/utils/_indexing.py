@@ -38,7 +38,7 @@ def _array_indexing(array, key, key_dtype, axis):
             key = np.asarray(key)
         # TODO remove this clause when SciPy 1.15 is min supported version
         elif sp_base_version < parse_version("1.15.0"):
-            if not isspmatrix(array) and key_dtype == "int":
+            if not isspmatrix(array) and not isinstance(key, slice):
                 key = list(key)
     if isinstance(key, tuple):
         key = list(key)
