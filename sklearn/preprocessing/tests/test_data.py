@@ -2538,10 +2538,9 @@ def test_maxabs_scaler_clip(sparse_container):
         else [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
     )
     X_transformed = scaler.transform(X_test)
-    # assertion checks that absolute values are strictly less than 1 + eps
     assert_array_less(
-        np.abs(X_transformed),
-        1.0 + np.finfo(np.float32).eps,
+        np.abs(X_transformed.data),
+        1.0 + np.finfo(np.float64).eps,  # as less or equal
     )
 
 
