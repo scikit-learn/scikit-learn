@@ -1,0 +1,2 @@
+- :class:`preprocessing.MaxAbsScaler` can now handle clip values in held-out data
+  with the parameter `clip`. By :user:`Hleb Levitski <glevv>`.

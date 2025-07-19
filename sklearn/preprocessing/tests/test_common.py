@@ -42,7 +42,7 @@ def _get_valid_samples_by_column(X, col):
 @pytest.mark.parametrize(
     "est, func, support_sparse, strictly_positive, omit_kwargs",
     [
-        (MaxAbsScaler(), maxabs_scale, True, False, []),
+        (MaxAbsScaler(), maxabs_scale, True, False, ["clip"]),
         (MinMaxScaler(), minmax_scale, False, False, ["clip"]),
         (StandardScaler(), scale, False, False, []),
         (StandardScaler(with_mean=False), scale, True, False, []),

@@ -1171,6 +1171,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
+    clip : bool, default=False
+        Set to True to clip transformed values of held-out data to
+        learned maximum absolute value.
+        Clipping transformed values does not prevent feature drift;
+        it only prevents out-of-range values in held-out data.
+        Since this parameter will clip values, inverse transform won't
+        be able to restore the original ones.
+
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,)
@@ -1221,10 +1229,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints: dict = {"copy": ["boolean"]}
+    _parameter_constraints: dict = {
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
 
-    def __init__(self, *, copy=True):
+    def __init__(self, *, copy=True, clip=False):
         self.copy = copy
+        self.clip = clip
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -1339,8 +1351,21 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
+            if self.clip:
+                X.data[X.data > 1.0] = 1.0
+                X.data[X.data < -1.0] = -1.0
         else:
             X /= self.scale_
+            if self.clip:
+                device_ = device(X)
+                X = _modify_in_place_if_numpy(
+                    xp,
+                    xp.clip,
+                    X,
+                    xp.asarray(-1.0, dtype=X.dtype, device=device_),
+                    xp.asarray(1.0, dtype=X.dtype, device=device_),
+                    out=X,
+                )
         return X
 
     def inverse_transform(self, X):
@@ -1389,7 +1414,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     },
     prefer_skip_nested_validation=False,
 )
-def maxabs_scale(X, *, axis=0, copy=True):
+def maxabs_scale(X, *, axis=0, copy=True, clip=False):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
     This estimator scales each feature individually such
@@ -1412,6 +1437,12 @@ def maxabs_scale(X, *, axis=0, copy=True):
         This is not guaranteed to always work in place; e.g. if the data is
         a numpy array with an int dtype, a copy will be returned even with
         copy=False.
+
+    clip : bool, default=False
+        Set to True to clip transformed values of held-out data to
+        learned maximum absolute value.
+        Clipping transformed values does not prevent feature drift;
+        it only prevents out-of-range values in held-out data.
 
     Returns
     -------
@@ -1471,7 +1502,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MaxAbsScaler(copy=copy)
+    s = MaxAbsScaler(copy=copy, clip=clip)
     if axis == 0:
         X = s.fit_transform(X)
     else:
