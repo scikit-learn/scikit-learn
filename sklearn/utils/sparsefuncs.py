@@ -718,13 +718,13 @@ def csc_median_axis_0(X):
 def _implicit_column_offset(X, offset):
     """Create an implicitly offset linear operator.
 
-    This is used by PCA on sparse data to avoid densifying the whole data
-    matrix.
+    This is used by PCA and IncrementalPCA on sparse data to avoid densifying the whole
+    data matrix.
 
-    Params
-    ------
-        X : sparse matrix of shape (n_samples, n_features)
-        offset : ndarray of shape (n_features,)
+    Parameters
+    ----------
+    X : sparse matrix of shape (n_samples, n_features)
+    offset : ndarray of shape (n_features,)
 
     Returns
     -------
@@ -739,4 +739,48 @@ def _implicit_column_offset(X, offset):
         rmatmat=lambda x: XT @ x - offset.T @ x.sum(axis=0)[None, :],
         dtype=X.dtype,
         shape=X.shape,
+    )
+
+
+def _implicit_vstack(blocks):
+    """Create an implicitly vertically stacked linear operator.
+
+    This is used by IncrementalPCA on sparse data to avoid densifying the whole data
+    matrix. The reason is that `scipy.sparse.vstack` does not handle LinearOperator.
+
+    Parameters
+    ----------
+    blocks : sequence of arrays
+        The blocks to stack vertically. They can be dense/sparse arrays or
+        LinearOperators. All blocks must be 2-dimensional with the same number of
+        columns.
+
+    Returns
+    -------
+    vstacked : LinearOperator
+    """
+    dtypes = [block.dtype for block in blocks]
+    ms = [block.shape[0] for block in blocks]
+    m = np.sum(ms)
+    n = blocks[0].shape[1]
+    boundaries = np.insert(np.cumsum(ms), 0, 0)
+    dtype = np.result_type(*dtypes)
+
+    def matvec(x):
+        y = np.zeros(m, dtype=dtype)
+        for i, block in enumerate(blocks):
+            y[boundaries[i] : boundaries[i + 1]] = (block @ x).squeeze()
+        return y
+
+    def rmatvec(x):
+        y = np.zeros(n, dtype=dtype)
+        for i, block in enumerate(blocks):
+            y += (block.T @ (x[boundaries[i] : boundaries[i + 1]])).squeeze()
+        return y
+
+    return LinearOperator(
+        matvec=matvec,
+        rmatvec=rmatvec,
+        dtype=dtype,
+        shape=(m, n),
     )
