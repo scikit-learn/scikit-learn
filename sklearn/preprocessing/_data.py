@@ -1176,6 +1176,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         learned maximum absolute value.
         Clipping transformed values does not prevent feature drift;
         it only prevents out-of-range values in held-out data.
+        Since this parameter will clip values, inverse transform won't
+        be able to restore the original ones.
 
     Attributes
     ----------
@@ -1355,7 +1357,15 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         else:
             X /= self.scale_
             if self.clip:
-                np.clip(X, 1.0, -1.0, out=X)
+                device_ = device(X)
+                X = _modify_in_place_if_numpy(
+                    xp,
+                    xp.clip,
+                    X,
+                    xp.asarray(-1.0, dtype=X.dtype, device=device_),
+                    xp.asarray(1.0, dtype=X.dtype, device=device_),
+                    out=X,
+                )
         return X
 
     def inverse_transform(self, X):
@@ -1431,6 +1441,8 @@ def maxabs_scale(X, *, axis=0, copy=True, clip=False):
     clip : bool, default=False
         Set to True to clip transformed values of held-out data to
         learned maximum absolute value.
+        Clipping transformed values does not prevent feature drift;
+        it only prevents out-of-range values in held-out data.
 
     Returns
     -------

@@ -2530,7 +2530,7 @@ def test_minmax_scaler_clip(feature_range):
 def test_maxabs_scaler_clip():
     # test behaviour of the parameter 'clip' in MaxAbsScaler
     X = iris.data
-    feature_range = (-1, 1)
+    feature_range = (-1.0, 1.0)
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
