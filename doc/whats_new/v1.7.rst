@@ -15,6 +15,62 @@ For a short description of the main highlights of the release, please refer to
 
 .. towncrier release notes start
 
+.. _changes_1_7_1:
+
+Version 1.7.1
+=============
+
+**July 2025**
+
+:mod:`sklearn.base`
+-------------------
+
+- |Fix| Fix regression in HTML representation when detecting the non-default parameters
+  that where of array-like types.
+  By :user:`Dea María Léon <deamarialeon>` :pr:`31528`
+
+:mod:`sklearn.compose`
+----------------------
+
+- |Fix| :class:`compose.ColumnTransformer` now correctly preserves non-default index
+  when mixing pandas Series and Dataframes.
+  By :user:`Nicolas Bolle <nicolas-bolle>`. :pr:`31079`
+
+:mod:`sklearn.datasets`
+-----------------------
+
+- |Fix| Fixed a regression preventing to extract the downloaded dataset in
+  :func:`datasets.fetch_20newsgroups`, :func:`datasets.fetch_20newsgroups_vectorized`,
+  :func:`datasets.fetch_lfw_people` and :func:`datasets.fetch_lfw_pairs`. This
+  only affects Python versions `>=3.10.0,<=3.10.11` and `>=3.11.0,<=3.11.3`.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>`. :pr:`31685`
+
+:mod:`sklearn.inspection`
+-------------------------
+
+- |Fix| Fix multiple issues in the multiclass setting of :class:`inspection.DecisionBoundaryDisplay`:
+
+  - `contour` plotting now correctly shows the decision boundary.
+  - `cmap` and `colors` are now properly ignored in favor of `multiclass_colors`.
+  - Linear segmented colormaps are now fully supported.
+
+  By :user:`Yunjie Lin <jshn9515>` :pr:`31553`
+
+:mod:`sklearn.naive_bayes`
+--------------------------
+
+- |Fix| :class:`naive_bayes.CategoricalNB` now correctly declares that it accepts
+  categorical features in the tags returned by its `__sklearn_tags__` method.
+  By :user:`Olivier Grisel <ogrisel>` :pr:`31556`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Fix| Fixed a spurious warning (about the number of unique classes being
+  greater than 50% of the number of samples) that could occur when
+  passing `classes` :func:`utils.multiclass.type_of_target`.
+  By :user:`Sascha D. Krauss <saskra>`. :pr:`31584`
+
 .. _changes_1_7_0:
 
 Version 1.7.0
@@ -483,32 +539,37 @@ more details.
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.6, including:
 
-4hm3d, Aaron Schumacher, Abhijeetsingh Meena, Acciaro Gennaro Daniele, 
-Achraf Tasfaout, Adrien Linares, Adrin Jalali, Agriya Khetarpal, Aiden Frank, 
-Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alfredo Saucedo, 
-Anderson Chaves, Andres Guzman-Ballen, Aniruddha Saha, antoinebaker, Antony 
-Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash, Ashton Powell, 
-ayoub.agouzoul, Bagus Tris Atmaja, Benjamin Danek, Boney Patel, Camille 
-Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis, Christine P. 
-Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey Farwell, 
-Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha, 
-dependabot[bot], Dimitri Papadopoulos Orfanos, Dmitry Kobak, Domenico, Elham 
-Babaei, emelia-hdz, EmilyXinyi, Emma Carballal, Eric Larson, fabianhenning, 
-Gael Varoquaux, Gil Ramot, Gordon Grey, Goutam, G Sreeja, Guillaume Lemaitre, 
-Haesun Park, Hanjun Kim, Helder Geovane Gomes de Lima, Henri Bonamy, Hleb 
-Levitski, Hugo Boulenger, IlyaSolomatin, Irene, Jérémie du Boisberranger, 
-Jérôme Dockès, JoaoRodriguesIST, Joel Nothman, Josh, Kevin Klein, Loic 
-Esteve, Lucas Colley, Luc Rocher, Lucy Liu, Luis M. B. Varona, lunovian, Mamduh 
-Zabidi, Marc Bresson, Marco Edward Gorelli, Marco Maggi, Maren Westermann, 
-Marie Sacksick, Martin Jurča, Miguel González Duque, Mihir Waknis, Mohamed 
-Ali SRIR, Mohamed DHIFALLAH, mohammed benyamna, Mohit Singh Thakur, Mounir 
-Lbath, myenugula, Natalia Mokeeva, Olivier Grisel, omahs, Omar Salman, Pedro 
-Lopes, Pedro Olivares, Preyas Shah, Radovenchyk, Rahil Parikh, Rémi Flamary, 
-Reshama Shaikh, Rishab Saini, rolandrmgservices, SanchitD, Santiago Castro, 
-Santiago Víquez, scikit-learn-bot, Scott Huberty, Shruti Nath, Siddharth 
-Bansal, Simarjot Sidhu, Sortofamudkip, sotagg, Sourabh Kumar, Stefan, Stefanie 
-Senger, Stefano Gaspari, Stephen Pardy, Success Moses, Sylvain Combettes, Tahar 
-Allouche, Thomas J. Fan, Thomas Li, ThorbenMaa, Tim Head, Umberto Fasci, UV, 
-Vasco Pereira, Vassilis Margonis, Velislav Babatchev, Victoria Shevchenko, 
-viktor765, Vipsa Kamani, Virgil Chan, vpz, Xiao Yuan, Yaich Mohamed, Yair 
-Shimony, Yao Xiao, Yaroslav Halchenko, Yulia Vilensky, Yuvi Panda
+4hm3d, Aaron Schumacher, Abhijeetsingh Meena, Acciaro Gennaro Daniele,
+Achraf Tasfaout, Adriano Leão, Adrien Linares, Adrin Jalali, Agriya Khetarpal,
+Aiden Frank, Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alfredo
+Saucedo, Anderson Chaves, Andres Guzman-Ballen, Aniruddha Saha, antoinebaker,
+Antony Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash, Ashton Powell,
+ayoub.agouzoul, Ayrat, Bagus Tris Atmaja, Benjamin Danek, Boney Patel, Camille
+Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis, Christine P.
+Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey Farwell,
+Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha,
+dependabot[bot], Dhyey Findoriya, Dimitri Papadopoulos Orfanos, Dmitry Kobak,
+Domenico, Elham Babaei, emelia-hdz, EmilyXinyi, Emma Carballal, Eric Larson,
+Eugen-Bleck, Evgeni Burovski, fabianhenning, Gael Varoquaux, GaetandeCast, Gil
+Ramot, Gordon Grey, Goutam, G Sreeja, Guillaume Lemaitre, Haesun Park, Hanjun
+Kim, Helder Geovane Gomes de Lima, Henri Bonamy, Hleb Levitski, Hugo Boulenger,
+IlyaSolomatin, Irene, Jérémie du Boisberranger, Jérôme Dockès,
+JoaoRodriguesIST, Joel Nothman, Josh, jshn9515, KALLA GANASEKHAR, Kevin Klein,
+Loic Esteve, Lucas Colley, Luc Rocher, Lucy Liu, Luis M. B. Varona, lunovian,
+Mamduh Zabidi, Marc Bresson, Marco Edward Gorelli, Marco Maggi, Maren
+Westermann, Marie Sacksick, Marija Vlajic, Martin Jurča, Mayank Raj, Michael
+Burkhart, Miguel González Duque, Mihir Waknis, Miro Hrončok, Mohamed Ali
+SRIR, Mohamed DHIFALLAH, mohammed benyamna, Mohit Singh Thakur, Mounir Lbath,
+myenugula, Natalia Mokeeva, Nicolas Bolle, Olivier Grisel, omahs, Omar Salman,
+Pedro Lopes, Pedro Olivares, Peter Holzer, Preyas Shah, Radovenchyk, Rahil
+Parikh, Rémi Flamary, Reshama Shaikh, Richard Harris, Rishab Saini,
+rolandrmgservices, SanchitD, Santiago Castro, Santiago Víquez, saskra,
+scikit-learn-bot, Scott Huberty, Shaurya Bisht, Shivam, Shruti Nath, Siddharth
+Bansal, SIKAI ZHANG, Simarjot Sidhu, sisird864, SiyuJin-1, Somdutta Banerjee,
+Sortofamudkip, sotagg, Sourabh Kumar, Stefan, Stefanie Senger, Stefano Gaspari,
+Steffen Rehberg, Stephen Pardy, Success Moses, Sylvain Combettes, Tahar
+Allouche, Thomas J. Fan, Thomas Li, ThorbenMaa, Tim Head, Tingwei Zhu, TJ
+Norred, Umberto Fasci, UV, Vasco Pereira, Vassilis Margonis, Velislav
+Babatchev, Victoria Shevchenko, viktor765, Vipsa Kamani, VirenPassi, Virgil
+Chan, vpz, Xiao Yuan, Yaich Mohamed, Yair Shimony, Yao Xiao, Yaroslav
+Halchenko, Yulia Vilensky, Yuvi Panda

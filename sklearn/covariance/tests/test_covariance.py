@@ -257,9 +257,9 @@ def test_ledoit_wolf_small():
     assert_almost_equal(shrinkage_, _naive_ledoit_wolf_shrinkage(X_small))
 
 
-def test_ledoit_wolf_large():
+def test_ledoit_wolf_large(global_random_seed):
     # test that ledoit_wolf doesn't error on data that is wider than block_size
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     # use a number of features that is larger than the block-size
     X = rng.normal(size=(10, 20))
     lw = LedoitWolf(block_size=10).fit(X)

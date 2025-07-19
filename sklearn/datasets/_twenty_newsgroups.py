@@ -43,6 +43,7 @@ from .. import preprocessing
 from ..feature_extraction.text import CountVectorizer
 from ..utils import Bunch, check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.fixes import tarfile_extractall
 from . import get_data_home, load_files
 from ._base import (
     RemoteFileMetadata,
@@ -81,10 +82,7 @@ def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
 
     logger.debug("Decompressing %s", archive_path)
     with tarfile.open(archive_path, "r:gz") as fp:
-        # Use filter="data" to prevent the most dangerous security issues.
-        # For more details, see
-        # https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
-        fp.extractall(path=target_dir, filter="data")
+        tarfile_extractall(fp, path=target_dir)
 
     with suppress(FileNotFoundError):
         os.remove(archive_path)
