@@ -462,8 +462,11 @@ class LabelPropagation(BaseLabelPropagation):
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=0)
-        if sparse.isspmatrix(affinity_matrix):
-            affinity_matrix.data /= np.diag(np.array(normalizer))
+        if sparse.issparse(affinity_matrix):
+            if normalizer.shape[0] == 1:
+                affinity_matrix.data /= np.diag(np.array(normalizer))
+            else:
+                affinity_matrix.data /= np.diag(np.array(normalizer[np.newaxis, :]))
         else:
             affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
