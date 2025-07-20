@@ -712,3 +712,61 @@ def test_pandas_copy_on_write():
     with pd.option_context("mode.copy_on_write", True):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+def test_target_encoder_pos_label():
+    """Test TargetEncoder pos_label parameter for binary classification."""
+    # Create simple binary classification data
+    X = np.array([["cat"], ["dog"], ["cat"], ["dog"], ["cat"], ["dog"]])
+    y = np.array(["yes", "no", "yes", "no", "yes", "no"])
+
+    # Test default behavior (pos_label=None) - should use LabelEncoder
+    encoder_default = TargetEncoder(target_type="binary", pos_label=None)
+    encoder_default.fit(X, y)
+    X_trans_default = encoder_default.transform(X)
+
+    # Test with pos_label='yes' - should use LabelBinarizer
+    encoder_pos_yes = TargetEncoder(target_type="binary", pos_label="yes")
+    encoder_pos_yes.fit(X, y)
+    X_trans_yes = encoder_pos_yes.transform(X)
+
+    # Test with pos_label='no' - should use LabelBinarizer  
+    encoder_pos_no = TargetEncoder(target_type="binary", pos_label="no")
+    encoder_pos_no.fit(X, y)
+    X_trans_no = encoder_pos_no.transform(X)
+
+    # Verify classes are set correctly
+    assert_array_equal(encoder_default.classes_, ["no", "yes"])  # LabelEncoder sorts
+    assert_array_equal(encoder_pos_yes.classes_, ["no", "yes"])  # LabelBinarizer 
+    assert_array_equal(encoder_pos_no.classes_, ["no", "yes"])   # LabelBinarizer
+
+    # Test with numeric binary labels
+    y_numeric = np.array([1, 0, 1, 0, 1, 0])
+    encoder_numeric = TargetEncoder(target_type="binary", pos_label=1)
+    encoder_numeric.fit(X, y_numeric)
+    assert_array_equal(encoder_numeric.classes_, [0, 1])
+
+    # Test that pos_label is ignored for non-binary targets
+    y_multiclass = np.array(["a", "b", "c", "a", "b", "c"])
+    encoder_multiclass = TargetEncoder(target_type="multiclass", pos_label="a")
+    encoder_multiclass.fit(X, y_multiclass)
+    # Should work without error - pos_label is ignored for multiclass
+
+
+@pytest.mark.parametrize("pos_label", [1, "yes", True])
+def test_target_encoder_pos_label_parameter_types(pos_label):
+    """Test that TargetEncoder accepts different types for pos_label."""
+    # Test that different parameter types are accepted
+    X = np.array([["a"], ["b"]])
+    
+    if pos_label == 1:
+        y = np.array([0, 1])
+    elif pos_label == "yes":
+        y = np.array(["no", "yes"])  
+    else:  # boolean True
+        y = np.array([False, True])
+    
+    encoder = TargetEncoder(target_type="binary", pos_label=pos_label)
+    encoder.fit(X, y)
+    # Should not raise any errors
+    assert encoder.pos_label == pos_label
