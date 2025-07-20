@@ -878,3 +878,51 @@ def test_base_estimator_deprecation(Estimator):
 
     with pytest.raises(ValueError):
         Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)
+
+
+def test_classifier_chain_multiclass_multioutput_error():
+    """Test that ClassifierChain raises clear error for multiclass-multioutput targets."""
+    # Create multiclass-multioutput data (3 classes per output)
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    y_multiclass_multioutput = np.array([
+        [0, 1],  # First output: class 0, Second output: class 1
+        [1, 2],  # First output: class 1, Second output: class 2  
+        [2, 0],  # First output: class 2, Second output: class 0
+        [0, 2],  # First output: class 0, Second output: class 2
+        [1, 1],  # First output: class 1, Second output: class 1
+        [2, 0],  # First output: class 2, Second output: class 0
+    ])
+    
+    # This should raise a ValueError with clear message
+    chain = ClassifierChain(LogisticRegression(random_state=42))
+    
+    expected_msg = (
+        "ClassifierChain does not support multiclass-multioutput targets. "
+        "ClassifierChain is designed for multilabel classification where "
+        "each target is binary \\(0 or 1\\). Your target has multiple classes "
+        "per output. Consider using MultiOutputClassifier instead."
+    )
+    
+    with pytest.raises(ValueError, match=expected_msg):
+        chain.fit(X, y_multiclass_multioutput)
+
+
+def test_classifier_chain_multilabel_still_works():
+    """Test that ClassifierChain still works correctly with multilabel data."""
+    # Create proper multilabel data (binary values only)
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    y_multilabel = np.array([
+        [0, 1],  # Not label 1, has label 2
+        [1, 1],  # Has label 1, has label 2
+        [0, 0],  # No labels
+        [1, 0],  # Has label 1, not label 2
+    ])
+    
+    # This should work fine (no error)
+    chain = ClassifierChain(LogisticRegression(random_state=42))
+    chain.fit(X, y_multilabel)
+    
+    # Basic functionality check
+    predictions = chain.predict(X)
+    assert predictions.shape == y_multilabel.shape
+    assert np.all((predictions == 0) | (predictions == 1))  # Should be binary

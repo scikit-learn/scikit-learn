@@ -41,7 +41,7 @@ from .utils.metadata_routing import (
     process_routing,
 )
 from .utils.metaestimators import available_if
-from .utils.multiclass import check_classification_targets
+from .utils.multiclass import check_classification_targets, type_of_target
 from .utils.parallel import Parallel, delayed
 from .utils.validation import (
     _check_method_params,
@@ -1085,6 +1085,20 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             Class instance.
         """
         _raise_for_params(fit_params, self, "fit")
+
+        # Validate input data
+        X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
+        
+        # Check if we have multiclass-multioutput targets, which are not supported
+        target_type = type_of_target(Y)
+        if target_type == "multiclass-multioutput":
+            raise ValueError(
+                "ClassifierChain does not support multiclass-multioutput "
+                "targets. ClassifierChain is designed for multilabel "
+                "classification where each target is binary (0 or 1). "
+                "Your target has multiple classes per output. "
+                "Consider using MultiOutputClassifier instead."
+            )
 
         super().fit(X, Y, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
