@@ -19,6 +19,7 @@ from ..utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
+    _check_sample_weight,
     check_is_fitted,
 )
 
@@ -72,6 +73,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _fit(
         self,
         X,
+        sample_weight=None,
         handle_unknown="error",
         ensure_all_finite=True,
         return_counts=False,
@@ -84,6 +86,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X, ensure_all_finite=ensure_all_finite
         )
         self.n_features_in_ = n_features
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
+            # Filtering rows with sample_weight equals zero so we don't get extra dummy
+            # columns.
+            X_list = [Xi[sample_weight != 0] for Xi in X_list]
+            sample_weight = sample_weight[sample_weight != 0]
+            n_samples = np.sum(sample_weight)
 
         if self.categories != "auto":
             if len(self.categories) != n_features:
@@ -100,7 +109,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
+                result = _unique(
+                    Xi, sample_weight=sample_weight, return_counts=compute_counts
+                )
                 if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
@@ -163,7 +174,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         )
                         raise ValueError(msg)
                 if compute_counts:
-                    category_counts.append(_get_counts(Xi, cats))
+                    category_counts.append(_get_counts(Xi, cats, sample_weight))
 
             self.categories_.append(cats)
 
@@ -281,11 +292,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        category_count : ndarray of shape (n_cardinality,)
-            Category counts.
+        category_count : array-like of shape (n_cardinality,)
+            Category counts or sum of `sample_weight` for the samples from the
+            category when `sample_weight` is different from `None`.
 
         n_samples : int
-            Number of samples.
+            Number of samples in training set or total sum of `sample_weight`
+            for all samples when `sample_weight` is different from `None`.
 
         col_idx : int
             Index of the current category. Only used for the error message.
@@ -348,7 +361,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         n_samples : int
-            Number of samples in training set.
+            Number of samples in training set or total sum of `sample_weight`
+            for all samples when `sample_weight` is different from `None`.
         category_counts: list of ndarray
             `category_counts[i]` is the category counts corresponding to
             `self.categories_[i]`.
@@ -578,13 +592,15 @@ class OneHotEncoder(_BaseEncoder):
 
     min_frequency : int or float, default=None
         Specifies the minimum frequency below which a category will be
-        considered infrequent.
+        considered infrequent. If during fit `sample_weight` is different from
+        default, then count will be done with sum of samples' weight.
 
         - If `int`, categories with a smaller cardinality will be considered
           infrequent.
 
         - If `float`, categories with a smaller cardinality than
-          `min_frequency * n_samples`  will be considered infrequent.
+          `min_frequency * n_samples` will be considered infrequent. If
+          `sample_weight` is different from `None`, `n_samples = sum(sample_weight)`.
 
         .. versionadded:: 1.1
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
@@ -970,7 +986,7 @@ class OneHotEncoder(_BaseEncoder):
         return output
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit OneHotEncoder to X.
 
@@ -983,6 +999,13 @@ class OneHotEncoder(_BaseEncoder):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights used to weight the categories when using filtering
+            catergories with `max_categories` and `min_frequency`. If `None`,
+            then samples are equally weighted. If both `max_categories` and
+            `min_frequency` are set to default values, then `sample_weight`
+            is ignored.
+
         Returns
         -------
         self
@@ -990,6 +1013,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         self._fit(
             X,
+            sample_weight=sample_weight,
             handle_unknown=self.handle_unknown,
             ensure_all_finite="allow-nan",
         )
@@ -1313,7 +1337,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
           infrequent.
 
         - If `float`, categories with a smaller cardinality than
-          `min_frequency * n_samples`  will be considered infrequent.
+          `min_frequency * n_samples` will be considered infrequent.
 
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
