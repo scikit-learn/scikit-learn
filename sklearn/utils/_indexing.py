@@ -8,7 +8,7 @@ from collections import UserList
 from itertools import compress, islice
 
 import numpy as np
-from scipy.sparse import issparse, isspmatrix
+from scipy.sparse import issparse
 
 from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, parse_version, sp_base_version
 
