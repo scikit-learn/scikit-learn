@@ -1423,7 +1423,7 @@ def test_column_transformer_with_make_column_selector():
     )
     X_df["col_str"] = X_df["col_str"].astype("category")
 
-    cat_selector = make_column_selector(dtype_include=["category", object, "str"])
+    cat_selector = make_column_selector(dtype_include=["category", object, "string"])
     num_selector = make_column_selector(dtype_include=np.number)
 
     ohe = OneHotEncoder()
