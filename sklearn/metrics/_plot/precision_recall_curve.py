@@ -439,7 +439,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y_score : array-like of shape (n_samples,)
             Estimated probabilities or output of decision function.
 
-            .. versionadded:: 1.7
+            .. versionadded:: 1.8
                 `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -485,8 +485,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Estimated probabilities or output of decision function.
 
 
-            .. deprecated:: 1.7
-                `y_pred` is deprecated and will be removed in 1.9. Use
+            .. deprecated:: 1.9
+                `y_pred` is deprecated and will be removed in 1.10. Use
                 `y_score` instead.
 
         **kwargs : dict

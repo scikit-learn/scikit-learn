@@ -234,7 +234,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             class, confidence values, or non-thresholded measure of decisions
             (as returned by `decision_function` on some classifiers).
 
-            .. versionadded:: 1.7
+            .. versionadded:: 1.8
                 `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -265,8 +265,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
 
-            .. deprecated:: 1.7
-                `y_pred` is deprecated and will be removed in 1.9. Use
+            .. deprecated:: 1.8
+                `y_pred` is deprecated and will be removed in 1.10. Use
                 `y_score` instead.
 
         **kwargs : dict
