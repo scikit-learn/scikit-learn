@@ -990,7 +990,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
-           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.8.
            From then on, the recommended 'multinomial' will always be used for
            `n_classes >= 3`.
            Solvers that do not support 'multinomial' will raise an error.
@@ -1262,7 +1262,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " 1.8. From then on, binary problems will be fit as proper binary "
                     " logistic regression models (as if multi_class='ovr' were set)."
                     " Leave it to its default value to avoid this warning."
                 ),
@@ -1272,7 +1272,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, it will always use 'multinomial'."
+                    " 1.8. From then on, it will always use 'multinomial'."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1281,7 +1281,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. Use OneVsRestClassifier(LogisticRegression(..)) instead."
+                    " 1.8. Use OneVsRestClassifier(LogisticRegression(..)) instead."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1678,7 +1678,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
-           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.8.
            From then on, the recommended 'multinomial' will always be used for
            `n_classes >= 3`.
            Solvers that do not support 'multinomial' will raise an error.
@@ -1936,7 +1936,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " 1.8. From then on, binary problems will be fit as proper binary "
                     " logistic regression models (as if multi_class='ovr' were set)."
                     " Leave it to its default value to avoid this warning."
                 ),
@@ -1946,7 +1946,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, it will always use 'multinomial'."
+                    " 1.8. From then on, it will always use 'multinomial'."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1955,7 +1955,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
+                    " 1.8. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,

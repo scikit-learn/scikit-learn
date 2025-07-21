@@ -1900,6 +1900,22 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
+def test_feature_union_1d_output():
+    """Test that FeatureUnion raises error for 1D transformer outputs."""
+    X = np.arange(6).reshape(3, 2)
+
+    with pytest.raises(
+        ValueError,
+        match="Transformer 'b' returned an array or dataframe with 1 dimensions",
+    ):
+        FeatureUnion(
+            [
+                ("a", FunctionTransformer(lambda X: X)),
+                ("b", FunctionTransformer(lambda X: X[:, 1])),
+            ]
+        ).fit_transform(X)
+
+
 # transform_input tests
 # =====================
 
