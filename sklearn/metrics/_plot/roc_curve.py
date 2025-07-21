@@ -576,7 +576,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_score = _deprecate_y_pred_parameter(y_score, y_pred)
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.7", "1.9")
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )

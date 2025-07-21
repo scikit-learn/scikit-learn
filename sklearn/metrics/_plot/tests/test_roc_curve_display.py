@@ -937,7 +937,7 @@ def test_y_score_and_y_pred_specified_error():
     ):
         RocCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
-    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.7"):
         display_y_pred = RocCurveDisplay.from_predictions(y_true, y_pred=y_score)
     desired_fpr, desired_fnr, _ = roc_curve(y_true, y_score)
     assert_allclose(display_y_pred.fpr, desired_fpr)

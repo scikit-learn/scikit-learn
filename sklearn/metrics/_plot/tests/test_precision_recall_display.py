@@ -383,7 +383,7 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
             assert display.ax_.spines[s].get_bounds() == (0, 1)
 
 
-# TODO(1.9): remove
+# TODO(1.10): remove
 def test_y_score_and_y_pred_specified_error():
     """1. Check that an error is raised when both y_score and y_pred are specified.
     2. Check that a warning is raised when y_pred is specified.
@@ -397,7 +397,7 @@ def test_y_score_and_y_pred_specified_error():
     ):
         PrecisionRecallDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
-    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
         display_y_pred = PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
     precision, recall, _ = precision_recall_curve(y_true, y_score)
     assert_allclose(display_y_pred.precision, precision)
