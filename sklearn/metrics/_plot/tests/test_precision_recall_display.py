@@ -397,4 +397,4 @@ def test_y_score_and_y_pred_specified_error():
         PrecisionRecallDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
     with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
-        display_y_pred = PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
+        PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
