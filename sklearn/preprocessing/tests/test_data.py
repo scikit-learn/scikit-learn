@@ -2535,7 +2535,9 @@ def test_maxabs_scaler_clip(data_constructor):
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = data_constructor(
-        np.hstack((X_min[:2] - 10, X_max[2:] + 10)).reshape(1, -1)
+        np.hstack((X_min.data[:2] - 100, X_max.data[2:] + 100)).reshape(1, -1)
+        if sparse.issparse(X)
+        else np.hstack((X_min[:2] - 100, X_max[2:] + 100)).reshape(1, -1)
     )
     X_transformed = scaler.transform(X_test)
     assert_allclose(X_transformed, [-1, -1, 1, 1])
