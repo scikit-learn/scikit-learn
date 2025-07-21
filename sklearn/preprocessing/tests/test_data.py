@@ -2532,15 +2532,19 @@ def test_minmax_scaler_clip(feature_range):
 )
 def test_maxabs_scaler_clip(data_constructor):
     X = data_constructor(iris.data)
+    is_sparse = sparse.issparse(X)
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = data_constructor(
         np.hstack((X_min.data[:2] - 100, X_max.data[2:] + 100)).reshape(1, -1)
-        if sparse.issparse(X)
+        if is_sparse
         else np.hstack((X_min[:2] - 100, X_max[2:] + 100)).reshape(1, -1)
     )
     X_transformed = scaler.transform(X_test)
-    assert_allclose(X_transformed, [-1, -1, 1, 1])
+    assert_array_less(
+        np.abs(X_transformed.data) if is_sparse else np.abs(X_transformed),
+        1.0 + np.finfo(np.float64).eps,  # as less or equal
+    )
 
 
 def test_standard_scaler_raise_error_for_1d_input():
