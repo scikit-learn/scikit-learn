@@ -1728,7 +1728,7 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
     X, y = make_classification(
         n_samples=2000,
         n_classes=2,
-        n_features=30,
+        n_features=20,
         n_informative=15,
         n_redundant=0,
         n_repeated=0,
@@ -1768,7 +1768,7 @@ def test_LogisticRegression_elastic_net_objective(global_random_seed, C, l1_rati
 
 # Fix this one:
 @pytest.mark.parametrize("n_classes", (2, 3))
-def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
+def test_LogisticRegressionCV_GridSearchCV_elastic_net(global_random_seed, n_classes):
     # make sure LogisticRegressionCV gives same best params (l1 and C) as
     # GridSearchCV when penalty is elasticnet
 
@@ -1776,7 +1776,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
         n_samples=100,
         n_classes=n_classes,
         n_informative=3,
-        random_state=0,
+        random_state=global_random_seed,
     )
 
     cv = StratifiedKFold(5)
@@ -1790,7 +1790,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
         solver="saga",
         cv=cv,
         l1_ratios=l1_ratios,
-        random_state=0,
+        random_state=global_random_seed,
         tol=1e-2,
     )
     lrcv.fit(X, y)
@@ -1799,7 +1799,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     lr = LogisticRegression(
         penalty="elasticnet",
         solver="saga",
-        random_state=0,
+        random_state=global_random_seed,
         tol=1e-2,
     )
     gs = GridSearchCV(lr, param_grid, cv=cv)
@@ -1972,7 +1972,7 @@ def test_elastic_net_versus_sgd(global_random_seed, C, l1_ratio):
         penalty="elasticnet",
         random_state=global_random_seed,
         fit_intercept=False,
-        tol=None,
+        tol=1e-5,
         max_iter=2000,
         l1_ratio=l1_ratio,
         alpha=1.0 / C / n_samples,
@@ -1983,7 +1983,7 @@ def test_elastic_net_versus_sgd(global_random_seed, C, l1_ratio):
         random_state=global_random_seed,
         fit_intercept=False,
         tol=1e-5,
-        max_iter=1000,
+        max_iter=2000,
         l1_ratio=l1_ratio,
         C=C,
         solver="saga",
