@@ -420,21 +420,21 @@ def _check_param_lengths(required, optional, class_name):
 
 
 # TODO(1.10): remove after the end of the deprecation period of `y_pred`
-def _deprecate_y_pred_parameter(
-    y_score, y_pred, deprecation_version: str, removed_version: str
-):
+def _deprecate_y_pred_parameter(y_score, y_pred, version):
+    version = parse_version(version)
+    version_remove = f"{version.major}.{version.minor + 2}"
     """Deprecate `y_pred` in favour of of `y_score`."""
     if y_score is not None and not (isinstance(y_pred, str) and y_pred == "deprecated"):
         raise ValueError(
             "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
-            f" only as `y_pred` was deprecated in {deprecation_version} and will be "
-            f"removed in {removed_version}."
+            f" only as `y_pred` was deprecated in {version} and will be "
+            f"removed in {version_remove}."
         )
     if not (isinstance(y_pred, str) and y_pred == "deprecated"):
         warnings.warn(
             (
-                f"y_pred was deprecated in {deprecation_version} and will be removed in"
-                f" {removed_version}. Please use `y_score` instead."
+                f"y_pred was deprecated in {version} and will be removed in"
+                f" {version_remove}. Please use `y_score` instead."
             ),
             FutureWarning,
         )

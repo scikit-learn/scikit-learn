@@ -300,7 +300,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8", "1,10")
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
