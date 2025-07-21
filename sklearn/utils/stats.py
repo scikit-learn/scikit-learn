@@ -48,7 +48,7 @@ def _weighted_percentile(
         defaults to "inverted_cdf". "averaged_inverted_cdf" is symmetrical with
         unit `sample_weight`, such that the total of `sample_weight` below or equal to
         `_weighted_percentile(percentile_rank)` is the same as the total of
-        `sample_weight` above or equal to `_weighted_percentile(100-percentile_rank).
+        `sample_weight` above or equal to `_weighted_percentile(100-percentile_rank)`.
         This symmetry is not guaranteed with non-unit weights.
 
     xp : array_namespace, default=None

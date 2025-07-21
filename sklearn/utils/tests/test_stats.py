@@ -81,7 +81,7 @@ def test_weighted_percentile_plus_one_clip_max(percentile_rank):
     Note that when `g` (Hyndman and Fan) / `fraction_above` greater than 0,
     `j+1` (Hyndman and Fan) / `percentile_plus_one_indices` is calculated but
     never used (so it does not matter what this value is).
-    When `g=0` and `percentile_indices` is at max index, we perfectly at 100
+    When `g=0` and `percentile_indices` is at max index, quantile is perfectly at 100
     and take the average of 2x the max index.
     """
     # Note for both spercentile_rank`s`,`percentile_indices` is already at max index
