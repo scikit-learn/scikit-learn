@@ -1397,7 +1397,7 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
         {
             "col_int": np.array([0, 1, 2], dtype=int),
             "col_float": np.array([0.0, 1.0, 2.0], dtype=float),
-            "col_str": ["one", "two", "three"],
+            "col_str": pd.Series(["one", "two", "three"], dtype=object),
         },
         columns=["col_int", "col_float", "col_str"],
     )
@@ -1423,7 +1423,7 @@ def test_column_transformer_with_make_column_selector():
     )
     X_df["col_str"] = X_df["col_str"].astype("category")
 
-    cat_selector = make_column_selector(dtype_include=["category", object])
+    cat_selector = make_column_selector(dtype_include=["category", object, "str"])
     num_selector = make_column_selector(dtype_include=np.number)
 
     ohe = OneHotEncoder()
