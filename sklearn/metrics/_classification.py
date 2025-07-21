@@ -668,8 +668,6 @@ def multilabel_confusion_matrix(
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight, device=device_)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)

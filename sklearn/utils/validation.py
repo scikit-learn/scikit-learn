@@ -2195,9 +2195,8 @@ def _check_sample_weight(
     float_dtypes = (
         [xp.float32] if max_float_type == xp.float32 else [xp.float64, xp.float32]
     )
-    if not allow_non_float:
-        if dtype is not None and dtype not in float_dtypes:
-            dtype = max_float_type
+    if not allow_non_float and dtype is not None and dtype not in float_dtypes:
+        dtype = max_float_type
 
     if sample_weight is None:
         sample_weight = xp.ones(n_samples, dtype=dtype, device=device)
