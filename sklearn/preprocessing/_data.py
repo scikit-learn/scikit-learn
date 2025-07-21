@@ -1172,12 +1172,9 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         is already a numpy array).
 
     clip : bool, default=False
-        Set to True to clip transformed values of held-out data to
-        learned maximum absolute value.
-        Clipping transformed values does not prevent feature drift;
-        it only prevents out-of-range values in held-out data.
-        Since this parameter will clip values, inverse transform won't
-        be able to restore the original ones.
+        Set to True to clip transformed values of held-out data to [-1, 1].
+        Since this parameter will clip values, `inverse_transform` may not
+        be able to restore the original data.
 
     Attributes
     ----------
@@ -1352,8 +1349,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
             if self.clip:
-                X.data[X.data > 1.0] = 1.0
-                X.data[X.data < -1.0] = -1.0
+                np.clip(X.data, -1.0, 1.0, out=X.data)
         else:
             X /= self.scale_
             if self.clip:
@@ -1414,7 +1410,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     },
     prefer_skip_nested_validation=False,
 )
-def maxabs_scale(X, *, axis=0, copy=True, clip=False):
+def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
 
     This estimator scales each feature individually such
@@ -1437,12 +1433,6 @@ def maxabs_scale(X, *, axis=0, copy=True, clip=False):
         This is not guaranteed to always work in place; e.g. if the data is
         a numpy array with an int dtype, a copy will be returned even with
         copy=False.
-
-    clip : bool, default=False
-        Set to True to clip transformed values of held-out data to
-        learned maximum absolute value.
-        Clipping transformed values does not prevent feature drift;
-        it only prevents out-of-range values in held-out data.
 
     Returns
     -------
@@ -1502,7 +1492,7 @@ def maxabs_scale(X, *, axis=0, copy=True, clip=False):
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MaxAbsScaler(copy=copy, clip=clip)
+    s = MaxAbsScaler(copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
