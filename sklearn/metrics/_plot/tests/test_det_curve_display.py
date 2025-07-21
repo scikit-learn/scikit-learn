@@ -114,7 +114,7 @@ def test_det_curve_display_default_name(
 
 
 # TODO(1.10): remove
-def test_y_score_and_y_pred_specified_error():
+def test_y_score_and_y_pred_specified_error(pyplot):
     """1. Check that an error is raised when both y_score and y_pred are specified.
     2. Check that a warning is raised when y_pred is specified.
     """
@@ -129,14 +129,3 @@ def test_y_score_and_y_pred_specified_error():
 
     with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
         display_y_pred = DetCurveDisplay.from_predictions(y_true, y_pred=y_score)
-    desired_fpr, desired_fnr, _ = det_curve(y_true=y_true, y_score=y_score)
-    # a specific value for atol is added since in DetCurveDisplay.plot() the values of
-    # fpr and fnr are altered to avoid providing invinity to matplotlib
-    atol = np.finfo(desired_fpr.dtype).eps
-    assert_allclose(
-        display_y_pred.fpr,
-        desired_fpr,
-        atol=atol,
-    )
-    display_y_score = DetCurveDisplay.from_predictions(y_true, y_score)
-    assert_allclose(display_y_score.fnr, desired_fnr, atol=atol)

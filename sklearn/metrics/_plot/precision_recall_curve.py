@@ -485,7 +485,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Estimated probabilities or output of decision function.
 
 
-            .. deprecated:: 1.9
+            .. deprecated:: 1.8
                 `y_pred` is deprecated and will be removed in 1.10. Use
                 `y_score` instead.
 

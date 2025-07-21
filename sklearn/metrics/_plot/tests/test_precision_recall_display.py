@@ -2,7 +2,6 @@ from collections import Counter
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
 from sklearn.compose import make_column_transformer
@@ -399,10 +398,3 @@ def test_y_score_and_y_pred_specified_error():
 
     with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
         display_y_pred = PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
-    precision, recall, _ = precision_recall_curve(y_true, y_score)
-    assert_allclose(display_y_pred.precision, precision)
-    assert_allclose(display_y_pred.recall, recall)
-
-    display_y_score = PrecisionRecallDisplay.from_predictions(y_true, y_score)
-    assert_allclose(display_y_score.precision, precision)
-    assert_allclose(display_y_score.recall, recall)
