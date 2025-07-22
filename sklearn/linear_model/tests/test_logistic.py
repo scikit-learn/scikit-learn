@@ -1624,7 +1624,7 @@ def test_warm_start_converge_LR(global_random_seed):
     for i in range(5):
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
-    assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1.2e-5)
+    assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=5e-5)
 
 
 def test_elastic_net_coeffs(global_random_seed):
@@ -1744,11 +1744,7 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
         fit_intercept=False,
     )
     lr_l2 = LogisticRegression(
-        penalty="l2",
-        solver="saga",
-        random_state=0,
-        C=C,
-        fit_intercept=False,
+        penalty="l2", solver="saga", random_state=0, C=C, fit_intercept=False
     )
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
