@@ -2555,10 +2555,10 @@ def test_maxabs_scaler_clip_sparse(sparse_container):
     )
     X = sparse_container(X)
     scaler = MaxAbsScaler(clip=True).fit(X)
-    X_max = np.max(X, axis=0, keepdims=True)
-    X_test = sparse_container(X_max.data + 10)
+    X_max = np.max(X, axis=0)
+    X_test = sparse_container((X_max.data + 10).reshape(1, -1))
     assert_array_almost_equal(scaler.transform(X_test).toarray(), 1.0)
-    X_test = sparse_container(-X_max.data - 10)
+    X_test = sparse_container((-X_max.data - 10).reshape(1, -1))
     assert_array_almost_equal(-scaler.transform(X_test).toarray(), 1.0)
 
 
