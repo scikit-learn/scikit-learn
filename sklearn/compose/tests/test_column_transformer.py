@@ -1402,7 +1402,7 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
         {
             "col_int": np.array([0, 1, 2], dtype=int),
             "col_float": np.array([0.0, 1.0, 2.0], dtype=float),
-            "col_str": pd.Series(["one", "two", "three"], dtype=object),
+            "col_str": ["one", "two", "three"],
         },
         columns=["col_int", "col_float", "col_str"],
     )
