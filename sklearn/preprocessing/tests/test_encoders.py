@@ -790,7 +790,7 @@ def test_encoder_dtypes_pandas():
     X = pd.DataFrame({"A": [1, 2], "B": ["a", "b"], "C": [3.0, 4.0]})
     expected_cat_type = ["int64", "object", "float64"]
     enc.fit(X)
-    assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
+    assert all([enc.categories_[i].dtype == expected_cat_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
