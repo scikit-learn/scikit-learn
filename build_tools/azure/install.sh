@@ -47,7 +47,7 @@ pre_python_environment_install() {
 check_packages_dev_version() {
     for package in $@; do
         package_version=$(python -c "import $package; print($package.__version__)")
-        if [[ $package_version =~ "^[.0-9]+$" ]]; then
+        if [[ $package_version =~ ^[.0-9]+$ ]]; then
             echo "$package is not a development version: $package_version"
             exit 1
         fi
