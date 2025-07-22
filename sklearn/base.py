@@ -312,10 +312,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             [name for name, value in ordered_out.items() if is_non_default(name, value)]
         )
 
-        estimator_type = self.__class__
+        estimator_class = self.__class__
 
         return ParamsDict(
-            ordered_out, non_default=non_default_ls, estimator_type=estimator_type
+            ordered_out, non_default=non_default_ls, estimator_type=estimator_class
         )
 
     def set_params(self, **params):

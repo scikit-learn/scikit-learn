@@ -18,7 +18,7 @@ def link_to_param_doc(estimator_type, param_name):
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
 
-    import sklearn
+    from sklearn import __version__
 
     if hasattr(estimator_type, "__module__"):
         module_name = estimator_type.__module__
@@ -30,10 +30,10 @@ def link_to_param_doc(estimator_type, param_name):
         # documentation.
         return None
 
-    if ".dev" in sklearn.__version__:
+    if ".dev" in __version__:
         doc_version = "dev"
     else:
-        doc_version = ".".join(sklearn.__version__.split(".")[:2])
+        doc_version = ".".join(__version__.split(".")[:2])
 
     class_doc_base_url = CLASS_DOC_URL_PREFIX.format(doc_version=doc_version)
 
@@ -51,12 +51,13 @@ def link_to_param_doc(estimator_type, param_name):
         # cannot link.
         return None
 
-    # Extract the first word of the type information as disambiguation suffix
-    # to build the fragment
+    # Extract the whole line of the type information, up to the line break as
+    # disambiguation suffix to build the fragment
     param_type = m.group(1)
 
     base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
-    text_fragment = f"{quote(param_name)},-{quote(param_type)}"
+    text_fragment = f"{quote(param_name)}{quote(param_type)}"
+    breakpoint()
 
     return f"{base_url}#:~:text={text_fragment}"
 
