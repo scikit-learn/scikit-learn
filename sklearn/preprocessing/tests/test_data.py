@@ -1046,14 +1046,9 @@ def test_scale_input_finiteness_validation():
     # Check if non-finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(
-        ValueError,
-        match=r"Input X contains infinity or a value too large for dtype"
+        ValueError, match=r"Input X contains infinity or a value too large for dtype"
     ):
         scale(X)
- 
-
-
-
 
 
 def test_robust_scaler_error_sparse():
