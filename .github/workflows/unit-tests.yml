@@ -1,4 +1,4 @@
-name: Unit test for ARM
+name: Unit tests
 permissions:
   contents: read
 
@@ -35,20 +35,38 @@ jobs:
           pip install ninja meson scipy
           python build_tools/check-meson-openmp-dependencies.py
 
-  run-unit-tests:
+  unit-tests:
     name: Run unit tests
-    runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
     if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint]
+    strategy:
+      # Ensures that all builds run to completion even if one of them fails
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04-arm
+            distrib: conda
+            lock-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+      env:
+        DISTRIB: ${{ matrix.distrib }}
+        LOCK_FILE: ${{ matrix.lock-file }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: mamba-org/setup-micromamba@v2
+      - uses: miniconda/setup-miniconda@v3
         with:
-          environment-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
-          environment-name: ci
-          cache-environment: true
+          miniforge-version: latest
+        # with:
+        #   environment-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+        #   environment-name: ci
+        #   cache-environment: true
 
-      - name: Build and run tests
+      - name: Build scikit-learn
         shell: bash -el {0}
-        run: bash build_tools/github/build_test_arm.sh
+        run: ./build_tools/azure/install.sh
+
+      - name: Run tests
+        shell: bash -el {0}
+        run: ./build_tools/azure/test_script.sh
