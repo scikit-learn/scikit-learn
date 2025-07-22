@@ -229,9 +229,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             X,
             reset=True,
             accept_sparse=self.accept_sparse,
-            dtype="numeric",
-            ensure_all_finite="allow-nan",
-            ensure_2d=True,
             skip_check_array=not self.validate,
         )
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
@@ -257,9 +254,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             X,
             reset=False,
             accept_sparse=self.accept_sparse,
-            dtype="numeric",
-            ensure_all_finite="allow-nan",
-            ensure_2d=True,
             skip_check_array=not self.validate,
         )
         out = self._transform(X, func=self.func, kw_args=self.kw_args)
