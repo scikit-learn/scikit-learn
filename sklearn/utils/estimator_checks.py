@@ -22,11 +22,11 @@ from scipy.stats import rankdata
 
 from .. import config_context
 from ..base import (
-    ClusterMixin,
     BaseEstimator,
     BiclusterMixin,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
     DensityMixin,
     MetaEstimatorMixin,
     MultiOutputMixin,

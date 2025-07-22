@@ -23,7 +23,13 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights, _check_precomputed
+from ._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _check_precomputed,
+    _get_weights,
+)
 
 
 def _adjusted_metric(metric, metric_kwargs, p=None):
