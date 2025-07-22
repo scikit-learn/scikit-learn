@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: miniconda/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
         # with:
