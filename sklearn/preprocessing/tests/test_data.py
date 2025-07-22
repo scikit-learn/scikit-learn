@@ -2530,9 +2530,10 @@ def test_minmax_scaler_clip(feature_range):
 def test_maxabs_scaler_clip_dense():
     X = iris.data
     scaler = MaxAbsScaler(clip=True).fit(X)
-    X_test = np.max(X, axis=0) + 10
+    X_max = np.max(X, axis=0, keepdims=True)
+    X_test = X_max + 10
     assert_array_almost_equal(scaler.transform(X_test), 1.0)
-    X_test = -np.max(X, axis=0) - 10
+    X_test = -X_max - 10
     assert_array_almost_equal(-scaler.transform(X_test), 1.0)
 
 
@@ -2554,10 +2555,10 @@ def test_maxabs_scaler_clip_sparse(sparse_container):
     )
     X = sparse_container(X)
     scaler = MaxAbsScaler(clip=True).fit(X)
-    X_max = np.max(X, axis=0)
-    X_test = X_max.data + 10
+    X_max = np.max(X, axis=0, keepdims=True)
+    X_test = sparse_container(X_max.data + 10)
     assert_array_almost_equal(scaler.transform(X_test).toarray(), 1.0)
-    X_test = -X_max.data - 10
+    X_test = sparse_container(-X_max.data - 10)
     assert_array_almost_equal(-scaler.transform(X_test).toarray(), 1.0)
 
 
