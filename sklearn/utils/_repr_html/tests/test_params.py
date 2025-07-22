@@ -98,8 +98,8 @@ def test_params_html_repr_with_doc_links():
     assert "Online `b` documentation" in html_output
     assert "sk-estimator-doc-link" in html_output
     # Check that the doc links contain the correct URL fragments
-    assert "mock_module.MockEstimator.html#:~:text=a,-int" in html_output
-    assert "mock_module.MockEstimator.html#:~:text=b,-str" in html_output
+    assert "mock_module.MockEstimator.html#:~:text=aint" in html_output
+    assert "mock_module.MockEstimator.html#:~:text=bstr" in html_output
 
 
 def test_params_html_repr_without_doc_links():
