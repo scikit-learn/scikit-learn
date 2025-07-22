@@ -61,3 +61,6 @@
     height: 14px;
     cursor: pointer;
 }
+a:link.wider-link {
+    width: 2em;
+}
