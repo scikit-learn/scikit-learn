@@ -924,7 +924,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
 
 # TODO(1.9): remove
-def test_y_score_and_y_pred_specified_error():
+def test_y_score_and_y_pred_specified_error(pyplot):
     """1. Check that an error is raised when both y_score and y_pred are specified.
     2. Check that a warning is raised when y_pred is specified.
     """
