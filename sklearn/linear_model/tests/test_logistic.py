@@ -1215,8 +1215,9 @@ def test_logreg_l1(global_random_seed):
         C=1.0,
         solver="liblinear",
         fit_intercept=False,
-        max_iter=100000,
+        max_iter=10000,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_liblinear.fit(X, y)
 
@@ -1225,8 +1226,9 @@ def test_logreg_l1(global_random_seed):
         C=1.0,
         solver="saga",
         fit_intercept=False,
-        max_iter=100000,
+        max_iter=10000,
         tol=1e-10,
+        random_state=global_random_seed,
     )
     lr_saga.fit(X, y)
 
