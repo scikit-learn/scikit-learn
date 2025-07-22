@@ -1019,7 +1019,6 @@ def test_scaler_without_copy(sparse_container):
     assert_array_equal(X_sparse.toarray(), X_sparse_copy.toarray())
 
 
-# Assuming CSR_CONTAINERS and CSC_CONTAINERS are already defined somewhere
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_scale_sparse_with_mean_raise_exception(sparse_container):
     rng = np.random.RandomState(42)

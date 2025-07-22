@@ -231,7 +231,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         ensure_all_finite="allow-nan",
         input_name="X",
     )
-
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
