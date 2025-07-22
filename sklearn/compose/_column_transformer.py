@@ -1346,6 +1346,7 @@ def _is_empty_column_selection(column):
     """
     if (
         hasattr(column, "dtype")
+        # Not necessarily a numpy dtype, can be a pandas dtype as well
         and isinstance(column.dtype, np.dtype)
         and np.issubdtype(column.dtype, np.bool_)
     ):
