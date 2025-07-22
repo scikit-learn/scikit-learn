@@ -11,11 +11,9 @@ import numpy as np
 from scipy import interpolate, optimize
 from scipy.stats import spearmanr
 
-from sklearn.utils import metadata_routing
-
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
-from .utils import check_array, check_consistent_length
+from .utils import check_array, check_consistent_length, metadata_routing
 from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.fixes import parse_version, sp_base_version
 from .utils.validation import _check_sample_weight, check_is_fitted

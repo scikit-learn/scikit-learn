@@ -12,8 +12,6 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import expit
 
-from sklearn.utils import Bunch
-
 from ._loss import HalfBinomialLoss
 from .base import (
     BaseEstimator,
@@ -28,7 +26,7 @@ from .isotonic import IsotonicRegression
 from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
-from .utils import _safe_indexing, column_or_1d, get_tags, indexable
+from .utils import _safe_indexing, column_or_1d, get_tags, indexable, Bunch
 from .utils._param_validation import (
     HasMethods,
     Hidden,

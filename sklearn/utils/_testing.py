@@ -37,22 +37,22 @@ from numpy.testing import (
     assert_array_less,
 )
 
-import sklearn
-from sklearn.utils import (
+from .. import __file__ as sklearn_path
+from . import (
     ClassifierTags,
     RegressorTags,
     Tags,
     TargetTags,
     TransformerTags,
 )
-from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import (
+from ._array_api import _check_array_api_dispatch
+from .fixes import (
     _IS_32BIT,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
+from .multiclass import check_classification_targets
+from .validation import (
     check_array,
     check_is_fitted,
     check_X_y,
@@ -927,7 +927,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
         with open(source_file, "wb") as f:
             f.write(source_code.encode("utf-8"))
         cmd = [sys.executable, source_file]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), ".."))
+        cwd = op.normpath(op.join(op.dirname(sklearn_path), ".."))
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])

@@ -9,8 +9,6 @@ import numpy as np
 from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from sklearn.utils import metadata_routing
-
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -18,7 +16,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array, resample
+from ..utils import _array_api, check_array, resample, metadata_routing
 from ..utils._array_api import (
     _find_matching_floating_dtype,
     _modify_in_place_if_numpy,
