@@ -2530,13 +2530,10 @@ def test_minmax_scaler_clip(feature_range):
 def test_maxabs_scaler_clip_dense():
     X = iris.data
     scaler = MaxAbsScaler(clip=True).fit(X)
-    X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
-    X_test = np.hstack((X_min[:2] - 10, X_max[2:] + 10)).reshape(1, -1)
-    X_transformed = scaler.transform(X_test)
-    assert_array_less(
-        np.abs(X_transformed),
-        1.0 + np.finfo(np.float64).eps,  # as less or equal
-    )
+    X_test = np.max(X, axis=0) + 10
+    assert_array_almost_equal(scaler.transform(X_test), 1.0)
+    X_test = -np.max(X, axis=0) - 10
+    assert_array_almost_equal(-scaler.transform(X_test), 1.0)
 
 
 @pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
@@ -2558,16 +2555,10 @@ def test_maxabs_scaler_clip_sparse(sparse_container):
     X = sparse_container(X)
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_max = np.max(X, axis=0)
-    X_test = sparse_container(X_max.data + 10)
-    assert_array_less(
-        scaler.transform(X_test),
-        1.0 + np.finfo(np.float64).eps,  # as less or equal
-    )
-    X_test = sparse_container(-X_max.data - 10)
-    assert_array_less(
-        -scaler.transform(X_test),
-        1.0 + np.finfo(np.float64).eps,  # as less or equal
-    )
+    X_test = X_max.data + 10
+    assert_array_almost_equal(scaler.transform(X_test).toarray(), 1.0)
+    X_test = -X_max.data - 10
+    assert_array_almost_equal(-scaler.transform(X_test).toarray(), 1.0)
 
 
 def test_standard_scaler_raise_error_for_1d_input():
