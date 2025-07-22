@@ -56,7 +56,6 @@ def link_to_param_doc(estimator_type, param_name):
 
     base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
     text_fragment = f"{quote(param_name)}{quote(param_type)}"
-    breakpoint()
 
     return f"{base_url}#:~:text={text_fragment}"
 
