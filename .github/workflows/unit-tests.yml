@@ -43,14 +43,14 @@ jobs:
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
-      env:
-        DISTRIB: ${{ matrix.distrib }}
-        LOCK_FILE: ${{ matrix.lock-file }}
       matrix:
         include:
           - os: ubuntu-24.04-arm
             distrib: conda
             lock-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+    env:
+      DISTRIB: ${{ matrix.distrib }}
+      LOCK_FILE: ${{ matrix.lock-file }}
 
     steps:
       - name: Checkout
