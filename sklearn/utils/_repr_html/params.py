@@ -7,6 +7,7 @@ import reprlib
 from collections import UserDict
 from urllib.parse import quote
 
+from sklearn import __version__
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
@@ -17,8 +18,6 @@ def link_to_param_doc(estimator_type, param_name):
 
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
-
-    from sklearn import __version__
 
     if hasattr(estimator_type, "__module__"):
         module_name = estimator_type.__module__
