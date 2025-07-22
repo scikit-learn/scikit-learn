@@ -51,6 +51,7 @@ jobs:
     env:
       DISTRIB: ${{ matrix.distrib }}
       LOCK_FILE: ${{ matrix.lock-file }}
+      VIRTUALENV: testvenv
 
     steps:
       - name: Checkout
