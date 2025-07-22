@@ -14,7 +14,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    # if: github.repository == 'scikit-learn/scikit-learn'
 
     steps:
       - name: Checkout
@@ -38,7 +38,7 @@ jobs:
   unit-tests:
     name: Run unit tests
     runs-on: ${{ matrix.os }}
-    if: github.repository == 'scikit-learn/scikit-learn'
+    # if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint]
     strategy:
       # Ensures that all builds run to completion even if one of them fails
