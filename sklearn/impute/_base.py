@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
+import pickle
 import warnings
 from collections import Counter
 from functools import partial
@@ -12,6 +13,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import murmurhash3_32
 from ..utils._mask import _get_mask
 from ..utils._missing import is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
@@ -38,6 +40,20 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _safe_min(items):
+    """Compute the minimum of a list of potentially non-comparable values.
+    If values cannot be directly compared due to type incompatibility,
+    the object with the lowest hash of its pickled representation is returned
+    as a fallback."""
+    items = list(items)  # necessary if items is a generator
+    try:
+        return min(items)
+    except TypeError as e:
+        if "'<' not supported between" in str(e):
+            return min(items, key=lambda x: murmurhash3_32(pickle.dumps(x)))
+        raise  # re-raise if it's a different TypeError
+
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -50,7 +66,7 @@ def _most_frequent(array, extra_value, n_repeat):
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
             # tie breaking similarly to scipy.stats.mode
-            most_frequent_value = min(
+            most_frequent_value = _safe_min(
                 value
                 for value, count in counter.items()
                 if count == most_frequent_count
@@ -72,7 +88,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return most_frequent_value
     elif most_frequent_count == n_repeat:
         # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        return _safe_min([most_frequent_value, extra_value])
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
