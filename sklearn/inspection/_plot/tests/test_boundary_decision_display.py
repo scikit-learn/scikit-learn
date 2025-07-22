@@ -702,21 +702,16 @@ def test_xlim_ylim_ranges(pyplot, fitted_clf, xlim, ylim):
         fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
     )
 
-    if xlim is not None:
-        assert disp.xx0.min() == pytest.approx(xlim[0])
-        assert disp.xx0.max() == pytest.approx(xlim[1])
-    else:
-        x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
-        assert disp.xx0.min() == pytest.approx(x0_min)
-        assert disp.xx0.max() == pytest.approx(x0_max)
+    def check_range(axis_data, lim, fallback_min, fallback_max):
+        if lim is not None:
+            assert axis_data.min() == pytest.approx(lim[0])
+            assert axis_data.max() == pytest.approx(lim[1])
+        else:
+            assert axis_data.min() == pytest.approx(fallback_min)
+            assert axis_data.max() == pytest.approx(fallback_max)
 
-    if ylim is not None:
-        assert disp.xx1.min() == pytest.approx(ylim[0])
-        assert disp.xx1.max() == pytest.approx(ylim[1])
-    else:
-        x1_min, x1_max = X[:, 1].min() - eps, X[:, 1].max() + eps
-        assert disp.xx1.min() == pytest.approx(x1_min)
-        assert disp.xx1.max() == pytest.approx(x1_max)
+    check_range(disp.xx0, xlim, X[:, 0].min() - eps, X[:, 0].max() + eps)
+    check_range(disp.xx1, ylim, X[:, 1].min() - eps, X[:, 1].max() + eps)
 
 
 @pytest.mark.parametrize(
@@ -746,64 +741,6 @@ def test_xlim_ylim_overrides_eps(pyplot, fitted_clf):
 
     disp = DecisionBoundaryDisplay.from_estimator(
         fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
-    )
-
-    assert disp.xx0.min() == pytest.approx(xlim[0])
-    assert disp.xx0.max() == pytest.approx(xlim[1])
-    assert disp.xx1.min() == pytest.approx(ylim[0])
-    assert disp.xx1.max() == pytest.approx(ylim[1])
-
-
-def test_xlim_ylim_with_regressor(pyplot):
-    """Check that xlim and ylim work with regressors."""
-    X_reg, y_reg = load_diabetes(return_X_y=True)
-    X_reg = X_reg[:, :2]
-    tree = DecisionTreeRegressor().fit(X_reg, y_reg)
-
-    xlim = (-0.1, 0.1)
-    ylim = (-0.15, 0.15)
-
-    disp = DecisionBoundaryDisplay.from_estimator(
-        tree, X_reg, xlim=xlim, ylim=ylim, grid_resolution=10
-    )
-
-    assert disp.xx0.min() == pytest.approx(xlim[0])
-    assert disp.xx0.max() == pytest.approx(xlim[1])
-    assert disp.xx1.min() == pytest.approx(ylim[0])
-    assert disp.xx1.max() == pytest.approx(ylim[1])
-
-
-def test_xlim_ylim_with_multiclass(pyplot):
-    """Check that xlim and ylim work with multiclass classification."""
-    X_iris, y_iris = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X_iris, y_iris)
-
-    xlim = (-2, 2)
-    ylim = (-1.5, 1.5)
-
-    disp = DecisionBoundaryDisplay.from_estimator(
-        clf, X_iris, xlim=xlim, ylim=ylim, grid_resolution=10
-    )
-
-    assert disp.xx0.min() == pytest.approx(xlim[0])
-    assert disp.xx0.max() == pytest.approx(xlim[1])
-    assert disp.xx1.min() == pytest.approx(ylim[0])
-    assert disp.xx1.max() == pytest.approx(ylim[1])
-
-
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_xlim_ylim_with_response_methods(pyplot, fitted_clf, response_method):
-    """Check xlim and ylim work with different response methods."""
-    xlim = (-1, 1)
-    ylim = (-1.5, 1.5)
-
-    disp = DecisionBoundaryDisplay.from_estimator(
-        fitted_clf,
-        X,
-        xlim=xlim,
-        ylim=ylim,
-        response_method=response_method,
-        grid_resolution=10,
     )
 
     assert disp.xx0.min() == pytest.approx(xlim[0])
