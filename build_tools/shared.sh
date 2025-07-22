@@ -28,6 +28,7 @@ show_installed_libraries(){
 
 activate_environment() {
     if [[ "$DISTRIB" =~ ^conda.* ]]; then
+        source $CONDA/etc/profile.d/conda.sh
         source activate $VIRTUALENV || conda activate $VIRTUALENV
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         source $VIRTUALENV/bin/activate
