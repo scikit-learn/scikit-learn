@@ -1437,6 +1437,7 @@ In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
 must support ``predict_proba`` method)::
 
+   >>> from sklearn.ensemble import VotingClassifier
    >>> eclf = VotingClassifier(
    ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
    ...     voting='soft'
