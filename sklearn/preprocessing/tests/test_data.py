@@ -2527,22 +2527,43 @@ def test_minmax_scaler_clip(feature_range):
     )
 
 
-@pytest.mark.parametrize(
-    "data_constructor", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS
-)
-def test_maxabs_scaler_clip(data_constructor):
-    X = data_constructor(iris.data)
-    is_sparse = sparse.issparse(X)
+def test_maxabs_scaler_clip_dense():
+    X = iris.data
     scaler = MaxAbsScaler(clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
-    X_test = data_constructor(
-        np.hstack((X_min.data[:2] - 100, X_max.data[2:] + 100)).reshape(1, -1)
-        if is_sparse
-        else np.hstack((X_min[:2] - 100, X_max[2:] + 100)).reshape(1, -1)
+    X_test = np.hstack((X_min[:2] - 10, X_max[2:] + 10)).reshape(1, -1)
+    X_transformed = scaler.transform(X_test)
+    assert_array_less(
+        np.abs(X_transformed),
+        1.0 + np.finfo(np.float64).eps,  # as less or equal
+    )
+
+
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_maxabs_scaler_clip_sparse(sparse_container):
+    X = np.array(
+        [
+            [0.0, 2.0, 0.0],
+            [25.0, 4.0, 0.0],
+            [50.0, 0.0, 2.6],
+            [0.0, 0.0, 4.1],
+            [0.0, 6.0, 0.0],
+            [0.0, 8.0, 0.0],
+            [75.0, 0.0, 2.3],
+            [0.0, 10.0, 0.0],
+            [0.0, 0.0, 9.5],
+            [100.0, 0.0, 0.1],
+        ]
+    )
+    X = sparse_container(X)
+    scaler = MaxAbsScaler(clip=True).fit(X)
+    X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
+    X_test = sparse_container(
+        np.hstack((X_min.data[:2] - 10, X_max.data[2:] + 10)).reshape(1, -1)
     )
     X_transformed = scaler.transform(X_test)
     assert_array_less(
-        np.abs(X_transformed.data) if is_sparse else np.abs(X_transformed),
+        np.abs(X_transformed.data),
         1.0 + np.finfo(np.float64).eps,  # as less or equal
     )
 

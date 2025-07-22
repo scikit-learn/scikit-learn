@@ -330,6 +330,13 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Set to True to clip transformed values of held-out data to
         provided `feature range`.
 
+        .. note::
+            Setting `clip=True` does not prevent feature drift (a distribution
+            shift between training and test data). the transformed values are clipped
+            to the `feature range`, which helps avoid unintended behavior in models
+            sensitive to out-of-range inputs (e.g. linear models). Use with care,
+            as clipping can distort the distribution of test data.
+
         .. versionadded:: 0.24
 
     Attributes
@@ -1175,6 +1182,13 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Set to True to clip transformed values of held-out data to [-1, 1].
         Since this parameter will clip values, `inverse_transform` may not
         be able to restore the original data.
+
+        .. note::
+            Setting `clip=True` does not prevent feature drift (a distribution
+            shift between training and test data). the transformed values are clipped
+            to the [-1, 1] range, which helps avoid unintended behavior in models
+            sensitive to out-of-range inputs (e.g. linear models). Use with care,
+            as clipping can distort the distribution of test data.
 
     Attributes
     ----------
