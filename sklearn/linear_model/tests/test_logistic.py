@@ -1614,17 +1614,17 @@ def test_warm_start_converge_LR(global_random_seed):
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = np.array([1] * 100 + [-1] * 100)
     lr_no_ws = LogisticRegression(
-        solver="sag", warm_start=False, random_state=global_random_seed
+        solver="sag", warm_start=False, tol=1e-6, random_state=global_random_seed
     )
     lr_ws = LogisticRegression(
-        solver="sag", warm_start=True, random_state=global_random_seed
+        solver="sag", warm_start=True, tol=1e-6, random_state=global_random_seed
     )
 
     lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
     for i in range(5):
         lr_ws.fit(X, y)
     lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
-    assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=5e-5)
+    assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
 
 
 def test_elastic_net_coeffs(global_random_seed):
