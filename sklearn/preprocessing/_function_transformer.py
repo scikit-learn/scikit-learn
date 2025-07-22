@@ -249,13 +249,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        X = validate_data(
-            self,
-            X,
-            reset=False,
-            accept_sparse=self.accept_sparse,
-            skip_check_array=not self.validate,
-        )
+        if self.validate:
+            X = validate_data(self, X, reset=False, accept_sparse=self.accept_sparse)
+
         out = self._transform(X, func=self.func, kw_args=self.kw_args)
         output_config = _get_output_config("transform", self)["dense"]
 
