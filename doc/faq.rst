@@ -300,6 +300,20 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
+What does the "spam" label for issues or pull requests mean?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "spam" label is used for many reasons, it is an indication for other
+maintainers that the issue or pull request has only received low effort.
+
+Some steps to increase the chances of the label being removed:
+- follow the :ref:`contribution guidelines <contributing>` and use the provided templates
+- improve the formatting and grammar of the text
+- improve the diff to remove noise and unrelated changes
+- improve the issue or pull request title to be more descriptive
+- self review your code, especially if you used AI tools to generate it
+
+
 .. _new_algorithms_inclusion_criteria:
 
 What are the inclusion criteria for new algorithms?
