@@ -12,6 +12,7 @@ concurrency:
 
 env:
   VIRTUALENV: testvenv
+  TEST_DIR: ${{ github.workspace }}/tmp_folder
 
 jobs:
   # lint:
