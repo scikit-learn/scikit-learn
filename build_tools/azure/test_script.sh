@@ -23,7 +23,7 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
 fi
 
 # TODO make get_commit_message.py work on GHA
-COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message || echo "dummy commit message")
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
 
 if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
     echo "float32 tests will be run due to commit message"
