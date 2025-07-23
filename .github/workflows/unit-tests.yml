@@ -46,11 +46,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04-arm
-            distrib: conda
-            lock-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+            DISTRIB: conda
+            LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
     env:
-      DISTRIB: ${{ matrix.distrib }}
-      LOCK_FILE: ${{ matrix.lock-file }}
+      ${{ matrix }}
       VIRTUALENV: testvenv
 
     steps:
