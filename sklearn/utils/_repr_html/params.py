@@ -89,7 +89,7 @@ def _doc_row(estimator_type, row, param_name):
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
             f'style="color: white; background: black;">?<span>Documentation'
-            f"for `{param_name}`</span>"
+            f" for `{param_name}`</span>"
         )
     else:
         link_string = (
