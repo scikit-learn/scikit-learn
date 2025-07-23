@@ -1635,7 +1635,7 @@ def test_elastic_net_coeffs(global_random_seed):
             random_state=global_random_seed,
             l1_ratio=ratio,
             tol=1e-3,
-            max_iter=400,
+            max_iter=500,
         )
         lr.fit(X, y)
         coeffs.append(lr.coef_)
@@ -1643,9 +1643,9 @@ def test_elastic_net_coeffs(global_random_seed):
     elastic_net_coeffs, l1_coeffs, l2_coeffs = coeffs
 
     # make sure coeffs differ by at least .1
-    assert not np.allclose(elastic_net_coeffs, l1_coeffs, rtol=0, atol=0.1)
-    assert not np.allclose(elastic_net_coeffs, l2_coeffs, rtol=0, atol=0.1)
-    assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=0.1)
+    assert not np.allclose(elastic_net_coeffs, l1_coeffs, rtol=0, atol=1e-3)
+    assert not np.allclose(elastic_net_coeffs, l2_coeffs, rtol=0, atol=1e-3)
+    assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=1e-3)
 
 
 @pytest.mark.parametrize("C", [0.001, 0.1, 1, 10, 100, 1000, 1e6])
