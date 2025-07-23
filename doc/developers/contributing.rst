@@ -48,9 +48,9 @@ Ways to contribute
 ==================
 
 There are many ways to contribute to scikit-learn.  Improving the
-documentation is no less important than improving the library itself.  If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-create a GitHub issue or preferably submit a GitHub pull request.
+documentation is no less important than improving the code of the library
+itself. If you find a typo in the documentation, or have made improvements, do
+not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
 
 There are many ways to help. In particular helping to
 :ref:`improve, triage, and investigate issues <bug_triaging>` and
