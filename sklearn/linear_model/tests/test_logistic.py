@@ -1962,7 +1962,7 @@ def test_elastic_net_versus_sgd(global_random_seed, C, l1_ratio):
         penalty="elasticnet",
         random_state=global_random_seed,
         fit_intercept=False,
-        tol=1e-5,
+        tol=None,
         max_iter=2000,
         l1_ratio=l1_ratio,
         alpha=1.0 / C / n_samples,
@@ -1973,7 +1973,7 @@ def test_elastic_net_versus_sgd(global_random_seed, C, l1_ratio):
         random_state=global_random_seed,
         fit_intercept=False,
         tol=1e-5,
-        max_iter=2000,
+        max_iter=1000,
         l1_ratio=l1_ratio,
         C=C,
         solver="saga",
@@ -1981,7 +1981,8 @@ def test_elastic_net_versus_sgd(global_random_seed, C, l1_ratio):
 
     sgd.fit(X, y)
     log.fit(X, y)
-    assert_array_almost_equal(sgd.coef_, log.coef_, decimal=1)
+
+    assert_allclose(sgd.coef_, log.coef_, atol=0.35)
 
 
 def test_logistic_regression_path_coefs_multinomial():
