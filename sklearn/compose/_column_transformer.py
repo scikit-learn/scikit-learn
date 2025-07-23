@@ -1290,7 +1290,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # transformers, and whether or not a transformer is used at all, which
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
-        transformers = chain(self.transformers, [("remainder", self.remainder, None)])
+        transformers = (
+            chain(self.transformers, [("remainder", self.remainder, None)])
+            if self.remainder != "drop"
+            else chain(self.transformers)
+        )
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
