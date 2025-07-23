@@ -182,9 +182,9 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
-"examples/*"=["E402"]
+"examples/*"=["E402", "TID251"]
 "doc/conf.py"=["E402"]
-"**/tests/*"=["CPY001"]
+"**/tests/*"=["CPY001", "TID251"]
 "asv_benchmarks/*"=["CPY001"]
 "benchmarks/*"=["CPY001"]
 "doc/*"=["CPY001"]
