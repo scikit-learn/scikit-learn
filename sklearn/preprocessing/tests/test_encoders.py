@@ -318,7 +318,7 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         enc.inverse_transform(X_tr)
 
 
-@pytest.mark.parametrize("sparse_", [False, True])
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "X, X_trans",
     [
@@ -330,22 +330,22 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
     ],
 )
 def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
-    X, X_trans, sparse_
+    X, X_trans, csr_container
 ):
     """Check that `inverse_transform` raise an error with unknown samples, no
     dropped feature, and `handle_unknow="error`.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/14934
     """
-    enc = OneHotEncoder(sparse_output=sparse_).fit(X)
+    enc = OneHotEncoder(sparse_output=csr_container is not None).fit(X)
     msg = (
         r"Samples \[(\d )*\d\] can not be inverted when drop=None and "
         r"handle_unknown='error' because they contain all zeros"
     )
 
-    if sparse_:
+    if csr_container is not None:
         # emulate sparse data transform by a one-hot encoder sparse.
-        X_trans = _convert_container(X_trans, "sparse")
+        X_trans = csr_container(X_trans)
     with pytest.raises(ValueError, match=msg):
         enc.inverse_transform(X_trans)
 

@@ -224,10 +224,12 @@ def test_predictions(global_random_seed, use_feature_names):
     f_b = rng.randint(low=0, high=9, size=n_samples)
     f_c = rng.randint(low=0, high=9, size=n_samples)
 
+    convert_container_kwargs = {
+        "constructor_type": "dataframe" if use_feature_names else "array",
+        "column_names": ["f_a", "f_0", "f_b", "f_1", "f_c"],  # no effect if array
+    }
     X = np.c_[f_a, f_0, f_b, f_1, f_c]
-    columns_name = ["f_a", "f_0", "f_b", "f_1", "f_c"]
-    constructor_name = "dataframe" if use_feature_names else "array"
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, **convert_container_kwargs)
 
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
     y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
@@ -261,24 +263,24 @@ def test_predictions(global_random_seed, use_feature_names):
     # First non-categorical feature (POS)
     # assert pred is all increasing when f_0 is all increasing
     X = np.c_[constant, linspace, constant, constant, constant]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, **convert_container_kwargs)
     pred = gbdt.predict(X)
     assert is_increasing(pred)
     # assert pred actually follows the variations of f_0
     X = np.c_[constant, sin, constant, constant, constant]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, **convert_container_kwargs)
     pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
     # Second non-categorical feature (NEG)
     # assert pred is all decreasing when f_1 is all increasing
     X = np.c_[constant, constant, constant, linspace, constant]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, **convert_container_kwargs)
     pred = gbdt.predict(X)
     assert is_decreasing(pred)
     # assert pred actually follows the inverse variations of f_1
     X = np.c_[constant, constant, constant, sin, constant]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, **convert_container_kwargs)
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
 
