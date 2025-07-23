@@ -88,12 +88,12 @@ def _doc_row(estimator_type, row, param_name):
         link_string = (
             f'rel="noreferrer" target="_blank" href='
             f"{link} "
-            f'style="color: white; background: black;">?<span>Online `{param_name}` '
-            f"documentation</span>"
+            f'style="color: white; background: black;">?<span>Documentation'
+            f"for `{param_name}`</span>"
         )
     else:
         link_string = (
-            f'style="color: white; background: black;">?<span>Online documentation'
+            f'style="color: white; background: black;">?<span>Documentation'
             f" for `{param_name}` not found </span>"
         )
 
@@ -128,7 +128,7 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;</td>
             <td class="value">{param_value}</td>
-            <td class="doc_link"><a class="sk-estimator-doc-link wider-link"
+            <td class="doc_link"><a class="sk-estimator-doc-link"
                                  {doc_link}
                                 </a>
             </td>
@@ -142,7 +142,7 @@ def _params_html_repr(params):
                 "param_value"
             ],
             doc_link=_doc_row(
-                params.estimator_type,
+                params.estimator_class,
                 row,
                 _read_params(row, params[row], params.non_default)["param_name"],
             ),
@@ -174,7 +174,7 @@ class ParamsDict(ReprHTMLMixin, UserDict):
 
     _html_repr = _params_html_repr
 
-    def __init__(self, params=None, non_default=tuple(), estimator_type=None):
+    def __init__(self, params=None, non_default=tuple(), estimator_class=None):
         super().__init__(params or {})
         self.non_default = non_default
-        self.estimator_type = estimator_type
+        self.estimator_class = estimator_class
