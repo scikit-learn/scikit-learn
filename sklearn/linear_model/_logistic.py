@@ -30,6 +30,7 @@ from ..utils import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import row_norms, softmax
+from ..utils.fixes import _get_additional_lbfgs_options_dict
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -194,17 +195,19 @@ def _logistic_regression_path(
         only supported by the 'saga' solver.
 
     intercept_scaling : float, default=1.
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equal to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
 
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     multi_class : {'ovr', 'multinomial', 'auto'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
@@ -462,9 +465,9 @@ def _logistic_regression_path(
                 options={
                     "maxiter": max_iter,
                     "maxls": 50,  # default is 20
-                    "iprint": iprint,
                     "gtol": tol,
                     "ftol": 64 * np.finfo(float).eps,
+                    **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
             )
             n_iter_i = _check_optimize_result(
@@ -692,16 +695,19 @@ def _log_reg_scoring_path(
         n_samples > n_features.
 
     intercept_scaling : float
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
+        i.e. a "synthetic" feature with constant value equal to
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
+
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     multi_class : {'auto', 'ovr', 'multinomial'}
         If the option chosen is 'ovr', then a binary problem is fit for each
@@ -881,17 +887,19 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         added to the decision function.
 
     intercept_scaling : float, default=1
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equal to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
 
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -982,7 +990,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
-           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.8.
            From then on, the recommended 'multinomial' will always be used for
            `n_classes >= 3`.
            Solvers that do not support 'multinomial' will raise an error.
@@ -1254,7 +1262,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " 1.8. From then on, binary problems will be fit as proper binary "
                     " logistic regression models (as if multi_class='ovr' were set)."
                     " Leave it to its default value to avoid this warning."
                 ),
@@ -1264,7 +1272,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, it will always use 'multinomial'."
+                    " 1.8. From then on, it will always use 'multinomial'."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1273,7 +1281,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. Use OneVsRestClassifier(LogisticRegression(..)) instead."
+                    " 1.8. Use OneVsRestClassifier(LogisticRegression(..)) instead."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1643,17 +1651,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         best scores across folds are averaged.
 
     intercept_scaling : float, default=1
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equal to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
 
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     multi_class : {'auto, 'ovr', 'multinomial'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
@@ -1668,7 +1678,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
-           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.8.
            From then on, the recommended 'multinomial' will always be used for
            `n_classes >= 3`.
            Solvers that do not support 'multinomial' will raise an error.
@@ -1926,7 +1936,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " 1.8. From then on, binary problems will be fit as proper binary "
                     " logistic regression models (as if multi_class='ovr' were set)."
                     " Leave it to its default value to avoid this warning."
                 ),
@@ -1936,7 +1946,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, it will always use 'multinomial'."
+                    " 1.8. From then on, it will always use 'multinomial'."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1945,7 +1955,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
+                    " 1.8. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,

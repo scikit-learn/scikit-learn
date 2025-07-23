@@ -34,7 +34,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class.
+        The label of the positive class. If not `None`, this value is displayed in
+        the x- and y-axes labels.
 
     Attributes
     ----------
@@ -136,9 +137,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             exist :term:`decision_function` is tried next.
 
         pos_label : int, float, bool or str, default=None
-            The label of the positive class. When `pos_label=None`, if `y_true`
-            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
+            The label of the positive class. By default, `estimators.classes_[1]`
+            is considered as the positive class.
 
         name : str, default=None
             Name of DET curve for labeling. If `None`, use the name of the

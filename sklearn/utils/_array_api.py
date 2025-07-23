@@ -6,7 +6,6 @@
 import itertools
 import math
 import os
-from functools import wraps
 
 import numpy
 import scipy
@@ -86,7 +85,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ):
         if array_namespace == "torch":
             for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
+                ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
@@ -244,53 +243,7 @@ def _union1d(a, b, xp):
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
 
-def isdtype(dtype, kind, *, xp):
-    """Returns a boolean indicating whether a provided dtype is of type "kind".
-
-    Included in the v2022.12 of the Array API spec.
-    https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
-    """
-    if isinstance(kind, tuple):
-        return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
-    else:
-        return _isdtype_single(dtype, kind, xp=xp)
-
-
-def _isdtype_single(dtype, kind, *, xp):
-    if isinstance(kind, str):
-        if kind == "bool":
-            return dtype == xp.bool
-        elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
-        elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
-        elif kind == "integral":
-            return any(
-                _isdtype_single(dtype, k, xp=xp)
-                for k in ("signed integer", "unsigned integer")
-            )
-        elif kind == "real floating":
-            return dtype in supported_float_dtypes(xp)
-        elif kind == "complex floating":
-            # Some name spaces might not have support for complex dtypes.
-            complex_dtypes = set()
-            if hasattr(xp, "complex64"):
-                complex_dtypes.add(xp.complex64)
-            if hasattr(xp, "complex128"):
-                complex_dtypes.add(xp.complex128)
-            return dtype in complex_dtypes
-        elif kind == "numeric":
-            return any(
-                _isdtype_single(dtype, k, xp=xp)
-                for k in ("integral", "real floating", "complex floating")
-            )
-        else:
-            raise ValueError(f"Unrecognized data type kind: {kind!r}")
-    else:
-        return dtype == kind
-
-
-def supported_float_dtypes(xp):
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -299,10 +252,18 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
+    dtypes_dict = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    valid_float_dtypes = []
+    for dtype_key in ("float64", "float32"):
+        if dtype_key in dtypes_dict:
+            valid_float_dtypes.append(dtypes_dict[dtype_key])
+
     if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
-    else:
-        return (xp.float64, xp.float32)
+        valid_float_dtypes.append(xp.float16)
+
+    return tuple(valid_float_dtypes)
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -332,20 +293,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-def _check_device_cpu(device):
-    if device not in {"cpu", None}:
-        raise ValueError(f"Unsupported device for NumPy: {device!r}")
-
-
-def _accept_device_cpu(func):
-    @wraps(func)
-    def wrapped_func(*args, **kwargs):
-        _check_device_cpu(kwargs.pop("device", None))
-        return func(*args, **kwargs)
-
-    return wrapped_func
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
@@ -527,36 +474,80 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
-    """Implementation to facilitate adding or assigning specified values to the
-    diagonal of a 2-d array.
-
-    If ``add_value`` is `True` then the values will be added to the diagonal
-    elements otherwise the values will be assigned to the diagonal elements.
-    By default, ``add_value`` is set to `True. This is currently only
-    supported for 2-d arrays.
-
-    The implementation is taken from the `numpy.fill_diagonal` function:
-    https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
-    """
+def _validate_diagonal_args(array, value, xp):
+    """Validate arguments to `_fill_diagonal`/`_add_to_diagonal`."""
     if array.ndim != 2:
         raise ValueError(
-            f"array should be 2-d. Got array with shape {tuple(array.shape)}"
+            f"`array` should be 2D. Got array with shape {tuple(array.shape)}"
         )
 
     value = xp.asarray(value, dtype=array.dtype, device=device(array))
-    end = None
-    # Explicit, fast formula for the common case.  For 2-d arrays, we
-    # accept rectangular ones.
-    step = array.shape[1] + 1
-    if not wrap:
-        end = array.shape[1] * array.shape[1]
+    if value.ndim not in [0, 1]:
+        raise ValueError(
+            "`value` needs to be a scalar or a 1D array, "
+            f"got a {value.ndim}D array instead."
+        )
+    min_rows_columns = min(array.shape)
+    if value.ndim == 1 and value.shape[0] != min_rows_columns:
+        raise ValueError(
+            "`value` needs to be a scalar or 1D array of the same length as the "
+            f"diagonal of `array` ({min_rows_columns}). Got {value.shape[0]}"
+        )
 
-    array_flat = xp.reshape(array, (-1,))
-    if add_value:
-        array_flat[:end:step] += value
+    return value, min_rows_columns
+
+
+def _fill_diagonal(array, value, xp):
+    """Minimal implementation of `numpy.fill_diagonal`.
+
+    `wrap` is not supported (i.e. always False). `value` should be a scalar or
+    1D of greater or equal length as the diagonal (i.e., `value` is never repeated
+    when shorter).
+
+    Note `array` is altered in place.
+    """
+    value, min_rows_columns = _validate_diagonal_args(array, value, xp)
+
+    if _is_numpy_namespace(xp):
+        xp.fill_diagonal(array, value, wrap=False)
     else:
-        array_flat[:end:step] = value
+        # TODO: when array libraries support `reshape(copy)`, use
+        # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
+        # `try/except`). This is faster than for loop, when no copy needs to be
+        # made within `reshape`. See #31445 for details.
+        if value.ndim == 0:
+            for i in range(min_rows_columns):
+                array[i, i] = value
+        else:
+            for i in range(min_rows_columns):
+                array[i, i] = value[i]
+
+
+def _add_to_diagonal(array, value, xp):
+    """Add `value` to diagonal of `array`.
+
+    Related to `fill_diagonal`. `value` should be a scalar or
+    1D of greater or equal length as the diagonal (i.e., `value` is never repeated
+    when shorter).
+
+    Note `array` is altered in place.
+    """
+    value, min_rows_columns = _validate_diagonal_args(array, value, xp)
+
+    if _is_numpy_namespace(xp):
+        step = array.shape[1] + 1
+        # Ensure we do not wrap
+        end = array.shape[1] * array.shape[1]
+        array.flat[:end:step] += value
+        return
+
+    # TODO: when array libraries support `reshape(copy)`, use
+    # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
+    # `try/except`). This is faster than for loop, when no copy needs to be
+    # made within `reshape`. See #31445 for details.
+    value = xp.linalg.diagonal(array) + value
+    for i in range(min_rows_columns):
+        array[i, i] = value[i]
 
 
 def _is_xp_namespace(xp, name):
@@ -1028,3 +1019,52 @@ def _tolist(array, xp=None):
         return array.tolist()
     array_np = _convert_to_numpy(array, xp=xp)
     return [element.item() for element in array_np]
+
+
+def _logsumexp(array, axis=None, xp=None):
+    # TODO replace by scipy.special.logsumexp when
+    # https://github.com/scipy/scipy/pull/22683 is part of a release.
+    # The following code is strongly inspired and simplified from
+    # scipy.special._logsumexp.logsumexp
+    xp, _, device = get_namespace_and_device(array, xp=xp)
+    axis = tuple(range(array.ndim)) if axis is None else axis
+
+    supported_dtypes = supported_float_dtypes(xp)
+    if array.dtype not in supported_dtypes:
+        array = xp.asarray(array, dtype=supported_dtypes[0])
+
+    array_max = xp.max(array, axis=axis, keepdims=True)
+    index_max = array == array_max
+
+    array = xp.asarray(array, copy=True)
+    array[index_max] = -xp.inf
+    i_max_dt = xp.astype(index_max, array.dtype)
+    m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
+    # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
+    shift = xp.where(
+        xp.isfinite(array_max),
+        array_max,
+        xp.asarray(0, dtype=array_max.dtype, device=device),
+    )
+    exp = xp.exp(array - shift)
+    s = xp.sum(exp, axis=axis, keepdims=True, dtype=exp.dtype)
+    s = xp.where(s == 0, s, s / m)
+    out = xp.log1p(s) + xp.log(m) + array_max
+    out = xp.squeeze(out, axis=axis)
+    out = out[()] if out.ndim == 0 else out
+
+    return out
+
+
+def _cholesky(covariance, xp):
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.cholesky(covariance, lower=True)
+    else:
+        return xp.linalg.cholesky(covariance)
+
+
+def _linalg_solve(cov_chol, eye_matrix, xp):
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
+    else:
+        return xp.linalg.solve(cov_chol, eye_matrix)

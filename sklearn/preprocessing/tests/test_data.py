@@ -1042,10 +1042,10 @@ def test_scale_sparse_with_mean_raise_exception(sparse_container):
 
 
 def test_scale_input_finiteness_validation():
-    # Check if non finite inputs raise ValueError
+    # Check if non-finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(
-        ValueError, match="Input contains infinity or a value too large"
+        ValueError, match=r"Input X contains infinity or a value too large for dtype"
     ):
         scale(X)
 

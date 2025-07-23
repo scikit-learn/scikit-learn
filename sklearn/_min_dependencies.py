@@ -24,7 +24,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "meson-python": ("0.16.0", "build"),
+    "meson-python": ("0.17.1", "build"),
     "matplotlib": ("3.5.0", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.19.0", "docs, examples, tests"),
     "pandas": ("1.4.0", "benchmark, docs, examples, tests"),
