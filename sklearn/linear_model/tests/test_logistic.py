@@ -1236,15 +1236,13 @@ def test_logreg_l1(global_random_seed):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_logreg_l1_sparse_data(csr_container, global_random_seed):
+def test_logreg_l1_sparse_data(csr_container):
     # Because liblinear penalizes the intercept and saga does not, we do not
     # fit the intercept to make it possible to compare the coefficients of
     # the two models at convergence.
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(42)
     n_samples = 50
-    X, y = make_classification(
-        n_samples=n_samples, n_features=20, random_state=global_random_seed
-    )
+    X, y = make_classification(n_samples=n_samples, n_features=20, random_state=0)
     X_noise = rng.normal(scale=0.1, size=(n_samples, 3))
     X_constant = np.zeros(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
@@ -1257,7 +1255,6 @@ def test_logreg_l1_sparse_data(csr_container, global_random_seed):
         solver="liblinear",
         fit_intercept=False,
         tol=1e-10,
-        random_state=global_random_seed,
     )
     lr_liblinear.fit(X, y)
 
@@ -1268,7 +1265,6 @@ def test_logreg_l1_sparse_data(csr_container, global_random_seed):
         fit_intercept=False,
         max_iter=1000,
         tol=1e-10,
-        random_state=global_random_seed,
     )
     lr_saga.fit(X, y)
     assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
@@ -1285,7 +1281,6 @@ def test_logreg_l1_sparse_data(csr_container, global_random_seed):
         fit_intercept=False,
         max_iter=1000,
         tol=1e-10,
-        random_state=global_random_seed,
     )
     lr_saga_dense.fit(X.toarray(), y)
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
