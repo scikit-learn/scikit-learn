@@ -1292,7 +1292,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # request all metadata requested by all transformers.
         transformers = (
             chain(self.transformers, [("remainder", self.remainder, None)])
-            if self.remainder != "drop"
+            if self.remainder not in ["drop", "passthrough"]
             else chain(self.transformers)
         )
         for name, step, _ in transformers:
