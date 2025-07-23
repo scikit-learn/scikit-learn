@@ -144,7 +144,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.naive_bayes import CategoricalNB
 from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
@@ -891,15 +890,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     BisectingKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    CategoricalNB: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
