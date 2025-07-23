@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+env:
+  VIRTUALENV: testvenv
+
 jobs:
   # lint:
   #   name: Lint
@@ -49,7 +52,6 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
     env: ${{ matrix }}
-      # VIRTUALENV: testvenv
 
     steps:
       - name: Checkout
