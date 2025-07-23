@@ -41,7 +41,7 @@ def _check_inputs_dtype(X, missing_values):
 def safe_min_with_fallback(values):
     """
     Safely find minimum value, handling incomparable types.
-    
+
     For incomparable types, fall back to deterministic selection based on:
     1. String representation
     2. Object id as last resort
