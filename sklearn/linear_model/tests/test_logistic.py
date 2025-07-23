@@ -1308,7 +1308,7 @@ def test_logistic_regression_cv_refit(global_random_seed, penalty):
         solver="saga",
         penalty=penalty,
         random_state=global_random_seed,
-        max_iter=1000,
+        max_iter=10000,
         tol=1e-12,
     )
     lr_cv = LogisticRegressionCV(Cs=[1.0], refit=True, **common_params)
