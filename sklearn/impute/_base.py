@@ -38,6 +38,24 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def safe_min_with_fallback(values):
+    """
+    Safely find minimum value, handling incomparable types.
+    
+    For incomparable types, fall back to deterministic selection based on:
+    1. String representation
+    2. Object id as last resort
+    """
+    try:
+        return min(values)
+    except TypeError:
+        # If direct comparison fails, use string representation for comparison
+        try:
+            return min(values, key=lambda x: str(x))
+        except (TypeError, ValueError):
+            # Last resort: use object id for deterministic but arbitrary selection
+            return min(values, key=lambda x: id(x))
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -49,12 +67,15 @@ def _most_frequent(array, extra_value, n_repeat):
             # Python Counter is more efficient
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
-            # tie breaking similarly to scipy.stats.mode
-            most_frequent_value = min(
-                value
-                for value, count in counter.items()
+
+            # Get all values with the most frequent count
+            tied_values = [
+                value for value, count in counter.items()
                 if count == most_frequent_count
-            )
+            ]
+
+            # Use safe comparison for tie breaking
+            most_frequent_value = safe_min_with_fallback(tied_values)
         else:
             mode = _mode(array)
             most_frequent_value = mode[0][0]
@@ -71,8 +92,8 @@ def _most_frequent(array, extra_value, n_repeat):
     elif most_frequent_count > n_repeat:
         return most_frequent_value
     elif most_frequent_count == n_repeat:
-        # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        # tie breaking - use safe comparison
+        return safe_min_with_fallback([most_frequent_value, extra_value])
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
