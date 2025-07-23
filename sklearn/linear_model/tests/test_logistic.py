@@ -2083,9 +2083,15 @@ def test_penalty_none(global_random_seed, solver):
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
-    lr_none = LogisticRegression(penalty=None, solver=solver, random_state=0)
+    lr_none = LogisticRegression(
+        penalty=None, solver=solver, max_iter=300, random_state=global_random_seed
+    )
     lr_l2_C_inf = LogisticRegression(
-        penalty="l2", C=np.inf, solver=solver, random_state=global_random_seed
+        penalty="l2",
+        C=np.inf,
+        solver=solver,
+        max_iter=300,
+        random_state=global_random_seed,
     )
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
