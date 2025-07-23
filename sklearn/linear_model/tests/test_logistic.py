@@ -1496,7 +1496,7 @@ def test_saga_vs_liblinear(global_random_seed, csr_container):
                 saga = LogisticRegression(
                     C=1.0 / (n_samples * alpha),
                     solver="saga",
-                    max_iter=200,
+                    max_iter=500,
                     fit_intercept=False,
                     penalty=penalty,
                     random_state=global_random_seed,
@@ -1506,7 +1506,7 @@ def test_saga_vs_liblinear(global_random_seed, csr_container):
                 liblinear = LogisticRegression(
                     C=1.0 / (n_samples * alpha),
                     solver="liblinear",
-                    max_iter=200,
+                    max_iter=500,
                     fit_intercept=False,
                     penalty=penalty,
                     random_state=global_random_seed,
