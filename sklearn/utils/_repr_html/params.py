@@ -167,7 +167,7 @@ class ParamsDict(ReprHTMLMixin, UserDict):
     non_default : tuple
         The list of non-default parameters.
 
-    estimator_type : type
+    estimator_class : type
         The class of the estimator. It allows to find the online documentation
         link for each paramter.
     """
