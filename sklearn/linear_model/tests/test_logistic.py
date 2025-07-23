@@ -746,7 +746,7 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
         assert_allclose(
             regressors[solver_1].coef_,
             regressors[solver_2].coef_,
-            rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-2,
+            rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
             err_msg=f"{solver_1} vs {solver_2}",
         )
         if fit_intercept:
