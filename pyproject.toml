@@ -137,7 +137,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
-extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF"]
+extend-select = ["TID251", "E501", "W", "I", "CPY001", "PGH", "RUF"]
 ignore=[
     # do not assign a lambda expression, use a def
     "E731",
@@ -171,6 +171,10 @@ ignore=[
     "COM812",
     "COM819",
 ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# Ban absolute imports within the sklearn package
+"sklearn.*".msg = "Use relative imports within the sklearn package instead. Use 'from . import module' or 'from .subpackage import module'."
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
