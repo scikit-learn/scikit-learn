@@ -2153,14 +2153,14 @@ def test_logisticregression_liblinear_sample_weight(global_random_seed, params):
         assert_allclose(X_clf_no_weight, X_clf_with_weight)
 
 
-def test_scores_attribute_layout_elasticnet(global_random_seed):
+def test_scores_attribute_layout_elasticnet():
     # Non regression test for issue #14955.
     # when penalty is elastic net the scores_ attribute has shape
     # (n_classes, n_Cs, n_l1_ratios)
     # We here make sure that the second dimension indeed corresponds to Cs and
     # the third dimension corresponds to l1_ratios.
 
-    X, y = make_classification(n_samples=1000, random_state=global_random_seed)
+    X, y = make_classification(n_samples=1000, random_state=0)
     cv = StratifiedKFold(n_splits=5)
 
     l1_ratios = [0.1, 0.9]
@@ -2172,7 +2172,7 @@ def test_scores_attribute_layout_elasticnet(global_random_seed):
         l1_ratios=l1_ratios,
         Cs=Cs,
         cv=cv,
-        random_state=global_random_seed,
+        random_state=0,
         max_iter=250,
         tol=1e-3,
     )
@@ -2187,7 +2187,7 @@ def test_scores_attribute_layout_elasticnet(global_random_seed):
                 solver="saga",
                 C=C,
                 l1_ratio=l1_ratio,
-                random_state=global_random_seed,
+                random_state=0,
                 max_iter=250,
                 tol=1e-3,
             )
