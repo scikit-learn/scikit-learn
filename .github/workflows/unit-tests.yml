@@ -57,6 +57,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - run: |
+          env | grep GITHUB
+          git log -1
+          echo $GITHUB_REF
+          git log $GITHUB_REF -1
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
