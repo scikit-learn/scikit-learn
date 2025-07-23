@@ -82,17 +82,42 @@ require pandas >= |PandasMinVersion|, some examples require seaborn >=
 User installation
 ~~~~~~~~~~~~~~~~~
 
-If you already have a working installation of NumPy and SciPy,
-the easiest way to install scikit-learn is using ``pip``::
+1. Set up your Python environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    pip install -U scikit-learn
+**Option A: Using `venv` (traditional method)**
 
-or ``conda``::
+.. code-block:: bash
 
-    conda install -c conda-forge scikit-learn
+   python -m venv env
+   source env/bin/activate  # On Windows: env\Scripts\activate
+
+**Option B: Using `uv` (recommended)**
+
+Ensure you have `uv <https://docs.astral.sh/uv/>`_ installed.
+
+.. code-block:: bash
+
+   uv venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+
+2. Install scikit-learn
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If you already have a working installation of NumPy and SciPy, the easiest way to install scikit-learn is using ``pip``:
+
+.. code-block:: bash
+
+   pip install -U scikit-learn
+
+Or with ``conda``:
+
+.. code-block:: bash
+
+   conda install -c conda-forge scikit-learn
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
-
 
 Changelog
 ---------
@@ -184,7 +209,7 @@ Main Channels
 - **Mailing list**: https://mail.python.org/mailman/listinfo/scikit-learn
 
 Developer & Support
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 - **GitHub Discussions**: https://github.com/scikit-learn/scikit-learn/discussions
 - **Stack Overflow**: https://stackoverflow.com/questions/tagged/scikit-learn
