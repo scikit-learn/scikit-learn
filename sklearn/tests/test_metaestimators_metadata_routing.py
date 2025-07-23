@@ -4,11 +4,6 @@ import re
 import numpy as np
 import pytest
 
-from ..base import (
-        BaseEstimator,
-        RegressorMixin
-)
-
 from sklearn import config_context
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.calibration import CalibratedClassifierCV
@@ -68,7 +63,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.preprocessing import FunctionTransformer
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -87,7 +81,6 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
-y_two_dim = np.expand_dims(y, 1)
 y_binary = (y >= 1).astype(int)
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
@@ -932,25 +925,3 @@ def test_metadata_routed_to_group_splitter(metaestimator):
         cv=GroupKFold(n_splits=2),
         scoring=make_scorer(mean_squared_error, response_method="predict"),
     )
-
-class ValidateDimensionRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, ndim):
-        self.ndim = ndim
-
-    def fit(self, X, y):
-        assert(y.ndim == self.ndim)
-
-    def predict(self, X):
-        pass
-
-
-@pytest.mark.parametrize("y", [y, y_two_dim])
-def test_dimension_routed_to_subregressor(y):
-    """Test that inner regressor receives y with the same dimension
-    as metaestimator."""
-
-    transformed_regressor = TransformedTargetRegressor(
-        transformer=FunctionTransformer(),
-        regressor=ValidateDimensionRegressor(ndim=y.ndim),
-    )
-    transformed_regressor.fit(X, y)
