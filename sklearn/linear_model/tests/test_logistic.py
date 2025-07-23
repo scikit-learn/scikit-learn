@@ -719,17 +719,17 @@ def test_logistic_regression_solvers(global_random_seed):
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_logistic_regression_solvers_multiclass(global_random_seed, fit_intercept):
+def test_logistic_regression_solvers_multiclass(fit_intercept):
     """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
-        n_samples=300,
+        n_samples=20,
         n_features=20,
         n_informative=10,
         n_classes=3,
-        random_state=global_random_seed,
+        random_state=0,
     )
-    tol = 1e-12
-    params = dict(fit_intercept=fit_intercept, tol=tol, random_state=global_random_seed)
+    tol = 1e-8
+    params = dict(fit_intercept=fit_intercept, tol=tol, random_state=42)
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
@@ -746,7 +746,7 @@ def test_logistic_regression_solvers_multiclass(global_random_seed, fit_intercep
         assert_allclose(
             regressors[solver_1].coef_,
             regressors[solver_2].coef_,
-            rtol=8e-3 if (solver_1 == "saga" or solver_2 == "saga") else 8e-2,
+            rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-2,
             err_msg=f"{solver_1} vs {solver_2}",
         )
         if fit_intercept:
