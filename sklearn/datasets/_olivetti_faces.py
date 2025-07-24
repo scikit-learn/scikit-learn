@@ -14,7 +14,7 @@ web page of Sam Roweis:
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
@@ -140,8 +140,6 @@ def fetch_olivetti_faces(
     (400, 64, 64)
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:
