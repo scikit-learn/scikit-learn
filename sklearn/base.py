@@ -854,6 +854,7 @@ class TransformerMixin(_SetOutputMixin):
 
         **fit_params : dict
             Additional fit parameters.
+            Pass only if the estimator accepts additional params in its `fit` method.
 
         Returns
         -------
@@ -888,6 +889,18 @@ class TransformerMixin(_SetOutputMixin):
                     ),
                     UserWarning,
                 )
+
+        for key, _ in fit_params.items():
+            if (
+                key not in inspect.signature(self.fit).parameters
+                and "fit_params" not in inspect.signature(self.fit).parameters
+            ):
+                message = (
+                    f"`{self.__class__.__name__}.fit` got an unexpected keyword "
+                    f"argument `{key}`. Only pass {key} into `fit_transform` if `fit` "
+                    "expects them or can handle `**fit_params`."
+                )
+                raise TypeError(message)
 
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
