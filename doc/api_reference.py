@@ -691,6 +691,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
