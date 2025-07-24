@@ -890,21 +890,26 @@ class TransformerMixin(_SetOutputMixin):
                     UserWarning,
                 )
 
-        for key, _ in fit_params.items():
-            if (
-                key not in inspect.signature(self.fit).parameters
-                and "fit_params" not in inspect.signature(self.fit).parameters
-            ):
-                message = (
-                    f"`{self.__class__.__name__}.fit` got an unexpected keyword "
-                    f"argument `{key}`. Only pass {key} into `fit_transform` if `fit` "
-                    "expects them or can handle `**fit_params`."
-                )
-                raise TypeError(message)
-
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
-            return self.fit(X, **fit_params).transform(X)
+            try:
+                return self.fit(X, **fit_params).transform(X)
+            except TypeError as e:
+                # re-raise if the transformer doesn't accept the passed **fit_params
+                for key, _ in fit_params.items():
+                    if (
+                        key not in inspect.signature(self.fit).parameters
+                        and "fit_params" not in inspect.signature(self.fit).parameters
+                    ):
+                        message = (
+                            f"`{self.__class__.__name__}.fit` got an unexpected "
+                            f"keyword argument `{key}`. Only pass `{key}` into "
+                            "`fit_transform` if `fit` expects it or can handle "
+                            "`**fit_params`."
+                        )
+                        raise TypeError(message) from e
+                raise
+
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
