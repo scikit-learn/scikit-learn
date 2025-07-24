@@ -13,14 +13,14 @@ from sklearn.utils._repr_html.base import ReprHTMLMixin
 CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
 
 
-def link_to_param_doc(estimator_type, param_name):
+def link_to_param_doc(estimator_class, param_name):
     """URL to the relevant section of the docstring using a Text Fragment
 
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
 
-    if hasattr(estimator_type, "__module__"):
-        module_name = estimator_type.__module__
+    if hasattr(estimator_class, "__module__"):
+        module_name = estimator_class.__module__
     else:
         module_name = None
 
@@ -40,9 +40,9 @@ def link_to_param_doc(estimator_type, param_name):
     if "._" in module_name:
         module_name = module_name.split("._")[0]
 
-    class_name = estimator_type.__qualname__
+    class_name = estimator_class.__qualname__
 
-    docstring = estimator_type.__doc__
+    docstring = estimator_class.__doc__
 
     m = re.search(f"{param_name} : (.+)\\n", docstring)
     if m is None:
@@ -75,14 +75,14 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
-def _doc_row(estimator_type, row, param_name):
+def _doc_row(estimator_class, row, param_name):
     """
     Generate an HTML table row containing a link to the online
     documentation for a specific parameter of an estimator.
     If the link cannot be generated, an empty string is returned.
     """
 
-    link = link_to_param_doc(estimator_type, row)
+    link = link_to_param_doc(estimator_class, row)
 
     if link:
         link_string = (
@@ -134,21 +134,15 @@ def _params_html_repr(params):
             </td>
         </tr>
     """
-    rows = [
-        ROW_TEMPLATE.format(
-            param_type=_read_params(row, params[row], params.non_default)["param_type"],
-            param_name=_read_params(row, params[row], params.non_default)["param_name"],
-            param_value=_read_params(row, params[row], params.non_default)[
-                "param_value"
-            ],
-            doc_link=_doc_row(
-                params.estimator_class,
-                row,
-                _read_params(row, params[row], params.non_default)["param_name"],
-            ),
+    rows = []
+    for row in params:
+        param = _read_params(row, params[row], params.non_default)
+        rows.append(
+            ROW_TEMPLATE.format(
+                **param,
+                doc_link=_doc_row(params.estimator_class, row, param["param_name"]),
+            )
         )
-        for row in params
-    ]
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
