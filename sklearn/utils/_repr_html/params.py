@@ -7,44 +7,20 @@ import reprlib
 from collections import UserDict
 from urllib.parse import quote
 
-from sklearn import __version__
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
 
 
-def link_to_param_doc(estimator_class, param_name):
+def link_to_param_doc(estimator_class, param_name, doc_link):
     """URL to the relevant section of the docstring using a Text Fragment
 
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
 
-    if hasattr(estimator_class, "__module__"):
-        module_name = estimator_class.__module__
-    else:
-        module_name = None
-
-    if module_name is None or not module_name.startswith("sklearn."):
-        # Not a scikit-learn estimator. Do not link to the scikit-learn
-        # documentation.
-        return None
-
-    if ".dev" in __version__:
-        doc_version = "dev"
-    else:
-        doc_version = ".".join(__version__.split(".")[:2])
-
-    class_doc_base_url = CLASS_DOC_URL_PREFIX.format(doc_version=doc_version)
-
-    # Strip private submodule component if any:
-    if "._" in module_name:
-        module_name = module_name.split("._")[0]
-
-    class_name = estimator_class.__qualname__
-
     docstring = estimator_class.__doc__
 
-    m = re.search(f"{param_name} : (.+)\\n", docstring)
+    m = re.search(f"{param_name} *: *(.+)", docstring)
     if m is None:
         # No match found in the docstring, return None to indicate that we
         # cannot link.
@@ -54,10 +30,9 @@ def link_to_param_doc(estimator_class, param_name):
     # disambiguation suffix to build the fragment
     param_type = m.group(1)
 
-    base_url = f"{class_doc_base_url}{quote(module_name)}.{quote(class_name)}.html"
     text_fragment = f"{quote(param_name)}{quote(param_type)}"
 
-    return f"{base_url}#:~:text={text_fragment}"
+    return f"{doc_link}#:~:text={text_fragment}"
 
 
 def _read_params(name, value, non_default_params):
@@ -75,14 +50,14 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
-def _doc_row(estimator_class, row, param_name):
+def _doc_row(estimator_class, row, param_name, doc_link):
     """
     Generate an HTML table row containing a link to the online
     documentation for a specific parameter of an estimator.
     If the link cannot be generated, an empty string is returned.
     """
 
-    link = link_to_param_doc(estimator_class, row)
+    link = link_to_param_doc(estimator_class, row, doc_link)
 
     if link:
         link_string = (
@@ -140,7 +115,9 @@ def _params_html_repr(params):
         rows.append(
             ROW_TEMPLATE.format(
                 **param,
-                doc_link=_doc_row(params.estimator_class, row, param["param_name"]),
+                doc_link=_doc_row(
+                    params.estimator_class, row, param["param_name"], params.doc_link
+                ),
             )
         )
 
@@ -168,7 +145,10 @@ class ParamsDict(ReprHTMLMixin, UserDict):
 
     _html_repr = _params_html_repr
 
-    def __init__(self, params=None, non_default=tuple(), estimator_class=None):
+    def __init__(
+        self, params=None, non_default=tuple(), estimator_class=None, doc_link=""
+    ):
         super().__init__(params or {})
         self.non_default = non_default
         self.estimator_class = estimator_class
+        self.doc_link = doc_link
