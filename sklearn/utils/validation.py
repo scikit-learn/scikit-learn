@@ -476,6 +476,12 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
+    if y is not None:
+        check_consistent_length(X, y)
+    def check_consistent_length(*arrays):
+        arrays = [a for a in arrays if a is not None]
+    ...
+
     lengths = [_num_samples(X) for X in arrays if X is not None]
     if len(set(lengths)) > 1:
         raise ValueError(
@@ -483,6 +489,10 @@ def check_consistent_length(*arrays):
             % [int(l) for l in lengths]
         )
 
+def test_check_X_y_optional_y():
+    X = np.array([[1, 2], [3, 4]])
+    result = check_X_y(X, y=None)
+    assert np.array_equal(result, X)
 
 def _make_indexable(iterable):
     """Ensure iterable supports indexing or convert to an indexable variant.
@@ -1208,7 +1218,7 @@ def _check_large_sparse(X, accept_large_sparse=False):
 
 def check_X_y(
     X,
-    y,
+    y=None,
     accept_sparse=False,
     *,
     accept_large_sparse=True,
@@ -1362,6 +1372,11 @@ def check_X_y(
     >>> y
     array([1, 2, 3])
     """
+    if y is None:
+        return check_array(X, dtype=dtype, accept_sparse=accept_sparse)
+
+
+
     if y is None:
         if estimator is None:
             estimator_name = "estimator"
@@ -3007,3 +3022,19 @@ def validate_data(
         _check_n_features(_estimator, X, reset=reset)
 
     return out
+def _check_input_parameters(X, y=None, groups=None, caller_name=None):
+    """Validate that at least one of y or groups is not None, and validate X."""
+    if y is None and groups is None:
+        raise ValueError(
+            f"{caller_name or 'This function'} requires at least one of 'y' or 'groups'."
+        )
+
+    X = check_array(X, accept_sparse=True, ensure_2d=True)
+
+    if y is not None:
+        y = check_array(y, ensure_2d=False)
+
+    if groups is not None:
+        groups = check_array(groups, ensure_2d=False)
+
+    return X, y, groups
