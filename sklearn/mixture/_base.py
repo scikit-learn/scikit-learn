@@ -20,6 +20,7 @@ from ..utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
     _logsumexp,
+    _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
 )
@@ -504,7 +505,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             ]
         )
 
-        return xp.asarray(X, device=device_), y
+        max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+        return xp.asarray(X, dtype=max_float_dtype, device=device_), y
 
     def _estimate_weighted_log_prob(self, X, xp=None):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.

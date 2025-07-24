@@ -992,3 +992,10 @@ class GaussianMixture(BaseMixture):
             The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = (
+            self.init_params in ["random", "random_from_data"] and not self.warm_start
+        )
+        return tags

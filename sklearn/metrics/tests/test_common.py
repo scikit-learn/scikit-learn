@@ -65,6 +65,7 @@ from sklearn.metrics.pairwise import (
     linear_kernel,
     paired_cosine_distances,
     paired_euclidean_distances,
+    pairwise_distances,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -1613,6 +1614,19 @@ def test_regression_with_invalid_sample_weight(name):
     with pytest.raises(ValueError, match="Found input variables with inconsistent"):
         metric(y_true, y_pred, sample_weight=sample_weight)
 
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true[:3], y_pred[:3], sample_weight=sample_weight)
+
     sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
         (n_samples, 2)
     )
@@ -2282,6 +2296,7 @@ array_api_metric_checkers = {
     roc_curve: [
         check_array_api_binary_classification_metric,
     ],
+    pairwise_distances: [check_array_api_metric_pairwise],
 }
 
 

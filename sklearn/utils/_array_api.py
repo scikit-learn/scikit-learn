@@ -6,7 +6,6 @@
 import itertools
 import math
 import os
-from functools import wraps
 
 import numpy
 import scipy
@@ -86,7 +85,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ):
         if array_namespace == "torch":
             for device, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
+                ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
@@ -244,53 +243,7 @@ def _union1d(a, b, xp):
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
 
-def isdtype(dtype, kind, *, xp):
-    """Returns a boolean indicating whether a provided dtype is of type "kind".
-
-    Included in the v2022.12 of the Array API spec.
-    https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
-    """
-    if isinstance(kind, tuple):
-        return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
-    else:
-        return _isdtype_single(dtype, kind, xp=xp)
-
-
-def _isdtype_single(dtype, kind, *, xp):
-    if isinstance(kind, str):
-        if kind == "bool":
-            return dtype == xp.bool
-        elif kind == "signed integer":
-            return dtype in {xp.int8, xp.int16, xp.int32, xp.int64}
-        elif kind == "unsigned integer":
-            return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
-        elif kind == "integral":
-            return any(
-                _isdtype_single(dtype, k, xp=xp)
-                for k in ("signed integer", "unsigned integer")
-            )
-        elif kind == "real floating":
-            return dtype in supported_float_dtypes(xp)
-        elif kind == "complex floating":
-            # Some name spaces might not have support for complex dtypes.
-            complex_dtypes = set()
-            if hasattr(xp, "complex64"):
-                complex_dtypes.add(xp.complex64)
-            if hasattr(xp, "complex128"):
-                complex_dtypes.add(xp.complex128)
-            return dtype in complex_dtypes
-        elif kind == "numeric":
-            return any(
-                _isdtype_single(dtype, k, xp=xp)
-                for k in ("integral", "real floating", "complex floating")
-            )
-        else:
-            raise ValueError(f"Unrecognized data type kind: {kind!r}")
-    else:
-        return dtype == kind
-
-
-def supported_float_dtypes(xp):
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
     Note: float16 is not officially part of the Array API spec at the
@@ -299,10 +252,18 @@ def supported_float_dtypes(xp):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
+    dtypes_dict = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    valid_float_dtypes = []
+    for dtype_key in ("float64", "float32"):
+        if dtype_key in dtypes_dict:
+            valid_float_dtypes.append(dtypes_dict[dtype_key])
+
     if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
-    else:
-        return (xp.float64, xp.float32)
+        valid_float_dtypes.append(xp.float16)
+
+    return tuple(valid_float_dtypes)
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -332,20 +293,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-def _check_device_cpu(device):
-    if device not in {"cpu", None}:
-        raise ValueError(f"Unsupported device for NumPy: {device!r}")
-
-
-def _accept_device_cpu(func):
-    @wraps(func)
-    def wrapped_func(*args, **kwargs):
-        _check_device_cpu(kwargs.pop("device", None))
-        return func(*args, **kwargs)
-
-    return wrapped_func
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
