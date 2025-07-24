@@ -89,8 +89,8 @@ def build_projection_operator(l_x, n_dir):
         weights += list(w[mask])
         camera_inds += list(inds[mask] + i * l_x)
         data_inds += list(data_unravel_indices[mask])
-    camera_inds = np.array(camera_inds, np.int32)  # lasso needs int32 inds
-    data_inds = np.array(data_inds, np.int32)
+    camera_inds = np.array(camera_inds, dtype=np.int32)  # lasso needs int32 inds
+    data_inds = np.array(data_inds, dtype=np.int32)
     proj_operator = sparse.coo_array((weights, (camera_inds, data_inds)))
     return proj_operator
 

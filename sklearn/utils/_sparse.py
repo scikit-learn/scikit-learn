@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 from .._config import get_config
-from .fixes import parse_version, sp_base_version
+from .fixes import SCIPY_VERSION_BELOW_1_12
 
 
 def _align_api_if_sparse(X):
@@ -38,7 +38,7 @@ def _align_api_if_sparse(X):
 ########### fixes for transitioning function names
 
 # TODO: Replace when Scipy 1.12 is the minimum supported version
-if sp_base_version >= parse_version("1.12.0"):
+if not SCIPY_VERSION_BELOW_1_12:
     _sparse_eye = sp.sparse.eye_array
     _sparse_diags = sp.sparse.diags_array
 

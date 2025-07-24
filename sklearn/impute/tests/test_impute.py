@@ -21,6 +21,7 @@ from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline, make_union
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -1766,9 +1767,13 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
         else:
             X_imputed = getattr(imputer, method)(X)
         assert X_imputed.shape == X.shape
-        constant_feature = (
-            X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
-        )
+        # Todo: remove first clause of if when min Scipy version is 1.12+
+        if SCIPY_VERSION_BELOW_1_12 and array_type == "sparse":
+            constant_feature = X_imputed[:, [0]].toarray()
+        else:
+            constant_feature = (
+                X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
+            )
         assert_array_equal(constant_feature, fill_value)
 
 
@@ -1787,9 +1792,11 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
         X_imputed = getattr(imputer, method)(X)
         if keep_empty_features:
             assert X_imputed.shape == X.shape
-            constant_feature = (
-                X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
-            )
+            if SCIPY_VERSION_BELOW_1_12 and array_type == "sparse":
+                constant_feature = X_imputed[:, [0]].toarray()
+            else:
+                col0 = X_imputed[:, 0]
+                constant_feature = col0.toarray() if array_type == "sparse" else col0
             assert_array_equal(constant_feature, 0)
         else:
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)

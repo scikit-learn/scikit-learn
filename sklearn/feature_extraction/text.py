@@ -22,6 +22,7 @@ from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_c
 from ..exceptions import NotFittedError
 from ..preprocessing import normalize
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from ..utils._sparse import SCIPY_VERSION_BELOW_1_12
 from ..utils.fixes import _IS_32BIT
 from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted, validate_data
 from ._hash import FeatureHasher
@@ -1446,8 +1447,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         inverse_vocabulary = terms[np.argsort(indices)]
 
         if sp.issparse(X):
+            if SCIPY_VERSION_BELOW_1_12:
+                return [
+                    inverse_vocabulary[X[[i], :].nonzero()[-1]].ravel()
+                    for i in range(n_samples)
+                ]
             return [
-                inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+                inverse_vocabulary[X[i, :].nonzero()[-1]].ravel()
                 for i in range(n_samples)
             ]
         else:

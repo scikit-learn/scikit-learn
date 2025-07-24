@@ -10,7 +10,7 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, parse_version, sp_base_version
+from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, SCIPY_VERSION_BELOW_1_12
 
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
@@ -36,10 +36,9 @@ def _array_indexing(array, key, key_dtype, axis):
     if issparse(array):
         if key_dtype == "bool":
             key = np.asarray(key)
-        # TODO remove this clause when SciPy 1.15 is min supported version
-        elif sp_base_version < parse_version("1.15.0"):
-            if not isinstance(key, slice):
-                key = list(key)
+        elif SCIPY_VERSION_BELOW_1_12:
+            if isinstance(key, numbers.Integral):
+                key = [key]
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]

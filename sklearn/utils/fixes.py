@@ -69,6 +69,11 @@ def _mode(a, axis=0):
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_12 = sp_base_version < parse_version("1.12.0")
+
+
+# TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_base_version >= parse_version("1.12.0"):
     _sparse_linalg_cg = scipy.sparse.linalg.cg
 else:
