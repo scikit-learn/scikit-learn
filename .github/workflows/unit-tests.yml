@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Unit tests
 permissions:
   contents: read
 
