@@ -466,6 +466,34 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
+def _convert_to_reference(*, reference, arrays):
+    """Convert `arrays` to `reference` array's namespace and device."""
+    xp_ref, _, device_ref = get_namespace_and_device(reference)
+    arrays_converted_list = []
+    for array in arrays:
+        xp_array, _, device_array = get_namespace_and_device(array)
+        if xp_ref == xp_array and device_ref == device_array:
+            arrays_converted_list.append(array)
+        else:
+            try:
+                # Note will copy if required
+                array_converted = xp_ref.from_dlpack(array, device=device_ref)
+            except AttributeError:
+                # Convert to numpy
+                if _is_numpy_namespace(xp_ref):
+                    array_converted = _convert_to_numpy(array)
+                # Convert from numpy
+                elif _is_numpy_namespace(xp_array):
+                    array_converted = xp_ref.asarray(array, device=device_ref)
+                else:
+                    # Convert to numpy then to reference
+                    array_np = _convert_to_numpy(array)
+                    array_converted = xp_ref.asarray(array_np, device=device_ref)
+            arrays_converted_list.append(array_converted)
+
+    return tuple(arrays_converted_list)
+
+
 def _expit(X, xp=None):
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
