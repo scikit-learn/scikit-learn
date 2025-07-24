@@ -980,13 +980,11 @@ def test_transformer_fit_transform_without_metadata_in_fit():
         def transform(X):
             return X
 
-    with pytest.raises(
-        TypeError,
-        match=(
-            "`NonConsumingTransformer.fit` got an unexpected keyword argument "
-            "`sample_weight`."
-        ),
-    ):
+    message = (
+        "`NonConsumingTransformer.fit` got an unexpected keyword argument "
+        "`sample_weight`."
+    )
+    with pytest.raises(TypeError, match=message):
         NonConsumingTransformer().fit_transform(
             X=[[1]], sample_weight=np.array([[1, 1, 1]])
         )
