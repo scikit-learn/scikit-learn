@@ -2723,6 +2723,10 @@ def _check_feature_names(estimator, X, *, reset):
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`sklearn.utils.validation`.
 
+    .. note::
+        To only check feature names without conducting a full data validation, prefer
+        using `validate_data(..., skip_check_array=True)` if possible.
+
     Parameters
     ----------
     estimator : estimator instance
@@ -2733,8 +2737,10 @@ def _check_feature_names(estimator, X, *, reset):
 
     reset : bool
         Whether to reset the `feature_names_in_` attribute.
+        If True, resets the `feature_names_in_` attribute as inferred from `X`.
         If False, the input will be checked for consistency with
         feature names of data provided when reset was last True.
+
         .. note::
            It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
@@ -2810,6 +2816,10 @@ def _check_feature_names(estimator, X, *, reset):
 def _check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
+    .. note::
+        To only check n_features without conducting a full data validation, prefer
+        using `validate_data(..., skip_check_array=True)` if possible.
+
     .. versionchanged:: 1.6
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`~sklearn.utils.validation`.
@@ -2823,12 +2833,14 @@ def _check_n_features(estimator, X, reset):
         The input samples.
 
     reset : bool
+        Whether to reset the `n_features_in_` attribute.
         If True, the `n_features_in_` attribute is set to `X.shape[1]`.
         If False and the attribute exists, then check that it is equal to
         `X.shape[1]`. If False and the attribute does *not* exist, then
         the check is skipped.
+
         .. note::
-           It is recommended to call reset=True in `fit` and in the first
+           It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
            should set `reset=False`.
     """
