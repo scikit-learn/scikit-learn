@@ -975,10 +975,10 @@ def test_transformer_fit_transform_without_metadata_in_fit():
 
     class NonConsumingTransformer(TransformerMixin):
         def fit(self, X, y=None):
-            return self
+            return self  # pragma: no cover
 
         def transform(X):
-            return X
+            return X  # pragma: no cover
 
     message = (
         "`NonConsumingTransformer.fit` got an unexpected keyword argument "
