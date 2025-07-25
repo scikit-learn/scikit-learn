@@ -5,6 +5,7 @@ from collections import Counter
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
@@ -383,7 +384,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -394,7 +395,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return cls.from_predictions(
             y,
-            y_pred,
+            y_score,
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
@@ -410,7 +411,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=False,
@@ -420,6 +421,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -434,8 +436,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         y_true : array-like of shape (n_samples,)
             True binary labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Estimated probabilities or output of decision function.
+
+            .. versionadded:: 1.8
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -478,6 +483,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
+        y_pred : array-like of shape (n_samples,)
+            Estimated probabilities or output of decision function.
+
+            .. deprecated:: 1.8
+                `y_pred` is deprecated and will be removed in 1.10. Use
+                `y_score` instead.
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -514,25 +526,26 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> y_pred = clf.predict_proba(X_test)[:, 1]
+        >>> y_score = clf.predict_proba(X_test)[:, 1]
         >>> PrecisionRecallDisplay.from_predictions(
-        ...    y_test, y_pred)
+        ...    y_test, y_score)
         <...>
         >>> plt.show()
         """
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
         precision, recall, _ = precision_recall_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
 
         class_count = Counter(y_true)
