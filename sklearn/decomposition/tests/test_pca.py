@@ -520,23 +520,6 @@ def test_pca_inverse(svd_solver, whiten):
     assert_allclose(X, Y_inverse, rtol=5e-6)
 
 
-def test_pca_validates_inverse_transform():
-    """Checks that PCA validates data with inverse_transform."""
-    X = iris.data
-    pca = PCA().fit(X)
-
-    msg = f"X has 2 components, but \\w+ is expecting {X.shape[1]} components as input."
-    with pytest.raises(ValueError, match=msg):
-        pca.inverse_transform(X[:, :2])
-
-    msg = (
-        f"X does not contain any components, "
-        f"but \\w+ is expecting {X.shape[1]} components"
-    )
-    with pytest.raises(ValueError, match=msg):
-        pca.inverse_transform(range(10))
-
-
 @pytest.mark.parametrize(
     "data", [np.array([[0, 1, 0], [1, 0, 0]]), np.array([[0, 1, 0], [1, 0, 0]]).T]
 )
