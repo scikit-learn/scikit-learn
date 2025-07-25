@@ -18,7 +18,8 @@ def link_to_param_doc(estimator_class, param_name, doc_link):
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
     docstring = estimator_class.__doc__
-    m = re.search(f"{param_name} *: *(.+)", docstring)
+
+    m = re.search(f"{param_name} : (.+)\\n", docstring)
     if m is None:
         # No match found in the docstring, return None to indicate that we
         # cannot link.
@@ -27,8 +28,7 @@ def link_to_param_doc(estimator_class, param_name, doc_link):
     # Extract the whole line of the type information, up to the line break as
     # disambiguation suffix to build the fragment
     param_type = m.group(1)
-
-    text_fragment = f"{quote(param_name)}{quote(param_type)}"
+    text_fragment = f"{quote(param_name)},-{quote(param_type)}"
 
     return f"{doc_link}#:~:text={text_fragment}"
 
