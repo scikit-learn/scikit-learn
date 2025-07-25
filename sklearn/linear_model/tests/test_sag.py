@@ -69,7 +69,11 @@ def sag(
     sample_weight=None,
     fit_intercept=True,
     saga=False,
+    tol=0,
+    true_weights=None,
 ):
+    if true_weights is not None:
+        convergence = []
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(X.shape[1])
@@ -89,36 +93,54 @@ def sag(
         decay = 0.01
 
     for epoch in range(n_iter):
+        previous_weights = weights.copy()
         for k in range(n_samples):
             idx = int(rng.rand() * n_samples)
             # idx = k
             entry = X[idx]
             seen.add(idx)
+            S_seen = len(seen)
+            if sample_weight is not None:
+                S_seen = sample_weight[list(seen)].sum()
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
-            if sample_weight is not None:
-                gradient *= sample_weight[idx]
             update = entry * gradient + alpha * weights
+            if sample_weight is not None:
+                update *= sample_weight[idx]
             gradient_correction = update - gradient_memory[idx]
             sum_gradient += gradient_correction
             gradient_memory[idx] = update
+            weights -= step_size * sum_gradient / S_seen
             if saga:
-                weights -= gradient_correction * step_size * (1 - 1.0 / len(seen))
+                weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
 
             if fit_intercept:
-                gradient_correction = gradient - intercept_gradient_memory[idx]
-                intercept_gradient_memory[idx] = gradient
+                update = gradient
+                if sample_weight is not None:
+                    update *= sample_weight[idx]
+                gradient_correction = update - intercept_gradient_memory[idx]
                 intercept_sum_gradient += gradient_correction
-                gradient_correction *= step_size * (1.0 - 1.0 / len(seen))
+                intercept_gradient_memory[idx] = update
+                intercept -= step_size * intercept_sum_gradient / S_seen * decay
                 if saga:
-                    intercept -= (
-                        step_size * intercept_sum_gradient / len(seen) * decay
-                    ) + gradient_correction
-                else:
-                    intercept -= step_size * intercept_sum_gradient / len(seen) * decay
+                    intercept -= gradient_correction * step_size * (1 - 1.0 / S_seen)
 
-            weights -= step_size * sum_gradient / len(seen)
+        # tracking convergence
+        if true_weights is not None:
+            l2_norm = np.sum((weights - true_weights) ** 2)
+            convergence.append(l2_norm)
+        # stopping criteria
+        max_weight = np.abs(weights).max()
+        max_change = np.abs(weights - previous_weights).max()
+        if (max_weight != 0 and max_change / max_weight <= tol) or (
+            max_weight == 0 and max_change == 0
+        ):
+            print(f"sag convergence after {epoch + 1} epochs")
+            break
 
+    if true_weights is not None:
+        convergence = np.array(convergence)
+        return weights, intercept, convergence
     return weights, intercept
 
 
@@ -239,11 +261,16 @@ def sag_sparse(
     return weights, intercept
 
 
-def get_step_size(X, alpha, fit_intercept, classification=True):
-    if classification:
-        return 4.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + 4.0 * alpha)
-    else:
-        return 1.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + alpha)
+def get_step_size(X, alpha, fit_intercept, classification=True, sample_weight=None):
+    # Lipschitz smoothness constant for f_i(w) = s_i (loss_i(w)) + alpha ||w||^2):
+    # L_i = s_i ( kappa * (||x_i||^2 + fit_intercept) + alpha )
+    # where kappa = 1/4 for classification and 1 for regression
+    kappa = 0.25 if classification else 1.0
+    L = kappa * (np.sum(X * X, axis=1) + fit_intercept) + alpha
+    if sample_weight is not None:
+        L *= sample_weight
+    # Recommended step_size = 1 / max L_i
+    return 1 / L.max()
 
 
 def test_classifier_matching():
