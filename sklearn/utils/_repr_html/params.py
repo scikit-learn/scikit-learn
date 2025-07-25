@@ -139,6 +139,11 @@ class ParamsDict(ReprHTMLMixin, UserDict):
     estimator_class : type
         The class of the estimator. It allows to find the online documentation
         link for each paramter.
+
+    doc_link : str
+        The base URL to the online documentation for the estimator class.
+        Used to generate parameter-specific documentation links in the HTML
+        representation. If empty, documentation links will not be generated.
     """
 
     _html_repr = _params_html_repr
