@@ -13,7 +13,7 @@ from ..exceptions import ConvergenceWarning, NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
 from ..utils._param_validation import Interval, StrOptions
-from ..utils._sparse import _align_api_if_sparse, SCIPY_VERSION_BELOW_1_12
+from ..utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import _ovr_decision_function, check_classification_targets
