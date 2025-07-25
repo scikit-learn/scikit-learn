@@ -18,7 +18,7 @@ def test_params_dict_content():
 
 
 def test_params_dict_repr_html_():
-    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",))
+    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",), estimator_class="")
     out = params._repr_html_()
     assert "<summary>Parameters</summary>" in out
 
@@ -29,7 +29,7 @@ def test_params_dict_repr_html_():
 
 
 def test_params_dict_repr_mimebundle():
-    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",))
+    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",), estimator_class="")
     out = params._repr_mimebundle_()
 
     assert "text/plain" in out
@@ -69,7 +69,7 @@ def test_read_params():
 
 def test_params_html_repr():
     """Check returned HTML template"""
-    params = ParamsDict({"a": 1, "b": 2})
+    params = ParamsDict({"a": 1, "b": 2}, estimator_class="")
     assert "parameters-table" in _params_html_repr(params)
     assert "estimator-table" in _params_html_repr(params)
 
@@ -90,6 +90,7 @@ def test_params_html_repr_with_doc_links():
         {"a": 1, "b": "value"},
         non_default=("a",),
         estimator_class=MockEstimator,
+        doc_link="mock_module.MockEstimator.html",
     )
     html_output = _params_html_repr(params)
 
@@ -99,6 +100,7 @@ def test_params_html_repr_with_doc_links():
     assert "Documentation for `b`" in html_output
     assert "sk-estimator-doc-link" in html_output
     # Check that the doc links contain the correct URL fragments
+
     assert "mock_module.MockEstimator.html#:~:text=aint" in html_output
     assert "mock_module.MockEstimator.html#:~:text=bstr" in html_output
 

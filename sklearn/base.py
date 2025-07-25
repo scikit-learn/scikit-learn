@@ -254,7 +254,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             out[key] = value
         return out
 
-    def _get_params_html(self, doc_link, deep=True):
+    def _get_params_html(self, doc_link="", deep=True):
         """
         Get parameters for this estimator with a specific HTML representation.
 

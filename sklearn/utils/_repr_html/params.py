@@ -17,9 +17,7 @@ def link_to_param_doc(estimator_class, param_name, doc_link):
 
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
-
     docstring = estimator_class.__doc__
-
     m = re.search(f"{param_name} *: *(.+)", docstring)
     if m is None:
         # No match found in the docstring, return None to indicate that we
