@@ -1346,7 +1346,12 @@ def _is_empty_column_selection(column):
     boolean array).
 
     """
-    if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
+    if (
+        hasattr(column, "dtype")
+        # Not necessarily a numpy dtype, can be a pandas dtype as well
+        and isinstance(column.dtype, np.dtype)
+        and np.issubdtype(column.dtype, np.bool_)
+    ):
         return not column.any()
     elif hasattr(column, "__len__"):
         return len(column) == 0 or (
