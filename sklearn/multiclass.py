@@ -500,6 +500,7 @@ class OneVsRestClassifier(
             maxima.fill(-np.inf)
             argmaxima = np.zeros(n_samples, dtype=int)
             n_classes = len(self.estimators_)
+            # Iterate in reverse order to match np.argmax tie-breaking behavior
             for i, e in enumerate(reversed(self.estimators_)):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
