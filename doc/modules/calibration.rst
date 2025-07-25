@@ -276,6 +276,41 @@ probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
+On the other hand, temperature scaling naturally supports multiclass
+predictions by working with logits and finally applying the softmax function.
+
+Temperature Scaling
+^^^^^^^^^^^^^^^^^^^
+
+For a multi-class classification problem with :math:`n` classes, temperature scaling
+[9]_, `method="temperature"`, produces class probabilities by modifying the softmax
+function with a temperature parameter :math:`T`:
+
+.. math::
+       \mathrm{softmax}\left(\frac{z}{T}\right) \,,
+
+where :math:`z` is the vector of logits for each class produced
+by the calibrating estimator for a given sample. In terms of scikit-learn's API,
+these correspond to the outputs of either :term:`decision_function` or
+:term:`predict_proba`. Probabilities are converted to logits by first adding a tiny
+positive constant to avoid numerical issues with logarithm of zero, and then applying the natural
+logarithm.
+
+The parameter :math:`T` is learned by minimizing
+:func:`~sklearn.metrics.log_loss` (i.e. cross-entropy loss) on a validation set.
+In scikit-learn’s implementation, the inverse temperature `beta = 1 / T`
+is optimized instead, so that the calibrated probabilities are given by
+`softmax(beta * logits)`.
+
+Note that the temperature parameter :math:`T` (and hence `beta`) does not
+affect the location of the maximum in the softmax output. Therefore, temperature
+scaling does not alter the accuracy of the calibrating estimator.
+
+The main advantage of temperature scaling over other calibration methods is that it
+provides a natural way to obtain (better) calibrated multi-class probabilities with
+just one free parameter in contrast to using a "One-vs-Rest" scheme that adds more
+parameters for each single class.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
@@ -324,3 +359,7 @@ one, a postprocessing is performed to normalize them.
        :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
        <10.1007/978-3-031-12409-9>`
        Springer Actuarial
+
+.. [9] `On Calibration of Modern Neural Networks
+       <https://proceedings.mlr.press/v70/guo17a/guo17a.pdf>`_,
+       C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
