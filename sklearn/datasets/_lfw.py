@@ -169,7 +169,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        
+
         # Opening file using a context manager to insure file is always closed
         with Image.open(file_path) as pil_img:
             pil_img = pil_img.crop(
