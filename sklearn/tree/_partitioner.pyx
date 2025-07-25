@@ -14,10 +14,12 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-
-import numpy as np
 from scipy.sparse import issparse
 
+import numpy as np
+
+from ._utils cimport goes_left
+from ..utils._bitset cimport BITSET_INNER_DTYPE_C
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -39,11 +41,49 @@ cdef class DensePartitioner:
         intp_t[::1] samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
+        bint breiman_shortcut,
     ):
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        self.breiman_shortcut = breiman_shortcut
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        n_features = X.shape[1]
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = n_categories
+
+        # If needed, allocate cache space for categorical splits
+        cdef int32_t max_n_categories = max(self.n_categories)
+        if max_n_categories > 0:
+            # cache_size = (max_n_categories + 63) // 64
+            # self.cat_cache[:] = np.empty(cache_size, dtype=np.uint32)
+            max_words = (max_n_categories + 31) // 32
+            self.cat_bitsets = np.zeros((max_words), dtype=np.uint32)
+        else:
+            self.cat_bitsets = np.zeros((1), dtype=np.uint32)
+
+        if self.breiman_shortcut:
+            # maps each of the 64 categories to the index of the category in the sorted list
+            self.cat_offset = np.empty(64, dtype=np.intp)
+            
+            # stores the statistic value of the feature for each category
+            self.sort_value = np.zeros(64, dtype=np.float32)
+            # stores the density of the samples for each category
+            self.sort_density = np.zeros(64, dtype=np.float32)
+            # A storage of the sorted categories used in Breiman shortcut
+            self.sorted_cat = np.empty(64, dtype=np.intp)
+        else:
+            # if there are no categories, we don't need to store the category offset, value, or density
+            self.cat_offset = np.empty(0, dtype=np.intp)
+            self.sort_value = np.zeros(0, dtype=np.float32)
+            self.sort_density = np.zeros(0, dtype=np.float32)
+            self.sorted_cat = np.empty(0, dtype=np.intp)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -187,19 +227,83 @@ cdef class DensePartitioner:
         # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
         p[0] += 1
 
+    cdef inline void count_missing(
+        self,
+        intp_t current_feature
+    ) noexcept nogil:
+        """Count missing values for a particular feature column dimension."""
+        cdef:
+            intp_t i, current_end
+            # float32_t[::1] feature_values = self.feature_values
+            const float32_t[:, :] X = self.X
+            intp_t[::1] samples = self.samples
+            intp_t n_missing = 0
+            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
+
+        # Sort samples along that feature; by copying the values into an array and
+        # sorting the array in a manner which utilizes the cache more effectively.
+        if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
+            i, current_end = self.start, self.end - 1
+            # Missing values are placed at the end and do not participate in the sorting.
+            while i <= current_end:
+                # Finds the right-most value that is not missing so that
+                # it can be swapped with missing values at its left.
+                if isnan(X[samples[current_end], current_feature]):
+                    n_missing += 1
+                    current_end -= 1
+                    continue
+
+                # X[samples[current_end], current_feature] is a non-missing value
+                if isnan(X[samples[i], current_feature]):
+                    samples[i], samples[current_end] = samples[current_end], samples[i]
+                    n_missing += 1
+                    current_end -= 1
+
+                i += 1
+
+        self.n_missing = n_missing
+
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold
+        SplitValue split_value,
+        intp_t feature,
     ) noexcept nogil:
-        """Partition samples for feature_values at the current_threshold."""
+        """
+        Partition samples into left and right groups based on the split criterion.
+
+        This function reorders the samples and feature values in-place so that all samples
+        that should go to the left child (according to the split_value and feature) are
+        placed before those that go to the right child. The returned index is the split
+        position: samples before this index go left, samples at or after go right.
+
+        Parameters
+        ----------
+        split_value : SplitValue
+            The split criterion (threshold for numerical, bitset for categorical).
+        feature : intp_t
+            The feature index to split on.
+
+        Returns
+        -------
+        partition_end : intp_t
+            The index separating left and right groups in the samples array.
+        """
         cdef:
             intp_t p = self.start
             intp_t partition_end = self.end - self.n_missing
             intp_t[::1] samples = self.samples
             float32_t[::1] feature_values = self.feature_values
+            const int32_t[:] n_categories = self.n_categories
+            BITSET_INNER_DTYPE_C[:] cat_cache = self.cat_bitsets
 
         while p < partition_end:
-            if feature_values[p] <= current_threshold:
+            # if feature_values[p] <= current_threshold:
+            if goes_left(
+                feature_values[p],
+                split_value,
+                n_categories[feature],
+                cat_cache,
+            ):
                 p += 1
             else:
                 partition_end -= 1
@@ -211,10 +315,30 @@ cdef class DensePartitioner:
 
         return partition_end
 
+    # cdef inline intp_t partition_samples_category(self, BITSET_INNER_DTYPE_C cat_split) noexcept nogil:
+    #     """XXX: perhaps unnecessary."""
+    #     cdef:
+    #         intp_t p = self.start
+    #         intp_t partition_end = self.end
+    #         intp_t[::1] samples = self.samples
+    #         float32_t[::1] feature_values = self.feature_values
+
+    #     while p < partition_end:
+    #         # XXX: is casting necessary?
+    #         if bs_get(cat_split, <intp_t>feature_values[p]):
+    #             p += 1
+    #         else:
+    #             partition_end -= 1
+    #             feature_values[p], feature_values[partition_end] = (
+    #                 feature_values[partition_end], feature_values[p])
+    #             samples[p], samples[partition_end] = (
+    #                 samples[partition_end], samples[p])
+    #     return partition_end
+
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue best_split_value,
         intp_t best_feature,
         intp_t best_n_missing,
     ) noexcept nogil:
@@ -233,6 +357,8 @@ cdef class DensePartitioner:
             intp_t[::1] samples = self.samples
             const float32_t[:, :] X = self.X
             float32_t current_value
+            const int32_t[:] n_categories = self.n_categories
+            BITSET_INNER_DTYPE_C[:] cat_cache = self.cat_bitsets
 
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
@@ -254,7 +380,13 @@ cdef class DensePartitioner:
                     current_value = X[samples[p], best_feature]
 
                 # Partition the non-missing samples
-                if current_value <= best_threshold:
+                # if current_value <= best_threshold:
+                if goes_left(
+                    current_value,
+                    best_split_value,
+                    n_categories[best_feature],
+                    cat_cache,
+                ):
                     p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
@@ -262,12 +394,142 @@ cdef class DensePartitioner:
         else:
             # Partitioning routine when there are no missing values
             while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
+                # if X[samples[p], best_feature] <= best_threshold:
+                if goes_left(
+                    X[samples[p], best_feature],
+                    best_split_value,
+                    n_categories[best_feature],
+                    cat_cache,
+                ):
                     p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
 
+    cdef inline void breiman_sort_categories(
+        self,
+        intp_t current_feature,
+        int32_t ncat,
+        intp_t ncat_present,
+        const intp_t[:] cat_offset,
+        intp_t[:] sorted_cat,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+    ) noexcept nogil:
+        """
+        Sort categories by increasing (weighted) mean of the outcome y, as per the Breiman shortcut.
+
+        This preprocessing step is used to efficiently search for the best split on categorical features
+        by sorting categories according to their (weighted) mean target value. The sorted order allows
+        the algorithm to consider only contiguous groupings of categories for binary splits.
+
+        Parameters
+        ----------
+        start : intp_t
+            Start index of the samples for this node.
+        end : intp_t
+            End index (exclusive) of the samples for this node.
+        ncat : int32_t
+            Total number of possible categories for the feature.
+        ncat_present : intp_t
+            Number of categories for the feature present in the current node.
+            Note: we split samples, so the deeper into the tree, the less categories
+            this might contain.
+        cat_offset : const intp_t[:]
+            Offsets mapping local category indices to actual category indices.
+        sorted_cat : intp_t[:]
+            Pre-allocated output array to store the sorted category indices. This is
+            equivalent to `samples` pointer, but instead points to a category.
+        y : const float64_t[:, ::1]
+            Target values (n_samples, 1).
+        sample_weight : const float64_t[:]
+            Sample weights (n_samples,) or None.
+        """
+        cdef:
+            intp_t[:] samples = self.samples
+            float32_t[:] feature_values = self.feature_values
+            float64_t w
+            intp_t cat, localcat
+            intp_t i, sample_idx, current_end
+
+            # cdef:
+            # float32_t[::1] feature_values = self.feature_values
+            # intp_t[::1] samples = self.samples
+            const float32_t[:, :] X = self.X
+            intp_t n_missing = 0
+            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
+
+        # Reset sort_value and sort_density arrays
+        self.sort_value[:] = 0
+        self.sort_density[:] = 0
+
+        # do nan checks if there are missing values, otherwise simply loop through
+        # and compute the cumulative metric for each category
+        if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
+            i, current_end = self.start, self.end - 1
+            # Missing values are placed at the end and do not participate in the sorting.
+            while i <= current_end:
+                # Finds the right-most value that is not missing so that
+                # it can be swapped with missing values at its left.
+                if isnan(X[samples[current_end], current_feature]):
+                    n_missing += 1
+                    current_end -= 1
+                    continue
+
+                # X[samples[current_end], current_feature] is a non-missing value
+                if isnan(X[samples[i], current_feature]):
+                    samples[i], samples[current_end] = samples[current_end], samples[i]
+                    n_missing += 1
+                    current_end -= 1
+
+                # Accumulate weighted sum of y and weights for each category
+                cat = <intp_t>X[samples[i], current_feature]
+                sample_idx = samples[i]
+                if sample_weight is not None:
+                    w = sample_weight[sample_idx]
+                else:
+                    w = 1.0
+                self.sort_value[cat] += w * y[sample_idx, 0]
+                self.sort_density[cat] += w
+
+                i += 1
+        else:
+            for i in range(self.start, self.end):
+                cat = <intp_t> X[samples[i], current_feature]  # Category index for the sample
+                sample_idx = samples[i]
+                if sample_weight is not None:
+                    w = sample_weight[sample_idx]
+                else:
+                    w = 1.0
+                self.sort_value[cat] += w * y[sample_idx, 0]
+                self.sort_density[cat] += w
+
+        # Compute weighted mean for each present category and prepare sorted_cat
+        for localcat in range(ncat_present):
+            # XXX: unsure which one it is, but cat_offset seems logical...
+            cat = localcat + cat_offset[localcat]  # Actual category index
+            # cat = cat_offset[localcat]  # Actual category index
+            if self.sort_density[cat] == 0:  # Avoid division by zero
+                self.sort_density[cat] = 1
+            self.sort_value[localcat] = self.sort_value[cat] / self.sort_density[cat]
+            sorted_cat[localcat] = cat
+
+        # Sort categories by their weighted mean target value, and store in `sorted_cat`
+        sort(&self.sort_value[0], &sorted_cat[0], ncat_present)
+        self.n_missing = n_missing
+
+    cpdef py_init_node_split(self, intp_t start, intp_t end):
+        """Initialize splitter at the beginning of node_split."""
+        self.start = start
+        self.end = end
+        self.n_missing = 0
+
+    cpdef py_breiman_sort_categories(self, intp_t current_feature, int32_t ncat,
+                              intp_t ncat_present, const intp_t[:] cat_offset,
+                              intp_t[:] sorted_cat, const float64_t[:, ::1] y,
+                              const float64_t[:] sample_weight):
+        self.breiman_sort_categories(current_feature, ncat, ncat_present, cat_offset,
+                                  sorted_cat, y, sample_weight)
 
 @final
 cdef class SparsePartitioner:
@@ -282,6 +544,8 @@ cdef class SparsePartitioner:
         intp_t n_samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
+        bint breiman_shortcut,
     ):
         if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
@@ -306,6 +570,41 @@ cdef class SparsePartitioner:
             self.index_to_samples[samples[p]] = p
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+
+        self.breiman_shortcut = breiman_shortcut
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        n_features = X.shape[1]
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = n_categories
+
+        # If needed, allocate cache space for categorical splits
+        cdef int32_t max_n_categories = max(self.n_categories)
+        if max_n_categories > 0:
+            max_words = (max_n_categories + 31) // 32
+            self.cat_bitsets = np.zeros((max_words), dtype=np.uint32)
+        else:
+            self.cat_bitsets = np.zeros((1), dtype=np.uint32)
+
+        if self.breiman_shortcut:
+            self.sort_value = np.zeros(64, dtype=np.float32)
+            self.sort_density = np.zeros(64, dtype=np.float32)
+
+            # XXX: unsure what this it.
+            self.cat_offset = np.empty(64, dtype=np.intp)
+            # A storage of the sorted categories used in Breiman shortcut
+            self.sorted_cat = np.empty(64, dtype=np.intp)
+        else:
+            self.sort_value = np.zeros(1, dtype=np.float32)
+            self.sort_density = np.zeros(1, dtype=np.float32)
+
+            # XXX: unsure what this it.
+            self.cat_offset = np.empty(1, dtype=np.intp)
+            # A storage of the sorted categories used in Breiman shortcut
+            self.sorted_cat = np.empty(1, dtype=np.intp)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -420,24 +719,27 @@ cdef class SparsePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold
+        SplitValue split_value,
+        intp_t feature,
     ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
-        return self._partition(current_threshold, self.start_positive)
+        return self._partition(split_value.threshold, self.start_positive)
 
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue best_split_value,
+        # float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
-        self._partition(best_threshold, best_pos)
+        self._partition(best_split_value.threshold, best_pos)
 
     cdef inline intp_t _partition(self, float64_t threshold, intp_t zero_pos) noexcept nogil:
         """Partition samples[start:end] based on threshold."""
+        # TODO: implement partitioning samples based on categorical split
         cdef:
             intp_t p, partition_end
             intp_t[::1] index_to_samples = self.index_to_samples
@@ -467,6 +769,16 @@ cdef class SparsePartitioner:
                 sparse_swap(index_to_samples, samples, p, partition_end)
 
         return partition_end
+
+    # cdef inline intp_t partition_samples_category(self, BITSET_INNER_DTYPE_C cat_split) noexcept nogil:
+    #     cdef:
+    #         intp_t p = self.start
+    #         # intp_t partition_end = self.end
+    #         # intp_t[::1] samples = self.samples
+    #         # float32_t[::1] feature_values = self.feature_values
+    #     # TODO: implement partition samples category for sparse input
+    #     # Right now, we return a dummy value to make compilation work
+    #     return p
 
     cdef inline void extract_nnz(self, intp_t feature) noexcept nogil:
         """Extract and partition values for a given feature.
@@ -523,6 +835,23 @@ cdef class SparsePartitioner:
                                          feature_values,
                                          &self.end_negative, &self.start_positive)
 
+    cdef inline void breiman_sort_categories(
+        self,
+        intp_t current_feature,
+        int32_t ncat,
+        intp_t ncat_present,
+        const intp_t[:] cat_offset,
+        intp_t[:] sorted_cat,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+    ) noexcept nogil:
+        raise NotImplementedError("Breiman shortcut is not implemented yet for sparse partitions.")
+
+    cdef inline void count_missing(
+        self,
+        intp_t current_feature
+    ) noexcept nogil:
+        raise NotImplementedError("Count missing is not implemented yet for sparse partitions.")
 
 cdef int compare_SIZE_t(const void* a, const void* b) noexcept nogil:
     """Comparison function for sort.
@@ -819,3 +1148,25 @@ cdef void heapsort(float32_t* feature_values, intp_t* samples, intp_t n) noexcep
         swap(feature_values, samples, 0, end)
         sift_down(feature_values, samples, 0, end)
         end = end - 1
+
+
+"""
+cpdef test functions to expose
+"""
+
+cpdef py_breiman_sort_categories(
+    self,
+    intp_t current_feature,
+    int32_t ncat,
+    intp_t ncat_present,
+    const intp_t[:] cat_offset,
+    intp_t[:] sorted_cat,
+    const float64_t[:, ::1] y,
+    const float64_t[:] sample_weight
+):
+    self.py_breiman_sort_categories(current_feature, ncat, ncat_present, cat_offset,
+                                  sorted_cat, y, sample_weight)
+
+cpdef py_init_node_split(self, intp_t start, intp_t end):
+    """Initialize splitter at the beginning of node_split."""
+    self.py_init_node_split(start, end)
