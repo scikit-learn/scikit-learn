@@ -21,7 +21,7 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils._sparse import _align_api_if_sparse, _sparse_eye
+from ..utils._sparse import _align_api_if_sparse, _sparse_eye, SCIPY_VERSION_BELOW_1_15
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
@@ -241,8 +241,6 @@ def _locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            # change when SciPy 1.12+ is minimal supported version
-            # M = eye_array(W.shape, format=W.format, dtype=W.dtype) - W
             M = _sparse_eye(*W.shape, format=W.format, dtype=W.dtype) - W
             M = M.T @ M  # M = (I - W)' (I - W) = W' W - W' - W + I
         else:
@@ -399,8 +397,12 @@ def _locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
-            M[[i], neighbors[i]] -= Wi_sum1
-            M[neighbors[i], [i]] -= Wi_sum1
+            if SCIPY_VERSION_BELOW_1_15:
+                M[[i], neighbors[i]] -= Wi_sum1
+                M[neighbors[i], [i]] -= Wi_sum1
+            else:
+                M[i, neighbors[i]] -= Wi_sum1
+                M[neighbors[i], i] -= Wi_sum1
             M[i, i] += s_i
 
     elif method == "ltsa":

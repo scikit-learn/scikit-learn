@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import scipy as sp
 from scipy.sparse import csc_array, csc_matrix, csr_array, csr_matrix
 
 import sklearn
@@ -76,3 +77,20 @@ def test_estimator_property_sparse(sparse_interface, result_type):
         regr.fit(X, y)
         # check spec_coeff property
         assert isinstance(regr.sparse_coef_, result_type)
+
+
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        sp.sparse.bsr_array, sp.sparse.bsr_matrix,
+        sp.sparse.csc_array, sp.sparse.csc_matrix,
+        sp.sparse.csr_array, sp.sparse.csr_matrix,
+        sp.sparse.coo_array, sp.sparse.coo_matrix,
+        sp.sparse.dia_array, sp.sparse.dia_matrix,
+        sp.sparse.dok_array, sp.sparse.dok_matrix,
+        sp.sparse.lil_array, sp.sparse.lil_matrix,
+    ]
+)
+def test_estimator_property_sparse(constructor):
+    A = constructor(np.array([[1., 2., 3.], [3., 2., 1.]]))
+    sklearn.utils._sparse._ensure_sparse_index_int32(A)

@@ -1717,21 +1717,22 @@ def test_check_pos_label_consistency_invalid_array_api(
         assert _check_pos_label_consistency("a", arr) == "a"
 
 
-@pytest.mark.parametrize("toarray", [np.array, sp.csr_array, sp.csc_array])
+CS_SPARSE = [sp.csr_array, sp.csr_matrix, sp.csc_array, sp.csc_matrix]
+@pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base)
     assert _allclose_dense_sparse(x, y)
 
 
-@pytest.mark.parametrize("toarray", [np.array, sp.csr_array, sp.csc_array])
+@pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_not_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base + 1)
     assert not _allclose_dense_sparse(x, y)
 
 
-@pytest.mark.parametrize("toarray", [sp.csr_array, sp.csc_array])
+@pytest.mark.parametrize("toarray", CS_SPARSE)
 def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)

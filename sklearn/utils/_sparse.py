@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 from .._config import get_config
-from .fixes import SCIPY_VERSION_BELOW_1_12
+from .fixes import SCIPY_VERSION_BELOW_1_12, SCIPY_VERSION_BELOW_1_15
 
 
 def _align_api_if_sparse(X):
@@ -170,9 +170,4 @@ def safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
         indices = A.indices.astype(idx_dtype, copy=False)
         indptr = A.indptr.astype(idx_dtype, copy=False)
         return indices, indptr
-
-    else:
-        raise TypeError(
-            f"Format {A.format} is not associated with index arrays. "
-            "DOK and LIL have dict and list, not array."
-        )
+    # DOK and LIL formats are not associated with index arrays.

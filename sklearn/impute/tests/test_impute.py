@@ -1767,7 +1767,6 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
         else:
             X_imputed = getattr(imputer, method)(X)
         assert X_imputed.shape == X.shape
-        # Todo: remove first clause of if when min Scipy version is 1.12+
         if SCIPY_VERSION_BELOW_1_12 and array_type == "sparse":
             constant_feature = X_imputed[:, [0]].toarray()
         else:

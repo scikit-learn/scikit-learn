@@ -13,7 +13,7 @@ from ..exceptions import ConvergenceWarning, NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
 from ..utils._param_validation import Interval, StrOptions
-from ..utils._sparse import _align_api_if_sparse
+from ..utils._sparse import _align_api_if_sparse, SCIPY_VERSION_BELOW_1_12
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import _ovr_decision_function, check_classification_targets
@@ -57,10 +57,16 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
             # SVs for class1:
             sv2 = support_vectors[sv_locs[class2] : sv_locs[class2 + 1], :]
 
-            # dual coef for class1 SVs:
-            alpha1 = dual_coef[[class2 - 1], sv_locs[class1] : sv_locs[class1 + 1]]
-            # dual coef for class2 SVs:
-            alpha2 = dual_coef[[class1], sv_locs[class2] : sv_locs[class2 + 1]]
+            if SCIPY_VERSION_BELOW_1_12:
+                # dual coef for class1 SVs:
+                alpha1 = dual_coef[[class2 - 1], sv_locs[class1] : sv_locs[class1 + 1]]
+                # dual coef for class2 SVs:
+                alpha2 = dual_coef[[class1], sv_locs[class2] : sv_locs[class2 + 1]]
+            else:
+                # dual coef for class1 SVs:
+                alpha1 = dual_coef[class2 - 1, sv_locs[class1] : sv_locs[class1 + 1]]
+                # dual coef for class2 SVs:
+                alpha2 = dual_coef[class1, sv_locs[class2] : sv_locs[class2 + 1]]
             # build weight for class1 vs class2
 
             coef.append(safe_sparse_dot(alpha1, sv1) + safe_sparse_dot(alpha2, sv2))
