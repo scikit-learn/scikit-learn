@@ -330,6 +330,9 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     clip : bool, default=False
         Set to True to clip transformed values of held-out data to
         provided `feature_range`.
+        Since this parameter will clip values, `inverse_transform` may not
+        be able to restore the original data.
+
 
         .. note::
             Setting `clip=True` does not prevent feature drift (a distribution
