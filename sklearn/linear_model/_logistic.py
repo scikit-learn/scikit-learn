@@ -13,11 +13,9 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import optimize
 
-from sklearn.metrics import get_scorer_names
-
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..base import _fit_context
-from ..metrics import get_scorer
+from ..metrics import get_scorer, get_scorer_names
 from ..model_selection import check_cv
 from ..preprocessing import LabelBinarizer, LabelEncoder
 from ..svm._base import _fit_liblinear

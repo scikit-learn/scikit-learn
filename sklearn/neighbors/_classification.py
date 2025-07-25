@@ -8,8 +8,6 @@ from numbers import Integral
 
 import numpy as np
 
-from sklearn.neighbors._base import _check_precomputed
-
 from ..base import ClassifierMixin, _fit_context
 from ..metrics._pairwise_distances_reduction import (
     ArgKminClassMode,
@@ -25,7 +23,13 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
+from ._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _check_precomputed,
+    _get_weights,
+)
 
 
 def _adjusted_metric(metric, metric_kwargs, p=None):

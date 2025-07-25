@@ -15,8 +15,6 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils import metadata_routing
-
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
@@ -26,7 +24,7 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..utils import Bunch, check_random_state, compute_sample_weight
+from ..utils import Bunch, check_random_state, compute_sample_weight, metadata_routing
 from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import (

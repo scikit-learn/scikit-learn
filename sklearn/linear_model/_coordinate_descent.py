@@ -12,11 +12,9 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.utils import metadata_routing
-
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
-from ..utils import Bunch, check_array, check_scalar
+from ..utils import Bunch, check_array, check_scalar, metadata_routing
 from ..utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,

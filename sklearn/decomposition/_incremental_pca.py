@@ -8,10 +8,8 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from sklearn.utils import metadata_routing
-
 from ..base import _fit_context
-from ..utils import gen_batches
+from ..utils import gen_batches, metadata_routing
 from ..utils._param_validation import Interval
 from ..utils.extmath import _incremental_mean_and_var, svd_flip
 from ..utils.validation import validate_data
