@@ -9,8 +9,8 @@ etc.). Please refer to our :ref:`installation instructions
 
 ``Scikit-learn`` is an open source machine learning library that supports
 supervised and unsupervised learning. It also provides various tools for
-model fitting, data preprocessing, model selection and evaluation, and many
-other utilities.
+model fitting, data preprocessing, model selection, model evaluation,
+and many other utilities.
 
 Fitting and predicting: estimator basics
 ----------------------------------------
@@ -37,8 +37,8 @@ The :term:`fit` method generally accepts 2 inputs:
   represented as rows and features are represented as columns.
 - The target values :term:`y` which are real numbers for regression tasks, or
   integers for classification (or any other discrete set of values). For
-  unsupervized learning tasks, ``y`` does not need to be specified. ``y`` is
-  usually 1d array where the ``i`` th entry corresponds to the target of the
+  unsupervised learning tasks, ``y`` does not need to be specified. ``y`` is
+  usually a 1d array where the ``i`` th entry corresponds to the target of the
   ``i`` th sample (row) of ``X``.
 
 Both ``X`` and ``y`` are usually expected to be numpy arrays or equivalent
@@ -53,10 +53,12 @@ new data. You don't need to re-train the estimator::
   >>> clf.predict([[4, 5, 6], [14, 15, 16]])  # predict classes of new data
   array([0, 1])
 
+You can check :ref:`ml_map` on how to choose the right model for your use case.
+
 Transformers and pre-processors
 -------------------------------
 
-Machine learning worflows are often composed of different parts. A typical
+Machine learning workflows are often composed of different parts. A typical
 pipeline consists of a pre-processing step that transforms or imputes the
 data, and a final predictor that predicts target values.
 
@@ -69,6 +71,7 @@ newly transformed sample matrix ``X``::
   >>> from sklearn.preprocessing import StandardScaler
   >>> X = [[0, 15],
   ...      [1, -10]]
+  >>> # scale data according to computed scaling values
   >>> StandardScaler().fit(X).transform(X)
   array([[-1.,  1.],
          [ 1., -1.]])
@@ -77,7 +80,7 @@ Sometimes, you want to apply different transformations to different features:
 the :ref:`ColumnTransformer<column_transformer>` is designed for these
 use-cases.
 
-Pipelines: chaining pre-preocessors and estimators
+Pipelines: chaining pre-processors and estimators
 --------------------------------------------------
 
 Transformers and estimators (predictors) can be combined together into a
@@ -101,7 +104,7 @@ the test data::
   >>> # create a pipeline object
   >>> pipe = make_pipeline(
   ...     StandardScaler(),
-  ...     LogisticRegression(random_state=0)
+  ...     LogisticRegression()
   ... )
   ...
   >>> # load the iris dataset and split it into train and test sets
@@ -111,7 +114,7 @@ the test data::
   >>> # fit the whole pipeline
   >>> pipe.fit(X_train, y_train)
   Pipeline(steps=[('standardscaler', StandardScaler()),
-                  ('logisticregression', LogisticRegression(random_state=0))])
+                  ('logisticregression', LogisticRegression())])
   >>> # we can now use it like any other estimator
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
@@ -164,13 +167,17 @@ a :class:`~sklearn.ensemble.RandomForestRegressor` that has been fitted with
 the best set of parameters. Read more in the :ref:`User Guide
 <grid_search>`::
 
-  >>> from sklearn.datasets import fetch_california_housing
+  >>> from sklearn.datasets import make_regression
   >>> from sklearn.ensemble import RandomForestRegressor
   >>> from sklearn.model_selection import RandomizedSearchCV
   >>> from sklearn.model_selection import train_test_split
   >>> from scipy.stats import randint
   ...
-  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> # create a synthetic dataset
+  >>> X, y = make_regression(n_samples=20640,
+  ...                        n_features=8,
+  ...                        noise=0.1,
+  ...                        random_state=0)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   ...
   >>> # define the parameter space that will be searched over
@@ -193,7 +200,7 @@ the best set of parameters. Read more in the :ref:`User Guide
   >>> # the search object now acts like a normal random forest estimator
   >>> # with max_depth=9 and n_estimators=4
   >>> search.score(X_test, y_test)
-  0.73...
+  0.84...
 
 .. note::
 
@@ -205,7 +212,7 @@ the best set of parameters. Read more in the :ref:`User Guide
     training and testing data. Indeed, since you pre-processed the data
     using the whole dataset, some information about the test sets are
     available to the train sets. This will lead to over-estimating the
-    generalization power of the estimator (you can read more in this `kaggle
+    generalization power of the estimator (you can read more in this `Kaggle
     post <https://www.kaggle.com/alexisbcook/data-leakage>`_).
 
     Using a pipeline for cross-validation and searching will largely keep
@@ -226,6 +233,3 @@ provide. You can also find an exhaustive list of the public API in the
 
 You can also look at our numerous :ref:`examples <general_examples>` that
 illustrate the use of ``scikit-learn`` in many different contexts.
-
-The :ref:`tutorials <tutorial_menu>` also contain additional learning
-resources.

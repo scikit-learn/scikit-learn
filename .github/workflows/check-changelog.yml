@@ -1,0 +1,36 @@
+name: Check Changelog
+permissions:
+  contents: read
+
+# This check makes sure that the changelog is properly updated
+# when a PR introduces a change in a test file.
+# To bypass this check, label the PR with "No Changelog Needed".
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+
+jobs:
+  check:
+    name: A reviewer will let you know if it is required or can be bypassed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Check if tests have changed
+        id: tests_changed
+        run: |
+          set -xe
+          changed_files=$(git diff --name-only origin/main)
+          # Changelog should be updated only if tests have been modified
+          if [[ "$changed_files" =~ tests ]]
+          then
+            echo "check_changelog=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check changelog entry
+        if: steps.tests_changed.outputs.check_changelog == 'true'
+        uses: scientific-python/action-towncrier-changelog@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BOT_USERNAME: changelog-bot

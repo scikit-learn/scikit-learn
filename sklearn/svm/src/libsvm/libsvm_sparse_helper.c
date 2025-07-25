@@ -1,12 +1,19 @@
 #include <stdlib.h>
-#include <numpy/arrayobject.h>
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include "svm.h"
+#include "_svm_cython_blas_helpers.h"
+
+
+#ifndef MAX
+    #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
 
 
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, npy_int n_samples)
+struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, int n_samples)
 {
     struct svm_csr_node **sparse, *temp;
     int i, j=0, k=0, n;
@@ -76,8 +83,8 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
  *
  * TODO: precomputed kernel.
  */
-struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
-		char *indices, npy_intp *n_indptr, char *indptr, char *Y,
+struct svm_csr_problem * csr_set_problem (char *values, Py_ssize_t *n_indices,
+		char *indices, Py_ssize_t *n_indptr, char *indptr, char *Y,
                 char *sample_weight, int kernel_type) {
 
     struct svm_csr_problem *problem;
@@ -99,8 +106,8 @@ struct svm_csr_problem * csr_set_problem (char *values, npy_intp *n_indices,
 
 
 struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
-                            char *SV_data, npy_intp *SV_indices_dims,
-                            char *SV_indices, npy_intp *SV_indptr_dims,
+                            char *SV_data, Py_ssize_t *SV_indices_dims,
+                            char *SV_indices, Py_ssize_t *SV_indptr_dims,
                             char *SV_intptr,
                             char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
@@ -121,6 +128,9 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
         goto sv_coef_error;
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
+
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
 
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
@@ -203,8 +213,8 @@ model_error:
 /*
  * Copy support vectors into a scipy.sparse.csr matrix
  */
-int csr_copy_SV (char *data, npy_intp *n_indices,
-		char *indices, npy_intp *n_indptr, char *indptr,
+int csr_copy_SV (char *data, Py_ssize_t *n_indices,
+		char *indices, Py_ssize_t *n_indptr, char *indptr,
 		struct svm_csr_model *model, int n_features)
 {
 	int i, j, k=0, index;
@@ -227,9 +237,9 @@ int csr_copy_SV (char *data, npy_intp *n_indices,
 }
 
 /* get number of nonzero coefficients in support vectors */
-npy_intp get_nonzero_SV (struct svm_csr_model *model) {
+Py_ssize_t get_nonzero_SV (struct svm_csr_model *model) {
 	int i, j;
-	npy_intp count=0;
+	Py_ssize_t count=0;
 	for (i=0; i<model->l; ++i) {
 		j = 0;
 		while (model->SV[i][j].index != -1) {
@@ -242,14 +252,14 @@ npy_intp get_nonzero_SV (struct svm_csr_model *model) {
 
 
 /*
- * Predict using a model, where data is expected to be enconded into a csr matrix.
+ * Predict using a model, where data is expected to be encoded into a csr matrix.
  */
-int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
-		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-		char *dec_values) {
+int csr_copy_predict (Py_ssize_t *data_size, char *data, Py_ssize_t *index_size,
+		char *index, Py_ssize_t *intptr_size, char *intptr, struct svm_csr_model *model,
+		char *dec_values, BlasFunctions *blas_functions) {
     double *t = (double *) dec_values;
     struct svm_csr_node **predict_nodes;
-    npy_intp i;
+    Py_ssize_t i;
 
     predict_nodes = csr_to_libsvm((double *) data, (int *) index,
                                   (int *) intptr, intptr_size[0]-1);
@@ -257,7 +267,7 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
-        *t = svm_csr_predict(model, predict_nodes[i]);
+        *t = svm_csr_predict(model, predict_nodes[i], blas_functions);
         free(predict_nodes[i]);
         ++t;
     }
@@ -265,11 +275,11 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     return 0;
 }
 
-int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_size,
-                char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-                char *dec_values, int nr_class) {
+int csr_copy_predict_values (Py_ssize_t *data_size, char *data, Py_ssize_t *index_size,
+                char *index, Py_ssize_t *intptr_size, char *intptr, struct svm_csr_model *model,
+                char *dec_values, int nr_class, BlasFunctions *blas_functions) {
     struct svm_csr_node **predict_nodes;
-    npy_intp i;
+    Py_ssize_t i;
 
     predict_nodes = csr_to_libsvm((double *) data, (int *) index,
                                   (int *) intptr, intptr_size[0]-1);
@@ -278,7 +288,8 @@ int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_si
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
         svm_csr_predict_values(model, predict_nodes[i],
-                               ((double *) dec_values) + i*nr_class);
+                               ((double *) dec_values) + i*nr_class,
+			       blas_functions);
         free(predict_nodes[i]);
     }
     free(predict_nodes);
@@ -286,12 +297,12 @@ int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_si
     return 0;
 }
 
-int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_size,
-		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-		char *dec_values) {
+int csr_copy_predict_proba (Py_ssize_t *data_size, char *data, Py_ssize_t *index_size,
+		char *index, Py_ssize_t *intptr_size, char *intptr, struct svm_csr_model *model,
+		char *dec_values, BlasFunctions *blas_functions) {
 
     struct svm_csr_node **predict_nodes;
-    npy_intp i;
+    Py_ssize_t i;
     int m = model->nr_class;
 
     predict_nodes = csr_to_libsvm((double *) data, (int *) index,
@@ -301,7 +312,7 @@ int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_siz
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
         svm_csr_predict_probability(
-		model, predict_nodes[i], ((double *) dec_values) + i*m);
+		model, predict_nodes[i], ((double *) dec_values) + i*m, blas_functions);
         free(predict_nodes[i]);
     }
     free(predict_nodes);
@@ -309,15 +320,15 @@ int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_siz
 }
 
 
-npy_intp get_nr(struct svm_csr_model *model)
+Py_ssize_t get_nr(struct svm_csr_model *model)
 {
-    return (npy_intp) model->nr_class;
+    return (Py_ssize_t) model->nr_class;
 }
 
-void copy_intercept(char *data, struct svm_csr_model *model, npy_intp *dims)
+void copy_intercept(char *data, struct svm_csr_model *model, Py_ssize_t *dims)
 {
     /* intercept = -rho */
-    npy_intp i, n = dims[0];
+    Py_ssize_t i, n = dims[0];
     double t, *ddata = (double *) data;
     for (i=0; i<n; ++i) {
         t = model->rho[i];
@@ -348,11 +359,20 @@ void copy_sv_coef(char *data, struct svm_csr_model *model)
 }
 
 /*
+ * Get the number of iterations run in optimization
+ */
+void copy_n_iter(char *data, struct svm_csr_model *model)
+{
+    const int n_models = MAX(1, model->nr_class * (model->nr_class-1) / 2);
+    memcpy(data, model->n_iter, n_models * sizeof(int));
+}
+
+/*
  * Get the number of support vectors in a model.
  */
-npy_intp get_l(struct svm_csr_model *model)
+Py_ssize_t get_l(struct svm_csr_model *model)
 {
-    return (npy_intp) model->l;
+    return (Py_ssize_t) model->l;
 }
 
 void copy_nSV(char *data, struct svm_csr_model *model)
@@ -371,12 +391,12 @@ void copy_label(char *data, struct svm_csr_model *model)
     memcpy(data, model->label, model->nr_class * sizeof(int));
 }
 
-void copy_probA(char *data, struct svm_csr_model *model, npy_intp * dims)
+void copy_probA(char *data, struct svm_csr_model *model, Py_ssize_t * dims)
 {
     memcpy(data, model->probA, dims[0] * sizeof(double));
 }
 
-void copy_probB(char *data, struct svm_csr_model *model, npy_intp * dims)
+void copy_probB(char *data, struct svm_csr_model *model, Py_ssize_t * dims)
 {
     memcpy(data, model->probB, dims[0] * sizeof(double));
 }
@@ -401,6 +421,7 @@ int free_problem(struct svm_csr_problem *problem)
 int free_model(struct svm_csr_model *model)
 {
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
+    /* We don't free n_iter, since we did not create them in set_model. */
     if (model == NULL) return -1;
     free(model->SV);
     free(model->sv_coef);

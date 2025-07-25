@@ -1,121 +1,138 @@
 #!/bin/bash
 
 set -e
+set -x
+
+# defines the get_dep and show_installed_libraries functions
+source build_tools/shared.sh
 
 UNAMESTR=`uname`
+CCACHE_LINKS_DIR="/tmp/ccache"
 
-make_conda() {
-    TO_INSTALL="$@"
-    conda create -n $VIRTUALENV --yes $TO_INSTALL
-    source activate $VIRTUALENV
+setup_ccache() {
+    CCACHE_BIN=`which ccache || echo ""`
+    if [[ "${CCACHE_BIN}" == "" ]]; then
+        echo "ccache not found, skipping..."
+    elif [[ -d "${CCACHE_LINKS_DIR}" ]]; then
+        echo "ccache already configured, skipping..."
+    else
+        echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
+        mkdir ${CCACHE_LINKS_DIR}
+        which ccache
+        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
+        ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
+        done
+        export PATH="${CCACHE_LINKS_DIR}:${PATH}"
+        ccache -M 256M
+
+        # Zeroing statistics so that ccache statistics are shown only for this build
+        ccache -z
+    fi
 }
 
-version_ge() {
-    # The two version numbers are seperated with a new line is piped to sort
-    # -rV. The -V activates for version number sorting and -r sorts in
-    # decending order. If the first argument is the top element of the sort, it
-    # is greater than or equal to the second argument.
-    test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
+pre_python_environment_install() {
+    if [[ "$DISTRIB" == "ubuntu" ]]; then
+        sudo apt-get update
+        sudo apt-get install python3-scipy python3-matplotlib \
+             libatlas3-base libatlas-base-dev python3-venv ccache
+
+    elif [[ "$DISTRIB" == "debian-32" ]]; then
+        apt-get update
+        apt-get install -y python3-dev python3-numpy python3-scipy \
+                python3-matplotlib libopenblas-dev \
+                python3-venv python3-pandas ccache git
+    fi
 }
 
-if [[ "$DISTRIB" == "conda" ]]; then
+check_packages_dev_version() {
+    for package in $@; do
+        package_version=$(python -c "import $package; print($package.__version__)")
+        if [[ $package_version =~ ^[.0-9]+$ ]]; then
+            echo "$package is not a development version: $package_version"
+            exit 1
+        fi
+    done
+}
 
-    TO_INSTALL="python=$PYTHON_VERSION pip \
-                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
+python_environment_install_and_activate() {
+    if [[ "$DISTRIB" == "conda"* ]]; then
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
+        activate_environment
 
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+        python3 -m venv --system-site-packages $VIRTUALENV
+        activate_environment
+        pip install -r "${LOCK_FILE}"
+
+    fi
+
+    # Install additional packages on top of the lock-file in specific cases
+    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+        echo "Installing development dependency wheels"
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy pandas Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
+
+        check_packages_dev_version $dev_packages
+
+        echo "Installing joblib from latest sources"
+        pip install https://github.com/joblib/joblib/archive/master.zip
+        echo "Installing pillow from latest sources"
+        pip install https://github.com/python-pillow/Pillow/archive/main.zip
+    fi
+}
+
+scikit_learn_install() {
+    setup_ccache
+    show_installed_libraries
+
+    if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
+        # Without openmp, we use the system clang. Here we use /usr/bin/ar
+        # instead because llvm-ar errors
+        export AR=/usr/bin/ar
+        # Make sure omp.h is not present in the conda environment, so that
+        # using an unprotected "cimport openmp" will make this build fail. At
+        # the time of writing (2023-01-13), on OSX, blas (mkl or openblas)
+        # brings in openmp so that you end up having the omp.h include inside
+        # the conda environment.
+        find $CONDA_PREFIX -name omp.h -delete -print
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
+        brew uninstall --ignore-dependencies --force libomp
+    fi
+
+    if [[ "$UNAMESTR" == "Linux" ]]; then
+        # FIXME: temporary fix to link against system libraries on linux
+        # https://github.com/scikit-learn/scikit-learn/issues/20640
+        export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
+    fi
+
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
+        # Check that pip can automatically build scikit-learn with the build
+        # dependencies specified in pyproject.toml using an isolated build
+        # environment:
+        pip install --verbose .
     else
-        TO_INSTALL="$TO_INSTALL nomkl"
+        if [[ "$UNAMESTR" == "MINGW64"* ]]; then
+           # Needed on Windows CI to compile with Visual Studio compiler
+           # otherwise Meson detects a MINGW64 platform and use MINGW64
+           # toolchain
+           ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
+        # Use the pre-installed build dependencies and build directly in the
+        # current environment.
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
-    if [[ -n "$PANDAS_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
-    fi
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
+}
 
-    if [[ -n "$PYAMG_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
-    fi
+main() {
+    pre_python_environment_install
+    python_environment_install_and_activate
+    scikit_learn_install
+}
 
-    if [[ -n "$PILLOW_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
-    fi
-
-    if [[ -n "$MATPLOTLIB_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
-    fi
-
-    if [[ "$UNAMESTR" == "Darwin" ]]; then
-        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
-        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
-    fi
-
-    # Old packages coming from the 'free' conda channel have been removed but
-    # we are using them for testing Python 3.5. See
-    # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
-    # for more details. restore_free_channel is defined starting from conda 4.7
-    conda_version=$(conda -V | awk '{print $2}')
-    if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
-        conda config --set restore_free_channel true
-    fi
-
-	make_conda $TO_INSTALL
-
-    if [[ "$PYTEST_VERSION" == "*" ]]; then
-        python -m pip install pytest
-    else
-        python -m pip install pytest=="$PYTEST_VERSION"
-    fi
-
-    if [[ "$PYTHON_VERSION" == "*" ]]; then
-        python -m pip install pytest-xdist
-    fi
-
-elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
-    sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
-    python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-    source $VIRTUALENV/bin/activate
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
-elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
-    apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
-    python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-    source $VIRTUALENV/bin/activate
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
-elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-    # Since conda main channel usually lacks behind on the latest releases,
-    # we use pypi to test against the latest releases of the dependencies.
-    # conda is still used as a convenient way to install Python and pip.
-    make_conda "python=$PYTHON_VERSION"
-    python -m pip install numpy scipy joblib cython
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
-    python -m pip install pandas matplotlib pyamg
-fi
-
-if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install coverage codecov pytest-cov
-fi
-
-if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    # numpydoc requires sphinx
-    # FIXME: until jinja2 2.10.2 is released with a fix the import station for
-    # collections.abc so as to not raise a spurious deprecation warning
-    python -m pip install sphinx==2.1.2
-    python -m pip install numpydoc
-fi
-
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    print('pandas not installed')
-"
-python -m pip list
-python setup.py build_ext --inplace -j 3
-python setup.py develop
+main

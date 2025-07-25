@@ -8,9 +8,9 @@ Density Estimation
 Density estimation walks the line between unsupervised learning, feature
 engineering, and data modeling.  Some of the most popular and useful
 density estimation techniques are mixture models such as
-Gaussian Mixtures (:class:`sklearn.mixture.GaussianMixture`), and
+Gaussian Mixtures (:class:`~sklearn.mixture.GaussianMixture`), and
 neighbor-based approaches such as the kernel density estimate
-(:class:`sklearn.neighbors.KernelDensity`).
+(:class:`~sklearn.neighbors.KernelDensity`).
 Gaussian Mixtures are discussed more fully in the context of
 :ref:`clustering <clustering>`, because the technique is also useful as
 an unsupervised clustering scheme.
@@ -58,7 +58,7 @@ distribution of points.
 Kernel Density Estimation
 =========================
 Kernel density estimation in scikit-learn is implemented in the
-:class:`sklearn.neighbors.KernelDensity` estimator, which uses the
+:class:`~sklearn.neighbors.KernelDensity` estimator, which uses the
 Ball Tree or KD Tree for efficient queries (see :ref:`neighbors` for
 a discussion of these).  Though the above example
 uses a 1D data set for simplicity, kernel density estimation can be
@@ -90,17 +90,21 @@ Here we have used ``kernel='gaussian'``, as seen above.
 Mathematically, a kernel is a positive function :math:`K(x;h)`
 which is controlled by the bandwidth parameter :math:`h`.
 Given this kernel form, the density estimate at a point :math:`y` within
-a group of points :math:`x_i; i=1\cdots N` is given by:
+a group of points :math:`x_i; i=1, \cdots, N` is given by:
 
 .. math::
-    \rho_K(y) = \sum_{i=1}^{N} K((y - x_i) / h)
+    \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
 
 The bandwidth here acts as a smoothing parameter, controlling the tradeoff
 between bias and variance in the result.  A large bandwidth leads to a very
 smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
-:class:`sklearn.neighbors.KernelDensity` implements several common kernel
+The parameter `bandwidth` controls this smoothing. One can either set
+manually this parameter or use Scott's and Silverman's estimation
+methods.
+
+:class:`~sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 
 .. |kde_kernels| image:: ../auto_examples/neighbors/images/sphx_glr_plot_kde_1d_002.png
@@ -109,36 +113,39 @@ forms, which are shown in the following figure:
 
 .. centered:: |kde_kernels|
 
-The form of these kernels is as follows:
+.. dropdown:: Kernels' mathematical expressions
 
-* Gaussian kernel (``kernel = 'gaussian'``)
+  The form of these kernels is as follows:
 
-  :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
+  * Gaussian kernel (``kernel = 'gaussian'``)
 
-* Tophat kernel (``kernel = 'tophat'``)
+    :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
 
-  :math:`K(x; h) \propto 1` if :math:`x < h`
+  * Tophat kernel (``kernel = 'tophat'``)
 
-* Epanechnikov kernel (``kernel = 'epanechnikov'``)
+    :math:`K(x; h) \propto 1` if :math:`x < h`
 
-  :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
+  * Epanechnikov kernel (``kernel = 'epanechnikov'``)
 
-* Exponential kernel (``kernel = 'exponential'``)
+    :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
 
-  :math:`K(x; h) \propto \exp(-x/h)`
+  * Exponential kernel (``kernel = 'exponential'``)
 
-* Linear kernel (``kernel = 'linear'``)
+    :math:`K(x; h) \propto \exp(-x/h)`
 
-  :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
+  * Linear kernel (``kernel = 'linear'``)
 
-* Cosine kernel (``kernel = 'cosine'``)
+    :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
 
-  :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
+  * Cosine kernel (``kernel = 'cosine'``)
+
+    :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
+
 
 The kernel density estimator can be used with any of the valid distance
-metrics (see :class:`sklearn.neighbors.DistanceMetric` for a list of available metrics), though
-the results are properly normalized only for the Euclidean metric.  One
-particularly useful metric is the
+metrics (see :class:`~sklearn.metrics.DistanceMetric` for a list of
+available metrics), though the results are properly normalized only
+for the Euclidean metric.  One particularly useful metric is the
 `Haversine distance <https://en.wikipedia.org/wiki/Haversine_formula>`_
 which measures the angular distance between points on a sphere.  Here
 is an example of using a kernel density estimate for a visualization
@@ -167,14 +174,14 @@ on a PCA projection of the data:
 The "new" data consists of linear combinations of the input data, with weights
 probabilistically drawn given the KDE model.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_kde_1d.py`: computation of simple kernel
-    density estimates in one dimension.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_kde_1d.py`: computation of simple kernel
+  density estimates in one dimension.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_digits_kde_sampling.py`: an example of using
-    Kernel Density estimation to learn a generative model of the hand-written
-    digits data, and drawing new samples from this model.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_digits_kde_sampling.py`: an example of using
+  Kernel Density estimation to learn a generative model of the hand-written
+  digits data, and drawing new samples from this model.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_species_kde.py`: an example of Kernel Density
-    estimation using the Haversine distance metric to visualize geospatial data
+* :ref:`sphx_glr_auto_examples_neighbors_plot_species_kde.py`: an example of Kernel Density
+  estimation using the Haversine distance metric to visualize geospatial data

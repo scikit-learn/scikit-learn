@@ -1,53 +1,81 @@
-"""
-Small collection of auxiliary functions that operate on arrays
+"""A small collection of auxiliary functions that operate on arrays."""
 
-"""
-
-cimport numpy as np
-import  numpy as np
-cimport cython
 from cython cimport floating
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ._cython_blas cimport _copy, _rotg, _rot
 
-ctypedef np.float64_t DOUBLE
+
+ctypedef fused real_numeric:
+    short
+    int
+    long
+    long long
+    float
+    double
 
 
-np.import_array()
+def min_pos(const floating[:] X):
+    """Find the minimum value of an array over positive values.
+
+    Returns the maximum representable value of the input dtype if none of the
+    values are positive.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n,)
+        Input array.
+
+    Returns
+    -------
+    min_val : float
+        The smallest positive value in the array, or the maximum representable value
+         of the input dtype if no positive values are found.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.arrayfuncs import min_pos
+    >>> X = np.array([0, -1, 2, 3, -4, 5])
+    >>> min_pos(X)
+    2.0
+    """
+    cdef Py_ssize_t i
+    cdef floating min_val = FLT_MAX if floating is float else DBL_MAX
+    for i in range(X.size):
+        if 0. < X[i] < min_val:
+            min_val = X[i]
+    return min_val
 
 
-def min_pos(np.ndarray X):
-   """
-   Find the minimum value of an array over positive values
+def _all_with_any_reduction_axis_1(real_numeric[:, :] array, real_numeric value):
+    """Check whether any row contains all values equal to `value`.
 
-   Returns a huge value if none of the values are positive
-   """
-   if X.dtype.name == 'float32':
-      return _float_min_pos(<float *> X.data, X.size)
-   elif X.dtype.name == 'float64':
-      return _double_min_pos(<double *> X.data, X.size)
-   else:
-      raise ValueError('Unsupported dtype for array X')
+    It is equivalent to `np.any(np.all(X == value, axis=1))`, but it avoids to
+    materialize the temporary boolean matrices in memory.
 
+    Parameters
+    ----------
+    array: array-like
+        The array to be checked.
+    value: short, int, long, float, or double
+        The value to use for the comparison.
 
-cdef float _float_min_pos(float *X, Py_ssize_t size):
-   cdef Py_ssize_t i
-   cdef float min_val = DBL_MAX
-   for i in range(size):
-      if 0. < X[i] < min_val:
-         min_val = X[i]
-   return min_val
+    Returns
+    -------
+    any_all_equal: bool
+        Whether or not any rows contains all values equal to `value`.
+    """
+    cdef Py_ssize_t i, j
 
-
-cdef double _double_min_pos(double *X, Py_ssize_t size):
-   cdef Py_ssize_t i
-   cdef np.float64_t min_val = FLT_MAX
-   for i in range(size):
-      if 0. < X[i] < min_val:
-         min_val = X[i]
-   return min_val
+    for i in range(array.shape[0]):
+        for j in range(array.shape[1]):
+            if array[i, j] != value:
+                break
+        else:  # no break
+            return True
+    return False
 
 
 # General Cholesky Delete.
@@ -56,35 +84,35 @@ cdef double _double_min_pos(double *X, Py_ssize_t size):
 # n = rows
 #
 # TODO: put transpose as an option
-def cholesky_delete(np.ndarray[floating, ndim=2] L, int go_out):
-   cdef:
-      int n = L.shape[0]
-      int m = L.strides[0]
-      floating c, s
-      floating *L1
-      int i
-   
-   if floating is float:
-      m /= sizeof(float)
-   else:
-      m /= sizeof(double)
+def cholesky_delete(floating[:, :] L, int go_out):
+    cdef:
+        int n = L.shape[0]
+        int m = L.strides[0]
+        floating c, s
+        floating *L1
+        int i
 
-   # delete row go_out
-   L1 = &L[0, 0] + (go_out * m)
-   for i in range(go_out, n-1):
-      _copy(i + 2, L1 + m, 1, L1, 1)
-      L1 += m
+    if floating is float:
+        m /= sizeof(float)
+    else:
+        m /= sizeof(double)
 
-   L1 = &L[0, 0] + (go_out * m)
-   for i in range(go_out, n-1):
-      _rotg(L1 + i, L1 + i + 1, &c, &s)
-      if L1[i] < 0:
-         # Diagonals cannot be negative
-         L1[i] = fabs(L1[i])
-         c = -c
-         s = -s
+    # delete row go_out
+    L1 = &L[0, 0] + (go_out * m)
+    for i in range(go_out, n-1):
+        _copy(i + 2, L1 + m, 1, L1, 1)
+        L1 += m
 
-      L1[i + 1] = 0.  # just for cleanup
-      L1 += m
+    L1 = &L[0, 0] + (go_out * m)
+    for i in range(go_out, n-1):
+        _rotg(L1 + i, L1 + i + 1, &c, &s)
+        if L1[i] < 0:
+            # Diagonals cannot be negative
+            L1[i] = fabs(L1[i])
+            c = -c
+            s = -s
 
-      _rot(n - i - 2, L1 + i, m, L1 + i + 1, m, c, s)
+        L1[i + 1] = 0.  # just for cleanup
+        L1 += m
+
+        _rot(n - i - 2, L1 + i, m, L1 + i + 1, m, c, s)

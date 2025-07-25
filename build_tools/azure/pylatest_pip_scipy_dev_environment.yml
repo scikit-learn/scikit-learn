@@ -1,0 +1,22 @@
+# DO NOT EDIT: this file is generated from the specification found in the
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - ccache
+  - pip
+  - pip:
+    - threadpoolctl
+    - pytest
+    - pytest-xdist
+    - pip
+    - ninja
+    - meson-python
+    - pytest-cov
+    - coverage
+    - pooch
+    - sphinx
+    - numpydoc<1.9.0
+    - python-dateutil

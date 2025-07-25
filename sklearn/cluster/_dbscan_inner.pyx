@@ -1,27 +1,19 @@
 # Fast inner loop for DBSCAN.
-# Author: Lars Buitinck
-# License: 3-clause BSD
-#
-# cython: boundscheck=False, wraparound=False
 
-cimport cython
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from libcpp.vector cimport vector
-cimport numpy as np
-import numpy as np
+
+from ..utils._typedefs cimport uint8_t, intp_t
 
 
-# Work around Cython bug: C++ exceptions are not caught unless thrown within
-# a cdef function with an "except +" declaration.
-cdef inline void push(vector[np.npy_intp] &stack, np.npy_intp i) except +:
-    stack.push_back(i)
-
-
-def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
-                 np.ndarray[object, ndim=1] neighborhoods,
-                 np.ndarray[np.npy_intp, ndim=1, mode='c'] labels):
-    cdef np.npy_intp i, label_num = 0, v
-    cdef np.ndarray[np.npy_intp, ndim=1] neighb
-    cdef vector[np.npy_intp] stack
+def dbscan_inner(const uint8_t[::1] is_core,
+                 object[:] neighborhoods,
+                 intp_t[::1] labels):
+    cdef intp_t i, label_num = 0, v
+    cdef intp_t[:] neighb
+    cdef vector[intp_t] stack
 
     for i in range(labels.shape[0]):
         if labels[i] != -1 or not is_core[i]:
@@ -39,7 +31,7 @@ def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
                     for i in range(neighb.shape[0]):
                         v = neighb[i]
                         if labels[v] == -1:
-                            push(stack, v)
+                            stack.push_back(v)
 
             if stack.size() == 0:
                 break

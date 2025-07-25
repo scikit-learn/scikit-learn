@@ -1,9 +1,6 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-#
-# Author: Arnaud Joly
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Random utility function
 =======================
@@ -13,19 +10,26 @@ The module contains:
     * Several algorithms to sample integers without replacement.
     * Fast rand_r alternative based on xor shifts
 """
-cimport cython
-
 import numpy as np
-cimport numpy as np
-np.import_array()
-
 from . import check_random_state
 
-cdef UINT32_t DEFAULT_SEED = 1
+from ._typedefs cimport intp_t
 
 
-cpdef _sample_without_replacement_check_input(np.int_t n_population,
-                                              np.int_t n_samples):
+cdef uint32_t DEFAULT_SEED = 1
+
+
+# Compatibility type to always accept the default int type used by NumPy, both
+# before and after NumPy 2. On Windows, `long` does not always match `inp_t`.
+# See the comments in the `sample_without_replacement` Python function for more
+# details.
+ctypedef fused default_int:
+    intp_t
+    long
+
+
+cpdef _sample_without_replacement_check_input(default_int n_population,
+                                              default_int n_samples):
     """ Check that input are consistent for sample_without_replacement"""
     if n_population < 0:
         raise ValueError('n_population should be greater than 0, got %s.'
@@ -38,8 +42,8 @@ cpdef _sample_without_replacement_check_input(np.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_tracking_selection(
-        np.int_t n_population,
-        np.int_t n_samples,
+        default_int n_population,
+        default_int n_samples,
         random_state=None):
     r"""Sample integers without replacement.
 
@@ -62,13 +66,13 @@ cpdef _sample_without_replacement_with_tracking_selection(
 
     Parameters
     ----------
-    n_population : int,
+    n_population : int
         The size of the set to sample from.
 
-    n_samples : int,
+    n_samples : int
         The number of integer to sample.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -76,15 +80,14 @@ cpdef _sample_without_replacement_with_tracking_selection(
 
     Returns
     -------
-    out : array of size (n_samples, )
+    out : ndarray of shape (n_samples,)
         The sampled subsets of integer.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -100,11 +103,11 @@ cpdef _sample_without_replacement_with_tracking_selection(
         selected.add(j)
         out[i] = j
 
-    return out
+    return np.asarray(out)
 
 
-cpdef _sample_without_replacement_with_pool(np.int_t n_population,
-                                            np.int_t n_samples,
+cpdef _sample_without_replacement_with_pool(default_int n_population,
+                                            default_int n_samples,
                                             random_state=None):
     """Sample integers without replacement.
 
@@ -118,13 +121,13 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
 
     Parameters
     ----------
-    n_population : int,
+    n_population : int
         The size of the set to sample from.
 
-    n_samples : int,
+    n_samples : int
         The number of integer to sample.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -132,18 +135,15 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
 
     Returns
     -------
-    out : array of size (n_samples, )
+    out : ndarray of shape (n_samples,)
         The sampled subsets of integer.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
-
-    cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                      dtype=np.int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples,), dtype=int)
+    cdef default_int[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -157,16 +157,16 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     for i in range(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
-        pool[j] = pool[n_population - i - 1]  # move non-selected item into
-                                              # vacancy
+        pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
 
-    return out
+    return np.asarray(out)
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
-    np.int_t n_population,
-    np.int_t n_samples,
-    random_state=None):
+    default_int n_population,
+    default_int n_samples,
+    random_state=None
+):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -179,13 +179,13 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
 
     Parameters
     ----------
-    n_population : int,
+    n_population : int
         The size of the set to sample from.
 
-    n_samples : int,
+    n_samples : int
          The number of integer to sample.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -193,17 +193,16 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
 
     Returns
     -------
-    out : array of size (n_samples, )
+    out : ndarray of shape (n_samples,)
         The sampled subsets of integer. The order of the items is not
         necessarily random. Use a random permutation of the array if the order
         of the items has to be randomized.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -220,67 +219,23 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
         if j < n_samples:
             out[j] = i
 
-    return out
+    return np.asarray(out)
 
 
-cpdef sample_without_replacement(np.int_t n_population,
-                                 np.int_t n_samples,
+cdef _sample_without_replacement(default_int n_population,
+                                 default_int n_samples,
                                  method="auto",
                                  random_state=None):
     """Sample integers without replacement.
 
-    Select n_samples integers from the set [0, n_population) without
-    replacement.
-
-
-    Parameters
-    ----------
-    n_population : int,
-        The size of the set to sample from.
-
-    n_samples : int,
-        The number of integer to sample.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    method : "auto", "tracking_selection", "reservoir_sampling" or "pool"
-        If method == "auto", the ratio of n_samples / n_population is used
-        to determine which algorithm to use:
-        If ratio is between 0 and 0.01, tracking selection is used.
-        If ratio is between 0.01 and 0.99, numpy.random.permutation is used.
-        If ratio is greater than 0.99, reservoir sampling is used.
-        The order of the selected integers is undefined. If a random order is
-        desired, the selected subset should be shuffled.
-
-        If method =="tracking_selection", a set based implementation is used
-        which is suitable for `n_samples` <<< `n_population`.
-
-        If method == "reservoir_sampling", a reservoir sampling algorithm is
-        used which is suitable for high memory constraint or when
-        O(`n_samples`) ~ O(`n_population`).
-        The order of the selected integers is undefined. If a random order is
-        desired, the selected subset should be shuffled.
-
-        If method == "pool", a pool based algorithm is particularly fast, even
-        faster than the tracking selection method. Hovewer, a vector containing
-        the entire population has to be initialized.
-        If n_samples ~ n_population, the reservoir sampling method is faster.
-
-    Returns
-    -------
-    out : array of size (n_samples, )
-        The sampled subsets of integer. The subset of selected integer might
-        not be randomized, see the method argument.
+    Private function for the implementation, see sample_without_replacement
+    documentation for more details.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
     all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
-    ratio = n_samples / n_population if n_population != 0.0 else 1.0
+    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
 
     # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
     if method == "auto" and ratio > 0.01 and ratio < 0.99:
@@ -312,7 +267,89 @@ cpdef sample_without_replacement(np.int_t n_population,
                          % (all_methods, method))
 
 
+def sample_without_replacement(
+        object n_population, object n_samples, method="auto", random_state=None):
+    """Sample integers without replacement.
+
+    Select n_samples integers from the set [0, n_population) without
+    replacement.
+
+
+    Parameters
+    ----------
+    n_population : int
+        The size of the set to sample from.
+
+    n_samples : int
+        The number of integer to sample.
+
+    random_state : int, RandomState instance or None, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    method : {"auto", "tracking_selection", "reservoir_sampling", "pool"}, \
+            default='auto'
+        If method == "auto", the ratio of n_samples / n_population is used
+        to determine which algorithm to use:
+        If ratio is between 0 and 0.01, tracking selection is used.
+        If ratio is between 0.01 and 0.99, numpy.random.permutation is used.
+        If ratio is greater than 0.99, reservoir sampling is used.
+        The order of the selected integers is undefined. If a random order is
+        desired, the selected subset should be shuffled.
+
+        If method =="tracking_selection", a set based implementation is used
+        which is suitable for `n_samples` <<< `n_population`.
+
+        If method == "reservoir_sampling", a reservoir sampling algorithm is
+        used which is suitable for high memory constraint or when
+        O(`n_samples`) ~ O(`n_population`).
+        The order of the selected integers is undefined. If a random order is
+        desired, the selected subset should be shuffled.
+
+        If method == "pool", a pool based algorithm is particularly fast, even
+        faster than the tracking selection method. However, a vector containing
+        the entire population has to be initialized.
+        If n_samples ~ n_population, the reservoir sampling method is faster.
+
+    Returns
+    -------
+    out : ndarray of shape (n_samples,)
+        The sampled subsets of integer. The subset of selected integer might
+        not be randomized, see the method argument.
+
+    Examples
+    --------
+    >>> from sklearn.utils.random import sample_without_replacement
+    >>> sample_without_replacement(10, 5, random_state=42)
+    array([8, 1, 5, 0, 7])
+    """
+    cdef:
+        intp_t n_pop_intp, n_samples_intp
+        long n_pop_long, n_samples_long
+
+    # On most platforms `np.int_ is np.intp`.  However, before NumPy 2 the
+    # default integer `np.int_` was a long which is 32bit on 64bit windows
+    # while `intp` is 64bit on 64bit platforms and 32bit on 32bit ones.
+    if np.int_ is np.intp:
+        # Branch always taken on NumPy >=2 (or when not on 64bit windows).
+        # Cython has different rules for conversion of values to integers.
+        # For NumPy <1.26.2 AND Cython 3, this first branch requires `int()`
+        # called explicitly to allow e.g. floats.
+        n_pop_intp = int(n_population)
+        n_samples_intp = int(n_samples)
+        return _sample_without_replacement(
+                n_pop_intp, n_samples_intp, method, random_state)
+    else:
+        # Branch taken on 64bit windows with Numpy<2.0 where `long` is 32bit
+        n_pop_long = n_population
+        n_samples_long = n_samples
+        return _sample_without_replacement(
+                n_pop_long, n_samples_long, method, random_state)
+
+
 def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
-    cdef UINT32_t my_seed = seed
+    cdef uint32_t my_seed = seed
     return our_rand_r(&my_seed)

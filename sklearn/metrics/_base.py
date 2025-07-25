@@ -1,16 +1,10 @@
 """
-Common code for all metrics
+Common code for all metrics.
 
 """
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 
@@ -20,9 +14,8 @@ from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
-def _average_binary_score(binary_metric, y_true, y_score, average,
-                          sample_weight=None):
-    """Average a binary metric for multilabel classification
+def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
+    """Average a binary metric for multilabel classification.
 
     Parameters
     ----------
@@ -33,7 +26,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {None, 'micro', 'macro', 'samples', 'weighted'}, default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -64,10 +57,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         classes.
 
     """
-    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
-        raise ValueError('average has to be one of {0}'
-                         ''.format(average_options))
+        raise ValueError("average has to be one of {0}".format(average_options))
 
     y_type = type_of_target(y_true)
     if y_type not in ("binary", "multilabel-indicator"):
@@ -90,16 +82,17 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         y_true = y_true.ravel()
         y_score = y_score.ravel()
 
-    elif average == 'weighted':
+    elif average == "weighted":
         if score_weight is not None:
-            average_weight = np.sum(np.multiply(
-                y_true, np.reshape(score_weight, (-1, 1))), axis=0)
+            average_weight = np.sum(
+                np.multiply(y_true, np.reshape(score_weight, (-1, 1))), axis=0
+            )
         else:
             average_weight = np.sum(y_true, axis=0)
         if np.isclose(average_weight.sum(), 0.0):
             return 0
 
-    elif average == 'samples':
+    elif average == "samples":
         # swap average_weight <-> score_weight
         average_weight = score_weight
         score_weight = None
@@ -116,8 +109,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     for c in range(n_classes):
         y_true_c = y_true.take([c], axis=not_average_axis).ravel()
         y_score_c = y_score.take([c], axis=not_average_axis).ravel()
-        score[c] = binary_metric(y_true_c, y_score_c,
-                                 sample_weight=score_weight)
+        score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
     # Average the results
     if average is not None:
@@ -126,13 +118,12 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
             # score from being affected by 0-weighted NaN elements.
             average_weight = np.asarray(average_weight)
             score[average_weight == 0] = 0
-        return np.average(score, weights=average_weight)
+        return float(np.average(score, weights=average_weight))
     else:
         return score
 
 
-def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
-                                  average='macro'):
+def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro"):
     """Average one-versus-one scores for multiclass classification.
 
     Uses the binary metric for one-vs-one multiclass classification,
@@ -141,7 +132,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     Parameters
     ----------
     binary_metric : callable
-        The binary metric function to use that accepts the following as input
+        The binary metric function to use that accepts the following as input:
             y_true_target : array, shape = [n_samples_target]
                 Some sub-array of y_true for a pair of classes designated
                 positive and negative in the one-vs-one scheme.
@@ -154,11 +145,11 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
-        belonging to a particular class
+        belonging to a particular class.
 
-    average : 'macro' or 'weighted', optional (default='macro')
+    average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
-        metric scores
+        metric scores:
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -170,7 +161,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
     Returns
     -------
     score : float
-        Average of the pairwise binary metric scores
+        Average of the pairwise binary metric scores.
     """
     check_consistent_length(y_true, y_score)
 

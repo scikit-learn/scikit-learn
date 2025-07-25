@@ -1,25 +1,38 @@
-version: 2
+version: 2.1
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.10.16
+    steps:
+      - checkout
+      - run:
+          name: dependencies
+          command: |
+            source build_tools/shared.sh
+            # Include pytest compatibility with mypy
+            pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+      - run:
+          name: linting
+          command: ./build_tools/linting.sh
+
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: cimg/base:current-22.04
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.5
-      - NUMPY_VERSION: 1.11.0
-      - SCIPY_VERSION: 0.17.0
-      - MATPLOTLIB_VERSION: 1.5.1
-      - CYTHON_VERSION: 0.28.5
-      - SCIKIT_IMAGE_VERSION: 0.12.3
+      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
+      # Do not fail if the documentation build generates warnings with minimum
+      # dependencies as long as we can avoid raising warnings with more recent
+      # versions of the same dependencies.
+      - SKLEARN_WARNINGS_AS_ERRORS: '0'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -31,7 +44,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -43,18 +56,20 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: cimg/base:current-22.04
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3
+      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
+      # Make sure that we fail if the documentation build generates warnings with
+      # recent versions of the dependencies.
+      - SKLEARN_WARNINGS_AS_ERRORS: '1'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
@@ -66,7 +81,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -81,38 +96,9 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  lint:
-    docker:
-      - image: circleci/python:3.6
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - run:
-          name: dependencies
-          command: sudo pip install flake8
-      - run:
-          name: linting
-          command: ./build_tools/circle/linting.sh
-
-  pypy3:
-    docker:
-      - image: pypy:3.6-7.1.1
-    steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - checkout
-      - run: ./build_tools/circle/build_test_pypy.sh
-      - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/base:current-22.04
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -121,9 +107,9 @@ jobs:
       - attach_workspace:
           at: doc/_build/html
       - run: ls -ltrh doc/_build/html/stable
-      - deploy:
+      - run:
           command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
@@ -138,21 +124,6 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - pypy3

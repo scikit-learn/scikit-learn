@@ -1,0 +1,45 @@
+{{py:
+
+"""
+Efficient (dense) parameter vector implementation for linear models.
+
+Template file for easily generate fused types consistent code using Tempita
+(https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
+
+Generated file: weight_vector.pxd
+
+Each class is duplicated for all dtypes (float and double). The keywords
+between double braces are substituted during the build.
+"""
+
+# name_suffix, c_type
+dtypes = [('64', 'double'),
+          ('32', 'float')]
+
+}}
+
+{{for name_suffix, c_type in dtypes}}
+
+cdef class WeightVector{{name_suffix}}(object):
+    cdef readonly {{c_type}}[::1] w
+    cdef readonly {{c_type}}[::1] aw
+    cdef {{c_type}} *w_data_ptr
+    cdef {{c_type}} *aw_data_ptr
+
+    cdef double wscale
+    cdef double average_a
+    cdef double average_b
+    cdef int n_features
+    cdef double sq_norm
+
+    cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+                  int xnnz, {{c_type}} c) noexcept nogil
+    cdef void add_average(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+                          int xnnz, {{c_type}} c, {{c_type}} num_iter) noexcept nogil
+    cdef {{c_type}} dot(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
+                    int xnnz) noexcept nogil
+    cdef void scale(self, {{c_type}} c) noexcept nogil
+    cdef void reset_wscale(self) noexcept nogil
+    cdef {{c_type}} norm(self) noexcept nogil
+
+{{endfor}}

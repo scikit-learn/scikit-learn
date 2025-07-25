@@ -1,46 +1,48 @@
-"""
-Machine learning module for Python
-==================================
+"""Configure global settings and get information about the working environment."""
 
-sklearn is a Python module integrating classical machine
-learning algorithms in the tightly-knit world of scientific Python
-packages (numpy, scipy, matplotlib).
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-It aims to provide simple and efficient solutions to learning problems
-that are accessible to everybody and reusable in various contexts:
-machine-learning as a versatile tool for science and engineering.
+# Machine learning module for Python
+# ==================================
+#
+# sklearn is a Python module integrating classical machine
+# learning algorithms in the tightly-knit world of scientific Python
+# packages (numpy, scipy, matplotlib).
+#
+# It aims to provide simple and efficient solutions to learning problems
+# that are accessible to everybody and reusable in various contexts:
+# machine-learning as a versatile tool for science and engineering.
+#
+# See https://scikit-learn.org for complete documentation.
 
-See http://scikit-learn.org for complete documentation.
-"""
-import sys
-import re
+import importlib as _importlib
 import logging
 import os
+import random
 
-from ._config import get_config, set_config, config_context
+from ._config import config_context, get_config, set_config
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 # PEP0440 compatible formatted version, see:
 # https://www.python.org/dev/peps/pep-0440/
 #
 # Generic release markers:
-#   X.Y
+#   X.Y.0   # For first release after an increment in Y
 #   X.Y.Z   # For bugfix releases
 #
 # Admissible pre-release markers:
-#   X.YaN   # Alpha release
-#   X.YbN   # Beta release
-#   X.YrcN  # Release Candidate
-#   X.Y     # Final release
+#   X.Y.ZaN   # Alpha release
+#   X.Y.ZbN   # Beta release
+#   X.Y.ZrcN  # Release Candidate
+#   X.Y.Z     # Final release
 #
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.22.dev0'
+__version__ = "1.8.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -57,50 +59,94 @@ os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 # https://github.com/ContinuumIO/anaconda-issues/issues/11294
 os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 
-try:
-    # This variable is injected in the __builtins__ by the build
-    # process. It is used to enable importing subpackages of sklearn when
-    # the binaries are not built
-    __SKLEARN_SETUP__
-except NameError:
-    __SKLEARN_SETUP__ = False
+# `_distributor_init` allows distributors to run custom init code.
+# For instance, for the Windows wheel, this is used to pre-load the
+# vcomp shared library runtime for OpenMP embedded in the sklearn/.libs
+# sub-folder.
+# It is necessary to do this prior to importing show_versions as the
+# later is linked to the OpenMP runtime to make it possible to introspect
+# it and importing it first would fail if the OpenMP dll cannot be found.
+from . import (  # noqa: F401 E402
+    __check_build,
+    _distributor_init,
+)
+from .base import clone  # noqa: E402
+from .utils._show_versions import show_versions  # noqa: E402
 
-if __SKLEARN_SETUP__:
-    sys.stderr.write('Partial import of sklearn during the build process.\n')
-    # We are not importing the rest of scikit-learn during the build
-    # process, as it may not be compiled yet
-else:
-    from . import __check_build
-    from .base import clone
-    from .utils._show_versions import show_versions
+_submodules = [
+    "calibration",
+    "cluster",
+    "covariance",
+    "cross_decomposition",
+    "datasets",
+    "decomposition",
+    "dummy",
+    "ensemble",
+    "exceptions",
+    "experimental",
+    "externals",
+    "feature_extraction",
+    "feature_selection",
+    "frozen",
+    "gaussian_process",
+    "inspection",
+    "isotonic",
+    "kernel_approximation",
+    "kernel_ridge",
+    "linear_model",
+    "manifold",
+    "metrics",
+    "mixture",
+    "model_selection",
+    "multiclass",
+    "multioutput",
+    "naive_bayes",
+    "neighbors",
+    "neural_network",
+    "pipeline",
+    "preprocessing",
+    "random_projection",
+    "semi_supervised",
+    "svm",
+    "tree",
+    "discriminant_analysis",
+    "impute",
+    "compose",
+]
 
-    __check_build  # avoid flakes unused variable error
+__all__ = _submodules + [
+    # Non-modules:
+    "clone",
+    "get_config",
+    "set_config",
+    "config_context",
+    "show_versions",
+]
 
-    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
-               'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
-               'experimental', 'externals', 'feature_extraction',
-               'feature_selection', 'gaussian_process', 'inspection',
-               'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'linear_model', 'manifold', 'metrics', 'mixture',
-               'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
-               # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context',
-               'show_versions']
+
+def __dir__():
+    return __all__
+
+
+def __getattr__(name):
+    if name in _submodules:
+        return _importlib.import_module(f"sklearn.{name}")
+    else:
+        try:
+            return globals()[name]
+        except KeyError:
+            raise AttributeError(f"Module 'sklearn' has no attribute '{name}'")
 
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""
-    import os
+
     import numpy as np
-    import random
 
     # Check if a random seed exists in the environment, if not create one.
-    _random_seed = os.environ.get('SKLEARN_SEED', None)
+    _random_seed = os.environ.get("SKLEARN_SEED", None)
     if _random_seed is None:
-        _random_seed = np.random.uniform() * (2 ** 31 - 1)
+        _random_seed = np.random.uniform() * np.iinfo(np.int32).max
     _random_seed = int(_random_seed)
     print("I: Seeding RNGs with %r" % _random_seed)
     np.random.seed(_random_seed)

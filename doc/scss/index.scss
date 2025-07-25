@@ -1,0 +1,176 @@
+/**
+ * Styling sheet for the scikit-learn landing page. This should be loaded only for the
+ * landing page.
+ *
+ * This file is compiled into styles/index.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
+ */
+
+/* Theme-aware colors for the landing page */
+
+html {
+  &[data-theme="light"] {
+    --sk-landing-bg-1: var(--sk-cyan-shades-3);
+    --sk-landing-bg-2: var(--sk-cyan);
+    --sk-landing-bg-3: var(--sk-orange-tint-8);
+    --sk-landing-bg-4: var(--sk-orange-tint-3);
+  }
+
+  &[data-theme="dark"] {
+    --sk-landing-bg-1: var(--sk-cyan-shades-5);
+    --sk-landing-bg-2: var(--sk-cyan-shades-2);
+    --sk-landing-bg-3: var(--sk-orange-tint-4);
+    --sk-landing-bg-4: var(--sk-orange-tint-1);
+  }
+}
+
+/* General */
+
+div.sk-landing-container {
+  max-width: 1400px;
+}
+
+/* Top bar */
+
+div.sk-landing-top-bar {
+  background-image: linear-gradient(
+    160deg,
+    var(--sk-landing-bg-1) 0%,
+    var(--sk-landing-bg-2) 17%,
+    var(--sk-landing-bg-3) 59%,
+    var(--sk-landing-bg-4) 100%
+  );
+
+  .sk-landing-header,
+  .sk-landing-subheader {
+    color: white;
+    text-shadow: 0px 0px 8px var(--sk-landing-bg-1);
+  }
+
+  .sk-landing-header {
+    font-size: 3.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sk-landing-subheader {
+    letter-spacing: 0.17rem;
+    margin-top: 0;
+    font-weight: 500;
+  }
+
+  a.sk-btn-orange {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  ul.sk-landing-header-body {
+    margin-top: auto;
+    margin-bottom: auto;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: black;
+  }
+}
+
+/* Body */
+
+div.sk-landing-body {
+  div.card {
+    background-color: var(--pst-color-background);
+    border-color: var(--pst-color-border);
+  }
+
+  .sk-px-xl-4 {
+    @media screen and (min-width: 1200px) {
+      padding-left: 1.3rem !important;
+      padding-right: 1.3rem !important;
+    }
+  }
+
+  .card-body {
+    p {
+      margin-bottom: 0.8rem;
+      color: var(--pst-color-text-base);
+    }
+
+    .sk-card-title {
+      font-weight: 700;
+      margin: 0 0 1rem 0;
+    }
+  }
+
+  .sk-card-img-container {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    margin-bottom: 1rem;
+
+    img {
+      max-width: unset;
+      height: 15rem;
+    }
+  }
+}
+
+/* More info */
+
+div.sk-landing-more-info {
+  font-size: 0.96rem;
+  background-color: var(--pst-color-surface);
+
+  .sk-landing-call-header {
+    font-weight: 700;
+    margin-top: 0;
+
+    html[data-theme="light"] & {
+      color: var(--sk-orange-shades-1);
+    }
+
+    html[data-theme="dark"] & {
+      color: var(--sk-orange);
+    }
+  }
+
+  ul.sk-landing-call-list > li {
+    margin-bottom: 0.25rem;
+  }
+
+  .sk-who-uses-carousel {
+    min-height: 200px;
+
+    .carousel-item img {
+      max-height: 100px;
+      max-width: 50%;
+      margin: 0.5rem;
+    }
+  }
+
+  .sk-more-testimonials {
+    text-align: right !important;
+  }
+}
+
+/* Footer */
+
+div.sk-landing-footer {
+  a.sk-footer-funding-link {
+    text-decoration: none;
+
+    p.sk-footer-funding-text {
+      color: var(--pst-color-link);
+
+      &:hover {
+        color: var(--pst-color-secondary);
+      }
+    }
+
+    div.sk-footer-funding-logos > img {
+      max-height: 40px;
+      max-width: 85px;
+      margin: 0 8px 8px 8px;
+      padding: 5px;
+      border-radius: 3px;
+      background-color: white;
+    }
+  }
+}

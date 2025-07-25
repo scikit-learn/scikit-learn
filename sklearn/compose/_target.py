@@ -1,28 +1,37 @@
-# Authors: Andreas Mueller <andreas.mueller@columbia.edu>
-#          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..utils.validation import check_is_fitted
-from ..utils import check_array, _safe_indexing
+from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
+from ..exceptions import NotFittedError
+from ..linear_model import LinearRegression
 from ..preprocessing import FunctionTransformer
+from ..utils import Bunch, _safe_indexing, check_array
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils._param_validation import HasMethods
+from ..utils._tags import get_tags
+from ..utils.validation import check_is_fitted
 
-__all__ = ['TransformedTargetRegressor']
+__all__ = ["TransformedTargetRegressor"]
 
 
 class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
-    Useful for applying a non-linear transformation to the target ``y`` in
+    Useful for applying a non-linear transformation to the target `y` in
     regression problems. This transformation can be given as a Transformer
-    such as the QuantileTransformer or as a function and its inverse such as
-    ``log`` and ``exp``.
+    such as the :class:`~sklearn.preprocessing.QuantileTransformer` or as a
+    function and its inverse such as `np.log` and `np.exp`.
 
-    The computation during ``fit`` is::
+    The computation during :meth:`fit` is::
 
         regressor.fit(X, func(y))
 
@@ -30,7 +39,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         regressor.fit(X, transformer.transform(y))
 
-    The computation during ``predict`` is::
+    The computation during :meth:`predict` is::
 
         inverse_func(regressor.predict(X))
 
@@ -40,35 +49,40 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
-    regressor : object, default=LinearRegression()
-        Regressor object such as derived from ``RegressorMixin``. This
-        regressor will automatically be cloned each time prior to fitting.
+    regressor : object, default=None
+        Regressor object such as derived from
+        :class:`~sklearn.base.RegressorMixin`. This regressor will
+        automatically be cloned each time prior to fitting. If `regressor is
+        None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
 
     transformer : object, default=None
-        Estimator object such as derived from ``TransformerMixin``. Cannot be
-        set at the same time as ``func`` and ``inverse_func``. If
-        ``transformer`` is ``None`` as well as ``func`` and ``inverse_func``,
-        the transformer will be an identity transformer. Note that the
-        transformer will be cloned during fitting. Also, the transformer is
-        restricting ``y`` to be a numpy array.
+        Estimator object such as derived from
+        :class:`~sklearn.base.TransformerMixin`. Cannot be set at the same time
+        as `func` and `inverse_func`. If `transformer is None` as well as
+        `func` and `inverse_func`, the transformer will be an identity
+        transformer. Note that the transformer will be cloned during fitting.
+        Also, the transformer is restricting `y` to be a numpy array.
 
-    func : function, optional
-        Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time as ``transformer``. The function needs to return a
-        2-dimensional array. If ``func`` is ``None``, the function used will be
-        the identity function.
+    func : function, default=None
+        Function to apply to `y` before passing to :meth:`fit`. Cannot be set
+        at the same time as `transformer`. If `func is None`, the function used will be
+        the identity function. If `func` is set, `inverse_func` also needs to be
+        provided. The function needs to return a 2-dimensional array.
 
-    inverse_func : function, optional
+    inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as ``transformer`` as well. The function needs to return
-        a 2-dimensional array. The inverse function is used to return
-        predictions to the same space of the original training labels.
+        the same time as `transformer`. The inverse function is used to return
+        predictions to the same space of the original training labels. If
+        `inverse_func` is set, `func` also needs to be provided. The inverse
+        function needs to return a 2-dimensional array.
 
     check_inverse : bool, default=True
-        Whether to check that ``transform`` followed by ``inverse_transform``
-        or ``func`` followed by ``inverse_func`` leads to the original targets.
+        Whether to check that `transform` followed by `inverse_transform`
+        or `func` followed by `inverse_func` leads to the original targets.
 
     Attributes
     ----------
@@ -76,7 +90,30 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         Fitted regressor.
 
     transformer_ : object
-        Transformer used in ``fit`` and ``predict``.
+        Transformer used in :meth:`fit` and :meth:`predict`.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
+        arbitrary callable.
+
+    Notes
+    -----
+    Internally, the target `y` is always converted into a 2-dimensional array
+    to be used by scikit-learn transformers. At the time of prediction, the
+    output will be reshaped to a have the same number of dimensions as `y`.
 
     Examples
     --------
@@ -94,18 +131,27 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     >>> tt.regressor_.coef_
     array([2.])
 
-    Notes
-    -----
-    Internally, the target ``y`` is always converted into a 2-dimensional array
-    to be used by scikit-learn transformers. At the time of prediction, the
-    output will be reshaped to a have the same number of dimensions as ``y``.
-
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
+    For a more detailed example use case refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
     """
-    def __init__(self, regressor=None, transformer=None,
-                 func=None, inverse_func=None, check_inverse=True):
+
+    _parameter_constraints: dict = {
+        "regressor": [HasMethods(["fit", "predict"]), None],
+        "transformer": [HasMethods("transform"), None],
+        "func": [callable, None],
+        "inverse_func": [callable, None],
+        "check_inverse": ["boolean"],
+    }
+
+    def __init__(
+        self,
+        regressor=None,
+        *,
+        transformer=None,
+        func=None,
+        inverse_func=None,
+        check_inverse=True,
+    ):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
@@ -119,19 +165,38 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         check on a subset (optional).
 
         """
-        if (self.transformer is not None and
-                (self.func is not None or self.inverse_func is not None)):
-            raise ValueError("'transformer' and functions 'func'/"
-                             "'inverse_func' cannot both be set.")
+        if self.transformer is not None and (
+            self.func is not None or self.inverse_func is not None
+        ):
+            raise ValueError(
+                "'transformer' and functions 'func'/'inverse_func' cannot both be set."
+            )
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:
-            if self.func is not None and self.inverse_func is None:
-                raise ValueError("When 'func' is provided, 'inverse_func' must"
-                                 " also be provided")
+            if (self.func is not None and self.inverse_func is None) or (
+                self.func is None and self.inverse_func is not None
+            ):
+                lacking_param, existing_param = (
+                    ("func", "inverse_func")
+                    if self.func is None
+                    else ("inverse_func", "func")
+                )
+                raise ValueError(
+                    f"When '{existing_param}' is provided, '{lacking_param}' must also"
+                    f" be provided. If {lacking_param} is supposed to be the default,"
+                    " you need to explicitly pass it the identity function."
+                )
             self.transformer_ = FunctionTransformer(
-                func=self.func, inverse_func=self.inverse_func, validate=True,
-                check_inverse=self.check_inverse)
+                func=self.func,
+                inverse_func=self.inverse_func,
+                validate=True,
+                check_inverse=self.check_inverse,
+            )
+            # We are transforming the target here and not the features, so we set the
+            # output of FunctionTransformer() to be a numpy array (default) and to not
+            # depend on the global configuration:
+            self.transformer_.set_output(transform="default")
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
@@ -141,36 +206,63 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
             y_sel = _safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
-            if not np.allclose(y_sel,
-                               self.transformer_.inverse_transform(y_sel_t)):
-                warnings.warn("The provided functions or transformer are"
-                              " not strictly inverse of each other. If"
-                              " you are sure you want to proceed regardless"
-                              ", set 'check_inverse=False'", UserWarning)
+            if not np.allclose(y_sel, self.transformer_.inverse_transform(y_sel_t)):
+                warnings.warn(
+                    (
+                        "The provided functions or transformer are"
+                        " not strictly inverse of each other. If"
+                        " you are sure you want to proceed regardless"
+                        ", set 'check_inverse=False'"
+                    ),
+                    UserWarning,
+                )
 
+    @_fit_context(
+        # TransformedTargetRegressor.regressor/transformer are not validated yet.
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the underlying
-            regressor.
+        **fit_params : dict
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the underlying regressor.
 
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the underlying regressor.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
-        y = check_array(y, accept_sparse=False, force_all_finite=True,
-                        ensure_2d=False, dtype='numeric')
+        if y is None:
+            raise ValueError(
+                f"This {self.__class__.__name__} estimator "
+                "requires y to be passed, but the target y is None."
+            )
+        y = check_array(
+            y,
+            input_name="y",
+            accept_sparse=False,
+            ensure_all_finite=True,
+            ensure_2d=False,
+            dtype="numeric",
+            allow_nd=True,
+        )
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
@@ -192,45 +284,114 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         if y_trans.ndim == 2 and y_trans.shape[1] == 1:
             y_trans = y_trans.squeeze(axis=1)
 
-        if self.regressor is None:
-            from ..linear_model import LinearRegression
-            self.regressor_ = LinearRegression()
+        self.regressor_ = self._get_regressor(get_clone=True)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
-            self.regressor_ = clone(self.regressor)
+            routed_params = Bunch(regressor=Bunch(fit=fit_params))
 
-        self.regressor_.fit(X, y_trans, **fit_params)
+        self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
+
+        if hasattr(self.regressor_, "feature_names_in_"):
+            self.feature_names_in_ = self.regressor_.feature_names_in_
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, **predict_params):
         """Predict using the base regressor, applying inverse.
 
-        The regressor is used to predict and the ``inverse_func`` or
-        ``inverse_transform`` is applied before returning the prediction.
+        The regressor is used to predict and the `inverse_func` or
+        `inverse_transform` is applied before returning the prediction.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
+        **predict_params : dict of str -> object
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying regressor.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying regressor.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
         Returns
         -------
-        y_hat : array, shape = (n_samples,)
+        y_hat : ndarray of shape (n_samples,)
             Predicted values.
-
         """
         check_is_fitted(self)
-        pred = self.regressor_.predict(X)
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            routed_params = Bunch(regressor=Bunch(predict=predict_params))
+
+        pred = self.regressor_.predict(X, **routed_params.regressor.predict)
         if pred.ndim == 1:
-            pred_trans = self.transformer_.inverse_transform(
-                pred.reshape(-1, 1))
+            pred_trans = self.transformer_.inverse_transform(pred.reshape(-1, 1))
         else:
             pred_trans = self.transformer_.inverse_transform(pred)
-        if (self._training_dim == 1 and
-                pred_trans.ndim == 2 and pred_trans.shape[1] == 1):
+        if (
+            self._training_dim == 1
+            and pred_trans.ndim == 2
+            and pred_trans.shape[1] == 1
+        ):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
 
-    def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+    def __sklearn_tags__(self):
+        regressor = self._get_regressor()
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.input_tags.sparse = get_tags(regressor).input_tags.sparse
+        tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
+        return tags
+
+    @property
+    def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() returns False the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__
+                )
+            ) from nfe
+
+        return self.regressor_.n_features_in_
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            regressor=self._get_regressor(),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
+        )
+        return router
+
+    def _get_regressor(self, get_clone=False):
+        if self.regressor is None:
+            return LinearRegression()
+
+        return clone(self.regressor) if get_clone else self.regressor

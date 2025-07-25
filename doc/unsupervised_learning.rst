@@ -1,5 +1,3 @@
-.. include:: includes/big_toc_css.rst
-
 .. _unsupervised-learning:
 
 Unsupervised learning

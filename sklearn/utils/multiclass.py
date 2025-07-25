@@ -1,44 +1,45 @@
-# Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
-#
-# License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
+"""Utilities to handle multiclass/multioutput target in classifiers."""
 
-"""
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import warnings
 from collections.abc import Sequence
 from itertools import chain
 
-from scipy.sparse import issparse
-from scipy.sparse.base import spmatrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
-
 import numpy as np
+from scipy.sparse import issparse
 
-from .validation import check_array, _assert_all_finite
+from ..utils._array_api import get_namespace
+from ..utils.fixes import VisibleDeprecationWarning
+from ._unique import attach_unique, cached_unique
+from .validation import _assert_all_finite, check_array
 
 
-def _unique_multiclass(y):
-    if hasattr(y, '__array__'):
-        return np.unique(np.asarray(y))
+def _unique_multiclass(y, xp=None):
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
+    if hasattr(y, "__array__") or is_array_api_compliant:
+        return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
 
-def _unique_indicator(y):
-    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
+def _unique_indicator(y, xp=None):
+    xp, _ = get_namespace(y, xp=xp)
+    return xp.arange(
+        check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
+    )
 
 
 _FN_UNIQUE_LABELS = {
-    'binary': _unique_multiclass,
-    'multiclass': _unique_multiclass,
-    'multilabel-indicator': _unique_indicator,
+    "binary": _unique_multiclass,
+    "multiclass": _unique_multiclass,
+    "multilabel-indicator": _unique_indicator,
 }
 
 
 def unique_labels(*ys):
-    """Extract an ordered array of unique labels
+    """Extract an ordered array of unique labels.
 
     We don't allow:
         - mix of multilabel and multiclass (single label) targets
@@ -52,10 +53,11 @@ def unique_labels(*ys):
     Parameters
     ----------
     *ys : array-likes
+        Label values.
 
     Returns
     -------
-    out : numpy array of shape [n_unique_labels]
+    out : ndarray of shape (n_unique_labels,)
         An ordered array of unique labels.
 
     Examples
@@ -68,8 +70,10 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
-    if not ys:
-        raise ValueError('No argument has been passed.')
+    ys = attach_unique(*ys, return_tuple=True)
+    xp, is_array_api_compliant = get_namespace(*ys)
+    if len(ys) == 0:
+        raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
     ys_types = set(type_of_target(x) for x in ys)
@@ -82,42 +86,58 @@ def unique_labels(*ys):
     label_type = ys_types.pop()
 
     # Check consistency for the indicator format
-    if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
-                    for y in ys)) > 1):
-        raise ValueError("Multi-label binary indicator input with "
-                         "different numbers of labels")
+    if (
+        label_type == "multilabel-indicator"
+        and len(
+            set(
+                check_array(y, accept_sparse=["csr", "csc", "coo"]).shape[1] for y in ys
+            )
+        )
+        > 1
+    ):
+        raise ValueError(
+            "Multi-label binary indicator input with different numbers of labels"
+        )
 
     # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
         raise ValueError("Unknown label type: %s" % repr(ys))
 
-    ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
+    if is_array_api_compliant:
+        # array_api does not allow for mixed dtypes
+        unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
+        return xp.unique_values(unique_ys)
 
+    ys_labels = set(
+        chain.from_iterable((i for i in _unique_labels(y, xp=xp)) for y in ys)
+    )
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, str) for label in ys_labels)) > 1):
+    if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
 
-    return np.array(sorted(ys_labels))
+    return xp.asarray(sorted(ys_labels))
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == 'f' and np.all(y.astype(int) == y)
+    xp, is_array_api_compliant = get_namespace(y)
+    return xp.isdtype(y.dtype, "real floating") and bool(
+        xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
+    )
 
 
 def is_multilabel(y):
-    """ Check if ``y`` is in a multilabel format.
+    """Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
-    y : numpy array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         Target values.
 
     Returns
     -------
-    out : bool,
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+    out : bool
+        Return ``True``, if ``y`` is in a multilabel format, else ``False``.
 
     Examples
     --------
@@ -134,22 +154,48 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__') or isinstance(y, Sequence):
-        y = np.asarray(y)
+    xp, is_array_api_compliant = get_namespace(y)
+    if hasattr(y, "__array__") or isinstance(y, Sequence) or is_array_api_compliant:
+        # DeprecationWarning will be replaced by ValueError, see NEP 34
+        # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+        check_y_kwargs = dict(
+            accept_sparse=True,
+            allow_nd=True,
+            ensure_all_finite=False,
+            ensure_2d=False,
+            ensure_min_samples=0,
+            ensure_min_features=0,
+        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", VisibleDeprecationWarning)
+            try:
+                y = check_array(y, dtype=None, **check_y_kwargs)
+            except (VisibleDeprecationWarning, ValueError) as e:
+                if str(e).startswith("Complex data not supported"):
+                    raise
+
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = check_array(y, dtype=object, **check_y_kwargs)
+
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
     if issparse(y):
-        if isinstance(y, (dok_matrix, lil_matrix)):
+        if y.format in ("dok", "lil"):
             y = y.tocsr()
-        return (len(y.data) == 0 or np.unique(y.data).size == 1 and
-                (y.dtype.kind in 'biu' or  # bool, int, uint
-                 _is_integral_float(np.unique(y.data))))
+        labels = xp.unique_values(y.data)
+        return len(y.data) == 0 or (
+            (labels.size == 1 or ((labels.size == 2) and (0 in labels)))
+            and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
+        )
     else:
-        labels = np.unique(y)
+        labels = cached_unique(y, xp=xp)
 
-        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
-                                    _is_integral_float(labels))
+        return labels.shape[0] < 3 and (
+            xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
+            or _is_integral_float(labels)
+        )
 
 
 def check_classification_targets(y):
@@ -162,32 +208,54 @@ def check_classification_targets(y):
     Parameters
     ----------
     y : array-like
+        Target values.
     """
-    y_type = type_of_target(y)
-    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
-                      'multilabel-indicator', 'multilabel-sequences']:
-        raise ValueError("Unknown label type: %r" % y_type)
+    y_type = type_of_target(y, input_name="y")
+    if y_type not in [
+        "binary",
+        "multiclass",
+        "multiclass-multioutput",
+        "multilabel-indicator",
+        "multilabel-sequences",
+    ]:
+        raise ValueError(
+            f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+            "classifier, which expects discrete classes on a "
+            "regression target with continuous values."
+        )
 
 
-def type_of_target(y):
+def type_of_target(y, input_name="", raise_unknown=False):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
     For example:
 
-        * ``binary`` is more specific but compatible with ``multiclass``.
-        * ``multiclass`` of integers is more specific but compatible with
-          ``continuous``.
-        * ``multilabel-indicator`` is more specific but compatible with
-          ``multiclass-multioutput``.
+    * ``binary`` is more specific but compatible with ``multiclass``.
+    * ``multiclass`` of integers is more specific but compatible with ``continuous``.
+    * ``multilabel-indicator`` is more specific but compatible with
+      ``multiclass-multioutput``.
 
     Parameters
     ----------
-    y : array-like
+    y : {array-like, sparse matrix}
+        Target values. If a sparse matrix, `y` is expected to be a
+        CSR/CSC matrix.
+
+    input_name : str, default=""
+        The data name used to construct the error message.
+
+        .. versionadded:: 1.1.0
+
+    raise_unknown : bool, default=False
+        If `True`, raise an error when the type of target returned by
+        :func:`~sklearn.utils.multiclass.type_of_target` is `"unknown"`.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
-    target_type : string
+    target_type : str
         One of:
 
         * 'continuous': `y` is an array-like of floats that are not all
@@ -209,6 +277,7 @@ def type_of_target(y):
 
     Examples
     --------
+    >>> from sklearn.utils.multiclass import type_of_target
     >>> import numpy as np
     >>> type_of_target([0.1, 0.6])
     'continuous'
@@ -233,65 +302,136 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
-             and not isinstance(y, str))
+    xp, is_array_api_compliant = get_namespace(y)
+
+    def _raise_or_return():
+        """Depending on the value of raise_unknown, either raise an error or return
+        'unknown'.
+        """
+        if raise_unknown:
+            input = input_name if input_name else "data"
+            raise ValueError(f"Unknown label type for {input}: {y!r}")
+        else:
+            return "unknown"
+
+    valid = (
+        (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
+        and not isinstance(y, str)
+    ) or is_array_api_compliant
 
     if not valid:
-        raise ValueError('Expected array-like (array or non-string sequence), '
-                         'got %r' % y)
+        raise ValueError(
+            "Expected array-like (array or non-string sequence), got %r" % y
+        )
 
-    sparse_pandas = (y.__class__.__name__ in ['SparseSeries', 'SparseArray'])
+    sparse_pandas = y.__class__.__name__ in ["SparseSeries", "SparseArray"]
     if sparse_pandas:
         raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
 
     if is_multilabel(y):
-        return 'multilabel-indicator'
+        return "multilabel-indicator"
+
+    # DeprecationWarning will be replaced by ValueError, see NEP 34
+    # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+    # We therefore catch both deprecation (NumPy < 1.24) warning and
+    # value error (NumPy >= 1.24).
+    check_y_kwargs = dict(
+        accept_sparse=True,
+        allow_nd=True,
+        ensure_all_finite=False,
+        ensure_2d=False,
+        ensure_min_samples=0,
+        ensure_min_features=0,
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", VisibleDeprecationWarning)
+        if not issparse(y):
+            try:
+                y = check_array(y, dtype=None, **check_y_kwargs)
+            except (VisibleDeprecationWarning, ValueError) as e:
+                if str(e).startswith("Complex data not supported"):
+                    raise
+
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = check_array(y, dtype=object, **check_y_kwargs)
 
     try:
-        y = np.asarray(y)
-    except ValueError:
-        # Known to fail in numpy 1.3 for array of arrays
-        return 'unknown'
-
-    # The old sequence of sequences format
-    try:
-        if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-                and not isinstance(y[0], str)):
-            raise ValueError('You appear to be using a legacy multi-label data'
-                             ' representation. Sequence of sequences are no'
-                             ' longer supported; use a binary array or sparse'
-                             ' matrix instead - the MultiLabelBinarizer'
-                             ' transformer can convert to this format.')
+        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        # labels in bytes format
+        if isinstance(first_row_or_val, bytes):
+            raise TypeError(
+                "Support for labels represented as bytes is not supported. Convert "
+                "the labels to a string or integer format."
+            )
+        # The old sequence of sequences format
+        if (
+            not hasattr(first_row_or_val, "__array__")
+            and isinstance(first_row_or_val, Sequence)
+            and not isinstance(first_row_or_val, str)
+        ):
+            raise ValueError(
+                "You appear to be using a legacy multi-label data"
+                " representation. Sequence of sequences are no"
+                " longer supported; use a binary array or sparse"
+                " matrix instead - the MultiLabelBinarizer"
+                " transformer can convert to this format."
+            )
     except IndexError:
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], str)):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if y.ndim not in (1, 2):
+        # Number of dimension greater than 2: [[[1, 2]]]
+        return _raise_or_return()
+    if not min(y.shape):
+        # Empty ndarray: []/[[]]
+        if y.ndim == 1:
+            # 1-D empty array: []
+            return "binary"  # []
+        # 2-D empty array: [[]]
+        return _raise_or_return()
+    if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
+        # [obj_1] and not ["label_1"]
+        return _raise_or_return()
 
-    if y.ndim == 2 and y.shape[1] == 0:
-        return 'unknown'  # [[]]
-
+    # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
-    # check float and contains non-integer float values
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+    # Check float and contains non-integer float values
+    if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y)
-        return 'continuous' + suffix
+        data = y.data if issparse(y) else y
+        if xp.any(data != xp.astype(data, int)):
+            _assert_all_finite(data, input_name=input_name)
+            return "continuous" + suffix
 
-    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
-        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+    # Check multiclass
+    if issparse(first_row_or_val):
+        first_row_or_val = first_row_or_val.data
+    classes = cached_unique(y)
+    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
+        # Only raise the warning when we have at least 20 samples.
+        warnings.warn(
+            "The number of unique classes is greater than 50% of the number "
+            "of samples. `y` could represent a regression problem, not a "
+            "classification problem.",
+            UserWarning,
+            stacklevel=2,
+        )
+    if classes.shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+        # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+        return "multiclass" + suffix
     else:
-        return 'binary'  # [1, 2] or [["a"], ["b"]]
+        return "binary"  # [1, 2] or [["a"], ["b"]]
 
 
 def _check_partial_fit_first_call(clf, classes=None):
-    """Private helper function for factorizing common classes param logic
+    """Private helper function for factorizing common classes param logic.
 
     Estimators that implement the ``partial_fit`` API need to be provided with
     the list of possible classes at the first call to partial_fit.
@@ -304,16 +444,16 @@ def _check_partial_fit_first_call(clf, classes=None):
     set on ``clf``.
 
     """
-    if getattr(clf, 'classes_', None) is None and classes is None:
-        raise ValueError("classes must be passed on the first call "
-                         "to partial_fit.")
+    if getattr(clf, "classes_", None) is None and classes is None:
+        raise ValueError("classes must be passed on the first call to partial_fit.")
 
     elif classes is not None:
-        if getattr(clf, 'classes_', None) is not None:
+        if getattr(clf, "classes_", None) is not None:
             if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, clf.classes_))
+                    "to partial_fit, was: %r" % (classes, clf.classes_)
+                )
 
         else:
             # This is the first call to partial_fit
@@ -326,11 +466,11 @@ def _check_partial_fit_first_call(clf, classes=None):
 
 
 def class_distribution(y, sample_weight=None):
-    """Compute class priors from multioutput-multiclass target data
+    """Compute class priors from multioutput-multiclass target data.
 
     Parameters
     ----------
-    y : array like or sparse matrix of size (n_samples, n_outputs)
+    y : {array-like, sparse matrix} of size (n_samples, n_outputs)
         The labels for each example.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -338,15 +478,14 @@ def class_distribution(y, sample_weight=None):
 
     Returns
     -------
-    classes : list of size n_outputs of arrays of size (n_classes,)
+    classes : list of size n_outputs of ndarray of size (n_classes,)
         List of classes for each column.
 
-    n_classes : list of integers of size n_outputs
-        Number of classes in each column
+    n_classes : list of int of size n_outputs
+        Number of classes in each column.
 
-    class_prior : list of size n_outputs of arrays of size (n_classes,)
+    class_prior : list of size n_outputs of ndarray of size (n_classes,)
         Class distribution of each column.
-
     """
     classes = []
     n_classes = []
@@ -361,18 +500,18 @@ def class_distribution(y, sample_weight=None):
         y_nnz = np.diff(y.indptr)
 
         for k in range(n_outputs):
-            col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
+            col_nonzero = y.indices[y.indptr[k] : y.indptr[k + 1]]
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
                 nz_samp_weight = sample_weight[col_nonzero]
-                zeros_samp_weight_sum = (np.sum(sample_weight) -
-                                         np.sum(nz_samp_weight))
+                zeros_samp_weight_sum = np.sum(sample_weight) - np.sum(nz_samp_weight)
             else:
                 nz_samp_weight = None
                 zeros_samp_weight_sum = y.shape[0] - y_nnz[k]
 
-            classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
-                                       return_inverse=True)
+            classes_k, y_k = np.unique(
+                y.data[y.indptr[k] : y.indptr[k + 1]], return_inverse=True
+            )
             class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
 
             # An explicit zero was found, combine its weight with the weight
@@ -384,8 +523,7 @@ def class_distribution(y, sample_weight=None):
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)
-                class_prior_k = np.insert(class_prior_k, 0,
-                                          zeros_samp_weight_sum)
+                class_prior_k = np.insert(class_prior_k, 0, zeros_samp_weight_sum)
 
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])
@@ -409,16 +547,16 @@ def _ovr_decision_function(predictions, confidences, n_classes):
 
     Parameters
     ----------
-    predictions : array-like, shape (n_samples, n_classifiers)
+    predictions : array-like of shape (n_samples, n_classifiers)
         Predicted classes for each binary classifier.
 
-    confidences : array-like, shape (n_samples, n_classifiers)
+    confidences : array-like of shape (n_samples, n_classifiers)
         Decision functions or predicted probabilities for positive class
         for each binary classifier.
 
     n_classes : int
         Number of classes. n_classifiers must be
-        ``n_classes * (n_classes - 1 ) / 2``
+        ``n_classes * (n_classes - 1 ) / 2``.
     """
     n_samples = predictions.shape[0]
     votes = np.zeros((n_samples, n_classes))
@@ -440,6 +578,7 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
-    transformed_confidences = (sum_of_confidences /
-                               (3 * (np.abs(sum_of_confidences) + 1)))
+    transformed_confidences = sum_of_confidences / (
+        3 * (np.abs(sum_of_confidences) + 1)
+    )
     return votes + transformed_confidences

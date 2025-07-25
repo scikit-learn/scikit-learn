@@ -1,0 +1,33 @@
+name: "Pull Request Labeler"
+on:
+  pull_request_target:
+    types: [opened]
+
+# Restrict the permissions granted to the use of secrets.GITHUB_TOKEN in this
+# github actions workflow:
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: thomasjpfan/labeler@v2.5.1
+      continue-on-error: true
+      if: github.repository == 'scikit-learn/scikit-learn'
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        max-labels: "3"
+        configuration-path: ".github/labeler-module.yml"
+
+  triage_file_extensions:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: thomasjpfan/labeler@v2.5.1
+      continue-on-error: true
+      if: github.repository == 'scikit-learn/scikit-learn'
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        configuration-path: ".github/labeler-file-extensions.yml"

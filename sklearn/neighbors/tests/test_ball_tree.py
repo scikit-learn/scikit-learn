@@ -2,13 +2,12 @@ import itertools
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal
-from sklearn.neighbors._ball_tree import (BallTree, NeighborsHeap,
-                                          simultaneous_sort, kernel_norm,
-                                          nodeheap_sort, DTYPE, ITYPE)
-from sklearn.neighbors import DistanceMetric
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
+
+from sklearn.neighbors._ball_tree import BallTree, BallTree32, BallTree64
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _convert_container
+from sklearn.utils.validation import check_array
 
 rng = np.random.RandomState(10)
 V_mahalanobis = rng.rand(3, 3)
@@ -16,37 +15,48 @@ V_mahalanobis = np.dot(V_mahalanobis, V_mahalanobis.T)
 
 DIMENSION = 3
 
-METRICS = {'euclidean': {},
-           'manhattan': {},
-           'minkowski': dict(p=3),
-           'chebyshev': {},
-           'seuclidean': dict(V=rng.random_sample(DIMENSION)),
-           'wminkowski': dict(p=3, w=rng.random_sample(DIMENSION)),
-           'mahalanobis': dict(V=V_mahalanobis)}
+METRICS = {
+    "euclidean": {},
+    "manhattan": {},
+    "minkowski": dict(p=3),
+    "chebyshev": {},
+}
 
-DISCRETE_METRICS = ['hamming',
-                    'canberra',
-                    'braycurtis']
+DISCRETE_METRICS = ["hamming", "canberra", "braycurtis"]
 
-BOOLEAN_METRICS = ['matching', 'jaccard', 'dice', 'kulsinski',
-                   'rogerstanimoto', 'russellrao', 'sokalmichener',
-                   'sokalsneath']
+BOOLEAN_METRICS = [
+    "jaccard",
+    "dice",
+    "rogerstanimoto",
+    "russellrao",
+    "sokalmichener",
+    "sokalsneath",
+]
 
-
-def dist_func(x1, x2, p):
-    return np.sum((x1 - x2) ** p) ** (1. / p)
+BALL_TREE_CLASSES = [
+    BallTree64,
+    BallTree32,
+]
 
 
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
+    from sklearn.metrics import DistanceMetric
+
+    X, Y = check_array(X), check_array(Y)
     D = DistanceMetric.get_metric(metric, **kwargs).pairwise(Y, X)
     ind = np.argsort(D, axis=1)[:, :k]
     dist = D[np.arange(Y.shape[0])[:, None], ind]
     return dist, ind
 
 
-@pytest.mark.parametrize('metric',
-                         itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
-def test_ball_tree_query_metrics(metric):
+def test_BallTree_is_BallTree64_subclass():
+    assert issubclass(BallTree, BallTree64)
+
+
+@pytest.mark.parametrize("metric", itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
+@pytest.mark.parametrize("array_type", ["list", "array"])
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_ball_tree_query_metrics(metric, array_type, BallTreeImplementation):
     rng = check_random_state(0)
     if metric in BOOLEAN_METRICS:
         X = rng.random_sample((40, 10)).round(0)
@@ -54,188 +64,137 @@ def test_ball_tree_query_metrics(metric):
     elif metric in DISCRETE_METRICS:
         X = (4 * rng.random_sample((40, 10))).round(0)
         Y = (4 * rng.random_sample((10, 10))).round(0)
+    X = _convert_container(X, array_type)
+    Y = _convert_container(Y, array_type)
 
     k = 5
 
-    bt = BallTree(X, leaf_size=1, metric=metric)
+    bt = BallTreeImplementation(X, leaf_size=1, metric=metric)
     dist1, ind1 = bt.query(Y, k)
     dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
     assert_array_almost_equal(dist1, dist2)
 
 
-def test_ball_tree_query_radius(n_samples=100, n_features=10):
-    rng = check_random_state(0)
-    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
-    query_pt = np.zeros(n_features, dtype=float)
-
-    eps = 1E-15  # roundoff error can cause test to fail
-    bt = BallTree(X, leaf_size=5)
-    rad = np.sqrt(((X - query_pt) ** 2).sum(1))
-
-    for r in np.linspace(rad[0], rad[-1], 100):
-        ind = bt.query_radius([query_pt], r + eps)[0]
-        i = np.where(rad <= r + eps)[0]
-
-        ind.sort()
-        i.sort()
-
-        assert_array_almost_equal(i, ind)
-
-
-def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
-    rng = check_random_state(0)
-    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
-    query_pt = np.zeros(n_features, dtype=float)
-
-    eps = 1E-15  # roundoff error can cause test to fail
-    bt = BallTree(X, leaf_size=5)
-    rad = np.sqrt(((X - query_pt) ** 2).sum(1))
-
-    for r in np.linspace(rad[0], rad[-1], 100):
-        ind, dist = bt.query_radius([query_pt], r + eps, return_distance=True)
-
-        ind = ind[0]
-        dist = dist[0]
-
-        d = np.sqrt(((query_pt - X[ind]) ** 2).sum(1))
-
-        assert_array_almost_equal(d, dist)
-
-
-def compute_kernel_slow(Y, X, kernel, h):
-    d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
-    norm = kernel_norm(h, X.shape[1], kernel)
-
-    if kernel == 'gaussian':
-        return norm * np.exp(-0.5 * (d * d) / (h * h)).sum(-1)
-    elif kernel == 'tophat':
-        return norm * (d < h).sum(-1)
-    elif kernel == 'epanechnikov':
-        return norm * ((1.0 - (d * d) / (h * h)) * (d < h)).sum(-1)
-    elif kernel == 'exponential':
-        return norm * (np.exp(-d / h)).sum(-1)
-    elif kernel == 'linear':
-        return norm * ((1 - d / h) * (d < h)).sum(-1)
-    elif kernel == 'cosine':
-        return norm * (np.cos(0.5 * np.pi * d / h) * (d < h)).sum(-1)
-    else:
-        raise ValueError('kernel not recognized')
-
-
-@pytest.mark.parametrize("kernel", ['gaussian', 'tophat', 'epanechnikov',
-                                    'exponential', 'linear', 'cosine'])
-@pytest.mark.parametrize("h", [0.01, 0.1, 1])
-@pytest.mark.parametrize("rtol", [0, 1E-5])
-@pytest.mark.parametrize("atol", [1E-6, 1E-2])
-@pytest.mark.parametrize("breadth_first", [True, False])
-def test_ball_tree_kde(kernel, h, rtol, atol, breadth_first, n_samples=100,
-                       n_features=3):
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((n_samples, n_features))
-    Y = rng.random_sample((n_samples, n_features))
-    bt = BallTree(X, leaf_size=10)
-
-    dens_true = compute_kernel_slow(Y, X, kernel, h)
-
-    dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
-                             kernel=kernel,
-                             breadth_first=breadth_first)
-    assert_allclose(dens, dens_true,
-                    atol=atol, rtol=max(rtol, 1e-7))
-
-
-def test_gaussian_kde(n_samples=1000):
-    # Compare gaussian KDE results to scipy.stats.gaussian_kde
-    from scipy.stats import gaussian_kde
-    rng = check_random_state(0)
-    x_in = rng.normal(0, 1, n_samples)
-    x_out = np.linspace(-5, 5, 30)
-
-    for h in [0.01, 0.1, 1]:
-        bt = BallTree(x_in[:, None])
-        gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
-
-        dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
-        dens_gkde = gkde.evaluate(x_out)
-
-        assert_array_almost_equal(dens_bt, dens_gkde, decimal=3)
-
-
-def test_ball_tree_two_point(n_samples=100, n_features=3):
-    rng = check_random_state(0)
-    X = rng.random_sample((n_samples, n_features))
-    Y = rng.random_sample((n_samples, n_features))
-    r = np.linspace(0, 1, 10)
-    bt = BallTree(X, leaf_size=10)
-
-    D = DistanceMetric.get_metric("euclidean").pairwise(Y, X)
-    counts_true = [(D <= ri).sum() for ri in r]
-
-    def check_two_point(r, dualtree):
-        counts = bt.two_point_correlation(Y, r=r, dualtree=dualtree)
-        assert_array_almost_equal(counts, counts_true)
-
-    for dualtree in (True, False):
-        check_two_point(r, dualtree)
-
-
-
-
-def test_neighbors_heap(n_pts=5, n_nbrs=10):
-    heap = NeighborsHeap(n_pts, n_nbrs)
-
-    for row in range(n_pts):
-        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
-        i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
-        for d, i in zip(d_in, i_in):
-            heap.push(row, d, i)
-
-        ind = np.argsort(d_in)
-        d_in = d_in[ind]
-        i_in = i_in[ind]
-
-        d_heap, i_heap = heap.get_arrays(sort=True)
-
-        assert_array_almost_equal(d_in[:n_nbrs], d_heap[row])
-        assert_array_almost_equal(i_in[:n_nbrs], i_heap[row])
-
-
-def test_node_heap(n_nodes=50):
-    vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
-
-    i1 = np.argsort(vals)
-    vals2, i2 = nodeheap_sort(vals)
-
-    assert_array_almost_equal(i1, i2)
-    assert_array_almost_equal(vals[i1], vals2)
-
-
-def test_simultaneous_sort(n_rows=10, n_pts=201):
-    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
-    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
-
-    dist2 = dist.copy()
-    ind2 = ind.copy()
-
-    # simultaneous sort rows using function
-    simultaneous_sort(dist, ind)
-
-    # simultaneous sort rows using numpy
-    i = np.argsort(dist2, axis=1)
-    row_ind = np.arange(n_rows)[:, None]
-    dist2 = dist2[row_ind, i]
-    ind2 = ind2[row_ind, i]
-
-    assert_array_almost_equal(dist, dist2)
-    assert_array_almost_equal(ind, ind2)
-
-
-def test_query_haversine():
+@pytest.mark.parametrize(
+    "BallTreeImplementation, decimal_tol", zip(BALL_TREE_CLASSES, [6, 5])
+)
+def test_query_haversine(BallTreeImplementation, decimal_tol):
     rng = check_random_state(0)
     X = 2 * np.pi * rng.random_sample((40, 2))
-    bt = BallTree(X, leaf_size=1, metric='haversine')
+    bt = BallTreeImplementation(X, leaf_size=1, metric="haversine")
     dist1, ind1 = bt.query(X, k=5)
-    dist2, ind2 = brute_force_neighbors(X, X, k=5, metric='haversine')
+    dist2, ind2 = brute_force_neighbors(X, X, k=5, metric="haversine")
 
-    assert_array_almost_equal(dist1, dist2)
+    assert_array_almost_equal(dist1, dist2, decimal=decimal_tol)
     assert_array_almost_equal(ind1, ind2)
+
+
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_array_object_type(BallTreeImplementation):
+    """Check that we do not accept object dtype array."""
+    X = np.array([(1, 2, 3), (2, 5), (5, 5, 1, 2)], dtype=object)
+    with pytest.raises(ValueError, match="setting an array element with a sequence"):
+        BallTreeImplementation(X)
+
+
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_bad_pyfunc_metric(BallTreeImplementation):
+    def wrong_returned_value(x, y):
+        return "1"
+
+    def one_arg_func(x):
+        return 1.0  # pragma: no cover
+
+    X = np.ones((5, 2))
+    msg = "Custom distance function must accept two vectors and return a float."
+    with pytest.raises(TypeError, match=msg):
+        BallTreeImplementation(X, metric=wrong_returned_value)
+
+    msg = "takes 1 positional argument but 2 were given"
+    with pytest.raises(TypeError, match=msg):
+        BallTreeImplementation(X, metric=one_arg_func)
+
+
+@pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
+def test_ball_tree_numerical_consistency(global_random_seed, metric):
+    # Results on float64 and float32 versions of a dataset must be
+    # numerically close.
+    X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(
+        random_seed=global_random_seed, features=50
+    )
+
+    metric_params = METRICS.get(metric, {})
+    bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
+
+    # Test consistency with respect to the `query` method
+    k = 5
+    dist_64, ind_64 = bt_64.query(Y_64, k=k)
+    dist_32, ind_32 = bt_32.query(Y_32, k=k)
+    assert_allclose(dist_64, dist_32, rtol=1e-5)
+    assert_equal(ind_64, ind_32)
+    assert dist_64.dtype == np.float64
+    assert dist_32.dtype == np.float32
+
+    # Test consistency with respect to the `query_radius` method
+    r = 2.38
+    ind_64 = bt_64.query_radius(Y_64, r=r)
+    ind_32 = bt_32.query_radius(Y_32, r=r)
+    for _ind64, _ind32 in zip(ind_64, ind_32):
+        assert_equal(_ind64, _ind32)
+
+    # Test consistency with respect to the `query_radius` method
+    # with return distances being true
+    ind_64, dist_64 = bt_64.query_radius(Y_64, r=r, return_distance=True)
+    ind_32, dist_32 = bt_32.query_radius(Y_32, r=r, return_distance=True)
+    for _ind64, _ind32, _dist_64, _dist_32 in zip(ind_64, ind_32, dist_64, dist_32):
+        assert_equal(_ind64, _ind32)
+        assert_allclose(_dist_64, _dist_32, rtol=1e-5)
+        assert _dist_64.dtype == np.float64
+        assert _dist_32.dtype == np.float32
+
+
+@pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
+def test_kernel_density_numerical_consistency(global_random_seed, metric):
+    # Test consistency with respect to the `kernel_density` method
+    X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(random_seed=global_random_seed)
+
+    metric_params = METRICS.get(metric, {})
+    bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
+
+    kernel = "gaussian"
+    h = 0.1
+    density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel, breadth_first=True)
+    density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel, breadth_first=True)
+    assert_allclose(density64, density32, rtol=1e-5)
+    assert density64.dtype == np.float64
+    assert density32.dtype == np.float32
+
+
+def test_two_point_correlation_numerical_consistency(global_random_seed):
+    # Test consistency with respect to the `two_point_correlation` method
+    X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(random_seed=global_random_seed)
+
+    bt_64 = BallTree64(X_64, leaf_size=10)
+    bt_32 = BallTree32(X_32, leaf_size=10)
+
+    r = np.linspace(0, 1, 10)
+
+    counts_64 = bt_64.two_point_correlation(Y_64, r=r, dualtree=True)
+    counts_32 = bt_32.two_point_correlation(Y_32, r=r, dualtree=True)
+    assert_allclose(counts_64, counts_32)
+
+
+def get_dataset_for_binary_tree(random_seed, features=3):
+    rng = np.random.RandomState(random_seed)
+    _X = rng.rand(100, features)
+    _Y = rng.rand(5, features)
+
+    X_64 = _X.astype(dtype=np.float64, copy=False)
+    Y_64 = _Y.astype(dtype=np.float64, copy=False)
+
+    X_32 = _X.astype(dtype=np.float32, copy=False)
+    Y_32 = _Y.astype(dtype=np.float32, copy=False)
+
+    return X_64, X_32, Y_64, Y_32
