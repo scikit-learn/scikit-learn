@@ -20,7 +20,7 @@ from ..exceptions import ConvergenceWarning
 from ..model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import (  # type: ignore
+from ..utils import (
     Bunch,
     arrayfuncs,
     as_float_array,
@@ -35,6 +35,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
@@ -90,8 +91,8 @@ def lars_path(
     Parameters
     ----------
     X : None or ndarray of shape (n_samples, n_features)
-        Input data. Note that if X is `None` then the Gram matrix must be
-        specified, i.e., cannot be `None` or `False`.
+        Input data. If X is `None`, Gram must also be `None`.
+        If only the Gram matrix is available, use `lars_path_gram` instead.
 
     y : None or ndarray of shape (n_samples,)
         Input targets.
@@ -196,7 +197,7 @@ def lars_path(
     ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
     ... )
     >>> true_coef
-    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
     >>> alphas, _, estimated_coef = lars_path(X, y)
     >>> alphas.shape
     (3,)
@@ -204,8 +205,8 @@ def lars_path(
     array([[ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
-           [ 0.     , 46.96..., 97.99...],
-           [ 0.     ,  0.     , 45.70...]])
+           [ 0.     , 46.96, 97.99],
+           [ 0.     ,  0.     , 45.70]])
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -377,7 +378,7 @@ def lars_path_gram(
     ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
     ... )
     >>> true_coef
-    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
     >>> alphas, _, estimated_coef = lars_path_gram(X.T @ y, X.T @ X, n_samples=100)
     >>> alphas.shape
     (3,)
@@ -385,8 +386,8 @@ def lars_path_gram(
     array([[ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
-           [ 0.     , 46.96..., 97.99...],
-           [ 0.     ,  0.     , 45.70...]])
+           [ 0.     , 46.96, 97.99],
+           [ 0.     ,  0.     , 45.70]])
     """
     return _lars_path_solver(
         X=None,
@@ -553,7 +554,7 @@ def _lars_path_solver(
         Gram = None
         if X is None:
             raise ValueError("X and Gram cannot both be unspecified.")
-    elif isinstance(Gram, str) and Gram == "auto" or Gram is True:
+    elif (isinstance(Gram, str) and Gram == "auto") or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:
@@ -1023,7 +1024,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     Lars(n_nonzero_coefs=1)
     >>> print(reg.coef_)
-    [ 0. -1.11...]
+    [ 0. -1.11]
     """
 
     _parameter_constraints: dict = {
@@ -1177,8 +1178,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(
-            X, y, force_writeable=True, y_numeric=True, multi_output=True
+        X, y = validate_data(
+            self, X, y, force_writeable=True, y_numeric=True, multi_output=True
         )
 
         alpha = getattr(self, "alpha", 0.0)
@@ -1344,7 +1345,7 @@ class LassoLars(Lars):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLars(alpha=0.01)
     >>> print(reg.coef_)
-    [ 0.         -0.955...]
+    [ 0.         -0.955]
     """
 
     _parameter_constraints: dict = {
@@ -1641,11 +1642,11 @@ class LarsCV(Lars):
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
     >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9996...
+    0.9996
     >>> reg.alpha_
-    np.float64(0.2961...)
+    np.float64(0.2961)
     >>> reg.predict(X[:1,])
-    array([154.3996...])
+    array([154.3996])
     """
 
     _parameter_constraints: dict = {
@@ -1688,8 +1689,10 @@ class LarsCV(Lars):
             fit_path=True,
         )
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -1720,7 +1723,7 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1758,7 +1761,7 @@ class LarsCV(Lars):
             )
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
-        all_alphas = np.concatenate(list(zip(*cv_paths))[0])
+        all_alphas = np.concatenate(next(zip(*cv_paths)))
         # Unique also sorts
         all_alphas = np.unique(all_alphas)
         # Take at most max_n_alphas values
@@ -1981,11 +1984,11 @@ class LassoLarsCV(LarsCV):
     >>> X, y = make_regression(noise=4.0, random_state=0)
     >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9993...
+    0.9993
     >>> reg.alpha_
-    np.float64(0.3972...)
+    np.float64(0.3972)
     >>> reg.predict(X[:1,])
-    array([-78.4831...])
+    array([-78.4831])
     """
 
     _parameter_constraints = {
@@ -2174,7 +2177,7 @@ class LassoLarsIC(LassoLars):
     >>> reg.fit(X, y)
     LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
-    [ 0.  -1.11...]
+    [ 0.  -1.11]
     """
 
     _parameter_constraints: dict = {
@@ -2210,8 +2213,10 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
         self.noise_variance = noise_variance
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
@@ -2237,7 +2242,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X

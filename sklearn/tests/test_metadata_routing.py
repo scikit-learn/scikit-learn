@@ -62,13 +62,6 @@ my_weights = rng.rand(N)
 my_other_weights = rng.rand(N)
 
 
-@pytest.fixture(autouse=True)
-def enable_slep006():
-    """Enable SLEP006 for all tests."""
-    with config_context(enable_metadata_routing=True):
-        yield
-
-
 class SimplePipeline(BaseEstimator):
     """A very simple pipeline, assuming the last step is always a predictor.
 
@@ -127,6 +120,7 @@ class SimplePipeline(BaseEstimator):
         return router
 
 
+@config_context(enable_metadata_routing=True)
 def test_assert_request_is_empty():
     requests = MetadataRequest(owner="test")
     assert_request_is_empty(requests)
@@ -172,6 +166,7 @@ def test_assert_request_is_empty():
         WeightedMetaRegressor(estimator=ConsumingRegressor(), registry=_Registry()),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_estimator_puts_self_in_registry(estimator):
     """Check that an estimator puts itself in the registry upon fit."""
     estimator.fit(X, y)
@@ -190,6 +185,7 @@ def test_estimator_puts_self_in_registry(estimator):
         ("valid_arg", True),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_request_type_is_alias(val, res):
     # Test request_is_alias
     assert request_is_alias(val) == res
@@ -207,17 +203,19 @@ def test_request_type_is_alias(val, res):
         ("alias_arg", False),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_request_type_is_valid(val, res):
     # Test request_is_valid
     assert request_is_valid(val) == res
 
 
+@config_context(enable_metadata_routing=True)
 def test_default_requests():
     class OddEstimator(BaseEstimator):
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
-        }  # type: ignore
+        }  # type: ignore[var-annotated]
 
     odd_request = get_routing_for_object(OddEstimator())
     assert odd_request.fit.requests == {"sample_weight": True}
@@ -242,6 +240,7 @@ def test_default_requests():
     assert_request_is_empty(est_request)
 
 
+@config_context(enable_metadata_routing=True)
 def test_default_request_override():
     """Test that default requests are correctly overridden regardless of the ASCII order
     of the class names, hence testing small and capital letter class name starts.
@@ -265,11 +264,13 @@ def test_default_request_override():
     )
 
 
+@config_context(enable_metadata_routing=True)
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
         process_routing(ConsumingClassifier(), "invalid_method", groups=my_groups)
 
 
+@config_context(enable_metadata_routing=True)
 def test_process_routing_invalid_object():
     class InvalidObject:
         pass
@@ -280,6 +281,7 @@ def test_process_routing_invalid_object():
 
 @pytest.mark.parametrize("method", METHODS)
 @pytest.mark.parametrize("default", [None, "default", []])
+@config_context(enable_metadata_routing=True)
 def test_process_routing_empty_params_get_with_default(method, default):
     empty_params = {}
     routed_params = process_routing(ConsumingClassifier(), "fit", **empty_params)
@@ -294,6 +296,7 @@ def test_process_routing_empty_params_get_with_default(method, default):
     assert default_params_for_method == params_for_method
 
 
+@config_context(enable_metadata_routing=True)
 def test_simple_metadata_routing():
     # Tests that metadata is properly routed
 
@@ -350,6 +353,7 @@ def test_simple_metadata_routing():
     )
 
 
+@config_context(enable_metadata_routing=True)
 def test_nested_routing():
     # check if metadata is routed in a nested routing situation.
     pipeline = SimplePipeline(
@@ -398,6 +402,7 @@ def test_nested_routing():
     )
 
 
+@config_context(enable_metadata_routing=True)
 def test_nested_routing_conflict():
     # check if an error is raised if there's a conflict between keys
     pipeline = SimplePipeline(
@@ -420,13 +425,14 @@ def test_nested_routing_conflict():
                 "In WeightedMetaRegressor, there is a conflict on sample_weight between"
                 " what is requested for this estimator and what is requested by its"
                 " children. You can resolve this conflict by using an alias for the"
-                " child estimator(s) requested metadata."
+                " child estimators' requested metadata."
             )
         ),
     ):
         pipeline.fit(X, y, metadata=my_groups, sample_weight=w1, outer_weights=w2)
 
 
+@config_context(enable_metadata_routing=True)
 def test_invalid_metadata():
     # check that passing wrong metadata raises an error
     trs = MetaTransformer(
@@ -449,6 +455,7 @@ def test_invalid_metadata():
         trs.fit(X, y).transform(X, sample_weight=my_weights)
 
 
+@config_context(enable_metadata_routing=True)
 def test_get_metadata_routing():
     class TestDefaultsBadMethodName(_MetadataRequester):
         __metadata_request__fit = {
@@ -525,6 +532,7 @@ def test_get_metadata_routing():
     assert_request_equal(est.get_metadata_routing(), expected)
 
 
+@config_context(enable_metadata_routing=True)
 def test_setting_default_requests():
     # Test _get_default_requests method
     test_cases = dict()
@@ -571,6 +579,7 @@ def test_setting_default_requests():
         Klass().fit(None, None)  # for coverage
 
 
+@config_context(enable_metadata_routing=True)
 def test_removing_non_existing_param_raises():
     """Test that removing a metadata using UNUSED which doesn't exist raises."""
 
@@ -586,6 +595,7 @@ def test_removing_non_existing_param_raises():
         InvalidRequestRemoval().get_metadata_routing()
 
 
+@config_context(enable_metadata_routing=True)
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(owner="test", method="fit")
 
@@ -606,6 +616,7 @@ def test_method_metadata_request():
     assert mmr._get_param_names(return_alias=True) == {"bar"}
 
 
+@config_context(enable_metadata_routing=True)
 def test_get_routing_for_object():
     class Consumer(BaseEstimator):
         __metadata_request__fit = {"prop": None}
@@ -624,9 +635,10 @@ def test_get_routing_for_object():
     assert mr.fit.requests == {"prop": None}
 
 
+@config_context(enable_metadata_routing=True)
 def test_metadata_request_consumes_method():
     """Test that MetadataRequest().consumes() method works as expected."""
-    request = MetadataRouter(owner="test")
+    request = MetadataRequest(owner="test")
     assert request.consumes(method="fit", params={"foo"}) == set()
 
     request = MetadataRequest(owner="test")
@@ -638,6 +650,7 @@ def test_metadata_request_consumes_method():
     assert request.consumes(method="fit", params={"bar", "foo"}) == {"bar"}
 
 
+@config_context(enable_metadata_routing=True)
 def test_metadata_router_consumes_method():
     """Test that MetadataRouter().consumes method works as expected."""
     # having it here instead of parametrizing the test since `set_fit_request`
@@ -665,6 +678,7 @@ def test_metadata_router_consumes_method():
         assert obj.get_metadata_routing().consumes(method="fit", params=input) == output
 
 
+@config_context(enable_metadata_routing=True)
 def test_metaestimator_warnings():
     class WeightedMetaRegressorWarn(WeightedMetaRegressor):
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
@@ -677,6 +691,7 @@ def test_metaestimator_warnings():
         ).fit(X, y, sample_weight=my_weights)
 
 
+@config_context(enable_metadata_routing=True)
 def test_estimator_warnings():
     class ConsumingRegressorWarn(ConsumingRegressor):
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
@@ -689,6 +704,7 @@ def test_estimator_warnings():
         )
 
 
+@config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "obj, string",
     [
@@ -717,6 +733,7 @@ def test_estimator_warnings():
         ),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_string_representations(obj, string):
     assert str(obj) == string
 
@@ -754,11 +771,13 @@ def test_string_representations(obj, string):
         ),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_validations(obj, method, inputs, err_cls, err_msg):
     with pytest.raises(err_cls, match=err_msg):
         getattr(obj, method)(**inputs)
 
 
+@config_context(enable_metadata_routing=True)
 def test_methodmapping():
     mm = (
         MethodMapping()
@@ -780,6 +799,7 @@ def test_methodmapping():
     assert repr(mm) == "[{'caller': 'score', 'callee': 'score'}]"
 
 
+@config_context(enable_metadata_routing=True)
 def test_metadatarouter_add_self_request():
     # adding a MetadataRequest as `self` adds a copy
     request = MetadataRequest(owner="nested")
@@ -809,6 +829,7 @@ def test_metadatarouter_add_self_request():
     assert router._self_request is not est._get_metadata_request()
 
 
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_add():
     # adding one with a string `method_mapping`
     router = MetadataRouter(owner="test").add(
@@ -839,6 +860,7 @@ def test_metadata_routing_add():
     )
 
 
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_get_param_names():
     router = (
         MetadataRouter(owner="test")
@@ -883,6 +905,7 @@ def test_metadata_routing_get_param_names():
     )
 
 
+@config_context(enable_metadata_routing=True)
 def test_method_generation():
     # Test if all required request methods are generated.
 
@@ -976,6 +999,7 @@ def test_method_generation():
         assert hasattr(SimpleEstimator(), f"set_{method}_request")
 
 
+@config_context(enable_metadata_routing=True)
 def test_composite_methods():
     # Test the behavior and the values of methods (composite methods) whose
     # request values are a union of requests by other methods (simple methods).
@@ -1028,6 +1052,7 @@ def test_composite_methods():
     }
 
 
+@config_context(enable_metadata_routing=True)
 def test_no_feature_flag_raises_error():
     """Test that when feature flag disabled, set_{method}_requests raises."""
     with config_context(enable_metadata_routing=False):
@@ -1035,11 +1060,13 @@ def test_no_feature_flag_raises_error():
             ConsumingClassifier().set_fit_request(sample_weight=True)
 
 
+@config_context(enable_metadata_routing=True)
 def test_none_metadata_passed():
     """Test that passing None as metadata when not requested doesn't raise"""
     MetaRegressor(estimator=ConsumingRegressor()).fit(X, y, sample_weight=None)
 
 
+@config_context(enable_metadata_routing=True)
 def test_no_metadata_always_works():
     """Test that when no metadata is passed, having a meta-estimator which does
     not yet support metadata routing works.
@@ -1060,6 +1087,7 @@ def test_no_metadata_always_works():
         MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
 
 
+@config_context(enable_metadata_routing=True)
 def test_unsetmetadatapassederror_correct():
     """Test that UnsetMetadataPassedError raises the correct error message when
     set_{method}_request is not set in nested cases."""
@@ -1076,6 +1104,7 @@ def test_unsetmetadatapassederror_correct():
         pipe.fit(X, y, metadata="blah")
 
 
+@config_context(enable_metadata_routing=True)
 def test_unsetmetadatapassederror_correct_for_composite_methods():
     """Test that UnsetMetadataPassedError raises the correct error message when
     composite metadata request methods are not set in nested cases."""
@@ -1094,6 +1123,7 @@ def test_unsetmetadatapassederror_correct_for_composite_methods():
         pipe.fit_transform(X, y, metadata="blah")
 
 
+@config_context(enable_metadata_routing=True)
 def test_unbound_set_methods_work():
     """Tests that if the set_{method}_request is unbound, it still works.
 

@@ -376,7 +376,7 @@ def _fetch_brute_kddcup99(
         except Exception as e:
             raise OSError(
                 "The cache for fetch_kddcup99 is invalid, please delete "
-                f"{str(kddcup_dir)} and run the fetch_kddcup99 again"
+                f"{kddcup_dir} and run the fetch_kddcup99 again"
             ) from e
 
     elif download_if_missing:
@@ -386,12 +386,13 @@ def _fetch_brute_kddcup99(
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
-        file_ = GzipFile(filename=archive_path, mode="r")
         Xy = []
-        for line in file_.readlines():
-            line = line.decode()
-            Xy.append(line.replace("\n", "").split(","))
-        file_.close()
+
+        with GzipFile(filename=archive_path, mode="r") as file_:
+            for line in file_.readlines():
+                line = line.decode()
+                Xy.append(line.replace("\n", "").split(","))
+
         logger.debug("extraction done")
         os.remove(archive_path)
 

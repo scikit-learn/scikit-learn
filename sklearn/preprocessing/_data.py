@@ -6,8 +6,10 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize, sparse, stats
-from scipy.special import boxcox
+from scipy import sparse, stats
+from scipy.special import boxcox, inv_boxcox
+
+from sklearn.utils import metadata_routing
 
 from ..base import (
     BaseEstimator,
@@ -17,9 +19,16 @@ from ..base import (
     _fit_context,
 )
 from ..utils import _array_api, check_array, resample
-from ..utils._array_api import get_namespace
+from ..utils._array_api import (
+    _find_matching_floating_dtype,
+    _modify_in_place_if_numpy,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.fixes import _yeojohnson_lambda
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -35,6 +44,7 @@ from ..utils.validation import (
     _check_sample_weight,
     check_is_fitted,
     check_random_state,
+    validate_data,
 )
 from ._encoders import OneHotEncoder
 
@@ -43,23 +53,23 @@ BOUNDS_THRESHOLD = 1e-7
 __all__ = [
     "Binarizer",
     "KernelCenterer",
-    "MinMaxScaler",
     "MaxAbsScaler",
+    "MinMaxScaler",
     "Normalizer",
     "OneHotEncoder",
+    "PowerTransformer",
+    "QuantileTransformer",
     "RobustScaler",
     "StandardScaler",
-    "QuantileTransformer",
-    "PowerTransformer",
     "add_dummy_feature",
     "binarize",
-    "normalize",
-    "scale",
-    "robust_scale",
     "maxabs_scale",
     "minmax_scale",
-    "quantile_transform",
+    "normalize",
     "power_transform",
+    "quantile_transform",
+    "robust_scale",
+    "scale",
 ]
 
 
@@ -208,8 +218,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     array([[-1.,  1.,  1.],
            [ 1., -1., -1.]])
     >>> scale(X, axis=1)  # scaling each row independently
-    array([[-1.37...,  0.39...,  0.98...],
-           [-1.22...,  0.     ,  1.22...]])
+    array([[-1.37,  0.39,  0.98],
+           [-1.22,  0.     ,  1.22]])
     """
     X = check_array(
         X,
@@ -219,6 +229,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         estimator="the scale function",
         dtype=FLOAT_DTYPES,
         ensure_all_finite="allow-nan",
+        input_name="X",
     )
     if sparse.issparse(X):
         if with_mean:
@@ -481,11 +492,18 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         xp, _ = get_namespace(X)
 
         first_pass = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=first_pass,
             dtype=_array_api.supported_float_dtypes(xp),
             ensure_all_finite="allow-nan",
+        )
+
+        device_ = device(X)
+        feature_range = (
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
         )
 
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
@@ -525,7 +543,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         xp, _ = get_namespace(X)
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
@@ -537,7 +556,15 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            xp.clip(X, self.feature_range[0], self.feature_range[1], out=X)
+            device_ = device(X)
+            X = _modify_in_place_if_numpy(
+                xp,
+                xp.clip,
+                X,
+                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device_),
+                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device_),
+                out=X,
+            )
         return X
 
     def inverse_transform(self, X):
@@ -550,7 +577,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -569,8 +596,11 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X /= self.scale_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -695,6 +725,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
+
+    .. code-block:: text
 
         z = (x - u) / s
 
@@ -909,7 +941,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Fitted scaler.
         """
         first_call = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=FLOAT_DTYPES,
@@ -1040,7 +1073,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=False,
             accept_sparse="csr",
@@ -1072,12 +1106,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
         copy : bool, default=None
-            Copy the input X or not.
+            Copy the input `X` or not.
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1107,8 +1142,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X += self.mean_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = not self.with_mean
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -1246,7 +1285,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         xp, _ = get_namespace(X)
 
         first_pass = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
@@ -1287,7 +1327,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         xp, _ = get_namespace(X)
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
@@ -1313,7 +1354,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1335,8 +1376,11 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X *= self.scale_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = True
+        return tags
 
 
 @validate_params(
@@ -1592,7 +1636,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             dtype=FLOAT_DTYPES,
@@ -1653,7 +1698,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
@@ -1683,7 +1729,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1706,8 +1752,11 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X += self.center_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.with_centering
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -1918,8 +1967,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     array([[-0.4,  0.2,  0.4],
            [-0.5,  0. ,  0.5]])
     >>> normalize(X, norm="l2")  # L2 normalization each row independently
-    array([[-0.66...,  0.33...,  0.66...],
-           [-0.70...,  0.     ,  0.70...]])
+    array([[-0.67, 0.33, 0.67],
+           [-0.71, 0.  , 0.71]])
     """
     if axis == 0:
         sparse_format = "csc"
@@ -2077,7 +2126,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_data(X, accept_sparse="csr")
+        validate_data(self, X, accept_sparse="csr")
         return self
 
     def transform(self, X, copy=None):
@@ -2098,13 +2147,17 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(
-            X, accept_sparse="csr", force_writeable=True, copy=copy, reset=False
+        X = validate_data(
+            self, X, accept_sparse="csr", force_writeable=True, copy=copy, reset=False
         )
         return normalize(X, norm=self.norm, axis=1, copy=False)
 
-    def _more_tags(self):
-        return {"stateless": True, "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.requires_fit = False
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -2165,8 +2218,10 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        cond = X > threshold
-        not_cond = np.logical_not(cond)
+        xp, _, device = get_namespace_and_device(X)
+        float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
+        cond = xp.astype(X, float_dtype, copy=False) > threshold
+        not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
     return X
@@ -2272,7 +2327,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_data(X, accept_sparse="csr")
+        validate_data(self, X, accept_sparse="csr")
         return self
 
     def transform(self, X, copy=None):
@@ -2296,7 +2351,8 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         # TODO: This should be refactored because binarize also calls
         # check_array
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             force_writeable=True,
@@ -2305,8 +2361,12 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         )
         return binarize(X, threshold=self.threshold, copy=False)
 
-    def _more_tags(self):
-        return {"stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.array_api_support = True
+        tags.input_tags.sparse = True
+        return tags
 
 
 class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -2387,6 +2447,10 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [ -5., -14.,  19.]])
     """
 
+    # X is called K in these methods.
+    __metadata_request__transform = {"K": metadata_routing.UNUSED}
+    __metadata_request__fit = {"K": metadata_routing.UNUSED}
+
     def fit(self, K, y=None):
         """Fit KernelCenterer.
 
@@ -2405,7 +2469,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         xp, _ = get_namespace(K)
 
-        K = self._validate_data(K, dtype=_array_api.supported_float_dtypes(xp))
+        K = validate_data(self, K, dtype=_array_api.supported_float_dtypes(xp))
 
         if K.shape[0] != K.shape[1]:
             raise ValueError(
@@ -2438,7 +2502,8 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
         xp, _ = get_namespace(K)
 
-        K = self._validate_data(
+        K = validate_data(
+            self,
             K,
             copy=copy,
             force_writeable=True,
@@ -2463,8 +2528,11 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         # implement get_feature_names_out for this class.
         return self.n_features_in_
 
-    def _more_tags(self):
-        return {"pairwise": True, "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = True
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -2861,7 +2929,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False, copy=False):
         """Check inputs before fit and transform."""
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=in_fit,
             accept_sparse="csc",
@@ -2951,7 +3020,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix} of (n_samples, n_features)
+        X_original : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
         check_is_fitted(self)
@@ -2961,8 +3030,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         return self._transform(X, inverse=True)
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -3204,11 +3276,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> print(pt.fit(data))
     PowerTransformer()
     >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
+    [ 1.386 -3.100]
     >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
+    [[-1.316 -0.707]
+     [ 0.209 -0.707]
+     [ 1.106  1.414]]
     """
 
     _parameter_constraints: dict = {
@@ -3344,20 +3416,20 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         The inverse of the Box-Cox transformation is given by::
 
             if lambda_ == 0:
-                X = exp(X_trans)
+                X_original = exp(X_trans)
             else:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_)
+                X_original = (X * lambda_ + 1) ** (1 / lambda_)
 
         The inverse of the Yeo-Johnson transformation is given by::
 
             if X >= 0 and lambda_ == 0:
-                X = exp(X_trans) - 1
+                X_original = exp(X) - 1
             elif X >= 0 and lambda_ != 0:
-                X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+                X_original = (X * lambda_ + 1) ** (1 / lambda_) - 1
             elif X < 0 and lambda_ != 2:
-                X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+                X_original = 1 - (-(2 - lambda_) * X + 1) ** (1 / (2 - lambda_))
             elif X < 0 and lambda_ == 2:
-                X = 1 - exp(-X_trans)
+                X_original = 1 - exp(-X)
 
         Parameters
         ----------
@@ -3366,7 +3438,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             The original data.
         """
         check_is_fitted(self)
@@ -3376,7 +3448,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X = self._scaler.inverse_transform(X)
 
         inv_fun = {
-            "box-cox": self._box_cox_inverse_tranform,
+            "box-cox": inv_boxcox,
             "yeo-johnson": self._yeo_johnson_inverse_transform,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
@@ -3384,17 +3456,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X[:, i] = inv_fun(X[:, i], lmbda)
 
         return X
-
-    def _box_cox_inverse_tranform(self, x, lmbda):
-        """Return inverse-transformed input x following Box-Cox inverse
-        transform with parameter lambda.
-        """
-        if lmbda == 0:
-            x_inv = np.exp(x)
-        else:
-            x_inv = (x * lmbda + 1) ** (1 / lmbda)
-
-        return x_inv
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
@@ -3483,8 +3544,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        return _yeojohnson_lambda(_neg_log_likelihood, x)
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
@@ -3504,7 +3565,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         check_shape : bool, default=False
             If True, check that n_features matches the length of self.lambdas_
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             ensure_2d=True,
             dtype=FLOAT_DTYPES,
@@ -3532,8 +3594,10 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -3623,9 +3687,9 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
+    [[-1.332 -0.707]
+     [ 0.256 -0.707]
+     [ 1.076  1.414]]
 
     .. warning:: Risk of data leak.
         Do not use :func:`~sklearn.preprocessing.power_transform` unless you

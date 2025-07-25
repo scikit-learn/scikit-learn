@@ -55,10 +55,7 @@ def get_step_message(log, start, end, title, message, details):
     if end not in log:
         return ""
     res = (
-        "-----------------------------------------------\n"
-        + f"### {title}\n\n"
-        + message
-        + "\n\n"
+        f"-----------------------------------------------\n### {title}\n\n{message}\n\n"
     )
     if details:
         res += (
@@ -93,33 +90,31 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
 
     message = ""
 
-    # black
+    # ruff check
     message += get_step_message(
         log,
-        start="### Running black ###",
-        end="Problems detected by black",
-        title="`black`",
+        start="### Running the ruff linter ###",
+        end="Problems detected by ruff check",
+        title="`ruff check`",
         message=(
-            "`black` detected issues. Please run `black .` locally and push "
-            "the changes. Here you can see the detected issues. Note that "
-            "running black might also fix some of the issues which might be "
-            "detected by `ruff`. Note that the installed `black` version is "
-            f"`black={versions['black']}`."
+            "`ruff` detected issues. Please run "
+            "`ruff check --fix --output-format=full` locally, fix the remaining "
+            "issues, and push the changes. Here you can see the detected issues. Note "
+            f"that the installed `ruff` version is `ruff={versions['ruff']}`."
         ),
         details=details,
     )
 
-    # ruff
+    # ruff format
     message += get_step_message(
         log,
-        start="### Running ruff ###",
-        end="Problems detected by ruff",
-        title="`ruff`",
+        start="### Running the ruff formatter ###",
+        end="Problems detected by ruff format",
+        title="`ruff format`",
         message=(
-            "`ruff` detected issues. Please run "
-            "`ruff check --fix --output-format=full .` locally, fix the remaining "
-            "issues, and push the changes. Here you can see the detected issues. Note "
-            f"that the installed `ruff` version is `ruff={versions['ruff']}`."
+            "`ruff` detected issues. Please run `ruff format` locally and push "
+            "the changes. Here you can see the detected issues. Note that the "
+            f"installed `ruff` version is `ruff={versions['ruff']}`."
         ),
         details=details,
     )
@@ -240,7 +235,7 @@ def get_headers(token):
 def find_lint_bot_comments(repo, token, pr_number):
     """Get the comment from the linting bot."""
     # repo is in the form of "org/repo"
-    # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments  # noqa
+    # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments
     response = requests.get(
         f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
         headers=get_headers(token),
@@ -275,7 +270,7 @@ def create_or_update_comment(comment, message, repo, pr_number, token):
     # repo is in the form of "org/repo"
     if comment is not None:
         print("updating existing comment")
-        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#update-an-issue-comment  # noqa
+        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#update-an-issue-comment
         response = requests.patch(
             f"https://api.github.com/repos/{repo}/issues/comments/{comment['id']}",
             headers=get_headers(token),
@@ -283,7 +278,7 @@ def create_or_update_comment(comment, message, repo, pr_number, token):
         )
     else:
         print("creating new comment")
-        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment  # noqa
+        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment
         response = requests.post(
             f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
             headers=get_headers(token),

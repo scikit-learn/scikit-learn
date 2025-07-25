@@ -9,15 +9,10 @@ Generated file: sag_fast.pyx
 
 Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted during the build.
-
-Authors: Danny Sullivan <dbsullivan23@gmail.com>
-         Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-         Arthur Mensch <arthur.mensch@m4x.org
-         Arthur Imbert <arthurimbert05@gmail.com>
-         Joan Massich <mailsik@gmail.com>
-
-License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # name_suffix, c_type, np_type
 dtypes = [('64', 'double', 'np.float64'),

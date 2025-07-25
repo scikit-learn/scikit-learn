@@ -12,12 +12,15 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from sklearn.utils import metadata_routing
+
 from .. import config_context
 from ..base import BaseEstimator, _fit_context
 from ..metrics.pairwise import pairwise_distances
 from ..utils import check_array
 from ..utils._param_validation import validate_params
 from ..utils.extmath import fast_logdet
+from ..utils.validation import validate_data
 
 
 @validate_params(
@@ -132,7 +135,7 @@ class EmpiricalCovariance(BaseEstimator):
         Estimated location, i.e. the estimated mean.
 
     covariance_ : ndarray of shape (n_features, n_features)
-        Estimated covariance matrix
+        Estimated covariance matrix.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
@@ -174,11 +177,14 @@ class EmpiricalCovariance(BaseEstimator):
     ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
     >>> cov.covariance_
-    array([[0.7569..., 0.2818...],
-           [0.2818..., 0.3928...]])
+    array([[0.7569, 0.2818],
+           [0.2818, 0.3928]])
     >>> cov.location_
-    array([0.0622..., 0.0193...])
+    array([0.0622, 0.0193])
     """
+
+    # X_test should have been called X
+    __metadata_request__score = {"X_test": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "store_precision": ["boolean"],
@@ -242,7 +248,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -275,7 +281,7 @@ class EmpiricalCovariance(BaseEstimator):
             The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
             as estimators of the Gaussian model mean and covariance matrix respectively.
         """
-        X_test = self._validate_data(X_test, reset=False)
+        X_test = validate_data(self, X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
@@ -337,6 +343,9 @@ class EmpiricalCovariance(BaseEstimator):
     def mahalanobis(self, X):
         """Compute the squared Mahalanobis distances of given observations.
 
+        For a detailed example of how outliers affects the Mahalanobis distance,
+        see :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -349,7 +358,7 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         precision = self.get_precision()
         with config_context(assume_finite=True):

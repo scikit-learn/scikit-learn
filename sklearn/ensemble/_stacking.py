@@ -24,8 +24,8 @@ from ..linear_model import LogisticRegression, RidgeCV
 from ..model_selection import check_cv, cross_val_predict
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -39,30 +39,11 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
     _check_response_method,
-    _deprecate_positional_args,
+    _estimator_has,
     check_is_fitted,
     column_or_1d,
 )
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `final_estimator_` if available, otherwise we check the
-    unfitted `final_estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "final_estimator_"):
-            getattr(self.final_estimator_, attr)
-        else:
-            getattr(self.final_estimator, attr)
-
-        return True
-
-    return check
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
@@ -364,7 +345,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return np.asarray(meta_names, dtype=object)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -477,7 +460,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits,
-        * `"prefit"` to assume the `estimators` are prefit. In this case, the
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
           estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
@@ -517,9 +500,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           will raise an error.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel all `estimators` `fit`.
+        The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        using all processors. See :term:`Glossary <n_jobs>` for more details.
 
     passthrough : bool, default=False
         When False, only the predictions of estimators will be used as
@@ -547,7 +530,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying classifier exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
@@ -558,7 +541,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The classifier which predicts given the output of `estimators_`.
+        The classifier fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -672,11 +656,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         return names, estimators
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert afterwards, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -690,11 +670,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             numerically increasing order or lexicographic order. If the order
             matter (e.g. for ordinal regression), one should numerically encode
             the target `y` before calling :term:`fit`.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -711,7 +686,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self : object
             Returns a fitted instance of estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         check_classification_targets(y)
         if type_of_target(y) == "multilabel-indicator":
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
@@ -727,11 +703,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             self.classes_ = self._label_encoder.classes_
             y_encoded = self._label_encoder.transform(y)
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return super().fit(X, y_encoded, **fit_params)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -784,7 +760,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             y_pred = self._label_encoder.inverse_transform(y_pred)
         return y_pred
 
-    @available_if(_estimator_has("predict_proba"))
+    @available_if(
+        _estimator_has(
+            "predict_proba", delegates=("final_estimator_", "final_estimator")
+        )
+    )
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
 
@@ -808,7 +788,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             y_pred = np.array([preds[:, 0] for preds in y_pred]).T
         return y_pred
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(
+        _estimator_has(
+            "decision_function", delegates=("final_estimator_", "final_estimator")
+        )
+    )
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
 
@@ -889,8 +873,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
-        * An iterable yielding train, test splits.
-        * "prefit" to assume the `estimators` are prefit, and skip cross validation
+        * An iterable yielding train, test splits,
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
+          estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -920,7 +905,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        using all processors. See :term:`Glossary <n_jobs>` for more details.
 
     passthrough : bool, default=False
         When False, only the predictions of estimators will be used as
@@ -933,7 +918,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     Attributes
     ----------
-    estimators_ : list of estimator
+    estimators_ : list of estimators
         The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
@@ -944,7 +929,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying regressor exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
@@ -955,7 +940,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The regressor to stacked the base estimators fitted.
+        The regressor fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -1023,11 +1009,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
                 )
             )
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert afterwards, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -1038,11 +1020,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         y : array-like of shape (n_samples,)
             Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -1059,10 +1036,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         self : object
             Returns a fitted instance.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         y = column_or_1d(y, warn=True)
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
+
         return super().fit(X, y, **fit_params)
 
     def transform(self, X):
@@ -1081,11 +1058,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         """
         return self._transform(X)
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert afterwards, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit_transform(self, X, y, *, sample_weight=None, **fit_params):
+    def fit_transform(self, X, y, **fit_params):
         """Fit the estimators and return the predictions for X for each estimator.
 
         Parameters
@@ -1096,11 +1069,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         y : array-like of shape (n_samples,)
             Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -1117,12 +1085,13 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         y_preds : ndarray of shape (n_samples, n_estimators)
             Prediction outputs for each estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         return super().fit_transform(X, y, **fit_params)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 

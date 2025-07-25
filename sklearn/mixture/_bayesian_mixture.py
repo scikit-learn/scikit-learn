@@ -100,12 +100,12 @@ class BayesianGaussianMixture(BaseMixture):
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
         String describing the type of covariance parameters to use.
-        Must be one of::
+        Must be one of:
 
-            'full' (each component has its own general covariance matrix),
-            'tied' (all components share the same general covariance matrix),
-            'diag' (each component has its own diagonal covariance matrix),
-            'spherical' (each component has its own single variance).
+        - 'full' (each component has its own general covariance matrix),
+        - 'tied' (all components share the same general covariance matrix),
+        - 'diag' (each component has its own diagonal covariance matrix),
+        - 'spherical' (each component has its own single variance).
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -126,13 +126,12 @@ class BayesianGaussianMixture(BaseMixture):
     init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
     default='kmeans'
         The method used to initialize the weights, the means and the
-        covariances.
-        String must be one of:
+        covariances. String must be one of:
 
-            'kmeans' : responsibilities are initialized using kmeans.
-            'k-means++' : use the k-means++ method to initialize.
-            'random' : responsibilities are initialized randomly.
-            'random_from_data' : initial means are randomly selected data points.
+        - 'kmeans': responsibilities are initialized using kmeans.
+        - 'k-means++': use the k-means++ method to initialize.
+        - 'random': responsibilities are initialized randomly.
+        - 'random_from_data': initial means are randomly selected data points.
 
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as
@@ -255,6 +254,10 @@ class BayesianGaussianMixture(BaseMixture):
         Lower bound value on the model evidence (of the training data) of the
         best fit of inference.
 
+    lower_bounds_ : array-like of shape (`n_iter_`,)
+        The list of lower bound values on the model evidence from each iteration
+        of the best fit of inference.
+
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The type depends on
@@ -339,8 +342,8 @@ class BayesianGaussianMixture(BaseMixture):
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
     >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
     >>> bgm.means_
-    array([[2.49... , 2.29...],
-           [8.45..., 4.52... ]])
+    array([[2.49 , 2.29],
+           [8.45, 4.52 ]])
     >>> bgm.predict([[0, 0], [9, 3]])
     array([0, 1])
     """
@@ -407,7 +410,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
         self.covariance_prior = covariance_prior
 
-    def _check_parameters(self, X):
+    def _check_parameters(self, X, xp=None):
         """Check that the parameters are well defined.
 
         Parameters
@@ -719,7 +722,7 @@ class BayesianGaussianMixture(BaseMixture):
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
 
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X, log_resp, xp=None):
         """M step.
 
         Parameters
@@ -739,7 +742,7 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
 
-    def _estimate_log_weights(self):
+    def _estimate_log_weights(self, xp=None):
         if self.weight_concentration_prior_type == "dirichlet_process":
             digamma_sum = digamma(
                 self.weight_concentration_[0] + self.weight_concentration_[1]
@@ -757,7 +760,7 @@ class BayesianGaussianMixture(BaseMixture):
                 np.sum(self.weight_concentration_)
             )
 
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, xp=None):
         _, n_features = X.shape
         # We remove `n_features * np.log(self.degrees_of_freedom_)` because
         # the precision matrix is normalized
@@ -844,7 +847,7 @@ class BayesianGaussianMixture(BaseMixture):
             self.precisions_cholesky_,
         )
 
-    def _set_parameters(self, params):
+    def _set_parameters(self, params, xp=None):
         (
             self.weight_concentration_,
             self.mean_precision_,

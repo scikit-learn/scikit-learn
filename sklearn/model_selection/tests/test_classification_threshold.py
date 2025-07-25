@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn import config_context
+from sklearn.base import clone
 from sklearn.datasets import (
     load_breast_cancer,
     load_iris,
@@ -101,7 +102,7 @@ def test_fit_and_score_over_thresholds_prefit():
     assert_allclose(scores, [0.5, 1.0])
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_fit_and_score_over_thresholds_sample_weight():
     """Check that we dispatch the sample-weight to fit and score the classifier."""
     X, y = load_iris(return_X_y=True)
@@ -150,8 +151,8 @@ def test_fit_and_score_over_thresholds_sample_weight():
     assert_allclose(scores_repeated, scores)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
+@config_context(enable_metadata_routing=True)
 def test_fit_and_score_over_thresholds_fit_params(fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
@@ -344,8 +345,8 @@ def test_tuned_threshold_classifier_with_string_targets(response_method, metric)
     assert_array_equal(np.unique(y_pred), np.sort(classes))
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("with_sample_weight", [True, False])
+@config_context(enable_metadata_routing=True)
 def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed):
     """Check the behaviour of the `refit` parameter."""
     rng = np.random.RandomState(global_random_seed)
@@ -396,8 +397,8 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
     assert_allclose(model.estimator_.coef_, estimator.coef_)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
+@config_context(enable_metadata_routing=True)
 def test_tuned_threshold_classifier_fit_params(fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
@@ -412,7 +413,7 @@ def test_tuned_threshold_classifier_fit_params(fit_params_type):
     model.fit(X, y, **fit_params)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_tuned_threshold_classifier_cv_zeros_sample_weights_equivalence():
     """Check that passing removing some sample from the dataset `X` is
     equivalent to passing a `sample_weight` with a factor 0."""
@@ -579,7 +580,7 @@ def test_fixed_threshold_classifier(response_method, threshold, pos_label):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_fixed_threshold_classifier_metadata_routing():
     """Check that everything works with metadata routing."""
     X, y = make_classification(random_state=0)
@@ -592,41 +593,26 @@ def test_fixed_threshold_classifier_metadata_routing():
     assert_allclose(classifier_default_threshold.estimator_.coef_, classifier.coef_)
 
 
-class ClassifierLoggingFit(ClassifierMixin, BaseEstimator):
-    """Classifier that logs the number of `fit` calls."""
-
-    def __init__(self, fit_calls=0):
-        self.fit_calls = fit_calls
-
-    def fit(self, X, y, **fit_params):
-        self.fit_calls += 1
-        self.is_fitted_ = True
-        return self
-
-    def predict_proba(self, X):
-        return np.ones((X.shape[0], 2), np.float64)  # pragma: nocover
-
-
-def test_fixed_threshold_classifier_prefit():
-    """Check the behaviour of the `FixedThresholdClassifier` with the `prefit`
-    parameter."""
+@pytest.mark.parametrize(
+    "method", ["predict_proba", "decision_function", "predict", "predict_log_proba"]
+)
+def test_fixed_threshold_classifier_fitted_estimator(method):
+    """Check that if the underlying estimator is already fitted, no fit is required."""
     X, y = make_classification(random_state=0)
+    classifier = LogisticRegression().fit(X, y)
+    fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
+    # This should not raise an error
+    getattr(fixed_threshold_classifier, method)(X)
 
-    estimator = ClassifierLoggingFit()
-    model = FixedThresholdClassifier(estimator=estimator, prefit=True)
-    with pytest.raises(NotFittedError):
-        model.fit(X, y)
 
-    # check that we don't clone the classifier when `prefit=True`.
-    estimator.fit(X, y)
-    model.fit(X, y)
-    assert estimator.fit_calls == 1
-    assert model.estimator_ is estimator
+def test_fixed_threshold_classifier_classes_():
+    """Check that the classes_ attribute is properly set."""
+    X, y = make_classification(random_state=0)
+    with pytest.raises(
+        AttributeError, match="The underlying estimator is not fitted yet."
+    ):
+        FixedThresholdClassifier(estimator=LogisticRegression()).classes_
 
-    # check that we clone the classifier when `prefit=False`.
-    estimator = ClassifierLoggingFit()
-    model = FixedThresholdClassifier(estimator=estimator, prefit=False)
-    model.fit(X, y)
-    assert estimator.fit_calls == 0
-    assert model.estimator_.fit_calls == 1
-    assert model.estimator_ is not estimator
+    classifier = LogisticRegression().fit(X, y)
+    fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
+    assert_array_equal(fixed_threshold_classifier.classes_, classifier.classes_)

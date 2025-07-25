@@ -13,7 +13,8 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator, clone
+from sklearn import config_context
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -24,7 +25,7 @@ from sklearn.datasets import (
     make_regression,
 )
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.exceptions import FitFailedWarning
+from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LogisticRegression,
@@ -185,7 +186,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         raise NotImplementedError
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -253,6 +254,7 @@ class MockClassifier:
                 P.shape[0],
                 P.shape[1],
             )
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, T):
@@ -272,11 +274,11 @@ class MockClassifier:
 
 # XXX: use 2D array, since 1D X is being detected as a single sample in
 # check_consistent_length
-X = np.ones((10, 2))
-y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+X = np.ones((15, 2))
+y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6])
 # The number of samples per class needs to be > n_splits,
 # for StratifiedKFold(n_splits=3)
-y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
+y2 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
 P = np.eye(5)
 
 
@@ -586,10 +588,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
             )
 
             # Make sure all the arrays are of np.ndarray type
-            assert type(cv_results["test_r2"]) == np.ndarray
-            assert type(cv_results["test_neg_mean_squared_error"]) == np.ndarray
-            assert type(cv_results["fit_time"]) == np.ndarray
-            assert type(cv_results["score_time"]) == np.ndarray
+            assert isinstance(cv_results["test_r2"], np.ndarray)
+            assert isinstance(cv_results["test_neg_mean_squared_error"], np.ndarray)
+            assert isinstance(cv_results["fit_time"], np.ndarray)
+            assert isinstance(cv_results["score_time"], np.ndarray)
 
             # Ensure all the times are within sane limits
             assert np.all(cv_results["fit_time"] >= 0)
@@ -692,7 +694,7 @@ def test_cross_val_score_fit_params(coo_container):
     n_classes = len(np.unique(y))
 
     W_sparse = coo_container(
-        (np.array([1]), (np.array([1]), np.array([0]))), shape=(10, 1)
+        (np.array([1]), (np.array([1]), np.array([0]))), shape=(15, 1)
     )
     P_sparse = coo_container(np.eye(5))
 
@@ -718,7 +720,7 @@ def test_cross_val_score_fit_params(coo_container):
         "dummy_obj": DUMMY_OBJ,
         "callback": assert_fit_params,
     }
-    cross_val_score(clf, X, y, params=fit_params)
+    cross_val_score(clf, X, y2, params=fit_params)
 
 
 def test_cross_val_score_score_func():
@@ -980,16 +982,12 @@ def test_cross_val_predict(coo_container):
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="decision_function"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="decision_function")
     assert preds.shape == (50,)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="decision_function"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="decision_function")
     assert preds.shape == (150, 3)
 
     # This specifically tests imbalanced splits for binary
@@ -1032,32 +1030,24 @@ def test_cross_val_predict_decision_function_shape():
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_proba")
     assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_proba")
     assert preds.shape == (150, 3)
 
 
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_log_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_log_proba")
     assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_log_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_log_proba")
     assert preds.shape == (150, 3)
 
 
@@ -1095,13 +1085,13 @@ def test_cross_val_predict_input_types(coo_container):
 
     # test with X and y as list and non empty method
     predictions = cross_val_predict(
-        LogisticRegression(solver="liblinear"),
+        LogisticRegression(),
         X.tolist(),
         y.tolist(),
         method="decision_function",
     )
     predictions = cross_val_predict(
-        LogisticRegression(solver="liblinear"),
+        LogisticRegression(),
         X,
         y.tolist(),
         method="decision_function",
@@ -1144,7 +1134,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1, solver="liblinear")
+    clf = LogisticRegression(random_state=1)
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1883,10 +1873,8 @@ def check_cross_val_predict_with_method_multiclass(est):
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method_binary(LogisticRegression(solver="liblinear"))
-    check_cross_val_predict_with_method_multiclass(
-        LogisticRegression(solver="liblinear")
-    )
+    check_cross_val_predict_with_method_binary(LogisticRegression())
+    check_cross_val_predict_with_method_multiclass(LogisticRegression())
 
 
 def test_cross_val_predict_method_checking():
@@ -1904,9 +1892,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(
-        LogisticRegression(random_state=42, solver="liblinear"), {"C": [0.1, 1]}, cv=2
-    )
+    est = GridSearchCV(LogisticRegression(random_state=42), {"C": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -1960,7 +1946,7 @@ def test_cross_val_predict_with_method_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(14, 10))
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
-    est = LogisticRegression(solver="liblinear")
+    est = LogisticRegression()
     for method in ["predict_proba", "predict_log_proba", "decision_function"]:
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
@@ -2017,7 +2003,7 @@ def test_cross_val_predict_class_subset():
 
     methods = ["decision_function", "predict_proba", "predict_log_proba"]
     for method in methods:
-        est = LogisticRegression(solver="liblinear")
+        est = LogisticRegression()
 
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method, cv=kfold3)
@@ -2482,14 +2468,10 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
-# `learning_curve` and `validation_curve` in 1.8
+# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
 @pytest.mark.parametrize(
     "func, extra_args",
     [
-        (cross_validate, {}),
-        (cross_val_score, {}),
-        (cross_val_predict, {}),
         (learning_curve, {}),
         (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
@@ -2515,7 +2497,6 @@ def test_fit_param_deprecation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2527,6 +2508,7 @@ def test_fit_param_deprecation(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_groups_with_routing_validation(func, extra_args):
     """Check that we raise an error if `groups` are passed to the cv method instead
     of `params` when metadata routing is enabled.
@@ -2541,7 +2523,6 @@ def test_groups_with_routing_validation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2553,21 +2534,65 @@ def test_groups_with_routing_validation(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
+def test_cross_validate_params_none(func, extra_args):
+    """Test that no errors are raised when passing `params=None`, which is the
+    default value.
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/30447
+    """
+    X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
+    func(estimator=ConsumingClassifier(), X=X, y=y, **extra_args)
+
+
+@pytest.mark.parametrize(
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (permutation_test_score, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
+)
+@config_context(enable_metadata_routing=True)
 def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
-    err_msg = re.escape("but are not explicitly set as requested or not requested")
-    with pytest.raises(ValueError, match=err_msg):
+
+    err_msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not "
+        "requested for ConsumingClassifier.fit, which is used within"
+    )
+    with pytest.raises(UnsetMetadataPassedError, match=err_msg):
         func(
             estimator=ConsumingClassifier(),
             X=X,
-            y=y,
+            y=y2,
+            params=dict(metadata=[]),
+            **extra_args,
+        )
+
+    # cross_val_predict doesn't use scoring
+    if func == cross_val_predict:
+        return
+
+    err_msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not "
+        "requested for ConsumingClassifier.score, which is used within"
+    )
+    with pytest.raises(UnsetMetadataPassedError, match=err_msg):
+        func(
+            estimator=ConsumingClassifier()
+            .set_fit_request(metadata=True)
+            .set_partial_fit_request(metadata=True),
+            X=X,
+            y=y2,
             params=dict(metadata=[]),
             **extra_args,
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2579,6 +2604,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_validation_functions_routing(func, extra_args):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
@@ -2671,7 +2697,7 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while
     partial_fitting it with `exploit_incremental_learning=True`."""

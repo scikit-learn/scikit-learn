@@ -2,13 +2,15 @@
 Testing Recursive feature elimination
 """
 
+import re
 from operator import attrgetter
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
@@ -26,7 +28,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier(ClassifierMixin):
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -56,8 +58,10 @@ class MockClassifier(ClassifierMixin):
     def set_params(self, **params):
         return self
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def test_rfe_features_importance():
@@ -322,7 +326,7 @@ def test_rfecv_cv_results_size(global_random_seed):
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel="linear"))
-    assert rfe._estimator_type == "classifier"
+    assert is_classifier(rfe)
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
@@ -538,7 +542,11 @@ def test_rfecv_std_and_mean(global_random_seed):
 
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
-    split_keys = [key for key in rfecv.cv_results_.keys() if "split" in key]
+    split_keys = [
+        key
+        for key in rfecv.cv_results_.keys()
+        if re.search(r"split\d+_test_score", key)
+    ]
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
@@ -700,3 +708,48 @@ def test_rfe_with_sample_weight():
     rfe_sw_2.fit(X, y, sample_weight=sample_weight_2)
 
     assert not np.array_equal(rfe_sw_2.ranking_, rfe.ranking_)
+
+
+def test_rfe_with_joblib_threading_backend(global_random_seed):
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfe = RFECV(
+        estimator=clf,
+        n_jobs=2,
+    )
+
+    rfe.fit(X, y)
+    ranking_ref = rfe.ranking_
+
+    with parallel_backend("threading"):
+        rfe.fit(X, y)
+
+    assert_array_equal(ranking_ref, rfe.ranking_)
+
+
+def test_results_per_cv_in_rfecv(global_random_seed):
+    """
+    Test that the results of RFECV are consistent across the different folds
+    in terms of length of the arrays.
+    """
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfecv = RFECV(
+        estimator=clf,
+        n_jobs=2,
+        cv=5,
+    )
+
+    rfecv.fit(X, y)
+
+    assert len(rfecv.cv_results_["split1_test_score"]) == len(
+        rfecv.cv_results_["split2_test_score"]
+    )
+    assert len(rfecv.cv_results_["split1_support"]) == len(
+        rfecv.cv_results_["split2_support"]
+    )
+    assert len(rfecv.cv_results_["split1_ranking"]) == len(
+        rfecv.cv_results_["split2_ranking"]
+    )
