@@ -141,6 +141,7 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
