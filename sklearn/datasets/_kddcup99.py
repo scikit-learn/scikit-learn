@@ -386,12 +386,14 @@ def _fetch_brute_kddcup99(
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
-        file_ = GzipFile(filename=archive_path, mode="r")
+        #file_ = GzipFile(filename=archive_path, mode="r")
         Xy = []
-        for line in file_.readlines():
-            line = line.decode()
-            Xy.append(line.replace("\n", "").split(","))
-        file_.close()
+        # Opening file using context manager to insure file is always closed
+        with GzipFile(filename=archive_path, mode="r") as file_:
+            for line in file_.readlines():
+                line = line.decode()
+                Xy.append(line.replace("\n", "").split(","))
+        #file_.close()
         logger.debug("extraction done")
         os.remove(archive_path)
 
