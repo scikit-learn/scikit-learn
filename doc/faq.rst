@@ -303,8 +303,9 @@ this reason.
 What does the "spam" label for issues or pull requests mean?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The "spam" label is used for many reasons, it is an indication for other
-maintainers that the issue or pull request has only received low effort.
+The "spam" label is an indication for reviewers that the issue or 
+pull request may not have received sufficient effort or preparation 
+from the author for a productive review.
 
 Some steps to increase the chances of the label being removed:
 - follow the :ref:`contribution guidelines <contributing>` and use the provided templates
