@@ -481,13 +481,13 @@ def _convert_to_reference(*, reference, arrays):
             except AttributeError:
                 # Convert to numpy
                 if _is_numpy_namespace(xp_ref):
-                    array_converted = _convert_to_numpy(array)
+                    array_converted = _convert_to_numpy(array, xp_array)
                 # Convert from numpy
                 elif _is_numpy_namespace(xp_array):
                     array_converted = xp_ref.asarray(array, device=device_ref)
                 else:
                     # Convert to numpy then to reference
-                    array_np = _convert_to_numpy(array)
+                    array_np = _convert_to_numpy(array, xp_array)
                     array_converted = xp_ref.asarray(array_np, device=device_ref)
             arrays_converted_list.append(array_converted)
 
