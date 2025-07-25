@@ -32,8 +32,8 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted
+from ..utils.extmath import _randomized_svd, fast_logdet, squared_norm
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -216,8 +216,8 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self : object
             FactorAnalysis class instance.
         """
-        X = self._validate_data(
-            X, copy=self.copy, dtype=np.float64, force_writeable=True
+        X = validate_data(
+            self, X, copy=self.copy, dtype=np.float64, force_writeable=True
         )
 
         n_samples, n_features = X.shape
@@ -264,7 +264,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(
+                _, s, Vt = _randomized_svd(
                     X,
                     n_components,
                     random_state=random_state,
@@ -295,8 +295,8 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
-                + " You might want"
-                + " to increase the number of iterations.",
+                " You might want"
+                " to increase the number of iterations.",
                 ConvergenceWarning,
             )
 
@@ -326,7 +326,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
@@ -396,7 +396,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]

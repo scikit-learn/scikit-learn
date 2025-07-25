@@ -74,7 +74,6 @@ extensions = [
     "autoshortsummary",
     "doi_role",
     "dropdown_anchors",
-    "move_gallery_links",
     "override_pst_pagetoc",
     "sphinx_issues",
 ]
@@ -180,6 +179,7 @@ exclude_patterns = [
     "templates",
     "includes",
     "**/sg_execution_times.rst",
+    "whats_new/upcoming_changes",
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -206,6 +206,11 @@ add_function_parentheses = False
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
+
+# This config option is used to generate the canonical links in the header
+# of every page. The canonical link is needed to prevent search engines from
+# returning results pointing to old scikit-learn versions.
+html_baseurl = "https://scikit-learn.org/stable/"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -281,7 +286,16 @@ html_theme_options = {
     # https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-exclude_patterns
     # In particular, "**" specifies the default for all pages
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
-    "secondary_sidebar_items": {"**": ["page-toc", "sourcelink"]},
+    "secondary_sidebar_items": {
+        "**": [
+            "page-toc",
+            "sourcelink",
+            # Sphinx-Gallery-specific sidebar components
+            # https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
+            "sg_download_links",
+            "sg_launcher_links",
+        ],
+    },
     "show_version_warning_banner": True,
     "announcement": None,
 }
@@ -337,6 +351,7 @@ html_additional_pages = {"index": "index.html"}
 html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
+    "scripts/sg_plotly_resize.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -364,7 +379,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file(
             "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
         )
-        # Internal: API search intialization and styling
+        # Internal: API search initialization and styling
         app.add_js_file("scripts/api-search.js")
         app.add_css_file("styles/api-search.css")
     elif pagename == "index":
@@ -425,6 +440,7 @@ redirects = {
     "contents": "index",
     "preface": "index",
     "modules/classes": "api/index",
+    "tutorial/machine_learning_map/index": "machine_learning_map",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
@@ -432,8 +448,17 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
-        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction"
+    ),
+    "auto_examples/model_selection/plot_validation_curve": (
+        "auto_examples/model_selection/plot_train_error_vs_test_error"
+    ),
+    "auto_examples/datasets/plot_digits_last_image": (
+        "auto_examples/exercises/plot_digits_classification_exercises"
+    ),
+    "auto_examples/datasets/plot_random_dataset": (
+        "auto_examples/classification/plot_classifier_comparison"
     ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
@@ -448,10 +473,41 @@ redirects = {
     "auto_examples/decomposition/plot_pca_3d": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
-    "auto_examples/exercises/plot_cv_digits.py": (
-        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    "auto_examples/exercises/plot_cv_digits": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris"
     ),
-    "tutorial/machine_learning_map/index.html": "machine_learning_map/index.html",
+    "auto_examples/linear_model/plot_lasso_lars": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+    ),
+    "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+    ),
+    "auto_examples/cluster/plot_color_quantization": (
+        "auto_examples/cluster/plot_face_compress"
+    ),
+    "auto_examples/cluster/plot_cluster_iris": (
+        "auto_examples/cluster/plot_kmeans_assumptions"
+    ),
+    "auto_examples/ensemble/plot_forest_importances_faces": (
+        "auto_examples/ensemble/plot_forest_importances"
+    ),
+    "auto_examples/ensemble/plot_voting_probas": (
+        "auto_examples/ensemble/plot_voting_decision_regions"
+    ),
+    "auto_examples/datasets/plot_iris_dataset": (
+        "auto_examples/decomposition/plot_pca_iris"
+    ),
+    "auto_examples/linear_model/plot_iris_logistic": (
+        "auto_examples/linear_model/plot_logistic_multinomial"
+    ),
+    "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
+    "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
+    "auto_examples/linear_model/plot_ols_ridge_variance": (
+        "auto_examples/linear_model/plot_ols_ridge"
+    ),
+    "auto_examples/linear_model/plot_sgd_comparison": (
+        "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -612,7 +668,7 @@ def notebook_modification_function(notebook_content, notebook_filename):
     if "seaborn" in notebook_content_str:
         code_lines.append("%pip install seaborn")
     if "plotly.express" in notebook_content_str:
-        code_lines.append("%pip install plotly")
+        code_lines.append("%pip install plotly nbformat")
     if "skimage" in notebook_content_str:
         code_lines.append("%pip install scikit-image")
     if "polars" in notebook_content_str:
@@ -628,6 +684,23 @@ def notebook_modification_function(notebook_content, notebook_filename):
     # always import matplotlib and pandas to avoid Pyodide limitation with
     # imports inside functions
     code_lines.extend(["import matplotlib", "import pandas"])
+
+    # Work around https://github.com/jupyterlite/pyodide-kernel/issues/166
+    # and https://github.com/pyodide/micropip/issues/223 by installing the
+    # dependencies first, and then scikit-learn from Anaconda.org.
+    if "dev" in release:
+        dev_docs_specific_code = [
+            "import piplite",
+            "import joblib",
+            "import threadpoolctl",
+            "import scipy",
+            "await piplite.install(\n"
+            f"  'scikit-learn=={release}',\n"
+            "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
+            ")",
+        ]
+
+        code_lines.extend(dev_docs_specific_code)
 
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
@@ -678,19 +751,10 @@ if with_jupyterlite:
         "notebook_modification_function": notebook_modification_function
     }
 
-# Secondary sidebar configuration for pages generated by sphinx-gallery
-
 # For the index page of the gallery and each nested section, we hide the secondary
 # sidebar by specifying an empty list (no components), because there is no meaningful
 # in-page toc for these pages, and they are generated so "sourcelink" is not useful
 # either.
-
-# For each example page we keep default ["page-toc", "sourcelink"] specified by the
-# "**" key. "page-toc" is wanted for these pages. "sourcelink" is also necessary since
-# otherwise the secondary sidebar will degenerate when "page-toc" is empty, and the
-# script `sphinxext/move_gallery_links.py` will fail (it assumes the existence of the
-# secondary sidebar). The script will remove "sourcelink" in the end.
-
 html_theme_options["secondary_sidebar_items"][f"{sg_gallery_dir}/index"] = []
 for sub_sg_dir in (Path(".") / sg_examples_dir).iterdir():
     if sub_sg_dir.is_dir():
@@ -708,8 +772,10 @@ carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import (  # noqa: F401
+    enable_halving_search_cv,
+    enable_iterative_imputer,
+)
 
 
 def make_carousel_thumbs(app, exception):
@@ -758,6 +824,15 @@ def disable_plot_gallery_for_linkcheck(app):
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
+def skip_properties(app, what, name, obj, skip, options):
+    """Skip properties that are fitted attributes"""
+    if isinstance(obj, property):
+        if name.endswith("_") and not name.startswith("_"):
+            return True
+
+    return skip
+
+
 def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
@@ -769,6 +844,8 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    app.connect("autodoc-skip-member", skip_properties)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
@@ -870,10 +947,6 @@ linkcheck_ignore = [
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
 ]
-
-# Config for sphinx-remove-toctrees
-
-remove_from_toctrees = ["metadata_routing.rst"]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a

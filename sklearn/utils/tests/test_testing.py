@@ -15,12 +15,14 @@ from sklearn.utils._testing import (
     _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
+    assert_docstring_consistency,
     assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
     set_random_state,
+    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
@@ -28,8 +30,6 @@ from sklearn.utils.fixes import (
     _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.metaestimators import available_if
 
@@ -398,13 +398,8 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
+@skip_if_no_numpydoc
 def test_check_docstring_parameters():
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-        minversion="1.2.0",
-    )
-
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=["b"])
@@ -446,8 +441,7 @@ def test_check_docstring_parameters():
             "+ ['a', 'b']",
         ],
         [
-            "In function: "
-            + "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
+            "In function: sklearn.utils.tests.test_testing.f_too_many_param_docstring",
             (
                 "Parameters in function docstring have more items w.r.t. function"
                 " signature, first extra item: c"
@@ -478,8 +472,7 @@ def test_check_docstring_parameters():
             "+ []",
         ],
         [
-            "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
             (
                 "There's a parameter name mismatch in function docstring w.r.t."
                 " function signature, at index 0 diff: 'X' != 'y'"
@@ -492,21 +485,20 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
-            + "predict_proba",
+            f"sklearn.utils.tests.test_testing.{mock_meta_name}."
+            "predict_proba",
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
         ],
         [
-            "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.score",
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
         ],
         [
-            "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
             (
                 "Parameters in function docstring have less items w.r.t. function"
                 " signature, first missing item: X"
@@ -532,6 +524,295 @@ def test_check_docstring_parameters():
     ):
         incorrect = check_docstring_parameters(f)
         assert msg == incorrect, '\n"%s"\n not in \n"%s"' % (msg, incorrect)
+
+
+def f_one(a, b):  # pragma: no cover
+    """Function one.
+
+    Parameters
+    ----------
+    a : int,   float
+        Parameter a.
+        Second    line.
+
+    b : str
+        Parameter b.
+
+    Returns
+    -------
+    c : int
+       Returning
+
+    d : int
+       Returning
+    """
+    pass
+
+
+def f_two(a, b):  # pragma: no cover
+    """Function two.
+
+    Parameters
+    ----------
+    a :   int, float
+        Parameter a.
+          Second line.
+
+    b : str
+        Parameter bb.
+
+    e : int
+        Extra parameter.
+
+    Returns
+    -------
+    c : int
+       Returning
+
+    d : int
+       Returning
+    """
+    pass
+
+
+def f_three(a, b):  # pragma: no cover
+    """Function two.
+
+    Parameters
+    ----------
+    a :   int, float
+        Parameter a.
+
+    b : str
+        Parameter B!
+
+    e :
+        Extra parameter.
+
+    Returns
+    -------
+    c : int
+       Returning.
+
+    d : int
+       Returning
+    """
+    pass
+
+
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_object_type():
+    """Check error raised when `objects` incorrect type."""
+    with pytest.raises(TypeError, match="All 'objects' must be one of"):
+        assert_docstring_consistency(["string", f_one])
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
+    "objects, kwargs, error",
+    [
+        (
+            [f_one, f_two],
+            {"include_params": ["a"], "exclude_params": ["b"]},
+            "The 'exclude_params' argument",
+        ),
+        (
+            [f_one, f_two],
+            {"include_returns": False, "exclude_returns": ["c"]},
+            "The 'exclude_returns' argument",
+        ),
+    ],
+)
+def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
+    """Check `assert_docstring_consistency` argument checking correct."""
+    with pytest.raises(TypeError, match=error):
+        assert_docstring_consistency(objects, **kwargs)
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
+    "objects, kwargs, error, warn",
+    [
+        pytest.param(
+            [f_one, f_two], {"include_params": ["a"]}, "", "", id="whitespace"
+        ),
+        pytest.param([f_one, f_two], {"include_returns": True}, "", "", id="incl_all"),
+        pytest.param(
+            [f_one, f_two, f_three],
+            {"include_params": ["a"]},
+            (
+                r"The description of Parameter 'a' is inconsistent between "
+                r"\['f_one',\n'f_two'\]"
+            ),
+            "",
+            id="2-1 group",
+        ),
+        pytest.param(
+            [f_one, f_two, f_three],
+            {"include_params": ["b"]},
+            (
+                r"The description of Parameter 'b' is inconsistent between "
+                r"\['f_one'\] and\n\['f_two'\] and"
+            ),
+            "",
+            id="1-1-1 group",
+        ),
+        pytest.param(
+            [f_two, f_three],
+            {"include_params": ["e"]},
+            (
+                r"The type specification of Parameter 'e' is inconsistent between\n"
+                r"\['f_two'\] and"
+            ),
+            "",
+            id="empty type",
+        ),
+        pytest.param(
+            [f_one, f_two],
+            {"include_params": True, "exclude_params": ["b"]},
+            "",
+            r"Checking was skipped for Parameters: \['e'\]",
+            id="skip warn",
+        ),
+    ],
+)
+def test_assert_docstring_consistency(objects, kwargs, error, warn):
+    """Check `assert_docstring_consistency` gives correct results."""
+    if error:
+        with pytest.raises(AssertionError, match=error):
+            assert_docstring_consistency(objects, **kwargs)
+    elif warn:
+        with pytest.warns(UserWarning, match=warn):
+            assert_docstring_consistency(objects, **kwargs)
+    else:
+        assert_docstring_consistency(objects, **kwargs)
+
+
+def f_four(labels):  # pragma: no cover
+    """Function four.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be excluded.
+    """
+    pass
+
+
+def f_five(labels):  # pragma: no cover
+    """Function five.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. This is an extra line. Labels present in the
+        data can be excluded.
+    """
+    pass
+
+
+def f_six(labels):  # pragma: no cover
+    """Function six.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The group of labels to add when `average != 'binary'`, and the
+        order if `average is None`. Labels present on them datas can be excluded.
+    """
+    pass
+
+
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_error_msg():
+    """Check `assert_docstring_consistency` difference message."""
+    msg = r"""The description of Parameter 'labels' is inconsistent between
+\['f_four'\] and \['f_five'\] and \['f_six'\]:
+
+\*\*\* \['f_four'\]
+--- \['f_five'\]
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+\*\*\* 10,25 \*\*\*\*
+
+--- 10,30 ----
+
+  'binary'`, and their order if `average is None`.
+\+ This is an extra line.
+  Labels present in the data can be excluded.
+
+\*\*\* \['f_four'\]
+--- \['f_six'\]
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+\*\*\* 1,25 \*\*\*\*
+
+  The
+! set
+  of labels to
+! include
+  when `average != 'binary'`, and
+! their
+  order if `average is None`. Labels present
+! in the data
+  can be excluded.
+--- 1,25 ----
+
+  The
+! group
+  of labels to
+! add
+  when `average != 'binary'`, and
+! the
+  order if `average is None`. Labels present
+! on them datas
+  can be excluded."""
+
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency([f_four, f_five, f_six], include_params=True)
+
+
+@skip_if_no_numpydoc
+def test_assert_docstring_consistency_descr_regex_pattern():
+    """Check `assert_docstring_consistency` `descr_regex_pattern` works."""
+    # Check regex that matches full parameter descriptions
+    regex_full = (
+        r"The (set|group) "  # match 'set' or 'group'
+        r"of labels to (include|add) "  # match 'include' or 'add'
+        r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
+        r"order if `average is None`\."
+        r"[\s\w]*\.* "  # optionally match additional sentence
+        r"Labels present (on|in) "  # match 'on' or 'in'
+        r"(them|the) "  # match 'them' or 'the'
+        r"datas? can be excluded\."  # match 'data' or 'datas'
+    )
+
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_full.split()),
+    )
+    # Check we can just match a few alternate words
+    regex_words = r"(labels|average|binary)"  # match any of these 3 words
+    assert_docstring_consistency(
+        [f_four, f_five, f_six],
+        include_params=True,
+        descr_regex_pattern=" ".join(regex_words.split()),
+    )
+    # Check error raised when regex doesn't match
+    regex_error = r"The set of labels to include when.+"
+    msg = r"The description of Parameter 'labels' in \['f_six'\] does not match"
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency(
+            [f_four, f_five, f_six],
+            include_params=True,
+            descr_regex_pattern=" ".join(regex_error.split()),
+        )
 
 
 class RegistrationCounter:
@@ -571,7 +852,6 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 def test_create_memmap_backed_data(monkeypatch):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
@@ -616,6 +896,10 @@ def test_create_memmap_backed_data(monkeypatch):
         ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
+        ("pyarrow", lambda: pytest.importorskip("pyarrow").Table),
+        ("pyarrow_array", lambda: pytest.importorskip("pyarrow").Array),
+        ("polars", lambda: pytest.importorskip("polars").DataFrame),
+        ("polars_series", lambda: pytest.importorskip("polars").Series),
         ("slice", slice),
     ],
 )
@@ -636,7 +920,15 @@ def test_convert_container(
 ):
     """Check that we convert the container to the right type of array with the
     right data type."""
-    if constructor_name in ("dataframe", "polars", "series", "polars_series", "index"):
+    if constructor_name in (
+        "dataframe",
+        "index",
+        "polars",
+        "polars_series",
+        "pyarrow",
+        "pyarrow_array",
+        "series",
+    ):
         # delay the import of pandas/polars within the function to only skip this test
         # instead of the whole file
         container_type = container_type()
@@ -653,6 +945,8 @@ def test_convert_container(
         # list and tuple will use Python class dtype: int, float
         # pandas index will always use high precision: np.int64 and np.float64
         assert np.issubdtype(type(container_converted[0]), superdtype)
+    elif constructor_name in ("polars", "polars_series", "pyarrow", "pyarrow_array"):
+        return
     elif hasattr(container_converted, "dtype"):
         assert container_converted.dtype == dtype
     elif hasattr(container_converted, "dtypes"):
@@ -677,24 +971,6 @@ def test_convert_container_categories_pyarrow():
     pa = pytest.importorskip("pyarrow")
     df = _convert_container([["x"]], "pyarrow", ["A"], categorical_feature_names=["A"])
     assert type(df.schema[0].type) is pa.DictionaryType
-
-
-@pytest.mark.skipif(
-    sp_version >= parse_version("1.8"),
-    reason="sparse arrays are available as of scipy 1.8.0",
-)
-@pytest.mark.parametrize("constructor_name", ["sparse_csr_array", "sparse_csc_array"])
-@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
-def test_convert_container_raise_when_sparray_not_available(constructor_name, dtype):
-    """Check that if we convert to sparse array but sparse array are not supported
-    (scipy<1.8.0), we should raise an explicit error."""
-    container = [0, 1]
-
-    with pytest.raises(
-        ValueError,
-        match=f"only available with scipy>=1.8.0, got {sp_version}",
-    ):
-        _convert_container(container, constructor_name, dtype=dtype)
 
 
 def test_raises():
@@ -816,17 +1092,9 @@ def test_assert_run_python_script_without_output():
         "sparse_csc",
         pytest.param(
             "sparse_csr_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
         ),
         pytest.param(
             "sparse_csc_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
         ),
     ],
 )

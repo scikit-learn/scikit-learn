@@ -9,9 +9,10 @@ import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import Pipeline
@@ -38,9 +39,13 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -51,7 +56,6 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
-    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
@@ -59,6 +63,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    sp_version,
 )
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -689,7 +694,9 @@ def test_standard_check_array_of_inverse_transform():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -701,14 +708,16 @@ def test_standard_check_array_of_inverse_transform():
     [
         MaxAbsScaler(),
         MinMaxScaler(),
+        MinMaxScaler(clip=True),
         KernelCenterer(),
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
+        Binarizer(),
     ],
     ids=_get_check_estimator_ids,
 )
-def test_scaler_array_api_compliance(
+def test_preprocessing_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
@@ -1033,10 +1042,10 @@ def test_scale_sparse_with_mean_raise_exception(sparse_container):
 
 
 def test_scale_input_finiteness_validation():
-    # Check if non finite inputs raise ValueError
+    # Check if non-finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(
-        ValueError, match="Input contains infinity or a value too large"
+        ValueError, match=r"Input X contains infinity or a value too large for dtype"
     ):
         scale(X)
 
@@ -2000,6 +2009,21 @@ def test_binarizer(constructor):
             binarizer.transform(constructor(X))
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_binarizer_array_api_int(array_namespace, device, dtype_name):
+    # Checks that Binarizer works with integer elements and float threshold
+    xp = _array_api_for_tests(array_namespace, device)
+    for dtype_name_ in [dtype_name, "int32", "int64"]:
+        X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
+        X_xp = xp.asarray(X_np, device=device)
+        binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
+        with config_context(array_api_dispatch=True):
+            binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
+        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
+
+
 def test_center_kernel():
     # Test that KernelCenterer is equivalent to StandardScaler
     # in feature space
@@ -2109,7 +2133,7 @@ def test_cv_pipeline_precomputed():
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the pairwise attribute?
-    assert pipeline._get_tags()["pairwise"]
+    assert pipeline.__sklearn_tags__().input_tags.pairwise
 
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
@@ -2278,7 +2302,7 @@ def test_power_transformer_shape_exception(method):
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
     wrong_shape_message = (
-        r"X has \d+ features, but PowerTransformer is " r"expecting \d+ features"
+        r"X has \d+ features, but PowerTransformer is expecting \d+ features"
     )
 
     with pytest.raises(ValueError, match=wrong_shape_message):
@@ -2329,6 +2353,11 @@ def test_optimization_power_transformer(method, lmbda):
     n_samples = 20000
     X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
 
+    if method == "box-cox":
+        # For box-cox, means that lmbda * y + 1 > 0 or y > - 1 / lmbda
+        # Clip the data here to make sure the inequality is valid.
+        X = np.clip(X, -1 / lmbda + 1e-5, None)
+
     pt = PowerTransformer(method=method, standardize=False)
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
@@ -2339,6 +2368,14 @@ def test_optimization_power_transformer(method, lmbda):
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples, decimal=2)
     assert_almost_equal(0, X_inv_trans.mean(), decimal=1)
     assert_almost_equal(1, X_inv_trans.std(), decimal=1)
+
+
+def test_invserse_box_cox():
+    # output nan if the input is invalid
+    pt = PowerTransformer(method="box-cox", standardize=False)
+    pt.lambdas_ = [0.5]
+    X_inv = pt.inverse_transform([[-2.1]])
+    assert np.isnan(X_inv)
 
 
 def test_yeo_johnson_darwin_example():
@@ -2605,3 +2642,52 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, np.zeros_like(X))
         else:
             assert_allclose(Xt_, X)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.12"),
+    reason="scipy version 1.12 required for stable yeo-johnson",
+)
+def test_power_transformer_no_warnings():
+    """Verify that PowerTransformer operates without raising any warnings on valid data.
+
+    This test addresses numerical issues with floating point numbers (mostly
+    overflows) with the Yeo-Johnson transform, see
+    https://github.com/scikit-learn/scikit-learn/issues/23319#issuecomment-1464933635
+    """
+    x = np.array(
+        [
+            2003.0,
+            1950.0,
+            1997.0,
+            2000.0,
+            2009.0,
+            2009.0,
+            1980.0,
+            1999.0,
+            2007.0,
+            1991.0,
+        ]
+    )
+
+    def _test_no_warnings(data):
+        """Internal helper to test for unexpected warnings."""
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")  # Ensure all warnings are captured
+            PowerTransformer(method="yeo-johnson", standardize=True).fit_transform(data)
+
+        assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+            str(w.message) for w in caught_warnings
+        )
+
+    # Full dataset: Should not trigger overflow in variance calculation.
+    _test_no_warnings(x.reshape(-1, 1))
+
+    # Subset of data: Should not trigger overflow in power calculation.
+    _test_no_warnings(x[:5].reshape(-1, 1))
+
+
+def test_yeojohnson_for_different_scipy_version():
+    """Check that the results are consistent across different SciPy versions."""
+    pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
+    pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)

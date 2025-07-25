@@ -18,7 +18,7 @@ from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from ..linear_model import _cd_fast as cd_fast  # type: ignore
+from ..linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 from ..utils import Bunch
@@ -35,6 +35,7 @@ from ..utils.validation import (
     _is_arraylike_not_scalar,
     check_random_state,
     check_scalar,
+    validate_data,
 )
 from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
@@ -333,9 +334,9 @@ def graphical_lasso(
     >>> emp_cov = empirical_covariance(X, assume_centered=True)
     >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
     >>> emp_cov
-    array([[ 1.68...,  0.21..., -0.20...],
-           [ 0.21...,  0.22..., -0.08...],
-           [-0.20..., -0.08...,  0.23...]])
+    array([[ 1.687,  0.212, -0.209],
+           [ 0.212,  0.221, -0.0817],
+           [-0.209, -0.0817, 0.232]])
     """
     model = GraphicalLasso(
         alpha=alpha,
@@ -556,7 +557,7 @@ class GraphicalLasso(BaseGraphicalLasso):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_features=2, ensure_min_samples=2)
 
         if self.covariance == "precomputed":
             emp_cov = X.copy()
@@ -892,6 +893,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
+
+    For an example comparing :class:`sklearn.covariance.GraphicalLassoCV`,
+    :func:`sklearn.covariance.ledoit_wolf` shrinkage and the empirical covariance
+    on high-dimensional gaussian data, see
+    :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`.
     """
 
     _parameter_constraints: dict = {
@@ -962,7 +968,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         # Covariance does not make sense for a single feature
         _raise_for_params(params, self, "fit")
 
-        X = self._validate_data(X, ensure_min_features=2)
+        X = validate_data(self, X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

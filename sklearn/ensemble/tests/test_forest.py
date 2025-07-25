@@ -168,11 +168,12 @@ def test_regression_criterion(name, criterion):
     reg = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
-    assert (
-        score > 0.93
-    ), "Failed with max_features=None, criterion %s and score = %f" % (
-        criterion,
-        score,
+    assert score > 0.93, (
+        "Failed with max_features=None, criterion %s and score = %f"
+        % (
+            criterion,
+            score,
+        )
     )
 
     reg = ForestRegressor(
@@ -926,7 +927,7 @@ def test_parallel_train():
 
     X_test = rng.randn(n_samples, n_features)
     probas = [clf.predict_proba(X_test) for clf in clfs]
-    for proba1, proba2 in zip(probas, probas[1:]):
+    for proba1, proba2 in itertools.pairwise(probas):
         assert_array_almost_equal(proba1, proba2)
 
 
@@ -1068,10 +1069,10 @@ def test_min_weight_fraction_leaf(name):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert (
-            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
-        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
-            name, est.min_weight_fraction_leaf
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
+            "Failed with {0} min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf
+            )
         )
 
 
@@ -1478,7 +1479,7 @@ def test_poisson_y_positive_check():
 
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
-class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
+class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore[valid-type,misc]
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)

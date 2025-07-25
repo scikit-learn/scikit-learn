@@ -7,16 +7,11 @@
     "project": "scikit-learn",
 
     // The project's homepage
-    "project_url": "scikit-learn.org/",
+    "project_url": "https://scikit-learn.org/",
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
     "repo": "..",
-
-    // The Python project's subdirectory in your repo.  If missing or
-    // the empty string, the project is assumed to be located at the root
-    // of the repository.
-    // "repo_subdir": "",
 
     // Customizable commands for building, installing, and
     // uninstalling the project. See asv.conf.json documentation.
@@ -24,10 +19,9 @@
     "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
     "build_command": ["python -m build --wheel -o {build_cache_dir} {build_dir}"],
 
-    // List of branches to benchmark. If not provided, defaults to "master
+    // List of branches to benchmark. If not provided, defaults to "main"
     // (for git) or "default" (for mercurial).
     "branches": ["main"],
-    // "branches": ["default"],    // for mercurial
 
     // The DVCS being used.  If not set, it will be automatically
     // determined from "repo" by looking at the protocol in the URL
@@ -46,19 +40,19 @@
     // defaults to 10 min
     //"install_timeout": 600,
 
+    // timeout in seconds all benchmarks, can be overridden per benchmark
+    // defaults to 1 min
+    //"default_benchmark_timeout": 60,
+
     // the base URL to show a commit for the project.
     "show_commit_url": "https://github.com/scikit-learn/scikit-learn/commit/",
 
-    // The Pythons you'd like to test against. If not provided, defaults
+    // The Pythons you'd like to test against.  If not provided, defaults
     // to the current version of Python used to run `asv`.
-    // "pythons": ["3.6"],
+    // "pythons": ["3.12"],
 
-    // The list of conda channel names to be searched for benchmark
-    // dependency packages in the specified order
-    // "conda_channels": ["conda-forge", "defaults"]
-
-    // The matrix of dependencies to test. Each key is the name of a
-    // package (in PyPI) and the values are version numbers. An empty
+    // The matrix of dependencies to test.  Each key is the name of a
+    // package (in PyPI) and the values are version numbers.  An empty
     // list or empty string indicates to just test against the default
     // (latest) version. null indicates that the package is to not be
     // installed. If the package to be tested is only available from
@@ -107,10 +101,10 @@
     // ],
     //
     // "include": [
-    //     // additional env for python2.7
-    //     {"python": "2.7", "numpy": "1.8"},
+    //     // additional env for python3.12
+    //     {"python": "3.12", "numpy": "1.26"},
     //     // additional env if run on windows+conda
-    //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "libpython": ""},
+    //     {"sys_platform": "win32", "environment_type": "conda", "python": "3.12", "libpython": ""},
     // ],
 
     // The directory (relative to the current directory) that benchmarks are
@@ -132,10 +126,10 @@
     // The number of characters to retain in the commit hashes.
     // "hash_length": 8,
 
-    // `asv` will cache results of the recent builds in each
+    // `asv` will cache wheels of the recent builds in each
     // environment, making them faster to install next time.  This is
-    // the number of builds to keep, per environment.
-    // "build_cache_size": 2,
+    // number of builds to keep, per environment.
+    // "build_cache_size": 0
 
     // The commits after which the regression search in `asv publish`
     // should start looking for regressions. Dictionary whose keys are
@@ -148,16 +142,5 @@
     // "regressions_first_commits": {
     //    "some_benchmark": "352cdf",  // Consider regressions only after this commit
     //    "another_benchmark": null,   // Skip regression detection altogether
-    // },
-
-    // The thresholds for relative change in results, after which `asv
-    // publish` starts reporting regressions. Dictionary of the same
-    // form as in ``regressions_first_commits``, with values
-    // indicating the thresholds.  If multiple entries match, the
-    // maximum is taken. If no entry matches, the default is 5%.
-    //
-    // "regressions_thresholds": {
-    //    "some_benchmark": 0.01,     // Threshold of 1%
-    //    "another_benchmark": 0.5,   // Threshold of 50%
-    // },
+    // }
 }

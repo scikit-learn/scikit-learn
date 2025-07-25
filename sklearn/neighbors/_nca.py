@@ -25,9 +25,10 @@ from ..metrics import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import softmax
+from ..utils.fixes import _get_additional_lbfgs_options_dict
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, validate_data
 
 
 class NeighborhoodComponentsAnalysis(
@@ -239,7 +240,7 @@ class NeighborhoodComponentsAnalysis(
             Fitted estimator.
         """
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = self._validate_data(X, y, ensure_min_samples=2)
+        X, y = validate_data(self, X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -312,7 +313,10 @@ class NeighborhoodComponentsAnalysis(
             "jac": True,
             "x0": transformation,
             "tol": self.tol,
-            "options": dict(maxiter=self.max_iter, disp=disp),
+            "options": dict(
+                maxiter=self.max_iter,
+                **_get_additional_lbfgs_options_dict("disp", disp),
+            ),
             "callback": self._callback,
         }
 
@@ -361,7 +365,7 @@ class NeighborhoodComponentsAnalysis(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return np.dot(X, self.components_.T)
 
@@ -519,8 +523,10 @@ class NeighborhoodComponentsAnalysis(
 
         return sign * loss, sign * gradient.ravel()
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags
 
     @property
     def _n_features_out(self):

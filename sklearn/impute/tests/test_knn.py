@@ -567,4 +567,4 @@ def test_knn_imputer_distance_weighted_not_enough_neighbors(na, working_memory):
 @pytest.mark.parametrize("na, allow_nan", [(-1, False), (np.nan, True)])
 def test_knn_tags(na, allow_nan):
     knn = KNNImputer(missing_values=na)
-    assert knn._get_tags()["allow_nan"] == allow_nan
+    assert knn.__sklearn_tags__().input_tags.allow_nan == allow_nan

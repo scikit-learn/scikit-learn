@@ -147,8 +147,9 @@ def test_custom_optimizer(kernel, global_random_seed):
     # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(global_random_seed)
-        theta_opt, func_min = initial_theta, obj_func(
-            initial_theta, eval_gradient=False
+        theta_opt, func_min = (
+            initial_theta,
+            obj_func(initial_theta, eval_gradient=False),
         )
         for _ in range(10):
             theta = np.atleast_1d(
@@ -282,3 +283,38 @@ def test_gpc_fit_error(params, error_type, err_msg):
     gpc = GaussianProcessClassifier(**params)
     with pytest.raises(error_type, match=err_msg):
         gpc.fit(X, y)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_gpc_latent_mean_and_variance_shape(kernel):
+    """Checks that the latent mean and variance have the right shape."""
+    gpc = GaussianProcessClassifier(kernel=kernel)
+    gpc.fit(X, y)
+
+    # Check that the latent mean and variance have the right shape
+    latent_mean, latent_variance = gpc.latent_mean_and_variance(X)
+    assert latent_mean.shape == (X.shape[0],)
+    assert latent_variance.shape == (X.shape[0],)
+
+
+def test_gpc_latent_mean_and_variance_complain_on_more_than_2_classes():
+    """Checks that the latent mean and variance have the right shape."""
+    gpc = GaussianProcessClassifier(kernel=RBF())
+    gpc.fit(X, y_mc)
+
+    # Check that the latent mean and variance have the right shape
+    with pytest.raises(
+        ValueError,
+        match="Returning the mean and variance of the latent function f "
+        "is only supported for binary classification",
+    ):
+        gpc.latent_mean_and_variance(X)
+
+
+def test_latent_mean_and_variance_works_on_structured_kernels():
+    X = ["A", "AB", "B"]
+    y = np.array([True, False, True])
+    kernel = MiniSeqKernel(baseline_similarity_bounds="fixed")
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+
+    gpc.latent_mean_and_variance(X)

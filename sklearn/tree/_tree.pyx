@@ -107,19 +107,7 @@ cdef class TreeBuilder:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
-        # TODO: This check for y seems to be redundant, as it is also
-        #  present in the BaseDecisionTree's fit method, and therefore
-        #  can be removed.
-        if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        if (
-            sample_weight is not None and
-            (
-                sample_weight.base.dtype != DOUBLE or
-                not sample_weight.base.flags.contiguous
-            )
-        ):
+        if sample_weight is not None and not sample_weight.base.flags.contiguous:
             sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
 
         return X, y, sample_weight
@@ -1872,7 +1860,7 @@ cdef struct BuildPrunedRecord:
     intp_t parent
     bint is_left
 
-cdef _build_pruned_tree(
+cdef void _build_pruned_tree(
     Tree tree,  # OUT
     Tree orig_tree,
     const uint8_t[:] leaves_in_subtree,
@@ -1931,6 +1919,15 @@ cdef _build_pruned_tree(
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
+            # protect against an infinite loop as a runtime error, when leaves_in_subtree
+            # are improperly set where a node is not marked as a leaf, but is a node
+            # in the original tree. Thus, it violates the assumption that the node
+            # is a leaf in the pruned tree, or has a descendant that will be pruned.
+            if (not is_leaf and node.left_child == _TREE_LEAF
+                    and node.right_child == _TREE_LEAF):
+                rc = -2
+                break
+
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
@@ -1960,3 +1957,33 @@ cdef _build_pruned_tree(
             tree.max_depth = max_depth_seen
     if rc == -1:
         raise MemoryError("pruning tree")
+    elif rc == -2:
+        raise ValueError(
+            "Node has reached a leaf in the original tree, but is not "
+            "marked as a leaf in the leaves_in_subtree mask."
+        )
+
+
+def _build_pruned_tree_py(Tree tree, Tree orig_tree, const uint8_t[:] leaves_in_subtree):
+    """Build a pruned tree.
+
+    Build a pruned tree from the original tree by transforming the nodes in
+    ``leaves_in_subtree`` into leaves.
+
+    Parameters
+    ----------
+    tree : Tree
+        Location to place the pruned tree
+    orig_tree : Tree
+        Original tree
+    leaves_in_subtree : uint8_t ndarray, shape=(node_count, )
+        Boolean mask for leaves to include in subtree. The array must have
+        the same size as the number of nodes in the original tree.
+    """
+    if leaves_in_subtree.shape[0] != orig_tree.node_count:
+        raise ValueError(
+            f"The length of leaves_in_subtree {len(leaves_in_subtree)} must be "
+            f"equal to the number of nodes in the original tree {orig_tree.node_count}."
+        )
+
+    _build_pruned_tree(tree, orig_tree, leaves_in_subtree, orig_tree.node_count)

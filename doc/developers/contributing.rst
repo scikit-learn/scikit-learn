@@ -11,9 +11,9 @@ contribute. It is hosted on https://github.com/scikit-learn/scikit-learn.
 The decision making process and governance structure of scikit-learn is laid
 out in :ref:`governance`.
 
-Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
-adding new algorithms, and the best way to contribute and to help the project
-is to start working on known issues.
+Scikit-learn is :ref:`selective <selectiveness>` when it comes to
+adding new algorithms and features. This means the best way to contribute
+and help the project is to start working on known issues.
 See :ref:`new_contributors` to get started.
 
 .. topic:: **Our community, our values**
@@ -47,20 +47,17 @@ welcome to post feature requests or pull requests.
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn, with the most common ones
-being contribution of code or documentation to the project. Improving the
-documentation is no less important than improving the library itself.  If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
-Full documentation can be found under the doc/ directory.
+There are many ways to contribute to scikit-learn. Improving the
+documentation is no less important than improving the code of the library
+itself. If you find a typo in the documentation, or have made improvements, do
+not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
 
-But there are many other ways to help. In particular helping to
+There are many ways to help. In particular helping to
 :ref:`improve, triage, and investigate issues <bug_triaging>` and
 :ref:`reviewing other developers' pull requests <code_review>` are very
-valuable contributions that decrease the burden on the project
-maintainers.
+valuable contributions that move the project forward.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs
+Another way to contribute is to report issues you are facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
@@ -184,12 +181,14 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers.
+  to get some feedback from core developers.
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
-  so far. In order to claim an issue for yourself, please comment exactly
-  ``/take`` on it for the CI to automatically assign the issue to you.
+  so far. If you'd like to work on such issue, leave a comment with your idea of
+  how you plan to approach it, and start working on it. If somebody else has
+  already said they'd be working on the issue in the past 2-3 weeks, please let
+  them finish their work, otherwise consider it stalled and take it over.
 
 To maintain the quality of the codebase and ease the review process, any
 contribution must conform to the project's :ref:`coding guidelines
@@ -269,7 +268,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
+        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 .. _upstream:
 
@@ -282,14 +281,20 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
-        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin	git@github.com:YourLogin/scikit-learn.git (push)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin    git@github.com:YourLogin/scikit-learn.git (push)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
@@ -344,9 +349,11 @@ The next steps now describe the process of modifying code and submitting a PR:
 
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an email to the
-    mailing list for more visibility.
+    instructions to create a pull request from your fork. This will send a
+    notification to potential reviewers. You may want to consider sending a message to
+    the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
+    channel for more visibility if your pull request does not receive attention after
+    a couple of days (instant replies are not guaranteed though).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
@@ -363,7 +370,7 @@ line
 
 .. topic:: Learning Git
 
-    The `Git documentation <https://git-scm.com/documentation>`_ and
+    The `Git documentation <https://git-scm.com/doc>`_ and
     http://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
 
@@ -431,13 +438,18 @@ complies with the following rules before marking a PR as "ready for review". The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. Follow the :ref:`coding-guidelines`.
+5. If your PR is likely to affect users, you need to add a changelog entry describing
+   your PR changes. See the
+   `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
+   for more details.
 
-6. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
+6. Follow the :ref:`coding-guidelines`.
+
+7. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
    module. A list of utility routines available for developers can be found in the
    :ref:`developers-utils` page.
 
-7. Often pull requests resolve one or more other issues (or pull requests).
+8. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -447,7 +459,7 @@ complies with the following rules before marking a PR as "ready for review". The
    related to some other issues/PRs, or it only partially resolves the target
    issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
-8. PRs should often substantiate the change, through benchmarks of
+9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
    examples of usage. Examples also illustrate the features and intricacies of
    the library to users. Have a look at other examples in the `examples/
@@ -456,14 +468,14 @@ complies with the following rules before marking a PR as "ready for review". The
    functionality is useful in practice and, if possible, compare it to other
    methods available in scikit-learn.
 
-9. New features have some maintenance overhead. We expect PR authors
-   to take part in the maintenance for the code they submit, at least
-   initially. New features need to be illustrated with narrative
-   documentation in the user guide, with small code snippets.
-   If relevant, please also add references in the literature, with PDF links
-   when possible.
+10. New features have some maintenance overhead. We expect PR authors
+    to take part in the maintenance for the code they submit, at least
+    initially. New features need to be illustrated with narrative
+    documentation in the user guide, with small code snippets.
+    If relevant, please also add references in the literature, with PDF links
+    when possible.
 
-10. The user guide should also include expected time and space complexity
+11. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     `n_features` is expected to be lower than 100".
@@ -517,31 +529,32 @@ profiling and Cython optimizations.
    sections.
 
 Continuous Integration (CI)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
 * CircleCI is used to build the docs for viewing.
 * Github Actions are used for various tasks, including building wheels and
   source distributions.
-* Cirrus CI is used to build on ARM.
 
-Please note that if one of the following markers appear in the latest commit
+.. _commit_markers:
+
+Commit message markers
+^^^^^^^^^^^^^^^^^^^^^^
+
+Please note that if one of the following markers appears in the latest commit
 message, the following actions are taken.
 
 ====================== ===================
 Commit Message Marker  Action Taken by CI
----------------------- -------------------
+====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
-[cd build gh]          CD is run only for GitHub Actions
-[cd build cirrus]      CD is run only for Cirrus CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.13 free-threaded
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
-[cirrus arm]           Run Cirrus CI ARM test
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
 [doc skip]             Docs are not built
 [doc quick]            Docs built, but excludes example gallery plots
@@ -551,10 +564,39 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
+Resolve conflicts in lock files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a bash snippet that helps resolving conflicts in environment and lock files:
+
+.. prompt:: bash
+
+  # pull latest upstream/main
+  git pull upstream main --no-rebase
+  # resolve conflicts - keeping the upstream/main version for specific files
+  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git merge --continue
+
+This will merge `upstream/main` into our branch, automatically prioritising the
+`upstream/main` for conflicting environment and lock files (this is good enough, because
+we will re-generate the lock files afterwards).
+
+Note that this only fixes conflicts in environment and lock files and you might have
+other conflicts to resolve.
+
+Finally, we have to re-generate the environment and lock files for the CIs by running:
+
+.. prompt:: bash
+
+  python build_tools/update_environments_and_lock_files.py
+
 .. _stalled_pull_request:
 
 Stalled pull requests
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 As contributing a feature can be a lengthy process, some
 pull requests appear inactive but unfinished. In such a case, taking
@@ -586,7 +628,7 @@ them over is a great service for the project. A good etiquette to take over is:
   old one.
 
 Stalled and Unclaimed Issues
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 Generally speaking, issues which are up for grabs will have a
 `"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
@@ -603,7 +645,7 @@ using the following guidelines:
 
 * If a contributor comments on an issue to say they are working on it,
   a pull request is expected within 2 weeks (new contributor) or 4 weeks
-  (contributor or core dev), unless an larger time frame is explicitly given.
+  (contributor or core dev), unless a larger time frame is explicitly given.
   Beyond that time, another contributor can take the issue and make a
   pull request for it. We encourage contributors to comment directly on the
   stalled or unclaimed issue to let community members know that they will be
@@ -630,7 +672,7 @@ underestimate how easy an issue is to solve!
   A great way to start contributing to scikit-learn is to pick an item from
   the list of `good first issues
   <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
-  in the issue tracker. Resolving these issues allow you to start contributing
+  in the issue tracker. Resolving these issues allows you to start contributing
   to the project without much prior knowledge. If you have already contributed
   to scikit-learn, you should look at Easy issues instead.
 
@@ -657,12 +699,13 @@ underestimate how easy an issue is to solve!
 Documentation
 =============
 
-We are glad to accept any sort of documentation:
+We welcome thoughtful contributions to the documentation and are happy to review
+additions in the following areas:
 
 * **Function/method/class docstrings:** Also known as "API documentation", these
-  describe what the object does and details any parameters, attributes and
+  describe what the object does and detail any parameters, attributes and
   methods. Docstrings live alongside the code in `sklearn/
-  <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are generated
+  <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_, and are
   generated according to `doc/api_reference.py
   <https://github.com/scikit-learn/scikit-learn/blob/main/doc/api_reference.py>`_. To
   add, update, remove, or deprecate a public API that is listed in :ref:`api_ref`, this
@@ -682,6 +725,19 @@ We are glad to accept any sort of documentation:
 
 
 .. dropdown:: Guidelines for writing docstrings
+
+  * You can use `pytest` to test docstrings, e.g. assuming the
+    `RandomForestClassifier` docstring has been modified, the following command
+    would test its docstring compliance:
+
+    .. prompt:: bash
+
+      pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
+
+  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples.
+    See the `numpydoc documentation
+    <https://numpydoc.readthedocs.io/en/latest/format.html#sections>`_ for
+    information on other possible sections.
 
   * When documenting the parameters and attributes, here is a list of some
     well-formatted examples
@@ -748,7 +804,15 @@ We are glad to accept any sort of documentation:
       SelectKBest : Select features based on the k highest scores.
       SelectFpr : Select features based on a false positive rate test.
 
-  * Add one or two snippets of code in "Example" section to show how it can be used.
+  * The "Notes" section is optional. It is meant to provide information on
+    specific behavior of a function/class/classmethod/method.
+
+  * A `Note` can also be added to an attribute, but in that case it requires
+    using the `.. rubric:: Note` directive.
+
+  * Add one or two **snippets** of code in "Example" section to show how it can
+    be used. The code should be runable as is, i.e. it should include all
+    required imports. Keep this section as brief as possible.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
@@ -920,8 +984,8 @@ To build the documentation, you need to be in the ``doc`` folder:
 
     cd doc
 
-In the vast majority of cases, you only need to generate the full web site,
-without the example gallery:
+In the vast majority of cases, you only need to generate the web site without
+the example gallery:
 
 .. prompt:: bash
 
@@ -936,13 +1000,14 @@ To also generate the example gallery you can use:
 
     make html
 
-This will run all the examples, which takes a while. If you only want to generate a few
-examples, which is particularly useful if you are modifying only a few examples, you can
-use:
+This will run all the examples, which takes a while. You can also run only a few examples based on their file names.
+Here is a way to run all examples with filenames containing `plot_calibration`:
 
 .. prompt:: bash
 
-    EXAMPLES_PATTERN=your_regex_goes_here make html
+    EXAMPLES_PATTERN="plot_calibration" make html
+
+You can use regular expressions for more advanced use cases.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
 an offline setting. To build the PDF manual, run:
@@ -1085,7 +1150,7 @@ You can also specify a whole module to benchmark:
   asv continuous -b linear_model upstream/main HEAD
 
 You can replace `HEAD` by any local branch. By default it will only report the
-benchmarks that have change by at least 10%. You can control this ratio with
+benchmarks that have changed by at least 10%. You can control this ratio with
 the `-f` flag.
 
 To run the full benchmark suite, simply remove the `-b` flag :
@@ -1521,7 +1586,7 @@ make this task easier and faster (in no particular order).
     variable) in the code base.
 
 - Configure `git blame` to ignore the commit that migrated the code style to
-  `black`.
+  `black` and then `ruff`.
 
   .. prompt:: bash
 

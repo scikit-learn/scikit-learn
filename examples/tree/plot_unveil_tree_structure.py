@@ -59,20 +59,17 @@ clf.fit(X_train, y_train)
 #
 # Among these arrays, we have:
 #
-#   - ``children_left[i]``: id of the left child of node ``i`` or -1 if leaf
-#     node
-#   - ``children_right[i]``: id of the right child of node ``i`` or -1 if leaf
-#     node
-#   - ``feature[i]``: feature used for splitting node ``i``
-#   - ``threshold[i]``: threshold value at node ``i``
-#   - ``n_node_samples[i]``: the number of training samples reaching node
-#     ``i``
-#   - ``impurity[i]``: the impurity at node ``i``
-#   - ``weighted_n_node_samples[i]``: the weighted number of training samples
-#     reaching node ``i``
-#   - ``value[i, j, k]``: the summary of the training samples that reached node i for
-#     output j and class k (for regression tree, class is set to 1). See below
-#     for more information about ``value``.
+# - ``children_left[i]``: id of the left child of node ``i`` or -1 if leaf node
+# - ``children_right[i]``: id of the right child of node ``i`` or -1 if leaf node
+# - ``feature[i]``: feature used for splitting node ``i``
+# - ``threshold[i]``: threshold value at node ``i``
+# - ``n_node_samples[i]``: the number of training samples reaching node ``i``
+# - ``impurity[i]``: the impurity at node ``i``
+# - ``weighted_n_node_samples[i]``: the weighted number of training samples
+#   reaching node ``i``
+# - ``value[i, j, k]``: the summary of the training samples that reached node i for
+#   output j and class k (for regression tree, class is set to 1). See below
+#   for more information about ``value``.
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not

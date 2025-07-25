@@ -25,6 +25,7 @@ from ..utils.extmath import _randomized_eigsh, svd_flip
 from ..utils.validation import (
     _check_psd_eigenvalues,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -434,7 +435,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         """
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
-        X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
+        X = validate_data(self, X, accept_sparse="csr", copy=self.copy_X)
         self.gamma_ = 1 / X.shape[1] if self.gamma is None else self.gamma
         self._centerer = KernelCenterer().set_output(transform="default")
         K = self._get_kernel(X)
@@ -470,7 +471,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Transformed values.
         """
         self.fit(X, **params)
 
@@ -494,10 +495,11 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Projection of X in the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of the components.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
@@ -543,8 +545,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
-            Returns the instance itself.
+        X_original : ndarray of shape (n_samples, n_features)
+            Original data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         References
         ----------
@@ -563,11 +566,12 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         K = self._get_kernel(X, self.X_transformed_fit_)
         return np.dot(K, self.dual_coef_)
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-            "pairwise": self.kernel == "precomputed",
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.input_tags.pairwise = self.kernel == "precomputed"
+        return tags
 
     @property
     def _n_features_out(self):

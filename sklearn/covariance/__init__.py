@@ -27,13 +27,13 @@ from ._shrunk_covariance import (
 )
 
 __all__ = [
+    "OAS",
     "EllipticEnvelope",
     "EmpiricalCovariance",
     "GraphicalLasso",
     "GraphicalLassoCV",
     "LedoitWolf",
     "MinCovDet",
-    "OAS",
     "ShrunkCovariance",
     "empirical_covariance",
     "fast_mcd",

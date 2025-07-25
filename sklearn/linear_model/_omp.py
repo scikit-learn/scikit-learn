@@ -23,6 +23,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, _pre_fit
 
 premature = (
@@ -396,7 +397,7 @@ def orthogonal_mp(
     >>> coef.shape
     (100,)
     >>> X[:1,] @ coef
-    array([-78.68...])
+    array([-78.68])
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -574,7 +575,7 @@ def orthogonal_mp_gram(
     >>> coef.shape
     (100,)
     >>> X[:1,] @ coef
-    array([-78.68...])
+    array([-78.68])
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -726,9 +727,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuit().fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {
@@ -768,7 +769,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
+        X, y = validate_data(self, X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
@@ -993,11 +994,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     ...                        noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.n_nonzero_coefs_
     np.int64(10)
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {
@@ -1055,7 +1056,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         """
         _raise_for_params(fit_params, self, "fit")
 
-        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
+        X, y = validate_data(self, X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, ensure_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         if _routing_enabled():

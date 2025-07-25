@@ -8,7 +8,7 @@ Generalized Linear Models.
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-from numbers import Integral
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -32,6 +32,7 @@ from ..utils._array_api import (
     indexing_dtype,
     supported_float_dtypes,
 )
+from ..utils._param_validation import Interval
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -41,7 +42,7 @@ from ..utils._seq_dataset import (
 from ..utils.extmath import safe_sparse_dot
 from ..utils.parallel import Parallel, delayed
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -273,7 +274,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
         if coef_.ndim == 1:
             return X @ coef_ + self.intercept_
@@ -317,9 +318,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         else:
             self.intercept_ = 0.0
 
-    def _more_tags(self):
-        return {"requires_y": True}
-
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
@@ -351,9 +349,13 @@ class LinearClassifierMixin(ClassifierMixin):
         check_is_fitted(self)
         xp, _ = get_namespace(X)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
+        return (
+            xp.reshape(scores, (-1,))
+            if (scores.ndim > 1 and scores.shape[1] == 1)
+            else scores
+        )
 
     def predict(self, X):
         """
@@ -471,6 +473,15 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
+    tol : float, default=1e-6
+        The precision of the solution (`coef_`) is determined by `tol` which
+        specifies a different convergence criterion for the `lsqr` solver.
+        `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
+        fitting on sparse training data. This parameter has no effect when fitting
+        on dense data.
+
+        .. versionadded:: 1.7
+
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
         speedup in case of sufficiently large problems, that is if firstly
@@ -482,6 +493,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive. This
         option is only supported for dense arrays.
+
+        For a comparison between a linear regression model with positive constraints
+        on the regression coefficients and a linear regression without such constraints,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`.
 
         .. versionadded:: 0.24
 
@@ -544,7 +559,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    np.float64(3.0...)
+    np.float64(3.0)
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
@@ -554,6 +569,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         "copy_X": ["boolean"],
         "n_jobs": [None, Integral],
         "positive": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -561,11 +577,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         copy_X=True,
+        tol=1e-6,
         n_jobs=None,
         positive=False,
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
+        self.tol = tol
         self.n_jobs = n_jobs
         self.positive = positive
 
@@ -597,7 +615,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=accept_sparse,
@@ -666,22 +685,31 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                self.coef_ = lsqr(X_centered, y)[0]
+                self.coef_ = lsqr(X_centered, y, atol=self.tol, btol=self.tol)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(lsqr)(X_centered, y[:, j].ravel())
+                    delayed(lsqr)(
+                        X_centered, y[:, j].ravel(), atol=self.tol, btol=self.tol
+                    )
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            # cut-off ratio for small singular values
+            cond = max(X.shape) * np.finfo(X.dtype).eps
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
             self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = not self.positive
+        return tags
 
 
 def _check_precomputed_gram_matrix(

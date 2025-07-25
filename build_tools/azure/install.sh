@@ -24,6 +24,9 @@ setup_ccache() {
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
         ccache -M 256M
+
+        # Zeroing statistics so that ccache statistics are shown only for this build
+        ccache -z
     fi
 }
 
@@ -31,31 +34,20 @@ pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
-             libatlas3-base libatlas-base-dev python3-virtualenv ccache
+             libatlas3-base libatlas-base-dev python3-venv ccache
 
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
-                python3-matplotlib libatlas3-base libatlas-base-dev \
-                python3-virtualenv python3-pandas ccache git
-
-    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
-    # 3.13 is released (scheduled October 2024) we can use something more
-    # similar to other conda+pip based builds
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get install -yq software-properties-common
-        sudo add-apt-repository --yes ppa:deadsnakes/nightly
-        sudo apt-get update -yq
-        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
+                python3-matplotlib libopenblas-dev \
+                python3-venv python3-pandas ccache git
     fi
 }
 
 check_packages_dev_version() {
     for package in $@; do
         package_version=$(python -c "import $package; print($package.__version__)")
-        if [[ $package_version =~ "^[.0-9]+$" ]]; then
+        if [[ $package_version =~ ^[.0-9]+$ ]]; then
             echo "$package is not a development version: $package_version"
             exit 1
         fi
@@ -65,29 +57,16 @@ check_packages_dev_version() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        source activate $VIRTUALENV
+        activate_environment
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
-        python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-        source $VIRTUALENV/bin/activate
+        python3 -m venv --system-site-packages $VIRTUALENV
+        activate_environment
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        python3.13t -m venv $VIRTUALENV
-        source $VIRTUALENV/bin/activate
-        pip install -r "${LOCK_FILE}"
-        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
-        # removed when the underlying Ubuntu image has pip>=24.1.
-        pip install 'pip>=24.1'
-        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
-        # scipy and cython move them to
-        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
-        # install them from scientific-python-nightly-wheels
-        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy Cython"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
     fi
 
+    # Install additional packages on top of the lock-file in specific cases
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
@@ -117,6 +96,11 @@ scikit_learn_install() {
         # brings in openmp so that you end up having the omp.h include inside
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
+        brew uninstall --ignore-dependencies --force libomp
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then

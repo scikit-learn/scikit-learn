@@ -1,5 +1,7 @@
 # Workflow to build and test wheels
 name: Wheel builder
+permissions:
+  contents: read
 
 on:
   schedule:
@@ -44,6 +46,11 @@ jobs:
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
+
+    # For conda-incubator/setup-miniconda to work
+    defaults:
+      run:
+        shell: bash -el {0}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
 
@@ -54,9 +61,6 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 39
-            platform_id: win_amd64
-          - os: windows-latest
             python: 310
             platform_id: win_amd64
           - os: windows-latest
@@ -65,54 +69,80 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 313t
+            platform_id: win_amd64
+            cibw_enable: cpython-freethreading
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
-            python: 39
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-
-          # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
-          - os: ubuntu-latest
             python: 310
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-
           - os: ubuntu-latest
             python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 312
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 313
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 313t
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            # TODO: remove next line when Python 3.13 is released
-            prerelease_pythons: True
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
+
+          # # Linux 64 bit manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 310
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 311
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 312
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313t
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+            cibw_enable: cpython-freethreading
 
           # MacOS x86_64
-          - os: macos-12
-            python: 39
-            platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 310
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 312
             platform_id: macosx_x86_64
+          - os: macos-13
+            python: 313
+            platform_id: macosx_x86_64
+          - os: macos-13
+            python: 313t
+            platform_id: macosx_x86_64
+            cibw_enable: cpython-freethreading
 
           # MacOS arm64
           - os: macos-14
-            python: 39
-            platform_id: macosx_arm64
-          - os: macos-14
             python: 310
             platform_id: macosx_arm64
           - os: macos-14
@@ -121,6 +151,13 @@ jobs:
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
+          - os: macos-14
+            python: 313
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 313t
+            platform_id: macosx_arm64
+            cibw_enable: cpython-freethreading
 
     steps:
       - name: Checkout scikit-learn
@@ -131,38 +168,14 @@ jobs:
         with:
           python-version: "3.11" # update once build dependencies are available
 
-      - name: Install conda for macos arm64
-        if: ${{ matrix.platform_id == 'macosx_arm64' }}
-        run: |
-          set -ex
-          # macos arm64 runners do not have conda installed. Thus we much install conda manually
-          EXPECTED_SHA="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
-          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/23.11.0-0/Mambaforge-23.11.0-0-MacOSX-arm64.sh"
-          curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
-
-          # Check SHA
-          file_sha=$(shasum -a 256 miniforge.sh | awk '{print $1}')
-          if [ "$EXPECTED_SHA" != "$file_sha" ]; then
-              echo "SHA values did not match!"
-              exit 1
-          fi
-
-          # Install miniforge
-          MINIFORGE_PATH=$HOME/miniforge
-          bash ./miniforge.sh -b -p $MINIFORGE_PATH
-          echo "$MINIFORGE_PATH/bin" >> $GITHUB_PATH
-          echo "CONDA_HOME=$MINIFORGE_PATH" >> $GITHUB_ENV
-
-      - name: Set conda environment for non-macos arm64 environments
-        if: ${{ matrix.platform_id != 'macosx_arm64' }}
-        run: |
-          # Non-macos arm64 envrionments already have conda installed
-          echo "CONDA_HOME=/usr/local/miniconda" >> $GITHUB_ENV
+      - uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
+        with:
+          miniforge-version: latest
 
       - name: Build and test wheels
         env:
-          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
-          CIBW_FREE_THREADED_SUPPORT: ${{ matrix.free_threaded_support }}
+          CIBW_ENABLE: ${{ matrix.cibw_enable }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
@@ -173,11 +186,16 @@ jobs:
           # toolchain
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
+          CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
+          CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
           CIBW_TEST_REQUIRES: pytest pandas
-          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
+          # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
+          # does not make sense because it would install dependencies in the host
+          # rather than inside the Docker image
+          CIBW_TEST_REQUIRES_WINDOWS: ""
+          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} {project}
           CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/wheels/build_wheels.sh
@@ -211,7 +229,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9" # update once build dependencies are available
+          python-version: "3.12"
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh

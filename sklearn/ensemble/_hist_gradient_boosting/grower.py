@@ -16,7 +16,6 @@ import numpy as np
 
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
-from ...utils.arrayfuncs import sum_parallel
 from ._bitset import set_raw_bitset_from_binned_bitset
 from .common import (
     PREDICTOR_RECORD_DTYPE,
@@ -353,7 +352,7 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
-        self._initialize_root(gradients, hessians)
+        self._initialize_root()
         self.n_nodes = 1
 
     def _validate_parameters(
@@ -401,15 +400,38 @@ class TreeGrower:
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
-    def _initialize_root(self, gradients, hessians):
+    def _initialize_root(self):
         """Initialize root node and finalize it if needed."""
+        tic = time()
+        if self.interaction_cst is not None:
+            allowed_features = set().union(*self.interaction_cst)
+            allowed_features = np.fromiter(
+                allowed_features, dtype=np.uint32, count=len(allowed_features)
+            )
+            arbitrary_feature = allowed_features[0]
+        else:
+            allowed_features = None
+            arbitrary_feature = 0
+
+        # TreeNode init needs the total sum of gradients and hessians. Therefore, we
+        # first compute the histograms and then compute the total grad/hess on an
+        # arbitrary feature histogram. This way we replace a loop over n_samples by a
+        # loop over n_bins.
+        histograms = self.histogram_builder.compute_histograms_brute(
+            self.splitter.partition,  # =self.root.sample_indices
+            allowed_features,
+        )
+        self.total_compute_hist_time += time() - tic
+
+        tic = time()
         n_samples = self.X_binned.shape[0]
         depth = 0
-        sum_gradients = sum_parallel(gradients, self.n_threads)
+        histogram_array = np.asarray(histograms[arbitrary_feature])
+        sum_gradients = histogram_array["sum_gradients"].sum()
         if self.histogram_builder.hessians_are_constant:
-            sum_hessians = hessians[0] * n_samples
+            sum_hessians = self.histogram_builder.hessians[0] * n_samples
         else:
-            sum_hessians = sum_parallel(hessians, self.n_threads)
+            sum_hessians = histogram_array["sum_hessians"].sum()
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
@@ -430,18 +452,10 @@ class TreeGrower:
 
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
-            allowed_features = set().union(*self.interaction_cst)
-            self.root.allowed_features = np.fromiter(
-                allowed_features, dtype=np.uint32, count=len(allowed_features)
-            )
+            self.root.allowed_features = allowed_features
 
-        tic = time()
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices, self.root.allowed_features
-        )
-        self.total_compute_hist_time += time() - tic
+        self.root.histograms = histograms
 
-        tic = time()
         self._compute_best_split_and_push(self.root)
         self.total_find_split_time += time() - tic
 
