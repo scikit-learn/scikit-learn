@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 from .._config import get_config
-from .fixes import SCIPY_VERSION_BELOW_1_12, SCIPY_VERSION_BELOW_1_15
+from .fixes import SCIPY_VERSION_BELOW_1_12
 
 
 def _align_api_if_sparse(X):

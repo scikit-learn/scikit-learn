@@ -82,15 +82,22 @@ def test_estimator_property_sparse(sparse_interface, result_type):
 @pytest.mark.parametrize(
     "constructor",
     [
-        sp.sparse.bsr_array, sp.sparse.bsr_matrix,
-        sp.sparse.csc_array, sp.sparse.csc_matrix,
-        sp.sparse.csr_array, sp.sparse.csr_matrix,
-        sp.sparse.coo_array, sp.sparse.coo_matrix,
-        sp.sparse.dia_array, sp.sparse.dia_matrix,
-        sp.sparse.dok_array, sp.sparse.dok_matrix,
-        sp.sparse.lil_array, sp.sparse.lil_matrix,
-    ]
+        sp.sparse.bsr_array,
+        sp.sparse.csc_array,
+        sp.sparse.csr_array,
+        sp.sparse.coo_array,
+        sp.sparse.dia_array,
+        sp.sparse.dok_array,
+        sp.sparse.lil_array,
+        sp.sparse.bsr_matrix,
+        sp.sparse.csc_matrix,
+        sp.sparse.csr_matrix,
+        sp.sparse.coo_matrix,
+        sp.sparse.dia_matrix,
+        sp.sparse.dok_matrix,
+        sp.sparse.lil_matrix,
+    ],
 )
-def test_estimator_property_sparse(constructor):
-    A = constructor(np.array([[1., 2., 3.], [3., 2., 1.]]))
+def test_ensure_sparse_index_int32(constructor):
+    A = constructor(np.array([[1.0, 2.0, 3.0], [3.0, 2.0, 1.0]]))
     sklearn.utils._sparse._ensure_sparse_index_int32(A)

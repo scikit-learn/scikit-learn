@@ -465,13 +465,13 @@ class LabelPropagation(BaseLabelPropagation):
         if sparse.issparse(affinity_matrix):
             normalizer = np.array(normalizer)  # convert np.matrix to np.array
             if normalizer.ndim == 2:
-                # old spmatrix workaround. But RHS result is a scalar when it should be a 1D vector
+                # old spmatrix treatment. RHS is a scalar (b/c normalizer is 2D row)
                 affinity_matrix.data /= np.diag(normalizer)
             else:
-                # This comment will do the (questionable) spmatrix workaround. 
-                # Instead: use the indices to pick out what spot in normalizer to use.
+                # We could use the (questionable) spmatrix treatment using:
                 # affinity_matrix.data /= np.diag(np.array(normalizer[np.newaxis, :]))
-                affinity_matrix.data /= normalizer[..., affinity_matrix.indices]
+                # Instead: use  numpy treatment dividing each row by its normalizer.
+                affinity_matrix.data /= normalizer[affinity_matrix.indices]
         else:
             affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix

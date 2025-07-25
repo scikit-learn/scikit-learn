@@ -21,8 +21,9 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils._sparse import _align_api_if_sparse, _sparse_eye, SCIPY_VERSION_BELOW_1_15
+from ..utils._sparse import _align_api_if_sparse, _sparse_eye
 from ..utils.extmath import stable_cumsum
+from ..utils.fixes import SCIPY_VERSION_BELOW_1_15
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 

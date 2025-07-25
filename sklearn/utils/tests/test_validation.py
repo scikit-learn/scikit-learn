@@ -1718,6 +1718,8 @@ def test_check_pos_label_consistency_invalid_array_api(
 
 
 CS_SPARSE = [sp.csr_array, sp.csr_matrix, sp.csc_array, sp.csc_matrix]
+
+
 @pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_equals(toarray):
     base = np.arange(9).reshape(3, 3)
