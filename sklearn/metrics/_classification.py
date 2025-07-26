@@ -664,7 +664,7 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
