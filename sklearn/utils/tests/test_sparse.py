@@ -84,20 +84,20 @@ INDEX_CONSTRUCTORS = [
     sp.sparse.csc_array,
     sp.sparse.csr_array,
     sp.sparse.coo_array,
-    sp.sparse.dia_array,
     sp.sparse.bsr_matrix,
     sp.sparse.csc_matrix,
     sp.sparse.csr_matrix,
     sp.sparse.coo_matrix,
-    sp.sparse.dia_matrix,
 ]
-NO_INDEX_CONSTRUCTORS = [
+NO_INDEX_TEST_CONSTRUCTORS = [
+    sp.sparse.dia_array,
     sp.sparse.dok_array,
     sp.sparse.lil_array,
+    sp.sparse.dia_matrix,
     sp.sparse.dok_matrix,
     sp.sparse.lil_matrix,
 ]
-SPARSE_CONSTRUCTORS = INDEX_CONSTRUCTORS + NO_INDEX_CONSTRUCTORS
+SPARSE_CONSTRUCTORS = INDEX_CONSTRUCTORS + NO_INDEX_TEST_CONSTRUCTORS
 
 
 @pytest.mark.parametrize("constructor", SPARSE_CONSTRUCTORS)
