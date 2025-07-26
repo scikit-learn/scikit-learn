@@ -33,7 +33,7 @@ Features                  text
   fetching / caching functions that downloads the data archive from
   the original `20 newsgroups website <http://people.csail.mit.edu/jrennie/20Newsgroups/>`__,
   extracts the archive contents
-  in the ``~/scikit_learn_data/20news_home`` folder and calls the
+  in the operating system's standard cache directory and calls the
   :func:`sklearn.datasets.load_files` on either the training or
   testing set folder, or both of them::
 
