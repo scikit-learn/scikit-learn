@@ -49,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: pymin_conda_forge_arm_linux-aarch64
+          - name: pymin_conda_forge_arm
             os: ubuntu-24.04-arm
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
