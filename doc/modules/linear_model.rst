@@ -1851,3 +1851,7 @@ And the classifier "predictions" are perfect::
     array([0, 1, 1, 0])
     >>> clf.score(X, y)
     1.0
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
