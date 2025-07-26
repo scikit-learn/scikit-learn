@@ -21,6 +21,7 @@ from ._indexing import (
 from ._mask import safe_mask
 from ._repr_html.base import _HTMLDocumentationLinkMixin  # noqa: F401
 from ._repr_html.estimator import estimator_html_repr
+from ._sparse import _align_api_if_sparse
 from ._tags import (
     ClassifierTags,
     InputTags,
@@ -57,6 +58,7 @@ __all__ = [
     "Tags",
     "TargetTags",
     "TransformerTags",
+    "_align_api_if_sparse",
     "all_estimators",
     "as_float_array",
     "assert_all_finite",

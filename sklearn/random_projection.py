@@ -42,6 +42,7 @@ from .base import (
 from .exceptions import DataDimensionalityWarning
 from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions, validate_params
+from .utils._sparse import _align_api_if_sparse
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted, validate_data
@@ -297,9 +298,10 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
         data = rng.binomial(1, 0.5, size=np.size(indices)) * 2 - 1
 
         # build the CSR structure by concatenating the rows
-        components = sp.csr_matrix(
+        components = sp.csr_array(
             (data, indices, indptr), shape=(n_components, n_features)
         )
+        components = _align_api_if_sparse(components)
 
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 

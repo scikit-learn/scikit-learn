@@ -16,12 +16,13 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import metadata_routing
+from sklearn.utils import _align_api_if_sparse, metadata_routing
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
 from ..exceptions import NotFittedError
 from ..preprocessing import normalize
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from ..utils._sparse import SCIPY_VERSION_BELOW_1_12
 from ..utils.fixes import _IS_32BIT
 from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted, validate_data
 from ._hash import FeatureHasher
@@ -880,7 +881,7 @@ class HashingVectorizer(
             X.data.fill(1)
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
-        return X
+        return _align_api_if_sparse(X)
 
     def fit_transform(self, X, y=None):
         """Transform a sequence of documents to a document-term matrix.
@@ -929,7 +930,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     r"""Convert a collection of text documents to a matrix of token counts.
 
     This implementation produces a sparse representation of the counts using
-    scipy.sparse.csr_matrix.
+    scipy.sparse.csr_array.
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
@@ -1300,13 +1301,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indptr = np.asarray(indptr, dtype=indices_dtype)
         values = np.frombuffer(values, dtype=np.intc)
 
-        X = sp.csr_matrix(
+        X = sp.csr_array(
             (values, j_indices, indptr),
             shape=(len(indptr) - 1, len(vocabulary)),
             dtype=self.dtype,
         )
         X.sort_indices()
-        return vocabulary, X
+        return vocabulary, _align_api_if_sparse(X)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -1393,7 +1394,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
 
-        return X
+        return _align_api_if_sparse(X)
 
     def transform(self, raw_documents):
         """Transform documents to document-term matrix.
@@ -1421,7 +1422,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
         if self.binary:
             X.data.fill(1)
-        return X
+        return _align_api_if_sparse(X)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -1446,8 +1447,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         inverse_vocabulary = terms[np.argsort(indices)]
 
         if sp.issparse(X):
+            if SCIPY_VERSION_BELOW_1_12:
+                return [
+                    inverse_vocabulary[X[[i], :].nonzero()[-1]].ravel()
+                    for i in range(n_samples)
+                ]
             return [
-                inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+                inverse_vocabulary[X[i, :].nonzero()[-1]].ravel()
                 for i in range(n_samples)
             ]
         else:
@@ -1655,7 +1661,7 @@ class TfidfTransformer(
             self, X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
         )
         if not sp.issparse(X):
-            X = sp.csr_matrix(X)
+            X = sp.csr_array(X)
         dtype = X.dtype if X.dtype in (np.float64, np.float32) else np.float64
 
         if self.use_idf:
@@ -1706,7 +1712,7 @@ class TfidfTransformer(
             reset=False,
         )
         if not sp.issparse(X):
-            X = sp.csr_matrix(X, dtype=X.dtype)
+            X = sp.csr_array(X, dtype=X.dtype)
 
         if self.sublinear_tf:
             np.log(X.data, X.data)
@@ -1720,7 +1726,7 @@ class TfidfTransformer(
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
 
-        return X
+        return _align_api_if_sparse(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

@@ -20,6 +20,12 @@ from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._sparse import (
+    _align_api_if_sparse,
+    _sparse_diags,
+    _sparse_eye,
+    _sparse_random,
+)
 from ..utils.random import sample_without_replacement
 
 
@@ -551,10 +557,12 @@ def make_multilabel_classification(
         X_indptr.append(len(X_indices))
         Y.append(y)
     X_data = np.ones(len(X_indices), dtype=np.float64)
-    X = sp.csr_matrix((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
+    X = sp.csr_array((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
     X.sum_duplicates()
     if not sparse:
         X = X.toarray()
+    else:
+        X = _align_api_if_sparse(X)
 
     # return_indicator can be True due to backward compatibility
     if return_indicator in (True, "sparse", "dense"):
@@ -1819,13 +1827,12 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -sp.eye(n_dim)
-    aux = sp.random(
-        m=n_dim,
-        n=n_dim,
+    chol = -_sparse_eye(n_dim)
+    aux = _sparse_random(
+        shape=(n_dim, n_dim),
         density=1 - alpha,
-        data_rvs=lambda x: random_state.uniform(
-            low=smallest_coef, high=largest_coef, size=x
+        data_sampler=lambda size: random_state.uniform(
+            low=smallest_coef, high=largest_coef, size=size
         ),
         random_state=random_state,
     )
@@ -1841,13 +1848,13 @@ def make_sparse_spd_matrix(
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
+        d = _sparse_diags(1.0 / np.sqrt(prec.diagonal()))
         prec = d @ prec @ d
 
     if sparse_format is None:
         return prec.toarray()
     else:
-        return prec.asformat(sparse_format)
+        return _align_api_if_sparse(prec.asformat(sparse_format))
 
 
 @validate_params(
