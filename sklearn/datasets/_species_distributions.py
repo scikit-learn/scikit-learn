@@ -31,7 +31,7 @@ R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
 import logging
 from io import BytesIO
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
@@ -233,8 +233,6 @@ def fetch_species_distributions(
     see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
     data_home = get_data_home(data_home)
-    if not exists(data_home):
-        makedirs(data_home)
 
     # Define parameters for the data files.  These should not be changed
     # unless the data model changes.  They will be saved in the npz file
