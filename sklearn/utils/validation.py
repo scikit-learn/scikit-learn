@@ -2138,7 +2138,7 @@ def _check_sample_weight(
     X,
     *,
     dtype=None,
-    allow_non_float=False,
+    force_float_dtype=True,
     ensure_non_negative=False,
     copy=False,
 ):
@@ -2168,8 +2168,8 @@ def _check_sample_weight(
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
 
-    allow_non_float : bool, default=False
-        Whether to allow `X` to be a non-float dtype, when `dtype` is a non-float
+    force_float_dtype : bool, default=True
+        Whether `X` should be forced to be float dtype, when `dtype` is a non-float
         dtype or None.
 
     ensure_non_negative : bool, default=False,
@@ -2195,7 +2195,7 @@ def _check_sample_weight(
     float_dtypes = (
         [xp.float32] if max_float_type == xp.float32 else [xp.float64, xp.float32]
     )
-    if not allow_non_float and dtype is not None and dtype not in float_dtypes:
+    if force_float_dtype and dtype is not None and dtype not in float_dtypes:
         dtype = max_float_type
 
     if sample_weight is None:
@@ -2203,7 +2203,7 @@ def _check_sample_weight(
     elif isinstance(sample_weight, numbers.Number):
         sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
-        if not allow_non_float and dtype is None:
+        if force_float_dtype and dtype is None:
             dtype = float_dtypes
         sample_weight = check_array(
             sample_weight,

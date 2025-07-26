@@ -103,7 +103,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     type_pred = type_of_target(y_pred, input_name="y_pred")
     if sample_weight is not None:
         sample_weight = _check_sample_weight(
-            sample_weight, y_true, allow_non_float=True
+            sample_weight, y_true, force_float_dtype=True
         )
 
     y_type = {type_true, type_pred}
@@ -209,7 +209,7 @@ def _validate_multiclass_probabilistic_prediction(
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true, allow_non_float=True)
+        _check_sample_weight(sample_weight, y_true, force_float_dtype=True)
 
     lb = LabelBinarizer()
 
@@ -3455,7 +3455,7 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true, allow_non_float=True)
+        _check_sample_weight(sample_weight, y_true, force_float_dtype=True)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
