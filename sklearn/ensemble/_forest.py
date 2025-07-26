@@ -1209,7 +1209,7 @@ class RandomForestClassifier(ForestClassifier):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "log_loss" and "entropy" both for the
         Shannon information gain, see :ref:`tree_mathematical_formulation`.
-        Note: This parameter is tree-specific.
+        Note: This parameter is passed to the underlying "DecisionTreeClassifier" estimators.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1614,6 +1614,8 @@ class RandomForestRegressor(ForestRegressor):
         uses reduction in Poisson deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
+        Note: This parameter is passed to the underlying ``DecisionTreeRegressor``
+        estimators.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
