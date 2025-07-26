@@ -2134,7 +2134,13 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, *, dtype=None, ensure_non_negative=False, copy=False
+    sample_weight,
+    X,
+    *,
+    dtype=None,
+    force_float_dtype=True,
+    ensure_non_negative=False,
+    copy=False,
 ):
     """Validate sample weights.
 
@@ -2162,6 +2168,10 @@ def _check_sample_weight(
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
 
+    force_float_dtype : bool, default=True
+        Whether `X` should be forced to be float dtype, when `dtype` is a non-float
+        dtype or None.
+
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
@@ -2185,7 +2195,7 @@ def _check_sample_weight(
     float_dtypes = (
         [xp.float32] if max_float_type == xp.float32 else [xp.float64, xp.float32]
     )
-    if dtype is not None and dtype not in float_dtypes:
+    if force_float_dtype and dtype is not None and dtype not in float_dtypes:
         dtype = max_float_type
 
     if sample_weight is None:
@@ -2193,7 +2203,7 @@ def _check_sample_weight(
     elif isinstance(sample_weight, numbers.Number):
         sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
-        if dtype is None:
+        if force_float_dtype and dtype is None:
             dtype = float_dtypes
         sample_weight = check_array(
             sample_weight,
