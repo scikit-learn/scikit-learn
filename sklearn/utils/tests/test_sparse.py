@@ -79,25 +79,38 @@ def test_estimator_property_sparse(sparse_interface, result_type):
         assert isinstance(regr.sparse_coef_, result_type)
 
 
-@pytest.mark.parametrize(
-    "constructor",
-    [
-        sp.sparse.bsr_array,
-        sp.sparse.csc_array,
-        sp.sparse.csr_array,
-        sp.sparse.coo_array,
-        sp.sparse.dia_array,
-        sp.sparse.dok_array,
-        sp.sparse.lil_array,
-        sp.sparse.bsr_matrix,
-        sp.sparse.csc_matrix,
-        sp.sparse.csr_matrix,
-        sp.sparse.coo_matrix,
-        sp.sparse.dia_matrix,
-        sp.sparse.dok_matrix,
-        sp.sparse.lil_matrix,
-    ],
-)
+INDEX_CONSTRUCTORS = [
+    sp.sparse.bsr_array,
+    sp.sparse.csc_array,
+    sp.sparse.csr_array,
+    sp.sparse.coo_array,
+    sp.sparse.dia_array,
+    sp.sparse.bsr_matrix,
+    sp.sparse.csc_matrix,
+    sp.sparse.csr_matrix,
+    sp.sparse.coo_matrix,
+    sp.sparse.dia_matrix,
+]
+NO_INDEX_CONSTRUCTORS = [
+    sp.sparse.dok_array,
+    sp.sparse.lil_array,
+    sp.sparse.dok_matrix,
+    sp.sparse.lil_matrix,
+]
+SPARSE_CONSTRUCTORS = INDEX_CONSTRUCTORS + NO_INDEX_CONSTRUCTORS
+
+
+@pytest.mark.parametrize("constructor", SPARSE_CONSTRUCTORS)
 def test_ensure_sparse_index_int32(constructor):
     A = constructor(np.array([[1.0, 2.0, 3.0], [3.0, 2.0, 1.0]]))
     sklearn.utils._sparse._ensure_sparse_index_int32(A)
+
+
+@pytest.mark.parametrize("constructor", INDEX_CONSTRUCTORS)
+def test_ensure_int32_raises(constructor):
+    with pytest.raises(ValueError, match="too large"):
+        rows, cols = [2, 0], [1, np.iinfo(np.int32).max + 1]
+        if constructor._format == "csc":
+            rows, cols = cols, rows
+        A = sp.sparse.coo_array(([1.0, 2.0], (rows, cols)))
+        sklearn.utils._sparse._ensure_sparse_index_int32(constructor(A))

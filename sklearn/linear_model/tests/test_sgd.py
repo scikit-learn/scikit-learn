@@ -70,8 +70,9 @@ class _SparseSGDRegressor(linear_model.SGDRegressor):
 
     def decision_function(self, X, *args, **kw):
         # XXX untested as of v0.22
-        X = _align_api_if_sparse(sp.csr_array(X))
-        return linear_model.SGDRegressor.decision_function(self, X, *args, **kw)
+        return linear_model.SGDRegressor.decision_function(
+            self, _align_api_if_sparse(X), *args, **kw
+        )
 
 
 class _SparseSGDOneClassSVM(linear_model.SGDOneClassSVM):
