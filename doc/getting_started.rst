@@ -119,6 +119,29 @@ the test data::
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
 
+Healthcare datasets
+-------------------
+
+Medical datasets can also be useful for healthcare machine learning applications.
+Here is an example of using the breast cancer dataset:
+
+  >>> from sklearn.datasets import load_breast_cancer
+  >>> # Load the breast cancer dataset  
+  >>> breast_cancer = load_breast_cancer()
+  >>> print(f"Dataset shape: {breast_cancer.data.shape}")
+  Dataset shape: (569, 30)
+  >>> print(f"Classes: {breast_cancer.target_names}")
+  Classes: ['malignant' 'benign']
+  >>> # Contains measurements from breast cancer biopsies
+  >>> # which can possibly be used to predict malignant(harmful) or benign(not harmful) tumors
+  >>> X, y = breast_cancer.data, breast_cancer.target
+  >>> print(f"Number of malignant cases: {sum(y == 0)}")
+  Number of malignant cases: 212
+  >>> print(f"Number of benign cases: {sum(y == 1)}")  
+  Number of benign cases: 357
+
+This demonstrates how scikit-learn can be applied to healthcare problems as well.
+
 Model evaluation
 ----------------
 
