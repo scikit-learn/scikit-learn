@@ -1,0 +1,4 @@
+- Validation update: Added a `ValueError` in `tree.export_graphviz` to ensure
+  that all feature names are strings. This improves input validation and prevents
+  unexpected behavior when non-string feature names are provided.
+  By :user:`Guilherme Peixoto <guilhermecsnpeixoto>`
