@@ -107,6 +107,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    pos_label : int, str or None, default=None
+        The positive label when `target_type` is "binary". When `pos_label=None`
+        the positive label is inferred from the data. Only used when
+        `target_type` is "binary".
+
+        .. versionadded:: 1.6
+
     Attributes
     ----------
     encodings_ : list of shape (n_features,) or (n_features * n_classes) of \
@@ -193,6 +200,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "cv": [Interval(Integral, 2, None, closed="left")],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
+        "pos_label": [None, Integral, str, "boolean"],
     }
 
     def __init__(
@@ -203,6 +211,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         cv=5,
         shuffle=True,
         random_state=None,
+        pos_label=None,
     ):
         self.categories = categories
         self.smooth = smooth
@@ -210,6 +219,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
         self.shuffle = shuffle
         self.random_state = random_state
+        self.pos_label = pos_label
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -373,9 +383,18 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         self.classes_ = None
         if self.target_type_ == "binary":
-            label_encoder = LabelEncoder()
-            y = label_encoder.fit_transform(y)
-            self.classes_ = label_encoder.classes_
+            if self.pos_label is not None:
+                label_binarizer = LabelBinarizer(pos_label=self.pos_label)
+                y = label_binarizer.fit_transform(y)
+                # For binary classification, LabelBinarizer may return 1D array, 
+                # convert to 2D for consistency
+                if y.ndim == 1:
+                    y = y.reshape(-1, 1)
+                self.classes_ = label_binarizer.classes_
+            else:
+                label_encoder = LabelEncoder()
+                y = label_encoder.fit_transform(y)
+                self.classes_ = label_encoder.classes_
         elif self.target_type_ == "multiclass":
             label_binarizer = LabelBinarizer()
             y = label_binarizer.fit_transform(y)
