@@ -716,9 +716,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         sparse = sp.issparse(X)
 
         if self.sample_interval is None:
-            # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
+            # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
             # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
-            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
+            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
             # 2011
             if self.sample_steps == 1:
                 sample_interval = 0.8

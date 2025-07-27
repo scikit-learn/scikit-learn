@@ -746,7 +746,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    np.float64(0.0182...)
+    np.float64(0.0182)
     """
 
     _parameter_constraints: dict = {

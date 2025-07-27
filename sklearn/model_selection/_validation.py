@@ -6,7 +6,6 @@ functions to validate the model.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import time
 import warnings
@@ -336,7 +335,7 @@ def cross_validate(
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])
-    [-3635.5... -3573.3... -6114.7...]
+    [-3635.5 -3573.3 -6114.7]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
@@ -819,9 +818,9 @@ def _fit_and_score(
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
+            progress_msg = f" {split_progress[0] + 1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
+            progress_msg += f"; {candidate_progress[0] + 1}/{candidate_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
@@ -1163,6 +1162,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
+
+    For a detailed example of using ``cross_val_predict`` to visualize
+    prediction errors, please see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
@@ -1930,6 +1933,11 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See Also
+    --------
+    LearningCurveDisplay.from_estimator : Plot a learning curve using an
+        estimator and data.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -2391,6 +2399,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----

@@ -159,7 +159,7 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, download the `Build Tools for Visual Studio 2019 installer
+First, download the `Build Tools for Visual Studio installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
@@ -168,39 +168,12 @@ screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
 
-Secondly, find out if you are running 64-bit or 32-bit Python. The building
-command depends on the architecture of the Python interpreter. You can check
-the architecture by running the following in ``cmd`` or ``powershell``
-console:
+Build scikit-learn by running the following command in your `sklearn-env` conda environment
+or virtualenv:
 
 .. prompt:: bash $
 
-    python -c "import struct; print(struct.calcsize('P') * 8)"
-
-For 64-bit Python, configure the build environment by running the following
-commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
-
-.. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
-.. so we work around by using a known prompt type and an explicit prompt text.
-..
-.. prompt:: bash C:\>
-
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-
-Replace ``x64`` by ``x86`` to build for 32-bit Python.
-
-Please be aware that the path above might be different from user to user. The
-aim is to point to the "vcvarsall.bat" file that will set the necessary
-environment variables in the current command prompt.
-
-Finally, build scikit-learn with this command prompt:
-
-.. prompt:: bash $
-
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
+    pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
 
 .. _compiler_macos:
 

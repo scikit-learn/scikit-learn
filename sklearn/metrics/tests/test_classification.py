@@ -596,7 +596,7 @@ def test_multilabel_confusion_matrix_errors():
     # Bad sample_weight
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
-    with pytest.raises(ValueError, match="should be a 1d array"):
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
         multilabel_confusion_matrix(
             y_true, y_pred, sample_weight=[[1, 2, 3], [2, 3, 4], [3, 4, 5]]
         )
@@ -709,9 +709,7 @@ def test_likelihood_ratios_warnings(params, warn_msg):
     # least one of the ratios is ill-defined.
 
     with pytest.warns(UserWarning, match=warn_msg):
-        # TODO(1.9): remove setting `replace_undefined_by` since this will be set by
-        # default
-        class_likelihood_ratios(replace_undefined_by=1.0, **params)
+        class_likelihood_ratios(**params)
 
 
 @pytest.mark.parametrize(
@@ -736,7 +734,6 @@ def test_likelihood_ratios_errors(params, err_msg):
         class_likelihood_ratios(**params)
 
 
-# TODO(1.9): remove setting `replace_undefined_by` since this will be set by default
 def test_likelihood_ratios():
     # Build confusion matrix with tn=9, fp=8, fn=1, tp=2,
     # sensitivity=2/3, specificity=9/17, prevalence=3/20,
@@ -744,14 +741,12 @@ def test_likelihood_ratios():
     y_true = np.array([1] * 3 + [0] * 17)
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
-    pos, neg = class_likelihood_ratios(y_true, y_pred, replace_undefined_by=np.nan)
+    pos, neg = class_likelihood_ratios(y_true, y_pred)
     assert_allclose(pos, 34 / 24)
     assert_allclose(neg, 17 / 27)
 
     # Build limit case with y_pred = y_true
-    pos, neg = class_likelihood_ratios(y_true, y_true, replace_undefined_by=np.nan)
-    # TODO(1.9): replace next line with `assert_array_equal(pos, 1.0)`, since
-    # `replace_undefined_by` has a new default:
+    pos, neg = class_likelihood_ratios(y_true, y_true)
     assert_array_equal(pos, np.nan * 2)
     assert_allclose(neg, np.zeros(2), rtol=1e-12)
 
@@ -759,9 +754,7 @@ def test_likelihood_ratios():
     # sensitivity=2/3, specificity=9/12, prevalence=3/20,
     # LR+=24/9, LR-=12/27
     sample_weight = np.array([1.0] * 15 + [0.0] * 5)
-    pos, neg = class_likelihood_ratios(
-        y_true, y_pred, sample_weight=sample_weight, replace_undefined_by=np.nan
-    )
+    pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
     assert_allclose(pos, 24 / 9)
     assert_allclose(neg, 12 / 27)
 
@@ -777,18 +770,6 @@ def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
     msg = "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9."
     with pytest.warns(FutureWarning, match=msg):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
-
-
-# TODO(1.9): remove test
-def test_likelihood_ratios_raise_default_deprecation():
-    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
-    and `replace_undefined_by` are both default."""
-    y_true = np.array([1, 0])
-    y_pred = np.array([1, 0])
-
-    msg = "The default return value of `class_likelihood_ratios` in case of a"
-    with pytest.warns(FutureWarning, match=msg):
-        class_likelihood_ratios(y_true, y_pred)
 
 
 def test_likelihood_ratios_replace_undefined_by_worst():
@@ -924,6 +905,17 @@ def test_cohen_kappa():
     assert_almost_equal(
         cohen_kappa_score(y1, y2, weights="quadratic"), 0.9541, decimal=4
     )
+
+
+def test_cohen_kappa_score_error_wrong_label():
+    """Test that correct error is raised when users pass labels that are not in y1."""
+    labels = [1, 2]
+    y1 = np.array(["a"] * 5 + ["b"] * 5)
+    y2 = np.array(["b"] * 10)
+    with pytest.raises(
+        ValueError, match="At least one label in `labels` must be present in `y1`"
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
@@ -2549,7 +2541,7 @@ def test__check_targets():
                         _check_targets(y1, y2)
 
         else:
-            merged_type, y1out, y2out = _check_targets(y1, y2)
+            merged_type, y1out, y2out, _ = _check_targets(y1, y2)
             assert merged_type == expected
             if merged_type.startswith("multilabel"):
                 assert y1out.format == "csr"
@@ -3314,6 +3306,46 @@ def test_d2_log_loss_score():
     assert d2_score < 0
     d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
     assert d2_score < 0
+
+
+def test_d2_log_loss_score_missing_labels():
+    """Check that d2_log_loss_score works when not all labels are present in y_true
+
+    non-regression test for https://github.com/scikit-learn/scikit-learn/issues/30713
+    """
+    y_true = [2, 0, 2, 0]
+    labels = [0, 1, 2]
+    sample_weight = [1.4, 0.6, 0.7, 0.3]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
+
+    # Null model consists of weighted average of the classes.
+    # Given that the sum of the weights is 3,
+    # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
+    # - weighted average of 1s is 0
+    # - weighted average of 2s is (1.4 + 0.7) / 3 = 0.7
+    y_pred_null = np.tile([0.3, 0, 0.7], (4, 1))
+    log_loss_null = log_loss(
+        y_true, y_pred_null, sample_weight=sample_weight, labels=labels
+    )
+
+    expected_d2_score = 1 - log_loss_obs / log_loss_null
+    d2_score = d2_log_loss_score(
+        y_true, y_pred, sample_weight=sample_weight, labels=labels
+    )
+    assert_allclose(d2_score, expected_d2_score)
+
+
+def test_d2_log_loss_score_label_order():
+    """Check that d2_log_loss_score doesn't depend on the order of the labels."""
+    y_true = [2, 0, 2, 0]
+    y_pred = np.tile([1, 0, 0], (4, 1))
+
+    d2_score = d2_log_loss_score(y_true, y_pred, labels=[0, 1, 2])
+    d2_score_other = d2_log_loss_score(y_true, y_pred, labels=[0, 2, 1])
+
+    assert_allclose(d2_score, d2_score_other)
 
 
 def test_d2_log_loss_score_raises():

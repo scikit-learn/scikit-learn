@@ -205,6 +205,8 @@ def grid_to_graph(
 
     Edges exist if 2 voxels are connected.
 
+    Read more in the :ref:`User Guide <connectivity_graph_image>`.
+
     Parameters
     ----------
     n_x : int

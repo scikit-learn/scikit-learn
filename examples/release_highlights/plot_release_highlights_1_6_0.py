@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001, E501
 """
 =======================================
 Release Highlights for scikit-learn 1.6
@@ -33,6 +33,7 @@ or with conda::
 # or to pass a pre-fitted model to some of the meta-estimators. Here's a short example:
 
 import time
+
 from sklearn.datasets import make_classification
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import SGDClassifier
@@ -122,6 +123,7 @@ print(
 # :class:`ensemble.ExtraTreesRegressor` now support missing values. More details in the
 # :ref:`User Guide <tree_missing_value_support>`.
 import numpy as np
+
 from sklearn.ensemble import ExtraTreesClassifier
 
 X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)

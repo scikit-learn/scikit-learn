@@ -32,10 +32,10 @@ The decision making process and governance structure of scikit-learn, like roles
 The people behind scikit-learn
 ==============================
 
-Scikit-learn is a community project, developed by a large group of
+scikit-learn is a community project, developed by a large group of
 people, all across the world. A few core contributor teams, listed below, have
 central roles, however a more complete list of contributors can be found `on
-github
+GitHub
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
 
 Active Core Contributors
@@ -93,6 +93,7 @@ Emeritus Maintainers Team
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
+.. rst-class:: grid-list-three-columns
 .. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
@@ -158,12 +159,13 @@ Bibtex entry::
     pages = {108--122},
   }
 
-Artwork
-=======
+Branding & Logos
+================
 
-High quality PNG and SVG logos are available in the `doc/logos/
+High quality PNG and SVG logos are available in the `doc/logos
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
-source directory.
+source directory. The color palette is available in the
+`Branding Guide <https://github.com/scikit-learn/blog?tab=readme-ov-file#brand-standards>`_.
 
 .. image:: images/scikit-learn-logo-notext.png
   :align: center
@@ -580,8 +582,43 @@ the past:
 
     |hf|
 
+
+Donations in Kind
+-----------------
+The following organizations provide non-financial contributions to the
+scikit-learn project.
+
+.. raw:: html
+
+  <table cellspacing="0" cellpadding="8">
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Contribution</th>
+      </tr>
+    </thead>
+    <tbody>
+          <tr>
+        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
+        <td>Storage for our staging and nightly builds</td>
+      </tr>
+      <tr>
+        <td><a href="https://circleci.com/">CircleCI</a></td>
+        <td>CPU time on their Continuous Integration servers</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.github.com">GitHub</a></td>
+        <td>Teams account</td>
+      </tr>
+      <tr>
+        <td><a href="https://azure.microsoft.com/en-us/">Microsoft Azure</a></td>
+        <td>CPU time on their Continuous Integration servers</td>
+      </tr>
+    </tbody>
+  </table>
+
 Coding Sprints
-==============
+--------------
 
 The scikit-learn project has a long history of `open source coding sprints
 <https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
@@ -593,40 +630,52 @@ list of events.
 Donating to the project
 =======================
 
-If you are interested in donating to the project or to one of our code-sprints,
-please donate via the `NumFOCUS Donations Page
-<https://numfocus.org/donate-to-scikit-learn>`_.
+If you have found scikit-learn to be useful in your work, research, or company, 
+please consider making a donation to the project commensurate with your resources.
+There are several options for making donations:
 
 .. raw:: html
 
   <p class="text-center">
     <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">
-      Help us, <strong>donate!</strong>
+      Donate via NumFOCUS
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://github.com/sponsors/scikit-learn">
+      Donate via GitHub Sponsors
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://causes.benevity.org/projects/433725">
+      Donate via Benevity
     </a>
   </p>
 
-All donations will be handled by `NumFOCUS <https://numfocus.org/>`_, a non-profit
-organization which is managed by a board of `Scipy community members
-<https://numfocus.org/board.html>`_. NumFOCUS's mission is to foster scientific
-computing software, in particular in Python. As a fiscal home of scikit-learn, it
-ensures that money is available when needed to keep the project funded and available
-while in compliance with tax regulations.
+**Donation Options:**
 
-The received donations for the scikit-learn project mostly will go towards covering
-travel-expenses for code sprints, as well as towards the organization budget of the
-project [#f1]_.
+* **NumFOCUS**: Donate via the `NumFOCUS Donations Page
+  <https://numfocus.org/donate-to-scikit-learn>`_, scikit-learn's fiscal sponsor.
+
+* **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
+  <https://github.com/sponsors/scikit-learn>`_.
+
+* **Benevity**: If your company uses scikit-learn, you can also support the
+  project through Benevity, a platform to manage employee donations. It is
+  widely used by hundreds of Fortune 1000 companies to streamline and scale
+  their social impact initiatives. If your company uses Benevity, you are
+  able to make a donation with a company match as high as 100%. Our project
+  ID is `433725 <https://causes.benevity.org/projects/433725>`_.
+
+All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
+non-profit organization based in Austin, Texas, USA. The NumFOCUS board
+consists of `SciPy community members <https://numfocus.org/board.html>`_. 
+Contributions are tax-deductible to the extent allowed by law.
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget, in particular, we might use some of
-  the donated funds to pay for other project expenses such as DNS,
-  hosting or continuous integration services.
+Contributions support the maintenance of the project, including development, 
+documentation, infrastructure and coding sprints. 
 
 
-Infrastructure support
-======================
-
-We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-us/>`_,
-`CircleCl <https://circleci.com/>`_ for free CPU
-time on their Continuous Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_
-for the storage they provide for our staging and nightly builds.
+scikit-learn Swag
+-----------------
+Official scikit-learn swag is available for purchase at the `NumFOCUS online store
+<https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
+A portion of the proceeds from each sale goes to support the scikit-learn project.

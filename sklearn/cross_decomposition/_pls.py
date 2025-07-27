@@ -419,10 +419,10 @@ class _PLS(
 
         Returns
         -------
-        X_reconstructed : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Return the reconstructed `X` data.
 
-        y_reconstructed : ndarray of shape (n_samples, n_targets)
+        y_original : ndarray of shape (n_samples, n_targets)
             Return the reconstructed `X` target. Only returned when `y` is given.
 
         Notes

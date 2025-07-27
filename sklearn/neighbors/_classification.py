@@ -182,7 +182,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[0.666... 0.333...]]
+    [[0.666 0.333]]
     """
 
     _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
@@ -359,7 +359,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     # on many combination of datasets.
                     # Hence, we choose to enforce it here.
                     # For more information, see:
-                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
+                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342
                     # TODO: adapt the heuristic for `strategy="auto"` for
                     # `ArgKminClassMode` and use `strategy="auto"`.
                     strategy="parallel_on_X",
@@ -807,7 +807,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 # on many combination of datasets.
                 # Hence, we choose to enforce it here.
                 # For more information, see:
-                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471  # noqa
+                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471
             )
             return probabilities
 

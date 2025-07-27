@@ -1433,7 +1433,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X_inv : list of arrays of shape (n_samples,)
+        X_original : list of arrays of shape (n_samples,)
             List of arrays of terms.
         """
         self._check_vocabulary()

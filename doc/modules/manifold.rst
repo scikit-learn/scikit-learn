@@ -112,6 +112,12 @@ from the data itself, without the use of predetermined classifications.
   using manifold learning to map the stock market structure based on historical stock
   prices.
 
+* See :ref:`sphx_glr_auto_examples_manifold_plot_manifold_sphere.py` for an example of
+  manifold learning techniques applied to a spherical data-set.
+
+* See :ref:`sphx_glr_auto_examples_manifold_plot_swissroll.py` for an example of using 
+  manifold learning techniques on a Swiss Roll dataset.
+
 The manifold learning implementations available in scikit-learn are
 summarized below
 

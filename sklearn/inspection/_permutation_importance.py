@@ -262,9 +262,9 @@ def permutation_importance(
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
     ...                                 random_state=0)
     >>> result.importances_mean
-    array([0.4666..., 0.       , 0.       ])
+    array([0.4666, 0.       , 0.       ])
     >>> result.importances_std
-    array([0.2211..., 0.       , 0.       ])
+    array([0.2211, 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
         X = check_array(X, ensure_all_finite="allow-nan", dtype=None)

@@ -61,7 +61,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
-    classifier and subsequently calibrate a classifier. With default
+    classifier and subsequently calibrate a classifier. With
     `ensemble=True`, for each cv split it
     fits a copy of the base estimator to the training subset, and calibrates it
     using the testing subset. For prediction, predicted probabilities are
@@ -225,11 +225,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
     >>> calibrated_clf.predict_proba(X)[:5, :]
-    array([[0.110..., 0.889...],
-           [0.072..., 0.927...],
-           [0.928..., 0.071...],
-           [0.928..., 0.071...],
-           [0.071..., 0.928...]])
+    array([[0.110, 0.889],
+           [0.072, 0.927],
+           [0.928, 0.072],
+           [0.928, 0.072],
+           [0.072, 0.928]])
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
@@ -246,7 +246,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
-    array([[0.936..., 0.063...]])
+    array([[0.936, 0.063]])
     """
 
     _parameter_constraints: dict = {
@@ -1005,6 +1005,13 @@ def calibration_curve(
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
 
+    See Also
+    --------
+    CalibrationDisplay.from_predictions : Plot calibration curve using true
+        and predicted labels.
+    CalibrationDisplay.from_estimator : Plot calibration curve using an
+        estimator and data.
+
     References
     ----------
     Alexandru Niculescu-Mizil and Rich Caruana (2005) Predicting Good
@@ -1095,9 +1102,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The positive class when computing the calibration curve.
-        By default, `pos_label` is set to `estimators.classes_[1]` when using
-        `from_estimator` and set to 1 when using `from_predictions`.
+        The positive class when calibration curve computed.
+        If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 1.1
 
@@ -1378,7 +1384,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
-            By default `pos_label` is set to 1.
+            When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
+            `pos_label` is set to 1, otherwise an error will be raised.
 
             .. versionadded:: 1.1
 

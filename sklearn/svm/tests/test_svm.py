@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 
 # mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
-from sklearn.svm import (  # type: ignore
+from sklearn.svm import (  # type: ignore[attr-defined]
     SVR,
     LinearSVC,
     LinearSVR,

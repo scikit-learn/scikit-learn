@@ -30,7 +30,7 @@ from ..utils.validation import _num_samples, check_non_negative, validate_data
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne, _utils  # type: ignore
+from . import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -949,9 +949,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
             assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(
-                P <= 1
-            ), "All probabilities should be less or then equal to one"
+            assert np.all(P <= 1), (
+                "All probabilities should be less or then equal to one"
+            )
 
         else:
             # Compute the number of nearest neighbors to find.

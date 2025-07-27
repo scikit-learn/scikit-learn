@@ -7,7 +7,6 @@ from ..exceptions import DataConversionWarning
 from . import metadata_routing
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices
-from ._estimator_html_repr import estimator_html_repr
 
 # Make _safe_indexing importable from here for backward compat as this particular
 # helper is considered semi-private and typically very useful for third-party
@@ -15,11 +14,13 @@ from ._estimator_html_repr import estimator_html_repr
 # _safe_indexing was included in our public API documentation despite the leading
 # `_` in its name.
 from ._indexing import (
-    _safe_indexing,  # noqa
+    _safe_indexing,  # noqa: F401
     resample,
     shuffle,
 )
 from ._mask import safe_mask
+from ._repr_html.base import _HTMLDocumentationLinkMixin  # noqa: F401
+from ._repr_html.estimator import estimator_html_repr
 from ._tags import (
     ClassifierTags,
     InputTags,

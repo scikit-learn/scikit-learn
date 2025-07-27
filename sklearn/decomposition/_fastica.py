@@ -781,7 +781,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Reconstructed data obtained with the mixing matrix.
         """
         check_is_fitted(self)

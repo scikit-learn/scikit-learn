@@ -36,7 +36,7 @@ from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
+from . import _hierarchical_fast as _hierarchical  # type: ignore[attr-defined]
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################

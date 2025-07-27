@@ -32,8 +32,8 @@ def test_precision_recall_display_plotting(
     classifier = LogisticRegression().fit(X, y)
     classifier.fit(X, y)
 
-    y_pred = getattr(classifier, response_method)(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, pos_label]
+    y_score = getattr(classifier, response_method)(X)
+    y_score = y_score if y_score.ndim == 1 else y_score[:, pos_label]
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
@@ -48,13 +48,13 @@ def test_precision_recall_display_plotting(
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+            y, y_score, pos_label=pos_label, drop_intermediate=drop_intermediate
         )
 
     precision, recall, _ = precision_recall_curve(
-        y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+        y, y_score, pos_label=pos_label, drop_intermediate=drop_intermediate
     )
-    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+    average_precision = average_precision_score(y, y_score, pos_label=pos_label)
 
     np.testing.assert_allclose(display.precision, precision)
     np.testing.assert_allclose(display.recall, recall)
@@ -94,7 +94,7 @@ def test_precision_recall_chance_level_line(
     pos_prevalence = Counter(y)[1] / len(y)
 
     lr = LogisticRegression()
-    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+    y_score = lr.fit(X, y).predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
@@ -107,7 +107,7 @@ def test_precision_recall_chance_level_line(
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y,
-            y_pred,
+            y_score,
             plot_chance_level=True,
             chance_level_kw=chance_level_kw,
         )
@@ -140,7 +140,7 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
     classifier = LogisticRegression().fit(X, y)
     classifier.fit(X, y)
 
-    y_pred = classifier.predict_proba(X)[:, pos_label]
+    y_score = classifier.predict_proba(X)[:, pos_label]
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
@@ -149,10 +149,10 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
         display = PrecisionRecallDisplay.from_estimator(classifier, X, y)
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label
+            y, y_score, pos_label=pos_label
         )
 
-    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+    average_precision = average_precision_score(y, y_score, pos_label=pos_label)
 
     # check that the default name is used
     assert display.line_.get_label() == default_label.format(average_precision)
@@ -194,18 +194,18 @@ def test_precision_recall_display_string_labels(pyplot):
         assert klass in lr.classes_
     display = PrecisionRecallDisplay.from_estimator(lr, X, y)
 
-    y_pred = lr.predict_proba(X)[:, 1]
-    avg_prec = average_precision_score(y, y_pred, pos_label=lr.classes_[1])
+    y_score = lr.predict_proba(X)[:, 1]
+    avg_prec = average_precision_score(y, y_score, pos_label=lr.classes_[1])
 
     assert display.average_precision == pytest.approx(avg_prec)
     assert display.estimator_name == lr.__class__.__name__
 
     err_msg = r"y_true takes value in {'benign', 'malignant'}"
     with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred)
+        PrecisionRecallDisplay.from_predictions(y, y_score)
 
     display = PrecisionRecallDisplay.from_predictions(
-        y, y_pred, pos_label=lr.classes_[1]
+        y, y_score, pos_label=lr.classes_[1]
     )
     assert display.average_precision == pytest.approx(avg_prec)
 
@@ -261,11 +261,11 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     # are betrayed by the class imbalance
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
-    y_pred = getattr(classifier, response_method)(X_test)
+    y_score = getattr(classifier, response_method)(X_test)
     # we select the corresponding probability columns or reverse the decision
     #  function otherwise
-    y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
-    y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    y_score_cancer = -1 * y_score if y_score.ndim == 1 else y_score[:, 0]
+    y_score_not_cancer = y_score if y_score.ndim == 1 else y_score[:, 1]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
@@ -278,7 +278,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y_test,
-            y_pred_cancer,
+            y_score_cancer,
             pos_label="cancer",
         )
     # we should obtain the statistics of the "cancer" class
@@ -298,7 +298,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y_test,
-            y_pred_not_cancer,
+            y_score_not_cancer,
             pos_label="not cancer",
         )
     avg_prec_limit = 0.95
@@ -314,7 +314,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     lr = LogisticRegression()
-    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+    y_score = lr.fit(X, y).predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
@@ -322,7 +322,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, plot_chance_level=False
+            y, y_score, plot_chance_level=False
         )
     assert display.chance_level_ is None
 
@@ -364,7 +364,7 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     clf = LogisticRegression().fit(X, y)
     clf.fit(X, y)
 
-    y_pred = clf.decision_function(X)
+    y_score = clf.decision_function(X)
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
@@ -372,7 +372,7 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(clf, X, y, despine=despine)
     else:
-        display = PrecisionRecallDisplay.from_predictions(y, y_pred, despine=despine)
+        display = PrecisionRecallDisplay.from_predictions(y, y_score, despine=despine)
 
     for s in ["top", "right"]:
         assert display.ax_.spines[s].get_visible() is not despine
@@ -380,3 +380,21 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     if despine:
         for s in ["bottom", "left"]:
             assert display.ax_.spines[s].get_bounds() == (0, 1)
+
+
+# TODO(1.10): remove
+def test_y_score_and_y_pred_specified_error(pyplot):
+    """1. Check that an error is raised when both y_score and y_pred are specified.
+    2. Check that a warning is raised when y_pred is specified.
+    """
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    y_pred = np.array([0.2, 0.3, 0.5, 0.1])
+
+    with pytest.raises(
+        ValueError, match="`y_pred` and `y_score` cannot be both specified"
+    ):
+        PrecisionRecallDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
+
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
+        PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)

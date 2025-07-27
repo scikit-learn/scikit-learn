@@ -28,7 +28,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
@@ -314,7 +314,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         return W, H
 
     # NNDSVD initialization
-    U, S, V = randomized_svd(X, n_components, random_state=random_state)
+    U, S, V = _randomized_svd(X, n_components, random_state=random_state)
     W = np.zeros_like(U)
     H = np.zeros_like(V)
 
@@ -1302,7 +1302,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
 

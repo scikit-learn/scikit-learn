@@ -537,9 +537,9 @@ class LinearModelLoss:
                 # The L2 penalty enters the Hessian on the diagonal only. To add those
                 # terms, we use a flattened view of the array.
                 order = "C" if hess.flags.c_contiguous else "F"
-                hess.reshape(-1, order=order)[
-                    : (n_features * n_dof) : (n_dof + 1)
-                ] += l2_reg_strength
+                hess.reshape(-1, order=order)[: (n_features * n_dof) : (n_dof + 1)] += (
+                    l2_reg_strength
+                )
 
             if self.fit_intercept:
                 # With intercept included as added column to X, the hessian becomes
@@ -795,7 +795,7 @@ class LinearModelLoss:
             #   = sum_{i, m} (X')_{ji} * p_i_k
             #                * (X_{im} * s_k_m - sum_l p_i_l * X_{im} * s_l_m)
             #
-            # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411  # noqa
+            # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411
             def hessp(s):
                 s = s.reshape((n_classes, -1), order="F")  # shape = (n_classes, n_dof)
                 if self.fit_intercept:
