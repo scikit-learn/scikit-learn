@@ -5,7 +5,7 @@ import html
 import reprlib
 from collections import UserDict
 
-from sklearn.utils._repr_html.base import ReprHTMLMixin
+from .base import ReprHTMLMixin
 
 
 def _read_params(name, value, non_default_params):
