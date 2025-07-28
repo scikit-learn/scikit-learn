@@ -46,30 +46,6 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
-def _generate_html_row_param(estimator_class, row, param_name, doc_link):
-    """
-    Generate an HTML table row containing a link to the online
-    documentation for a specific parameter of an estimator.
-    If the link cannot be generated, an empty string is returned.
-    """
-
-    link = _generate_link_to_param_doc(estimator_class, row, doc_link)
-
-    if link:
-        html_row = (
-            f'rel="noreferrer" target="_blank" href="{link}"'
-            f'style="color: white; background: black;">?'
-            f"<span>Documentation for {param_name}</span>"
-        )
-    else:
-        html_row = (
-            f'style="color: white; background: black;">?<span>Documentation'
-            f" for `{param_name}` not found </span>"
-        )
-
-    return html_row
-
-
 def _params_html_repr(params):
     """Generate HTML representation of estimator parameters.
 
@@ -77,7 +53,7 @@ def _params_html_repr(params):
     collapsible details element. Parameters are styled differently based
     on whether they are default or user-set values.
     """
-    HTML_TEMPLATE = """
+    PARAMS_TABLE_TEMPLATE = """
         <div class="estimator-table">
             <details>
                 <summary>Parameters</summary>
@@ -90,7 +66,7 @@ def _params_html_repr(params):
         </div>
     """
 
-    ROW_TEMPLATE = """
+    PARAM_ROW_TEMPLATE = """
         <tr class="{param_type}">
             <td><i class="copy-paste-icon"
                  onclick="copyToClipboard('{param_name}',
@@ -98,25 +74,46 @@ def _params_html_repr(params):
             ></i></td>
             <td class="param">{param_name}&nbsp;
                 <a class="sk-estimator-doc-link doc_link"
-                            {doc_link}
+                            {param_doc_link}
                         </a>
             </td>
             <td class="value">{param_value}</td>
         </tr>
     """
+
+    PARAM_AVAILABLE_DOC_LINK_TEMPLATE = """
+        <a class="sk-estimator-doc-link doc_link"
+            rel="noreferrer" target="_blank" href="{link}"
+            style="color: white; background: black;">?
+            <span>Documentation for {param_name}</span>
+        </a>
+    """
+
+    PARAM_UNAVAILABLE_DOC_LINK_TEMPLATE = """
+        <a class="sk-estimator-doc-link doc_link"
+            style="color: white; background: black;">?
+            <span>Documentation for {param_name} not found</span>
+        </a>
+    """
+
     rows = []
     for row in params:
         param = _read_params(row, params[row], params.non_default)
-        rows.append(
-            ROW_TEMPLATE.format(
-                **param,
-                doc_link=_generate_html_row_param(
-                    params.estimator_class, row, param["param_name"], params.doc_link
-                ),
-            )
-        )
 
-    return HTML_TEMPLATE.format(rows="\n".join(rows))
+        if link := _generate_link_to_param_doc(
+            params.estimator_class, row, params.doc_link
+        ):
+            param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
+                link=link, param_name=param["param_name"]
+            )
+        else:
+            param_doc_link = PARAM_UNAVAILABLE_DOC_LINK_TEMPLATE.format(
+                param_name=param["param_name"]
+            )
+
+        rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))
+
+    return PARAMS_TABLE_TEMPLATE.format(rows="\n".join(rows))
 
 
 class ParamsDict(ReprHTMLMixin, UserDict):
