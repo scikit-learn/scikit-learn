@@ -46,7 +46,6 @@ from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_sp
 from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
 from sklearn.utils._testing import (
-    _convert_container,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -459,7 +458,7 @@ def test_unfitted_feature_importances(name):
 
 
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
-@pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "X, y, lower_bound_accuracy",
     [
@@ -486,10 +485,12 @@ def test_unfitted_feature_importances(name):
 )
 @pytest.mark.parametrize("oob_score", [True, partial(f1_score, average="micro")])
 def test_forest_classifier_oob(
-    ForestClassifier, X, y, X_type, lower_bound_accuracy, oob_score
+    ForestClassifier, X, y, sparse_container, lower_bound_accuracy, oob_score
 ):
     """Check that OOB score is close to score on a test set."""
-    X = _convert_container(X, constructor_name=X_type)
+    if sparse_container is not None:
+        X = sparse_container(X)
+
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -528,7 +529,7 @@ def test_forest_classifier_oob(
 
 
 @pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
-@pytest.mark.parametrize("X_type", ["array", "sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "X, y, lower_bound_r2",
     [
@@ -547,10 +548,14 @@ def test_forest_classifier_oob(
     ],
 )
 @pytest.mark.parametrize("oob_score", [True, explained_variance_score])
-def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob_score):
+def test_forest_regressor_oob(
+    ForestRegressor, X, y, sparse_container, lower_bound_r2, oob_score
+):
     """Check that forest-based regressor provide an OOB score close to the
     score on a test set."""
-    X = _convert_container(X, constructor_name=X_type)
+    if sparse_container is not None:
+        X = sparse_container(X)
+
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,

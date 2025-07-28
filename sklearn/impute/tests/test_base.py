@@ -96,7 +96,7 @@ def test_assign_where(X1_type):
     rng = np.random.RandomState(0)
 
     n_samples, n_features = 10, 5
-    X1 = _convert_container(rng.randn(n_samples, n_features), constructor_name=X1_type)
+    X1 = _convert_container(rng.randn(n_samples, n_features), constructor_type=X1_type)
     X2 = rng.randn(n_samples, n_features)
     mask = rng.randint(0, 2, size=(n_samples, n_features)).astype(bool)
 

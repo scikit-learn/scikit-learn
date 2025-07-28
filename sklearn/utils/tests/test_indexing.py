@@ -1,5 +1,6 @@
 import warnings
 from copy import copy
+from itertools import product
 from unittest import SkipTest
 
 import numpy as np
@@ -30,6 +31,68 @@ from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
+
+
+def _convert_container_kwargs(
+    *constructor_types, include_sparse=False, dataframe_libs=None, series_libs=None
+):
+    """
+    This is for generating parametrization kwargs for `_convert_container`.
+
+    Parameters
+    ----------
+    constructor_types : str
+        The container types to be used in the `_convert_container` function.
+
+    include_sparse : bool, default=False
+        Whether to include sparse containers when "array" is in `constructor_types`.
+        Note that if True, this will include all possible combinations of sparse
+        containers and sparse formats.
+
+    dataframe_libs : list of str or None, default=None
+        The libraries to be used in the `_convert_container` function when "dataframe"
+        is in `constructor_types`. None means all available dataframe libraries, i.e.,
+        "pandas", "polars", and "pyarrow".
+
+    series_libs : list of str or None, default=None
+        The libraries to be used in the `_convert_container` function when "series"
+        is in `constructor_types`. None means all available series libraries, i.e.,
+        "pandas", "polars", and "pyarrow".
+    """
+    for constructor_type in constructor_types:
+        if constructor_type in ("list", "tuple", "slice", "index"):
+            yield {"constructor_type": constructor_type}
+        elif constructor_type == "array":
+            yield {"constructor_type": "array"}
+            if include_sparse:
+                for sparse_container, sparse_format in product(
+                    ("matrix", "array"), ("csr", "csc")
+                ):
+                    yield {
+                        "constructor_type": "array",
+                        "sparse_container": sparse_container,
+                        "sparse_format": sparse_format,
+                    }
+        elif constructor_type == "dataframe":
+            if dataframe_libs is None:
+                dataframe_libs = ["pandas", "polars", "pyarrow"]
+            for dataframe_lib in dataframe_libs:
+                yield {
+                    "constructor_type": "dataframe",
+                    "constructor_lib": dataframe_lib,
+                }
+        elif constructor_type == "series":
+            if series_libs is None:
+                series_libs = ["pandas", "polars", "pyarrow"]
+            for series_lib in series_libs:
+                yield {
+                    "constructor_type": "series",
+                    "constructor_lib": series_lib,
+                }
+        else:
+            raise ValueError(
+                f"Invalid constructor type: {constructor_type}"
+            )  # pragma: no cover
 
 
 def test_polars_indexing():
@@ -134,54 +197,71 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
 
 
 @pytest.mark.parametrize(
-    "array_type", ["list", "array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_kwargs",
+    _convert_container_kwargs("list", "array", "dataframe", include_sparse=True),
 )
-@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
-def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
+@pytest.mark.parametrize(
+    "indices_kwargs",
+    _convert_container_kwargs(
+        "list", "tuple", "array", "slice", "series", series_libs=["pandas"]
+    ),
+)
+def test_safe_indexing_2d_container_axis_0(array_kwargs, indices_kwargs):
     indices = [1, 2]
-    if indices_type == "slice" and isinstance(indices[1], int):
+    if indices_kwargs["constructor_type"] == "slice" and isinstance(indices[1], int):
         indices[1] += 1
-    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
-    indices = _convert_container(indices, indices_type)
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], **array_kwargs)
+    indices = _convert_container(indices, **indices_kwargs)
     subset = _safe_indexing(array, indices, axis=0)
     assert_allclose_dense_sparse(
-        subset, _convert_container([[4, 5, 6], [7, 8, 9]], array_type)
+        subset, _convert_container([[4, 5, 6], [7, 8, 9]], **array_kwargs)
     )
 
 
 @pytest.mark.parametrize(
-    "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
+    "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
-@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
-def test_safe_indexing_1d_container(array_type, indices_type):
+@pytest.mark.parametrize(
+    "indices_kwargs",
+    _convert_container_kwargs(
+        "list", "tuple", "array", "series", "slice", series_libs=["pandas"]
+    ),
+)
+def test_safe_indexing_1d_container(array_kwargs, indices_kwargs):
     indices = [1, 2]
-    if indices_type == "slice" and isinstance(indices[1], int):
+    if indices_kwargs["constructor_type"] == "slice" and isinstance(indices[1], int):
         indices[1] += 1
-    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
-    indices = _convert_container(indices, indices_type)
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], **array_kwargs)
+    indices = _convert_container(indices, **indices_kwargs)
     subset = _safe_indexing(array, indices, axis=0)
-    assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
+    assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
 @pytest.mark.parametrize(
-    "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
-@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_kwargs",
+    _convert_container_kwargs(
+        "list", "tuple", "array", "series", "slice", series_libs=["pandas"]
+    ),
+)
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
-def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
+def test_safe_indexing_2d_container_axis_1(array_kwargs, indices_kwargs, indices):
     # validation of the indices
     # we make a copy because indices is mutable and shared between tests
     indices_converted = copy(indices)
-    if indices_type == "slice" and isinstance(indices[1], int):
+    if indices_kwargs["constructor_type"] == "slice" and isinstance(indices[1], int):
         indices_converted[1] += 1
 
-    columns_name = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        column_names=["col_0", "col_1", "col_2"],
+        **array_kwargs,
     )
-    indices_converted = _convert_container(indices_converted, indices_type)
+    indices_converted = _convert_container(indices_converted, **indices_kwargs)
 
-    if isinstance(indices[0], str) and array_type in ("array", "sparse"):
+    if isinstance(indices[0], str) and array_kwargs["constructor_type"] != "dataframe":
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -190,115 +270,130 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     else:
         subset = _safe_indexing(array, indices_converted, axis=1)
         assert_allclose_dense_sparse(
-            subset, _convert_container([[2, 3], [5, 6], [8, 9]], array_type)
+            subset, _convert_container([[2, 3], [5, 6], [8, 9]], **array_kwargs)
         )
 
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
 @pytest.mark.parametrize(
-    "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
-@pytest.mark.parametrize("indices_type", ["array", "series"])
+@pytest.mark.parametrize(
+    "indices_kwargs",
+    _convert_container_kwargs("array", "series", series_libs=["pandas"]),
+)
 @pytest.mark.parametrize(
     "axis, expected_array", [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
 )
 def test_safe_indexing_2d_read_only_axis_1(
-    array_read_only, indices_read_only, array_type, indices_type, axis, expected_array
+    array_read_only,
+    indices_read_only,
+    array_kwargs,
+    indices_kwargs,
+    axis,
+    expected_array,
 ):
     array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     if array_read_only:
         array.setflags(write=False)
-    array = _convert_container(array, array_type)
+    array = _convert_container(array, **array_kwargs)
     indices = np.array([1, 2])
     if indices_read_only:
         indices.setflags(write=False)
-    indices = _convert_container(indices, indices_type)
+    indices = _convert_container(indices, **indices_kwargs)
     subset = _safe_indexing(array, indices, axis=axis)
-    assert_allclose_dense_sparse(subset, _convert_container(expected_array, array_type))
+    assert_allclose_dense_sparse(
+        subset, _convert_container(expected_array, **array_kwargs)
+    )
 
 
 @pytest.mark.parametrize(
-    "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
+    "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
-@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
-def test_safe_indexing_1d_container_mask(array_type, indices_type):
+@pytest.mark.parametrize(
+    "indices_kwargs",
+    _convert_container_kwargs(
+        "list", "tuple", "array", "series", series_libs=["pandas"]
+    ),
+)
+def test_safe_indexing_1d_container_mask(array_kwargs, indices_kwargs):
     indices = [False] + [True] * 2 + [False] * 6
-    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
-    indices = _convert_container(indices, indices_type)
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], **array_kwargs)
+    indices = _convert_container(indices, **indices_kwargs)
     subset = _safe_indexing(array, indices, axis=0)
-    assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
+    assert_allclose_dense_sparse(subset, _convert_container([2, 3], **array_kwargs))
 
 
 @pytest.mark.parametrize(
-    "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_kwargs", _convert_container_kwargs("array", "dataframe", include_sparse=True)
 )
-@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
+@pytest.mark.parametrize(
+    "indices_kwargs",
+    _convert_container_kwargs(
+        "list", "tuple", "array", "series", series_libs=["pandas"]
+    ),
+)
 @pytest.mark.parametrize(
     "axis, expected_subset",
     [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])],
 )
-def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
-    columns_name = ["col_0", "col_1", "col_2"]
+def test_safe_indexing_2d_mask(array_kwargs, indices_kwargs, axis, expected_subset):
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        column_names=["col_0", "col_1", "col_2"],
+        **array_kwargs,
     )
     indices = [False, True, True]
-    indices = _convert_container(indices, indices_type)
+    indices = _convert_container(indices, **indices_kwargs)
 
     subset = _safe_indexing(array, indices, axis=axis)
     assert_allclose_dense_sparse(
-        subset, _convert_container(expected_subset, array_type)
+        subset, _convert_container(expected_subset, **array_kwargs)
     )
 
 
 @pytest.mark.parametrize(
-    "array_type, expected_output_type",
-    [
-        ("list", "list"),
-        ("array", "array"),
-        ("sparse", "sparse"),
-        ("dataframe", "series"),
-        ("polars", "polars_series"),
-        ("pyarrow", "pyarrow_array"),
-    ],
+    "array_kwargs, expected_output_kwargs",
+    zip(
+        _convert_container_kwargs("list", "array", "dataframe", include_sparse=True),
+        _convert_container_kwargs("list", "array", "series", include_sparse=True),
+    ),
 )
-def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
-    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
+def test_safe_indexing_2d_scalar_axis_0(array_kwargs, expected_output_kwargs):
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], **array_kwargs)
     indices = 2
     subset = _safe_indexing(array, indices, axis=0)
-    expected_array = _convert_container([7, 8, 9], expected_output_type)
+    expected_array = _convert_container([7, 8, 9], **expected_output_kwargs)
     assert_allclose_dense_sparse(subset, expected_array)
 
 
 @pytest.mark.parametrize(
-    "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
+    "array_kwargs", _convert_container_kwargs("list", "array", "series")
 )
-def test_safe_indexing_1d_scalar(array_type):
-    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
+def test_safe_indexing_1d_scalar(array_kwargs):
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], **array_kwargs)
     indices = 2
     subset = _safe_indexing(array, indices, axis=0)
     assert subset == 3
 
 
 @pytest.mark.parametrize(
-    "array_type, expected_output_type",
-    [
-        ("array", "array"),
-        ("sparse", "sparse"),
-        ("dataframe", "series"),
-        ("polars", "polars_series"),
-        ("pyarrow", "pyarrow_array"),
-    ],
+    "array_kwargs, expected_output_kwargs",
+    zip(
+        _convert_container_kwargs("array", "dataframe", include_sparse=True),
+        _convert_container_kwargs("array", "series", include_sparse=True),
+    ),
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
-def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indices):
-    columns_name = ["col_0", "col_1", "col_2"]
+def test_safe_indexing_2d_scalar_axis_1(array_kwargs, expected_output_kwargs, indices):
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+        column_names=["col_0", "col_1", "col_2"],
+        **array_kwargs,
     )
 
-    if isinstance(indices, str) and array_type in ("array", "sparse"):
+    if isinstance(indices, str) and array_kwargs["constructor_type"] != "dataframe":
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -307,16 +402,18 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indice
     else:
         subset = _safe_indexing(array, indices, axis=1)
         expected_output = [3, 6, 9]
-        if expected_output_type == "sparse":
+        if expected_output_kwargs.get("sparse_container") is not None:
             # sparse matrix are keeping the 2D shape
             expected_output = [[3], [6], [9]]
-        expected_array = _convert_container(expected_output, expected_output_type)
+        expected_array = _convert_container(expected_output, **expected_output_kwargs)
         assert_allclose_dense_sparse(subset, expected_array)
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "sparse"])
-def test_safe_indexing_None_axis_0(array_type):
-    X = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
+@pytest.mark.parametrize(
+    "array_kwargs", _convert_container_kwargs("list", "array", include_sparse=True)
+)
+def test_safe_indexing_None_axis_0(array_kwargs):
+    X = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], **array_kwargs)
     X_subset = _safe_indexing(X, None, axis=0)
     assert_allclose_dense_sparse(X_subset, X)
 
@@ -401,38 +498,43 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
         _safe_indexing(X, indices, axis=1)
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-def test_safe_assign(array_type):
+@pytest.mark.parametrize(
+    "array_kwargs",
+    _convert_container_kwargs(
+        "array", "dataframe", include_sparse=True, dataframe_libs=["pandas"]
+    ),
+)
+def test_safe_assign(array_kwargs):
     """Check that `_safe_assign` works as expected."""
     rng = np.random.RandomState(0)
     X_array = rng.randn(10, 5)
 
     row_indexer = [1, 2]
     values = rng.randn(len(row_indexer), X_array.shape[1])
-    X = _convert_container(X_array, array_type)
+    X = _convert_container(X_array, **array_kwargs)
     _safe_assign(X, values, row_indexer=row_indexer)
 
     assigned_portion = _safe_indexing(X, row_indexer, axis=0)
     assert_allclose_dense_sparse(
-        assigned_portion, _convert_container(values, array_type)
+        assigned_portion, _convert_container(values, **array_kwargs)
     )
 
     column_indexer = [1, 2]
     values = rng.randn(X_array.shape[0], len(column_indexer))
-    X = _convert_container(X_array, array_type)
+    X = _convert_container(X_array, **array_kwargs)
     _safe_assign(X, values, column_indexer=column_indexer)
 
     assigned_portion = _safe_indexing(X, column_indexer, axis=1)
     assert_allclose_dense_sparse(
-        assigned_portion, _convert_container(values, array_type)
+        assigned_portion, _convert_container(values, **array_kwargs)
     )
 
     row_indexer, column_indexer = None, None
     values = rng.randn(*X.shape)
-    X = _convert_container(X_array, array_type)
+    X = _convert_container(X_array, **array_kwargs)
     _safe_assign(X, values, column_indexer=column_indexer)
 
-    assert_allclose_dense_sparse(X, _convert_container(values, array_type))
+    assert_allclose_dense_sparse(X, _convert_container(values, **array_kwargs))
 
 
 @pytest.mark.parametrize(

@@ -1569,8 +1569,9 @@ def test_dataframe_categorical_results_same_as_ndarray(
     f_cat = [f"cat{c:0>3}" for c in f_cat]
     X_df = _convert_container(
         np.asarray([f_num, f_cat]).T,
-        dataframe_lib,
-        ["f_num", "f_cat"],
+        "dataframe",
+        constructor_lib=dataframe_lib,
+        column_names=["f_num", "f_cat"],
         categorical_feature_names=["f_cat"],
     )
 
@@ -1613,7 +1614,11 @@ def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     rng = np.random.RandomState(42)
     f_cat = rng.randint(0, high=100, size=100).astype(str)
     X_df = _convert_container(
-        f_cat[:, None], dataframe_lib, ["f_cat"], categorical_feature_names=["f_cat"]
+        f_cat[:, None],
+        "dataframe",
+        constructor_lib=dataframe_lib,
+        column_names=["f_cat"],
+        categorical_feature_names=["f_cat"],
     )
     y = rng.randint(0, high=2, size=100)
 
@@ -1639,14 +1644,16 @@ def test_categorical_different_order_same_model(dataframe_lib):
     f_cat_b_a = np.asarray(["B", "A"])[f_ints]
     df_a_b = _convert_container(
         f_cat_a_b[:, None],
-        dataframe_lib,
-        ["f_cat"],
+        "dataframe",
+        constructor_lib=dataframe_lib,
+        column_names=["f_cat"],
         categorical_feature_names=["f_cat"],
     )
     df_b_a = _convert_container(
         f_cat_b_a[:, None],
-        dataframe_lib,
-        ["f_cat"],
+        "dataframe",
+        constructor_lib=dataframe_lib,
+        column_names=["f_cat"],
         categorical_feature_names=["f_cat"],
     )
 

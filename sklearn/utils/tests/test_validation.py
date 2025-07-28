@@ -1899,13 +1899,22 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
 
 
 @pytest.mark.parametrize(
-    "constructor_name",
-    ["list", "tuple", "array", "dataframe", "sparse_csr", "sparse_csc"],
+    "constructor_type, constructor_kwargs",
+    [(input_type, {}) for input_type in ("list", "tuple", "array", "dataframe")]
+    + [
+        (
+            "array",
+            {"sparse_container": sparse_container, "sparse_format": sparse_format},
+        )
+        for sparse_container, sparse_format in product(
+            ("matrix", "array"), ("csr", "csc")
+        )
+    ],
 )
-def test_num_features(constructor_name):
+def test_num_features(constructor_type, constructor_kwargs):
     """Check _num_features for array-likes."""
     X = [[1, 2, 3], [4, 5, 6]]
-    X = _convert_container(X, constructor_name)
+    X = _convert_container(X, constructor_type, **constructor_kwargs)
     assert _num_features(X) == 3
 
 
@@ -1979,28 +1988,31 @@ def test_get_feature_names_pandas():
 
 
 @pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+    "constructor_lib, minversion",
+    [("pandas", "1.5.0"), ("pyarrow", "12.0.0"), ("polars", "0.18.2")],
 )
-def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
+def test_get_feature_names_dataframe_protocol(constructor_lib, minversion):
     """Uses the dataframe exchange protocol to get feature names."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data,
+        "dataframe",
+        constructor_lib=constructor_lib,
+        column_names=columns,
+        minversion=minversion,
     )
     feature_names = _get_feature_names(df)
 
     assert_array_equal(feature_names, columns)
 
 
-@pytest.mark.parametrize("constructor_name", ["pyarrow", "dataframe", "polars"])
-def test_is_pandas_df_other_libraries(constructor_name):
-    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
-    if constructor_name in ("pyarrow", "polars"):
-        assert not _is_pandas_df(df)
-    else:
-        assert _is_pandas_df(df)
+@pytest.mark.parametrize("constructor_lib", ["pyarrow", "pandas", "polars"])
+def test_is_pandas_df_other_libraries(constructor_lib):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]], "dataframe", constructor_lib=constructor_lib
+    )
+    assert _is_pandas_df(df) == (constructor_lib == "pandas")
 
 
 def test_is_pandas_df():
@@ -2019,24 +2031,15 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
     assert not _is_pandas_df(1)
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [
-        ("pyarrow", dependent_packages["pyarrow"][0]),
-        ("dataframe", dependent_packages["pandas"][0]),
-        ("polars", dependent_packages["polars"][0]),
-    ],
-)
-def test_is_polars_df_other_libraries(constructor_name, minversion):
+@pytest.mark.parametrize("constructor_lib", ["pyarrow", "pandas", "polars"])
+def test_is_polars_df_other_libraries(constructor_lib):
     df = _convert_container(
         [[1, 4, 2], [3, 3, 6]],
-        constructor_name,
-        minversion=minversion,
+        "dataframe",
+        constructor_lib=constructor_lib,
+        minversion=dependent_packages[constructor_lib][0],
     )
-    if constructor_name in ("pyarrow", "dataframe"):
-        assert not _is_polars_df(df)
-    else:
-        assert _is_polars_df(df)
+    assert _is_polars_df(df) == (constructor_lib == "polars")
 
 
 def test_is_polars_df_for_duck_typed_polars_dataframe():

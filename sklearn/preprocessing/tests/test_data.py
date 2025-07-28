@@ -46,7 +46,6 @@ from sklearn.utils._array_api import (
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
     _array_api_for_tests,
-    _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -120,29 +119,36 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 @pytest.mark.parametrize(
     ["Xw", "X", "sample_weight"],
     [
-        ([[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [1, 2, 3], [4, 5, 6]], [2.0, 1.0]),
         (
-            [[1, 0, 1], [0, 0, 1]],
-            [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
+            np.array([[1, 2, 3], [4, 5, 6]]),
+            np.array([[1, 2, 3], [1, 2, 3], [4, 5, 6]]),
+            [2.0, 1.0],
+        ),
+        (
+            np.array([[1, 0, 1], [0, 0, 1]]),
+            np.array([[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]]),
             np.array([1, 3]),
         ),
         (
-            [[1, np.nan, 1], [np.nan, np.nan, 1]],
-            [
-                [1, np.nan, 1],
-                [np.nan, np.nan, 1],
-                [np.nan, np.nan, 1],
-                [np.nan, np.nan, 1],
-            ],
+            np.array([[1, np.nan, 1], [np.nan, np.nan, 1]]),
+            np.array(
+                [
+                    [1, np.nan, 1],
+                    [np.nan, np.nan, 1],
+                    [np.nan, np.nan, 1],
+                    [np.nan, np.nan, 1],
+                ]
+            ),
             np.array([1, 3]),
         ),
     ],
 )
-@pytest.mark.parametrize("array_constructor", ["array", "sparse_csr", "sparse_csc"])
-def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
-    with_mean = not array_constructor.startswith("sparse")
-    X = _convert_container(X, array_constructor)
-    Xw = _convert_container(Xw, array_constructor)
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
+def test_standard_scaler_sample_weight(Xw, X, sample_weight, sparse_container):
+    with_mean = sparse_container is None
+    if sparse_container is not None:
+        X = sparse_container(X)
+        Xw = sparse_container(Xw)
 
     # weighted StandardScaler
     yw = np.ones(Xw.shape[0])
@@ -1514,15 +1520,16 @@ def test_quantile_transform_nan():
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse"])
-def test_quantile_transformer_sorted_quantiles(array_type):
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
+def test_quantile_transformer_sorted_quantiles(csr_container):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15733
     # Taken from upstream bug report:
     # https://github.com/numpy/numpy/issues/14685
     X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
     X = 0.1 * X.reshape(-1, 1)
-    X = _convert_container(X, array_type)
+    if csr_container is not None:
+        X = csr_container(X)
 
     n_quantiles = 100
     qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)

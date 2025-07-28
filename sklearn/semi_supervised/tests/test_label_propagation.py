@@ -12,13 +12,8 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
 from sklearn.semi_supervised import _label_propagation as label_propagation
-from sklearn.utils._testing import (
-    _convert_container,
-    assert_allclose,
-    assert_array_equal,
-)
-
-CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
+from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),
@@ -126,15 +121,15 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-@pytest.mark.parametrize("accepted_sparse_type", ["sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("index_dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_sparse_input_types(
-    accepted_sparse_type, index_dtype, dtype, Estimator, parameters
+    sparse_container, index_dtype, dtype, Estimator, parameters
 ):
     # This is non-regression test for #17085
-    X = _convert_container([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], accepted_sparse_type)
+    X = sparse_container([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]])
     X.data = X.data.astype(dtype, copy=False)
     X.indices = X.indices.astype(index_dtype, copy=False)
     X.indptr = X.indptr.astype(index_dtype, copy=False)
@@ -143,10 +138,12 @@ def test_sparse_input_types(
     assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
-@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-def test_convergence_speed(constructor_type):
+@pytest.mark.parametrize(
+    "sparse_container", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_convergence_speed(sparse_container):
     # This is a non-regression test for #5774
-    X = _convert_container([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], constructor_type)
+    X = sparse_container([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
     mdl.fit(X, y)

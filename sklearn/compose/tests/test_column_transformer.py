@@ -176,16 +176,16 @@ def test_column_transformer_tuple_transformers_parameter():
     )
 
 
-@pytest.mark.parametrize("constructor_name", ["dataframe", "polars"])
-def test_column_transformer_dataframe(constructor_name):
-    if constructor_name == "dataframe":
-        dataframe_lib = pytest.importorskip("pandas")
-    else:
-        dataframe_lib = pytest.importorskip(constructor_name)
+@pytest.mark.parametrize("constructor_lib", ["pandas", "polars"])
+def test_column_transformer_dataframe(constructor_lib):
+    dataframe_lib = pytest.importorskip(constructor_lib)
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = _convert_container(
-        X_array, constructor_name, columns_name=["first", "second"]
+        X_array,
+        "dataframe",
+        constructor_lib=constructor_lib,
+        column_names=["first", "second"],
     )
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
@@ -210,7 +210,7 @@ def test_column_transformer_dataframe(constructor_name):
         (np.array([True, False]), X_res_first),
         ([True, False], X_res_first),
     ]
-    if constructor_name == "dataframe":
+    if constructor_lib == "pandas":
         # Scalars are only supported for pandas dataframes.
         cases.extend(
             [
@@ -310,7 +310,7 @@ def test_column_transformer_dataframe(constructor_name):
     )
     ct.fit_transform(X_df)
 
-    if constructor_name == "dataframe":
+    if constructor_lib == "pandas":
         # DataFrame protocol does not have 1d columns, so we only test on Pandas
         # dataframes.
         ct = ColumnTransformer(

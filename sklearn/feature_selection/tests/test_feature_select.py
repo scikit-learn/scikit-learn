@@ -28,7 +28,6 @@ from sklearn.feature_selection import (
 )
 from sklearn.utils import safe_mask
 from sklearn.utils._testing import (
-    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -95,7 +94,8 @@ def test_f_classif(csr_container):
 
 
 @pytest.mark.parametrize("center", [True, False])
-def test_r_regression(center):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_r_regression(center, csr_container):
     X, y = make_regression(
         n_samples=2000, n_features=20, n_informative=5, shuffle=False, random_state=0
     )
@@ -104,7 +104,7 @@ def test_r_regression(center):
     assert (-1 < corr_coeffs).all()
     assert (corr_coeffs < 1).all()
 
-    sparse_X = _convert_container(X, "sparse")
+    sparse_X = csr_container(X)
 
     sparse_corr_coeffs = r_regression(sparse_X, y, center=center)
     assert_allclose(sparse_corr_coeffs, corr_coeffs)
