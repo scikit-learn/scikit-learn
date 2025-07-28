@@ -9,8 +9,6 @@ import numpy as np
 from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from sklearn.utils import metadata_routing
-
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -18,7 +16,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array, resample
+from ..utils import _array_api, check_array, metadata_routing, resample
 from ..utils._array_api import (
     _find_matching_floating_dtype,
     _modify_in_place_if_numpy,
@@ -329,7 +327,16 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     clip : bool, default=False
         Set to True to clip transformed values of held-out data to
-        provided `feature range`.
+        provided `feature_range`.
+        Since this parameter will clip values, `inverse_transform` may not
+        be able to restore the original data.
+
+        .. note::
+            Setting `clip=True` does not prevent feature drift (a distribution
+            shift between training and test data). The transformed values are clipped
+            to the `feature_range`, which helps avoid unintended behavior in models
+            sensitive to out-of-range inputs (e.g. linear models). Use with care,
+            as clipping can distort the distribution of test data.
 
         .. versionadded:: 0.24
 
@@ -1172,6 +1179,18 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
+    clip : bool, default=False
+        Set to True to clip transformed values of held-out data to [-1, 1].
+        Since this parameter will clip values, `inverse_transform` may not
+        be able to restore the original data.
+
+        .. note::
+            Setting `clip=True` does not prevent feature drift (a distribution
+            shift between training and test data). The transformed values are clipped
+            to the [-1, 1] range, which helps avoid unintended behavior in models
+            sensitive to out-of-range inputs (e.g. linear models). Use with care,
+            as clipping can distort the distribution of test data.
+
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,)
@@ -1222,10 +1241,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints: dict = {"copy": ["boolean"]}
+    _parameter_constraints: dict = {
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
 
-    def __init__(self, *, copy=True):
+    def __init__(self, *, copy=True, clip=False):
         self.copy = copy
+        self.clip = clip
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -1340,8 +1363,20 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
+            if self.clip:
+                np.clip(X.data, -1.0, 1.0, out=X.data)
         else:
             X /= self.scale_
+            if self.clip:
+                device_ = device(X)
+                X = _modify_in_place_if_numpy(
+                    xp,
+                    xp.clip,
+                    X,
+                    xp.asarray(-1.0, dtype=X.dtype, device=device_),
+                    xp.asarray(1.0, dtype=X.dtype, device=device_),
+                    out=X,
+                )
         return X
 
     def inverse_transform(self, X):

@@ -10,7 +10,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _add_to_diagonal, device, get_namespace
-from ..utils.validation import check_is_fitted, validate_data
+from ..utils.validation import check_array, check_is_fitted, validate_data
 
 
 class _BasePCA(
@@ -186,7 +186,11 @@ class _BasePCA(
         If whitening is enabled, inverse_transform will compute the
         exact inverse operation, which includes reversing whitening.
         """
-        xp, _ = get_namespace(X)
+        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+
+        check_is_fitted(self)
+
+        X = check_array(X, input_name="X", dtype=[xp.float64, xp.float32])
 
         if self.whiten:
             scaled_components = (
