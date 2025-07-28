@@ -1880,7 +1880,7 @@ In multilabel classification, the :func:`zero_one_loss` scores a subset as
 one if its labels strictly match the predictions, and as a zero if there
 are any errors.  By default, the function returns the percentage of imperfectly
 predicted subsets.  To get the count of such subsets instead, set
-``normalize`` to ``False``
+``normalize`` to ``False``.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -1891,8 +1891,8 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
    L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
-loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero-one
+loss can also be computed as :math:`\text{zero-one loss} = 1 - \text{accuracy}`.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -1950,7 +1950,7 @@ achieves the best score only when the estimated probabilities equal the
 true ones.
 
 Note that in the binary case, the Brier score is usually divided by two and
-ranges between :math:`[0,1]`. For binary targets :math:`y_i \in {0, 1}` and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in \{0, 1\}` and
 probability estimates :math:`\hat{p}_i  \approx \operatorname{Pr}(y_i = 1)`
 for the positive class, the Brier score is then equal to:
 

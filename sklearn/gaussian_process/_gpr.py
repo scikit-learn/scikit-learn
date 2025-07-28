@@ -450,6 +450,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if y_mean.ndim > 1 and y_mean.shape[1] == 1:
                 y_mean = np.squeeze(y_mean, axis=1)
 
+            if not return_cov and not return_std:
+                return y_mean
+
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
             V = solve_triangular(
                 self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
@@ -467,7 +470,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_cov = np.squeeze(y_cov, axis=2)
 
                 return y_mean, y_cov
-            elif return_std:
+            else:  # return_std
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
@@ -492,8 +495,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var = np.squeeze(y_var, axis=1)
 
                 return y_mean, np.sqrt(y_var)
-            else:
-                return y_mean
 
     def sample_y(self, X, n_samples=1, random_state=0):
         """Draw samples from Gaussian process and evaluate at X.

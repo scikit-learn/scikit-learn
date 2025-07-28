@@ -506,6 +506,13 @@ def estimator_checks_generator(
 ):
     """Iteratively yield all check callables for an estimator.
 
+    This function is used by
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` and
+    :func:`~sklearn.utils.estimator_checks.check_estimator` to yield all check callables
+    for an estimator. In most cases, these functions should be used instead. When
+    implementing a custom equivalent, please refer to their source code to
+    understand how `estimator_checks_generator` is intended to be used.
+
     .. versionadded:: 1.6
 
     Parameters
@@ -1086,7 +1093,8 @@ def check_array_api_input(
             f"got {attribute_ns}"
         )
 
-        assert array_device(est_xp_param) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         if check_values:
@@ -1123,10 +1131,11 @@ def check_array_api_input(
         # now since array-api-strict seems a bit too strict ...
         numpy_asarray_works = xp.__name__ != "array_api_strict"
 
-    except (TypeError, RuntimeError):
+    except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # array-api-strict chose to raise RuntimeError instead. Exception type
-        # may need to be updated in the future for other libraries.
+        # array-api-strict chose to raise RuntimeError instead. NumPy emits
+        # a ValueError if `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
         numpy_asarray_works = False
 
     if numpy_asarray_works:
@@ -1172,7 +1181,9 @@ def check_array_api_input(
             f"got {result_ns}."
         )
 
-        assert array_device(result_xp) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(result_xp) == array_device(X_xp)
+
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
         if check_values:
@@ -1197,7 +1208,8 @@ def check_array_api_input(
                 f" {input_ns}, got {inverse_result_ns}."
             )
 
-            assert array_device(invese_result_xp) == array_device(X_xp)
+            with config_context(array_api_dispatch=True):
+                assert array_device(invese_result_xp) == array_device(X_xp)
 
             invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
             if check_values:
@@ -3989,7 +4001,10 @@ def check_positive_only_tag_during_fit(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 0)
     X = _enforce_estimator_tags_X(estimator, X)
-    X -= X.mean()
+    # Make sure that the dtype of X stays unchanged: for instance estimator
+    # that expect categorical inputs typically expected integer-based encoded
+    # categories.
+    X -= X.mean().astype(X.dtype)
 
     if tags.input_tags.positive_only:
         with raises(ValueError, match="Negative values in data"):
@@ -4397,7 +4412,14 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            raise ve
+            raise ValueError(
+                "Your estimator raised a ValueError, but with the incorrect or "
+                "incomplete error message to be considered a graceful fail. "
+                "The expected message in the ValueError should contain one of "
+                f"these literal strings:\n{expected_err_msgs}. "
+                f"For example, you could have `ValueError('{expected_err_msgs[0]}')`.\n"
+                f"This is the error message in your exception:\n{ve}"
+            )
 
 
 @ignore_warnings(category=FutureWarning)

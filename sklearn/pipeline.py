@@ -16,9 +16,9 @@ from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
 from .utils import Bunch
-from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
+from .utils._repr_html.estimator import _VisualBlock
 from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,
@@ -320,6 +320,8 @@ class Pipeline(_BaseComposition):
         return self
 
     def _validate_steps(self):
+        if not self.steps:
+            raise ValueError("The pipeline is empty. Please add steps.")
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -1289,7 +1291,6 @@ class Pipeline(_BaseComposition):
 
         An empty pipeline is considered fitted.
         """
-
         # First find the last step that is not 'passthrough'
         last_step = None
         for _, estimator in reversed(self.steps):
@@ -1312,15 +1313,15 @@ class Pipeline(_BaseComposition):
             return False
 
     def _sk_visual_block_(self):
-        _, estimators = zip(*self.steps)
-
         def _get_name(name, est):
             if est is None or est == "passthrough":
                 return f"{name}: passthrough"
             # Is an estimator
             return f"{name}: {est.__class__.__name__}"
 
-        names = [_get_name(name, est) for name, est in self.steps]
+        names, estimators = zip(
+            *[(_get_name(name, est), est) for name, est in self.steps]
+        )
         name_details = [str(est) for est in estimators]
         return _VisualBlock(
             "serial",
@@ -2037,15 +2038,23 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        # Check if Xs dimensions are valid
+        for X, (name, _) in zip(Xs, self.transformer_list):
+            if hasattr(X, "shape") and len(X.shape) != 2:
+                raise ValueError(
+                    f"Transformer '{name}' returned an array or dataframe with "
+                    f"{len(X.shape)} dimensions, but expected 2 dimensions "
+                    "(n_samples, n_features)."
+                )
+
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        return np.hstack(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
