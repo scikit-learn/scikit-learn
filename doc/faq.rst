@@ -307,7 +307,8 @@ The "spam" label is used for many reasons, it is an indication for other
 maintainers that the issue or pull request has only received low effort.
 
 Some steps to increase the chances of the label being removed:
-- follow the :ref:`contribution guidelines <contributing>` and use the provided templates
+- follow the :ref:`contribution guidelines <contributing>` and use the provided
+  issue and pull request templates
 - improve the formatting and grammar of the text
 - improve the diff to remove noise and unrelated changes
 - improve the issue or pull request title to be more descriptive
