@@ -422,7 +422,7 @@ class ValidateDimensionRegressor(BaseEstimator):
         assert y.ndim == self.ndim
 
     def predict(self, X):
-        pass
+        pass  # pragma: no cover
 
 
 @pytest.mark.parametrize("ndim", [1, 2])
