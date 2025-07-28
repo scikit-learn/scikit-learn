@@ -292,12 +292,14 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 init_default_params[param_name]
             ):
                 return True
-
-            if param_value != init_default_params[param_name] and not (
+            if not np.array_equal(
+                param_value, init_default_params[param_name]
+            ) and not (
                 is_scalar_nan(init_default_params[param_name])
                 and is_scalar_nan(param_value)
             ):
                 return True
+
             return False
 
         # reorder the parameters from `self.get_params` using the `__init__`

@@ -848,7 +848,10 @@ class PCA(_BasePCA):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
-        tags.array_api_support = True
+        tags.array_api_support = (
+            self.svd_solver in ["full", "randomized"]
+            and self.power_iteration_normalizer == "QR"
+        )
         tags.input_tags.sparse = self.svd_solver in (
             "auto",
             "arpack",

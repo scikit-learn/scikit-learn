@@ -167,13 +167,17 @@ a :class:`~sklearn.ensemble.RandomForestRegressor` that has been fitted with
 the best set of parameters. Read more in the :ref:`User Guide
 <grid_search>`::
 
-  >>> from sklearn.datasets import fetch_california_housing
+  >>> from sklearn.datasets import make_regression
   >>> from sklearn.ensemble import RandomForestRegressor
   >>> from sklearn.model_selection import RandomizedSearchCV
   >>> from sklearn.model_selection import train_test_split
   >>> from scipy.stats import randint
   ...
-  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> # create a synthetic dataset
+  >>> X, y = make_regression(n_samples=20640,
+  ...                        n_features=8,
+  ...                        noise=0.1,
+  ...                        random_state=0)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   ...
   >>> # define the parameter space that will be searched over
@@ -196,7 +200,7 @@ the best set of parameters. Read more in the :ref:`User Guide
   >>> # the search object now acts like a normal random forest estimator
   >>> # with max_depth=9 and n_estimators=4
   >>> search.score(X_test, y_test)
-  0.73...
+  0.84...
 
 .. note::
 

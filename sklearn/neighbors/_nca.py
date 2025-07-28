@@ -25,6 +25,7 @@ from ..metrics import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import softmax
+from ..utils.fixes import _get_additional_lbfgs_options_dict
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
 from ..utils.validation import check_array, check_is_fitted, validate_data
@@ -312,7 +313,10 @@ class NeighborhoodComponentsAnalysis(
             "jac": True,
             "x0": transformation,
             "tol": self.tol,
-            "options": dict(maxiter=self.max_iter, disp=disp),
+            "options": dict(
+                maxiter=self.max_iter,
+                **_get_additional_lbfgs_options_dict("disp", disp),
+            ),
             "callback": self._callback,
         }
 

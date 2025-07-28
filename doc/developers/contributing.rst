@@ -11,9 +11,9 @@ contribute. It is hosted on https://github.com/scikit-learn/scikit-learn.
 The decision making process and governance structure of scikit-learn is laid
 out in :ref:`governance`.
 
-Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
-adding new algorithms, and the best way to contribute and to help the project
-is to start working on known issues.
+Scikit-learn is :ref:`selective <selectiveness>` when it comes to
+adding new algorithms and features. This means the best way to contribute
+and help the project is to start working on known issues.
 See :ref:`new_contributors` to get started.
 
 .. topic:: **Our community, our values**
@@ -47,20 +47,17 @@ welcome to post feature requests or pull requests.
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn, with the most common ones
-being contribution of code or documentation to the project. Improving the
-documentation is no less important than improving the library itself.  If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-create a GitHub issue or preferably submit a GitHub pull request.
-Full documentation can be found under the doc/ directory.
+There are many ways to contribute to scikit-learn. Improving the
+documentation is no less important than improving the code of the library
+itself. If you find a typo in the documentation, or have made improvements, do
+not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
 
-But there are many other ways to help. In particular helping to
+There are many ways to help. In particular helping to
 :ref:`improve, triage, and investigate issues <bug_triaging>` and
 :ref:`reviewing other developers' pull requests <code_review>` are very
-valuable contributions that decrease the burden on the project
-maintainers.
+valuable contributions that move the project forward.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs
+Another way to contribute is to report issues you are facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
@@ -188,8 +185,10 @@ Contributing code
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
-  so far. In order to claim an issue for yourself, please comment exactly
-  ``/take`` on it for the CI to automatically assign the issue to you.
+  so far. If you'd like to work on such issue, leave a comment with your idea of
+  how you plan to approach it, and start working on it. If somebody else has
+  already said they'd be working on the issue in the past 2-3 weeks, please let
+  them finish their work, otherwise consider it stalled and take it over.
 
 To maintain the quality of the codebase and ease the review process, any
 contribution must conform to the project's :ref:`coding guidelines
@@ -700,7 +699,8 @@ underestimate how easy an issue is to solve!
 Documentation
 =============
 
-We are glad to accept any sort of documentation:
+We welcome thoughtful contributions to the documentation and are happy to review
+additions in the following areas:
 
 * **Function/method/class docstrings:** Also known as "API documentation", these
   describe what the object does and detail any parameters, attributes and

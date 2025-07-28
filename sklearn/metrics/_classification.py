@@ -66,7 +66,7 @@ def _check_zero_division(zero_division):
         return np.nan
 
 
-def _check_targets(y_true, y_pred):
+def _check_targets(y_true, y_pred, sample_weight=None):
     """Check that y_true and y_pred belong to the same classification task.
 
     This converts multiclass or binary types to a common shape, and raises a
@@ -83,6 +83,8 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array-like
 
+    sample_weight : array-like, default=None
+
     Returns
     -------
     type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
@@ -92,11 +94,17 @@ def _check_targets(y_true, y_pred):
     y_true : array or indicator matrix
 
     y_pred : array or indicator matrix
+
+    sample_weight : array or None
     """
-    xp, _ = get_namespace(y_true, y_pred)
-    check_consistent_length(y_true, y_pred)
+    xp, _ = get_namespace(y_true, y_pred, sample_weight)
+    check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_true, force_float_dtype=False
+        )
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -148,7 +156,7 @@ def _check_targets(y_true, y_pred):
             y_pred = csr_matrix(y_pred)
         y_type = "multilabel-indicator"
 
-    return y_type, y_true, y_pred
+    return y_type, y_true, y_pred, sample_weight
 
 
 def _validate_multiclass_probabilistic_prediction(
@@ -200,6 +208,9 @@ def _validate_multiclass_probabilistic_prediction(
         raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
+
     lb = LabelBinarizer()
 
     if labels is not None:
@@ -356,8 +367,9 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
@@ -464,7 +476,9 @@ def confusion_matrix(
     (0, 2, 1, 1)
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -482,10 +496,6 @@ def confusion_matrix(
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-    else:
-        sample_weight = np.asarray(sample_weight)
-
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -654,11 +664,10 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight, device=device_)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
@@ -831,8 +840,8 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         List of labels to index the matrix. This may be used to select a
         subset of labels. If `None`, all labels that appear at least once in
         ``y1`` or ``y2`` are used. Note that at least one label in `labels` must be
-         present in `y1`, even though this function is otherwise agnostic to the order
-         of `y1` and `y2`.
+        present in `y1`, even though this function is otherwise agnostic to the order
+        of `y1` and `y2`.
 
     weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. `None` means not weighted;
@@ -1171,8 +1180,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
@@ -1627,6 +1637,11 @@ def fbeta_score(
     returns 0.0 and raises ``UndefinedMetricWarning``. This behavior can be
     modified by setting ``zero_division``.
 
+    F-beta score is not implemented as a named scorer that can be passed to
+    the `scoring` parameter of cross-validation tools directly: it requires to be
+    wrapped with :func:`make_scorer` so as to specify the value of `beta`. See
+    examples for details.
+
     References
     ----------
     .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
@@ -1650,9 +1665,29 @@ def fbeta_score(
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71, 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
-    >>> fbeta_score(y_true, y_pred_empty,
-    ...             average="macro", zero_division=np.nan, beta=0.5)
+    >>> fbeta_score(
+    ...     y_true,
+    ...     y_pred_empty,
+    ...     average="macro",
+    ...     zero_division=np.nan,
+    ...     beta=0.5,
+    ... )
     0.128
+
+    In order to use :func:`fbeta_scorer` as a scorer, a callable
+    scorer objects needs to be created first with :func:`make_scorer`,
+    passing the value for the `beta` parameter.
+
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(
+    ...     LinearSVC(dual="auto"),
+    ...     param_grid={'C': [1, 10]},
+    ...     scoring=ftwo_scorer,
+    ...     cv=5
+    ... )
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1734,7 +1769,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         raise ValueError("average has to be one of " + str(average_options))
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
     present_labels = _tolist(unique_labels(y_true, y_pred))
@@ -2202,7 +2237,9 @@ def class_likelihood_ratios(
     # remove `FutureWarning`, and the Warns section in the docstring should not mention
     # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type != "binary":
         raise ValueError(
             "class_likelihood_ratios only supports binary classification "
@@ -2920,7 +2957,9 @@ def classification_report(
     """
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -3109,15 +3148,15 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     0.75
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
 
     if sample_weight is None:
         weight_average = 1.0
     else:
-        sample_weight = xp.asarray(sample_weight, device=device)
         weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
@@ -3415,6 +3454,8 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     assert_all_finite(y_prob)
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3514,7 +3555,7 @@ def brier_score_loss(
         When True, scale the Brier score by 1/2 to lie in the [0, 1] range instead
         of the [0, 2] range. The default "auto" option implements the rescaling to
         [0, 1] only for binary classification (as customary) but keeps the
-        original [0, 2] range for multiclasss classification.
+        original [0, 2] range for multiclass classification.
 
         .. versionadded:: 1.7
 
