@@ -1039,7 +1039,7 @@ def test_linearsvc_verbose():
     os.dup2(stdout, 1)  # restore original stdout
 
 
-def test_svc_clone_with_callable_kernel(global_random_seed):
+def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
     # create SVM with callable linear kernel, check that results are the same
@@ -1047,7 +1047,7 @@ def test_svc_clone_with_callable_kernel(global_random_seed):
     svm_callable = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
         probability=True,
-        random_state=global_random_seed,
+        random_state=0,
         decision_function_shape="ovr",
     )
     # clone for checking clonability with lambda functions..
@@ -1057,7 +1057,7 @@ def test_svc_clone_with_callable_kernel(global_random_seed):
     svm_builtin = svm.SVC(
         kernel="linear",
         probability=True,
-        random_state=global_random_seed,
+        random_state=0,
         decision_function_shape="ovr",
     )
     svm_builtin.fit(iris.data, iris.target)
