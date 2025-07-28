@@ -260,6 +260,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
         Parameters
         ----------
+        doc_link : str
+            URL to the estimator documentation.
+            Used for linking to the estimator's parameters documentation
+            available in HTML displays.
+
         deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
@@ -312,12 +317,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             [name for name, value in ordered_out.items() if is_non_default(name, value)]
         )
 
-        estimator_class = self.__class__
-
         return ParamsDict(
             ordered_out,
             non_default=non_default_ls,
-            estimator_class=estimator_class,
+            estimator_class=self.__class__,
             doc_link=doc_link,
         )
 

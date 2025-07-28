@@ -9,10 +9,8 @@ from urllib.parse import quote
 
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
-CLASS_DOC_URL_PREFIX = "https://scikit-learn.org/{doc_version}/modules/generated/"
 
-
-def link_to_param_doc(estimator_class, param_name, doc_link):
+def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
     """URL to the relevant section of the docstring using a Text Fragment
 
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
@@ -48,28 +46,28 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
-def _doc_row(estimator_class, row, param_name, doc_link):
+def _generate_html_row_param(estimator_class, row, param_name, doc_link):
     """
     Generate an HTML table row containing a link to the online
     documentation for a specific parameter of an estimator.
     If the link cannot be generated, an empty string is returned.
     """
 
-    link = link_to_param_doc(estimator_class, row, doc_link)
+    link = _generate_link_to_param_doc(estimator_class, row, doc_link)
 
     if link:
-        link_string = (
+        html_row = (
             f'rel="noreferrer" target="_blank" href="{link}"'
             f'style="color: white; background: black;">?'
             f"<span>Documentation for {param_name}</span>"
         )
     else:
-        link_string = (
+        html_row = (
             f'style="color: white; background: black;">?<span>Documentation'
             f" for `{param_name}` not found </span>"
         )
 
-    return link_string
+    return html_row
 
 
 def _params_html_repr(params):
@@ -112,7 +110,7 @@ def _params_html_repr(params):
         rows.append(
             ROW_TEMPLATE.format(
                 **param,
-                doc_link=_doc_row(
+                doc_link=_generate_html_row_param(
                     params.estimator_class, row, param["param_name"], params.doc_link
                 ),
             )
