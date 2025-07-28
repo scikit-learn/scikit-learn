@@ -769,7 +769,10 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = validate_data(self, X, y, multi_output=True, y_numeric=True)
+        FLOAT_DTYPES = (np.float64, np.float32, np.float16)
+        X, y = validate_data(
+            self, X, y, multi_output=True, y_numeric=True, dtype=FLOAT_DTYPES
+        )
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
