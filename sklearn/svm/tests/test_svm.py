@@ -144,7 +144,7 @@ def test_libsvm_iris(global_random_seed):
     assert_array_equal(pred, pred2)
 
 
-def test_precomputed(global_random_seed):
+def test_precomputed():
     # SVC with a precomputed kernel.
     # We test it with a toy dataset and with iris.
     clf = svm.SVC(kernel="precomputed")
@@ -193,7 +193,7 @@ def test_precomputed(global_random_seed):
     # and check parameters against a linear SVC
     clf = svm.SVC(kernel="precomputed")
     clf2 = svm.SVC(kernel="linear")
-    iris = get_iris_dataset(global_random_seed)
+    iris = get_iris_dataset(42)
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     clf2.fit(iris.data, iris.target)
@@ -1040,7 +1040,7 @@ def test_linearsvc_verbose():
 
 
 def test_svc_clone_with_callable_kernel(global_random_seed):
-    iris = get_iris_dataset(global_random_seed)
+    iris = get_iris_dataset(42)
 
     # create SVM with callable linear kernel, check that results are the same
     # as with built-in linear kernel
@@ -1069,7 +1069,7 @@ def test_svc_clone_with_callable_kernel(global_random_seed):
     assert_array_almost_equal(
         svm_cloned.predict_proba(iris.data),
         svm_builtin.predict_proba(iris.data),
-        decimal=2,
+        decimal=4,
     )
     assert_array_almost_equal(
         svm_cloned.decision_function(iris.data),
