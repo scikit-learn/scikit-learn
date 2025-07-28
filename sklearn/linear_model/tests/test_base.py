@@ -597,7 +597,7 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
             X_32,
             y_64,
             fit_intercept=fit_intercept,
-            sample_weight=sw_64,
+            sample_weight=sw_32,  # sample_weight must have same dtype as X
             rescale_with_sw=rescale_with_sw,
         )
     )
@@ -607,7 +607,7 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
             X_64,
             y_32,
             fit_intercept=fit_intercept,
-            sample_weight=sw_32,
+            sample_weight=sw_64,  # sample_weight must have same dtype as X
             rescale_with_sw=rescale_with_sw,
         )
     )

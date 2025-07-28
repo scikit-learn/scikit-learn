@@ -5,7 +5,6 @@ Generalized Linear Models.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -120,7 +119,8 @@ def _preprocess_data(
 
     This helper is in charge of the following steps:
 
-    - Ensure that `sample_weight` is an array or `None`.
+    - `sample_weight` is assumed to be `None` or a validated array with same dtype as
+      `X`.
     - If `check_input=True`, perform standard input validation of `X`, `y`.
     - Perform copies if requested to avoid side-effects in case of inplace
       modifications of the input.
@@ -178,11 +178,6 @@ def _preprocess_data(
                 X = _asarray_with_order(X, order="K", copy=True, xp=xp)
 
     dtype_ = X.dtype
-
-    if isinstance(sample_weight, numbers.Number):
-        sample_weight = None
-    if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=dtype_)
 
     if fit_intercept:
         if X_is_sparse:
