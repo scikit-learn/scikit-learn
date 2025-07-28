@@ -29,7 +29,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libbrotlidec-1.1.0-h6e16a3a_3.cond
 https://conda.anaconda.org/conda-forge/osx-64/libbrotlienc-1.1.0-h6e16a3a_3.conda#94c0090989db51216f40558958a3dd40
 https://conda.anaconda.org/conda-forge/osx-64/libgfortran5-14.2.0-h51e75f0_103.conda#6183f7e9cd1e7ba20118ff0ca20a05e5
 https://conda.anaconda.org/conda-forge/osx-64/libpng-1.6.50-h3c4a55f_0.conda#0b750895b4a3cbd06e685f86c24c205d
-https://conda.anaconda.org/conda-forge/osx-64/libsqlite-3.50.3-h39a8b3b_0.conda#41e1a78df514ac69dd9d22a804d51310
+https://conda.anaconda.org/conda-forge/osx-64/libsqlite-3.50.3-h875aaf5_1.conda#10de0664b3e6f560c7707890aca8174c
 https://conda.anaconda.org/conda-forge/osx-64/libxcb-1.17.0-hf1f96e2_0.conda#bbeca862892e2898bdb45792a61c4afc
 https://conda.anaconda.org/conda-forge/osx-64/libxml2-2.13.8-h93c44a6_0.conda#e42a93a31cbc6826620144343d42f472
 https://conda.anaconda.org/conda-forge/osx-64/ninja-1.13.1-h0ba0a54_0.conda#71576ca895305a20c73304fcb581ae1a
@@ -65,7 +65,7 @@ https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.2.3-pyhd8ed1ab_1.conda
 https://conda.anaconda.org/conda-forge/noarch/python-tzdata-2025.2-pyhd8ed1ab_0.conda#88476ae6ebd24f39261e0854ac244f33
 https://conda.anaconda.org/conda-forge/noarch/pytz-2025.2-pyhd8ed1ab_0.conda#bc8e3267d44011051f2eb14d22fb0960
 https://conda.anaconda.org/conda-forge/noarch/setuptools-80.9.0-pyhff2d567_0.conda#4de79c071274a53dcaf2a8c749d1499e
-https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhd8ed1ab_0.conda#a451d576819089b0d672f18768be0f65
+https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda#3339e3b65d58accf4ca4fb8748ab16b3
 https://conda.anaconda.org/conda-forge/osx-64/tbb-2021.13.0-hb890de9_1.conda#284892942cdddfded53d090050b639a5
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda#9d64911b31d57ca443e9f1e36b04385f
 https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhd8ed1ab_1.conda#b0dd904de08b7db706167240bf37b164
@@ -73,7 +73,7 @@ https://conda.anaconda.org/conda-forge/noarch/tomli-2.2.1-pyhd8ed1ab_1.conda#ac9
 https://conda.anaconda.org/conda-forge/osx-64/tornado-6.5.1-py313h63b0ddb_0.conda#7554d07cbe64f41c73a403e99bccf3c6
 https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.14.1-pyhe01879c_0.conda#e523f4f1e980ed7a4240d7e27e9ec81f
 https://conda.anaconda.org/conda-forge/osx-64/ccache-4.11.3-h33566b8_0.conda#b65cad834bd6c1f660c101cca09430bf
-https://conda.anaconda.org/conda-forge/osx-64/coverage-7.9.2-py313h717bdf5_0.conda#855af2d2eb136ec60e572d8403775500
+https://conda.anaconda.org/conda-forge/osx-64/coverage-7.10.1-py313h4db2fa4_0.conda#82ec1dabd8bbdfe1f418447e2a6d20c6
 https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.0-pyhd8ed1ab_0.conda#72e42d28960d875c7654614f8b50939a
 https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.59.0-py313h4db2fa4_0.conda#1dab5b45690c319aba7d846f9267349c
 https://conda.anaconda.org/conda-forge/osx-64/freetype-2.13.3-h694c41f_1.conda#126dba1baf5030cb6f34533718924577
@@ -91,9 +91,9 @@ https://conda.anaconda.org/conda-forge/osx-64/liblapack-3.9.0-20_osx64_mkl.conda
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-6.2.1-pyhd8ed1ab_0.conda#ce978e1b9ed8b8d49164e90a5cdc94cd
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
 https://conda.anaconda.org/conda-forge/osx-64/liblapacke-3.9.0-20_osx64_mkl.conda#124ae8e384268a8da66f1d64114a1eda
-https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.1-py313hdb1a8e5_1.conda#fcf306b390eb68fbee1943d9979e51aa
+https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.2-py313hdb1a8e5_0.conda#6cdf47cd7a9cb038ee6f7997ab4bb59b
 https://conda.anaconda.org/conda-forge/osx-64/blas-devel-3.9.0-20_osx64_mkl.conda#cc3260179093918b801e373c6e888e02
-https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.3.2-py313ha0b1807_0.conda#2c2d1f840df1c512b34e0537ef928169
+https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.3.3-py313hc551f4f_0.conda#0a11d16b8d6d48a93fe23b8897328af8
 https://conda.anaconda.org/conda-forge/osx-64/pandas-2.3.1-py313h366a99e_0.conda#3f95c70574b670f1f8e4f28d66aca339
 https://conda.anaconda.org/conda-forge/osx-64/scipy-1.16.0-py313h7e69c36_0.conda#ffba48a156734dfa47fabea9b59b7fa1
 https://conda.anaconda.org/conda-forge/osx-64/blas-2.120-mkl.conda#b041a7677a412f3d925d8208936cb1e2
