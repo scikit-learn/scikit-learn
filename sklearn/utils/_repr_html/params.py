@@ -59,10 +59,8 @@ def _doc_row(estimator_class, row, param_name, doc_link):
 
     if link:
         link_string = (
-            f'rel="noreferrer" target="_blank" href='
-            f"{link} "
-            f'style="color: white; background: black;">?<span>Documentation'
-            f" for `{param_name}`</span>"
+            f'rel="noreferrer" target="_blank" href={link}">?'
+            f"<span>Documentation for {param_name}</span>"
         )
     else:
         link_string = (
@@ -99,12 +97,12 @@ def _params_html_repr(params):
                  onclick="copyToClipboard('{param_name}',
                           this.parentElement.nextElementSibling)"
             ></i></td>
-            <td class="param">{param_name}&nbsp;</td>
-            <td class="value">{param_value}</td>
-            <td class="doc_link"><a class="sk-estimator-doc-link"
-                                 {doc_link}
-                                </a>
+            <td class="param">{param_name}&nbsp;
+                <a class="sk-estimator-doc-link doc_link"
+                            {doc_link}
+                        </a>
             </td>
+            <td class="value">{param_value}</td>
         </tr>
     """
     rows = []
