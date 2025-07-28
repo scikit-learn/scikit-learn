@@ -308,27 +308,19 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _set_intercept(self, X_offset, y_offset, X_scale=None):
         """Set the intercept_"""
-
-        if X_scale is None:
-            xp, _ = get_namespace(X_offset, y_offset)
-        else:
-            xp, _ = get_namespace(X_offset, y_offset, X_scale)
+        xp, _ = get_namespace(X_offset, y_offset, X_scale)
 
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
-            coef_ = xp.astype(self.coef_, X_offset.dtype, copy=False)
-            if X_scale is None:
-                self.coef_ = coef_
-            else:
-                self.coef_ = xp.divide(coef_, X_scale)
+            self.coef_ = xp.astype(self.coef_, X_offset.dtype, copy=False)
+            if X_scale is not None:
+                self.coef_ /= X_scale
 
-            if coef_.ndim == 1:
-                intercept_ = y_offset - X_offset @ self.coef_
+            if self.coef_.ndim == 1:
+                self.intercept_ = y_offset - X_offset @ self.coef_
             else:
-                intercept_ = y_offset - X_offset @ self.coef_.T
-
-            self.intercept_ = intercept_
+                self.intercept_ = y_offset - X_offset @ self.coef_.T
 
         else:
             self.intercept_ = 0.0
@@ -651,7 +643,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         # sparse matrix. Therefore, let's not copy X when it is sparse.
         copy_X_in_preprocess_data = self.copy_X and not sp.issparse(X)
 
-        X, y, X_offset, y_offset, X_scale, sample_weight_sqrt = _preprocess_data(
+        X, y, X_offset, y_offset, _, sample_weight_sqrt = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
@@ -818,6 +810,7 @@ def _pre_fit(
     else:
         # copy was done in fit if necessary
         rescale_with_sw = True
+
     X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
         X,
         y,

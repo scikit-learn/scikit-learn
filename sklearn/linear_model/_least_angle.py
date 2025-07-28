@@ -1081,11 +1081,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
-            X,
-            y,
-            fit_intercept=self.fit_intercept,
-            copy=self.copy_X,
-            rescale_with_sw=False,
+            X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 
         if y.ndim == 1:
@@ -2248,7 +2244,7 @@ class LassoLarsIC(LassoLars):
             copy_X = self.copy_X
         X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
-        X, y, Xmean, ymean, X_scale, _ = _preprocess_data(
+        X, y, Xmean, ymean, _, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X
         )
 
@@ -2310,7 +2306,7 @@ class LassoLarsIC(LassoLars):
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
-        self._set_intercept(Xmean, ymean, X_scale)
+        self._set_intercept(Xmean, ymean)
         return self
 
     def _estimate_noise_variance(self, X, y, positive):
