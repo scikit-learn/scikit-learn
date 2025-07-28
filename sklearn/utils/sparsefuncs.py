@@ -9,8 +9,9 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
 
-from ..utils.fixes import _sparse_min_max, _sparse_nan_min_max
-from ..utils.validation import _check_sample_weight
+from sklearn.utils.fixes import _sparse_min_max, _sparse_nan_min_max
+from sklearn.utils.validation import _check_sample_weight
+
 from .sparsefuncs_fast import (
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
 )

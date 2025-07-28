@@ -7,9 +7,10 @@ import warnings
 
 import numpy as np
 
-from ..base import RegressorMixin, _fit_context
-from ..metrics import DistanceMetric
-from ..utils._param_validation import StrOptions
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.metrics import DistanceMetric
+from sklearn.utils._param_validation import StrOptions
+
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 

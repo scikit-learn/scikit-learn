@@ -12,11 +12,12 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
 
-from ..base import RegressorMixin, _fit_context
-from ..utils import _safe_indexing
-from ..utils._param_validation import Interval
-from ..utils.extmath import fast_logdet
-from ..utils.validation import _check_sample_weight, validate_data
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.utils import _safe_indexing
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import _check_sample_weight, validate_data
+
 from ._base import LinearModel, _preprocess_data, _rescale_data
 
 ###############################################################################

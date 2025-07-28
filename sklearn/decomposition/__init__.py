@@ -7,7 +7,8 @@ regarded as dimensionality reduction techniques.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ..utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_svd
+
 from ._dict_learning import (
     DictionaryLearning,
     MiniBatchDictionaryLearning,

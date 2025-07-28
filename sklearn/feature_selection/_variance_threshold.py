@@ -5,10 +5,11 @@ from numbers import Real
 
 import numpy as np
 
-from ..base import BaseEstimator, _fit_context
-from ..utils._param_validation import Interval
-from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.sparsefuncs import mean_variance_axis, min_max_axis
+from sklearn.utils.validation import check_is_fitted, validate_data
+
 from ._base import SelectorMixin
 
 

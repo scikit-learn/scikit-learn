@@ -15,18 +15,18 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     MultiOutputMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection import GridSearchCV
-from ..preprocessing import LabelBinarizer
-from ..utils import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import (
     Bunch,
     check_array,
     check_consistent_length,
@@ -34,25 +34,30 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import _sparse_linalg_cg
-from ..utils.metadata_routing import (
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.fixes import _sparse_linalg_cg
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
+
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 

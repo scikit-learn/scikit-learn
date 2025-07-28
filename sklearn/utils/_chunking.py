@@ -7,7 +7,8 @@ from numbers import Integral
 
 import numpy as np
 
-from .._config import get_config
+from sklearn._config import get_config
+
 from ._param_validation import Interval, validate_params
 
 

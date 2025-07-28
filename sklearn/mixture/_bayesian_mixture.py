@@ -9,8 +9,9 @@ from numbers import Real
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import Interval, StrOptions
+
 from ._base import BaseMixture, _check_shape
 from ._gaussian_mixture import (
     _check_precision_matrix,

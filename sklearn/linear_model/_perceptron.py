@@ -3,7 +3,8 @@
 
 from numbers import Real
 
-from ..utils._param_validation import Interval, StrOptions
+from sklearn.utils._param_validation import Interval, StrOptions
+
 from ._stochastic_gradient import BaseSGDClassifier
 
 

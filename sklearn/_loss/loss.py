@@ -24,8 +24,9 @@ import numbers
 import numpy as np
 from scipy.special import xlogy
 
-from ..utils import check_scalar
-from ..utils.stats import _weighted_percentile
+from sklearn.utils import check_scalar
+from sklearn.utils.stats import _weighted_percentile
+
 from ._loss import (
     CyAbsoluteError,
     CyExponentialLoss,

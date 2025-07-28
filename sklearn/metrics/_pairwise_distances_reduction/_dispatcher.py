@@ -7,12 +7,9 @@ from typing import List
 import numpy as np
 from scipy.sparse import issparse
 
-from ... import get_config
-from .._dist_metrics import (
-    BOOL_METRICS,
-    METRIC_MAPPING64,
-    DistanceMetric,
-)
+from sklearn import get_config
+from sklearn.metrics._dist_metrics import BOOL_METRICS, METRIC_MAPPING64, DistanceMetric
+
 from ._argkmin import (
     ArgKmin32,
     ArgKmin64,

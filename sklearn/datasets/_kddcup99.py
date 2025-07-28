@@ -21,9 +21,10 @@ from os.path import exists, join
 import joblib
 import numpy as np
 
-from ..utils import Bunch, check_random_state
-from ..utils import shuffle as shuffle_method
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils import shuffle as shuffle_method
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+
 from . import get_data_home
 from ._base import (
     RemoteFileMetadata,

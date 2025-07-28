@@ -12,23 +12,25 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, check_array, check_scalar, metadata_routing
-from ..utils._metadata_requests import (
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     get_routing_for_object,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metadata_routing import (
-    _routing_enabled,
-    process_routing,
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,

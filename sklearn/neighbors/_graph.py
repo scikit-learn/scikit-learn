@@ -5,15 +5,16 @@
 
 import itertools
 
-from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
-from ..utils._param_validation import (
+from sklearn.base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
+from sklearn.utils._param_validation import (
     Integral,
     Interval,
     Real,
     StrOptions,
     validate_params,
 )
-from ..utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted
+
 from ._base import VALID_METRICS, KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 from ._unsupervised import NearestNeighbors
 

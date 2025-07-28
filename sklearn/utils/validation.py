@@ -16,9 +16,13 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from .. import get_config as _get_config
-from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import (
+from sklearn import get_config as _get_config
+from sklearn.exceptions import (
+    DataConversionWarning,
+    NotFittedError,
+    PositiveSpectrumWarning,
+)
+from sklearn.utils._array_api import (
     _asarray_with_order,
     _convert_to_numpy,
     _is_numpy_namespace,
@@ -26,8 +30,9 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils.deprecation import _deprecate_force_all_finite
-from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
+from sklearn.utils.deprecation import _deprecate_force_all_finite
+from sklearn.utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
+
 from ._isfinite import FiniteStatus, cy_isfinite
 from ._tags import get_tags
 from .fixes import _object_dtype_isnan

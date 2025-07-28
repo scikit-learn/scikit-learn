@@ -15,11 +15,12 @@ import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
-from ..base import _fit_context
-from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval
-from ..utils.extmath import fast_logdet
-from ..utils.validation import validate_data
+from sklearn.base import _fit_context
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import validate_data
+
 from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 

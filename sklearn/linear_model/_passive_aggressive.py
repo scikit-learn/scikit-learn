@@ -3,8 +3,9 @@
 
 from numbers import Real
 
-from ..base import _fit_context
-from ..utils._param_validation import Interval, StrOptions
+from sklearn.base import _fit_context
+from sklearn.utils._param_validation import Interval, StrOptions
+
 from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
 
 

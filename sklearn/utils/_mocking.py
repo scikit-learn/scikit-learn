@@ -3,8 +3,9 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin
-from ..utils._metadata_requests import RequestMethod
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils._metadata_requests import RequestMethod
+
 from .metaestimators import available_if
 from .validation import (
     _check_sample_weight,

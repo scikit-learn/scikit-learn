@@ -71,13 +71,14 @@ def all_estimators(type_filter=None):
       <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ..base import (
+    from sklearn.base import (
         BaseEstimator,
         ClassifierMixin,
         ClusterMixin,
         RegressorMixin,
         TransformerMixin,
     )
+
     from ._testing import ignore_warnings
 
     def is_abstract(c):

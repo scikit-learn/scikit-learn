@@ -9,41 +9,47 @@ import numpy as np
 from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     OneToOneFeatureMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array, metadata_routing, resample
-from ..utils._array_api import (
+from sklearn.utils import _array_api, check_array, metadata_routing, resample
+from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _modify_in_place_if_numpy,
     device,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.extmath import _incremental_mean_and_var, row_norms
-from ..utils.fixes import _yeojohnson_lambda
-from ..utils.sparsefuncs import (
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.fixes import _yeojohnson_lambda
+from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
     mean_variance_axis,
     min_max_axis,
 )
-from ..utils.sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
     check_is_fitted,
     check_random_state,
     validate_data,
 )
+
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7

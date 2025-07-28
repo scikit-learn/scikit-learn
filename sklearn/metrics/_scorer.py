@@ -26,11 +26,16 @@ from traceback import format_exc
 
 import numpy as np
 
-from ..base import is_regressor
-from ..utils import Bunch
-from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
-from ..utils._response import _get_response_values
-from ..utils.metadata_routing import (
+from sklearn.base import is_regressor
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils._response import _get_response_values
+from sklearn.utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
@@ -40,7 +45,8 @@ from ..utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from ..utils.validation import _check_response_method
+from sklearn.utils.validation import _check_response_method
+
 from . import (
     accuracy_score,
     average_precision_score,

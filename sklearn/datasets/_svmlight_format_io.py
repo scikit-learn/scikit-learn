@@ -20,9 +20,15 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from .. import __version__
-from ..utils import check_array
-from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from sklearn import __version__
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+
 from ._svmlight_format_fast import (
     _dump_svmlight_file,
     _load_svmlight_file,

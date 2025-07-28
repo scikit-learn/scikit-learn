@@ -12,12 +12,17 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import gammainc
 
-from ..base import BaseEstimator, _fit_context
-from ..neighbors._base import VALID_METRICS
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.neighbors._base import VALID_METRICS
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
+
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 

@@ -104,8 +104,9 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
-from .. import get_config
-from ..exceptions import UnsetMetadataPassedError
+from sklearn import get_config
+from sklearn.exceptions import UnsetMetadataPassedError
+
 from ._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new

@@ -20,8 +20,8 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from .. import config_context
-from ..base import (
+from sklearn import config_context
+from sklearn.base import (
     BaseEstimator,
     BiclusterMixin,
     ClassifierMixin,
@@ -39,39 +39,40 @@ from ..base import (
     is_outlier_detector,
     is_regressor,
 )
-from ..datasets import (
+from sklearn.datasets import (
     load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
     make_regression,
 )
-from ..exceptions import (
+from sklearn.exceptions import (
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
     SkipTestWarning,
 )
-from ..linear_model._base import LinearClassifierMixin
-from ..metrics import accuracy_score, adjusted_rand_score, f1_score
-from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
-from ..model_selection._validation import _safe_split
-from ..pipeline import make_pipeline
-from ..preprocessing import StandardScaler, scale
-from ..utils import _safe_indexing
-from ..utils._array_api import (
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
+from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
+from sklearn.model_selection._validation import _safe_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler, scale
+from sklearn.utils import _safe_indexing
+from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
-from ..utils._array_api import device as array_device
-from ..utils._param_validation import (
+from sklearn.utils._array_api import device as array_device
+from sklearn.utils._param_validation import (
     InvalidParameterError,
     generate_invalid_param_val,
     make_constraint,
 )
+
 from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval, StrOptions, validate_params

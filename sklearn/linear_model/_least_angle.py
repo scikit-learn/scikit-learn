@@ -15,27 +15,28 @@ import numpy as np
 from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..model_selection import check_cv
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import (
-    Bunch,
-    arrayfuncs,
-    as_float_array,
-    check_random_state,
-)
-from ..utils._metadata_requests import (
+from sklearn.utils import Bunch, arrayfuncs, as_float_array, check_random_state
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
+
 from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}

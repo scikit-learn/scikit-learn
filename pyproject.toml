@@ -137,7 +137,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
-extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF"]
+extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF", "TID252"]
 ignore=[
     # do not assign a lambda expression, use a def
     "E731",

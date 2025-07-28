@@ -3,7 +3,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ..exceptions import DataConversionWarning
+from sklearn.exceptions import DataConversionWarning
+
 from . import metadata_routing
 from ._bunch import Bunch
 from ._chunking import gen_batches, gen_even_slices

@@ -6,18 +6,19 @@ import math
 
 import numpy as np
 
-from .._config import get_config
-from ..externals import array_api_extra as xpx
-from ..utils import check_array
-from ..utils._array_api import (
+from sklearn._config import get_config
+from sklearn.externals import array_api_extra as xpx
+from sklearn.utils import check_array
+from sklearn.utils._array_api import (
     _add_to_diagonal,
     _cholesky,
     _linalg_solve,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import StrOptions
-from ..utils.extmath import row_norms
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.extmath import row_norms
+
 from ._base import BaseMixture, _check_shape
 
 ###############################################################################

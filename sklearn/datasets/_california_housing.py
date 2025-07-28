@@ -31,8 +31,9 @@ from os.path import exists
 import joblib
 import numpy as np
 
-from ..utils import Bunch
-from ..utils._param_validation import Interval, validate_params
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, validate_params
+
 from . import get_data_home
 from ._base import (
     RemoteFileMetadata,

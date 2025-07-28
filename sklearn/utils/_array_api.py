@@ -12,10 +12,11 @@ import scipy
 import scipy.sparse as sp
 import scipy.special as special
 
-from .._config import get_config
-from ..externals import array_api_compat
-from ..externals import array_api_extra as xpx
-from ..externals.array_api_compat import numpy as np_compat
+from sklearn._config import get_config
+from sklearn.externals import array_api_compat
+from sklearn.externals import array_api_extra as xpx
+from sklearn.externals.array_api_compat import numpy as np_compat
+
 from .fixes import parse_version
 
 # TODO: complete __all__

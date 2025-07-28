@@ -22,29 +22,36 @@ import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..exceptions import NotFittedError
-from ..metrics import check_scoring
-from ..metrics._scorer import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (
     _check_multimetric_scoring,
     _MultimetricScorer,
     get_scorer_names,
 )
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._repr_html.estimator import _VisualBlock
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_method_params, check_is_fitted, indexable
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import _check_method_params, check_is_fitted, indexable
+
 from ._split import check_cv
 from ._validation import (
     _aggregate_score_dicts,

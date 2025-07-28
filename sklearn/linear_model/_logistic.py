@@ -13,38 +13,39 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import optimize
 
-from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
-from ..base import _fit_context
-from ..metrics import get_scorer, get_scorer_names
-from ..model_selection import check_cv
-from ..preprocessing import LabelBinarizer, LabelEncoder
-from ..svm._base import _fit_liblinear
-from ..utils import (
+from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn.base import _fit_context
+from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.model_selection import check_cv
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.svm._base import _fit_liblinear
+from sklearn.utils import (
     Bunch,
     check_array,
     check_consistent_length,
     check_random_state,
     compute_class_weight,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import row_norms, softmax
-from ..utils.fixes import _get_additional_lbfgs_options_dict
-from ..utils.metadata_routing import (
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import row_norms, softmax
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.multiclass import check_classification_targets
-from ..utils.optimize import _check_optimize_result, _newton_cg
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.optimize import _check_optimize_result, _newton_cg
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     check_is_fitted,
     validate_data,
 )
+
 from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
 from ._glm.glm import NewtonCholeskySolver
 from ._linear_loss import LinearModelLoss
