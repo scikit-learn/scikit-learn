@@ -59,7 +59,8 @@ def _doc_row(estimator_class, row, param_name, doc_link):
 
     if link:
         link_string = (
-            f'rel="noreferrer" target="_blank" href={link}">?'
+            f'rel="noreferrer" target="_blank" href="{link}"'
+            f'style="color: white; background: black;">?'
             f"<span>Documentation for {param_name}</span>"
         )
     else:
