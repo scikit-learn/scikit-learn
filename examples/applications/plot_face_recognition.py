@@ -4,27 +4,26 @@ Faces recognition example using eigenfaces and SVMs
 ===================================================
 
 The dataset used in this example is a preprocessed excerpt of the
-"Labeled Faces in the Wild", aka LFW_:
-
-  http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz (233MB)
-
-.. _LFW: http://vis-www.cs.umass.edu/lfw/
+"Labeled Faces in the Wild", aka LFW:
+https://www.kaggle.com/datasets/jessicali9530/lfw-dataset
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 from time import time
-import matplotlib.pyplot as plt
 
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.datasets import fetch_lfw_people
-from sklearn.metrics import classification_report
-from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.svm import SVC
+import matplotlib.pyplot as plt
 from scipy.stats import loguniform
 
+from sklearn.datasets import fetch_lfw_people
+from sklearn.decomposition import PCA
+from sklearn.metrics import ConfusionMatrixDisplay, classification_report
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 # %%
 # Download the data, if not already on disk and load it as numpy arrays

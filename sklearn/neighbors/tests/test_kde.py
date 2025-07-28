@@ -1,16 +1,15 @@
+import joblib
 import numpy as np
-
 import pytest
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
+from sklearn.datasets import make_blobs
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KDTree, KernelDensity, NearestNeighbors
 from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
-from sklearn.datasets import make_blobs
-from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.exceptions import NotFittedError
-import joblib
+from sklearn.utils._testing import assert_allclose
 
 
 # XXX Duplicated in test_neighbors_tree, test_kde
@@ -114,7 +113,7 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
 
     kde = KernelDensity(algorithm=algorithm, metric=metric)
 
-    if algorithm == "kd_tree" and metric not in KDTree.valid_metrics():
+    if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
         with pytest.raises(ValueError, match="invalid metric"):
             kde.fit(X)
     else:
@@ -165,7 +164,7 @@ def test_kde_sample_weights():
         test_points = rng.rand(n_samples_test, d)
         for algorithm in ["auto", "ball_tree", "kd_tree"]:
             for metric in ["euclidean", "minkowski", "manhattan", "chebyshev"]:
-                if algorithm != "kd_tree" or metric in KDTree.valid_metrics():
+                if algorithm != "kd_tree" or metric in KDTree.valid_metrics:
                     kde = KernelDensity(algorithm=algorithm, metric=metric)
 
                     # Test that adding a constant sample weight has no effect

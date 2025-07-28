@@ -1,14 +1,15 @@
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
+from sklearn.datasets import make_classification, make_regression
+from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
+from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
-    assert_array_equal,
     assert_allclose,
+    assert_array_equal,
 )
-from sklearn.feature_selection._mutual_info import _compute_mi
-from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test_compute_mi_dd():
@@ -176,12 +177,13 @@ def test_mutual_info_classif_mixed(global_dtype):
         assert mi_nn[2] == mi[2]
 
 
-def test_mutual_info_options(global_dtype):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_mutual_info_options(global_dtype, csr_container):
     X = np.array(
         [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
     )
     y = np.array([0, 1, 2, 2, 1], dtype=global_dtype)
-    X_csr = csr_matrix(X)
+    X_csr = csr_container(X)
 
     for mutual_info in (mutual_info_regression, mutual_info_classif):
         with pytest.raises(ValueError):
@@ -236,3 +238,33 @@ def test_mutual_information_symmetry_classif_regression(correlated, global_rando
     )
 
     assert mi_classif == pytest.approx(mi_regression)
+
+
+def test_mutual_info_regression_X_int_dtype(global_random_seed):
+    """Check that results agree when X is integer dtype and float dtype.
+
+    Non-regression test for Issue #26696.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randint(100, size=(100, 10))
+    X_float = X.astype(np.float64, copy=True)
+    y = rng.randint(100, size=100)
+
+    expected = mutual_info_regression(X_float, y, random_state=global_random_seed)
+    result = mutual_info_regression(X, y, random_state=global_random_seed)
+    assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize(
+    "mutual_info_func, data_generator",
+    [
+        (mutual_info_regression, make_regression),
+        (mutual_info_classif, make_classification),
+    ],
+)
+def test_mutual_info_n_jobs(global_random_seed, mutual_info_func, data_generator):
+    """Check that results are consistent with different `n_jobs`."""
+    X, y = data_generator(random_state=global_random_seed)
+    single_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=1)
+    multi_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=2)
+    assert_allclose(single_job, multi_job)

@@ -1,30 +1,20 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Alexis Mignon <alexis.mignon@gmail.com>
-#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs
-cimport numpy as cnp
 import numpy as np
 
 from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _gemv, _nrm2,
-                                   _copy, _scal)
+from ..utils._cython_blas cimport (
+    _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
+)
 from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-
-
+from ..utils._typedefs cimport uint32_t
 from ..utils._random cimport our_rand_r
 
-ctypedef cnp.float64_t DOUBLE
-ctypedef cnp.uint32_t UINT32_t
-
-cnp.import_array()
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -32,10 +22,12 @@ cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
-    RAND_R_MAX = 0x7FFFFFFF
+    # It corresponds to the maximum representable value for
+    # 32-bit signed integers (i.e. 2^31 - 1).
+    RAND_R_MAX = 2147483647
 
 
-cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) noexcept nogil:
+cdef inline uint32_t rand_int(uint32_t end, uint32_t* random_state) noexcept nogil:
     """Generate a random integer in [0; end)."""
     return our_rand_r(random_state) % end
 
@@ -90,6 +82,22 @@ cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil
             m = d
     return m
 
+
+message_conv = (
+    "Objective did not converge. You might want to increase "
+    "the number of iterations, check the scale of the "
+    "features or consider increasing regularisation."
+)
+
+
+message_ridge = (
+    "Linear regression models with a zero l1 penalization "
+    "strength are more efficiently fitted using one of the "
+    "solvers implemented in "
+    "sklearn.linear_model.Ridge/RidgeCV instead."
+)
+
+
 def enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
@@ -131,7 +139,10 @@ def enet_coordinate_descent(
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
+    # same as norm_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm_cols_X = np.einsum(
+        "ij,ij->j", X, X, dtype=dtype, order="C"
+    )
 
     # initial value of the residuals
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
@@ -148,14 +159,13 @@ def enet_coordinate_descent(
     cdef floating R_norm2
     cdef floating w_norm2
     cdef floating l1_norm
-    cdef floating const
+    cdef floating const_
     cdef floating A_norm2
     cdef unsigned int ii
-    cdef unsigned int i
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
@@ -207,9 +217,11 @@ def enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            if (w_max == 0.0 or
-                d_w_max / w_max < d_w_tol or
-                n_iter == max_iter - 1):
+            if (
+                w_max == 0.0
+                or d_w_max / w_max < d_w_tol
+                or n_iter == max_iter - 1
+            ):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
@@ -233,19 +245,18 @@ def enet_coordinate_descent(
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const ** 2)
+                    const_ = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * (const_ ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm2
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
-                # np.dot(R.T, y)
                 gap += (alpha * l1_norm
-                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)
-                        + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
+                        + 0.5 * beta * (1 + const_ ** 2) * (w_norm2))
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -255,18 +266,11 @@ def enet_coordinate_descent(
             # for/else, runs if for doesn't end with a `break`
             with gil:
                 message = (
-                    "Objective did not converge. You might want to increase "
-                    "the number of iterations, check the scale of the "
-                    "features or consider increasing regularisation. "
-                    f"Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    message_conv +
+                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
                 )
                 if alpha < np.finfo(np.float64).eps:
-                    message += (
-                        " Linear regression models with null weight for the "
-                        "l1 regularization term are more efficiently fitted "
-                        "using one of the solvers implemented in "
-                        "sklearn.linear_model.Ridge/RidgeCV instead."
-                    )
+                    message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
@@ -319,55 +323,52 @@ def sparse_enet_coordinate_descent(
     # that every calculation results as if we had rescaled y and X (and therefore also
     # X_mean) by sqrt(sample_weight) without actually calculating the square root.
     # We work with:
-    #     yw = sample_weight
+    #     yw = sample_weight * y
     #     R = sample_weight * residual
     #     norm_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
-
-    # get the data information into easy vars
-    cdef unsigned int n_samples = y.shape[0]
-    cdef unsigned int n_features = w.shape[0]
-
-    # compute norms of the columns of X
-    cdef unsigned int ii
-    cdef floating[:] norm_cols_X
-
-    cdef unsigned int startptr = X_indptr[0]
-    cdef unsigned int endptr
-
-    # initial value of the residuals
-    # R = y - Zw, weighted version R = sample_weight * (y - Zw)
-    cdef floating[::1] R
-    cdef floating[::1] XtA
-    cdef const floating[::1] yw
 
     if floating is float:
         dtype = np.float32
     else:
         dtype = np.float64
 
-    norm_cols_X = np.zeros(n_features, dtype=dtype)
-    XtA = np.zeros(n_features, dtype=dtype)
+    # get the data information into easy vars
+    cdef unsigned int n_samples = y.shape[0]
+    cdef unsigned int n_features = w.shape[0]
+
+    # compute norms of the columns of X
+    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
+
+    # initial value of the residuals
+    # R = y - Zw, weighted version R = sample_weight * (y - Zw)
+    cdef floating[::1] R
+    cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
+    cdef const floating[::1] yw
 
     cdef floating tmp
     cdef floating w_ii
     cdef floating d_w_max
     cdef floating w_max
     cdef floating d_w_ii
+    cdef floating gap = tol + 1.0
+    cdef floating d_w_tol = tol
+    cdef floating dual_norm_XtA
     cdef floating X_mean_ii
     cdef floating R_sum = 0.0
     cdef floating R_norm2
     cdef floating w_norm2
-    cdef floating A_norm2
     cdef floating l1_norm
+    cdef floating const_
+    cdef floating A_norm2
     cdef floating normalize_sum
-    cdef floating gap = tol + 1.0
-    cdef floating d_w_tol = tol
-    cdef floating dual_norm_XtA
+    cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef unsigned int startptr = X_indptr[0]
+    cdef unsigned int endptr
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
     cdef int kk
@@ -386,6 +387,7 @@ def sparse_enet_coordinate_descent(
                 center = True
                 break
 
+        # R = y - np.dot(X, w)
         for ii in range(n_features):
             X_mean_ii = X_mean[ii]
             endptr = X_indptr[ii + 1]
@@ -401,7 +403,9 @@ def sparse_enet_coordinate_descent(
                 if center:
                     for jj in range(n_samples):
                         R[jj] += X_mean_ii * w_ii
+                        R_sum += R[jj]
             else:
+                # R = sw * (y - np.dot(X, w))
                 for jj in range(startptr, endptr):
                     tmp = sample_weight[X_indices[jj]]
                     # second term will be subtracted by loop over range(n_samples)
@@ -412,8 +416,13 @@ def sparse_enet_coordinate_descent(
                     for jj in range(n_samples):
                         normalize_sum += sample_weight[jj] * X_mean_ii ** 2
                         R[jj] += sample_weight[jj] * X_mean_ii * w_ii
+                        R_sum += R[jj]
                 norm_cols_X[ii] = normalize_sum
             startptr = endptr
+
+        # Note: No need to update R_sum from here on because the update terms cancel
+        # each other: w_ii * np.sum(X[:,ii] - X_mean[ii]) = 0. R_sum is only ever
+        # needed and calculated if X_mean is provided.
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
@@ -460,9 +469,6 @@ def sparse_enet_coordinate_descent(
                     tmp += R[X_indices[jj]] * X_data[jj]
 
                 if center:
-                    R_sum = 0.0
-                    for jj in range(n_samples):
-                        R_sum += R[jj]
                     tmp -= R_sum * X_mean_ii
 
                 if positive and tmp < 0.0:
@@ -498,13 +504,8 @@ def sparse_enet_coordinate_descent(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                # sparse X.T / dense R dot product
-                if center:
-                    R_sum = 0.0
-                    for jj in range(n_samples):
-                        R_sum += R[jj]
-
                 # XtA = X.T @ R - beta * w
+                # sparse X.T / dense R dot product
                 for ii in range(n_features):
                     XtA[ii] = 0.0
                     for kk in range(X_indptr[ii], X_indptr[ii + 1]):
@@ -532,21 +533,18 @@ def sparse_enet_coordinate_descent(
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
                 if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * const**2
+                    const_ = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * const_**2
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm2
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
-                gap += (alpha * l1_norm - const * _dot(
-                            n_samples,
-                            &R[0], 1,
-                            &y[0], 1
-                            )
-                        + 0.5 * beta * (1 + const ** 2) * w_norm2)
+                gap += (alpha * l1_norm
+                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
+                        + 0.5 * beta * (1 + const_ ** 2) * w_norm2)
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -555,10 +553,13 @@ def sparse_enet_coordinate_descent(
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
-                warnings.warn("Objective did not converge. You might want to "
-                              "increase the number of iterations. Duality "
-                              "gap: {}, tolerance: {}".format(gap, tol),
-                              ConvergenceWarning)
+                message = (
+                    message_conv +
+                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                )
+                if alpha < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
+                warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
 
@@ -605,7 +606,6 @@ def enet_coordinate_descent_gram(
         dtype = np.float64
 
     # get the data information into easy vars
-    cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = Q.shape[0]
 
     # initial value "Q w" which will be kept of up to date in the iterations
@@ -625,8 +625,8 @@ def enet_coordinate_descent_gram(
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     cdef floating y_norm2 = np.dot(y, y)
     cdef floating* w_ptr = &w[0]
@@ -637,9 +637,11 @@ def enet_coordinate_descent_gram(
     tol = tol * y_norm2
 
     if alpha == 0:
-        warnings.warn("Coordinate descent without L1 regularization may "
+        warnings.warn(
+            "Coordinate descent without L1 regularization may "
             "lead to unexpected results and is discouraged. "
-            "Set l1_ratio > 0 to add L1 regularization.")
+            "Set l1_ratio > 0 to add L1 regularization."
+        )
 
     with nogil:
         for n_iter in range(max_iter):
@@ -707,17 +709,20 @@ def enet_coordinate_descent_gram(
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const ** 2)
+                    const_ = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * (const_ ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm2
 
                 # The call to asum is equivalent to the L1 norm of w
-                gap += (alpha * _asum(n_features, &w[0], 1) -
-                        const * y_norm2 +  const * q_dot_w +
-                        0.5 * beta * (1 + const ** 2) * w_norm2)
+                gap += (
+                    alpha * _asum(n_features, &w[0], 1)
+                    - const_ * y_norm2
+                    + const_ * q_dot_w
+                    + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+                )
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -726,12 +731,14 @@ def enet_coordinate_descent_gram(
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
-                warnings.warn("Objective did not converge. You might want to "
-                              "increase the number of iterations. Duality "
-                              "gap: {}, tolerance: {}".format(gap, tol),
-                              ConvergenceWarning)
+                message = (
+                    message_conv +
+                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                )
+                warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
+
 
 def enet_coordinate_descent_multi_task(
     const floating[::1, :] W,
@@ -745,7 +752,7 @@ def enet_coordinate_descent_multi_task(
     bint random=0
 ):
     """Cython version of the coordinate descent algorithm
-        for Elastic-Net mult-task regression
+        for Elastic-Net multi-task regression
 
         We minimize
 
@@ -799,15 +806,17 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     cdef const floating* X_ptr = &X[0, 0]
     cdef const floating* Y_ptr = &Y[0, 0]
 
     if l1_reg == 0:
-        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
-            " results and is discouraged.")
+        warnings.warn(
+            "Coordinate descent with l1_reg=0 may lead to unexpected"
+            " results and is discouraged."
+        )
 
     with nogil:
         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
@@ -920,11 +929,11 @@ def enet_coordinate_descent_multi_task(
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
                 w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
-                    const =  l1_reg / dual_norm_XtA
-                    A_norm = R_norm * const
+                    const_ = l1_reg / dual_norm_XtA
+                    A_norm = R_norm * const_
                     gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
                 else:
-                    const = 1.0
+                    const_ = 1.0
                     gap = R_norm ** 2
 
                 # ry_sum = np.sum(R * y)
@@ -935,18 +944,22 @@ def enet_coordinate_descent_multi_task(
                 for ii in range(n_features):
                     l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
-                gap += l1_reg * l21_norm - const * ry_sum + \
-                     0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                gap += (
+                    l1_reg * l21_norm
+                    - const_ * ry_sum
+                    + 0.5 * l2_reg * (1 + const_ ** 2) * (w_norm ** 2)
+                )
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
-                warnings.warn("Objective did not converge. You might want to "
-                              "increase the number of iterations. Duality "
-                              "gap: {}, tolerance: {}".format(gap, tol),
-                              ConvergenceWarning)
+                message = (
+                    message_conv +
+                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                )
+                warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1

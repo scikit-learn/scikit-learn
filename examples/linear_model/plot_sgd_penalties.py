@@ -11,8 +11,11 @@ and :class:`~sklearn.linear_model.SGDRegressor`.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 l1_color = "navy"
 l2_color = "c"

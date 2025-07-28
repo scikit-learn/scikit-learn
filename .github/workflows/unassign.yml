@@ -18,4 +18,7 @@ jobs:
         if: github.event.issue.state == 'open'
         run: |
           echo "Marking issue ${{ github.event.issue.number }} as help wanted"
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["help wanted"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels
+          gh issue edit $ISSUE --add-label "help wanted"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.html_url }}

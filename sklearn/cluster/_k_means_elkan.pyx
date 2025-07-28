@@ -1,10 +1,5 @@
-# Author: Andreas Mueller
-#
-# Licence: BSD 3 clause
-
-# TODO: We still need to use ndarrays instead of typed memoryviews when using
-# fused types and when the array may be read-only (for instance when it's
-# provided by the user). This is fixed in cython > 0.3.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -154,7 +149,6 @@ def init_bounds_sparse(
     cdef:
         int n_samples = X.shape[0]
         int n_clusters = centers.shape[0]
-        int n_features = X.shape[1]
 
         floating[::1] X_data = X.data
         int[::1] X_indices = X.indices
@@ -264,12 +258,20 @@ def elkan_iter_chunked_dense(
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
+    if n_samples == 0:
+        # An empty array was passed, do nothing and return early (before
+        # attempting to compute n_chunks). This can typically happen when
+        # calling the prediction function of a bisecting k-means model with a
+        # large fraction of outliers.
+        return
+
+    cdef:
         # hard-coded number of samples per chunk. Splitting in chunks is
         # necessary to get parallelism. Chunk size chosen to be same as lloyd's
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff
+        int chunk_idx
         int start, end
 
         int i, j, k
@@ -386,9 +388,11 @@ cdef void _update_chunk_dense(
                 # If this holds, then center_index is a good candidate for the
                 # sample to be relabelled, and we need to confirm this by
                 # recomputing the upper and lower bounds.
-                if (j != label
+                if (
+                    j != label
                     and (upper_bound > lower_bounds[i, j])
-                    and (upper_bound > center_half_distances[label, j])):
+                    and (upper_bound > center_half_distances[label, j])
+                ):
 
                     # Recompute upper bound by calculating the actual distance
                     # between the sample and its current assigned center.
@@ -401,8 +405,10 @@ cdef void _update_chunk_dense(
                     # If the condition still holds, then compute the actual
                     # distance between the sample and center. If this is less
                     # than the previous distance, reassign label.
-                    if (upper_bound > lower_bounds[i, j]
-                        or (upper_bound > center_half_distances[label, j])):
+                    if (
+                        upper_bound > lower_bounds[i, j]
+                        or (upper_bound > center_half_distances[label, j])
+                    ):
 
                         distance = _euclidean_dense_dense(
                             &X[i, 0], &centers_old[j, 0], n_features, False)
@@ -495,6 +501,14 @@ def elkan_iter_chunked_sparse(
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
+    if n_samples == 0:
+        # An empty array was passed, do nothing and return early (before
+        # attempting to compute n_chunks). This can typically happen when
+        # calling the prediction function of a bisecting k-means model with a
+        # large fraction of outliers.
+        return
+
+    cdef:
         floating[::1] X_data = X.data
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr
@@ -504,7 +518,7 @@ def elkan_iter_chunked_sparse(
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff
+        int chunk_idx
         int start, end
 
         int i, j, k
@@ -631,9 +645,11 @@ cdef void _update_chunk_sparse(
                 # If this holds, then center_index is a good candidate for the
                 # sample to be relabelled, and we need to confirm this by
                 # recomputing the upper and lower bounds.
-                if (j != label
+                if (
+                    j != label
                     and (upper_bound > lower_bounds[i, j])
-                    and (upper_bound > center_half_distances[label, j])):
+                    and (upper_bound > center_half_distances[label, j])
+                ):
 
                     # Recompute upper bound by calculating the actual distance
                     # between the sample and its current assigned center.
@@ -648,8 +664,10 @@ cdef void _update_chunk_sparse(
                     # If the condition still holds, then compute the actual
                     # distance between the sample and center. If this is less
                     # than the previous distance, reassign label.
-                    if (upper_bound > lower_bounds[i, j]
-                        or (upper_bound > center_half_distances[label, j])):
+                    if (
+                        upper_bound > lower_bounds[i, j]
+                        or (upper_bound > center_half_distances[label, j])
+                    ):
                         distance = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] - s],
                             X_indices[X_indptr[i] - s: X_indptr[i + 1] - s],

@@ -1,9 +1,7 @@
 # Optimized inner loop of load_svmlight_file.
 #
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 from cpython cimport array
@@ -80,8 +78,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         if n_features and features[0].startswith(qid_prefix):
             _, value = features[0].split(COLON, 1)
             if query_id:
-                query.resize(len(query) + 1)
-                query[len(query) - 1] = np.int64(value)
+                query = np.append(query, np.int64(value))
             features.pop(0)
             n_features -= 1
 
@@ -113,6 +110,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
     return (dtype, data, indices, indptr, labels, query)
 
+
 # Two fused types are defined to be able to
 # use all possible combinations of parameters.
 ctypedef fused int_or_float:
@@ -128,8 +126,9 @@ ctypedef fused int_or_longlong:
     cython.integral
     signed long long
 
+
 def get_dense_row_string(
-    int_or_float[:,:] X,
+    const int_or_float[:, :] X,
     Py_ssize_t[:] x_inds,
     double_or_longlong[:] x_vals,
     Py_ssize_t row,
@@ -143,7 +142,7 @@ def get_dense_row_string(
         int_or_float val
 
     for k in range(row_length):
-        val = X[row,k]
+        val = X[row, k]
         if val == 0:
             continue
         x_inds[x_nz_used] = k
@@ -156,6 +155,7 @@ def get_dense_row_string(
     ]
 
     return " ".join(reprs)
+
 
 def get_sparse_row_string(
     int_or_float[:] X_data,
@@ -175,6 +175,7 @@ def get_sparse_row_string(
     ]
 
     return " ".join(reprs)
+
 
 def _dump_svmlight_file(
     X,
@@ -211,8 +212,6 @@ def _dump_svmlight_file(
         Py_ssize_t j
         Py_ssize_t col_start
         Py_ssize_t col_end
-        bint first
-        Py_ssize_t x_nz_used
         Py_ssize_t[:] x_inds = np.empty(row_length, dtype=np.intp)
         signed long long[:] x_vals_int
         double[:] x_vals_float
@@ -224,8 +223,6 @@ def _dump_svmlight_file(
             x_vals_float = np.zeros(row_length, dtype=np.float64)
 
     for i in range(x_len):
-        x_nz_used = 0
-
         if not X_is_sp:
             if X_is_integral:
                 s = get_dense_row_string(X, x_inds, x_vals_int, i, value_pattern, one_based)
@@ -234,18 +231,17 @@ def _dump_svmlight_file(
         else:
             s = get_sparse_row_string(X.data, X.indptr, X.indices, i, value_pattern, one_based)
         if multilabel:
-            first = True
             if y_is_sp:
                 col_start = y.indptr[i]
                 col_end = y.indptr[i+1]
                 labels_str = ','.join(tuple(label_pattern % y.indices[j] for j in range(col_start, col_end) if y.data[j] != 0))
             else:
-                labels_str = ','.join(label_pattern % j for j in range(num_labels) if y[i,j] != 0)
+                labels_str = ','.join(label_pattern % j for j in range(num_labels) if y[i, j] != 0)
         else:
             if y_is_sp:
                 labels_str = label_pattern % y.data[i]
             else:
-                labels_str = label_pattern % y[i,0]
+                labels_str = label_pattern % y[i, 0]
 
         if query_id_is_not_empty:
             feat = (labels_str, query_id[i], s)

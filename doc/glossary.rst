@@ -66,6 +66,7 @@ General Concepts
         It excludes:
 
         * a :term:`sparse matrix`
+        * a sparse array
         * an iterator
         * a generator
 
@@ -197,13 +198,37 @@ General Concepts
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
         available for external use through
-        :func:`utils.estimator_checks.check_estimator`, with most of the
+        :func:`utils.estimator_checks.check_estimator` or
+        :func:`utils.estimator_checks.parametrize_with_checks`, with most of the
         implementation in ``sklearn/utils/estimator_checks.py``.
 
         Note: Some exceptions to the common testing regime are currently
         hard-coded into the library, but we hope to replace this by marking
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
+
+    cross-fitting
+    cross fitting
+        A resampling method that iteratively partitions data into mutually
+        exclusive subsets to fit two stages. During the first stage, the
+        mutually exclusive subsets enable predictions or transformations to be
+        computed on data not seen during training. The computed data is then
+        used in the second stage. The objective is to avoid having any
+        overfitting in the first stage introduce bias into the input data
+        distribution of the second stage.
+        For examples of its use, see: :class:`~preprocessing.TargetEncoder`,
+        :class:`~ensemble.StackingClassifier`,
+        :class:`~ensemble.StackingRegressor` and
+        :class:`~calibration.CalibratedClassifierCV`.
+
+    cross-validation
+    cross validation
+        A resampling method that iteratively partitions data into mutually
+        exclusive 'train' and 'test' subsets so model performance can be
+        evaluated on unseen data. This conserves data as avoids the need to hold
+        out a 'validation' dataset and accounts for variability as multiple
+        rounds of cross validation are generally performed.
+        See :ref:`User Guide <cross_validation>` for more details.
 
     deprecation
         We use deprecation to slowly violate our :term:`backwards
@@ -262,7 +287,26 @@ General Concepts
         Note that in this case, the precision can be platform dependent.
         The `numeric` dtype refers to accepting both `integer` and `floating`.
 
-        TODO: Mention efficiency and precision issues; casting policy.
+        When it comes to choosing between 64-bit dtype (i.e. `np.float64` and
+        `np.int64`) and 32-bit dtype (i.e. `np.float32` and `np.int32`), it
+        boils down to a trade-off between efficiency and precision. The 64-bit
+        types offer more accurate results due to their lower floating-point
+        error, but demand more computational resources, resulting in slower
+        operations and increased memory usage. In contrast, 32-bit types
+        promise enhanced operation speed and reduced memory consumption, but
+        introduce a larger floating-point error. The efficiency improvements are
+        dependent on lower level optimization such as vectorization,
+        single instruction multiple dispatch (SIMD), or cache optimization but
+        crucially on the compatibility of the algorithm in use.
+
+        Specifically, the choice of precision should account for whether the
+        employed algorithm can effectively leverage `np.float32`. Some
+        algorithms, especially certain minimization methods, are exclusively
+        coded for `np.float64`, meaning that even if `np.float32` is passed, it
+        triggers an automatic conversion back to `np.float64`. This not only
+        negates the intended computational savings but also introduces
+        additional overhead, making operations with `np.float32` unexpectedly
+        slower and more memory-intensive due to this extra conversion step.
 
     duck typing
         We try to apply `duck typing
@@ -344,8 +388,8 @@ General Concepts
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may
-        use this term specifically to refer to the functions in :mod:`metrics`
-        (disregarding :mod:`metrics.pairwise`), as distinct from the
+        use this term specifically to refer to the functions in :mod:`~sklearn.metrics`
+        (disregarding :mod:`~sklearn.metrics.pairwise`), as distinct from the
         :term:`score` method and the :term:`scoring` API used in cross
         validation. See :ref:`model_evaluation`.
 
@@ -360,12 +404,11 @@ General Concepts
         the scoring API.
 
         Note that some estimators can calculate metrics that are not included
-        in :mod:`metrics` and are estimator-specific, notably model
+        in :mod:`~sklearn.metrics` and are estimator-specific, notably model
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
+        Estimator tags describe certain capabilities of an estimator.  This would
         enable some runtime behaviors based on estimator inspection, but it
         also allows each estimator to be tested for appropriate invariances
         while being excepted from other :term:`common tests`.
@@ -373,15 +416,6 @@ General Concepts
         Some aspects of estimator tags are currently determined through
         the :term:`duck typing` of methods like ``predict_proba`` and through
         some special attributes on estimator objects:
-
-        .. glossary::
-
-            ``_estimator_type``
-                This string-valued attribute identifies an estimator as being a
-                classifier, regressor, etc. It is set by mixins such as
-                :class:`base.ClassifierMixin`, but needs to be more explicitly
-                adopted on a :term:`meta-estimator`.  Its value should usually be
-                checked by way of a helper such as :func:`base.is_classifier`.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -473,7 +507,7 @@ General Concepts
 
     joblib
         A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
-        facilite simple parallelism and caching.  Joblib is oriented towards
+        facilitate simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`. See :ref:`parallelism` for more
         information.
@@ -494,8 +528,8 @@ General Concepts
         applying a :term:`transformer` to the entirety of a dataset rather
         than each training portion in a cross validation split.
 
-        We aim to provide interfaces (such as :mod:`pipeline` and
-        :mod:`model_selection`) that shield the user from data leakage.
+        We aim to provide interfaces (such as :mod:`~sklearn.pipeline` and
+        :mod:`~sklearn.model_selection`) that shield the user from data leakage.
 
     memmapping
     memory map
@@ -575,7 +609,7 @@ General Concepts
     params
         We mostly use *parameter* to refer to the aspects of an estimator that
         can be specified in its construction. For example, ``max_depth`` and
-        ``random_state`` are parameters of :class:`RandomForestClassifier`.
+        ``random_state`` are parameters of :class:`~ensemble.RandomForestClassifier`.
         Parameters to an estimator's constructor are stored unmodified as
         attributes on the estimator instance, and conventionally start with an
         alphabetic character and end with an alphanumeric character.  Each
@@ -620,7 +654,7 @@ General Concepts
         implementations of distance metrics (as well as improper metrics like
         Cosine Distance) through :func:`metrics.pairwise_distances`, and of
         kernel functions (a constrained class of similarity functions) in
-        :func:`metrics.pairwise_kernels`.  These can compute pairwise distance
+        :func:`metrics.pairwise.pairwise_kernels`.  These can compute pairwise distance
         matrices that are symmetric and hence store data redundantly.
 
         See also :term:`precomputed` and :term:`metric`.
@@ -667,6 +701,9 @@ General Concepts
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
         number of rows in a data array :term:`X`.
+        Note that this definition is standard in machine learning and deviates from
+        statistics where it means *a set of individuals or objects collected or
+        selected*.
 
     sample property
     sample properties
@@ -710,7 +747,7 @@ General Concepts
     sparse matrix
     sparse graph
         A representation of two-dimensional numeric data that is more memory
-        efficient the corresponding dense numpy array where almost all elements
+        efficient than the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
         several underlying sparse data representations, or *formats*.
         Some formats are more efficient than others for particular tasks, and
@@ -814,8 +851,8 @@ Class APIs and Estimator Types
         strategy over the binary classification problem.
 
         Classifiers must store a :term:`classes_` attribute after fitting,
-        and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their :term:`_estimator_type` attribute.
+        and inherit from :class:`base.ClassifierMixin`, which sets
+        their corresponding :term:`estimator tags` correctly.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
@@ -903,8 +940,11 @@ Class APIs and Estimator Types
         :class:`ensemble.BaggingClassifier`.
 
         In a meta-estimator's :term:`fit` method, any contained estimators
-        should be :term:`cloned` before they are fit (although FIXME: Pipeline
-        and FeatureUnion do not do this currently). An exception to this is
+        should be :term:`cloned` before they are fit. 
+        
+        .. FIXME: Pipeline and FeatureUnion do not do this currently
+        
+        An exception to this is
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
@@ -958,8 +998,8 @@ Class APIs and Estimator Types
         A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
         with :term:`continuous` output values.
 
-        Regressors usually inherit from :class:`base.RegressorMixin`, which
-        sets their :term:`_estimator_type` attribute.
+        Regressors inherit from :class:`base.RegressorMixin`, which sets their
+        :term:`estimator tags` correctly.
 
         A regressor can be distinguished from other estimators with
         :func:`~base.is_regressor`.
@@ -1025,6 +1065,38 @@ Further examples:
 * :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
+
+.. _glossary_metadata_routing:
+
+Metadata Routing
+================
+
+.. glossary::
+
+    consumer
+        An object which consumes :term:`metadata`. This object is usually an
+        :term:`estimator`, a :term:`scorer`, or a :term:`CV splitter`. Consuming
+        metadata means using it in calculations, e.g. using
+        :term:`sample_weight` to calculate a certain type of score. Being a
+        consumer doesn't mean that the object always receives a certain
+        metadata, rather it means it can use it if it is provided.
+
+    metadata
+        Data which is related to the given :term:`X` and :term:`y` data, but
+        is not directly a part of the data, e.g. :term:`sample_weight` or
+        :term:`groups`, and is passed along to different objects and methods,
+        e.g. to a :term:`scorer` or a :term:`CV splitter`.
+
+    router
+        An object which routes metadata to :term:`consumers <consumer>`. This
+        object is usually a :term:`meta-estimator`, e.g.
+        :class:`~pipeline.Pipeline` or :class:`~model_selection.GridSearchCV`.
+        Some routers can also be a consumer. This happens for example when a
+        meta-estimator uses the given :term:`groups`, and it also passes it
+        along to some of its sub-objects, such as a :term:`CV splitter`.
+
+Please refer to :ref:`Metadata Routing User Guide <metadata_routing>` for more
+information.
 
 .. _glossary_target_types:
 
@@ -1119,10 +1191,10 @@ Target Types
         :term:`multiclass` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
-        XXX: For simplicity, we may not always support string class labels
+        Note: For simplicity, we may not always support string class labels
         for multiclass multioutput, and integer class labels should be used.
 
-        :mod:`multioutput` provides estimators which estimate multi-output
+        :mod:`~sklearn.multioutput` provides estimators which estimate multi-output
         problems using multiple single-output estimators.  This may not fully
         account for dependencies among the different outputs, which methods
         natively handling the multioutput case (e.g. decision trees, nearest
@@ -1312,7 +1384,7 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
-        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+        Note: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
@@ -1474,7 +1546,7 @@ functions or non-estimator constructors.
         1: 1}, {0: 1, 1: 1}]`` instead of ``[{1:1}, {2:5}, {3:1}, {4:1}]``.
 
         The ``class_weight`` parameter is validated and interpreted with
-        :func:`utils.compute_class_weight`.
+        :func:`utils.class_weight.compute_class_weight`.
 
     ``cv``
         Determines a cross validation splitting strategy, as used in
@@ -1500,16 +1572,17 @@ functions or non-estimator constructors.
         With some exceptions (especially where not using cross validation at
         all is an option), the default is 5-fold.
 
-        ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
+        ``cv`` values are validated and interpreted with
+        :func:`model_selection.check_cv`.
 
     ``kernel``
         Specifies the kernel function to be used by Kernel Method algorithms.
-        For example, the estimators :class:`SVC` and
-        :class:`GaussianProcessClassifier` both have a ``kernel`` parameter
-        that takes the name of the kernel to use as string or a callable
-        kernel function used to compute the kernel matrix. For more reference,
-        see the :ref:`kernel_approximation` and the :ref:`gaussian_process`
-        user guides.
+        For example, the estimators :class:`svm.SVC` and
+        :class:`gaussian_process.GaussianProcessClassifier` both have a
+        ``kernel`` parameter that takes the name of the kernel to use as string
+        or a callable kernel function used to compute the kernel matrix. For
+        more reference, see the :ref:`kernel_approximation` and the
+        :ref:`gaussian_process` user guides.
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
@@ -1520,8 +1593,7 @@ functions or non-estimator constructors.
         estimators: some, but not all, use it to mean a single epoch (i.e. a
         pass over every sample in the data).
 
-        FIXME perhaps we should have some common tests about the relationship
-        between ConvergenceWarning and max_iter.
+        .. FIXME: perhaps we should have some common tests about the relationship between ConvergenceWarning and max_iter.
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
@@ -1541,7 +1613,7 @@ functions or non-estimator constructors.
         for some algorithms, an improper distance metric (one that does not
         obey the triangle inequality, such as Cosine Distance) may be used.
 
-        XXX: hierarchical clustering uses ``affinity`` with this meaning.
+        Note: Hierarchical clustering uses ``affinity`` with this meaning.
 
         We also use *metric* to refer to :term:`evaluation metrics`, but avoid
         using this sense as a parameter name.
@@ -1626,9 +1698,15 @@ functions or non-estimator constructors.
         objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
-        Specifies the score function to be maximized (usually by :ref:`cross
-        validation <cross_validation>`), or -- in some cases -- multiple score
-        functions to be reported. The score function can be a string accepted
+        Depending on the object, can specify:
+
+        * the score function to be maximized (usually by
+          :ref:`cross validation <cross_validation>`),
+        * the multiple score functions to be reported,
+        * the score function to be used to check early stopping, or
+        * for visualization related objects, the score function to output or plot
+
+        The score function can be a string accepted
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
         confused with an :term:`evaluation metric`, as the latter have a more
         diverse API.  ``scoring`` may also be set to None, in which case the
@@ -1639,8 +1717,7 @@ functions or non-estimator constructors.
         either as a list of unique strings, a dictionary with names as keys and
         callables as values or a callable that returns a dictionary. Note that
         this does *not* specify which score function is to be maximized, and
-        another parameter such as ``refit`` maybe used for this purpose.
-
+        another parameter such as ``refit`` may be used for this purpose.
 
         The ``scoring`` parameter is validated and interpreted using
         :func:`metrics.check_scoring`.
@@ -1670,18 +1747,18 @@ functions or non-estimator constructors.
         is an interaction between ``warm_start`` and the parameter controlling
         the number of iterations of the estimator.
 
-        For estimators imported from :mod:`ensemble`,
+        For estimators imported from :mod:`~sklearn.ensemble`,
         ``warm_start`` will interact with ``n_estimators`` or ``max_iter``.
         For these models, the number of iterations, reported via
         ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
         estimators/iterations learnt since the initialization of the model.
-        Thus, if a model was already initialized with `N`` estimators, and `fit`
+        Thus, if a model was already initialized with `N` estimators, and `fit`
         is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
         will train `M - N` new estimators.
 
         Other models, usually using gradient-based solvers, have a different
         behavior. They all expose a ``max_iter`` parameter. The reported
-        ``n_iter_`` corresponds to the number of iteration done during the last
+        ``n_iter_`` corresponds to the number of iterations done during the last
         call to ``fit`` and will be at most ``max_iter``. Thus, we do not
         consider the state of the estimator since the initialization.
 
@@ -1723,7 +1800,7 @@ See concept :term:`attribute`.
         the number of output features and :term:`n_features` is the number of
         input features.
 
-        See also :term:`components_` which is a similar attribute for linear
+        See also :term:`coef_` which is a similar attribute for linear
         predictors.
 
     ``coef_``
@@ -1784,12 +1861,11 @@ See concept :term:`sample property`.
         the weight.  Weights may be specified as floats, so that sample weights
         are usually equivalent up to a constant positive scaling factor.
 
-        FIXME  Is this interpretation always the case in practice? We have no
-        common tests.
+        .. FIXME: Is this interpretation always the case in practice? We have no common tests.
 
         Some estimators, such as decision trees, support negative weights.
-        FIXME: This feature or its absence may not be tested or documented in
-        many estimators.
+        
+        .. FIXME: This feature or its absence may not be tested or documented in many estimators.
 
         This is not entirely the case where other parameters of the model
         consider the number of samples in a region, as with ``min_samples`` in

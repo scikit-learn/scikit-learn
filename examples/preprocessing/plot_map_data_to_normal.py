@@ -34,17 +34,14 @@ is prone to overfitting. The use of the power transform is then recommended.
 
 """
 
-# Author: Eric Chang <ericchang2017@u.northwestern.edu>
-#         Nicolas Hug <contact@nicolas-hug.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.preprocessing import PowerTransformer
-from sklearn.preprocessing import QuantileTransformer
 from sklearn.model_selection import train_test_split
-
+from sklearn.preprocessing import PowerTransformer, QuantileTransformer
 
 N_SAMPLES = 1000
 FONT_SIZE = 6

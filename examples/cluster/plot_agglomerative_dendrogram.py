@@ -1,5 +1,6 @@
-# Authors: Mathew Kallada, Andreas Mueller
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 =========================================
 Plot Hierarchical Clustering Dendrogram
@@ -10,11 +11,11 @@ using AgglomerativeClustering and the dendrogram method available in scipy.
 """
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
-from sklearn.datasets import load_iris
+
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import load_iris
 
 
 def plot_dendrogram(model, **kwargs):

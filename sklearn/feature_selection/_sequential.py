@@ -1,20 +1,28 @@
 """
 Sequential feature selection
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
 
-import warnings
-
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
+from ..metrics import check_scoring, get_scorer_names
+from ..model_selection import check_cv, cross_val_score
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from ..utils._tags import get_tags
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
-from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
-from ..model_selection import cross_val_score, check_cv
-from ..metrics import get_scorer_names
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -36,11 +44,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : "auto", int or float, default='warn'
+    n_features_to_select : "auto", int or float, default="auto"
         If `"auto"`, the behaviour depends on the `tol` parameter:
 
-        - if `tol` is not `None`, then features are selected until the score
-          improvement does not exceed `tol`.
+        - if `tol` is not `None`, then features are selected while the score
+          change does not exceed `tol`.
         - otherwise, half of the features are selected.
 
         If integer, the parameter is the absolute number of features to select.
@@ -49,17 +57,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         .. versionadded:: 1.1
            The option `"auto"` was added in version 1.1.
 
-        .. deprecated:: 1.1
-           The default changed from `None` to `"warn"` in 1.1 and will become
-           `"auto"` in 1.3. `None` and `'warn'` will be removed in 1.3.
-           To keep the same behaviour as `None`, set
-           `n_features_to_select="auto" and `tol=None`.
+        .. versionchanged:: 1.3
+           The default changed from `"warn"` to `"auto"` in 1.3.
 
     tol : float, default=None
         If the score is not incremented by at least `tol` between two
         consecutive feature additions or removals, stop adding or removing.
 
         `tol` can be negative when removing features using `direction="backward"`.
+        `tol` is required to be strictly positive when doing forward selection.
         It can be useful to reduce the number of features at the cost of a small
         decrease in the score.
 
@@ -71,13 +77,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         Whether to perform forward selection or backward selection.
 
     scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        Scoring method to use for cross-validation. Options:
 
-        NOTE that when using a custom scorer, it should return a single
-        value.
-
-        If None, the estimator's score method is used.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)`` that returns a single value.
+          See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -89,9 +96,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used. These splitters are instantiated
-        with `shuffle=False` so the splits will be the same across calls.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. In all other
+        cases, :class:`~sklearn.model_selection.KFold` is used. These splitters
+        are instantiated with `shuffle=False` so the splits will be the same
+        across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -154,10 +163,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
-            StrOptions({"auto", "warn"}, deprecated={"warn"}),
+            StrOptions({"auto"}),
             Interval(RealNotInt, 0, 1, closed="right"),
             Interval(Integral, 0, None, closed="neither"),
-            Hidden(None),
         ],
         "tol": [None, Interval(Real, None, None, closed="neither")],
         "direction": [StrOptions({"forward", "backward"})],
@@ -170,7 +178,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self,
         estimator,
         *,
-        n_features_to_select="warn",
+        n_features_to_select="auto",
         tol=None,
         direction="forward",
         scoring=None,
@@ -185,7 +193,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    @_fit_context(
+        # SequentialFeatureSelector.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit(self, X, y=None, **params):
         """Learn the features to select from X.
 
         Parameters
@@ -198,52 +210,35 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Target values. This parameter may be ignored for
             unsupervised learning.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying `estimator`, `cv`
+            and `scorer` objects.
+
+            .. versionadded:: 1.6
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
-        # FIXME: to be removed in 1.3
-        if self.n_features_to_select in ("warn", None):
-            # for backwards compatibility
-            warnings.warn(
-                (
-                    "Leaving `n_features_to_select` to "
-                    "None is deprecated in 1.0 and will become 'auto' "
-                    "in 1.3. To keep the same behaviour as with None "
-                    "(i.e. select half of the features) and avoid "
-                    "this warning, you should manually set "
-                    "`n_features_to_select='auto'` and set tol=None "
-                    "when creating an instance."
-                ),
-                FutureWarning,
-            )
-
-        tags = self._get_tags()
-        X = self._validate_data(
+        _raise_for_params(params, self, "fit")
+        tags = self.__sklearn_tags__()
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            ensure_all_finite=not tags.input_tags.allow_nan,
         )
         n_features = X.shape[1]
 
-        # FIXME: to be fixed in 1.3
-        error_msg = (
-            "n_features_to_select must be either 'auto', 'warn', "
-            "None, an integer in [1, n_features - 1] "
-            "representing the absolute "
-            "number of features, or a float in (0, 1] "
-            "representing a percentage of features to "
-            f"select. Got {self.n_features_to_select}"
-        )
-        if self.n_features_to_select in ("warn", None):
-            if self.tol is not None:
-                raise ValueError("tol is only enabled if `n_features_to_select='auto'`")
-            self.n_features_to_select_ = n_features // 2
-        elif self.n_features_to_select == "auto":
+        if self.n_features_to_select == "auto":
             if self.tol is not None:
                 # With auto feature selection, `n_features_to_select_` will be updated
                 # to `support_.sum()` after features are selected.
@@ -251,14 +246,16 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             else:
                 self.n_features_to_select_ = n_features // 2
         elif isinstance(self.n_features_to_select, Integral):
-            if not 0 < self.n_features_to_select < n_features:
-                raise ValueError(error_msg)
+            if self.n_features_to_select >= n_features:
+                raise ValueError("n_features_to_select must be < n_features.")
             self.n_features_to_select_ = self.n_features_to_select
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
         if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be positive when doing forward selection")
+            raise ValueError(
+                "tol must be strictly positive when doing forward selection"
+            )
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
@@ -276,9 +273,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         old_score = -np.inf
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
+
+        # We only need to verify the routing here and not use the routed params
+        # because internally the actual routing will also take place inside the
+        # `cross_val_score` function.
+        if _routing_enabled():
+            process_routing(self, "fit", **params)
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
-                cloned_estimator, X, y, cv, current_mask
+                cloned_estimator, X, y, cv, current_mask, **params
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
                 break
@@ -294,7 +297,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         return self
 
-    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask):
+    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask, **params):
         # Return the best new feature and its score to add to the current_mask,
         # i.e. return the best new feature and its score to add (resp. remove)
         # when doing forward selection (resp. backward selection).
@@ -315,6 +318,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 cv=cv,
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
+                params=params,
             ).mean()
         new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
         return new_feature_idx, scores[new_feature_idx]
@@ -323,7 +327,37 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self)
         return self.support_
 
-    def _more_tags(self):
-        return {
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+        router.add(
+            splitter=check_cv(self.cv, classifier=is_classifier(self.estimator)),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
+        router.add(
+            scorer=check_scoring(self.estimator, scoring=self.scoring),
+            method_mapping=MethodMapping().add(caller="fit", callee="score"),
+        )
+        return router

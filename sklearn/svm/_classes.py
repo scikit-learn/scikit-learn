@@ -1,14 +1,35 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
-from ..utils import deprecated
-from ..utils.validation import _num_samples
-from ..utils.multiclass import check_classification_targets
+from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _num_samples, validate_data
+from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
+
+
+def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
+    """Helper function to assign the value of dual parameter."""
+    if dual == "auto":
+        if X.shape[0] < X.shape[1]:
+            try:
+                _get_liblinear_solver_type(multi_class, penalty, loss, True)
+                return True
+            except ValueError:  # dual not supported for the combination
+                return False
+        else:
+            try:
+                _get_liblinear_solver_type(multi_class, penalty, loss, False)
+                return False
+            except ValueError:  # primal not supported by the combination
+                return True
+    else:
+        return dual
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -18,6 +39,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     liblinear rather than libsvm, so it has more flexibility in the choice of
     penalties and loss functions and should scale better to large numbers of
     samples.
+
+    The main differences between :class:`~sklearn.svm.LinearSVC` and
+    :class:`~sklearn.svm.SVC` lie in the loss function used by default, and in
+    the handling of intercept regularization between those two implementations.
 
     This class supports both dense and sparse input and the multiclass support
     is handled according to a one-vs-the-rest scheme.
@@ -37,9 +62,18 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         square of the hinge loss. The combination of ``penalty='l1'``
         and ``loss='hinge'`` is not supported.
 
-    dual : bool, default=True
+    dual : "auto" or bool, default="auto"
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
+        `dual="auto"` will choose the value of the parameter automatically,
+        based on the values of `n_samples`, `n_features`, `loss`, `multi_class`
+        and `penalty`. If `n_samples` < `n_features` and optimizer supports
+        chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
+        otherwise it will be set to False.
+
+        .. versionchanged:: 1.3
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -47,6 +81,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
+        For an intuitive visualization of the effects of scaling
+        the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     multi_class : {'ovr', 'crammer_singer'}, default='ovr'
         Determines the multi-class strategy if `y` contains more than
@@ -60,20 +97,26 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         will be ignored.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (i.e. data is expected to be already centered).
+        Whether or not to fit an intercept. If set to True, the feature vector
+        is extended to include an intercept term: `[x_1, ..., x_n, 1]`, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When self.fit_intercept is True, instance vector x becomes
-        ``[x, self.intercept_scaling]``,
-        i.e. a "synthetic" feature with constant value equals to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        When `fit_intercept` is True, the instance vector x becomes ``[x_1,
+        ..., x_n, intercept_scaling]``, i.e. a "synthetic" feature with a
+        constant value equal to `intercept_scaling` is appended to the instance
+        vector. The intercept becomes intercept_scaling * synthetic feature
+        weight. Note that liblinear internally penalizes the intercept,
+        treating it like any other term in the feature vector. To reduce the
+        impact of the regularization on the intercept, the `intercept_scaling`
+        parameter can be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
+        the feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
     class_weight : dict or 'balanced', default=None
         Set the parameter C of class i to ``class_weight[i]*C`` for
@@ -182,10 +225,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     ('linearsvc', LinearSVC(random_state=0, tol=1e-05))])
 
     >>> print(clf.named_steps['linearsvc'].coef_)
-    [[0.141...   0.526... 0.679... 0.493...]]
+    [[0.141   0.526 0.679 0.493]]
 
     >>> print(clf.named_steps['linearsvc'].intercept_)
-    [0.1693...]
+    [0.1693]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
@@ -193,7 +236,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "penalty": [StrOptions({"l1", "l2"})],
         "loss": [StrOptions({"hinge", "squared_hinge"})],
-        "dual": ["boolean"],
+        "dual": ["boolean", StrOptions({"auto"})],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
         "multi_class": [StrOptions({"ovr", "crammer_singer"})],
@@ -210,7 +253,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         penalty="l2",
         loss="squared_hinge",
         *,
-        dual=True,
+        dual="auto",
         tol=1e-4,
         C=1.0,
         multi_class="ovr",
@@ -234,6 +277,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.penalty = penalty
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -258,9 +302,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -271,6 +314,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
+        _dual = _validate_dual_parameter(
+            self.dual, self.loss, self.penalty, self.multi_class, X
+        )
+
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
@@ -279,7 +326,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.intercept_scaling,
             self.class_weight,
             self.penalty,
-            self.dual,
+            _dual,
             self.verbose,
             self.max_iter,
             self.tol,
@@ -302,14 +349,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         return self
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class LinearSVR(RegressorMixin, LinearModel):
@@ -319,6 +362,10 @@ class LinearSVR(RegressorMixin, LinearModel):
     liblinear rather than libsvm, so it has more flexibility in the choice of
     penalties and loss functions and should scale better to large numbers of
     samples.
+
+    The main differences between :class:`~sklearn.svm.LinearSVR` and
+    :class:`~sklearn.svm.SVR` lie in the loss function used by default, and in
+    the handling of intercept regularization between those two implementations.
 
     This class supports both dense and sparse input.
 
@@ -347,24 +394,38 @@ class LinearSVR(RegressorMixin, LinearModel):
         loss ('squared_epsilon_insensitive') is the L2 loss.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (i.e. data is expected to be already centered).
+        Whether or not to fit an intercept. If set to True, the feature vector
+        is extended to include an intercept term: `[x_1, ..., x_n, 1]`, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When self.fit_intercept is True, instance vector x becomes
-        [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        When `fit_intercept` is True, the instance vector x becomes `[x_1, ...,
+        x_n, intercept_scaling]`, i.e. a "synthetic" feature with a constant
+        value equal to `intercept_scaling` is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight.
+        Note that liblinear internally penalizes the intercept, treating it
+        like any other term in the feature vector. To reduce the impact of the
+        regularization on the intercept, the `intercept_scaling` parameter can
+        be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
+        the feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
-    dual : bool, default=True
+    dual : "auto" or bool, default="auto"
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
+        `dual="auto"` will choose the value of the parameter automatically,
+        based on the values of `n_samples`, `n_features` and `loss`. If
+        `n_samples` < `n_features` and optimizer supports chosen `loss`,
+        then dual will be set to True, otherwise it will be set to False.
+
+        .. versionchanged:: 1.3
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
@@ -412,8 +473,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         same library as this class (liblinear).
 
     SVR : Implementation of Support Vector Machine regression using libsvm:
-        the kernel can be non-linear but its SMO algorithm does not
-        scale to large number of samples as LinearSVC does.
+        the kernel can be non-linear but its SMO algorithm does not scale to
+        large number of samples as :class:`~sklearn.svm.LinearSVR` does.
 
     sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
         function as LinearSVR
@@ -435,11 +496,11 @@ class LinearSVR(RegressorMixin, LinearModel):
                     ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
 
     >>> print(regr.named_steps['linearsvr'].coef_)
-    [18.582... 27.023... 44.357... 64.522...]
+    [18.582 27.023 44.357 64.522]
     >>> print(regr.named_steps['linearsvr'].intercept_)
-    [-4...]
+    [-4.]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-2.384...]
+    [-2.384]
     """
 
     _parameter_constraints: dict = {
@@ -449,7 +510,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
-        "dual": ["boolean"],
+        "dual": ["boolean", StrOptions({"auto"})],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -464,7 +525,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         loss="epsilon_insensitive",
         fit_intercept=True,
         intercept_scaling=1.0,
-        dual=True,
+        dual="auto",
         verbose=0,
         random_state=None,
         max_iter=1000,
@@ -480,6 +541,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.dual = dual
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -504,9 +566,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -515,6 +576,9 @@ class LinearSVR(RegressorMixin, LinearModel):
             accept_large_sparse=False,
         )
         penalty = "l2"  # SVR only accepts l2 penalty
+
+        _dual = _validate_dual_parameter(self.dual, self.loss, penalty, "ovr", X)
+
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
@@ -523,7 +587,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             self.intercept_scaling,
             None,
             penalty,
-            self.dual,
+            _dual,
             self.verbose,
             self.max_iter,
             self.tol,
@@ -541,14 +605,10 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         return self
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class SVC(BaseSVC):
@@ -569,6 +629,9 @@ class SVC(BaseSVC):
     other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
+    To learn how to tune SVC's hyperparameters, see the following example:
+    :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+
     Read more in the :ref:`User Guide <svm_classification>`.
 
     Parameters
@@ -576,14 +639,18 @@ class SVC(BaseSVC):
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive. The penalty
-        is a squared l2 penalty.
+        is a squared l2 penalty. For an intuitive visualization of the effects
+        of scaling the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-        Specifies the kernel type to be used in the algorithm.
-        If none is given, 'rbf' will be used. If a callable is given it is
-        used to pre-compute the kernel matrix from data matrices; that matrix
-        should be an array of shape ``(n_samples, n_samples)``.
+        Specifies the kernel type to be used in the algorithm. If
+        none is given, 'rbf' will be used. If a callable is given it is used to
+        pre-compute the kernel matrix from data matrices; that matrix should be
+        an array of shape ``(n_samples, n_samples)``. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -659,7 +726,9 @@ class SVC(BaseSVC):
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
-        relatively high computational cost compared to a simple predict.
+        relatively high computational cost compared to a simple predict. See
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -722,7 +791,7 @@ class SVC(BaseSVC):
         Indices of support vectors.
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+        Support vectors. An empty array if kernel is precomputed.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -773,6 +842,9 @@ class SVC(BaseSVC):
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    For a comparison of the SVC with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _impl = "c_svc"
@@ -815,15 +887,6 @@ class SVC(BaseSVC):
             random_state=random_state,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
-
 
 class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
@@ -844,9 +907,11 @@ class NuSVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-         Specifies the kernel type to be used in the algorithm.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix.
+        Specifies the kernel type to be used in the algorithm.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to precompute the kernel matrix. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -921,6 +986,8 @@ class NuSVC(BaseSVC):
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
         relatively high computational cost compared to a simple predict.
+        See :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -992,6 +1059,7 @@ class NuSVC(BaseSVC):
         0 if correctly fitted, 1 if the algorithm did not converge.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
@@ -1082,22 +1150,6 @@ class NuSVC(BaseSVC):
             random_state=random_state,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_subset_invariance": (
-                    "fails for the decision_function method"
-                ),
-                "check_class_weight_classifiers": "class_weight is ignored.",
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-                "check_classifiers_one_label_sample_weights": (
-                    "specified nu is infeasible for the fit."
-                ),
-            }
-        }
-
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
@@ -1121,6 +1173,8 @@ class SVR(RegressorMixin, BaseLibSVM):
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types
+         see :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1147,7 +1201,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
-        The penalty is a squared l2 penalty.
+        The penalty is a squared l2. For an intuitive visualization of the
+        effects of scaling the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     epsilon : float, default=0.1
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -1172,13 +1228,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
-        .. deprecated:: 1.2
-            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1295,24 +1344,6 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.4): Remove
-    @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
-    @property
-    def class_weight_(self):
-        return np.empty(0)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
-
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1333,13 +1364,17 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         default 0.5 will be taken.
 
     C : float, default=1.0
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. For an intuitive visualization
+        of the effects of scaling the regularization parameter C, see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`.
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
          Specifies the kernel type to be used in the algorithm.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
+         For an intuitive visualization of different kernel types see
+         See :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1380,13 +1415,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
-        .. deprecated:: 1.2
-            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1503,24 +1531,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO(1.4): Remove
-    @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
-    @property
-    def class_weight_(self):
-        return np.empty(0)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
-
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
     """Unsupervised Outlier Detection.
@@ -1584,13 +1594,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_classes,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
-
-        .. deprecated:: 1.2
-            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
-
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1659,7 +1662,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
-    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+    array([1.7798, 2.0547, 2.0556, 2.0561, 1.7332])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
 
     _impl = "one_class"
@@ -1699,15 +1705,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             max_iter,
             random_state=None,
         )
-
-    # TODO(1.4): Remove
-    @deprecated(  # type: ignore
-        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
-        " 1.4."
-    )
-    @property
-    def class_weight_(self):
-        return np.empty(0)
 
     def fit(self, X, y=None, sample_weight=None):
         """Detect the soft boundary of the set of samples X.
@@ -1790,12 +1787,3 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }

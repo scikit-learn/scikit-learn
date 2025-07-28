@@ -1,15 +1,17 @@
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
 from libc.math cimport isnan
 
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
+from ...utils._typedefs cimport uint8_t
 
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
-                 const unsigned char[::1] is_categorical,
-                 const unsigned char missing_values_bin_idx,
+                 const uint8_t[::1] is_categorical,
+                 const uint8_t missing_values_bin_idx,
                  int n_threads,
                  X_BINNED_DTYPE_C [::1, :] binned):
     """Bin continuous and categorical values to discrete integer-coded levels.
@@ -24,7 +26,7 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
-    is_categorical : ndarray of unsigned char of shape (n_features,)
+    is_categorical : ndarray of uint8_t of shape (n_features,)
         Indicates categorical features.
     n_threads : int
         Number of OpenMP threads to use.
@@ -35,20 +37,24 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         int feature_idx
 
     for feature_idx in range(data.shape[1]):
-        _map_col_to_bins(data[:, feature_idx],
-                             binning_thresholds[feature_idx],
-                             is_categorical[feature_idx],
-                             missing_values_bin_idx,
-                             n_threads,
-                             binned[:, feature_idx])
+        _map_col_to_bins(
+            data[:, feature_idx],
+            binning_thresholds[feature_idx],
+            is_categorical[feature_idx],
+            missing_values_bin_idx,
+            n_threads,
+            binned[:, feature_idx]
+        )
 
 
-cdef void _map_col_to_bins(const X_DTYPE_C [:] data,
-                               const X_DTYPE_C [:] binning_thresholds,
-                               const unsigned char is_categorical,
-                               const unsigned char missing_values_bin_idx,
-                               int n_threads,
-                               X_BINNED_DTYPE_C [:] binned):
+cdef void _map_col_to_bins(
+    const X_DTYPE_C [:] data,
+    const X_DTYPE_C [:] binning_thresholds,
+    const uint8_t is_categorical,
+    const uint8_t missing_values_bin_idx,
+    int n_threads,
+    X_BINNED_DTYPE_C [:] binned
+):
     """Binary search to find the bin index for each value in the data."""
     cdef:
         int i

@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _computational_performance:
 
 .. currentmodule:: sklearn
@@ -19,9 +15,9 @@ scikit-learn estimators in different contexts and provide some tips and
 tricks for overcoming performance bottlenecks.
 
 Prediction latency is measured as the elapsed time necessary to make a
-prediction (e.g. in micro-seconds). Latency is often viewed as a distribution
+prediction (e.g. in microseconds). Latency is often viewed as a distribution
 and operations engineers often focus on the latency at a given percentile of
-this distribution (e.g. the 90 percentile).
+this distribution (e.g. the 90th percentile).
 
 Prediction throughput is defined as the number of predictions the software can
 deliver in a given amount of time (e.g. in predictions per second).
@@ -34,15 +30,16 @@ to take into account the same exact properties of the data as more complex ones.
 Prediction Latency
 ------------------
 
-One of the most straight-forward concerns one may have when using/choosing a
+One of the most straightforward concerns one may have when using/choosing a
 machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
 The main factors that influence the prediction latency are
-  1. Number of features
-  2. Input data representation and sparsity
-  3. Model complexity
-  4. Feature extraction
+
+1. Number of features
+2. Input data representation and sparsity
+3. Model complexity
+4. Feature extraction
 
 A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
@@ -195,7 +192,7 @@ support vectors.
 .. centered:: |nusvr_model_complexity|
 
 For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
-ExtraTrees etc) the number of trees and their depth play the most
+ExtraTrees, etc.) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`~ensemble.GradientBoostingRegressor`.
@@ -224,9 +221,9 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
-    :target: ../auto_examples/applications/plot_out_of_core_classification.html
-    :scale: 80
+.. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
+  :target: ../auto_examples/applications/plot_out_of_core_classification.html
+  :scale: 80
 
 .. centered:: |prediction_time|
 
@@ -283,10 +280,11 @@ scikit-learn install with the following command::
     python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
- - Atlas (need hardware specific tuning by rebuilding on the target machine)
- - OpenBLAS
- - MKL
- - Apple Accelerate and vecLib frameworks (OSX only)
+
+- Atlas (need hardware specific tuning by rebuilding on the target machine)
+- OpenBLAS
+- MKL
+- Apple Accelerate and vecLib frameworks (OSX only)
 
 More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
@@ -354,7 +352,7 @@ feature selection components in a pipeline once we know which features to
 keep from a previous run. Finally, it can help reduce processing time and I/O
 usage upstream in the data access and feature extraction layers by not
 collecting and building features that are discarded by the model. For instance
-if the raw data come from a database, it can make it possible to write simpler
+if the raw data come from a database, it is possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.
@@ -364,5 +362,5 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - :ref:`scikit-learn developer performance documentation <performance-howto>`
-  - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+- :ref:`scikit-learn developer performance documentation <performance-howto>`
+- `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_

@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.1
@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 1.1
 We are pleased to announce the release of scikit-learn 1.1! Many bug fixes
 and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. **For an exhaustive list of
-all the changes**, please refer to the :ref:`release notes <changes_1_1>`.
+all the changes**, please refer to the :ref:`release notes <release_notes_1_1>`.
 
 To install the latest version (with pip)::
 
@@ -22,13 +22,16 @@ or with conda::
 """
 
 # %%
-# Quantile loss in :class:`ensemble.HistGradientBoostingRegressor`
-# ----------------------------------------------------------------
-# :class:`ensemble.HistGradientBoostingRegressor` can model quantiles with
+# .. _quantile_support_hgbdt:
+#
+# Quantile loss in :class:`~ensemble.HistGradientBoostingRegressor`
+# -----------------------------------------------------------------
+# :class:`~ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
-from sklearn.ensemble import HistGradientBoostingRegressor
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.ensemble import HistGradientBoostingRegressor
 
 # Simple regression function for X * cos(X)
 rng = np.random.RandomState(42)
@@ -51,20 +54,25 @@ for quantile, hist in hist_quantiles.items():
     ax.plot(X_1d, hist.predict(X), label=quantile)
 _ = ax.legend(loc="lower left")
 
+# %%
+# For a usecase example, see
+# :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 # %%
 # `get_feature_names_out` Available in all Transformers
 # -----------------------------------------------------
-# :term:`get_feature_names_out` is now available in all Transformers. This enables
-# :class:`pipeline.Pipeline` to construct the output feature names for more complex
-# pipelines:
+# :term:`get_feature_names_out` is now available in all transformers, thereby
+# concluding the implementation of
+# `SLEP007 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep007/proposal.html>`__.
+# This enables :class:`~pipeline.Pipeline` to construct the output feature names for
+# more complex pipelines:
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.feature_selection import SelectKBest
 from sklearn.datasets import fetch_openml
+from sklearn.feature_selection import SelectKBest
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 X, y = fetch_openml(
     "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
@@ -101,14 +109,16 @@ plt.tight_layout()
 
 
 # %%
-# Grouping infrequent categories in :class:`OneHotEncoder`
-# --------------------------------------------------------
-# :class:`OneHotEncoder` supports aggregating infrequent categories into a single
-# output for each feature. The parameters to enable the gathering of infrequent
-# categories are `min_frequency` and `max_categories`. See the
-# :ref:`User Guide <one_hot_encoder_infrequent_categories>` for more details.
-from sklearn.preprocessing import OneHotEncoder
+# Grouping infrequent categories in :class:`~preprocessing.OneHotEncoder`
+# -----------------------------------------------------------------------
+# :class:`~preprocessing.OneHotEncoder` supports aggregating infrequent
+# categories into a single output for each feature. The parameters to enable
+# the gathering of infrequent categories are `min_frequency` and
+# `max_categories`. See the :ref:`User Guide <encoder_infrequent_categories>`
+# for more details.
 import numpy as np
+
+from sklearn.preprocessing import OneHotEncoder
 
 X = np.array(
     [["dog"] * 5 + ["cat"] * 20 + ["rabbit"] * 10 + ["snake"] * 3], dtype=object
@@ -165,16 +175,18 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 # - :class:`linear_model.TweedieRegressor`
 
 # %%
-# MiniBatchNMF: an online version of NMF
-# --------------------------------------
-# The new class :class:`decomposition.MiniBatchNMF` implements a faster but less
-# accurate version of non-negative matrix factorization (:class:`decomposition.NMF`).
-# :class:`MiniBatchNMF` divides the data into mini-batches and optimizes the NMF model
-# in an online manner by cycling over the mini-batches, making it better suited for
-# large datasets. In particular, it implements `partial_fit`, which can be used for
-# online learning when the data is not readily available from the start, or when the
+# :class:`~decomposition.MiniBatchNMF`: an online version of NMF
+# --------------------------------------------------------------
+# The new class :class:`~decomposition.MiniBatchNMF` implements a faster but
+# less accurate version of non-negative matrix factorization
+# (:class:`~decomposition.NMF`). :class:`~decomposition.MiniBatchNMF` divides the
+# data into mini-batches and optimizes the NMF model in an online manner by
+# cycling over the mini-batches, making it better suited for large datasets. In
+# particular, it implements `partial_fit`, which can be used for online
+# learning when the data is not readily available from the start, or when the
 # data does not fit into memory.
 import numpy as np
+
 from sklearn.decomposition import MiniBatchNMF
 
 rng = np.random.RandomState(0)
@@ -193,21 +205,23 @@ H = nmf.components_
 X_reconstructed = W @ H
 
 print(
-    f"relative reconstruction error: ",
+    "relative reconstruction error: ",
     f"{np.sum((X - X_reconstructed) ** 2) / np.sum(X**2):.5f}",
 )
 
 # %%
-# BisectingKMeans: divide and cluster
-# -----------------------------------
-# The new class :class:`cluster.BisectingKMeans` is a variant of :class:`KMeans`, using
-# divisive hierarchical clustering. Instead of creating all centroids at once, centroids
-# are picked progressively based on a previous clustering: a cluster is split into two
-# new clusters repeatedly until the target number of clusters is reached, giving a
-# hierarchical structure to the clustering.
-from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans, BisectingKMeans
+# :class:`~cluster.BisectingKMeans`: divide and cluster
+# -----------------------------------------------------
+# The new class :class:`~cluster.BisectingKMeans` is a variant of
+# :class:`~cluster.KMeans`, using divisive hierarchical clustering. Instead of
+# creating all centroids at once, centroids are picked progressively based on a
+# previous clustering: a cluster is split into two new clusters repeatedly
+# until the target number of clusters is reached, giving a hierarchical
+# structure to the clustering.
 import matplotlib.pyplot as plt
+
+from sklearn.cluster import BisectingKMeans, KMeans
+from sklearn.datasets import make_blobs
 
 X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
 

@@ -2,10 +2,15 @@
 
 set -e
 
+# Do not upload to codecov on forks
+if [[ "$BUILD_REPOSITORY_NAME" != "scikit-learn/scikit-learn" ]]; then
+    exit 0
+fi
+
 # When we update the codecov uploader version, we need to update the checksums.
 # The checksum for each codecov binary is available at
-# https://uploader.codecov.io e.g. for linux
-# https://uploader.codecov.io/v0.4.1/linux/codecov.SHA256SUM.
+# https://cli.codecov.io e.g. for linux
+# https://cli.codecov.io/v10.2.1/linux/codecov.SHA256SUM.
 
 # Instead of hardcoding a specific version and signature in this script, it
 # would be possible to use the "latest" symlink URL but then we need to
@@ -15,9 +20,8 @@ set -e
 # However this approach would yield a larger number of downloads from
 # codecov.io and keybase.io, therefore increasing the risk of running into
 # network failures.
-CODECOV_UPLOADER_VERSION=0.4.1
-CODECOV_BASE_URL="https://uploader.codecov.io/v$CODECOV_UPLOADER_VERSION"
-
+CODECOV_CLI_VERSION=10.2.1
+CODECOV_BASE_URL="https://cli.codecov.io/v$CODECOV_CLI_VERSION"
 
 # Check that the git repo is located at the expected location:
 if [[ ! -d "$BUILD_REPOSITORY_LOCALPATH/.git" ]]; then
@@ -34,19 +38,22 @@ fi
 
 if [[ $OSTYPE == *"linux"* ]]; then
     curl -Os "$CODECOV_BASE_URL/linux/codecov"
-    SHA256SUM="32cb14b5f3aaacd67f4c1ff55d82f037d3cd10c8e7b69c051f27391d2e66e15c  codecov"
+    SHA256SUM="39dd112393680356daf701c07f375303aef5de62f06fc80b466b5c3571336014  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z
+    ./codecov upload-coverage -t ${CODECOV_TOKEN} -f coverage.xml -Z
+    ./codecov do-upload --disable-search --report-type test_results --file $JUNIT_FILE
 elif [[ $OSTYPE == *"darwin"* ]]; then
     curl -Os "$CODECOV_BASE_URL/macos/codecov"
-    SHA256SUM="4ab0f06f06e9c4d25464f155b0aff36bfc1e8dbcdb19bfffd586beed1269f3af  codecov"
+    SHA256SUM="01183f6367c7baff4947cce389eaa511b7a6d938e37ae579b08a86b51f769fd9  codecov"
     echo "$SHA256SUM" | shasum -a256 -c
     chmod +x codecov
-    ./codecov -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z
+    ./codecov upload-coverage -t ${CODECOV_TOKEN} -f coverage.xml -Z
+    ./codecov do-upload --disable-search --report-type test_results --file $JUNIT_FILE
 else
     curl -Os "$CODECOV_BASE_URL/windows/codecov.exe"
-    SHA256SUM="e0cda212aeaebe695509ce8fa2d608760ff70bc932003f544f1ad368ac5450a8 codecov.exe"
+    SHA256SUM="e54e9520428701a510ef451001db56b56fb17f9b0484a266f184b73dd27b77e7  codecov.exe"
     echo "$SHA256SUM" | sha256sum -c
-    ./codecov.exe -t ${CODECOV_TOKEN} -R $BUILD_REPOSITORY_LOCALPATH -f coverage.xml -Z
+    ./codecov.exe upload-coverage -t ${CODECOV_TOKEN} -f coverage.xml -Z
+    ./codecov.exe do-upload --disable-search --report-type test_results --file $JUNIT_FILE
 fi

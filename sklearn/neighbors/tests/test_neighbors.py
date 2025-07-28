@@ -1,20 +1,11 @@
-from itertools import product
-from contextlib import nullcontext
-import warnings
-
-import pytest
 import re
+import warnings
+from itertools import product
+
+import joblib
 import numpy as np
-from scipy.sparse import (
-    bsr_matrix,
-    coo_matrix,
-    csc_matrix,
-    csr_matrix,
-    dok_matrix,
-    dia_matrix,
-    lil_matrix,
-    issparse,
-)
+import pytest
+from scipy.sparse import issparse
 
 from sklearn import (
     config_context,
@@ -23,36 +14,48 @@ from sklearn import (
     neighbors,
 )
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import EfficiencyWarning
-from sklearn.exceptions import NotFittedError
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.exceptions import EfficiencyWarning, NotFittedError
+from sklearn.metrics._dist_metrics import (
+    DistanceMetric,
+)
+from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS, pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
-    assert_radius_neighbors_results_equality,
+    assert_compatible_argkmin_results,
+    assert_compatible_radius_results,
 )
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import (
+    LeaveOneOut,
+    cross_val_predict,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
     KNeighborsRegressor,
 )
 from sklearn.neighbors._base import (
-    _is_sorted_by_data,
-    _check_precomputed,
-    sort_graph_by_row_values,
     KNeighborsMixin,
+    _check_precomputed,
+    _is_sorted_by_data,
+    sort_graph_by_row_values,
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
+    ignore_warnings,
 )
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DIA_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
+)
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.fixes import sp_version, parse_version
-
-import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -67,19 +70,45 @@ perm = rng.permutation(digits.target.size)
 digits.data = digits.data[perm]
 digits.target = digits.target[perm]
 
-SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix, lil_matrix)
+SPARSE_TYPES = tuple(
+    BSR_CONTAINERS
+    + COO_CONTAINERS
+    + CSC_CONTAINERS
+    + CSR_CONTAINERS
+    + DOK_CONTAINERS
+    + LIL_CONTAINERS
+)
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
-)  # type: ignore
+)
+
 P = (1, 2, 3, 4, np.inf)
-JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
 neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_graph)
+
+# A list containing metrics where the string specifies the use of the
+# DistanceMetric object directly (as resolved in _parse_metric)
+DISTANCE_METRIC_OBJS = ["DM_euclidean"]
+
+
+def _parse_metric(metric: str, dtype=None):
+    """
+    Helper function for properly building a type-specialized DistanceMetric instances.
+
+    Constructs a type-specialized DistanceMetric instance from a string
+    beginning with "DM_" while allowing a pass-through for other metric-specifying
+    strings. This is necessary since we wish to parameterize dtype independent of
+    metric, yet DistanceMetric requires it for construction.
+
+    """
+    if metric[:3] == "DM_":
+        return DistanceMetric.get_metric(metric[3:], dtype=dtype)
+    return metric
 
 
 def _generate_test_params_for(metric: str, n_features: int):
@@ -87,26 +116,15 @@ def _generate_test_params_for(metric: str, n_features: int):
 
     # Distinguishing on cases not to compute unneeded datastructures.
     rng = np.random.RandomState(1)
-    weights = rng.random_sample(n_features)
 
     if metric == "minkowski":
-        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
-        if sp_version >= parse_version("1.8.0.dev0"):
-            # TODO: remove the test once we no longer support scipy < 1.8.0.
-            # Recent scipy versions accept weights in the Minkowski metric directly:
-            # type: ignore
-            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-        return minkowski_kwargs
-
-    # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
-    if metric == "wminkowski":
-        weights /= weights.sum()
-        wminkowski_kwargs = [dict(p=1.5, w=weights)]
-        if sp_version < parse_version("1.8.0.dev0"):
-            # wminkowski was removed in scipy 1.8.0 but should work for previous
-            # versions.
-            wminkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-        return wminkowski_kwargs
+        return [
+            dict(p=1.5),
+            dict(p=2),
+            dict(p=3),
+            dict(p=np.inf),
+            dict(p=3, w=rng.rand(n_features)),
+        ]
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
@@ -145,7 +163,7 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 def test_unsupervised_kneighbors(
     global_dtype,
     n_samples,
@@ -158,6 +176,8 @@ def test_unsupervised_kneighbors(
     # The different algorithms must return identical results
     # on their common metrics, with and without returning
     # distances
+
+    metric = _parse_metric(metric, global_dtype)
 
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
@@ -173,6 +193,12 @@ def test_unsupervised_kneighbors(
     results = []
 
     for algorithm in ALGORITHMS:
+        if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
+            if "tree" in algorithm:  # pragma: nocover
+                pytest.skip(
+                    "Neither KDTree nor BallTree support 32-bit distance metric"
+                    " objects."
+                )
         neigh = neighbors.NearestNeighbors(
             n_neighbors=n_neighbors, algorithm=algorithm, metric=metric
         )
@@ -222,7 +248,7 @@ def test_unsupervised_kneighbors(
         (1000, 5, 100),
     ],
 )
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
@@ -246,6 +272,19 @@ def test_neigh_predictions_algorithm_agnosticity(
     # The different algorithms must return identical predictions results
     # on their common metrics.
 
+    metric = _parse_metric(metric, global_dtype)
+    if isinstance(metric, DistanceMetric):
+        if "Classifier" in NeighborsMixinSubclass.__name__:
+            pytest.skip(
+                "Metrics of type `DistanceMetric` are not yet supported for"
+                " classifiers."
+            )
+        if "Radius" in NeighborsMixinSubclass.__name__:
+            pytest.skip(
+                "Metrics of type `DistanceMetric` are not yet supported for"
+                " radius-neighbor estimators."
+            )
+
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
     X = local_rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
@@ -260,6 +299,12 @@ def test_neigh_predictions_algorithm_agnosticity(
     )
 
     for algorithm in ALGORITHMS:
+        if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
+            if "tree" in algorithm:  # pragma: nocover
+                pytest.skip(
+                    "Neither KDTree nor BallTree support 32-bit distance metric"
+                    " objects."
+                )
         neigh = NeighborsMixinSubclass(parameter, algorithm=algorithm, metric=metric)
         neigh.fit(X, y)
 
@@ -427,14 +472,15 @@ def test_precomputed_sparse_radius(fmt):
     check_precomputed(make_train_test, estimators)
 
 
-def test_is_sorted_by_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_is_sorted_by_data(csr_container):
     # Test that _is_sorted_by_data works as expected. In CSR sparse matrix,
     # entries in each row can be sorted by indices, by data, or unsorted.
     # _is_sorted_by_data should return True when entries are sorted by data,
     # and False in all other cases.
 
-    # Test with sorted 1D array
-    X = csr_matrix(np.arange(10))
+    # Test with sorted single row sparse array
+    X = csr_container(np.arange(10).reshape(1, 10))
     assert _is_sorted_by_data(X)
     # Test with unsorted 1D array
     X[0, 2] = 5
@@ -442,20 +488,21 @@ def test_is_sorted_by_data():
 
     # Test when the data is sorted in each sample, but not necessarily
     # between samples
-    X = csr_matrix([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
+    X = csr_container([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
     assert _is_sorted_by_data(X)
 
     # Test with duplicates entries in X.indptr
     data, indices, indptr = [0, 4, 2, 2], [0, 1, 1, 1], [0, 2, 2, 4]
-    X = csr_matrix((data, indices, indptr), shape=(3, 3))
+    X = csr_container((data, indices, indptr), shape=(3, 3))
     assert _is_sorted_by_data(X)
 
 
 @pytest.mark.filterwarnings("ignore:EfficiencyWarning")
 @pytest.mark.parametrize("function", [sort_graph_by_row_values, _check_precomputed])
-def test_sort_graph_by_row_values(function):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sort_graph_by_row_values(function, csr_container):
     # Test that sort_graph_by_row_values returns a graph sorted by row values
-    X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    X = csr_container(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_data(X)
     Xt = function(X)
     assert _is_sorted_by_data(Xt)
@@ -464,16 +511,17 @@ def test_sort_graph_by_row_values(function):
     mask = np.random.RandomState(42).randint(2, size=(10, 10))
     X = X.toarray()
     X[mask == 1] = 0
-    X = csr_matrix(X)
+    X = csr_container(X)
     assert not _is_sorted_by_data(X)
     Xt = function(X)
     assert _is_sorted_by_data(Xt)
 
 
 @pytest.mark.filterwarnings("ignore:EfficiencyWarning")
-def test_sort_graph_by_row_values_copy():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sort_graph_by_row_values_copy(csr_container):
     # Test if the sorting is done inplace if X is CSR, so that Xt is X.
-    X_ = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    X_ = csr_container(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_data(X_)
 
     # sort_graph_by_row_values is done inplace if copy=False
@@ -497,14 +545,11 @@ def test_sort_graph_by_row_values_copy():
     with pytest.raises(ValueError, match="Use copy=True to allow the conversion"):
         sort_graph_by_row_values(X.tocsc(), copy=False)
 
-    # raise if X is not even sparse
-    with pytest.raises(TypeError, match="Input graph must be a sparse matrix"):
-        sort_graph_by_row_values(X.toarray())
 
-
-def test_sort_graph_by_row_values_warning():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sort_graph_by_row_values_warning(csr_container):
     # Test that the parameter warn_when_not_sorted works as expected.
-    X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    X = csr_container(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_data(X)
 
     # warning
@@ -521,10 +566,12 @@ def test_sort_graph_by_row_values_warning():
         sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=False)
 
 
-@pytest.mark.parametrize("format", [dok_matrix, bsr_matrix, dia_matrix])
-def test_sort_graph_by_row_values_bad_sparse_format(format):
+@pytest.mark.parametrize(
+    "sparse_container", DOK_CONTAINERS + BSR_CONTAINERS + DIA_CONTAINERS
+)
+def test_sort_graph_by_row_values_bad_sparse_format(sparse_container):
     # Test that sort_graph_by_row_values and _check_precomputed error on bad formats
-    X = format(np.abs(np.random.RandomState(42).randn(10, 10)))
+    X = sparse_container(np.abs(np.random.RandomState(42).randn(10, 10)))
     with pytest.raises(TypeError, match="format is not supported"):
         sort_graph_by_row_values(X)
     with pytest.raises(TypeError, match="format is not supported"):
@@ -532,9 +579,10 @@ def test_sort_graph_by_row_values_bad_sparse_format(format):
 
 
 @pytest.mark.filterwarnings("ignore:EfficiencyWarning")
-def test_precomputed_sparse_invalid():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_precomputed_sparse_invalid(csr_container):
     dist = np.array([[0.0, 2.0, 1.0], [2.0, 0.0, 3.0], [1.0, 3.0, 0.0]])
-    dist_csr = csr_matrix(dist)
+    dist_csr = csr_container(dist)
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
     neigh.fit(dist_csr)
     neigh.kneighbors(None, n_neighbors=1)
@@ -542,7 +590,7 @@ def test_precomputed_sparse_invalid():
 
     # Ensures enough number of nearest neighbors
     dist = np.array([[0.0, 2.0, 0.0], [2.0, 0.0, 3.0], [0.0, 3.0, 0.0]])
-    dist_csr = csr_matrix(dist)
+    dist_csr = csr_container(dist)
     neigh.fit(dist_csr)
     msg = "2 neighbors per samples are required, but some samples have only 1"
     with pytest.raises(ValueError, match=msg):
@@ -550,7 +598,7 @@ def test_precomputed_sparse_invalid():
 
     # Checks error with inconsistent distance matrix
     dist = np.array([[5.0, 2.0, 1.0], [-2.0, 0.0, 3.0], [1.0, 3.0, 0.0]])
-    dist_csr = csr_matrix(dist)
+    dist_csr = csr_container(dist)
     msg = "Negative values in data passed to precomputed distance matrix."
     with pytest.raises(ValueError, match=msg):
         neigh.kneighbors(dist_csr, n_neighbors=1)
@@ -608,7 +656,7 @@ def test_unsupervised_radius_neighbors(
             assert_allclose(
                 np.concatenate(list(results[i][0])),
                 np.concatenate(list(results[i + 1][0])),
-            ),
+            )
             assert_allclose(
                 np.concatenate(list(results[i][1])),
                 np.concatenate(list(results[i + 1][1])),
@@ -966,12 +1014,13 @@ def test_radius_neighbors_boundary_handling():
         assert_array_equal(results[0], [0, 1])
 
 
-def test_radius_neighbors_returns_array_of_objects():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_radius_neighbors_returns_array_of_objects(csr_container):
     # check that we can pass precomputed distances to
     # NearestNeighbors.radius_neighbors()
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/16036
-    X = csr_matrix(np.ones((4, 4)))
+    X = csr_container(np.ones((4, 4)))
     X.setdiag([0, 0, 0, 0])
 
     nbrs = neighbors.NearestNeighbors(
@@ -1005,15 +1054,26 @@ def test_query_equidistant_kth_nn(algorithm):
 
 @pytest.mark.parametrize(
     ["algorithm", "metric"],
-    [
-        ("ball_tree", "euclidean"),
-        ("kd_tree", "euclidean"),
+    list(
+        product(
+            ("kd_tree", "ball_tree", "brute"),
+            ("euclidean", *DISTANCE_METRIC_OBJS),
+        )
+    )
+    + [
         ("brute", "euclidean"),
         ("brute", "precomputed"),
     ],
 )
 def test_radius_neighbors_sort_results(algorithm, metric):
     # Test radius_neighbors[_graph] output when sort_result is True
+
+    metric = _parse_metric(metric, np.float64)
+    if isinstance(metric, DistanceMetric):
+        pytest.skip(
+            "Metrics of type `DistanceMetric` are not yet supported for radius-neighbor"
+            " estimators."
+        )
     n_samples = 10
     rng = np.random.RandomState(42)
     X = rng.random_sample((n_samples, 4))
@@ -1331,7 +1391,7 @@ def test_kneighbors_regressor_sparse(
             assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric="euclidean"))
-            if sparsev in {dok_matrix, bsr_matrix}:
+            if sparsev in DOK_CONTAINERS + BSR_CONTAINERS:
                 msg = "not supported due to its handling of explicit zeros"
                 with pytest.raises(TypeError, match=msg):
                     knn_pre.predict(X2_pre)
@@ -1413,12 +1473,13 @@ def test_kneighbors_graph():
 
 @pytest.mark.parametrize("n_neighbors", [1, 2, 3])
 @pytest.mark.parametrize("mode", ["connectivity", "distance"])
-def test_kneighbors_graph_sparse(n_neighbors, mode, seed=36):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kneighbors_graph_sparse(n_neighbors, mode, csr_container, seed=36):
     # Test kneighbors_graph to build the k-Nearest Neighbor graph
     # for sparse input.
     rng = np.random.RandomState(seed)
     X = rng.randn(10, 10)
-    Xcsr = csr_matrix(X)
+    Xcsr = csr_container(X)
 
     assert_allclose(
         neighbors.kneighbors_graph(X, n_neighbors, mode=mode).toarray(),
@@ -1441,12 +1502,13 @@ def test_radius_neighbors_graph():
 
 @pytest.mark.parametrize("n_neighbors", [1, 2, 3])
 @pytest.mark.parametrize("mode", ["connectivity", "distance"])
-def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_radius_neighbors_graph_sparse(n_neighbors, mode, csr_container, seed=36):
     # Test radius_neighbors_graph to build the Nearest Neighbor graph
     # for sparse input.
     rng = np.random.RandomState(seed)
     X = rng.randn(10, 10)
-    Xcsr = csr_matrix(X)
+    Xcsr = csr_container(X)
 
     assert_allclose(
         neighbors.radius_neighbors_graph(X, n_neighbors, mode=mode).toarray(),
@@ -1463,11 +1525,12 @@ def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
         neighbors.RadiusNeighborsRegressor,
     ],
 )
-def test_neighbors_validate_parameters(Estimator):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_neighbors_validate_parameters(Estimator, csr_container):
     """Additional parameter validation for *Neighbors* estimators not covered by common
     validation."""
     X = rng.random_sample((10, 2))
-    Xsparse = csr_matrix(X)
+    Xsparse = csr_container(X)
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
@@ -1573,8 +1636,6 @@ def test_nearest_neighbors_validate_params():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "metric",
     sorted(
@@ -1582,11 +1643,22 @@ def test_nearest_neighbors_validate_params():
             neighbors.VALID_METRICS["brute"]
         )
         - set(["pyfunc", *BOOL_METRICS])
-    ),
+    )
+    + DISTANCE_METRIC_OBJS,
 )
 def test_neighbors_metrics(
-    global_dtype, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
+    global_dtype,
+    global_random_seed,
+    metric,
+    n_samples=20,
+    n_features=3,
+    n_query_pts=2,
+    n_neighbors=5,
 ):
+    rng = np.random.RandomState(global_random_seed)
+
+    metric = _parse_metric(metric, global_dtype)
+
     # Test computing the neighbors for various metrics
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
@@ -1596,12 +1668,21 @@ def test_neighbors_metrics(
 
     for metric_params in metric_params_list:
         # Some metric (e.g. Weighted minkowski) are not supported by KDTree
-        exclude_kd_tree = metric not in neighbors.VALID_METRICS["kd_tree"] or (
-            "minkowski" in metric and "w" in metric_params
+        exclude_kd_tree = (
+            False
+            if isinstance(metric, DistanceMetric)
+            else metric not in neighbors.VALID_METRICS["kd_tree"]
+            or ("minkowski" in metric and "w" in metric_params)
         )
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
+            if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
+                if "tree" in algorithm:  # pragma: nocover
+                    pytest.skip(
+                        "Neither KDTree nor BallTree support 32-bit distance metric"
+                        " objects."
+                    )
             neigh = neighbors.NearestNeighbors(
                 n_neighbors=n_neighbors,
                 algorithm=algorithm,
@@ -1622,43 +1703,44 @@ def test_neighbors_metrics(
                 X_test = np.ascontiguousarray(X_test[:, feature_sl])
 
             neigh.fit(X_train)
-
-            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-            if (
-                metric == "wminkowski"
-                and algorithm == "brute"
-                and sp_version >= parse_version("1.6.0")
-            ):
-                with pytest.warns((FutureWarning, DeprecationWarning)):
-                    # For float64 WMinkowskiDistance raises a FutureWarning,
-                    # for float32 scipy raises a DeprecationWarning
-                    results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
-            else:
-                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
         brute_dst, brute_idx = results["brute"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
 
-        assert_allclose(brute_dst, ball_tree_dst)
+        # The returned distances are always in float64 regardless of the input dtype
+        # We need to adjust the tolerance w.r.t the input dtype
+        rtol = 1e-7 if global_dtype == np.float64 else 1e-4
+
+        assert_allclose(brute_dst, ball_tree_dst, rtol=rtol)
         assert_array_equal(brute_idx, ball_tree_idx)
 
         if not exclude_kd_tree:
             kd_tree_dst, kd_tree_idx = results["kd_tree"]
-            assert_allclose(brute_dst, kd_tree_dst)
+            assert_allclose(brute_dst, kd_tree_dst, rtol=rtol)
             assert_array_equal(brute_idx, kd_tree_idx)
 
-            assert_allclose(ball_tree_dst, kd_tree_dst)
+            assert_allclose(ball_tree_dst, kd_tree_dst, rtol=rtol)
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+# TODO: Remove ignore_warnings when minimum supported SciPy version is 1.17
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
 def test_kneighbors_brute_backend(
-    global_dtype, metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+    metric,
+    global_dtype,
+    global_random_seed,
+    n_samples=2000,
+    n_features=30,
+    n_query_pts=5,
+    n_neighbors=5,
 ):
+    rng = np.random.RandomState(global_random_seed)
     # Both backend for the 'brute' algorithm of kneighbors must give identical results.
     X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
     X_test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
@@ -1669,14 +1751,11 @@ def test_kneighbors_brute_backend(
         X_train = np.ascontiguousarray(X_train[:, feature_sl])
         X_test = np.ascontiguousarray(X_test[:, feature_sl])
 
-    metric_params_list = _generate_test_params_for(metric, n_features)
+    if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
+        X_train = X_train > 0.5
+        X_test = X_test > 0.5
 
-    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-    warn_context_manager = nullcontext()
-    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        # For float64 WMinkowskiDistance raises a FutureWarning,
-        # for float32 scipy raises a DeprecationWarning
-        warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
+    metric_params_list = _generate_test_params_for(metric, n_features)
 
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
@@ -1691,20 +1770,20 @@ def test_kneighbors_brute_backend(
 
         neigh.fit(X_train)
 
-        with warn_context_manager:
-            with config_context(enable_cython_pairwise_dist=False):
-                # Use the legacy backend for brute
-                legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
-                    X_test, return_distance=True
-                )
-            with config_context(enable_cython_pairwise_dist=True):
-                # Use the pairwise-distances reduction backend for brute
-                pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
-                    X_test, return_distance=True
-                )
+        with config_context(enable_cython_pairwise_dist=False):
+            # Use the legacy backend for brute
+            legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
+                X_test, return_distance=True
+            )
+        with config_context(enable_cython_pairwise_dist=True):
+            # Use the pairwise-distances reduction backend for brute
+            pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
+                X_test, return_distance=True
+            )
 
-        assert_allclose(legacy_brute_dst, pdr_brute_dst)
-        assert_array_equal(legacy_brute_idx, pdr_brute_idx)
+        assert_compatible_argkmin_results(
+            legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
+        )
 
 
 def test_callable_metric():
@@ -1728,14 +1807,17 @@ def test_callable_metric():
     assert_allclose(dist1, dist2)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
+@pytest.mark.parametrize(
+    "metric", neighbors.VALID_METRICS["brute"] + DISTANCE_METRIC_OBJS
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_valid_brute_metric_for_auto_algorithm(
-    global_dtype, metric, n_samples=20, n_features=12
+    global_dtype, metric, csr_container, n_samples=20, n_features=12
 ):
+    metric = _parse_metric(metric, global_dtype)
+
     X = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
-    Xcsr = csr_matrix(X)
+    Xcsr = csr_container(X)
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
@@ -1781,7 +1863,8 @@ def test_metric_params_interface():
         est.fit(X, y)
 
 
-def test_predict_sparse_ball_kd_tree():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_predict_sparse_ball_kd_tree(csr_container):
     rng = np.random.RandomState(0)
     X = rng.rand(5, 5)
     y = rng.randint(0, 2, 5)
@@ -1790,7 +1873,7 @@ def test_predict_sparse_ball_kd_tree():
     for model in [nbrs1, nbrs2]:
         model.fit(X, y)
         with pytest.raises(ValueError):
-            model.predict(csr_matrix(X))
+            model.predict(csr_container(X))
 
 
 def test_non_euclidean_kneighbors():
@@ -1816,7 +1899,7 @@ def test_non_euclidean_kneighbors():
             X, radius, metric=metric, mode="connectivity", include_self=True
         ).toarray()
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
-        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
+        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
 
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric="manhattan")
@@ -1853,13 +1936,15 @@ def test_k_and_radius_neighbors_train_is_not_query():
         check_object_arrays(ind, [[1], [0, 1]])
 
         # Test the graph variants.
-        assert_array_equal(nn.kneighbors_graph(test_data).A, [[0.0, 1.0], [0.0, 1.0]])
         assert_array_equal(
-            nn.kneighbors_graph([[2], [1]], mode="distance").A,
+            nn.kneighbors_graph(test_data).toarray(), [[0.0, 1.0], [0.0, 1.0]]
+        )
+        assert_array_equal(
+            nn.kneighbors_graph([[2], [1]], mode="distance").toarray(),
             np.array([[0.0, 1.0], [0.0, 0.0]]),
         )
         rng = nn.radius_neighbors_graph([[2], [1]], radius=1.5)
-        assert_array_equal(rng.A, [[0, 1], [1, 1]])
+        assert_array_equal(rng.toarray(), [[0, 1], [1, 1]])
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -1881,7 +1966,7 @@ def test_k_and_radius_neighbors_X_None(algorithm):
     rng = nn.radius_neighbors_graph(None, radius=1.5)
     kng = nn.kneighbors_graph(None)
     for graph in [rng, kng]:
-        assert_array_equal(graph.A, [[0, 1], [1, 0]])
+        assert_array_equal(graph.toarray(), [[0, 1], [1, 0]])
         assert_array_equal(graph.data, [1, 1])
         assert_array_equal(graph.indices, [1, 0])
 
@@ -1889,7 +1974,7 @@ def test_k_and_radius_neighbors_X_None(algorithm):
     nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)
     nn.fit(X)
     assert_array_equal(
-        nn.kneighbors_graph().A,
+        nn.kneighbors_graph().toarray(),
         np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 0]]),
     )
 
@@ -1947,13 +2032,15 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
 def test_include_self_neighbors_graph():
     # Test include_self parameter in neighbors_graph
     X = [[2, 3], [4, 5]]
-    kng = neighbors.kneighbors_graph(X, 1, include_self=True).A
-    kng_not_self = neighbors.kneighbors_graph(X, 1, include_self=False).A
+    kng = neighbors.kneighbors_graph(X, 1, include_self=True).toarray()
+    kng_not_self = neighbors.kneighbors_graph(X, 1, include_self=False).toarray()
     assert_array_equal(kng, [[1.0, 0.0], [0.0, 1.0]])
     assert_array_equal(kng_not_self, [[0.0, 1.0], [1.0, 0.0]])
 
-    rng = neighbors.radius_neighbors_graph(X, 5.0, include_self=True).A
-    rng_not_self = neighbors.radius_neighbors_graph(X, 5.0, include_self=False).A
+    rng = neighbors.radius_neighbors_graph(X, 5.0, include_self=True).toarray()
+    rng_not_self = neighbors.radius_neighbors_graph(
+        X, 5.0, include_self=False
+    ).toarray()
     assert_array_equal(rng, [[1.0, 1.0], [1.0, 1.0]])
     assert_array_equal(rng_not_self, [[0.0, 1.0], [1.0, 0.0]])
 
@@ -2009,10 +2096,10 @@ def test_same_radius_neighbors_parallel(algorithm):
     assert_allclose(graph, graph_parallel)
 
 
-@pytest.mark.parametrize("backend", JOBLIB_BACKENDS)
+@pytest.mark.parametrize("backend", ["threading", "loky"])
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):
-    # Non-regression test which ensure the knn methods are properly working
+    # Non-regression test which ensures the knn methods are properly working
     # even when forcing the global joblib backend.
     with joblib.parallel_backend(backend):
         X, y = datasets.make_classification(
@@ -2021,12 +2108,12 @@ def test_knn_forcing_backend(backend, algorithm):
         X_train, X_test, y_train, y_test = train_test_split(X, y)
 
         clf = neighbors.KNeighborsClassifier(
-            n_neighbors=3, algorithm=algorithm, n_jobs=3
+            n_neighbors=3, algorithm=algorithm, n_jobs=2
         )
         clf.fit(X_train, y_train)
         clf.predict(X_test)
         clf.kneighbors(X_test)
-        clf.kneighbors_graph(X_test, mode="distance").toarray()
+        clf.kneighbors_graph(X_test, mode="distance")
 
 
 def test_dtype_convert():
@@ -2039,16 +2126,17 @@ def test_dtype_convert():
     assert_array_equal(result, y)
 
 
-def test_sparse_metric_callable():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_metric_callable(csr_container):
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
         assert issparse(x) and issparse(y)
-        return x.dot(y.T).A.item()
+        return x.dot(y.T).toarray().item()
 
-    X = csr_matrix(
+    X = csr_container(
         [[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [0, 0, 1, 0, 0]]  # Population matrix
     )
 
-    Y = csr_matrix([[1, 1, 0, 1, 1], [1, 0, 0, 0, 1]])  # Query matrix
+    Y = csr_container([[1, 1, 0, 1, 1], [1, 0, 0, 1, 1]])  # Query matrix
 
     nn = neighbors.NearestNeighbors(
         algorithm="brute", n_neighbors=2, metric=sparse_metric
@@ -2062,7 +2150,7 @@ def test_sparse_metric_callable():
 
 
 # ignore conversion to boolean in pairwise_distances
-@ignore_warnings(category=DataConversionWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.DataConversionWarning")
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
@@ -2162,35 +2250,27 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
-# TODO: Remove in 1.3
-def test_neighbors_distance_metric_deprecation():
-    from sklearn.neighbors import DistanceMetric
-    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
-
-    msg = r"This import path will be removed in 1\.3"
-    with pytest.warns(FutureWarning, match=msg):
-        dist_metric = DistanceMetric.get_metric("euclidean")
-
-    assert isinstance(dist_metric, ActualDistanceMetric)
-
-
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+# TODO: Remove ignore_warnings when minimum supported SciPy version is 1.17
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
 def test_radius_neighbors_brute_backend(
     metric,
+    global_random_seed,
+    global_dtype,
     n_samples=2000,
     n_features=30,
-    n_query_pts=100,
-    n_neighbors=5,
+    n_query_pts=5,
     radius=1.0,
 ):
+    rng = np.random.RandomState(global_random_seed)
     # Both backends for the 'brute' algorithm of radius_neighbors
     # must give identical results.
-    X_train = rng.rand(n_samples, n_features)
-    X_test = rng.rand(n_query_pts, n_features)
+    X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
+    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -2200,18 +2280,10 @@ def test_radius_neighbors_brute_backend(
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
-    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
-    warn_context_manager = nullcontext()
-    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        # For float64 WMinkowskiDistance raises a FutureWarning,
-        # for float32 scipy raises a DeprecationWarning
-        warn_context_manager = pytest.warns((FutureWarning, DeprecationWarning))
-
     for metric_params in metric_params_list:
         p = metric_params.pop("p", 2)
 
         neigh = neighbors.NearestNeighbors(
-            n_neighbors=n_neighbors,
             radius=radius,
             algorithm="brute",
             metric=metric,
@@ -2220,24 +2292,25 @@ def test_radius_neighbors_brute_backend(
         )
 
         neigh.fit(X_train)
-        with warn_context_manager:
-            with config_context(enable_cython_pairwise_dist=False):
-                # Use the legacy backend for brute
-                legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
-                    X_test, return_distance=True
-                )
-            with config_context(enable_cython_pairwise_dist=True):
-                # Use the pairwise-distances reduction backend for brute
-                pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
-                    X_test, return_distance=True
-                )
 
-        assert_radius_neighbors_results_equality(
+        with config_context(enable_cython_pairwise_dist=False):
+            # Use the legacy backend for brute
+            legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
+                X_test, return_distance=True
+            )
+        with config_context(enable_cython_pairwise_dist=True):
+            # Use the pairwise-distances reduction backend for brute
+            pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
+                X_test, return_distance=True
+            )
+
+        assert_compatible_radius_results(
             legacy_brute_dst,
             pdr_brute_dst,
             legacy_brute_idx,
             pdr_brute_idx,
             radius=radius,
+            check_sorted=False,
         )
 
 
@@ -2260,3 +2333,171 @@ def test_regressor_predict_on_arraylikes():
     est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
     est.fit(X, y)
     assert_allclose(est.predict([[0, 2.5]]), [6])
+
+
+@pytest.mark.parametrize(
+    "Estimator, params",
+    [
+        (neighbors.KNeighborsClassifier, {"n_neighbors": 2}),
+        (neighbors.KNeighborsRegressor, {"n_neighbors": 2}),
+        (neighbors.RadiusNeighborsRegressor, {}),
+        (neighbors.RadiusNeighborsClassifier, {}),
+        (neighbors.KNeighborsTransformer, {"n_neighbors": 2}),
+        (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}),
+        (neighbors.LocalOutlierFactor, {"n_neighbors": 1}),
+    ],
+)
+def test_nan_euclidean_support(Estimator, params):
+    """Check that the different neighbor estimators are lenient towards `nan`
+    values if using `metric="nan_euclidean"`.
+    """
+
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
+    y = [0, 0, 1, 1]
+
+    params.update({"metric": "nan_euclidean"})
+    estimator = Estimator().set_params(**params).fit(X, y)
+
+    for response_method in ("kneighbors", "predict", "transform", "fit_predict"):
+        if hasattr(estimator, response_method):
+            output = getattr(estimator, response_method)(X)
+            if hasattr(output, "toarray"):
+                assert not np.isnan(output.data).any()
+            else:
+                assert not np.isnan(output).any()
+
+
+def test_predict_dataframe():
+    """Check that KNN predict works with dataframes
+
+    non-regression test for issue #26768
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(np.array([[1, 2], [3, 4], [5, 6], [7, 8]]), columns=["a", "b"])
+    y = np.array([1, 2, 3, 4])
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X, y)
+    knn.predict(X)
+
+
+def test_nearest_neighbours_works_with_p_less_than_1():
+    """Check that NearestNeighbors works with :math:`p \\in (0,1)` when `algorithm`
+    is `"auto"` or `"brute"` regardless of the dtype of X.
+
+    Non-regression test for issue #26548
+    """
+    X = np.array([[1.0, 0.0], [0.0, 0.0], [0.0, 1.0]])
+    neigh = neighbors.NearestNeighbors(
+        n_neighbors=3, algorithm="brute", metric_params={"p": 0.5}
+    )
+    neigh.fit(X)
+
+    y = neigh.radius_neighbors(X[0].reshape(1, -1), radius=4, return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])
+
+    y = neigh.kneighbors(X[0].reshape(1, -1), return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])
+
+
+def test_KNeighborsClassifier_raise_on_all_zero_weights():
+    """Check that `predict` and `predict_proba` raises on sample of all zeros weights.
+
+    Related to Issue #25854.
+    """
+    X = [[0, 1], [1, 2], [2, 3], [3, 4]]
+    y = [0, 0, 1, 1]
+
+    def _weights(dist):
+        return np.vectorize(lambda x: 0 if x > 0.5 else 1)(dist)
+
+    est = neighbors.KNeighborsClassifier(n_neighbors=3, weights=_weights)
+    est.fit(X, y)
+
+    msg = (
+        "All neighbors of some sample is getting zero weights. "
+        "Please modify 'weights' to avoid this case if you are "
+        "using a user-defined function."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        est.predict([[1.1, 1.1]])
+
+    with pytest.raises(ValueError, match=msg):
+        est.predict_proba([[1.1, 1.1]])
+
+
+@pytest.mark.parametrize(
+    "nn_model",
+    [
+        neighbors.KNeighborsClassifier(n_neighbors=10),
+        neighbors.RadiusNeighborsClassifier(),
+    ],
+)
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_neighbor_classifiers_loocv(nn_model, algorithm):
+    """Check that `predict` and related functions work fine with X=None
+
+    Calling predict with X=None computes a prediction for each training point
+    from the labels of its neighbors (without the label of the data point being
+    predicted upon). This is therefore mathematically equivalent to
+    leave-one-out cross-validation without having do any retraining (rebuilding
+    a KD-tree or Ball-tree index) or any data reshuffling.
+    """
+    X, y = datasets.make_blobs(n_samples=15, centers=5, n_features=2, random_state=0)
+
+    nn_model = clone(nn_model).set_params(algorithm=algorithm)
+
+    # Set the radius for RadiusNeighborsRegressor to some percentile of the
+    # empirical pairwise distances to avoid trivial test cases and warnings for
+    # predictions with no neighbors within the radius.
+    if "radius" in nn_model.get_params():
+        dists = pairwise_distances(X).ravel()
+        dists = dists[dists > 0]
+        nn_model.set_params(radius=np.percentile(dists, 80))
+
+    loocv = cross_val_score(nn_model, X, y, cv=LeaveOneOut())
+    nn_model.fit(X, y)
+
+    assert_allclose(loocv, nn_model.predict(None) == y)
+    assert np.mean(loocv) == pytest.approx(nn_model.score(None, y))
+
+    # Evaluating `nn_model` on its "training" set should lead to a higher
+    # accuracy value than leaving out each data point in turn because the
+    # former can overfit while the latter cannot by construction.
+    assert nn_model.score(None, y) < nn_model.score(X, y)
+
+
+@pytest.mark.parametrize(
+    "nn_model",
+    [
+        neighbors.KNeighborsRegressor(n_neighbors=10),
+        neighbors.RadiusNeighborsRegressor(),
+    ],
+)
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_neighbor_regressors_loocv(nn_model, algorithm):
+    """Check that `predict` and related functions work fine with X=None"""
+    X, y = datasets.make_regression(n_samples=15, n_features=2, random_state=0)
+
+    # Only checking cross_val_predict and not cross_val_score because
+    # cross_val_score does not work with LeaveOneOut() for a regressor: the
+    # default score method implements R2 score which is not well defined for a
+    # single data point.
+    #
+    # TODO: if score is refactored to evaluate models for other scoring
+    # functions, then this test can be extended to check cross_val_score as
+    # well.
+    nn_model = clone(nn_model).set_params(algorithm=algorithm)
+
+    # Set the radius for RadiusNeighborsRegressor to some percentile of the
+    # empirical pairwise distances to avoid trivial test cases and warnings for
+    # predictions with no neighbors within the radius.
+    if "radius" in nn_model.get_params():
+        dists = pairwise_distances(X).ravel()
+        dists = dists[dists > 0]
+        nn_model.set_params(radius=np.percentile(dists, 80))
+
+    loocv = cross_val_predict(nn_model, X, y, cv=LeaveOneOut())
+    nn_model.fit(X, y)
+    assert_allclose(loocv, nn_model.predict(None))

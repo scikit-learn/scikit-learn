@@ -1,17 +1,21 @@
 """Incremental Principal Components Analysis."""
 
-# Author: Kyle Kastner <kastnerkyle@gmail.com>
-#         Giorgio Patrini
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
+
 import numpy as np
 from scipy import linalg, sparse
 
-from ._base import _BasePCA
+from sklearn.utils import metadata_routing
+
+from ..base import _fit_context
 from ..utils import gen_batches
 from ..utils._param_validation import Interval
-from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var, svd_flip
+from ..utils.validation import validate_data
+from ._base import _BasePCA
 
 
 class IncrementalPCA(_BasePCA):
@@ -36,6 +40,9 @@ class IncrementalPCA(_BasePCA):
     remain in memory at a time. There will be ``n_samples / batch_size`` SVD
     computations to get the principal components, versus 1 large SVD of
     complexity ``O(n_samples * n_features ** 2)`` for PCA.
+
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`.
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
@@ -179,6 +186,8 @@ class IncrementalPCA(_BasePCA):
     (1797, 7)
     """
 
+    __metadata_request__partial_fit = {"check_input": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "whiten": ["boolean"],
@@ -192,6 +201,7 @@ class IncrementalPCA(_BasePCA):
         self.copy = copy
         self.batch_size = batch_size
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X, using minibatches of size batch_size.
 
@@ -209,8 +219,6 @@ class IncrementalPCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         self.components_ = None
         self.n_samples_seen_ = 0
         self.mean_ = 0.0
@@ -220,11 +228,13 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "lil"],
             copy=self.copy,
             dtype=[np.float64, np.float32],
+            force_writeable=True,
         )
         n_samples, n_features = X.shape
 
@@ -243,6 +253,7 @@ class IncrementalPCA(_BasePCA):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, check_input=True):
         """Incremental fit with X. All of X is processed as a single batch.
 
@@ -265,9 +276,6 @@ class IncrementalPCA(_BasePCA):
         """
         first_pass = not hasattr(self, "components_")
 
-        if first_pass:
-            self._validate_params()
-
         if check_input:
             if sparse.issparse(X):
                 raise TypeError(
@@ -275,8 +283,13 @@ class IncrementalPCA(_BasePCA):
                     "sparse input. Either convert data to dense "
                     "or use IncrementalPCA.fit to do so in batches."
                 )
-            X = self._validate_data(
-                X, copy=self.copy, dtype=[np.float64, np.float32], reset=first_pass
+            X = validate_data(
+                self,
+                X,
+                copy=self.copy,
+                dtype=[np.float64, np.float32],
+                force_writeable=True,
+                reset=first_pass,
             )
         n_samples, n_features = X.shape
         if first_pass:
@@ -293,11 +306,11 @@ class IncrementalPCA(_BasePCA):
                 "more rows than columns for IncrementalPCA "
                 "processing" % (self.n_components, n_features)
             )
-        elif not self.n_components <= n_samples:
+        elif self.n_components > n_samples and first_pass:
             raise ValueError(
-                "n_components=%r must be less or equal to "
-                "the batch number of samples "
-                "%d." % (self.n_components, n_samples)
+                f"n_components={self.n_components} must be less or equal to "
+                f"the batch number of samples {n_samples} for the first "
+                "partial_fit call."
             )
         else:
             self.n_components_ = self.n_components
@@ -405,3 +418,9 @@ class IncrementalPCA(_BasePCA):
             return np.vstack(output)
         else:
             return super().transform(X)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Beware that fit accepts sparse data but partial_fit doesn't
+        tags.input_tags.sparse = True
+        return tags

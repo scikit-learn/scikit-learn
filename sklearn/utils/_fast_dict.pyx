@@ -2,8 +2,8 @@
 Uses C++ map containers for fast dict-like behavior with keys being
 integers, and values float.
 """
-# Author: Gael Varoquaux
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
@@ -52,12 +52,12 @@ cdef class IntFloatDict:
 
     # Cython 0.20 generates buggy code below. Commenting this out for now
     # and relying on the to_arrays method
-    #def __iter__(self):
-    #    cdef cpp_map[intp_t, float64_t].iterator it = self.my_map.begin()
-    #    cdef cpp_map[intp_t, float64_t].iterator end = self.my_map.end()
-    #    while it != end:
-    #        yield deref(it).first, deref(it).second
-    #        inc(it)
+    # def __iter__(self):
+    #     cdef cpp_map[intp_t, float64_t].iterator it = self.my_map.begin()
+    #     cdef cpp_map[intp_t, float64_t].iterator end = self.my_map.end()
+    #     while it != end:
+    #         yield deref(it).first, deref(it).second
+    #         inc(it)
 
     def __iter__(self):
         cdef int size = self.my_map.size()

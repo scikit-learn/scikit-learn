@@ -1,17 +1,19 @@
 import re
+import warnings
 
 import numpy as np
-from scipy import sparse
 import pytest
+from scipy import sparse
 
 from sklearn.exceptions import NotFittedError
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import _convert_container
-from sklearn.utils import is_scalar_nan
-
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test_one_hot_encoder_sparse_dense():
@@ -37,7 +39,7 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown(handle_unknown):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     X2 = np.array([[4, 1, 1]])
@@ -61,19 +63,7 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
     assert_allclose(X2, X2_passed)
 
 
-def test_one_hot_encoder_not_fitted():
-    X = np.array([["a"], ["b"]])
-    enc = OneHotEncoder(categories=["a", "b"])
-    msg = (
-        "This OneHotEncoder instance is not fitted yet. "
-        "Call 'fit' with appropriate arguments before using this "
-        "estimator."
-    )
-    with pytest.raises(NotFittedError, match=msg):
-        enc.transform(X)
-
-
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     X = np.array(["11111111", "22", "333", "4444"]).reshape((-1, 1))
     X2 = np.array(["55555", "22"]).reshape((-1, 1))
@@ -240,7 +230,7 @@ def check_categorical_onehot(X):
 
     assert_allclose(Xtr1.toarray(), Xtr2)
 
-    assert sparse.isspmatrix_csr(Xtr1)
+    assert sparse.issparse(Xtr1) and Xtr1.format == "csr"
     return Xtr1.toarray()
 
 
@@ -278,7 +268,7 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0, 1], [1, 0, 0, 1, 1]])
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize("drop", [None, "first"])
 def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
@@ -398,7 +388,7 @@ def test_X_is_not_1D_pandas(method):
     X = pd.Series([6, 3, 4, 6])
     oh = OneHotEncoder()
 
-    msg = "Expected 2D array, got 1D array instead"
+    msg = f"Expected a 2-dimensional container but got {type(X)} instead."
     with pytest.raises(ValueError, match=msg):
         getattr(oh, method)(X)
 
@@ -414,7 +404,7 @@ def test_X_is_not_1D_pandas(method):
             np.object_,
         ),
         (np.array([["A", "cat"], ["B", "cat"]]), [["A", "B"], ["cat"]], np.str_),
-        (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float_),
+        (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float64),
         (
             np.array([["A", np.nan], [None, np.nan]], dtype=object),
             [["A", None], [np.nan]],
@@ -453,7 +443,7 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
             assert np.issubdtype(res.dtype, cat_dtype)
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
@@ -493,12 +483,6 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
             [["a", None, "z"]],
             object,
         ),
-        (
-            np.array([["a", np.nan]], dtype=object).T,
-            np.array([["a", None]], dtype=object).T,
-            [["a", np.nan, "z"]],
-            object,
-        ),
     ],
     ids=[
         "object",
@@ -507,7 +491,6 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
         "object-string-none",
         "object-string-nan",
         "object-None-and-nan",
-        "object-nan-and-None",
     ],
 )
 def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype, handle_unknown):
@@ -547,11 +530,19 @@ def test_one_hot_encoder_unsorted_categories():
     with pytest.raises(ValueError, match=msg):
         enc.fit_transform(X)
 
-    # np.nan must be the last category in categories[0] to be considered sorted
-    X = np.array([[1, 2, np.nan]]).T
-    enc = OneHotEncoder(categories=[[1, np.nan, 2]])
-    with pytest.raises(ValueError, match=msg):
-        enc.fit_transform(X)
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_nan_ending_specified_categories(Encoder):
+    """Test encoder for specified categories that nan is at the end.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27088
+    """
+    cats = [np.array([0, np.nan, 1])]
+    enc = Encoder(categories=cats)
+    X = np.array([[0, 1]], dtype=object).T
+    with pytest.raises(ValueError, match="Nan should be the last element"):
+        enc.fit(X)
 
 
 def test_one_hot_encoder_specified_categories_mixed_columns():
@@ -797,16 +788,44 @@ def test_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = pd.DataFrame({"A": [1, 2], "B": ["a", "b"], "C": [3.0, 4.0]})
-    X_type = [X["A"].dtype, X["B"].dtype, X["C"].dtype]
+    expected_cat_type = ["int64", "object", "float64"]
     enc.fit(X)
-    assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
+    assert all([enc.categories_[i].dtype == expected_cat_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
 def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [["Male", 1], ["Female", 3]]
-    np.testing.assert_no_warnings(enc.fit_transform, X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        enc.fit_transform(X)
+
+
+@pytest.mark.parametrize("drop", ["if_binary", "first"])
+def test_ohe_handle_unknown_warn(drop):
+    """Check handle_unknown='warn' works correctly."""
+
+    X = [["a", 0], ["b", 2], ["b", 1]]
+
+    ohe = OneHotEncoder(
+        drop=drop,
+        sparse_output=False,
+        handle_unknown="warn",
+        categories=[["b", "a"], [1, 2]],
+    )
+    ohe.fit(X)
+
+    X_test = [["c", 1]]
+    X_expected = np.array([[0, 0]])
+
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during transform. "
+        r"These unknown categories will be encoded as all zeros"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        X_trans = ohe.transform(X_test)
+    assert_allclose(X_trans, X_expected)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None, float("nan")])
@@ -876,7 +895,7 @@ def test_categories(density, drop):
 
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
-    assert "categorical" in Encoder()._get_tags()["X_types"]
+    assert Encoder().__sklearn_tags__().input_tags.categorical
 
 
 @pytest.mark.parametrize(
@@ -1360,15 +1379,6 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     assert_allclose(X_trans, [[1], [1]])
 
 
-# TODO(1.4): Remove when `sparse` parameter is replaced by `sparse_output`
-def test_one_hot_encoder_sparse_deprecated():
-    X = [["Male", 1], ["Female", 3], ["Female", 2]]
-
-    msg = "`sparse` was renamed to `sparse_output`"
-    with pytest.warns(FutureWarning, match=msg):
-        OneHotEncoder(sparse=False).fit(X)
-
-
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
@@ -1454,7 +1464,7 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
-@pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "ignore"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
 def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknown):
     # checks pandas dataframe with categorical features
@@ -1486,7 +1496,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     assert np.isnan(ohe.categories_[0][-1])
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
     during transform."""
@@ -1524,7 +1534,7 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", 0]], dtype=object))
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
@@ -1561,7 +1571,7 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", None]], dtype=object))
 
 
-@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_explicit_categories(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
     during fit with categories passed in."""
@@ -1586,6 +1596,26 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
+
+
+def test_ohe_more_informative_error_message():
+    """Raise informative error message when pandas output and sparse_output=True."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["z", "b", "b"]}, columns=["a", "b"])
+
+    ohe = OneHotEncoder(sparse_output=True)
+    ohe.set_output(transform="pandas")
+
+    msg = (
+        "Pandas output does not support sparse data. Set "
+        "sparse_output=False to output pandas dataframes or disable Pandas output"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit_transform(df)
+
+    ohe.fit(df)
+    with pytest.raises(ValueError, match=msg):
+        ohe.transform(df)
 
 
 def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
@@ -1660,7 +1690,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
             (
                 np.array([["a", np.nan]], dtype=object).T,
                 np.array([["a", "b"]], dtype=object).T,
-                [np.array(["a", np.nan, "d"], dtype=object)],
+                [np.array(["a", "d", np.nan], dtype=object)],
                 np.object_,
             )
         ),
@@ -1668,7 +1698,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
             (
                 np.array([["a", np.nan]], dtype=object).T,
                 np.array([["a", "b"]], dtype=object).T,
-                [np.array(["a", np.nan, "d"], dtype=object)],
+                [np.array(["a", "d", np.nan], dtype=object)],
                 np.object_,
             )
         ),
@@ -1703,6 +1733,22 @@ def test_ordinal_encoder_specified_categories_missing_passthrough(
     oe = OrdinalEncoder(categories=cats)
     with pytest.raises(ValueError, match="Found unknown categories"):
         oe.fit(X2)
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_duplicate_specified_categories(Encoder):
+    """Test encoder for specified categories have duplicate values.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27088
+    """
+    cats = [np.array(["a", "b", "a"], dtype=object)]
+    enc = Encoder(categories=cats)
+    X = np.array([["a", "b"]], dtype=object).T
+    with pytest.raises(
+        ValueError, match="the predefined categories contain duplicate elements."
+    ):
+        enc.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -1741,24 +1787,25 @@ def test_ordinal_encoder_handle_missing_and_unknown(X, expected_X_trans, X_test)
     assert_allclose(oe.transform(X_test), [[-1.0]])
 
 
-def test_ordinal_encoder_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_ordinal_encoder_sparse(csr_container):
     """Check that we raise proper error with sparse input in OrdinalEncoder.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/19878
     """
     X = np.array([[3, 2, 1], [0, 1, 1]])
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     encoder = OrdinalEncoder()
 
-    err_msg = "A sparse matrix was passed, but dense data is required"
+    err_msg = "Sparse data was passed, but dense data is required"
     with pytest.raises(TypeError, match=err_msg):
         encoder.fit(X_sparse)
     with pytest.raises(TypeError, match=err_msg):
         encoder.fit_transform(X_sparse)
 
     X_trans = encoder.fit_transform(X)
-    X_trans_sparse = sparse.csr_matrix(X_trans)
+    X_trans_sparse = csr_container(X_trans)
     with pytest.raises(TypeError, match=err_msg):
         encoder.inverse_transform(X_trans_sparse)
 
@@ -1957,7 +2004,7 @@ def test_one_hot_encoder_set_output():
 
     ohe.set_output(transform="pandas")
 
-    match = "Pandas output does not support sparse data"
+    match = "Pandas output does not support sparse data. Set sparse_output=False"
     with pytest.raises(ValueError, match=match):
         ohe.fit_transform(X_df)
 
@@ -2303,3 +2350,18 @@ def test_ordinal_encoder_missing_appears_infrequent():
     )
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_not_fitted(Encoder):
+    """Check that we raise a `NotFittedError` by calling transform before fit with
+    the encoders.
+
+    One could expect that the passing the `categories` argument to the encoder
+    would make it stateless. However, `fit` is making a couple of check, such as the
+    position of `np.nan`.
+    """
+    X = np.array([["A"], ["B"], ["C"]], dtype=object)
+    encoder = Encoder(categories=[["A", "B", "C"]])
+    with pytest.raises(NotFittedError):
+        encoder.transform(X)

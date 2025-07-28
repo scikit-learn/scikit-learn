@@ -5,14 +5,24 @@
 Pipelines and composite estimators
 ==================================
 
-Transformers are usually combined with classifiers, regressors or other
-estimators to build a composite estimator.  The most common tool is a
-:ref:`Pipeline <pipeline>`. Pipeline is often used in combination with
-:ref:`FeatureUnion <feature_union>` which concatenates the output of
-transformers into a composite feature space.  :ref:`TransformedTargetRegressor
-<transformed_target_regressor>` deals with transforming the :term:`target`
-(i.e. log-transform :term:`y`). In contrast, Pipelines only transform the
-observed data (:term:`X`).
+To build a composite estimator, transformers are usually combined with other
+transformers or with :term:`predictors` (such as classifiers or regressors).
+The most common tool used for composing estimators is a :ref:`Pipeline
+<pipeline>`. Pipelines require all steps except the last to be a
+:term:`transformer`. The last step can be anything, a transformer, a
+:term:`predictor`, or a clustering estimator which might have or not have a
+`.predict(...)` method. A pipeline exposes all methods provided by the last
+estimator: if the last step provides a `transform` method, then the pipeline
+would have a `transform` method and behave like a transformer. If the last step
+provides a `predict` method, then the pipeline would expose that method, and
+given a data :term:`X`, use all steps except the last to transform the data,
+and then give that transformed data to the `predict` method of the last step of
+the pipeline. The class :class:`Pipeline` is often used in combination with
+:ref:`ColumnTransformer <column_transformer>` or
+:ref:`FeatureUnion <feature_union>` which concatenate the output of transformers
+into a composite feature space.
+:ref:`TransformedTargetRegressor <transformed_target_regressor>`
+deals with transforming the :term:`target` (i.e. log-transform :term:`y`).
 
 .. _pipeline:
 
@@ -41,12 +51,21 @@ All estimators in a pipeline, except the last one, must be transformers
 (i.e. must have a :term:`transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
+.. note::
+
+    Calling ``fit`` on the pipeline is the same as calling ``fit`` on
+    each estimator in turn, ``transform`` the input and pass it on to the next step.
+    The pipeline has all the methods that the last estimator in the pipeline has,
+    i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
+    as a classifier. If the last estimator is a transformer, again, so is the
+    pipeline.
+
 
 Usage
 -----
 
-Construction
-............
+Build a pipeline
+................
 
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
@@ -60,38 +79,22 @@ is an estimator object::
     >>> pipe
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
 
-The utility function :func:`make_pipeline` is a shorthand
-for constructing pipelines;
-it takes a variable number of estimators and returns a pipeline,
-filling in the names automatically::
+.. dropdown:: Shorthand version using :func:`make_pipeline`
 
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB())
-    Pipeline(steps=[('binarizer', Binarizer()), ('multinomialnb', MultinomialNB())])
+  The utility function :func:`make_pipeline` is a shorthand
+  for constructing pipelines;
+  it takes a variable number of estimators and returns a pipeline,
+  filling in the names automatically::
 
-Accessing steps
-...............
+      >>> from sklearn.pipeline import make_pipeline
+      >>> make_pipeline(PCA(), SVC())
+      Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute,
-but can be accessed by index or name by indexing (with ``[idx]``) the
-Pipeline::
+Access pipeline steps
+.....................
 
-    >>> pipe.steps[0]
-    ('reduce_dim', PCA())
-    >>> pipe[0]
-    PCA()
-    >>> pipe['reduce_dim']
-    PCA()
-
-Pipeline's `named_steps` attribute allows accessing steps by name with tab
-completion in interactive environments::
-
-    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
-    True
-
-A sub-pipeline can also be extracted using the slicing notation commonly used
+The estimators of a pipeline are stored as a list in the ``steps`` attribute.
+A sub-pipeline can be extracted using the slicing notation commonly used
 for Python Sequences such as lists or strings (although only a step of 1 is
 permitted). This is convenient for performing only some of the transformations
 (or their inverse):
@@ -101,49 +104,33 @@ permitted). This is convenient for performing only some of the transformations
     >>> pipe[-1:]
     Pipeline(steps=[('clf', SVC())])
 
+.. dropdown:: Accessing a step by name or position
 
-.. _pipeline_nested_parameters:
+  A specific step can also be accessed by index or name by indexing (with ``[idx]``) the
+  pipeline::
 
-Nested parameters
-.................
+      >>> pipe.steps[0]
+      ('reduce_dim', PCA())
+      >>> pipe[0]
+      PCA()
+      >>> pipe['reduce_dim']
+      PCA()
 
-Parameters of the estimators in the pipeline can be accessed using the
-``<estimator>__<parameter>`` syntax::
+  `Pipeline`'s `named_steps` attribute allows accessing steps by name with tab
+  completion in interactive environments::
 
-    >>> pipe.set_params(clf__C=10)
-    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
+      >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+      True
 
-This is particularly important for doing grid searches::
-
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> param_grid = dict(reduce_dim__n_components=[2, 5, 10],
-    ...                   clf__C=[0.1, 10, 100])
-    >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
-
-Individual steps may also be replaced as parameters, and non-final steps may be
-ignored by setting them to ``'passthrough'``::
-
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
-    ...                   clf=[SVC(), LogisticRegression()],
-    ...                   clf__C=[0.1, 10, 100])
-    >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
-
-The estimators of the pipeline can be retrieved by index:
-
-    >>> pipe[0]
-    PCA()
-
-or by name::
-
-    >>> pipe['reduce_dim']
-    PCA()
+Tracking feature names in a pipeline
+....................................
 
 To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
 ``get_feature_names_out()`` method, just like all transformers. You can use
 pipeline slicing to get the feature names going into each step::
 
     >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.feature_selection import SelectKBest
     >>> iris = load_iris()
     >>> pipe = Pipeline(steps=[
@@ -154,36 +141,60 @@ pipeline slicing to get the feature names going into each step::
     >>> pipe[:-1].get_feature_names_out()
     array(['x2', 'x3'], ...)
 
-You can also provide custom feature names for the input data using
-``get_feature_names_out``::
+.. dropdown:: Customize feature names
 
-    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
-    array(['petal length (cm)', 'petal width (cm)'], ...)
+  You can also provide custom feature names for the input data using
+  ``get_feature_names_out``::
 
-.. topic:: Examples:
+      >>> pipe[:-1].get_feature_names_out(iris.feature_names)
+      array(['petal length (cm)', 'petal width (cm)'], ...)
 
- * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
- * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
+.. _pipeline_nested_parameters:
 
-.. topic:: See Also:
+Access to nested parameters
+...........................
 
- * :ref:`composite_grid_search`
+It is common to adjust the parameters of an estimator within a pipeline. This parameter
+is therefore nested because it belongs to a particular sub-step. Parameters of the
+estimators in the pipeline are accessible using the ``<estimator>__<parameter>``
+syntax::
+
+    >>> pipe = Pipeline(steps=[("reduce_dim", PCA()), ("clf", SVC())])
+    >>> pipe.set_params(clf__C=10)
+    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
+
+.. dropdown:: When does it matter?
+
+  This is particularly important for doing grid searches::
+
+      >>> from sklearn.model_selection import GridSearchCV
+      >>> param_grid = dict(reduce_dim__n_components=[2, 5, 10],
+      ...                   clf__C=[0.1, 10, 100])
+      >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+
+  Individual steps may also be replaced as parameters, and non-final steps may be
+  ignored by setting them to ``'passthrough'``::
+
+      >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
+      ...                   clf=[SVC(), LogisticRegression()],
+      ...                   clf__C=[0.1, 10, 100])
+      >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+
+  .. seealso::
+
+    * :ref:`composite_grid_search`
 
 
-Notes
------
+.. rubric:: Examples
 
-Calling ``fit`` on the pipeline is the same as calling ``fit`` on
-each estimator in turn, ``transform`` the input and pass it on to the next step.
-The pipeline has all the methods that the last estimator in the pipeline has,
-i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
-as a classifier. If the last estimator is a transformer, again, so is the
-pipeline.
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
+
 
 .. _pipeline_cache:
 
@@ -219,47 +230,49 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transformers**
+.. dropdown:: Side effect of caching transformers
+  :color: warning
 
-   Using a :class:`Pipeline` without cache enabled, it is possible to
-   inspect the original instance such as::
+  Using a :class:`Pipeline` without cache enabled, it is possible to
+  inspect the original instance such as::
 
-     >>> from sklearn.datasets import load_digits
-     >>> X_digits, y_digits = load_digits(return_X_y=True)
-     >>> pca1 = PCA()
-     >>> svm1 = SVC()
-     >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(X_digits, y_digits)
-     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
-     >>> # The pca instance can be inspected directly
-     >>> print(pca1.components_)
-         [[-1.77484909e-19  ... 4.07058917e-18]]
+      >>> from sklearn.datasets import load_digits
+      >>> X_digits, y_digits = load_digits(return_X_y=True)
+      >>> pca1 = PCA(n_components=10)
+      >>> svm1 = SVC()
+      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
+      >>> pipe.fit(X_digits, y_digits)
+      Pipeline(steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
+      >>> # The pca instance can be inspected directly
+      >>> pca1.components_.shape
+      (10, 64)
 
-   Enabling caching triggers a clone of the transformers before fitting.
-   Therefore, the transformer instance given to the pipeline cannot be
-   inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
-   transformer.
-   Instead, use the attribute ``named_steps`` to inspect estimators within
-   the pipeline::
+  Enabling caching triggers a clone of the transformers before fitting.
+  Therefore, the transformer instance given to the pipeline cannot be
+  inspected directly.
+  In the following example, accessing the :class:`~sklearn.decomposition.PCA`
+  instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+  unfitted transformer.
+  Instead, use the attribute ``named_steps`` to inspect estimators within
+  the pipeline::
 
-     >>> cachedir = mkdtemp()
-     >>> pca2 = PCA()
-     >>> svm2 = SVC()
-     >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
-     ...                        memory=cachedir)
-     >>> cached_pipe.fit(X_digits, y_digits)
-     Pipeline(memory=...,
-             steps=[('reduce_dim', PCA()), ('clf', SVC())])
-     >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-         [[-1.77484909e-19  ... 4.07058917e-18]]
-     >>> # Remove the cache directory
-     >>> rmtree(cachedir)
+      >>> cachedir = mkdtemp()
+      >>> pca2 = PCA(n_components=10)
+      >>> svm2 = SVC()
+      >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
+      ...                        memory=cachedir)
+      >>> cached_pipe.fit(X_digits, y_digits)
+      Pipeline(memory=...,
+               steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
+      >>> cached_pipe.named_steps['reduce_dim'].components_.shape
+      (10, 64)
+      >>> # Remove the cache directory
+      >>> rmtree(cachedir)
 
-.. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
 .. _transformed_target_regressor:
 
@@ -273,12 +286,17 @@ the regressor that will be used for prediction, and the transformer that will
 be applied to the target variable::
 
   >>> import numpy as np
-  >>> from sklearn.datasets import fetch_california_housing
+  >>> from sklearn.datasets import make_regression
   >>> from sklearn.compose import TransformedTargetRegressor
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> # create a synthetic dataset
+  >>> X, y = make_regression(n_samples=20640,
+  ...                        n_features=8,
+  ...                        noise=100.0,
+  ...                        random_state=0)
+  >>> y = np.exp( 1 + (y - y.min()) * (4 / (y.max() - y.min())))
   >>> X, y = X[:2000, :], y[:2000]  # select a subset of data
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
@@ -287,11 +305,11 @@ be applied to the target variable::
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.61
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: 0.67
   >>> raw_target_regr = LinearRegression().fit(X_train, y_train)
-  >>> print('R2 score: {0:.2f}'.format(raw_target_regr.score(X_test, y_test)))
-  R2 score: 0.59
+  >>> print(f"R2 score: {raw_target_regr.score(X_test, y_test):.2f}")
+  R2 score: 0.64
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
@@ -308,8 +326,8 @@ Subsequently, the object is created as::
   ...                                   inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.51
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: 0.67
 
 By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
@@ -323,8 +341,8 @@ each other. However, it is possible to bypass this checking by setting
   ...                                   check_inverse=False)
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
-  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: -1.57
+  >>> print(f"R2 score: {regr.score(X_test, y_test):.2f}")
+  R2 score: -3.02
 
 .. note::
 
@@ -332,9 +350,9 @@ each other. However, it is possible to bypass this checking by setting
    pair of functions ``func`` and ``inverse_func``. However, setting both
    options will raise an error.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
 
 
 .. _feature_union:
@@ -396,9 +414,9 @@ and ignored by setting to ``'drop'``::
     FeatureUnion(transformer_list=[('linear_pca', PCA()),
                                    ('kernel_pca', 'drop')])
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
 .. _column_transformer:
@@ -491,10 +509,10 @@ on data type or column name::
   ...       OneHotEncoder(),
   ...       make_column_selector(pattern='city', dtype_include=object))])
   >>> ct.fit_transform(X)
-  array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
-         [-1.507...,  1.414...,  1. ,  0. ,  0. ],
-         [-0.301...,  0.      ,  0. ,  1. ,  0. ],
-         [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
+  array([[ 0.904,  0.      ,  1. ,  0. ,  0. ],
+         [-1.507,  1.414,  1. ,  0. ,  0. ],
+         [-0.301,  0.      ,  0. ,  1. ,  0. ],
+         [ 0.904, -1.414,  0. ,  0. ,  1. ]])
 
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
@@ -558,9 +576,9 @@ will use the column names to select the columns::
   >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
   ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
   >>> ct.transform(X_new)
-  array([[ 0.9...],
-         [ 2.1...],
-         [-3.9...]])
+  array([[ 0.9],
+         [ 2.1],
+         [-3.9]])
 
 .. _visualizing_composite_estimators:
 
@@ -591,7 +609,7 @@ As an alternative, the HTML can be written to a file using
    >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
    ...     f.write(estimator_html_repr(clf))
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
- * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+* :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`

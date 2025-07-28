@@ -23,17 +23,15 @@ clusters widely spaced.
 
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.utils import shuffle
-from sklearn.utils import check_random_state
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.utils import check_random_state, shuffle
 
 random_state = np.random.RandomState(0)
 

@@ -34,6 +34,9 @@ bike sharing dataset. The example is inspired by [1]_.
        Graphical Statistics, 24(1): 44-65 <1309.6392>`
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Bike sharing dataset preprocessing
 # ----------------------------------
@@ -42,7 +45,7 @@ bike sharing dataset. The example is inspired by [1]_.
 # rentals using weather and season data as well as the datetime information.
 from sklearn.datasets import fetch_openml
 
-bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas")
+bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 # Make an explicit copy to avoid "SettingWithCopyWarning" from pandas
 X, y = bikes.data.copy(), bikes.target
 
@@ -57,7 +60,12 @@ X["weather"].value_counts()
 
 # %%
 # Because of this rare category, we collapse it into `"rain"`.
-X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
+X["weather"] = (
+    X["weather"]
+    .astype(object)
+    .replace(to_replace="heavy_rain", value="rain")
+    .astype("category")
+)
 
 # %%
 # We now have a closer look at the `"year"` feature:
@@ -100,8 +108,9 @@ categorical_features = X_train.columns.drop(numerical_features)
 # We plot the average number of bike rentals by grouping the data by season and
 # by year.
 from itertools import product
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 days = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 hours = tuple(range(24))
@@ -109,11 +118,11 @@ xticklabels = [f"{day}\n{hour}:00" for day, hour in product(days, hours)]
 xtick_start, xtick_period = 6, 12
 
 fig, axs = plt.subplots(nrows=2, figsize=(8, 6), sharey=True, sharex=True)
-average_bike_rentals = bikes.frame.groupby(["year", "season", "weekday", "hour"]).mean(
-    numeric_only=True
-)["count"]
+average_bike_rentals = bikes.frame.groupby(
+    ["year", "season", "weekday", "hour"], observed=True
+).mean(numeric_only=True)["count"]
 for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
-    df.groupby("season").plot(ax=ax, legend=True)
+    df.groupby("season", observed=True).plot(ax=ax, legend=True)
 
     # decorate the plot
     ax.set_xticks(
@@ -157,8 +166,7 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
 # numerical features and encode the categorical features with a
 # :class:`~sklearn.preprocessing.OneHotEncoder`.
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
 
 mlp_preprocessor = ColumnTransformer(
     transformers=[
@@ -203,6 +211,7 @@ hgbdt_preprocessor
 # Let's fit a :class:`~sklearn.neural_network.MLPRegressor` and compute
 # single-variable partial dependence plots.
 from time import time
+
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 
@@ -242,6 +251,7 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 #
 # We will plot the averaged partial dependence.
 import matplotlib.pyplot as plt
+
 from sklearn.inspection import PartialDependenceDisplay
 
 common_params = {
@@ -355,8 +365,11 @@ _ = display.figure_.suptitle(
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 #
+# .. _ice-vs-pdp:
+#
 # ICE vs. PDP
 # ~~~~~~~~~~~
+#
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
 # this regard, it is possible to plot each individual response. This representation is
@@ -529,10 +542,10 @@ _ = display.figure_.suptitle(
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
-import numpy as np
 
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+import numpy as np
 
 from sklearn.inspection import partial_dependence
 
@@ -561,3 +574,45 @@ clb.ax.set_title("Partial\ndependence")
 plt.show()
 
 # %%
+# .. _plt_partial_dependence_custom_values:
+#
+# Custom Inspection Points
+# ~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# None of the examples so far specify _which_ points are evaluated to create the
+# partial dependence plots. By default we use percentiles defined by the input dataset.
+# In some cases it can be helpful to specify the exact points where you would like the
+# model evaluated. For instance, if a user wants to test the model behavior on
+# out-of-distribution data or compare two models that were fit on slightly different
+# data. The `custom_values` parameter allows the user to pass in the values that they
+# want the model to be evaluated on. This overrides the `grid_resolution` and
+# `percentiles` parameters. Let's return to our gradient boosting example above
+# but with custom values
+
+print("Computing partial dependence plots with custom evaluation values...")
+tic = time()
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
+
+features_info = {
+    "features": ["temp", "humidity"],
+    "kind": "both",
+}
+
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+    # we set custom values for temp feature -
+    # all other features are evaluated based on the data
+    custom_values={"temp": np.linspace(0, 40, 10)},
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with a gradient boosting"
+    ),
+    fontsize=16,
+)

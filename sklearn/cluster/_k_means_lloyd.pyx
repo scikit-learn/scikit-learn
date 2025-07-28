@@ -1,9 +1,5 @@
 # Licence: BSD 3 clause
 
-# TODO: We still need to use ndarrays instead of typed memoryviews when using
-# fused types and when the array may be read-only (for instance when it's
-# provided by the user). This is fixed in cython > 0.3.
-
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
@@ -82,12 +78,20 @@ def lloyd_iter_chunked_dense(
         int n_features = X.shape[1]
         int n_clusters = centers_old.shape[0]
 
+    if n_samples == 0:
+        # An empty array was passed, do nothing and return early (before
+        # attempting to compute n_chunks). This can typically happen when
+        # calling the prediction function of a bisecting k-means model with a
+        # large fraction of outliers.
+        return
+
+    cdef:
         # hard-coded number of samples per chunk. Appeared to be close to
         # optimal in all situations.
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff
+        int chunk_idx
         int start, end
 
         int j, k
@@ -153,8 +157,9 @@ def lloyd_iter_chunked_dense(
 
     if update_centers:
         omp_destroy_lock(&lock)
-        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
-                                    centers_new, weight_in_clusters, labels)
+        _relocate_empty_clusters_dense(
+            X, sample_weight, centers_old, centers_new, weight_in_clusters, labels
+        )
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
@@ -266,19 +271,26 @@ def lloyd_iter_chunked_sparse(
           the algorithm. This is useful especially when calling predict on a
           fitted model.
     """
-    # print(X.indices.dtype)
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
         int n_clusters = centers_old.shape[0]
 
+    if n_samples == 0:
+        # An empty array was passed, do nothing and return early (before
+        # attempting to compute n_chunks). This can typically happen when
+        # calling the prediction function of a bisecting k-means model with a
+        # large fraction of outliers.
+        return
+
+    cdef:
         # Choose same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.
         # However, splitting in chunks is necessary to get parallelism.
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff = 0
+        int chunk_idx
         int start = 0, end = 0
 
         int j, k

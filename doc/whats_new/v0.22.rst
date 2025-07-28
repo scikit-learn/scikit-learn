@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_22:
+
+============
+Version 0.22
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_22_2:
 
 Version 0.22.2.post1
@@ -27,13 +38,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
+- |Fix| Fixed a bug in `metrics.plot_roc_curve` where
   the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
   instead of the parameter `name`. It results in a different plot when calling
   :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
   :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
+- |Fix| Fixed a bug in `metrics.plot_precision_recall_curve` where the
   name of the estimator was passed in the
   :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
   results in a different plot when calling
@@ -41,12 +52,12 @@ Changelog
   :pr:`16505` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
-..............................
+........................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 .. _changes_0_22_1:
@@ -82,18 +93,18 @@ Changelog
   Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
   :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
 
-- |Fix| :func:`inspection.plot_partial_dependence` and
+- |Fix| `inspection.plot_partial_dependence` and
   :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
   the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| :func:`metrics.plot_confusion_matrix` now raises error when `normalize`
+- |Fix| `metrics.plot_confusion_matrix` now raises error when `normalize`
   is invalid. Previously, it runs fine with no normalization.
   :pr:`15888` by `Hanmin Qin`_.
 
-- |Fix| :func:`metrics.plot_confusion_matrix` now colors the label color
+- |Fix| `metrics.plot_confusion_matrix` now colors the label color
   correctly to maximize contrast with its background. :pr:`15936` by
   `Thomas Fan`_ and :user:`DizietAsahi`.
 
@@ -101,8 +112,8 @@ Changelog
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
 
-- |Fix| Fixed a bug in :func:`metrics.plot_confusion_matrix` to correctly
-  pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
+- |Fix| Fixed a bug in `metrics.plot_confusion_matrix` to correctly
+  pass the `values_format` parameter to the :class:`metrics.ConfusionMatrixDisplay`
   plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
 
 :mod:`sklearn.model_selection`
@@ -118,7 +129,7 @@ Changelog
 ..........................
 
 - |Fix| Removed `abstractmethod` decorator for the method `_check_X` in
-  :class:`naive_bayes.BaseNB` that could break downstream projects inheriting
+  `naive_bayes.BaseNB` that could break downstream projects inheriting
   from this deprecated public base class. :pr:`15996` by
   :user:`Brigitta Sipőcz <bsipocz>`.
 
@@ -143,10 +154,10 @@ Changelog
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
 
-- |Fix| :func:`utils.check_is_fitted` accepts back an explicit ``attributes``
+- |Fix| :func:`utils.validation.check_is_fitted` accepts back an explicit ``attributes``
   argument to check for specific attributes as explicit markers of a fitted
   estimator. When no explicit ``attributes`` are provided, only the attributes
-  that end with a underscore and do not start with double underscore are used
+  that end with an underscore and do not start with double underscore are used
   as "fitted" markers. The ``all_or_any`` argument is also no longer
   deprecated. This change is made to restore some backward compatibility with
   the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
@@ -157,12 +168,6 @@ Version 0.22.0
 ==============
 
 **December 3 2019**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
-
-.. include:: changelog_legend.inc
 
 Website update
 --------------
@@ -390,12 +395,12 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Efficiency| :class:`decomposition.NMF(solver='mu')` fitted on sparse input
+- |Efficiency| :class:`decomposition.NMF` with `solver="mu"` fitted on sparse input
   matrices now uses batching to avoid briefly allocating an array with size
-  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
+  (#non-zero elements, n_components). :pr:`15257` by :user:`Mart Willocx <Maocx>`.
 
-- |Enhancement| :func:`decomposition.dict_learning()` and
-  :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
+- |Enhancement| :func:`decomposition.dict_learning` and
+  :func:`decomposition.dict_learning_online` now accept `method_max_iter` and
   pass it to :meth:`decomposition.sparse_encode`.
   :issue:`12650` by `Adrin Jalali`_.
 
@@ -403,15 +408,15 @@ Changelog
   :class:`decomposition.DictionaryLearning`, and
   :class:`decomposition.MiniBatchDictionaryLearning` now take a
   `transform_max_iter` parameter and pass it to either
-  :func:`decomposition.dict_learning()` or
-  :func:`decomposition.sparse_encode()`. :issue:`12650` by `Adrin Jalali`_.
+  :func:`decomposition.dict_learning` or
+  :func:`decomposition.sparse_encode`. :issue:`12650` by `Adrin Jalali`_.
 
 - |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
   matrices as input, converting them to dense in batches thereby avoiding the
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
-- |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
+- |Fix| :func:`decomposition.sparse_encode` now passes the `max_iter` to the
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
 
@@ -419,7 +424,7 @@ Changelog
 ....................
 
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
-  of the provided constant in multiouput cases.
+  of the provided constant in multioutput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
 - |API| The default value of the `strategy` parameter in
@@ -451,7 +456,7 @@ Changelog
   - |Feature| Estimators now have an additional `warm_start` parameter that
     enables warm starting. :pr:`14012` by :user:`Johann Faouzi <johannfaouzi>`.
   - |Feature| :func:`inspection.partial_dependence` and
-    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+    `inspection.plot_partial_dependence` now support the fast 'recursion'
     method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Enhancement| for :class:`ensemble.HistGradientBoostingClassifier` the
     training loss or score is now monitored on a class-wise stratified
@@ -503,7 +508,7 @@ Changelog
 - |Fix| Stacking and Voting estimators now ensure that their underlying
   estimators are either all classifiers or all regressors.
   :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
-  and :class:`ensemble.VotingClassifier` and :class:`VotingRegressor`
+  and :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`
   now raise consistent error messages.
   :pr:`15084` by `Guillaume Lemaitre`_.
 
@@ -529,10 +534,10 @@ Changelog
   :pr:`14602` by :user:`Gaurav Chawla <getgaurav2>`.
 
 - |Fix| Functions created by ``build_preprocessor`` and ``build_analyzer`` of
-  :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
+  `feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
 
-- |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
+- |Fix| `feature_extraction.text.strip_accents_unicode` now correctly
   removes accents from strings that are in NFKD normalized form. :pr:`15100` by
   :user:`Daniel Grady <DGrady>`.
 
@@ -548,8 +553,8 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
-- |Enhancement| Updated the following :mod:`feature_selection` estimators to allow
-  NaN/Inf values in ``transform`` and ``fit``:
+- |Enhancement| Updated the following :mod:`sklearn.feature_selection`
+  estimators to allow NaN/Inf values in ``transform`` and ``fit``:
   :class:`feature_selection.RFE`, :class:`feature_selection.RFECV`,
   :class:`feature_selection.SelectFromModel`,
   and :class:`feature_selection.VarianceThreshold`. Note that if the underlying
@@ -570,7 +575,7 @@ Changelog
   of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
   to their training/prediction methods.
   A user-defined kernel should be provided for computing the kernel matrix among
-  the generic objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
+  the generic objects, and should inherit from `gaussian_process.kernels.GenericKernelMixin`
   to notify the GPR/GPC model that it handles non-vectorial samples.
   :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
 
@@ -603,7 +608,7 @@ Changelog
 - |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
   By :user:`Sergey Feldman <sergeyf>`.
 
-- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
+- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features were
   imputed in the reverse desired order with ``imputation_order`` either
   ``"ascending"`` or ``"descending"``. :pr:`15393` by
   :user:`Venkatachalam N <venkyyuvy>`.
@@ -616,18 +621,18 @@ Changelog
   respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
 
 - |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  `inspection.plot_partial_dependence` now support the fast 'recursion'
   method for :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
-- |Enhancement| :func:`inspection.plot_partial_dependence` has been extended to
+- |Enhancement| `inspection.plot_partial_dependence` has been extended to
   now support the new visualization API described in the :ref:`User Guide
   <visualizations>`. :pr:`14646` by `Thomas Fan`_.
 
 - |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
   and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
-  In addition :func:`inspection.plot_partial_dependence` will use the column
+  In addition `inspection.plot_partial_dependence` will use the column
   names by default when a dataframe is passed.
   :pr:`14028` and :pr:`15429` by `Guillaume Lemaitre`_.
 
@@ -712,14 +717,15 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
+- |MajorFeature| `metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
 
 - |Feature| Added a new parameter ``zero_division`` to multiple classification
-  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
-  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-  :func:`classification_report`. This allows to set returned value for
+  metrics: :func:`metrics.precision_score`, :func:`metrics.recall_score`,
+  :func:`metrics.f1_score`, :func:`metrics.fbeta_score`,
+  :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.classification_report`. This allows to set returned value for
   ill-defined metrics.
   :pr:`14900` by :user:`Marc Torrellas Socastro <marctorrellas>`.
 
@@ -732,16 +738,16 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
-- |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
+- |Feature| `metrics.plot_precision_recall_curve` has been added to plot
   precision recall curves. :pr:`14936` by `Thomas Fan`_.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` has been added to plot
+- |Feature| `metrics.plot_confusion_matrix` has been added to plot
   confusion matrices. :pr:`15083` by `Thomas Fan`_.
 
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
   `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
-  :pr:`12789` and :pr:`15274` by 
+  :pr:`12789` and :pr:`15274` by
   :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
   `Thomas Fan`_.
 
@@ -877,7 +883,7 @@ Changelog
 .............................
 
 - |Feature| Add `max_fun` parameter in
-  :class:`neural_network.BaseMultilayerPerceptron`,
+  `neural_network.BaseMultilayerPerceptron`,
   :class:`neural_network.MLPRegressor`, and
   :class:`neural_network.MLPClassifier` to give control over
   maximum number of function evaluation to not meet ``tol`` improvement.
@@ -949,7 +955,7 @@ Changelog
   :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
   has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
 
-- |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
+- |Fix| fixed a bug in `BaseLibSVM._sparse_fit` where n_SV=0 raised a
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
 - |Fix| The liblinear solver now supports ``sample_weight``.
@@ -993,14 +999,14 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
-- |Feature| A new random variable, :class:`utils.fixes.loguniform` implements a
+- |Feature| A new random variable, `utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
   for ``loguniform(1, 100)``. See :issue:`11232` by
   :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
-  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
+  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`_.
 
-- |Enhancement| :func:`utils.safe_indexing` (now deprecated) accepts an
+- |Enhancement| `utils.safe_indexing` (now deprecated) accepts an
   ``axis`` parameter to index array-like across rows and columns. The column
   indexing can be done on NumPy array, SciPy sparse matrix, and Pandas
   DataFrame. An additional refactoring was done. :pr:`14035` and :pr:`14475`
@@ -1092,8 +1098,8 @@ These changes mostly affect library developers.
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 - Added two common multioutput estimator tests
-  :func:`~utils.estimator_checks.check_classifier_multioutput` and
-  :func:`~utils.estimator_checks.check_regressor_multioutput`.
+  `utils.estimator_checks.check_classifier_multioutput` and
+  `utils.estimator_checks.check_regressor_multioutput`.
   :pr:`13392` by :user:`Rok Mihevc <rok>`.
 
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
@@ -1102,8 +1108,7 @@ These changes mostly affect library developers.
   to be overridable only once. :pr:`14884` by `Andreas Müller`_.
 
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.21, including:

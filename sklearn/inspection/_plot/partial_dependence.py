@@ -1,5 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
-import warnings
 from itertools import chain
 from math import ceil
 
@@ -7,34 +9,38 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
+from ...base import is_regressor
+from ...utils import (
+    Bunch,
+    _safe_indexing,
+    check_array,
+    check_random_state,
+)
+from ...utils._encode import _unique
+from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._plotting import _validate_style_kwargs
+from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
-from ...base import is_regressor
-from ...utils import Bunch
-from ...utils import check_array
-from ...utils import check_matplotlib_support  # noqa
-from ...utils import check_random_state
-from ...utils import _safe_indexing
-from ...utils.parallel import delayed, Parallel
-from ...utils._encode import _unique
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP).
-
-    This can also display individual partial dependencies which are often
-    referred to as: Individual Condition Expectation (ICE).
+    """Partial Dependence Plot (PDP) and Individual Conditional Expectation (ICE).
 
     It is recommended to use
     :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
-    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
-    stored as attributes.
+    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are stored
+    as attributes.
 
-    Read more in
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <partial_dependence>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Inspection Guide <partial_dependence>`.
 
-        .. versionadded:: 0.22
+    For an example on how to use this class, see the following example:
+    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -63,18 +69,6 @@ class PartialDependenceDisplay:
     deciles : dict
         Deciles for feature indices in ``features``.
 
-    pdp_lim : dict or None
-        Global min and max average predictions, such that all plots will have
-        the same scale and y limits. `pdp_lim[1]` is the global min and max for
-        single partial dependence curves. `pdp_lim[2]` is the global min and
-        max for two-way partial dependence curves. If `None`, the limit will be
-        inferred from the global minimum and maximum of all predictions.
-
-        .. deprecated:: 1.1
-           Pass the parameter `pdp_lim` to
-           :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
-           It will be removed in 1.3.
-
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
         Whether to plot the partial dependence averaged across all the samples
@@ -97,8 +91,9 @@ class PartialDependenceDisplay:
 
         .. note::
            The fast ``method='recursion'`` option is only available for
-           ``kind='average'``. Plotting individual dependencies requires using
-           the slower ``method='brute'`` option.
+           `kind='average'` and `sample_weights=None`. Computing individual
+           dependencies and doing weighted averages requires using the slower
+           `method='brute'`.
 
         .. versionadded:: 0.24
            Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
@@ -236,7 +231,6 @@ class PartialDependenceDisplay:
         feature_names,
         target_idx,
         deciles,
-        pdp_lim="deprecated",
         kind="average",
         subsample=1000,
         random_state=None,
@@ -246,7 +240,6 @@ class PartialDependenceDisplay:
         self.features = features
         self.feature_names = feature_names
         self.target_idx = target_idx
-        self.pdp_lim = pdp_lim
         self.deciles = deciles
         self.kind = kind
         self.subsample = subsample
@@ -260,6 +253,7 @@ class PartialDependenceDisplay:
         X,
         features,
         *,
+        sample_weight=None,
         categorical_features=None,
         feature_names=None,
         target=None,
@@ -267,6 +261,7 @@ class PartialDependenceDisplay:
         n_cols=3,
         grid_resolution=100,
         percentiles=(0.05, 0.95),
+        custom_values=None,
         method="auto",
         n_jobs=None,
         verbose=0,
@@ -282,15 +277,21 @@ class PartialDependenceDisplay:
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
-        Partial dependence plots, individual conditional expectation plots or an
-        overlay of both of them can be plotted by setting the ``kind``
-        parameter. The ``len(features)`` plots are arranged in a grid with
-        ``n_cols`` columns. Two-way partial dependence plots are plotted as
-        contour plots. The deciles of the feature values will be shown with tick
-        marks on the x-axes for one-way plots, and on both axes for two-way
-        plots.
+        Partial dependence plots, individual conditional expectation plots, or an
+        overlay of both can be plotted by setting the `kind` parameter.
+        This method generates one plot for each entry in `features`. The plots
+        are arranged in a grid with `n_cols` columns. For one-way partial
+        dependence plots, the deciles of the feature values are shown on the
+        x-axis. For two-way plots, the deciles are shown on both axes and PDPs
+        are contour plots.
 
-        Read more in the :ref:`User Guide <partial_dependence>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Inspection Guide <partial_dependence>`.
+
+        For an example on how to use this class method, see
+        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`.
 
         .. note::
 
@@ -350,6 +351,14 @@ class PartialDependenceDisplay:
             with `kind='average'`). Each tuple must be of size 2.
             If any entry is a string, then it must be in ``feature_names``.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights are used to calculate weighted means when averaging the
+            model output. If `None`, then samples are equally weighted. If
+            `sample_weight` is not `None`, then `method` will be set to `'brute'`.
+            Note that `sample_weight` is ignored for `kind='individual'`.
+
+            .. versionadded:: 1.3
+
         categorical_features : array-like of shape (n_features,) or shape \
                 (n_categorical_features,), dtype={bool, int, str}, default=None
             Indicates the categorical features.
@@ -395,10 +404,20 @@ class PartialDependenceDisplay:
         grid_resolution : int, default=100
             The number of equally spaced points on the axes of the plots, for each
             target feature.
+            This parameter is overridden by `custom_values` if that parameter is set.
 
         percentiles : tuple of float, default=(0.05, 0.95)
             The lower and upper percentile used to create the extreme values
             for the PDP axes. Must be in [0, 1].
+            This parameter is overridden by `custom_values` if that parameter is set.
+
+        custom_values : dict
+            A dictionary mapping the index of an element of `features` to an
+            array of values where the partial dependence should be calculated
+            for that feature. Setting a range of values for a feature overrides
+            `grid_resolution` and `percentiles`.
+
+            .. versionadded:: 1.7
 
         method : str, default='auto'
             The method used to calculate the averaged predictions:
@@ -422,7 +441,8 @@ class PartialDependenceDisplay:
               computationally intensive.
 
             - `'auto'`: the `'recursion'` is used for estimators that support it,
-              and `'brute'` is used otherwise.
+              and `'brute'` is used otherwise. If `sample_weight` is not `None`,
+              then `'brute'` is used regardless of the estimator.
 
             Please see :ref:`this note <pdp_method_differences>` for
             differences between the `'brute'` and `'recursion'` method.
@@ -477,9 +497,10 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-           Note that the fast ``method='recursion'`` option is only available for
-           ``kind='average'``. Plotting individual dependencies requires using the
-           slower ``method='brute'`` option.
+            Note that the fast `method='recursion'` option is only available for
+            `kind='average'` and `sample_weights=None`. Computing individual
+            dependencies and doing weighted averages requires using the slower
+            `method='brute'`.
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
@@ -521,8 +542,8 @@ class PartialDependenceDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")  # noqa
-        import matplotlib.pyplot as plt  # noqa
+        check_matplotlib_support(f"{cls.__name__}.from_estimator")
+        import matplotlib.pyplot as plt
 
         # set target_idx for multi-class estimators
         if hasattr(estimator, "classes_") and np.size(estimator.classes_) > 2:
@@ -541,7 +562,7 @@ class PartialDependenceDisplay:
         # Use check_array only on lists and other non-array-likes / sparse. Do not
         # convert DataFrame into a NumPy array.
         if not (hasattr(X, "__array__") or sparse.issparse(X)):
-            X = check_array(X, force_all_finite="allow-nan", dtype=object)
+            X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
         n_features = X.shape[1]
 
         feature_names = _check_feature_names(X, feature_names)
@@ -603,7 +624,7 @@ class PartialDependenceDisplay:
         else:
             # we need to create a boolean indicator of which features are
             # categorical from the categorical_features list.
-            categorical_features = np.array(categorical_features, copy=False)
+            categorical_features = np.asarray(categorical_features)
             if categorical_features.dtype.kind == "b":
                 # categorical features provided as a list of boolean
                 if categorical_features.size != n_features:
@@ -706,6 +727,7 @@ class PartialDependenceDisplay:
                 estimator,
                 X,
                 fxs,
+                sample_weight=sample_weight,
                 feature_names=feature_names,
                 categorical_features=categorical_features,
                 response_method=response_method,
@@ -713,6 +735,7 @@ class PartialDependenceDisplay:
                 grid_resolution=grid_resolution,
                 percentiles=percentiles,
                 kind=kind_plot,
+                custom_values=custom_values,
             )
             for kind_plot, fxs in zip(kind_, features)
         )
@@ -744,7 +767,7 @@ class PartialDependenceDisplay:
                     X_col = _safe_indexing(X, fx, axis=1)
                     deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
-        display = PartialDependenceDisplay(
+        display = cls(
             pd_results=pd_results,
             features=features,
             feature_names=feature_names,
@@ -926,7 +949,7 @@ class PartialDependenceDisplay:
             have the same scale and y limits. `pdp_lim[1]` is the global min
             and max for single partial dependence curves.
         """
-        from matplotlib import transforms  # noqa
+        from matplotlib import transforms
 
         if kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -1065,7 +1088,7 @@ class PartialDependenceDisplay:
             heatmap_idx = np.unravel_index(pd_plot_idx, self.heatmaps_.shape)
             self.heatmaps_[heatmap_idx] = im
         else:
-            from matplotlib import transforms  # noqa
+            from matplotlib import transforms
 
             XX, YY = np.meshgrid(feature_values[0], feature_values[1])
             Z = avg_preds[self.target_idx].T
@@ -1203,8 +1226,8 @@ class PartialDependenceDisplay:
         """
 
         check_matplotlib_support("plot_partial_dependence")
-        import matplotlib.pyplot as plt  # noqa
-        from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
+        import matplotlib.pyplot as plt
+        from matplotlib.gridspec import GridSpecFromSubplotSpec
 
         if isinstance(self.kind, str):
             kind = [self.kind] * len(self.features)
@@ -1232,27 +1255,6 @@ class PartialDependenceDisplay:
                 f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
                 f" of such values. Currently, kind={self.kind!r}"
             )
-
-        # FIXME: remove in 1.3
-        if self.pdp_lim != "deprecated":
-            warnings.warn(
-                (
-                    "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
-                    "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
-                    "instead."
-                ),
-                FutureWarning,
-            )
-            if pdp_lim is not None and self.pdp_lim != pdp_lim:
-                warnings.warn(
-                    (
-                        "`pdp_lim` has been passed in both the constructor and the"
-                        " `plot` method. For backward compatibility, the parameter from"
-                        " the constructor will be used."
-                    ),
-                    UserWarning,
-                )
-            pdp_lim = self.pdp_lim
 
         # Center results before plotting
         if not centered:
@@ -1312,7 +1314,7 @@ class PartialDependenceDisplay:
         if contour_kw is None:
             contour_kw = {}
         default_contour_kws = {"alpha": 0.75}
-        contour_kw = {**default_contour_kws, **contour_kw}
+        contour_kw = _validate_style_kwargs(default_contour_kws, contour_kw)
 
         n_features = len(self.features)
         is_average_plot = [kind_plot == "average" for kind_plot in kind]
@@ -1440,26 +1442,25 @@ class PartialDependenceDisplay:
                     default_ice_lines_kws = {}
                     default_pd_lines_kws = {}
 
-                ice_lines_kw = {
-                    **default_line_kws,
-                    **default_ice_lines_kws,
-                    **line_kw,
-                    **ice_lines_kw,
-                }
+                default_ice_lines_kws = {**default_line_kws, **default_ice_lines_kws}
+                default_pd_lines_kws = {**default_line_kws, **default_pd_lines_kws}
+
+                line_kw = _validate_style_kwargs(default_line_kws, line_kw)
+
+                ice_lines_kw = _validate_style_kwargs(
+                    _validate_style_kwargs(default_ice_lines_kws, line_kw), ice_lines_kw
+                )
                 del ice_lines_kw["label"]
 
-                pd_line_kw = {
-                    **default_line_kws,
-                    **default_pd_lines_kws,
-                    **line_kw,
-                    **pd_line_kw,
-                }
+                pd_line_kw = _validate_style_kwargs(
+                    _validate_style_kwargs(default_pd_lines_kws, line_kw), pd_line_kw
+                )
 
                 default_bar_kws = {"color": "C0"}
-                bar_kw = {**default_bar_kws, **bar_kw}
+                bar_kw = _validate_style_kwargs(default_bar_kws, bar_kw)
 
                 default_heatmap_kw = {}
-                heatmap_kw = {**default_heatmap_kw, **heatmap_kw}
+                heatmap_kw = _validate_style_kwargs(default_heatmap_kw, heatmap_kw)
 
                 self._plot_one_way_partial_dependence(
                     kind_plot,

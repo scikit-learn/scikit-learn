@@ -26,7 +26,7 @@ review, either the pull request needs some benchmarking, tinkering,
 convincing, etc. or more likely the reviewers are simply busy. In either
 case, we ask for your understanding during the review process.
 For more information, see our FAQ on this topic:
-http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention.
+https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention.
 
 Thanks for contributing!
 -->

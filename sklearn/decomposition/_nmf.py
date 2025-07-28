@@ -1,37 +1,40 @@
-""" Non-negative matrix factorization.
-"""
-# Author: Vlad Niculae
-#         Lars Buitinck
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Tom Dupre la Tour
-# License: BSD 3 clause
+"""Non-negative matrix factorization."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import itertools
+import time
+import warnings
 from abc import ABC
+from math import sqrt
 from numbers import Integral, Real
+
 import numpy as np
 import scipy.sparse as sp
-import time
-import itertools
-import warnings
-from math import sqrt
 from scipy import linalg
 
-from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state, check_array, gen_batches
-from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import (
-    check_is_fitted,
-    check_non_negative,
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
 )
+from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_random_state, gen_batches
 from ..utils._param_validation import (
     Interval,
     StrOptions,
     validate_params,
 )
-
+from ..utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.validation import (
+    check_is_fitted,
+    check_non_negative,
+    validate_data,
+)
+from ._cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -64,14 +67,19 @@ def trace_dot(X, Y):
 
 def _check_init(A, shape, whom):
     A = check_array(A)
-    if np.shape(A) != shape:
+    if shape[0] != "auto" and A.shape[0] != shape[0]:
         raise ValueError(
-            "Array with wrong shape passed to %s. Expected %s, but got %s "
-            % (whom, shape, np.shape(A))
+            f"Array with wrong first dimension passed to {whom}. Expected {shape[0]}, "
+            f"but got {A.shape[0]}."
+        )
+    if shape[1] != "auto" and A.shape[1] != shape[1]:
+        raise ValueError(
+            f"Array with wrong second dimension passed to {whom}. Expected {shape[1]}, "
+            f"but got {A.shape[1]}."
         )
     check_non_negative(A, whom)
     if np.max(A) == 0:
-        raise ValueError("Array passed to %s is full of zeros." % whom)
+        raise ValueError(f"Array passed to {whom} is full of zeros.")
 
 
 def _beta_divergence(X, W, H, beta, square_root=False):
@@ -115,7 +123,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         if sp.issparse(X):
             norm_X = np.dot(X.data, X.data)
             norm_WH = trace_dot(np.linalg.multi_dot([W.T, W, H]), H)
-            cross_prod = trace_dot((X * H.T), W)
+            cross_prod = trace_dot((X @ H.T), W)
             res = (norm_X + norm_WH - 2.0 * cross_prod) / 2.0
         else:
             res = squared_norm(X - np.dot(W, H)) / 2.0
@@ -306,7 +314,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         return W, H
 
     # NNDSVD initialization
-    U, S, V = randomized_svd(X, n_components, random_state=random_state)
+    U, S, V = _randomized_svd(X, n_components, random_state=random_state)
     W = np.zeros_like(U)
     H = np.zeros_like(V)
 
@@ -891,13 +899,14 @@ def _fit_multiplicative_update(
         "W": ["array-like", None],
         "H": ["array-like", None],
         "update_H": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def non_negative_factorization(
     X,
     W=None,
     H=None,
-    n_components=None,
+    n_components="auto",
     *,
     init=None,
     update_H=True,
@@ -920,22 +929,19 @@ def non_negative_factorization(
 
     The objective function is:
 
-        .. math::
+    .. math::
 
-            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+        L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+                &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+                &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+                &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
+                &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
+    where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     The generic norm :math:`||X - WH||_{loss}^2` may represent
@@ -970,9 +976,16 @@ def non_negative_factorization(
         If `update_H=False`, it is used as a constant, to solve for W only.
         If `None`, uses the initialisation method specified in `init`.
 
-    n_components : int, default=None
-        Number of components, if n_components is not set all features
-        are kept.
+    n_components : int or {'auto'} or None, default='auto'
+        Number of components. If `None`, all features are kept.
+        If `n_components='auto'`, the number of components is automatically inferred
+        from `W` or `H` shapes.
+
+        .. versionchanged:: 1.4
+            Added `'auto'` value.
+
+        .. versionchanged:: 1.6
+            Default value changed from `None` to `'auto'`.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1122,7 +1135,11 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     """Base class for NMF and MiniBatchNMF."""
 
     _parameter_constraints: dict = {
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+            StrOptions({"auto"}),
+        ],
         "init": [
             StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
             None,
@@ -1142,7 +1159,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
     def __init__(
         self,
-        n_components=None,
+        n_components="auto",
         *,
         init=None,
         beta_loss="frobenius",
@@ -1177,32 +1194,61 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     def _check_w_h(self, X, W, H, update_H):
         """Check W and H, or initialize them."""
         n_samples, n_features = X.shape
+
         if self.init == "custom" and update_H:
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
             _check_init(W, (n_samples, self._n_components), "NMF (input W)")
+            if self._n_components == "auto":
+                self._n_components = H.shape[0]
+
             if H.dtype != X.dtype or W.dtype != X.dtype:
                 raise TypeError(
                     "H and W should have the same dtype as X. Got "
                     "H.dtype = {} and W.dtype = {}.".format(H.dtype, W.dtype)
                 )
+
         elif not update_H:
+            if W is not None:
+                warnings.warn(
+                    "When update_H=False, the provided initial W is not used.",
+                    RuntimeWarning,
+                )
+
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
+            if self._n_components == "auto":
+                self._n_components = H.shape[0]
+
             if H.dtype != X.dtype:
                 raise TypeError(
                     "H should have the same dtype as X. Got H.dtype = {}.".format(
                         H.dtype
                     )
                 )
+
             # 'mu' solver should not be initialized by zeros
             if self.solver == "mu":
                 avg = np.sqrt(X.mean() / self._n_components)
                 W = np.full((n_samples, self._n_components), avg, dtype=X.dtype)
             else:
                 W = np.zeros((n_samples, self._n_components), dtype=X.dtype)
+
         else:
+            if W is not None or H is not None:
+                warnings.warn(
+                    (
+                        "When init!='custom', provided W or H are ignored. Set "
+                        " init='custom' to use them as initialization."
+                    ),
+                    RuntimeWarning,
+                )
+
+            if self._n_components == "auto":
+                self._n_components = X.shape[1]
+
             W, H = _initialize_nmf(
                 X, self._n_components, init=self.init, random_state=self.random_state
             )
+
         return W, H
 
     def _compute_regularization(self, X):
@@ -1244,34 +1290,36 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, W):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18
 
         Parameters
         ----------
-        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix.
 
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
+
         check_is_fitted(self)
-        return W @ self.components_
+        return X @ self.components_
 
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "requires_positive_X": True,
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class NMF(_BaseNMF):
@@ -1283,23 +1331,20 @@ class NMF(_BaseNMF):
 
     The objective function is:
 
-        .. math::
+    .. math::
 
-            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+        L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+                &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+                &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+                &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
+                &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
-    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+    where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm).
 
     The generic norm :math:`||X - WH||_{loss}` may represent
     the Frobenius norm or another supported beta-divergence loss.
@@ -1320,9 +1365,16 @@ class NMF(_BaseNMF):
 
     Parameters
     ----------
-    n_components : int, default=None
-        Number of components, if n_components is not set all features
-        are kept.
+    n_components : int or {'auto'} or None, default='auto'
+        Number of components. If `None`, all features are kept.
+        If `n_components='auto'`, the number of components is automatically inferred
+        from W or H shapes.
+
+        .. versionchanged:: 1.4
+            Added `'auto'` value.
+
+        .. versionchanged:: 1.6
+            Default value changed from `None` to `'auto'`.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1485,7 +1537,7 @@ class NMF(_BaseNMF):
 
     def __init__(
         self,
-        n_components=None,
+        n_components="auto",
         *,
         init=None,
         solver="cd",
@@ -1538,6 +1590,7 @@ class NMF(_BaseNMF):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1565,10 +1618,8 @@ class NMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
         with config_context(assume_finite=True):
@@ -1623,8 +1674,6 @@ class NMF(_BaseNMF):
         n_iter_ : int
             Actual number of iterations.
         """
-        check_non_negative(X, "NMF (input X)")
-
         # check parameters
         self._check_params(X)
 
@@ -1678,8 +1727,7 @@ class NMF(_BaseNMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
+                "it to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -1700,8 +1748,13 @@ class NMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            ensure_non_negative=True,
         )
 
         with config_context(assume_finite=True):
@@ -1722,23 +1775,20 @@ class MiniBatchNMF(_BaseNMF):
 
     The objective function is:
 
-        .. math::
+    .. math::
 
-            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+        L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+                &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+                &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+                &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
+                &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
-    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+    where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm).
 
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
@@ -1755,9 +1805,16 @@ class MiniBatchNMF(_BaseNMF):
 
     Parameters
     ----------
-    n_components : int, default=None
-        Number of components, if `n_components` is not set all features
-        are kept.
+    n_components : int or {'auto'} or None, default='auto'
+        Number of components. If `None`, all features are kept.
+        If `n_components='auto'`, the number of components is automatically inferred
+        from W or H shapes.
+
+        .. versionchanged:: 1.4
+            Added `'auto'` value.
+
+        .. versionchanged:: 1.6
+            Default value changed from `None` to `'auto'`.
 
     init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
@@ -1922,7 +1979,7 @@ class MiniBatchNMF(_BaseNMF):
 
     def __init__(
         self,
-        n_components=None,
+        n_components="auto",
         *,
         init=None,
         batch_size=1024,
@@ -2122,6 +2179,7 @@ class MiniBatchNMF(_BaseNMF):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -2148,10 +2206,8 @@ class MiniBatchNMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
         with config_context(assume_finite=True):
@@ -2279,14 +2335,19 @@ class MiniBatchNMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         W = self._solve_W(X, self.components_, self._transform_max_iter)
 
         return W
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, W=None, H=None):
         """Update the model using the data in `X` as a mini-batch.
 
@@ -2320,10 +2381,8 @@ class MiniBatchNMF(_BaseNMF):
         """
         has_components = hasattr(self, "components_")
 
-        if not has_components:
-            self._validate_params()
-
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],

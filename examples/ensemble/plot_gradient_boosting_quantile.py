@@ -4,14 +4,20 @@ Prediction Intervals for Gradient Boosting Regression
 =====================================================
 
 This example shows how quantile regression can be used to create prediction
-intervals.
+intervals. See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
+for an example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate some data for a synthetic regression problem by applying the
 # function f to uniformly sampled random inputs.
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 
 
@@ -58,7 +64,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_pinball_loss, mean_squared_error
 
-
 all_models = {}
 common_params = dict(
     learning_rate=0.05,
@@ -93,19 +98,16 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 # 90% interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
 
-
 y_pred = all_models["mse"].predict(xx)
 y_lower = all_models["q 0.05"].predict(xx)
 y_upper = all_models["q 0.95"].predict(xx)
 y_med = all_models["q 0.50"].predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_med, "r-", label="Predicted median")
-plt.plot(xx, y_pred, "r-", label="Predicted mean")
-plt.plot(xx, y_upper, "k-")
-plt.plot(xx, y_lower, "k-")
+plt.plot(xx, y_med, "tab:orange", linewidth=3, label="Predicted median")
+plt.plot(xx, y_pred, "tab:green", linewidth=3, label="Predicted mean")
 plt.fill_between(
     xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
 )
@@ -129,8 +131,8 @@ plt.show()
 # Analysis of the error metrics
 # -----------------------------
 #
-# Measure the models with :func:`mean_squared_error` and
-# :func:`mean_pinball_loss` metrics on the training dataset.
+# Measure the models with :func:`~sklearn.metrics.mean_squared_error` and
+# :func:`~sklearn.metrics.mean_pinball_loss` metrics on the training dataset.
 import pandas as pd
 
 
@@ -157,7 +159,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # training converged.
 #
 # Note that because the target distribution is asymmetric, the expected
-# conditional mean and conditional median are signficiantly different and
+# conditional mean and conditional median are significantly different and
 # therefore one could not use the squared error model get a good estimation of
 # the conditional median nor the converse.
 #
@@ -191,11 +193,13 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
 #
+# .. _calibration-section:
+#
 # Calibration of the confidence interval
 # --------------------------------------
 #
 # We can also evaluate the ability of the two extreme quantile estimators at
-# producing a well-calibrated conditational 90%-confidence interval.
+# producing a well-calibrated conditional 90%-confidence interval.
 #
 # To do this we can compute the fraction of observations that fall between the
 # predictions:
@@ -237,10 +241,11 @@ coverage_fraction(
 # cross-validation on the pinball loss with alpha=0.05:
 
 # %%
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.metrics import make_scorer
 from pprint import pprint
+
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import HalvingRandomSearchCV
 
 param_grid = dict(
     learning_rate=[0.05, 0.1, 0.2],
@@ -293,8 +298,8 @@ pprint(search_95p.best_params_)
 
 # %%
 # The result shows that the hyper-parameters for the 95th percentile regressor
-# identified by the search procedure are roughly in the same range as the hand-
-# tuned hyper-parameters for the median regressor and the hyper-parameters
+# identified by the search procedure are roughly in the same range as the hand-tuned
+# hyper-parameters for the median regressor and the hyper-parameters
 # identified by the search procedure for the 5th percentile regressor. However,
 # the hyper-parameter searches did lead to an improved 90% confidence interval
 # that is comprised by the predictions of those two tuned quantile regressors.
@@ -304,10 +309,8 @@ y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_upper, "k-")
-plt.plot(xx, y_lower, "k-")
 plt.fill_between(
     xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
 )

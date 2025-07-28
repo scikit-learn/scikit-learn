@@ -3,7 +3,7 @@
 Cython Best Practices, Conventions and Knowledge
 ================================================
 
-This documents tips to develop Cython code in scikit-learn.
+This document contains tips to develop Cython code in scikit-learn.
 
 Tips for developing with Cython in scikit-learn
 -----------------------------------------------
@@ -58,13 +58,13 @@ Tips to ease development
 
 * You might find this alias to compile individual Cython extension handy:
 
-    .. code-block::
+  .. code-block::
 
-         # You might want to add this alias to your shell script config.
-         alias cythonX="cython -X language_level=3 -X boundscheck=False -X wraparound=False -X initializedcheck=False -X nonecheck=False -X cdivision=True"
+      # You might want to add this alias to your shell script config.
+      alias cythonX="cython -X language_level=3 -X boundscheck=False -X wraparound=False -X initializedcheck=False -X nonecheck=False -X cdivision=True"
 
-         # This generates `source.c` as as if you had recompiled scikit-learn entirely.
-         cythonX --annotate source.pyx
+      # This generates `source.c` as if you had recompiled scikit-learn entirely.
+      cythonX --annotate source.pyx
 
 * Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
   This report indicates interactions with the CPython interpreter on a line-by-line basis.
@@ -72,10 +72,10 @@ Tips to ease development
   the computationally intensive sections of the algorithms.
   For more information, please refer to `this section of Cython's tutorial <https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html#primes>`_
 
-    .. code-block::
+  .. code-block::
 
-         # This generates a HTML report (`source.html`) for `source.c`.
-         cythonX --annotate source.pyx
+      # This generates a HTML report (`source.html`) for `source.c`.
+      cythonX --annotate source.pyx
 
 Tips for performance
 ^^^^^^^^^^^^^^^^^^^^
@@ -88,16 +88,14 @@ Tips for performance
 
 * Make sure you have deactivated `checks <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/sklearn/_build_utils/__init__.py#L68-L87>`_.
 
-* Always prefer memoryviews instead over ``cnp.ndarray`` when possible: memoryviews are lightweight.
+* Always prefer memoryviews instead of ``cnp.ndarray`` when possible: memoryviews are lightweight.
 
 * Avoid memoryview slicing: memoryview slicing might be costly or misleading in some cases and
   we better not use it, even if handling fewer dimensions in some context would be preferable.
 
 * Decorate final classes or methods with ``@final`` (this allows removing virtual tables when needed)
 
-* Inline methods and function when it makes sense
-
-* Make sure your Cython compilation units `use NumPy recent C API <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/setup.py#L64-L70>`_.
+* Inline methods and functions when it makes sense
 
 * In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections
   for a line of Cython code, the better" is a good rule of thumb.
@@ -107,16 +105,16 @@ Tips for performance
   the GIL when entering them. You have to do that yourself either by passing ``nogil=True`` to
   ``cython.parallel.prange`` explicitly, or by using an explicit context manager:
 
-    .. code-block:: cython
+  .. code-block:: cython
 
-       cdef inline void my_func(self) nogil:
+      cdef inline void my_func(self) nogil:
 
-            # Some logic interacting with CPython, e.g. allocating arrays via NumPy.
+          # Some logic interacting with CPython, e.g. allocating arrays via NumPy.
 
-            with nogil:
-                # The code here is run as is it were written in C.
+          with nogil:
+              # The code here is run as if it were written in C.
 
-            return 0
+          return 0
 
   This item is based on `this comment from Stéfan's Benhel <https://github.com/cython/cython/issues/2798#issuecomment-459971828>`_
 
@@ -141,3 +139,16 @@ must be ``cimported`` from this module and not from the OpenMP library directly:
 
 The parallel loop, `prange`, is already protected by cython and can be used directly
 from `cython.parallel`.
+
+Types
+~~~~~
+
+Cython code requires to use explicit types. This is one of the reasons you get a
+performance boost. In order to avoid code duplication, we have a central place
+for the most used types in
+`sklearn/utils/_typedefs.pyd <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_typedefs.pyd>`_.
+Ideally you start by having a look there and `cimport` types you need, for example
+
+.. code-block:: cython
+
+    from sklearn.utils._typedefs cimport float32, float64

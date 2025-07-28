@@ -21,16 +21,15 @@ x and y coordinate as output.
 
 """
 
-# Author: Tim Head <betatim@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.multioutput import MultiOutputRegressor
-
 
 # Create a random dataset
 rng = np.random.RandomState(1)

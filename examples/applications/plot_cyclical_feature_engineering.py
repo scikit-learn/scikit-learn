@@ -13,6 +13,9 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data exploration on the Bike Sharing Demand dataset
 # ---------------------------------------------------
@@ -20,9 +23,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
-)
+bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 df = bike_sharing.frame
 
 # %%
@@ -34,7 +35,6 @@ df = bike_sharing.frame
 # and the leisure use of the bikes on the weekends with a more spread peak
 # demand around the middle of the days:
 import matplotlib.pyplot as plt
-
 
 fig, ax = plt.subplots(figsize=(12, 4))
 average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
@@ -62,14 +62,14 @@ df["count"].max()
 # .. note::
 #
 #     The fit method of the models used in this notebook all minimize the
-#     mean squared error to estimate the conditional mean instead of the mean
-#     absolute error that would fit an estimator of the conditional median.
+#     mean squared error to estimate the conditional mean.
+#     The absolute error, however, would estimate the conditional median.
 #
-#     When reporting performance measure on the test set in the discussion, we
-#     instead choose to focus on the mean absolute error that is more
-#     intuitive than the (root) mean squared error. Note, however, that the
-#     best models for one metric are also the best for the other in this
-#     study.
+#     Nevertheless, when reporting performance measures on the test set in
+#     the discussion, we choose to focus on the mean absolute error instead
+#     of the (root) mean squared error because it is more intuitive to
+#     interpret. Note, however, that in this study the best models for one
+#     metric are also the best ones in terms of the other metric.
 y = df["count"] / df["count"].max()
 
 # %%
@@ -107,7 +107,13 @@ X["weather"].value_counts()
 # train machine learning models with cross validation. Instead, we simplify the
 # representation by collapsing those into the `"rain"` category.
 #
-X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
+X["weather"] = (
+    X["weather"]
+    .astype(object)
+    .replace(to_replace="heavy_rain", value="rain")
+    .astype("category")
+)
+
 # %%
 X["weather"].value_counts()
 
@@ -168,72 +174,52 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heteorogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
-# Here, we do minimal ordinal encoding for the categorical variables and then
-# let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
-# pass the list of categorical values explicitly to use a logical order when
-# encoding the categories as integers instead of the lexicographical order.
-# This also has the added benefit of preventing any issue with unknown
-# categories when using cross-validation.
+# Here, we use the modern
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
+# for categorical features. Therefore, we only need to set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features. For reference, we extract the categorical
+# features from the dataframe based on the dtype. The internal trees use a dedicated
+# tree splitting rule for these features.
 #
 # The numerical variables need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
 
-
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
-categories = [
-    ["clear", "misty", "rain"],
-    ["spring", "summer", "fall", "winter"],
-    ["False", "True"],
-    ["False", "True"],
-]
-ordinal_encoder = OrdinalEncoder(categories=categories)
-
-
-gbrt_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", ordinal_encoder, categorical_columns),
-        ],
-        remainder="passthrough",
-        # Use short feature names to make it easier to specify the categorical
-        # variables in the HistGradientBoostingRegressor in the next
-        # step of the pipeline.
-        verbose_feature_names_out=False,
-    ),
-    HistGradientBoostingRegressor(
-        categorical_features=categorical_columns,
-        random_state=42,
-    ),
-).set_output(transform="pandas")
+gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
+categorical_columns = X.columns[X.dtypes == "category"]
+print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
-# Lets evaluate our gradient boosting model with the mean absolute error of the
+# Let's evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
+import numpy as np
 
 
-def evaluate(model, X, y, cv):
+def evaluate(model, X, y, cv, model_prop=None, model_step=None):
     cv_results = cross_validate(
         model,
         X,
         y,
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
+        return_estimator=model_prop is not None,
     )
+    if model_prop is not None:
+        if model_step is not None:
+            values = [
+                getattr(m[model_step], model_prop) for m in cv_results["estimator"]
+            ]
+        else:
+            values = [getattr(m, model_prop) for m in cv_results["estimator"]]
+        print(f"Mean model.{model_prop} = {np.mean(values)}")
     mae = -cv_results["test_neg_mean_absolute_error"]
     rmse = -cv_results["test_neg_root_mean_squared_error"]
     print(
@@ -242,9 +228,11 @@ def evaluate(model, X, y, cv):
     )
 
 
-evaluate(gbrt_pipeline, X, y, cv=ts_cv)
+evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
 
 # %%
+# We see that we set `max_iter` large enough such that early stopping took place.
+#
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
@@ -260,13 +248,10 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
 # For consistency, we scale the numerical features to the same 0-1 range using
-# class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
+# :class:`~sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import RidgeCV
-import numpy as np
-
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
@@ -281,10 +266,14 @@ naive_linear_pipeline = make_pipeline(
 )
 
 
-evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
+evaluate(
+    naive_linear_pipeline, X, y, cv=ts_cv, model_prop="alpha_", model_step="ridgecv"
+)
 
 
 # %%
+# It is affirmative to see that the selected `alpha_` is in our specified
+# range.
 #
 # The performance is not good: the average error is around 14% of the maximum
 # demand. This is more than three times higher than the average error of the
@@ -619,9 +608,8 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # However, it is possible to use the `PolynomialFeatures` class on coarse
 # grained spline encoded hours to model the "workingday"/"hours" interaction
 # explicitly without introducing too many new variables:
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import FeatureUnion
-
+from sklearn.preprocessing import PolynomialFeatures
 
 hour_workday_interaction = make_pipeline(
     ColumnTransformer(
@@ -635,7 +623,7 @@ hour_workday_interaction = make_pipeline(
 
 # %%
 # Those features are then combined with the ones already computed in the
-# previous spline-base pipeline. We can observe a nice performance improvemnt
+# previous spline-base pipeline. We can observe a nice performance improvement
 # by modeling this pairwise interaction explicitly:
 
 cyclic_spline_interactions_pipeline = make_pipeline(
@@ -667,7 +655,6 @@ evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
 # Alternatively, we can use the Nyström method to compute an approximate
 # polynomial kernel expansion. Let us try the latter:
 from sklearn.kernel_approximation import Nystroem
-
 
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
@@ -713,8 +700,8 @@ evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
+gbrt.fit(X.iloc[train_0], y.iloc[train_0])
+gbrt_predictions = gbrt.predict(X.iloc[test_0])
 
 one_hot_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_poly_predictions = one_hot_poly_pipeline.predict(X.iloc[test_0])
@@ -773,7 +760,7 @@ _ = ax.legend()
 # to the geographical repartition of the fleet at any point in time or the
 # fraction of bikes that are immobilized because they need servicing.
 #
-# Let us finally get a more quantative look at the prediction errors of those
+# Let us finally get a more quantitative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
 from sklearn.metrics import PredictionErrorDisplay
 

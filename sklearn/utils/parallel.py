@@ -1,18 +1,30 @@
-"""Module that customize joblib tools for scikit-learn usage."""
+"""Customizations of :mod:`joblib` and :mod:`threadpoolctl` tools for scikit-learn
+usage.
+"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import functools
 import warnings
 from functools import update_wrapper
 
 import joblib
+from threadpoolctl import ThreadpoolController
 
 from .._config import config_context, get_config
 
+# Global threadpool controller instance that can be used to locally limit the number of
+# threads without looping through all shared libraries every time.
+# It should not be accessed directly and _get_threadpool_controller should be used
+# instead.
+_threadpool_controller = None
 
-def _with_config(delayed_func, config):
+
+def _with_config_and_warning_filters(delayed_func, config, warning_filters):
     """Helper function that intends to attach a config to a delayed function."""
-    if hasattr(delayed_func, "with_config"):
-        return delayed_func.with_config(config)
+    if hasattr(delayed_func, "with_config_and_warning_filters"):
+        return delayed_func.with_config_and_warning_filters(config, warning_filters)
     else:
         warnings.warn(
             (
@@ -58,11 +70,16 @@ class Parallel(joblib.Parallel):
         # in a different thread depending on the backend and on the value of
         # pre_dispatch and n_jobs.
         config = get_config()
-        iterable_with_config = (
-            (_with_config(delayed_func, config), args, kwargs)
+        warning_filters = warnings.filters
+        iterable_with_config_and_warning_filters = (
+            (
+                _with_config_and_warning_filters(delayed_func, config, warning_filters),
+                args,
+                kwargs,
+            )
             for delayed_func, args, kwargs in iterable
         )
-        return super().__call__(iterable_with_config)
+        return super().__call__(iterable_with_config_and_warning_filters)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
@@ -70,7 +87,7 @@ def delayed(function):
     """Decorator used to capture the arguments of a function.
 
     This alternative to `joblib.delayed` is meant to be used in conjunction
-    with `sklearn.utils.parallel.Parallel`. The latter captures the the scikit-
+    with `sklearn.utils.parallel.Parallel`. The latter captures the scikit-
     learn configuration by calling `sklearn.get_config()` in the current
     thread, prior to dispatching the first task. The captured configuration is
     then propagated and enabled for the duration of the execution of the
@@ -106,13 +123,15 @@ class _FuncWrapper:
         self.function = function
         update_wrapper(self, self.function)
 
-    def with_config(self, config):
+    def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
+        self.warning_filters = warning_filters
         return self
 
     def __call__(self, *args, **kwargs):
-        config = getattr(self, "config", None)
-        if config is None:
+        config = getattr(self, "config", {})
+        warning_filters = getattr(self, "warning_filters", [])
+        if not config or not warning_filters:
             warnings.warn(
                 (
                     "`sklearn.utils.parallel.delayed` should be used with"
@@ -122,6 +141,37 @@ class _FuncWrapper:
                 ),
                 UserWarning,
             )
-            config = {}
-        with config_context(**config):
+
+        with config_context(**config), warnings.catch_warnings():
+            warnings.filters = warning_filters
             return self.function(*args, **kwargs)
+
+
+def _get_threadpool_controller():
+    """Return the global threadpool controller instance."""
+    global _threadpool_controller
+
+    if _threadpool_controller is None:
+        _threadpool_controller = ThreadpoolController()
+
+    return _threadpool_controller
+
+
+def _threadpool_controller_decorator(limits=1, user_api="blas"):
+    """Decorator to limit the number of threads used at the function level.
+
+    It should be preferred over `threadpoolctl.ThreadpoolController.wrap` because this
+    one only loads the shared libraries when the function is called while the latter
+    loads them at import time.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            controller = _get_threadpool_controller()
+            with controller.limit(limits=limits, user_api=user_api):
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

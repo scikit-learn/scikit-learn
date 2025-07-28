@@ -25,8 +25,9 @@ prevalence of the positive class.
 
 """
 
-# Authors:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-#           Olivier Grisel <olivier.grisel@ensta.org>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Pre-test vs. post-test analysis
 # ===============================
@@ -39,7 +40,7 @@ prevalence of the positive class.
 from sklearn.datasets import make_classification
 
 X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
-print(f"Percentage of people carrying the disease: {100*y.mean():.2f}%")
+print(f"Percentage of people carrying the disease: {100 * y.mean():.2f}%")
 
 # %%
 # A machine learning model is built to diagnose if a person with some given
@@ -55,12 +56,12 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # ratio to evaluate the usefulness of this classifier as a disease diagnosis
 # tool:
 
-from sklearn.metrics import class_likelihood_ratios
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import class_likelihood_ratios
 
 estimator = LogisticRegression().fit(X_train, y_train)
 y_pred = estimator.predict(X_test)
-pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred)
+pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, replace_undefined_by=1.0)
 print(f"LR+: {pos_LR:.3f}")
 
 # %%
@@ -80,7 +81,7 @@ import pandas as pd
 
 def scoring(estimator, X, y):
     y_pred = estimator.predict(X)
-    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, raise_warning=False)
+    pos_lr, neg_lr = class_likelihood_ratios(y, y_pred, replace_undefined_by=1.0)
     return {"positive_likelihood_ratio": pos_lr, "negative_likelihood_ratio": neg_lr}
 
 
@@ -166,10 +167,12 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # label `1` corresponds to the positive class "disease", whereas the label `0`
 # stands for "no-disease".
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.inspection import DecisionBoundaryDisplay
 from collections import defaultdict
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.inspection import DecisionBoundaryDisplay
 
 populations = defaultdict(list)
 common_params = {
@@ -224,7 +227,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     disp.ax_.legend(*scatter.legend_elements())
 
 # %%
-# We define a function for bootstraping.
+# We define a function for bootstrapping.
 
 
 def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
@@ -241,7 +244,7 @@ def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
 
 
 # %%
-# We score the base model for each prevalence using bootstraping.
+# We score the base model for each prevalence using bootstrapping.
 
 results = defaultdict(list)
 n_bootstrap = 100

@@ -19,17 +19,6 @@ Interoperability and framework enhancements
 These tools adapt scikit-learn for use with other technologies or otherwise
 enhance the functionality of scikit-learn's estimators.
 
-**Data formats**
-
-- `Fast svmlight / libsvm file loader <https://github.com/mblondel/svmlight-loader>`_
-  Fast and memory-efficient svmlight / libsvm file loader for Python.
-
-- `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
-  scikit-learn pipelines and pandas data frame with dedicated transformers.
-
-- `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
-  compatibility of scikit-learn estimators with xarray data structures.
-
 **Auto-ML**
 
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
@@ -51,31 +40,29 @@ enhance the functionality of scikit-learn's estimators.
   transforming temporal and relational datasets into feature matrices for
   machine learning.
 
-- `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
-  A library for building neat pipelines, providing the right abstractions to
-  both ease research, development, and deployment of machine learning
-  applications. Compatible with deep learning frameworks and scikit-learn API,
-  it can stream minibatches, use data checkpoints, build funky pipelines, and
-  serialize models with custom per-step savers.
-
 - `EvalML <https://github.com/alteryx/evalml>`_
-  EvalML is an AutoML library which builds, optimizes, and evaluates
+  An AutoML library which builds, optimizes, and evaluates
   machine learning pipelines using domain-specific objective functions.
   It incorporates multiple modeling libraries under one API, and
   the objects that EvalML creates use an sklearn-compatible API.
 
-**Experimentation frameworks**
+- `MLJAR AutoML <https://github.com/mljar/mljar-supervised>`_
+  A Python package for AutoML on Tabular Data with Feature Engineering,
+  Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
-- `Neptune <https://neptune.ai/>`_ Metadata store for MLOps,
-  built for teams that run a lot of experiments.‌ It gives you a single
+**Experimentation and model registry frameworks**
+
+- `MLFlow <https://mlflow.org/>`_ An open source platform to manage the ML
+  lifecycle, including experimentation, reproducibility, deployment, and a central
+  model registry.
+
+- `Neptune <https://neptune.ai/>`_ A metadata store for MLOps,
+  built for teams that run a lot of experiments. It gives you a single
   place to log, store, display, organize, compare, and query all your
   model building metadata.
 
-- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+- `Sacred <https://github.com/IDSIA/Sacred>`_ A tool to help you configure,
   organize, log and reproduce experiments
-
-- `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
-  research in a consistent and reproducible way
 
 - `Scikit-Learn Laboratory
   <https://skll.readthedocs.io/en/latest/index.html>`_  A command-line
@@ -84,17 +71,13 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model inspection and visualization**
 
-- `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
+- `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A Python library for
   decision tree visualization and model interpretation.
 
-- `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
-  debugging/inspecting machine learning models and explaining their
-  predictions.
+- `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>`_ Tools for
+  diagnostics and assessment of (machine learning) models (in Python).
 
-- `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
-  utilities.
-
-- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
   Machine learning model evaluation made easy: plots, tables, HTML reports,
   experiment tracking and Jupyter notebook analysis. Visual analysis, model
   selection, evaluation and diagnostics.
@@ -102,17 +85,6 @@ enhance the functionality of scikit-learn's estimators.
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
-
-**Model selection**
-
-- `scikit-optimize <https://scikit-optimize.github.io/>`_
-  A library to minimize (very) expensive and noisy black-box functions. It
-  implements several methods for sequential model-based optimization, and
-  includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
-  cross-validated parameter search using any of these strategies.
-
-- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-  algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
@@ -129,18 +101,14 @@ enhance the functionality of scikit-learn's estimators.
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
   library.
 
-- `sklearn-porter <https://github.com/nok/sklearn-porter>`_
-  Transpile trained scikit-learn models to C, Java, Javascript and others.
-
-- `m2cgen <https://github.com/BayesWitnesses/m2cgen>`_
-  A lightweight library which allows to transpile trained machine learning
-  models including many scikit-learn estimators into a native code of C, Java,
-  Go, R, PHP, Dart, Haskell, Rust and many other programming languages.
-
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
-  
+
+- `emlearn <https://emlearn.org>`_
+  Implements scikit-learn estimators in C99 for embedded devices and microcontrollers.
+  Supports several classifier, regression and outlier detection models.
+
 **Model throughput**
 
 - `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
@@ -152,6 +120,13 @@ enhance the functionality of scikit-learn's estimators.
   ``scikit-learn`` itself. If you encounter issues while using this project,
   make sure you report potential issues in their respective repositories.
 
+**Interface to R with genomic applications**
+
+- `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
+  Exposes a small number of dimension reduction facilities as an illustration
+  of the basilisk protocol for interfacing Python with R. Intended as a
+  springboard for more complete interop.
+
 
 Other estimators and tasks
 --------------------------
@@ -161,41 +136,52 @@ project. The following are projects providing interfaces similar to
 scikit-learn for additional learning algorithms, infrastructures
 and tasks.
 
+**Time series and forecasting**
+
+- `aeon <https://github.com/aeon-toolkit/aeon>`_ A
+  scikit-learn compatible toolbox for machine learning with time series
+  (fork of `sktime`_).
+
+- `Darts <https://unit8co.github.io/darts/>`_ A Python library for
+  user-friendly forecasting and anomaly detection on time series. It contains a variety
+  of models, from classics such as ARIMA to deep neural networks. The forecasting
+  models can all be used in the same way, using fit() and predict() functions, similar
+  to scikit-learn.
+
+- `sktime <https://github.com/sktime/sktime>`_ A scikit-learn compatible
+  toolbox for machine learning with time series including time series
+  classification/regression and (supervised/panel) forecasting.
+
+- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A Python library
+  that eases using scikit-learn regressors as multi-step forecasters. It also works
+  with any regressor compatible with the scikit-learn API.
+
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for
+  time series that offers tools for pre-processing and feature extraction as well as
+  dedicated models for clustering, classification and regression.
+
+**Gradient (tree) boosting**
+
+Note scikit-learn own modern gradient boosting estimators
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+
+- `XGBoost <https://github.com/dmlc/xgboost>`_ XGBoost is an optimized distributed
+  gradient boosting library designed to be highly efficient, flexible and portable.
+
+- `LightGBM <https://lightgbm.readthedocs.io>`_ LightGBM is a gradient boosting
+  framework that uses tree based learning algorithms. It is designed to be distributed
+  and efficient.
+
 **Structured learning**
-
-- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series
-  that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
-
-- `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
 
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
 
-- `PyStruct <https://pystruct.github.io>`_ General conditional random fields
-  and structured prediction.
-
 - `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
   for Python, with an emphasis on hidden Markov models.
 
-- `sklearn-crfsuite <https://github.com/TeamHG-Memex/sklearn-crfsuite>`_
-  Linear-chain conditional random fields
-  (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
-  sklearn-like API).
-
-- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
-  that eases using scikit-learn regressors as multi-step forecasters. It also works
-  with any regressor compatible with the scikit-learn API.
-
 **Deep neural networks etc.**
-
-- `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
-  abstractions around existing neural network libraries
-
-- `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
-  TensorFlow with a scikit-learn inspired API.
-
-- `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
-  build and train neural networks in Theano.
 
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
@@ -209,6 +195,14 @@ and tasks.
 - `Flower <https://flower.dev/>`_ A friendly federated learning framework with a
   unified approach that can federate any workload, any ML framework, and any programming language.
 
+**Privacy Preserving Machine Learning**
+
+- `Concrete ML <https://github.com/zama-ai/concrete-ml/>`_ A privacy preserving
+  ML framework built on top of `Concrete
+  <https://github.com/zama-ai/concrete>`_, with bindings to traditional ML
+  frameworks, thanks to fully homomorphic encryption. APIs of so-called
+  Concrete ML built-in models are very close to scikit-learn APIs.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
@@ -219,36 +213,11 @@ and tasks.
 
 **Other regression and classification**
 
-- `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
-  tree library.
-
-- `ML-Ensemble <https://mlens.readthedocs.io/>`_ Generalized
-  ensemble learning (stacking, blending, subsemble, deep ensembles,
-  etc.).
-
-- `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
-  state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
-
-- `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate
-  adaptive regression splines
-
-- `Kernel Regression <https://github.com/jmetzen/kernel_regression>`_
-  Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
-  selection
-
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
 - `scikit-multilearn <https://github.com/scikit-multilearn/scikit-multilearn>`_
   Multi-label classification with focus on label space manipulation.
-
-- `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence
-  learning using sliding window segmentation.
-
-- `libOPF <https://github.com/jppbsi/LibOPF>`_ Optimal path forest classifier
-
-- `fastFM <https://github.com/ibayer/fastFM>`_ Fast factorization machine
-  implementation compatible with scikit-learn
 
 **Decomposition and clustering**
 
@@ -266,16 +235,19 @@ and tasks.
 
 - `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
-
-- `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
-  K-means and mixture of von Mises Fisher clustering routines for data on the
-  unit hypersphere.
+  As of scikit-learn version 1.3.0, there is :class:`~sklearn.cluster.HDBSCAN`.
 
 **Pre-processing**
 
 - `categorical-encoding
   <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
   library of sklearn compatible categorical variable encoders.
+  As of scikit-learn version 1.3.0, there is
+  :class:`~sklearn.preprocessing.TargetEncoder`.
+
+- `skrub <https://skrub-data.org>`_ : facilitate learning on dataframes,
+  with sklearn compatible encoders (of categories, dates, strings) and
+  more.
 
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
@@ -312,7 +284,7 @@ Other packages useful for data analysis and machine learning.
 - `PyMC <https://www.pymc.io/>`_ Bayesian statistical models and
   fitting algorithms.
 
-- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
+- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ A visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `scikit-survival <https://scikit-survival.readthedocs.io/>`_ A library implementing
@@ -328,12 +300,6 @@ Recommendation Engine packages
 - `lightfm <https://github.com/lyst/lightfm>`_ A Python/Cython
   implementation of a hybrid recommender system.
 
-- `OpenRec <https://github.com/ylongqi/openrec>`_ TensorFlow-based
-  neural-network inspired recommendation algorithms.
-
-- `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
-  implementation of deep recommender models.
-
 - `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
@@ -343,7 +309,7 @@ Domain specific packages
 - `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
 
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
-  vision in python.
+  vision in Python.
 
 - `Natural language toolkit (nltk) <https://www.nltk.org/>`_ Natural language
   processing and some machine learning.
@@ -354,9 +320,6 @@ Domain specific packages
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 
 - `AstroML <https://www.astroml.org/>`_  Machine learning for astronomy.
-
-- `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
-  conformational dynamics time series.
 
 Translations of scikit-learn documentation
 ------------------------------------------

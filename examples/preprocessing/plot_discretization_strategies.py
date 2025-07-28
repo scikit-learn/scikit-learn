@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ==========================================================
 Demonstrating the different strategies of KBinsDiscretizer
@@ -17,14 +16,14 @@ The plot shows the regions where the discretized encoding is constant.
 
 """
 
-# Author: Tom Dupré la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.datasets import make_blobs
+from sklearn.preprocessing import KBinsDiscretizer
 
 strategies = ["uniform", "quantile", "kmeans"]
 
@@ -77,7 +76,12 @@ for ds_cnt, X in enumerate(X_list):
     i += 1
     # transform the dataset with KBinsDiscretizer
     for strategy in strategies:
-        enc = KBinsDiscretizer(n_bins=4, encode="ordinal", strategy=strategy)
+        enc = KBinsDiscretizer(
+            n_bins=4,
+            encode="ordinal",
+            quantile_method="averaged_inverted_cdf",
+            strategy=strategy,
+        )
         enc.fit(X)
         grid_encoded = enc.transform(grid)
 

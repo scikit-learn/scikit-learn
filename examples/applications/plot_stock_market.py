@@ -10,20 +10,21 @@ The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to fluctuate in relation to each other during a day.
 """
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Retrieve the data from Internet
 # -------------------------------
 #
-# The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
-# that we get high-tech firms, and before the 2008 crash). This kind of
+# The data is from 2003 - 2008. This is reasonably calm: not too long ago so
+# that we get high-tech firms, and before the 2008 crash. This kind of
 # historical data can be obtained from APIs like the
 # `data.nasdaq.com <https://data.nasdaq.com/>`_ and
 # `alphavantage.co <https://www.alphavantage.co/>`_.
 
 import sys
+
 import numpy as np
 import pandas as pd
 
@@ -157,10 +158,10 @@ for i in range(n_labels + 1):
 # ---------------------
 #
 # For visualization purposes, we need to lay out the different symbols on a
-# 2D canvas. For this we use :ref:`manifold` techniques to retrieve 2D
+# 2D canvas. For this, we use :ref:`manifold` techniques to retrieve 2D
 # embedding.
-# We use a dense eigen_solver to achieve reproducibility (arpack is initiated
-# with the random vectors that we don't control). In addition, we use a large
+# We use a dense ``eigen_solver`` to achieve reproducibility (arpack is initiated
+# with the random vectors that we do not control). In addition, we use a large
 # number of neighbors to capture the large-scale structure.
 
 # Finding a low-dimension embedding for visualization: find the best position of
@@ -179,15 +180,15 @@ embedding = node_position_model.fit_transform(X.T).T
 # -------------
 #
 # The output of the 3 models are combined in a 2D graph where nodes
-# represents the stocks and edges the:
+# represent the stocks and edges the connections (partial correlations):
 #
 # - cluster labels are used to define the color of the nodes
 # - the sparse covariance model is used to display the strength of the edges
 # - the 2D embedding is used to position the nodes in the plan
 #
 # This example has a fair amount of visualization-related code, as
-# visualization is crucial here to display the graph. One of the challenge
-# is to position the labels minimizing overlap. For this we use an
+# visualization is crucial here to display the graph. One of the challenges
+# is to position the labels minimizing overlap. For this, we use an
 # heuristic based on the direction of the nearest neighbor along each
 # axis.
 
@@ -212,7 +213,7 @@ plt.scatter(
 )
 
 # Plot the edges
-start_idx, end_idx = np.where(non_zero)
+start_idx, end_idx = non_zero.nonzero()
 # a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [
@@ -262,12 +263,12 @@ for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
     )
 
 plt.xlim(
-    embedding[0].min() - 0.15 * embedding[0].ptp(),
-    embedding[0].max() + 0.10 * embedding[0].ptp(),
+    embedding[0].min() - 0.15 * np.ptp(embedding[0]),
+    embedding[0].max() + 0.10 * np.ptp(embedding[0]),
 )
 plt.ylim(
-    embedding[1].min() - 0.03 * embedding[1].ptp(),
-    embedding[1].max() + 0.03 * embedding[1].ptp(),
+    embedding[1].min() - 0.03 * np.ptp(embedding[1]),
+    embedding[1].max() + 0.03 * np.ptp(embedding[1]),
 )
 
 plt.show()

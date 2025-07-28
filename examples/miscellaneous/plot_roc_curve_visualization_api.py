@@ -9,17 +9,21 @@ how to use the visualization API by comparing ROC curves.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Load Data and Train a SVC
 # -------------------------
 # First, we load the wine dataset and convert it to a binary classification
 # problem. Then, we train a support vector classifier on a training dataset.
 import matplotlib.pyplot as plt
-from sklearn.svm import SVC
+
+from sklearn.datasets import load_wine
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import RocCurveDisplay
-from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
 
 X, y = load_wine(return_X_y=True)
 y = y == 2
@@ -50,6 +54,8 @@ plt.show()
 rfc = RandomForestClassifier(n_estimators=10, random_state=42)
 rfc.fit(X_train, y_train)
 ax = plt.gca()
-rfc_disp = RocCurveDisplay.from_estimator(rfc, X_test, y_test, ax=ax, alpha=0.8)
-svc_disp.plot(ax=ax, alpha=0.8)
+rfc_disp = RocCurveDisplay.from_estimator(
+    rfc, X_test, y_test, ax=ax, curve_kwargs=dict(alpha=0.8)
+)
+svc_disp.plot(ax=ax, curve_kwargs=dict(alpha=0.8))
 plt.show()

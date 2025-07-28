@@ -1,34 +1,34 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
 import warnings
 
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-    assert_allclose,
-)
+import numpy as np
+import pytest
 
+import sklearn
+from sklearn.datasets import load_iris, make_blobs, make_circles
 from sklearn.decomposition import PCA, KernelPCA
-from sklearn.datasets import make_circles
-from sklearn.datasets import make_blobs
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Perceptron
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _check_psd_eigenvalues
 
 
-def test_kernel_pca():
+def test_kernel_pca(global_random_seed):
     """Nominal test for all solvers and all known kernels + a custom one
 
     It tests
      - that fit_transform is equivalent to fit+transform
      - that the shapes of transforms and inverse transforms are correct
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
@@ -81,7 +81,7 @@ def test_kernel_pca_invalid_parameters():
         estimator.fit(np.random.randn(10, 10))
 
 
-def test_kernel_pca_consistent_transform():
+def test_kernel_pca_consistent_transform(global_random_seed):
     """Check robustness to mutations in the original training array
 
     Test that after fitting a kPCA model, it stays independent of any
@@ -89,7 +89,7 @@ def test_kernel_pca_consistent_transform():
     internal copy.
     """
     # X_fit_ needs to retain the old, unmodified copy of X
-    state = np.random.RandomState(0)
+    state = np.random.RandomState(global_random_seed)
     X = state.rand(10, 10)
     kpca = KernelPCA(random_state=state).fit(X)
     transformed1 = kpca.transform(X)
@@ -100,12 +100,12 @@ def test_kernel_pca_consistent_transform():
     assert_array_almost_equal(transformed1, transformed2)
 
 
-def test_kernel_pca_deterministic_output():
+def test_kernel_pca_deterministic_output(global_random_seed):
     """Test that Kernel PCA produces deterministic output
 
     Tests that the same inputs and random state produce the same output.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(10, 10)
     eigen_solver = ("arpack", "dense")
 
@@ -117,15 +117,16 @@ def test_kernel_pca_deterministic_output():
         assert_allclose(transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
-def test_kernel_pca_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kernel_pca_sparse(csr_container, global_random_seed):
     """Test that kPCA works on a sparse data input.
 
     Same test as ``test_kernel_pca except inverse_transform`` since it's not
     implemented for sparse matrices.
     """
-    rng = np.random.RandomState(0)
-    X_fit = sp.csr_matrix(rng.random_sample((5, 4)))
-    X_pred = sp.csr_matrix(rng.random_sample((2, 4)))
+    rng = np.random.RandomState(global_random_seed)
+    X_fit = csr_container(rng.random_sample((5, 4)))
+    X_pred = csr_container(rng.random_sample((2, 4)))
 
     for eigen_solver in ("auto", "arpack", "randomized"):
         for kernel in ("linear", "rbf", "poly"):
@@ -156,12 +157,12 @@ def test_kernel_pca_sparse():
 
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"])
 @pytest.mark.parametrize("n_features", [4, 10])
-def test_kernel_pca_linear_kernel(solver, n_features):
+def test_kernel_pca_linear_kernel(solver, n_features, global_random_seed):
     """Test that kPCA with linear kernel is equivalent to PCA for all solvers.
 
     KernelPCA with linear kernel should produce the same output as PCA.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = rng.random_sample((5, n_features))
     X_pred = rng.random_sample((2, n_features))
 
@@ -245,9 +246,9 @@ def test_leave_zero_eig():
             assert_array_almost_equal(np.abs(A), np.abs(B))
 
 
-def test_kernel_pca_precomputed():
+def test_kernel_pca_precomputed(global_random_seed):
     """Test that kPCA works with a precomputed kernel, for all solvers"""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
@@ -523,3 +524,43 @@ def test_kernel_pca_feature_names_out():
 
     names = kpca.get_feature_names_out()
     assert_array_equal([f"kernelpca{i}" for i in range(2)], names)
+
+
+def test_kernel_pca_inverse_correct_gamma(global_random_seed):
+    """Check that gamma is set correctly when not provided.
+
+    Non-regression test for #26280
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.random_sample((5, 4))
+
+    kwargs = {
+        "n_components": 2,
+        "random_state": rng,
+        "fit_inverse_transform": True,
+        "kernel": "rbf",
+    }
+
+    expected_gamma = 1 / X.shape[1]
+    kpca1 = KernelPCA(gamma=None, **kwargs).fit(X)
+    kpca2 = KernelPCA(gamma=expected_gamma, **kwargs).fit(X)
+
+    assert kpca1.gamma_ == expected_gamma
+    assert kpca2.gamma_ == expected_gamma
+
+    X1_recon = kpca1.inverse_transform(kpca1.transform(X))
+    X2_recon = kpca2.inverse_transform(kpca1.transform(X))
+
+    assert_allclose(X1_recon, X2_recon)
+
+
+def test_kernel_pca_pandas_output():
+    """Check that KernelPCA works with pandas output when the solver is arpack.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27579
+    """
+    pytest.importorskip("pandas")
+    X, _ = load_iris(as_frame=True, return_X_y=True)
+    with sklearn.config_context(transform_output="pandas"):
+        KernelPCA(n_components=2, eigen_solver="arpack").fit_transform(X)

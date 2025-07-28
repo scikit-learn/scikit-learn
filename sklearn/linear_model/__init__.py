@@ -1,52 +1,50 @@
-"""
-The :mod:`sklearn.linear_model` module implements a variety of linear models.
-"""
+"""A variety of linear models."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See http://scikit-learn.sourceforge.net/modules/sgd.html and
 # http://scikit-learn.sourceforge.net/modules/linear_model.html for
 # complete documentation.
 
 from ._base import LinearRegression
-from ._bayes import BayesianRidge, ARDRegression
-from ._least_angle import (
-    Lars,
-    LassoLars,
-    lars_path,
-    lars_path_gram,
-    LarsCV,
-    LassoLarsCV,
-    LassoLarsIC,
-)
+from ._bayes import ARDRegression, BayesianRidge
 from ._coordinate_descent import (
-    Lasso,
     ElasticNet,
-    LassoCV,
     ElasticNetCV,
-    lasso_path,
-    enet_path,
-    MultiTaskLasso,
+    Lasso,
+    LassoCV,
     MultiTaskElasticNet,
     MultiTaskElasticNetCV,
+    MultiTaskLasso,
     MultiTaskLassoCV,
+    enet_path,
+    lasso_path,
 )
-from ._glm import PoissonRegressor, GammaRegressor, TweedieRegressor
+from ._glm import GammaRegressor, PoissonRegressor, TweedieRegressor
 from ._huber import HuberRegressor
-from ._sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
-from ._stochastic_gradient import SGDClassifier, SGDRegressor, SGDOneClassSVM
-from ._ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, ridge_regression
+from ._least_angle import (
+    Lars,
+    LarsCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    lars_path,
+    lars_path_gram,
+)
 from ._logistic import LogisticRegression, LogisticRegressionCV
 from ._omp import (
-    orthogonal_mp,
-    orthogonal_mp_gram,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
+    orthogonal_mp,
+    orthogonal_mp_gram,
 )
-from ._passive_aggressive import PassiveAggressiveClassifier
-from ._passive_aggressive import PassiveAggressiveRegressor
+from ._passive_aggressive import PassiveAggressiveClassifier, PassiveAggressiveRegressor
 from ._perceptron import Perceptron
-
 from ._quantile import QuantileRegressor
 from ._ransac import RANSACRegressor
+from ._ridge import Ridge, RidgeClassifier, RidgeClassifierCV, RidgeCV, ridge_regression
+from ._stochastic_gradient import SGDClassifier, SGDOneClassSVM, SGDRegressor
 from ._theil_sen import TheilSenRegressor
 
 __all__ = [
@@ -54,8 +52,7 @@ __all__ = [
     "BayesianRidge",
     "ElasticNet",
     "ElasticNetCV",
-    "Hinge",
-    "Huber",
+    "GammaRegressor",
     "HuberRegressor",
     "Lars",
     "LarsCV",
@@ -65,10 +62,8 @@ __all__ = [
     "LassoLarsCV",
     "LassoLarsIC",
     "LinearRegression",
-    "Log",
     "LogisticRegression",
     "LogisticRegressionCV",
-    "ModifiedHuber",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
@@ -78,16 +73,18 @@ __all__ = [
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "Perceptron",
+    "PoissonRegressor",
     "QuantileRegressor",
+    "RANSACRegressor",
     "Ridge",
     "RidgeCV",
     "RidgeClassifier",
     "RidgeClassifierCV",
     "SGDClassifier",
-    "SGDRegressor",
     "SGDOneClassSVM",
-    "SquaredLoss",
+    "SGDRegressor",
     "TheilSenRegressor",
+    "TweedieRegressor",
     "enet_path",
     "lars_path",
     "lars_path_gram",
@@ -95,8 +92,4 @@ __all__ = [
     "orthogonal_mp",
     "orthogonal_mp_gram",
     "ridge_regression",
-    "RANSACRegressor",
-    "PoissonRegressor",
-    "GammaRegressor",
-    "TweedieRegressor",
 ]

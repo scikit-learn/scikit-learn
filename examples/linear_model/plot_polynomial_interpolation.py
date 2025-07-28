@@ -36,19 +36,15 @@ infinite) dimensional feature spaces.
 
 """
 
-# Author: Mathieu Blondel
-#         Jake Vanderplas
-#         Christian Lorentzen
-#         Malte Londschien
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
 from sklearn.pipeline import make_pipeline
-
+from sklearn.preprocessing import PolynomialFeatures, SplineTransformer
 
 # %%
 # We start by defining a function that we intend to approximate and prepare

@@ -9,10 +9,14 @@ trained using SGD.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
-from sklearn.linear_model import SGDClassifier
+import numpy as np
+
 from sklearn.datasets import make_blobs
+from sklearn.linear_model import SGDClassifier
 
 # we create 50 separable points
 X, Y = make_blobs(n_samples=50, centers=2, random_state=0, cluster_std=0.60)

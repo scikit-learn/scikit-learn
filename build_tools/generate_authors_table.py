@@ -6,16 +6,18 @@ of hard-coded contributors.
 The table should be updated for each new inclusion in the teams.
 Generating the table requires admin rights.
 """
-import sys
-import requests
-import getpass
-import time
-from pathlib import Path
-from os import path
 
-print("user:", file=sys.stderr)
+import getpass
+import sys
+import time
+from os import path
+from pathlib import Path
+
+import requests
+
+print("Input user:", file=sys.stderr)
 user = input()
-token = getpass.getpass("access token:\n")
+token = getpass.getpass("Input access token:\n")
 auth = (user, token)
 
 LOGO_URL = "https://avatars2.githubusercontent.com/u/365630?v=4"
@@ -42,23 +44,32 @@ def get_contributors():
     """Get the list of contributor profiles. Require admin rights."""
     # get core devs and contributor experience team
     core_devs = []
+    documentation_team = []
     contributor_experience_team = []
     comm_team = []
     core_devs_slug = "core-devs"
     contributor_experience_team_slug = "contributor-experience-team"
     comm_team_slug = "communication-team"
+    documentation_team_slug = "documentation-team"
 
     entry_point = "https://api.github.com/orgs/scikit-learn/"
 
     for team_slug, lst in zip(
-        (core_devs_slug, contributor_experience_team_slug, comm_team_slug),
-        (core_devs, contributor_experience_team, comm_team),
+        (
+            core_devs_slug,
+            contributor_experience_team_slug,
+            comm_team_slug,
+            documentation_team_slug,
+        ),
+        (core_devs, contributor_experience_team, comm_team, documentation_team),
     ):
+        print(f"Retrieving {team_slug}\n")
         for page in [1, 2]:  # 30 per page
             reply = get(f"{entry_point}teams/{team_slug}/members?page={page}")
             lst.extend(reply.json())
 
     # get members of scikit-learn on GitHub
+    print("Retrieving members\n")
     members = []
     for page in [1, 2, 3]:  # 30 per page
         reply = get(f"{entry_point}members?page={page}")
@@ -66,6 +77,7 @@ def get_contributors():
 
     # keep only the logins
     core_devs = set(c["login"] for c in core_devs)
+    documentation_team = set(c["login"] for c in documentation_team)
     contributor_experience_team = set(c["login"] for c in contributor_experience_team)
     comm_team = set(c["login"] for c in comm_team)
     members = set(c["login"] for c in members)
@@ -80,10 +92,22 @@ def get_contributors():
         core_devs  # remove ogrisel from contributor_experience_team
     )
 
-    emeritus = members - core_devs - contributor_experience_team - comm_team
+    emeritus = (
+        members
+        - core_devs
+        - contributor_experience_team
+        - comm_team
+        - documentation_team
+    )
 
     # hard coded
+    emeritus_contributor_experience_team = {
+        "cmarmo",
+    }
     emeritus_comm_team = {"reshamas"}
+
+    # Up-to-now, we can subtract the team emeritus from the original emeritus
+    emeritus -= emeritus_contributor_experience_team | emeritus_comm_team
 
     comm_team -= {"reshamas"}  # in the comm team but not on the web page
 
@@ -93,13 +117,21 @@ def get_contributors():
     contributor_experience_team = [
         get_profile(login) for login in contributor_experience_team
     ]
+    emeritus_contributor_experience_team = [
+        get_profile(login) for login in emeritus_contributor_experience_team
+    ]
     comm_team = [get_profile(login) for login in comm_team]
     emeritus_comm_team = [get_profile(login) for login in emeritus_comm_team]
+    documentation_team = [get_profile(login) for login in documentation_team]
 
     # sort by last name
     core_devs = sorted(core_devs, key=key)
     emeritus = sorted(emeritus, key=key)
     contributor_experience_team = sorted(contributor_experience_team, key=key)
+    emeritus_contributor_experience_team = sorted(
+        emeritus_contributor_experience_team, key=key
+    )
+    documentation_team = sorted(documentation_team, key=key)
     comm_team = sorted(comm_team, key=key)
     emeritus_comm_team = sorted(emeritus_comm_team, key=key)
 
@@ -107,8 +139,10 @@ def get_contributors():
         core_devs,
         emeritus,
         contributor_experience_team,
+        emeritus_contributor_experience_team,
         comm_team,
         emeritus_comm_team,
+        documentation_team,
     )
 
 
@@ -176,15 +210,20 @@ if __name__ == "__main__":
         core_devs,
         emeritus,
         contributor_experience_team,
+        emeritus_contributor_experience_team,
         comm_team,
         emeritus_comm_team,
+        documentation_team,
     ) = get_contributors()
 
-    with open(REPO_FOLDER / "doc" / "authors.rst", "w+", encoding="utf-8") as rst_file:
+    print("Generating rst files")
+    with open(
+        REPO_FOLDER / "doc" / "maintainers.rst", "w+", encoding="utf-8"
+    ) as rst_file:
         rst_file.write(generate_table(core_devs))
 
     with open(
-        REPO_FOLDER / "doc" / "authors_emeritus.rst", "w+", encoding="utf-8"
+        REPO_FOLDER / "doc" / "maintainers_emeritus.rst", "w+", encoding="utf-8"
     ) as rst_file:
         rst_file.write(generate_list(emeritus))
 
@@ -192,6 +231,13 @@ if __name__ == "__main__":
         REPO_FOLDER / "doc" / "contributor_experience_team.rst", "w+", encoding="utf-8"
     ) as rst_file:
         rst_file.write(generate_table(contributor_experience_team))
+
+    with open(
+        REPO_FOLDER / "doc" / "contributor_experience_team_emeritus.rst",
+        "w+",
+        encoding="utf-8",
+    ) as rst_file:
+        rst_file.write(generate_list(emeritus_contributor_experience_team))
 
     with open(
         REPO_FOLDER / "doc" / "communication_team.rst", "w+", encoding="utf-8"
@@ -202,3 +248,8 @@ if __name__ == "__main__":
         REPO_FOLDER / "doc" / "communication_team_emeritus.rst", "w+", encoding="utf-8"
     ) as rst_file:
         rst_file.write(generate_list(emeritus_comm_team))
+
+    with open(
+        REPO_FOLDER / "doc" / "documentation_team.rst", "w+", encoding="utf-8"
+    ) as rst_file:
+        rst_file.write(generate_table(documentation_team))

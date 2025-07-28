@@ -12,9 +12,12 @@ for handling categorical features: :class:`TargetEncoder`,
 
 .. note::
     `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-    cross-validation scheme is used in `fit_transform` for encoding. See the
+    cross fitting scheme is used in `fit_transform` for encoding. See the
     :ref:`User Guide <target_encoder>`. for details.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Loading Data from OpenML
@@ -23,7 +26,7 @@ for handling categorical features: :class:`TargetEncoder`,
 # be a reviewer:
 from sklearn.datasets import fetch_openml
 
-wine_reviews = fetch_openml(data_id=42074, as_frame=True, parser="pandas")
+wine_reviews = fetch_openml(data_id=42074, as_frame=True)
 
 df = wine_reviews.frame
 df.head()
@@ -55,9 +58,7 @@ _ = y.hist()
 # strategies. First, we list out the encoders we will be using to preprocess
 # the categorical features:
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import TargetEncoder
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder
 
 categorical_preprocessors = [
     ("drop", "drop"),
@@ -71,9 +72,9 @@ categorical_preprocessors = [
 
 # %%
 # Next, we evaluate the models using cross validation and record the results:
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import cross_validate
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
 
 n_cv_folds = 3
 max_iter = 20

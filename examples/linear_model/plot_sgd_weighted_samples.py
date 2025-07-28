@@ -8,8 +8,12 @@ is proportional to its weight.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import linear_model
 
 # we create 20 points

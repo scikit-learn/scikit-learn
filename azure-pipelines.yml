@@ -11,7 +11,7 @@ jobs:
 - job: git_commit
   displayName: Get Git Commit
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - bash: python build_tools/azure/get_commit_message.py
       name: commit
@@ -27,24 +27,29 @@ jobs:
     )
   displayName: Linting
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
   steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.9'
+        versionSpec: '3.12'
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest flake8 $(get_dep mypy min) $(get_dep black min)
+        pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
       displayName: Run linters
+    - bash: |
+        pip install ninja meson scipy
+        python build_tools/check-meson-openmp-dependencies.py
+      displayName: Run Meson OpenMP checks
+
 
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Nightly
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
@@ -59,73 +64,36 @@ jobs:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
         LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock'
-        CHECK_WARNINGS: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-        # Tests that require large downloads over the networks are skipped in CI.
-        # Here we make sure, that they are still run on a regular basis.
-        SKLEARN_SKIP_NETWORK_TESTS: '0'
 
-- template: build_tools/azure/posix-docker.yml
-  # Experimental CPython branch without the Global Interpreter Lock:
-  # https://github.com/colesbury/nogil/
-  #
-  # The nogil build relies on a dedicated PyPI-style index to install patched
-  # versions of NumPy, SciPy and Cython maintained by @colesbury and that
-  # include specifc fixes to make them run correctly without relying on the GIL.
-  #
-  # The goal of this CI entry is to make sure that we do not introduce any
-  # dependency on the GIL in scikit-learn itself. An auxiliary goal is to early
-  # detect any regression in the patched build dependencies to report them
-  # upstream. The long-term goal is to be able to stop having to maintain
-  # multiprocessing based workaround / hacks in joblib / loky to make multi-CPU
-  # computing in scikit-learn efficient by default using regular threads.
-  #
-  # If this experimental entry becomes too unstable, feel free to disable it.
+- template: build_tools/azure/posix.yml
+  # CPython 3.13 free-threaded build
   parameters:
-    name: Linux_nogil
-    vmImage: ubuntu-20.04
+    name: Linux_free_threaded
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit, linting]
     condition: |
       and(
         succeeded(),
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
         or(eq(variables['Build.Reason'], 'Schedule'),
-           contains(dependencies['git_commit']['outputs']['commit.message'], '[nogil]'
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[free-threaded]'
           )
         )
       )
     matrix:
-      pylatest_pip_nogil:
-        DOCKER_CONTAINER: 'nogil/python'
-        DISTRIB: 'pip-nogil'
-        LOCK_FILE: './build_tools/azure/python_nogil_lock.txt'
+      pylatest_free_threaded:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
-
-- template: build_tools/azure/posix-docker.yml
-  parameters:
-    name: Linux_Nightly_PyPy
-    vmImage: ubuntu-20.04
-    dependsOn: [linting, git_commit]
-    condition: |
-      and(
-        succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        or(
-          eq(variables['Build.Reason'], 'Schedule'),
-          contains(dependencies['git_commit']['outputs']['commit.message'], '[pypy]')
-        )
-      )
-    matrix:
-      pypy3:
-        DOCKER_CONTAINER: 'condaforge/miniforge3:4.10.3-5'
-        DISTRIB: 'conda-pypy3'
-        LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda.lock'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [git_commit]
     condition: |
       and(
@@ -137,8 +105,12 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
-        SHOW_SHORT_SUMMARY: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
+          SKLEARN_SKIP_NETWORK_TESTS: '0'
+        SCIPY_ARRAY_API: '1'
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
 # By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
@@ -158,16 +130,17 @@ jobs:
       )
     commitMessage: dependencies['git_commit']['outputs']['commit.message']
     matrix:
-      py38_conda_forge_openblas_ubuntu_2204:
+      pymin_conda_forge_openblas_ubuntu_2204:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         COVERAGE: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
     name: Ubuntu_Atlas
-    vmImage: ubuntu-22.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -177,8 +150,8 @@ jobs:
       )
     matrix:
       # Linux environment to test that scikit-learn can be built against
-      # versions of numpy, scipy with ATLAS that comes with Ubuntu Jammy Jellyfish 22.04
-      # i.e. numpy 1.21.5 and scipy 1.8.0
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04 Noble Numbat
+      # i.e. numpy 1.26.4 and scipy 1.11.4
       ubuntu_atlas:
         DISTRIB: 'ubuntu'
         LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
@@ -188,7 +161,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -197,10 +170,14 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      # Linux + Python 3.8 build with OpenBLAS
-      py38_conda_defaults_openblas:
+      # Linux build with minimum supported version of dependencies
+      pymin_conda_forge_openblas_min_dependencies:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
@@ -210,17 +187,19 @@ jobs:
         DISTRIB: 'conda-pip-latest'
         LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-        CHECK_WARNINGS: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
         # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
         # threaded because by default the tests configuration (sklearn/conftest.py)
         # makes sure that they are single threaded in each xdist subprocess.
         PYTEST_XDIST_VERSION: 'none'
+        PIP_BUILD_ISOLATION: 'true'
+        SCIPY_ARRAY_API: '1'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
     name: Linux_Docker
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-24.04
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -229,11 +208,11 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      debian_atlas_32bit:
-        DOCKER_CONTAINER: 'i386/debian:11.2'
+      debian_32bit:
+        DOCKER_CONTAINER: 'i386/debian:trixie'
         DISTRIB: 'debian-32'
         COVERAGE: "true"
-        LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        LOCK_FILE: './build_tools/azure/debian_32bit_lock.txt'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
@@ -241,7 +220,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-11
+    vmImage: macOS-13
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -254,9 +233,10 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
-      pylatest_conda_mkl_no_openmp:
+        SCIPY_ARRAY_API: '1'
+      pylatest_conda_forge_mkl_no_openmp:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
@@ -273,15 +253,19 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      py38_conda_forge_mkl:
+      pymin_conda_forge_openblas:
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
-        CHECK_WARNINGS: 'true'
+        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_openblas_win-64_conda.lock
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
         # The Azure Windows runner is typically much slower than other CI
         # runners due to the lack of compiler cache. Running the tests with
         # coverage enabled make them run extra slower. Since very few parts of
         # code should have windows-specific code branches, it should be enable
         # to restrict the code coverage collection to the non-windows runners.
         COVERAGE: 'false'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed

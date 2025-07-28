@@ -1,16 +1,15 @@
 import os
-from os.path import exists
-from os.path import join
 from os import environ
-import warnings
+from os.path import exists, join
 
-from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import check_skip_network
-from sklearn.utils.fixes import parse_version
+import pytest
+from _pytest.doctest import DoctestItem
+
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
+from sklearn.utils._testing import SkipTest, check_skip_network
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 
 def setup_labeled_faces():
@@ -34,8 +33,6 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
-    if IS_PYPY and os.environ.get("CI", None):
-        raise SkipTest("Skipping too slow test with PyPy on CI")
     check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
     if not exists(cache_path):
@@ -44,7 +41,7 @@ def setup_working_with_text_data():
 
 def setup_loading_other_datasets():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping loading_other_datasets.rst, pandas not installed")
 
@@ -59,49 +56,35 @@ def setup_loading_other_datasets():
 
 def setup_compose():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
 def setup_impute():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping impute.rst, pandas not installed")
 
 
 def setup_grid_search():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping grid_search.rst, pandas not installed")
 
 
 def setup_preprocessing():
     try:
-        import pandas  # noqa
-
-        if parse_version(pandas.__version__) < parse_version("1.1.0"):
-            raise SkipTest("Skipping preprocessing.rst, pandas version < 1.1.0")
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
 
-def setup_unsupervised_learning():
-    try:
-        import skimage  # noqa
-    except ImportError:
-        raise SkipTest("Skipping unsupervised_learning.rst, scikit-image not installed")
-    # ignore deprecation warnings from scipy.misc.face
-    warnings.filterwarnings(
-        "ignore", "The binary mode of fromstring", DeprecationWarning
-    )
-
-
 def skip_if_matplotlib_not_installed(fname):
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         basename = os.path.basename(fname)
         raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
@@ -109,7 +92,7 @@ def skip_if_matplotlib_not_installed(fname):
 
 def skip_if_cupy_not_installed(fname):
     try:
-        import cupy  # noqa
+        import cupy  # noqa: F401
     except ImportError:
         basename = os.path.basename(fname)
         raise SkipTest(f"Skipping doctests for {basename}, cupy not installed")
@@ -128,10 +111,6 @@ def pytest_runtest_setup(item):
         setup_rcv1()
     elif fname.endswith("datasets/twenty_newsgroups.rst") or is_index:
         setup_twenty_newsgroups()
-    elif (
-        fname.endswith("tutorial/text_analytics/working_with_text_data.rst") or is_index
-    ):
-        setup_working_with_text_data()
     elif fname.endswith("modules/compose.rst") or is_index:
         setup_compose()
     elif fname.endswith("datasets/loading_other_datasets.rst"):
@@ -142,14 +121,10 @@ def pytest_runtest_setup(item):
         setup_grid_search()
     elif fname.endswith("modules/preprocessing.rst"):
         setup_preprocessing()
-    elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
-        setup_unsupervised_learning()
 
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",
         "modules/tree.rst",
-        "tutorial/statistical_inference/settings.rst",
-        "tutorial/statistical_inference/supervised_learning.rst",
     ]
     for each in rst_files_requiring_matplotlib:
         if fname.endswith(each):
@@ -167,3 +142,38 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
+
+
+def pytest_collection_modifyitems(config, items):
+    """Called after collect is completed.
+
+    Parameters
+    ----------
+    config : pytest config
+    items : list of collected items
+    """
+    skip_doctests = False
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
+        skip_doctests = True
+
+    # Normally doctest has the entire module's scope. Here we set globs to an empty dict
+    # to remove the module's scope:
+    # https://docs.python.org/3/library/doctest.html#what-s-the-execution-context
+    for item in items:
+        if isinstance(item, DoctestItem):
+            item.dtest.globs = {}
+
+    if skip_doctests:
+        skip_marker = pytest.mark.skip(reason=reason)
+
+        for item in items:
+            if isinstance(item, DoctestItem):
+                item.add_marker(skip_marker)

@@ -8,18 +8,19 @@ This example compares the parameter search performed by
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sklearn.svm import SVC
 from sklearn import datasets
-from sklearn.model_selection import GridSearchCV
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingGridSearchCV
-
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV
+from sklearn.svm import SVC
 
 # %%
 # We first define the parameter space for an :class:`~sklearn.svm.SVC`

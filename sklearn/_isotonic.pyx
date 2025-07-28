@@ -1,4 +1,5 @@
-# Author: Nelle Varoquaux, Andrew Tulloch, Antony Lee
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Uses the pool adjacent violators algorithm (PAVA), with the
 # enhancement of searching for the longest decreasing subsequence to
@@ -6,7 +7,6 @@
 
 import numpy as np
 from cython cimport floating
-
 
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
@@ -85,7 +85,6 @@ def _make_unique(const floating[::1] X,
     cdef floating current_x = X[0]
     cdef floating current_y = 0
     cdef floating current_weight = 0
-    cdef floating y_old = 0
     cdef int i = 0
     cdef int j
     cdef floating x
@@ -114,4 +113,4 @@ def _make_unique(const floating[::1] X,
         np.asarray(x_out[:i+1]),
         np.asarray(y_out[:i+1]),
         np.asarray(weights_out[:i+1]),
-)
+    )

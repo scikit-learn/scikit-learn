@@ -27,10 +27,11 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # of both the train and valid subsets. This is used when we only want to train
 # the classifier but not calibrate the predicted probabilities.
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD Style.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 np.random.seed(0)
@@ -63,10 +64,11 @@ clf.fit(X_train_valid, y_train_valid)
 # using the valid data subset (400 samples) in a 2-stage process.
 
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.frozen import FrozenEstimator
 
 clf = RandomForestClassifier(n_estimators=25)
 clf.fit(X_train, y_train)
-cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv="prefit")
+cal_clf = CalibratedClassifierCV(FrozenEstimator(clf), method="sigmoid")
 cal_clf.fit(X_valid, y_valid)
 
 # %%
@@ -210,14 +212,30 @@ _ = plt.legend(loc="best")
 
 from sklearn.metrics import log_loss
 
-score = log_loss(y_test, clf_probs)
-cal_score = log_loss(y_test, cal_clf_probs)
+loss = log_loss(y_test, clf_probs)
+cal_loss = log_loss(y_test, cal_clf_probs)
 
-print("Log-loss of")
-print(f" * uncalibrated classifier: {score:.3f}")
-print(f" * calibrated classifier: {cal_score:.3f}")
+print("Log-loss of:")
+print(f" - uncalibrated classifier: {loss:.3f}")
+print(f" - calibrated classifier: {cal_loss:.3f}")
 
 # %%
+# We can also assess calibration with the Brier score for probabilistics predictions
+# (lower is better, possible range is [0, 2]):
+
+from sklearn.metrics import brier_score_loss
+
+loss = brier_score_loss(y_test, clf_probs)
+cal_loss = brier_score_loss(y_test, cal_clf_probs)
+
+print("Brier score of")
+print(f" - uncalibrated classifier: {loss:.3f}")
+print(f" - calibrated classifier: {cal_loss:.3f}")
+
+# %%
+# According to the Brier score, the calibrated classifier is not better than
+# the original model.
+#
 # Finally we generate a grid of possible uncalibrated probabilities over
 # the 2-simplex, compute the corresponding calibrated probabilities and
 # plot arrows for each. The arrows are colored according the highest
@@ -272,3 +290,15 @@ plt.xlim(-0.05, 1.05)
 plt.ylim(-0.05, 1.05)
 
 plt.show()
+
+# %%
+# One can observe that, on average, the calibrator is pushing highly confident
+# predictions away from the boundaries of the simplex while simultaneously
+# moving uncertain predictions towards one of three modes, one for each class.
+# We can also observe that the mapping is not symmetric. Furthermore some
+# arrows seems to cross class assignment boundaries which is not necessarily
+# what one would expect from a calibration map as it means that some predicted
+# classes will change after calibration.
+#
+# All in all, the One-vs-Rest multiclass-calibration strategy implemented in
+# `CalibratedClassifierCV` should not be trusted blindly.

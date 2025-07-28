@@ -8,10 +8,14 @@ Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
 Between Data Points", Science Feb. 2007
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
-from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
+from sklearn.cluster import AffinityPropagation
 from sklearn.datasets import make_blobs
 
 # %%

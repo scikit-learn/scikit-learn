@@ -1,7 +1,7 @@
 """
-========================================
-Label Propagation digits active learning
-========================================
+=========================================
+Label Propagation digits: Active learning
+=========================================
 
 Demonstrates an active learning technique to learn handwritten digits
 using label propagation.
@@ -20,16 +20,16 @@ model with their true labels.
 
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.semi_supervised import LabelSpreading
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)
@@ -79,7 +79,7 @@ for i in range(max_iterations):
     # select up to 5 digit examples that the classifier is most uncertain about
     uncertainty_index = np.argsort(pred_entropies)[::-1]
     uncertainty_index = uncertainty_index[
-        np.in1d(uncertainty_index, unlabeled_indices)
+        np.isin(uncertainty_index, unlabeled_indices)
     ][:5]
 
     # keep track of indices that we get labels for
@@ -108,7 +108,7 @@ for i in range(max_iterations):
             sub.axis("off")
 
         # labeling 5 points, remote from labeled set
-        (delete_index,) = np.where(unlabeled_indices == image_index)
+        (delete_index,) = (unlabeled_indices == image_index).nonzero()
         delete_indices = np.concatenate((delete_indices, delete_index))
 
     unlabeled_indices = np.delete(unlabeled_indices, delete_indices)

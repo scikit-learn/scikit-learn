@@ -5,6 +5,10 @@ It is not part of the public API.
 Specific losses are used for regression, binary classification or multiclass
 classification.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Goals:
 # - Provide a common private module for loss functions/classes.
 # - To be used in:
@@ -16,30 +20,33 @@ classification.
 # - Replace link module of GLMs.
 
 import numbers
+
 import numpy as np
 from scipy.special import xlogy
-from ._loss import (
-    CyHalfSquaredError,
-    CyAbsoluteError,
-    CyPinballLoss,
-    CyHalfPoissonLoss,
-    CyHalfGammaLoss,
-    CyHalfTweedieLoss,
-    CyHalfTweedieLossIdentity,
-    CyHalfBinomialLoss,
-    CyHalfMultinomialLoss,
-    CyExponentialLoss,
-)
-from .link import (
-    Interval,
-    IdentityLink,
-    LogLink,
-    LogitLink,
-    HalfLogitLink,
-    MultinomialLogit,
-)
+
 from ..utils import check_scalar
 from ..utils.stats import _weighted_percentile
+from ._loss import (
+    CyAbsoluteError,
+    CyExponentialLoss,
+    CyHalfBinomialLoss,
+    CyHalfGammaLoss,
+    CyHalfMultinomialLoss,
+    CyHalfPoissonLoss,
+    CyHalfSquaredError,
+    CyHalfTweedieLoss,
+    CyHalfTweedieLossIdentity,
+    CyHuberLoss,
+    CyPinballLoss,
+)
+from .link import (
+    HalfLogitLink,
+    IdentityLink,
+    Interval,
+    LogitLink,
+    LogLink,
+    MultinomialLogit,
+)
 
 
 # Note: The shape of raw_prediction for multiclass classifications are
@@ -110,7 +117,7 @@ class BaseLoss:
         Indicates whether n_classes > 2 is allowed.
     """
 
-    # For decision trees:
+    # For gradient boosted decision trees:
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
     # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
@@ -119,8 +126,8 @@ class BaseLoss:
     # procedure. See the original paper Greedy Function Approximation: A
     # Gradient Boosting Machine by Friedman
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
-    need_update_leaves_values = False
     differentiable = True
+    need_update_leaves_values = False
     is_multiclass = False
 
     def __init__(self, closs, link, n_classes=None):
@@ -186,13 +193,14 @@ class BaseLoss:
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
             raw_prediction = raw_prediction.squeeze(1)
 
-        return self.closs.loss(
+        self.closs.loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             loss_out=loss_out,
             n_threads=n_threads,
         )
+        return loss_out
 
     def loss_gradient(
         self,
@@ -247,7 +255,7 @@ class BaseLoss:
         if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
             gradient_out = gradient_out.squeeze(1)
 
-        return self.closs.loss_gradient(
+        self.closs.loss_gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -255,6 +263,7 @@ class BaseLoss:
             gradient_out=gradient_out,
             n_threads=n_threads,
         )
+        return loss_out, gradient_out
 
     def gradient(
         self,
@@ -296,13 +305,14 @@ class BaseLoss:
         if gradient_out.ndim == 2 and gradient_out.shape[1] == 1:
             gradient_out = gradient_out.squeeze(1)
 
-        return self.closs.gradient(
+        self.closs.gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             gradient_out=gradient_out,
             n_threads=n_threads,
         )
+        return gradient_out
 
     def gradient_hessian(
         self,
@@ -360,7 +370,7 @@ class BaseLoss:
         if hessian_out.ndim == 2 and hessian_out.shape[1] == 1:
             hessian_out = hessian_out.squeeze(1)
 
-        return self.closs.gradient_hessian(
+        self.closs.gradient_hessian(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -368,6 +378,7 @@ class BaseLoss:
             hessian_out=hessian_out,
             n_threads=n_threads,
         )
+        return gradient_out, hessian_out
 
     def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
         """Compute the weighted average loss.
@@ -540,6 +551,10 @@ class AbsoluteError(BaseLoss):
     For a given sample x_i, the absolute error is defined as::
 
         loss(x_i) = |y_true_i - raw_prediction_i|
+
+    Note that the exact hessian = 0 almost everywhere (except at one point, therefore
+    differentiable = False). Optimization routines like in HGBT, however, need a
+    hessian > 0. Therefore, we assign 1.
     """
 
     differentiable = False
@@ -582,10 +597,14 @@ class PinballLoss(BaseLoss):
 
     Note: 2 * PinballLoss(quantile=0.5) equals AbsoluteError().
 
+    Note that the exact hessian = 0 almost everywhere (except at one point, therefore
+    differentiable = False). Optimization routines like in HGBT, however, need a
+    hessian > 0. Therefore, we assign 1.
+
     Additional Attributes
     ---------------------
     quantile : float
-        The quantile to be estimated. Must be in range (0, 1).
+        The quantile level of the quantile to be estimated. Must be in range (0, 1).
     """
 
     differentiable = False
@@ -619,6 +638,79 @@ class PinballLoss(BaseLoss):
             return _weighted_percentile(
                 y_true, sample_weight, 100 * self.closs.quantile
             )
+
+
+class HuberLoss(BaseLoss):
+    """Huber loss, for regression.
+
+    Domain:
+    y_true and y_pred all real numbers
+    quantile in (0, 1)
+
+    Link:
+    y_pred = raw_prediction
+
+    For a given sample x_i, the Huber loss is defined as::
+
+        loss(x_i) = 1/2 * abserr**2            if abserr <= delta
+                    delta * (abserr - delta/2) if abserr > delta
+
+        abserr = |y_true_i - raw_prediction_i|
+        delta = quantile(abserr, self.quantile)
+
+    Note: HuberLoss(quantile=1) equals HalfSquaredError and HuberLoss(quantile=0)
+    equals delta * (AbsoluteError() - delta/2).
+
+    Additional Attributes
+    ---------------------
+    quantile : float
+        The quantile level which defines the breaking point `delta` to distinguish
+        between absolute error and squared error. Must be in range (0, 1).
+
+     Reference
+    ---------
+    .. [1] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+      boosting machine <10.1214/aos/1013203451>`.
+      Annals of Statistics, 29, 1189-1232.
+    """
+
+    differentiable = False
+    need_update_leaves_values = True
+
+    def __init__(self, sample_weight=None, quantile=0.9, delta=0.5):
+        check_scalar(
+            quantile,
+            "quantile",
+            target_type=numbers.Real,
+            min_val=0,
+            max_val=1,
+            include_boundaries="neither",
+        )
+        self.quantile = quantile  # This is better stored outside of Cython.
+        super().__init__(
+            closs=CyHuberLoss(delta=float(delta)),
+            link=IdentityLink(),
+        )
+        self.approx_hessian = True
+        self.constant_hessian = False
+
+    def fit_intercept_only(self, y_true, sample_weight=None):
+        """Compute raw_prediction of an intercept-only model.
+
+        This is the weighted median of the target, i.e. over the samples
+        axis=0.
+        """
+        # See formula before algo 4 in Friedman (2001), but we apply it to y_true,
+        # not to the residual y_true - raw_prediction. An estimator like
+        # HistGradientBoostingRegressor might then call it on the residual, e.g.
+        # fit_intercept_only(y_true - raw_prediction).
+        if sample_weight is None:
+            median = np.percentile(y_true, 50, axis=0)
+        else:
+            median = _weighted_percentile(y_true, sample_weight, 50)
+        diff = y_true - median
+        term = np.sign(diff) * np.minimum(self.closs.delta, np.abs(diff))
+        return median + np.average(term, weights=sample_weight)
 
 
 class HalfPoissonLoss(BaseLoss):
@@ -991,7 +1083,7 @@ class HalfMultinomialLoss(BaseLoss):
         elif proba_out is None:
             proba_out = np.empty_like(gradient_out)
 
-        return self.closs.gradient_proba(
+        self.closs.gradient_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -999,6 +1091,7 @@ class HalfMultinomialLoss(BaseLoss):
             proba_out=proba_out,
             n_threads=n_threads,
         )
+        return gradient_out, proba_out
 
 
 class ExponentialLoss(BaseLoss):
@@ -1078,6 +1171,7 @@ _LOSSES = {
     "squared_error": HalfSquaredError,
     "absolute_error": AbsoluteError,
     "pinball_loss": PinballLoss,
+    "huber_loss": HuberLoss,
     "poisson_loss": HalfPoissonLoss,
     "gamma_loss": HalfGammaLoss,
     "tweedie_loss": HalfTweedieLoss,

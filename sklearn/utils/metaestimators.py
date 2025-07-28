@@ -1,23 +1,25 @@
-"""Utilities for meta-estimators"""
-# Author: Joel Nothman
-#         Andreas Mueller
-# License: BSD
-from typing import List, Any
+"""Utilities for meta-estimators."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
-import numpy as np
 from contextlib import suppress
+from typing import Any, List
 
-from ..utils import _safe_indexing
-from ..utils._tags import _safe_tags
+import numpy as np
+
 from ..base import BaseEstimator
+from ..utils import _safe_indexing
+from ..utils._tags import get_tags
 from ._available_if import available_if
 
 __all__ = ["available_if"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for classifiers composed of named estimators."""
+    """Handles parameter management for estimators that are composed of named
+    sub-estimators."""
 
     steps: List[Any]
 
@@ -138,7 +140,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if _safe_tags(estimator, key="pairwise"):
+    if get_tags(estimator).input_tags.pairwise:
         if not hasattr(X, "shape"):
             raise ValueError(
                 "Precomputed kernels or affinity matrices have "

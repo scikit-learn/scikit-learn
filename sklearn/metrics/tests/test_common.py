@@ -1,71 +1,95 @@
+import math
 from functools import partial
 from inspect import signature
-from itertools import product
-from itertools import chain
-from itertools import permutations
+from itertools import chain, permutations, product
 
 import numpy as np
-import scipy.sparse as sp
-
 import pytest
 
+from sklearn._config import config_context
 from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.validation import _num_samples
-from sklearn.utils.validation import check_random_state
-from sklearn.utils import shuffle
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import balanced_accuracy_score
-from sklearn.metrics import brier_score_loss
-from sklearn.metrics import cohen_kappa_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import coverage_error
-from sklearn.metrics import d2_tweedie_score
-from sklearn.metrics import d2_pinball_score
-from sklearn.metrics import d2_absolute_error_score
-from sklearn.metrics import det_curve
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import fbeta_score
-from sklearn.metrics import hamming_loss
-from sklearn.metrics import hinge_loss
-from sklearn.metrics import jaccard_score
-from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import label_ranking_loss
-from sklearn.metrics import log_loss
-from sklearn.metrics import max_error
-from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_absolute_percentage_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_poisson_deviance
-from sklearn.metrics import mean_gamma_deviance
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import multilabel_confusion_matrix
-from sklearn.metrics import mean_pinball_loss
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import precision_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics import zero_one_loss
-from sklearn.metrics import ndcg_score
-from sklearn.metrics import dcg_score
-from sklearn.metrics import top_k_accuracy_score
-
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    cohen_kappa_score,
+    confusion_matrix,
+    coverage_error,
+    d2_absolute_error_score,
+    d2_pinball_score,
+    d2_tweedie_score,
+    dcg_score,
+    det_curve,
+    explained_variance_score,
+    f1_score,
+    fbeta_score,
+    hamming_loss,
+    hinge_loss,
+    jaccard_score,
+    label_ranking_average_precision_score,
+    label_ranking_loss,
+    log_loss,
+    matthews_corrcoef,
+    max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_gamma_deviance,
+    mean_pinball_loss,
+    mean_poisson_deviance,
+    mean_squared_error,
+    mean_squared_log_error,
+    mean_tweedie_deviance,
+    median_absolute_error,
+    multilabel_confusion_matrix,
+    ndcg_score,
+    precision_recall_curve,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
+    top_k_accuracy_score,
+    zero_one_loss,
+)
 from sklearn.metrics._base import _average_binary_score
-
+from sklearn.metrics.pairwise import (
+    additive_chi2_kernel,
+    chi2_kernel,
+    cosine_distances,
+    cosine_similarity,
+    euclidean_distances,
+    linear_kernel,
+    paired_cosine_distances,
+    paired_euclidean_distances,
+    pairwise_distances,
+    pairwise_kernels,
+    polynomial_kernel,
+    rbf_kernel,
+    sigmoid_kernel,
+)
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import shuffle
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import COO_CONTAINERS, parse_version, sp_version
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples, check_random_state
 
 # Note toward developers about metric testing
 # -------------------------------------------
@@ -104,11 +128,14 @@ REGRESSION_METRICS = {
     "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
+    "mean_squared_log_error": mean_squared_log_error,
     "mean_pinball_loss": mean_pinball_loss,
     "median_absolute_error": median_absolute_error,
     "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput="variance_weighted"),
+    "root_mean_squared_error": root_mean_squared_error,
+    "root_mean_squared_log_error": root_mean_squared_log_error,
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
@@ -279,16 +306,11 @@ METRIC_UNDEFINED_BINARY = {
 
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
-    "brier_score_loss",
     "micro_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
     "roc_auc_score",
     "weighted_roc_auc",
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "samples_average_precision_score",
     "jaccard_score",
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -378,6 +400,8 @@ METRICS_WITH_LABELS = {
     "unnormalized_multilabel_confusion_matrix",
     "unnormalized_multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
+    "log_loss",
+    "brier_score_loss",
 }
 
 # Metrics with a "normalize" option
@@ -391,6 +415,7 @@ METRICS_WITH_NORMALIZE_OPTION = {
 THRESHOLDED_MULTILABEL_METRICS = {
     "log_loss",
     "unnormalized_log_loss",
+    "brier_score_loss",
     "roc_auc_score",
     "weighted_roc_auc",
     "samples_roc_auc",
@@ -446,7 +471,10 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_error",
     "median_absolute_error",
     "mean_squared_error",
+    "mean_squared_log_error",
     "r2_score",
+    "root_mean_squared_error",
+    "root_mean_squared_log_error",
     "explained_variance_score",
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
@@ -470,6 +498,9 @@ SYMMETRIC_METRICS = {
     "micro_f1_score",
     "macro_f1_score",
     "weighted_recall_score",
+    "mean_squared_log_error",
+    "root_mean_squared_error",
+    "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score",
     "micro_f1_score",
@@ -526,7 +557,6 @@ NOT_SYMMETRIC_METRICS = {
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
-    "median_absolute_error",
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
@@ -539,10 +569,26 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "d2_tweedie_score",
 }
 
+# Metrics involving y = log(1+x)
+METRICS_WITH_LOG1P_Y = {
+    "mean_squared_log_error",
+    "root_mean_squared_log_error",
+}
+
 
 def _require_positive_targets(y1, y2):
     """Make targets strictly positive"""
     offset = abs(min(y1.min(), y2.min())) + 1
+    y1 += offset
+    y2 += offset
+    return y1, y2
+
+
+def _require_log1p_targets(y1, y2):
+    """Make targets strictly larger than -1"""
+    offset = abs(min(y1.min(), y2.min())) - 0.99
+    y1 = y1.astype(np.float64)
+    y2 = y2.astype(np.float64)
     y1 += offset
     y2 += offset
     return y1, y2
@@ -570,6 +616,9 @@ def test_symmetric_metric(name):
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
 
+    elif name in METRICS_WITH_LOG1P_Y:
+        y_true, y_pred = _require_log1p_targets(y_true, y_pred)
+
     y_true_bin = random_state.randint(0, 2, size=(20, 25))
     y_pred_bin = random_state.randint(0, 2, size=(20, 25))
 
@@ -595,18 +644,43 @@ def test_symmetric_metric(name):
 def test_not_symmetric_metric(name):
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20,))
-    y_pred = random_state.randint(0, 2, size=(20,))
-
-    if name in METRICS_REQUIRE_POSITIVE_Y:
-        y_true, y_pred = _require_positive_targets(y_true, y_pred)
-
     metric = ALL_METRICS[name]
 
-    # use context manager to supply custom error message
-    with pytest.raises(AssertionError):
-        assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-        raise ValueError("%s seems to be symmetric" % name)
+    # The metric can be accidentally symmetric on a random draw.
+    # We run several random draws to check that at least of them
+    # gives an asymmetric result.
+    always_symmetric = True
+    for _ in range(5):
+        y_true = random_state.randint(0, 2, size=(20,))
+        y_pred = random_state.randint(0, 2, size=(20,))
+
+        if name in METRICS_REQUIRE_POSITIVE_Y:
+            y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+        nominal = metric(y_true, y_pred)
+        swapped = metric(y_pred, y_true)
+        if not np.allclose(nominal, swapped):
+            always_symmetric = False
+            break
+
+    if always_symmetric:
+        raise ValueError(f"{name} seems to be symmetric")
+
+
+def test_symmetry_tests():
+    # check test_symmetric_metric and test_not_symmetric_metric
+    sym = "accuracy_score"
+    not_sym = "recall_score"
+    # test_symmetric_metric passes on a symmetric metric
+    # but fails on a not symmetric metric
+    test_symmetric_metric(sym)
+    with pytest.raises(AssertionError, match=f"{not_sym} is not symmetric"):
+        test_symmetric_metric(not_sym)
+    # test_not_symmetric_metric passes on a not symmetric metric
+    # but fails on a symmetric metric
+    test_not_symmetric_metric(not_sym)
+    with pytest.raises(ValueError, match=f"{sym} seems to be symmetric"):
+        test_not_symmetric_metric(sym)
 
 
 @pytest.mark.parametrize(
@@ -619,6 +693,8 @@ def test_sample_order_invariance(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
+    elif name in METRICS_WITH_LOG1P_Y:
+        y_true, y_pred = _require_log1p_targets(y_true, y_pred)
 
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
@@ -631,14 +707,16 @@ def test_sample_order_invariance(name):
         )
 
 
-@ignore_warnings
 def test_sample_order_invariance_multilabel_and_multioutput():
     random_state = check_random_state(0)
 
     # Generate some data
     y_true = random_state.randint(0, 2, size=(20, 25))
     y_pred = random_state.randint(0, 2, size=(20, 25))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     y_true_shuffle, y_pred_shuffle, y_score_shuffle = shuffle(
         y_true, y_pred, y_score, random_state=0
@@ -684,6 +762,8 @@ def test_format_invariance_with_1d_vectors(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y1, y2 = _require_positive_targets(y1, y2)
+    elif name in METRICS_WITH_LOG1P_Y:
+        y1, y2 = _require_log1p_targets(y1, y2)
 
     y1_list = list(y1)
     y2_list = list(y2)
@@ -791,8 +871,46 @@ def test_format_invariance_with_1d_vectors(name):
         if name not in (
             MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTILABELS_METRICS
         ):
-            with pytest.raises(ValueError):
-                metric(y1_row, y2_row)
+            if "roc_auc" in name:
+                # for consistency between the `roc_cuve` and `roc_auc_score`
+                # np.nan is returned and an `UndefinedMetricWarning` is raised
+                with pytest.warns(UndefinedMetricWarning):
+                    assert math.isnan(metric(y1_row, y2_row))
+            else:
+                with pytest.raises(ValueError):
+                    metric(y1_row, y2_row)
+
+
+@pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
+def test_classification_with_invalid_sample_weight(metric):
+    # Check invalid `sample_weight` raises correct error
+    random_state = check_random_state(0)
+    n_samples = 20
+    y1 = random_state.randint(0, 2, size=(n_samples,))
+    y2 = random_state.randint(0, 2, size=(n_samples,))
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y1[:3], y2[:3], sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y1, y2, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(
@@ -919,14 +1037,15 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
 @pytest.mark.parametrize(
     "y_true, y_score",
-    invalids_nan_inf +
+    invalids_nan_inf
+    +
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
     [
         ([np.nan, 1, 2], [1, 2, 3]),
         ([np.inf, 1, 2], [1, 2, 3]),
-    ],  # type: ignore
+    ],
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the
@@ -962,7 +1081,6 @@ def test_classification_binary_continuous_input(metric):
         metric(y_true, y_score)
 
 
-@ignore_warnings
 def check_single_sample(name):
     # Non-regression test: scores should work with a single sample.
     # This is important for leave-one-out cross validation.
@@ -973,19 +1091,22 @@ def check_single_sample(name):
     # assert that no exception is thrown
     if name in METRICS_REQUIRE_POSITIVE_Y:
         values = [1, 2]
+    elif name in METRICS_WITH_LOG1P_Y:
+        values = [-0.7, 1]
     else:
         values = [0, 1]
     for i, j in product(values, repeat=2):
         metric([i], [j])
 
 
-@ignore_warnings
 def check_single_sample_multioutput(name):
     metric = ALL_METRICS[name]
     for i, j, k, l in product([0, 1], repeat=4):
         metric(np.array([[i, j]]), np.array([[k, l]]))
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize(
     "name",
     sorted(
@@ -1000,6 +1121,8 @@ def test_single_sample(name):
     check_single_sample(name)
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize("name", sorted(MULTIOUTPUT_METRICS | MULTILABELS_METRICS))
 def test_single_sample_multioutput(name):
     check_single_sample_multioutput(name)
@@ -1034,8 +1157,9 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         )
 
 
-@ignore_warnings
-def test_multilabel_representation_invariance():
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_multilabel_representation_invariance(coo_container):
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -1059,8 +1183,8 @@ def test_multilabel_representation_invariance():
     y1 = np.vstack([y1, [[0] * n_classes]])
     y2 = np.vstack([y2, [[0] * n_classes]])
 
-    y1_sparse_indicator = sp.coo_matrix(y1)
-    y2_sparse_indicator = sp.coo_matrix(y2)
+    y1_sparse_indicator = coo_container(y1)
+    y2_sparse_indicator = coo_container(y2)
 
     y1_list_array_indicator = list(y1)
     y2_list_array_indicator = list(y2)
@@ -1235,7 +1359,6 @@ def test_normalize_option_multilabel_classification(name):
     )
 
 
-@ignore_warnings
 def _check_averaging(
     metric, y_true, y_pred, y_true_binarize, y_pred_binarize, is_multilabel
 ):
@@ -1384,10 +1507,10 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-@ignore_warnings
-def check_sample_weight_invariance(name, metric, y1, y2):
+def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 10, size=len(y1))
+    if sample_weight is None:
+        sample_weight = rng.randint(1, 10, size=len(y1))
 
     # top_k_accuracy_score always lead to a perfect score for k > 1 in the
     # binary case
@@ -1463,7 +1586,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     if not name.startswith("unnormalized"):
         # check that the score is invariant under scaling of the weights by a
         # common factor
-        for scaling in [2, 0.3]:
+        # Due to numerical instability of floating points in `cumulative_sum` in
+        # `median_absolute_error`, it is not always equivalent when scaling by a float.
+        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+        for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
@@ -1495,8 +1621,49 @@ def test_regression_sample_weight_invariance(name):
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
+    sample_weight = np.arange(len(y_true))
     metric = ALL_METRICS[name]
-    check_sample_weight_invariance(name, metric, y_true, y_pred)
+
+    check_sample_weight_invariance(name, metric, y_true, y_pred, sample_weight)
+
+
+@pytest.mark.parametrize(
+    "name",
+    sorted(
+        set(ALL_METRICS).intersection(set(REGRESSION_METRICS))
+        - METRICS_WITHOUT_SAMPLE_WEIGHT
+    ),
+)
+def test_regression_with_invalid_sample_weight(name):
+    # Check that `sample_weight` with incorrect length raises error
+    n_samples = 50
+    random_state = check_random_state(0)
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    metric = ALL_METRICS[name]
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true[:3], y_pred[:3], sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(
@@ -1551,7 +1718,7 @@ def test_multiclass_sample_weight_invariance(name):
 @pytest.mark.parametrize(
     "name",
     sorted(
-        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS)
         - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
@@ -1566,7 +1733,10 @@ def test_multilabel_sample_weight_invariance(name):
     )
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
-    y_score = random_state.randint(1, 4, size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
@@ -1575,7 +1745,19 @@ def test_multilabel_sample_weight_invariance(name):
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
-@ignore_warnings
+@pytest.mark.parametrize(
+    "name",
+    sorted(MULTIOUTPUT_METRICS - METRICS_WITHOUT_SAMPLE_WEIGHT),
+)
+def test_multioutput_sample_weight_invariance(name):
+    random_state = check_random_state(0)
+    y_true = random_state.uniform(0, 2, size=(20, 5))
+    y_pred = random_state.uniform(0, 2, size=(20, 5))
+
+    metric = ALL_METRICS[name]
+    check_sample_weight_invariance(name, metric, y_true, y_pred)
+
+
 def test_no_averaging_labels():
     # test labels argument when not using averaging
     # in multi-class and multi-label cases
@@ -1629,7 +1811,10 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
     y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     # Makes sure all samples have at least one label. This works around errors
     # when running metrics where average="sample"
@@ -1723,7 +1908,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         "pass pos_label explicit"
     )
     err_msg_pos_label_1 = (
-        r"pos_label=1 is not a valid label. It should be one of " r"\['eggs', 'spam'\]"
+        r"pos_label=1 is not a valid label. It should be one of \['eggs', 'spam'\]"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
@@ -1731,3 +1916,519 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
     err_msg = err_msg_pos_label_1 if pos_label_default == 1 else err_msg_pos_label_None
     with pytest.raises(ValueError, match=err_msg):
         metric(y1, y2)
+
+
+def check_array_api_metric(
+    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    a_xp = xp.asarray(a_np, device=device)
+    b_xp = xp.asarray(b_np, device=device)
+
+    metric_np = metric(a_np, b_np, **metric_kwargs)
+
+    if metric_kwargs.get("sample_weight") is not None:
+        metric_kwargs["sample_weight"] = xp.asarray(
+            metric_kwargs["sample_weight"], device=device
+        )
+
+    multioutput = metric_kwargs.get("multioutput")
+    if isinstance(multioutput, np.ndarray):
+        metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
+
+    # When array API dispatch is disabled, and np.asarray works (for example PyTorch
+    # with CPU device), calling the metric function with such numpy compatible inputs
+    # should work (albeit by implicitly converting to numpy arrays instead of
+    # dispatching to the array library).
+    try:
+        np.asarray(a_xp)
+        np.asarray(b_xp)
+        numpy_as_array_works = True
+    except (TypeError, RuntimeError, ValueError):
+        # PyTorch with CUDA device and CuPy raise TypeError consistently.
+        # array-api-strict chose to raise RuntimeError instead. NumPy raises
+        # a ValueError if the `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
+        numpy_as_array_works = False
+
+    if numpy_as_array_works:
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_1,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+        assert_allclose(
+            metric_xp_mixed_2,
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
+
+        def _check_metric_matches(xp_val, np_val):
+            assert_allclose(
+                _convert_to_numpy(xp.asarray(xp_val), xp),
+                np_val,
+                atol=_atol_for_type(dtype_name),
+            )
+
+        # Handle cases where there are multiple return values, e.g. roc_curve:
+        if isinstance(metric_xp, tuple):
+            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
+                _check_metric_matches(metric_xp_val, metric_np_val)
+        else:
+            _check_metric_matches(metric_xp, metric_np)
+
+
+def check_array_api_binary_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([0, 0, 1, 1])
+    y_pred_np = np.array([0, 1, 0, 1])
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
+def check_array_api_multiclass_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([0, 1, 2, 3])
+    y_pred_np = np.array([0, 1, 0, 2])
+
+    additional_params = {
+        "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
+    }
+    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
+        metric=metric,
+        params=additional_params,
+    )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
+
+        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
+
+
+def check_array_api_multilabel_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
+
+    additional_params = {
+        "average": ("micro", "macro", "weighted"),
+        "beta": (0.2, 0.5, 0.8),
+    }
+    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
+        metric=metric,
+        params=additional_params,
+    )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
+
+        sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
+
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
+
+
+def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
+    if func_name == "mean_poisson_deviance" and sp_version < parse_version("1.14.0"):
+        pytest.skip(
+            "mean_poisson_deviance's dependency `xlogy` is available as of scipy 1.14.0"
+        )
+
+    y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
+    y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
+
+    metric_kwargs = {}
+    metric_params = signature(metric).parameters
+
+    if "sample_weight" in metric_params:
+        metric_kwargs["sample_weight"] = None
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        **metric_kwargs,
+    )
+
+    if "sample_weight" in metric_params:
+        metric_kwargs["sample_weight"] = np.array(
+            [0.1, 2.0, 1.5, 0.5], dtype=dtype_name
+        )
+
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            **metric_kwargs,
+        )
+
+
+def check_array_api_regression_metric_multioutput(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([[1, 3, 2], [1, 2, 2]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 4, 4], [1, 1, 1]], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        multioutput=np.array([0.1, 0.3, 0.7], dtype=dtype_name),
+    )
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        multioutput="raw_values",
+    )
+
+
+def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
+    X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
+    Y_np = np.array([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], dtype=dtype_name)
+
+    metric_kwargs = {}
+    if "dense_output" in signature(metric).parameters:
+        metric_kwargs["dense_output"] = False
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=X_np,
+            b_np=Y_np,
+            **metric_kwargs,
+        )
+        metric_kwargs["dense_output"] = True
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=X_np,
+        b_np=Y_np,
+        **metric_kwargs,
+    )
+
+
+array_api_metric_checkers = {
+    accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    f1_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    jaccard_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    multilabel_confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    precision_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    recall_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    zero_one_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    hamming_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    mean_tweedie_deviance: [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
+    r2_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    cosine_similarity: [check_array_api_metric_pairwise],
+    explained_variance_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_pinball_loss: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_squared_log_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    median_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    d2_tweedie_score: [
+        check_array_api_regression_metric,
+    ],
+    paired_cosine_distances: [check_array_api_metric_pairwise],
+    mean_poisson_deviance: [check_array_api_regression_metric],
+    additive_chi2_kernel: [check_array_api_metric_pairwise],
+    mean_gamma_deviance: [check_array_api_regression_metric],
+    max_error: [check_array_api_regression_metric],
+    mean_absolute_percentage_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    chi2_kernel: [check_array_api_metric_pairwise],
+    paired_euclidean_distances: [check_array_api_metric_pairwise],
+    cosine_distances: [check_array_api_metric_pairwise],
+    euclidean_distances: [check_array_api_metric_pairwise],
+    linear_kernel: [check_array_api_metric_pairwise],
+    polynomial_kernel: [check_array_api_metric_pairwise],
+    rbf_kernel: [check_array_api_metric_pairwise],
+    root_mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    root_mean_squared_log_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    sigmoid_kernel: [check_array_api_metric_pairwise],
+    pairwise_kernels: [check_array_api_metric_pairwise],
+    roc_curve: [
+        check_array_api_binary_classification_metric,
+    ],
+    pairwise_distances: [check_array_api_metric_pairwise],
+}
+
+
+def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
+    for metric, checkers in metric_checkers.items():
+        for checker in checkers:
+            yield metric, checker
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
+def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    # TODO: Remove once array-api-strict > 2.3.1
+    # https://github.com/data-apis/array-api-strict/issues/134 has been fixed but
+    # not released yet.
+    if (
+        getattr(metric, "__name__", None) == "median_absolute_error"
+        and array_namespace == "array_api_strict"
+    ):
+        try:
+            import array_api_strict
+        except ImportError:
+            pass
+        else:
+            if device == array_api_strict.Device("device1"):
+                pytest.xfail(
+                    "`_weighted_percentile` is affected by array_api_strict bug when "
+                    "indexing with tuple of arrays on non-'CPU_DEVICE' devices."
+                )
+    check_func(metric, array_namespace, device, dtype_name)
+
+
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+@pytest.mark.parametrize("metric_name", sorted(ALL_METRICS))
+def test_metrics_dataframe_series(metric_name, df_lib_name):
+    df_lib = pytest.importorskip(df_lib_name)
+
+    y_pred = df_lib.Series([0.0, 1.0, 0, 1.0])
+    y_true = df_lib.Series([1.0, 0.0, 0.0, 0.0])
+
+    metric = ALL_METRICS[metric_name]
+    try:
+        expected_metric = metric(y_pred.to_numpy(), y_true.to_numpy())
+    except ValueError:
+        pytest.skip(f"{metric_name} can not deal with 1d inputs")
+
+    assert_allclose(metric(y_pred, y_true), expected_metric)
+
+
+def _get_metric_kwargs_for_array_api_testing(metric, params):
+    """Helper function to enable specifying a variety of additional params and
+    their corresponding values, so that they can be passed to a metric function
+    when testing for array api compliance."""
+    metric_kwargs_combinations = [{}]
+    for param, values in params.items():
+        if param not in signature(metric).parameters:
+            continue
+
+        new_combinations = []
+        for kwargs in metric_kwargs_combinations:
+            for value in values:
+                new_kwargs = kwargs.copy()
+                new_kwargs[param] = value
+                new_combinations.append(new_kwargs)
+
+        metric_kwargs_combinations = new_combinations
+
+    return metric_kwargs_combinations
+
+
+@pytest.mark.parametrize("name", sorted(ALL_METRICS))
+def test_returned_value_consistency(name):
+    """Ensure that the returned values of all metrics are consistent.
+
+    It can either be a float, a numpy array, or a tuple of floats or numpy arrays.
+    It should not be a numpy float64 or float32.
+    """
+
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=(20,))
+    y_pred = rng.randint(0, 2, size=(20,))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    if name in METRIC_UNDEFINED_BINARY:
+        y_true = rng.randint(0, 2, size=(20, 3))
+        y_pred = rng.randint(0, 2, size=(20, 3))
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_pred)
+
+    assert isinstance(score, (float, np.ndarray, tuple))
+    assert not isinstance(score, (np.float64, np.float32))
+
+    if isinstance(score, tuple):
+        assert all(isinstance(v, float) for v in score) or all(
+            isinstance(v, np.ndarray) for v in score
+        )

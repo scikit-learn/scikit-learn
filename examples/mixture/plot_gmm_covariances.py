@@ -27,13 +27,11 @@ dimensions.
 
 """
 
-# Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
-# Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 from sklearn import datasets

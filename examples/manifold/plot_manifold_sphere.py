@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =============================================
 Manifold Learning methods on a severed sphere
@@ -26,18 +25,20 @@ that of representing a flat map of the Earth, as with
 
 """
 
-# Author: Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
-import numpy as np
+
 import matplotlib.pyplot as plt
-from matplotlib.ticker import NullFormatter
-from sklearn import manifold
-from sklearn.utils import check_random_state
 
 # Unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+import numpy as np
+from matplotlib.ticker import NullFormatter
+
+from sklearn import manifold
+from sklearn.utils import check_random_state
 
 # Variables for manifold learning.
 n_neighbors = 10
@@ -49,7 +50,7 @@ p = random_state.rand(n_samples) * (2 * np.pi - 0.55)
 t = random_state.rand(n_samples) * np.pi
 
 # Sever the poles from the sphere.
-indices = (t < (np.pi - (np.pi / 8))) & (t > ((np.pi / 8)))
+indices = (t < (np.pi - (np.pi / 8))) & (t > (np.pi / 8))
 colors = p[indices]
 x, y, z = (
     np.sin(t[indices]) * np.cos(p[indices]),
@@ -77,7 +78,7 @@ for i, method in enumerate(methods):
     t0 = time()
     trans_data = (
         manifold.LocallyLinearEmbedding(
-            n_neighbors=n_neighbors, n_components=2, method=method
+            n_neighbors=n_neighbors, n_components=2, method=method, random_state=42
         )
         .fit_transform(sphere_data)
         .T
@@ -111,7 +112,7 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, max_iter=100, n_init=1, normalized_stress="auto")
+mds = manifold.MDS(2, max_iter=100, n_init=1, random_state=42)
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
@@ -125,7 +126,9 @@ plt.axis("tight")
 
 # Perform Spectral Embedding.
 t0 = time()
-se = manifold.SpectralEmbedding(n_components=2, n_neighbors=n_neighbors)
+se = manifold.SpectralEmbedding(
+    n_components=2, n_neighbors=n_neighbors, random_state=42
+)
 trans_data = se.fit_transform(sphere_data).T
 t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))

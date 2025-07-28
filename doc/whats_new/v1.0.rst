@@ -2,12 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_0:
+
+===========
+Version 1.0
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_0_2:
 
 Version 1.0.2
 =============
 
-**In Development**
+**December 2021**
 
 - |Fix| :class:`cluster.Birch`,
   :class:`feature_selection.RFECV`, :class:`ensemble.RandomForestRegressor`,
@@ -96,11 +107,11 @@ Changelog
   This fixes a regression introduced in 1.0.0 with respect to 0.24.2.
   :pr:`21694` by :user:`Julien Jerphanion <jjerphan>`.
 
-- |Fix| All :class:`sklearn.metrics.MinkowskiDistance` now accepts a weight
+- |Fix| All `sklearn.metrics.MinkowskiDistance` now accepts a weight
   parameter that makes it possible to write code that behaves consistently both
-  with scipy 1.8 and earlier versions. In turns this means that all
+  with scipy 1.8 and earlier versions. In turn this means that all
   neighbors-based estimators (except those that use `algorithm="kd_tree"`) now
-  accept a weight parameter with `metric="minknowski"` to yield results that
+  accept a weight parameter with `metric="minkowski"` to yield results that
   are always consistent with `scipy.spatial.distance.cdist`.
   :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
 
@@ -113,7 +124,7 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
+- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly support
   read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
@@ -147,9 +158,6 @@ Version 1.0.1
 
 **October 2021**
 
-Changelog
----------
-
 Fixed models
 ------------
 
@@ -171,7 +179,7 @@ Fixed models
 
 - |Fix| Fixed a bug in :class:`calibration.CalibratedClassifierCV` with
   `method="sigmoid"` that was ignoring the `sample_weight` when computing the
-  the Bayesian priors.
+  Bayesian priors.
   :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cluster`
@@ -205,8 +213,8 @@ Fixed models
   longer checks for uppercase characters in the provided vocabulary. :pr:`21251`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Fixed a bug in :class:`feature_extraction.CountVectorizer` and
-  :class:`feature_extraction.TfidfVectorizer` by raising an
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer` by raising an
   error when 'min_idf' or 'max_idf' are floating-point numbers greater than 1.
   :pr:`20752` by :user:`Alek Lefebvre <AlekLefebvre>`.
 
@@ -250,7 +258,7 @@ Fixed models
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.validation._check_sample_weight` can perform a
+- |Enhancement| `utils.validation._check_sample_weight` can perform a
   non-negativity check on the sample weights. It can be turned on
   using the only_non_negative bool parameter.
   Estimators that check for non-negative weights are updated:
@@ -262,7 +270,7 @@ Fixed models
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
-- |Fix| Solve a bug in :func:`~sklearn.utils.metaestimators.if_delegate_has_method`
+- |Fix| Solve a bug in ``sklearn.utils.metaestimators.if_delegate_has_method``
   where the underlying check for an attribute did not work with NumPy arrays.
   :pr:`21145` by :user:`Zahlii <Zahlii>`.
 
@@ -280,12 +288,6 @@ Version 1.0.0
 =============
 
 **September 2021**
-
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
-
-.. include:: changelog_legend.inc
 
 Minimal dependencies
 --------------------
@@ -417,7 +419,8 @@ Changelog
 
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
   These feature names are compared to names seen in non-`fit` methods, e.g.
-  `transform` and will raise a `FutureWarning` if they are not consistent.
+  `transform` and will raise a `FutureWarning` if they are not consistent, see also
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
   These ``FutureWarning`` s will become ``ValueError`` s in 1.2. :pr:`18010` by
   `Thomas Fan`_.
 
@@ -569,7 +572,7 @@ Changelog
 - |Fix| :func:`datasets.fetch_kddcup99` returns dataframes when
   `return_X_y=True` and `as_frame=True`. :pr:`19011` by `Thomas Fan`_.
 
-- |API| Deprecates :func:`datasets.load_boston` in 1.0 and it will be removed
+- |API| Deprecates `datasets.load_boston` in 1.0 and it will be removed
   in 1.2. Alternative code snippets to load similar datasets are provided.
   Please report to the docstring of the function for details.
   :pr:`20729` by `Guillaume Lemaitre`_.
@@ -587,7 +590,7 @@ Changelog
 - |Fix| Fixes incorrect multiple data-conversion warnings when clustering
   boolean data. :pr:`19046` by :user:`Surya Prakash <jdsurya>`.
 
-- |Fix| Fixed :func:`dict_learning`, used by
+- |Fix| Fixed :func:`decomposition.dict_learning`, used by
   :class:`decomposition.DictionaryLearning`, to ensure determinism of the
   output. Achieved by flipping signs of the SVD output which is used to
   initialize the code. :pr:`18433` by :user:`Bruno Charron <brcharron>`.
@@ -613,7 +616,7 @@ Changelog
   to `alpha` instead of 1.0 by default starting from version 1.2 :pr:`19159` by
   :user:`Benoît Malézieux <bmalezieux>`.
 
-- |API| Rename variable names in :class:`KernelPCA` to improve
+- |API| Rename variable names in :class:`decomposition.KernelPCA` to improve
   readability. `lambdas_` and `alphas_` are renamed to `eigenvalues_`
   and `eigenvectors_`, respectively. `lambdas_` and `alphas_` are
   deprecated and will be removed in 1.2.
@@ -744,7 +747,7 @@ Changelog
   :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
 
 - |Enhancement| Add kwargs to format ICE and PD lines separately in partial
-  dependence plots :func:`inspection.plot_partial_dependence` and
+  dependence plots `inspection.plot_partial_dependence` and
   :meth:`inspection.PartialDependenceDisplay.plot`. :pr:`19428` by :user:`Mehdi
   Hamoumi <mhham>`.
 
@@ -754,7 +757,7 @@ Changelog
 
 - |API| :class:`inspection.PartialDependenceDisplay` exposes a class method:
   :func:`~inspection.PartialDependenceDisplay.from_estimator`.
-  :func:`inspection.plot_partial_dependence` is deprecated in favor of the
+  `inspection.plot_partial_dependence` is deprecated in favor of the
   class method and will be removed in 1.2. :pr:`20959` by `Thomas Fan`_.
 
 :mod:`sklearn.kernel_approximation`
@@ -776,7 +779,7 @@ Changelog
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
-  a kernelized One Class SVM while benefitting from a linear
+  a kernelized One Class SVM while benefiting from a linear
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
@@ -939,7 +942,7 @@ Changelog
   :pr:`18328` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Alonso Silva Allende <alonsosilvaallende>`.
 
-- |Fix| avoid overflow in :func:`metrics.cluster.adjusted_rand_score` with
+- |Fix| avoid overflow in :func:`metrics.adjusted_rand_score` with
   large amount of data. :pr:`20312` by :user:`Divyanshu Deoli
   <divyanshudeoli>`.
 
@@ -947,7 +950,7 @@ Changelog
   :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
   :func:`~metrics.ConfusionMatrixDisplay.from_predictions` allowing to create
   a confusion matrix plot using an estimator or the predictions.
-  :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
+  `metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
@@ -955,7 +958,7 @@ Changelog
   :func:`~metrics.PrecisionRecallDisplay.from_estimator` and
   :func:`~metrics.PrecisionRecallDisplay.from_predictions` allowing to create
   a precision-recall curve using an estimator or the predictions.
-  :func:`metrics.plot_precision_recall_curve` is deprecated in favor of these
+  `metrics.plot_precision_recall_curve` is deprecated in favor of these
   two class methods and will be removed in 1.2.
   :pr:`20552` by `Guillaume Lemaitre`_.
 
@@ -963,7 +966,7 @@ Changelog
   :func:`~metrics.DetCurveDisplay.from_estimator` and
   :func:`~metrics.DetCurveDisplay.from_predictions` allowing to create
   a confusion matrix plot using an estimator or the predictions.
-  :func:`metrics.plot_det_curve` is deprecated in favor of these two
+  `metrics.plot_det_curve` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`19278` by `Guillaume Lemaitre`_.
 
@@ -990,7 +993,7 @@ Changelog
 - |Enhancement| warn only once in the main process for per-split fit failures
   in cross-validation. :pr:`20619` by :user:`Loïc Estève <lesteve>`
 
-- |Enhancement| The :class:`model_selection.BaseShuffleSplit` base class is
+- |Enhancement| The `model_selection.BaseShuffleSplit` base class is
   now public. :pr:`20056` by :user:`pabloduque0`.
 
 - |Fix| Avoid premature overflow in :func:`model_selection.train_test_split`.
@@ -1020,13 +1023,13 @@ Changelog
   :pr:`19473` by :user:`jiefangxuanyan <jiefangxuanyan>` and
   :user:`Julien Jerphanion <jjerphan>`.
 
-- |FIX| :class:`neighbors.DistanceMetric` subclasses now support readonly
+- |FIX| `neighbors.DistanceMetric` subclasses now support readonly
   memory-mapped datasets. :pr:`19883` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
   and :class:`neighbors.RadiusNeighborsRegressor` do not validate `weights` in
-  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  `__init__` and validate `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 - |API| The parameter `kwargs` of :class:`neighbors.RadiusNeighborsClassifier` is
@@ -1078,7 +1081,7 @@ Changelog
 
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
-  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
+  :pr:`19934` by :user:`Hleb Levitski <glevv>`.
 
 - |Efficiency| The implementation of `fit` for
   :class:`preprocessing.PolynomialFeatures` transformer is now faster. This is
@@ -1160,7 +1163,7 @@ Changelog
   :user:`Clifford Akai-Nettey<cliffordEmmanuel>`.
 
 - |Enhancement| Added helper decorator :func:`utils.metaestimators.available_if`
-  to provide flexiblity in metaestimators making methods available or
+  to provide flexibility in metaestimators making methods available or
   unavailable on the basis of state, in a more readable way.
   :pr:`19948` by `Joel Nothman`_.
 
@@ -1174,15 +1177,15 @@ Changelog
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| The docstrings of propreties that are decorated with
+- |Fix| The docstrings of properties that are decorated with
   :func:`utils.deprecated` are now properly wrapped. :pr:`20385` by `Thomas
   Fan`_.
 
-- |Fix| :func:`utils.stats._weighted_percentile` now correctly ignores
+- |Fix| `utils.stats._weighted_percentile` now correctly ignores
   zero-weighted observations smaller than the smallest observation with
   positive weight for ``percentile=0``. Affected classes are
   :class:`dummy.DummyRegressor` for ``quantile=0`` and
-  :class:`ensemble.HuberLossFunction` and :class:`ensemble.HuberLossFunction`
+  `ensemble.HuberLossFunction` and `ensemble.HuberLossFunction`
   for ``alpha=0``. :pr:`20528` by :user:`Malte Londschien <mlondschien>`.
 
 - |Fix| :func:`utils._safe_indexing` explicitly takes a dataframe copy when
@@ -1194,7 +1197,7 @@ Changelog
   :func:`model_selection.cross_val_predict`).
   :pr:`20673` by :user:`Joris Van den Bossche  <jorisvandenbossche>`.
 
-- |Fix| Fix a regression in :func:`utils.is_scalar_nan` where large Python
+- |Fix| Fix a regression in `utils.is_scalar_nan` where large Python
   numbers would raise an error due to overflow in C types (`np.float64` or
   `np.int64`).
   :pr:`20727` by `Guillaume Lemaitre`_.
@@ -1208,12 +1211,11 @@ Changelog
   manager instead. Note that these functions were not documented and part from
   the public API. :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
 
-- |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
+- |API| Fixed several bugs in `utils.graph.graph_shortest_path`, which is
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
   by `Tom Dupre la Tour`_.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 0.24, including:
@@ -1235,7 +1237,7 @@ Markou, EricEllwanger, Eric Fiegel, Erich Schubert, Ezri-Mudde, Fatos Morina,
 Felipe Rodrigues, Felix Hafner, Fenil Suchak, flyingdutchman23, Flynn, Fortune
 Uwha, Francois Berenger, Frankie Robertson, Frans Larsson, Frederick Robinson,
 frellwan, Gabriel S Vicente, Gael Varoquaux, genvalen, Geoffrey Thomas,
-geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz, gregorystrubel,
+geroldcsendes, Hleb Levitski, Glen, Glòria Macià Muñoz, gregorystrubel,
 groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak, Hans Moritz
 Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura, Hassan
 Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko Ashimine,

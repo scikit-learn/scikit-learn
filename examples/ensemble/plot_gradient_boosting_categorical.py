@@ -10,18 +10,25 @@ performances of :class:`~ensemble.HistGradientBoostingRegressor` with
 different encoding strategies for categorical features. In
 particular, we will evaluate:
 
-- dropping the categorical features
-- using a :class:`~preprocessing.OneHotEncoder`
-- using an :class:`~preprocessing.OrdinalEncoder` and treat categories as
-  ordered, equidistant quantities
-- using an :class:`~preprocessing.OrdinalEncoder` and rely on the :ref:`native
-  category support <categorical_support_gbdt>` of the
+- "Dropped": dropping the categorical features;
+- "One Hot": using a :class:`~preprocessing.OneHotEncoder`;
+- "Ordinal": using an :class:`~preprocessing.OrdinalEncoder` and treat
+  categories as ordered, equidistant quantities;
+- "Native": using an :class:`~preprocessing.OrdinalEncoder` and rely on the
+  :ref:`native category support <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
-We will work with the Ames Lowa Housing dataset which consists of numerical
+We will work with the Ames Iowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 
+See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
+
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load Ames Housing dataset
@@ -30,7 +37,7 @@ and categorical features, where the houses' sales prices is the target.
 # are either categorical or numerical:
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True)
 
 # Select only a subset of features of X to make the example faster to run
 categorical_columns_subset = [
@@ -77,15 +84,15 @@ print(f"Number of numerical features: {n_numerical_features}")
 # As a baseline, we create an estimator where the categorical features are
 # dropped:
 
+from sklearn.compose import make_column_selector, make_column_transformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.compose import make_column_transformer
-from sklearn.compose import make_column_selector
 
 dropper = make_column_transformer(
     ("drop", make_column_selector(dtype_include="category")), remainder="passthrough"
 )
 hist_dropped = make_pipeline(dropper, HistGradientBoostingRegressor(random_state=42))
+hist_dropped
 
 # %%
 # Gradient boosting estimator with one-hot encoding
@@ -106,6 +113,7 @@ one_hot_encoder = make_column_transformer(
 hist_one_hot = make_pipeline(
     one_hot_encoder, HistGradientBoostingRegressor(random_state=42)
 )
+hist_one_hot
 
 # %%
 # Gradient boosting estimator with ordinal encoding
@@ -114,8 +122,9 @@ hist_one_hot = make_pipeline(
 # were ordered quantities, i.e. the categories will be encoded as 0, 1, 2,
 # etc., and treated as continuous features.
 
-from sklearn.preprocessing import OrdinalEncoder
 import numpy as np
+
+from sklearn.preprocessing import OrdinalEncoder
 
 ordinal_encoder = make_column_transformer(
     (
@@ -132,92 +141,123 @@ ordinal_encoder = make_column_transformer(
 hist_ordinal = make_pipeline(
     ordinal_encoder, HistGradientBoostingRegressor(random_state=42)
 )
+hist_ordinal
 
 # %%
 # Gradient boosting estimator with native categorical support
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
 # that will natively handle categorical features. This estimator will not treat
-# categorical features as ordered quantities.
+# categorical features as ordered quantities. We set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features.
 #
-# Since the :class:`~ensemble.HistGradientBoostingRegressor` requires category
-# values to be encoded in `[0, n_unique_categories - 1]`, we still rely on an
-# :class:`~preprocessing.OrdinalEncoder` to pre-process the data.
-#
-# The main difference between this pipeline and the previous one is that in
-# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
-# which features are categorical.
+# The main difference between this estimator and the previous one is that in
+# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` detect
+# which features are categorical from the DataFrame columns' dtypes.
 
-# The ordinal encoder will first output the categorical features, and then the
-# continuous (passed-through) features
-
-hist_native = make_pipeline(
-    ordinal_encoder,
-    HistGradientBoostingRegressor(
-        random_state=42,
-        categorical_features=categorical_columns,
-    ),
-).set_output(transform="pandas")
+hist_native = HistGradientBoostingRegressor(
+    random_state=42, categorical_features="from_dtype"
+)
+hist_native
 
 # %%
 # Model comparison
 # ----------------
-# Finally, we evaluate the models using cross validation. Here we compare the
-# models performance in terms of
-# :func:`~metrics.mean_absolute_percentage_error` and fit times.
+# Here we use :term:`cross validation` to compare the models performance in
+# terms of :func:`~metrics.mean_absolute_percentage_error` and fit times. In the
+# upcoming plots, error bars represent 1 standard deviation as computed across
+# folds.
 
 from sklearn.model_selection import cross_validate
-import matplotlib.pyplot as plt
 
-scoring = "neg_mean_absolute_percentage_error"
-n_cv_folds = 3
+common_params = {"cv": 5, "scoring": "neg_mean_absolute_percentage_error", "n_jobs": -1}
 
-dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
-native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
-
-
-def plot_results(figure_title):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
-
-    plot_info = [
-        ("fit_time", "Fit times (s)", ax1, None),
-        ("test_score", "Mean Absolute Percentage Error", ax2, None),
-    ]
-
-    x, width = np.arange(4), 0.9
-    for key, title, ax, y_limit in plot_info:
-        items = [
-            dropped_result[key],
-            one_hot_result[key],
-            ordinal_result[key],
-            native_result[key],
-        ]
-
-        mape_cv_mean = [np.mean(np.abs(item)) for item in items]
-        mape_cv_std = [np.std(item) for item in items]
-
-        ax.bar(
-            x=x,
-            height=mape_cv_mean,
-            width=width,
-            yerr=mape_cv_std,
-            color=["C0", "C1", "C2", "C3"],
-        )
-        ax.set(
-            xlabel="Model",
-            title=title,
-            xticks=x,
-            xticklabels=["Dropped", "One Hot", "Ordinal", "Native"],
-            ylim=y_limit,
-        )
-    fig.suptitle(figure_title)
-
-
-plot_results("Gradient Boosting on Ames Housing")
+dropped_result = cross_validate(hist_dropped, X, y, **common_params)
+one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
+ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
+native_result = cross_validate(hist_native, X, y, **common_params)
+results = [
+    ("Dropped", dropped_result),
+    ("One Hot", one_hot_result),
+    ("Ordinal", ordinal_result),
+    ("Native", native_result),
+]
 
 # %%
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+
+
+def plot_performance_tradeoff(results, title):
+    fig, ax = plt.subplots()
+    markers = ["s", "o", "^", "x"]
+
+    for idx, (name, result) in enumerate(results):
+        test_error = -result["test_score"]
+        mean_fit_time = np.mean(result["fit_time"])
+        mean_score = np.mean(test_error)
+        std_fit_time = np.std(result["fit_time"])
+        std_score = np.std(test_error)
+
+        ax.scatter(
+            result["fit_time"],
+            test_error,
+            label=name,
+            marker=markers[idx],
+        )
+        ax.scatter(
+            mean_fit_time,
+            mean_score,
+            color="k",
+            marker=markers[idx],
+        )
+        ax.errorbar(
+            x=mean_fit_time,
+            y=mean_score,
+            yerr=std_score,
+            c="k",
+            capsize=2,
+        )
+        ax.errorbar(
+            x=mean_fit_time,
+            y=mean_score,
+            xerr=std_fit_time,
+            c="k",
+            capsize=2,
+        )
+
+    ax.set_xscale("log")
+
+    nticks = 7
+    x0, x1 = np.log10(ax.get_xlim())
+    ticks = np.logspace(x0, x1, nticks)
+    ax.set_xticks(ticks)
+    ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%1.1e"))
+    ax.minorticks_off()
+
+    ax.annotate(
+        "  best\nmodels",
+        xy=(0.05, 0.05),
+        xycoords="axes fraction",
+        xytext=(0.1, 0.15),
+        textcoords="axes fraction",
+        arrowprops=dict(arrowstyle="->", lw=1.5),
+    )
+    ax.set_xlabel("Time to fit (seconds)")
+    ax.set_ylabel("Mean Absolute Percentage Error")
+    ax.set_title(title)
+    ax.legend()
+    plt.show()
+
+
+plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
+
+# %%
+# In the plot above, the "best models" are those that are closer to the
+# down-left corner, as indicated by the arrow. Those models would indeed
+# correspond to faster fitting and lower error.
+#
 # We see that the model with one-hot-encoded data is by far the slowest. This
 # is to be expected, since one-hot-encoding creates one additional feature per
 # category value (for each categorical feature), and thus more split points
@@ -255,19 +295,31 @@ plot_results("Gradient Boosting on Ames Housing")
 # of trees and the depth of each tree.
 
 for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
-    pipe.set_params(
-        histgradientboostingregressor__max_depth=3,
-        histgradientboostingregressor__max_iter=15,
-    )
+    if pipe is hist_native:
+        # The native model does not use a pipeline so, we can set the parameters
+        # directly.
+        pipe.set_params(max_depth=3, max_iter=15)
+    else:
+        pipe.set_params(
+            histgradientboostingregressor__max_depth=3,
+            histgradientboostingregressor__max_iter=15,
+        )
 
-dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
-one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
-ordinal_result = cross_validate(hist_ordinal, X, y, cv=n_cv_folds, scoring=scoring)
-native_result = cross_validate(hist_native, X, y, cv=n_cv_folds, scoring=scoring)
+dropped_result = cross_validate(hist_dropped, X, y, **common_params)
+one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
+ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
+native_result = cross_validate(hist_native, X, y, **common_params)
+results_underfit = [
+    ("Dropped", dropped_result),
+    ("One Hot", one_hot_result),
+    ("Ordinal", ordinal_result),
+    ("Native", native_result),
+]
 
-plot_results("Gradient Boosting on Ames Housing (few and small trees)")
-
-plt.show()
+# %%
+plot_performance_tradeoff(
+    results_underfit, "Gradient Boosting on Ames Housing (few and shallow trees)"
+)
 
 # %%
 # The results for these under-fitting models confirm our previous intuition:

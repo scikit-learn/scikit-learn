@@ -1,11 +1,11 @@
-"""Random Projection transformers.
+"""Random projection transformers.
 
-Random Projections are a simple and computationally efficient way to
+Random projections are a simple and computationally efficient way to
 reduce the dimensionality of the data by trading a controlled amount
 of accuracy (as additional variance) for faster processing times and
 smaller model sizes.
 
-The dimensions and distribution of Random Projections matrices are
+The dimensions and distribution of random projections matrices are
 controlled so as to preserve the pairwise distances between any two
 samples of the dataset.
 
@@ -20,33 +20,35 @@ The main theoretical result behind the efficiency of random projection is the
   much lower dimension in such a way that distances between the points are
   nearly preserved. The map used for the embedding is at least Lipschitz,
   and can even be taken to be an orthogonal projection.
-
 """
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>,
-#          Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 import scipy.sparse as sp
+from scipy import linalg
 
-from .base import BaseEstimator, TransformerMixin
-from .base import ClassNamePrefixFeaturesOutMixin
-
+from .base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .exceptions import DataDimensionalityWarning
 from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
-from .exceptions import DataDimensionalityWarning
+from .utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
-    "SparseRandomProjection",
     "GaussianRandomProjection",
+    "SparseRandomProjection",
     "johnson_lindenstrauss_min_dim",
 ]
 
@@ -55,7 +57,8 @@ __all__ = [
     {
         "n_samples": ["array-like", Interval(Real, 1, None, closed="left")],
         "eps": ["array-like", Interval(Real, 0, 1, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to.
@@ -64,6 +67,8 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     distance between two points by a factor (1 +- eps) in a euclidean space
     with good probability. The projection `p` is an eps-embedding as defined
     by:
+
+    .. code-block:: text
 
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
@@ -74,6 +79,8 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     The minimum number of components to guarantee the eps-embedding is
     given by:
+
+    .. code-block:: text
 
       n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
 
@@ -115,7 +122,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
     >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
-    663
+    np.int64(663)
 
     >>> johnson_lindenstrauss_min_dim(1e6, eps=[0.5, 0.1, 0.01])
     array([    663,   11841, 1112658])
@@ -298,7 +305,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -356,6 +363,7 @@ class BaseRandomProjection(
             components = components.toarray()
         return linalg.pinv(components, check_finite=False)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix.
 
@@ -374,9 +382,8 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        self._validate_params()
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
 
         n_samples, n_features = X.shape
@@ -453,10 +460,11 @@ class BaseRandomProjection(
         inverse_components = self._compute_inverse_components()
         return X @ inverse_components.T
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.input_tags.sparse = True
+        return tags
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -593,8 +601,12 @@ class GaussianRandomProjection(BaseRandomProjection):
             Projected array.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            reset=False,
+            dtype=[np.float64, np.float32],
         )
 
         return X @ self.components_.T
@@ -611,9 +623,11 @@ class SparseRandomProjection(BaseRandomProjection):
     If we note `s = 1 / density` the components of the random matrix are
     drawn from:
 
-      - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
-      -  0                              with probability 1 - 1 / s
-      - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+    .. code-block:: text
+
+      -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+       0                              with probability 1 - 1 / s
+      +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
 
     Read more in the :ref:`User Guide <sparse_random_matrix>`.
 
@@ -732,7 +746,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    0.0182...
+    np.float64(0.0182)
     """
 
     _parameter_constraints: dict = {
@@ -799,8 +813,12 @@ class SparseRandomProjection(BaseRandomProjection):
             `dense_output = False`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            reset=False,
+            dtype=[np.float64, np.float32],
         )
 
         return safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)

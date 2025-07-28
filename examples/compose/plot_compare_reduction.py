@@ -20,23 +20,23 @@ fitting of a transformer is costly.
 
 """
 
-# Authors: Robert McGibbon
-#          Joel Nothman
-#          Guillaume Lemaitre
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Illustration of ``Pipeline`` and ``GridSearchCV``
 ###############################################################################
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import load_digits
+from sklearn.decomposition import NMF, PCA
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
-from sklearn.decomposition import PCA, NMF
-from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import LinearSVC
 
 X, y = load_digits(return_X_y=True)
 
@@ -92,7 +92,8 @@ plt.show()
 
 # %%
 # Caching transformers within a ``Pipeline``
-###############################################################################
+# ##########################################
+#
 # It is sometimes worthwhile storing the state of a specific transformer
 # since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
 # such situations. Therefore, we use the argument ``memory`` to enable caching.
@@ -103,8 +104,9 @@ plt.show()
 #     cache. Hence, use the ``memory`` constructor parameter when the fitting
 #     of a transformer is costly.
 
-from joblib import Memory
 from shutil import rmtree
+
+from joblib import Memory
 
 # Create a temporary folder to store the transformers of the pipeline
 location = "cachedir"

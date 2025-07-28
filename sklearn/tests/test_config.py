@@ -3,8 +3,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from sklearn import get_config, set_config, config_context
-from sklearn.utils.parallel import delayed, Parallel
+import sklearn
+from sklearn import config_context, get_config, set_config
+from sklearn.utils.fixes import _IS_WASM
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def test_config_context():
@@ -17,6 +19,8 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "enable_metadata_routing": False,
+        "skip_parameter_validation": False,
     }
 
     # Not using as a context manager affects nothing
@@ -33,6 +37,8 @@ def test_config_context():
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
+            "enable_metadata_routing": False,
+            "skip_parameter_validation": False,
         }
     assert get_config()["assume_finite"] is False
 
@@ -66,6 +72,8 @@ def test_config_context():
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
+        "enable_metadata_routing": False,
+        "skip_parameter_validation": False,
     }
 
     # No positional arguments
@@ -130,6 +138,7 @@ def test_config_threadsafe_joblib(backend):
     assert items == [False, True, False, True]
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
 def test_config_threadsafe():
     """Uses threads directly to test that the global config does not change
     between threads. Same test as `test_config_threadsafe_joblib` but with
@@ -145,3 +154,15 @@ def test_config_threadsafe():
         ]
 
     assert items == [False, True, False, True]
+
+
+def test_config_array_api_dispatch_error_scipy(monkeypatch):
+    """Check error when SciPy is too old"""
+    monkeypatch.setattr(sklearn.utils._array_api.scipy, "__version__", "1.13.0")
+
+    with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
+        with config_context(array_api_dispatch=True):
+            pass
+
+    with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
+        set_config(array_api_dispatch=True)

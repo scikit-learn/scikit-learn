@@ -1,17 +1,15 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Generalized Linear Models with Exponential Dispersion Family
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# some parts and tricks stolen from other sklearn files.
-# License: BSD 3 clause
 
 from numbers import Integral, Real
 
 import numpy as np
 import scipy.optimize
 
-from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 from ..._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
@@ -19,13 +17,15 @@ from ..._loss.loss import (
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
 )
-from ...base import BaseEstimator, RegressorMixin
+from ...base import BaseEstimator, RegressorMixin, _fit_context
 from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
+from ...utils.fixes import _get_additional_lbfgs_options_dict
 from ...utils.optimize import _check_optimize_result
-from ...utils.validation import _check_sample_weight, check_is_fitted
+from ...utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from .._linear_loss import LinearModelLoss
+from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
@@ -124,8 +124,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         HalfSquaredError         identity  y any real number
         HalfPoissonLoss          log       0 <= y
         HalfGammaLoss            log       0 < y
-        HalfTweedieLoss          log       dependend on tweedie power
-        HalfTweedieLossIdentity  identity  dependend on tweedie power
+        HalfTweedieLoss          log       dependent on tweedie power
+        HalfTweedieLossIdentity  identity  dependent on tweedie power
         =======================  ========  ==========================
 
         The link function of the GLM, i.e. mapping from linear predictor
@@ -168,6 +168,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self.warm_start = warm_start
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit a Generalized Linear Model.
 
@@ -187,9 +188,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        self._validate_params()
-
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csc", "csr"],
@@ -208,10 +208,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             loss_dtype = min(max(y.dtype, X.dtype), np.float64)
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
-        # TODO: We could support samples_weight=None as the losses support it.
-        # Note that _check_sample_weight calls check_array(order="C") required by
-        # losses.
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
+        if sample_weight is not None:
+            # Note that _check_sample_weight calls check_array(order="C") required by
+            # losses.
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
         n_samples, n_features = X.shape
         self._base_loss = self._get_loss()
@@ -229,17 +229,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # TODO: if alpha=0 check that X is not rank deficient
 
-        # IMPORTANT NOTE: Rescaling of sample_weight:
+        # NOTE: Rescaling of sample_weight:
         # We want to minimize
-        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
+        #     obj = 1/(2 * sum(sample_weight)) * sum(sample_weight * deviance)
         #         + 1/2 * alpha * L2,
         # with
         #     deviance = 2 * loss.
         # The objective is invariant to multiplying sample_weight by a constant. We
-        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
+        # could choose this constant such that sum(sample_weight) = 1 in order to end
+        # up with
         #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
-        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
-        sample_weight = sample_weight / sample_weight.sum()
+        # But LinearModelLoss.loss() already computes
+        #     average(loss, weights=sample_weight)
+        # Thus, without rescaling, we have
+        #     obj = LinearModelLoss.loss(...)
 
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
@@ -271,16 +274,18 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 options={
                     "maxiter": self.max_iter,
                     "maxls": 50,  # default is 20
-                    "iprint": self.verbose - 1,
                     "gtol": self.tol,
                     # The constant 64 was found empirically to pass the test suite.
                     # The point is that ftol is very small, but a bit larger than
                     # machine precision for float64, which is the dtype used by lbfgs.
                     "ftol": 64 * np.finfo(float).eps,
+                    **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
-            self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+            self.n_iter_ = _check_optimize_result(
+                "lbfgs", opt_res, max_iter=self.max_iter
+            )
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
@@ -334,7 +339,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=[np.float64, np.float32],
@@ -416,10 +422,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f" {base_loss.__name__}."
             )
 
-        # Note that constant_to_optimal_zero is already multiplied by sample_weight.
-        constant = np.mean(base_loss.constant_to_optimal_zero(y_true=y))
-        if sample_weight is not None:
-            constant *= sample_weight.shape[0] / np.sum(sample_weight)
+        constant = np.average(
+            base_loss.constant_to_optimal_zero(y_true=y, sample_weight=None),
+            weights=sample_weight,
+        )
 
         # Missing factor of 2 in deviance cancels out.
         deviance = base_loss(
@@ -437,17 +443,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
         return 1 - (deviance + constant) / (deviance_null + constant)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         try:
             # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
             # TweedieRegressor might set the used loss during fit different from
             # self._base_loss.
             base_loss = self._get_loss()
-            return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+            tags.target_tags.positive_only = not base_loss.in_y_true_range(-1.0)
         except (ValueError, AttributeError, TypeError):
             # This happens when the link or power parameter of TweedieRegressor is
             # invalid. We fallback on the default tags in that case.
-            return {}
+            pass  # pragma: no cover
+        return tags
 
     def _get_loss(self):
         """This is only necessary because of the link and power arguments of the
@@ -552,13 +561,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     PoissonRegressor()
     >>> clf.score(X, y)
-    0.990...
+    np.float64(0.990)
     >>> clf.coef_
-    array([0.121..., 0.158...])
+    array([0.121, 0.158])
     >>> clf.intercept_
-    2.088...
+    np.float64(2.088)
     >>> clf.predict([[1, 1], [3, 4]])
-    array([10.676..., 21.875...])
+    array([10.676, 21.875])
     """
 
     _parameter_constraints: dict = {
@@ -684,13 +693,13 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     GammaRegressor()
     >>> clf.score(X, y)
-    0.773...
+    np.float64(0.773)
     >>> clf.coef_
-    array([0.072..., 0.066...])
+    array([0.073, 0.067])
     >>> clf.intercept_
-    2.896...
+    np.float64(2.896)
     >>> clf.predict([[1, 0], [2, 8]])
-    array([19.483..., 35.795...])
+    array([19.483, 35.795])
     """
 
     _parameter_constraints: dict = {
@@ -846,13 +855,13 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     TweedieRegressor()
     >>> clf.score(X, y)
-    0.839...
+    np.float64(0.839)
     >>> clf.coef_
-    array([0.599..., 0.299...])
+    array([0.599, 0.299])
     >>> clf.intercept_
-    1.600...
+    np.float64(1.600)
     >>> clf.predict([[1, 1], [3, 4]])
-    array([2.500..., 4.599...])
+    array([2.500, 4.599])
     """
 
     _parameter_constraints: dict = {

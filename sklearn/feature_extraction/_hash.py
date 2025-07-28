@@ -1,15 +1,17 @@
-# Author: Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral
 from itertools import chain
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ._hashing_fast import transform as _hashing_transform
+from sklearn.utils import metadata_routing
+
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -33,6 +35,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     CountVectorizer, intended for large-scale (online) learning and situations
     where memory is tight, e.g. when running prediction code on embedded
     devices.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 
@@ -101,6 +106,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
            [ 0., -1.,  0.,  0.,  0.,  0.,  0.,  1.]])
     """
 
+    # raw_X should have been called X
+    __metadata_request__transform = {"raw_X": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="both")],
         "input_type": [StrOptions({"dict", "pair", "string"})],
@@ -121,6 +129,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self.n_features = n_features
         self.alternate_sign = alternate_sign
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
         """Only validates estimator's parameters.
 
@@ -140,8 +149,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self : object
             FeatureHasher class instance.
         """
-        # repeat input validation for grid search (which calls set_params)
-        self._validate_params()
         return self
 
     def transform(self, raw_X):
@@ -191,5 +198,11 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {"X_types": [self.input_type]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        if self.input_type == "string":
+            tags.input_tags.string = True
+        elif self.input_type == "dict":
+            tags.input_tags.dict = True
+        return tags

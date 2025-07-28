@@ -1,35 +1,36 @@
-# Author: Alexander Fabisch  -- <afabisch@informatik.uni-bremen.de>
-# Author: Christopher Moody <chrisemoody@gmail.com>
-# Author: Nick Travers <nickt@squareup.com>
-# License: BSD 3 clause (C) 2014
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # This is the exact and Barnes-Hut t-SNE implementation. There are other
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
-import warnings
+from numbers import Integral, Real
 from time import time
+
 import numpy as np
 from scipy import linalg
-from scipy.spatial.distance import pdist
-from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
-from numbers import Integral, Real
+from scipy.spatial.distance import pdist, squareform
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..decomposition import PCA
+from ..metrics.pairwise import _VALID_METRICS, pairwise_distances
 from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import check_non_negative
-from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import _num_samples, check_non_negative, validate_data
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-from . import _utils  # type: ignore
-
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne  # type: ignore
+from . import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -301,7 +302,7 @@ def _gradient_descent(
     objective,
     p0,
     it,
-    n_iter,
+    max_iter,
     n_iter_check=1,
     n_iter_without_progress=300,
     momentum=0.8,
@@ -329,7 +330,7 @@ def _gradient_descent(
         Current number of iterations (this function will be called more than
         once during the optimization).
 
-    n_iter : int
+    max_iter : int
         Maximum number of gradient descent iterations.
 
     n_iter_check : int, default=1
@@ -391,10 +392,10 @@ def _gradient_descent(
     best_iter = i = it
 
     tic = time()
-    for i in range(it, n_iter):
+    for i in range(it, max_iter):
         check_convergence = (i + 1) % n_iter_check == 0
         # only compute the error when needed
-        kwargs["compute_error"] = check_convergence or i == n_iter - 1
+        kwargs["compute_error"] = check_convergence or i == max_iter - 1
 
         error, grad = objective(p, *args, **kwargs)
 
@@ -443,6 +444,15 @@ def _gradient_descent(
     return p, error, i
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "X_embedded": ["array-like", "sparse matrix"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+    },
+    prefer_skip_nested_validation=True,
+)
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     r"""Indicate to what extent the local structure is retained.
 
@@ -498,10 +508,20 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
            (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
 
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
-           Local Structure. Proceedings of the Twelth International Conference on
+           Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.decomposition import PCA
+    >>> from sklearn.manifold import trustworthiness
+    >>> X, _ = make_blobs(n_samples=100, n_features=10, centers=3, random_state=42)
+    >>> X_embedded = PCA(n_components=2).fit_transform(X)
+    >>> print(f"{trustworthiness(X, X_embedded, n_neighbors=5):.2f}")
+    0.92
     """
-    n_samples = X.shape[0]
+    n_samples = _num_samples(X)
     if n_neighbors >= n_samples / 2:
         raise ValueError(
             f"n_neighbors ({n_neighbors}) should be less than n_samples / 2"
@@ -595,9 +615,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         .. versionchanged:: 1.2
            The default value changed to `"auto"`.
 
-    n_iter : int, default=1000
+    max_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
         least 250.
+
+        .. versionchanged:: 1.5
+            Parameter name changed from `n_iter` to `max_iter`.
 
     n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
@@ -678,14 +701,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distances : True, default='deprecated'
-        This parameter has no effect since distance values are always squared
-        since 1.1.
-
-        .. deprecated:: 1.1
-             `square_distances` has no effect from 1.1 and will be removed in
-             1.3.
-
     Attributes
     ----------
     embedding_ : array-like of shape (n_samples, n_components)
@@ -723,6 +738,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     Isomap : Manifold learning based on Isometric Mapping.
     LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
     SpectralEmbedding : Spectral embedding for non-linear dimensionality.
+
+    Notes
+    -----
+    For an example of using :class:`~sklearn.manifold.TSNE` in combination with
+    :class:`~sklearn.neighbors.KNeighborsTransformer` see
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`.
 
     References
     ----------
@@ -764,7 +785,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             StrOptions({"auto"}),
             Interval(Real, 0, None, closed="neither"),
         ],
-        "n_iter": [Interval(Integral, 250, None, closed="left")],
+        "max_iter": [Interval(Integral, 250, None, closed="left")],
         "n_iter_without_progress": [Interval(Integral, -1, None, closed="left")],
         "min_grad_norm": [Interval(Real, 0, None, closed="left")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
@@ -778,11 +799,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "method": [StrOptions({"barnes_hut", "exact"})],
         "angle": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [None, Integral],
-        "square_distances": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     # Control the number of exploration iterations with early_exaggeration on
-    _EXPLORATION_N_ITER = 250
+    _EXPLORATION_MAX_ITER = 250
 
     # Control the number of iterations between progress checks
     _N_ITER_CHECK = 50
@@ -794,7 +814,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         perplexity=30.0,
         early_exaggeration=12.0,
         learning_rate="auto",
-        n_iter=1000,
+        max_iter=1000,
         n_iter_without_progress=300,
         min_grad_norm=1e-7,
         metric="euclidean",
@@ -805,13 +825,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        square_distances="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
@@ -822,11 +841,13 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        self.square_distances = square_distances
 
     def _check_params_vs_input(self, X):
         if self.perplexity >= X.shape[0]:
-            raise ValueError("perplexity must be less than n_samples")
+            raise ValueError(
+                f"perplexity ({self.perplexity}) must be less "
+                f"than n_samples ({X.shape[0]})"
+            )
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -837,14 +858,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
-        if self.square_distances != "deprecated":
-            warnings.warn(
-                (
-                    "The parameter `square_distances` has not effect and will be "
-                    "removed in version 1.3."
-                ),
-                FutureWarning,
-            )
+
         if self.learning_rate == "auto":
             # See issue #18018
             self.learning_rate_ = X.shape[0] / self.early_exaggeration / 4
@@ -853,15 +867,19 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             self.learning_rate_ = self.learning_rate
 
         if self.method == "barnes_hut":
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr"],
                 ensure_min_samples=2,
                 dtype=[np.float32, np.float64],
             )
         else:
-            X = self._validate_data(
-                X, accept_sparse=["csr", "csc", "coo"], dtype=[np.float32, np.float64]
+            X = validate_data(
+                self,
+                X,
+                accept_sparse=["csr", "csc", "coo"],
+                dtype=[np.float32, np.float64],
             )
         if self.metric == "precomputed":
             if isinstance(self.init, str) and self.init == "pca":
@@ -931,9 +949,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
             assert np.all(np.isfinite(P)), "All probabilities should be finite"
             assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(
-                P <= 1
-            ), "All probabilities should be less or then equal to one"
+            assert np.all(P <= 1), (
+                "All probabilities should be less or then equal to one"
+            )
 
         else:
             # Compute the number of nearest neighbors to find.
@@ -1047,8 +1065,8 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             "verbose": self.verbose,
             "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
-            "n_iter_without_progress": self._EXPLORATION_N_ITER,
-            "n_iter": self._EXPLORATION_N_ITER,
+            "n_iter_without_progress": self._EXPLORATION_MAX_ITER,
+            "max_iter": self._EXPLORATION_MAX_ITER,
             "momentum": 0.5,
         }
         if self.method == "barnes_hut":
@@ -1075,9 +1093,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.n_iter - self._EXPLORATION_N_ITER
-        if it < self._EXPLORATION_N_ITER or remaining > 0:
-            opt_args["n_iter"] = self.n_iter
+        remaining = self.max_iter - self._EXPLORATION_MAX_ITER
+        if it < self._EXPLORATION_MAX_ITER or remaining > 0:
+            opt_args["max_iter"] = self.max_iter
             opt_args["it"] = it + 1
             opt_args["momentum"] = 0.8
             opt_args["n_iter_without_progress"] = self.n_iter_without_progress
@@ -1097,6 +1115,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         return X_embedded
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed output.
 
@@ -1118,12 +1140,15 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._validate_params()
         self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
 
+    @_fit_context(
+        # TSNE.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit X into an embedded space.
 
@@ -1142,10 +1167,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array of shape (n_samples, n_components)
-            Embedding of the training data in low-dimensional space.
+        self : object
+            Fitted estimator.
         """
-        self._validate_params()
         self.fit_transform(X)
         return self
 
@@ -1154,5 +1178,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """Number of transformed output features."""
         return self.embedding_.shape[1]
 
-    def _more_tags(self):
-        return {"pairwise": self.metric == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags

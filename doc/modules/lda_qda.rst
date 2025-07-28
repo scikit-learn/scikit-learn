@@ -29,10 +29,10 @@ Discriminant Analysis can only learn linear boundaries, while Quadratic
 Discriminant Analysis can learn quadratic boundaries and is therefore more
 flexible.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and QDA
-    on synthetic data.
+* :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and
+  QDA on synthetic data.
 
 Dimensionality reduction using Linear Discriminant Analysis
 ===========================================================
@@ -49,10 +49,10 @@ This is implemented in the `transform` method. The desired dimensionality can
 be set using the ``n_components`` parameter. This parameter has no influence
 on the `fit` and `predict` methods.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
-    for dimensionality reduction of the Iris dataset
+* :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and
+  PCA for dimensionality reduction of the Iris dataset
 
 .. _lda_qda_math:
 
@@ -93,10 +93,10 @@ predicted class is the one that maximises this log-posterior.
 
 .. note:: **Relation with Gaussian Naive Bayes**
 
-	  If in the QDA model one assumes that the covariance matrices are diagonal,
-	  then the inputs are assumed to be conditionally independent in each class,
-	  and the resulting classifier is equivalent to the Gaussian Naive Bayes
-	  classifier :class:`naive_bayes.GaussianNB`.
+    If in the QDA model one assumes that the covariance matrices are diagonal,
+    then the inputs are assumed to be conditionally independent in each class,
+    and the resulting classifier is equivalent to the Gaussian Naive Bayes
+    classifier :class:`naive_bayes.GaussianNB`.
 
 LDA
 ---
@@ -137,7 +137,7 @@ Mathematical formulation of LDA dimensionality reduction
 First note that the K means :math:`\mu_k` are vectors in
 :math:`\mathcal{R}^d`, and they lie in an affine subspace :math:`H` of
 dimension at most :math:`K - 1` (2 points lie on a line, 3 points lie on a
-plane, etc).
+plane, etc.).
 
 As mentioned above, we can interpret LDA as assigning :math:`x` to the class
 whose mean :math:`\mu_k` is the closest in terms of Mahalanobis distance,
@@ -173,11 +173,11 @@ In this scenario, the empirical sample covariance is a poor
 estimator, and shrinkage helps improving the generalization performance of
 the classifier.
 Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
-the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to 'auto'.
+the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to `'auto'`.
 This automatically determines the optimal shrinkage parameter in an analytic
 way following the lemma introduced by Ledoit and Wolf [2]_. Note that
-currently shrinkage only works when setting the ``solver`` parameter to 'lsqr'
-or 'eigen'.
+currently shrinkage only works when setting the ``solver`` parameter to `'lsqr'`
+or `'eigen'`.
 
 The ``shrinkage`` parameter can also be manually set between 0 and 1. In
 particular, a value of 0 corresponds to no shrinkage (which means the empirical
@@ -190,14 +190,14 @@ matrix.
 The shrunk Ledoit and Wolf estimator of covariance may not always be the
 best choice. For example if the distribution of the data
 is normally distributed, the
-Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
+Oracle Approximating Shrinkage estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
-formula used with shrinkage="auto". In LDA, the data are assumed to be gaussian
+formula used with `shrinkage="auto"`. In LDA, the data are assumed to be gaussian
 conditionally to the class. If these assumptions hold, using LDA with
-the OAS estimator of covariance will yield a better classification 
+the OAS estimator of covariance will yield a better classification
 accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
 
-The covariance estimator can be chosen using with the ``covariance_estimator``
+The covariance estimator can be chosen using the ``covariance_estimator``
 parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
 class. A covariance estimator should have a :term:`fit` method and a
 ``covariance_`` attribute like all covariance estimators in the
@@ -210,10 +210,10 @@ class. A covariance estimator should have a :term:`fit` method and a
 
 .. centered:: |shrinkage|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
-    with Empirical, Ledoit Wolf and OAS covariance estimator.
+* :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
+  with Empirical, Ledoit Wolf and OAS covariance estimator.
 
 Estimation algorithms
 =====================
@@ -239,7 +239,7 @@ computing :math:`S` and :math:`V` via the SVD of :math:`X` is enough. For
 LDA, two SVDs are computed: the SVD of the centered input matrix :math:`X`
 and the SVD of the class-wise mean vectors.
 
-The 'lsqr' solver is an efficient algorithm that only works for
+The `'lsqr'` solver is an efficient algorithm that only works for
 classification. It needs to explicitly compute the covariance matrix
 :math:`\Sigma`, and supports shrinkage and custom covariance estimators.
 This solver computes the coefficients
@@ -247,19 +247,19 @@ This solver computes the coefficients
 \mu_k`, thus avoiding the explicit computation of the inverse
 :math:`\Sigma^{-1}`.
 
-The 'eigen' solver is based on the optimization of the between class scatter to
+The `'eigen'` solver is based on the optimization of the between class scatter to
 within class scatter ratio. It can be used for both classification and
-transform, and it supports shrinkage. However, the 'eigen' solver needs to
+transform, and it supports shrinkage. However, the `'eigen'` solver needs to
 compute the covariance matrix, so it might not be suitable for situations with
 a high number of features.
 
-.. topic:: References:
+.. rubric:: References
 
-   .. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
-      Friedman J., Section 4.3, p.106-119, 2008.
+.. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
+    Friedman J., Section 4.3, p.106-119, 2008.
 
-   .. [2] Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix.
-      The Journal of Portfolio Management 30(4), 110-119, 2004.
+.. [2] Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix.
+    The Journal of Portfolio Management 30(4), 110-119, 2004.
 
-   .. [3] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
-      (Second Edition), section 2.6.2.
+.. [3] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
+    (Second Edition), section 2.6.2.

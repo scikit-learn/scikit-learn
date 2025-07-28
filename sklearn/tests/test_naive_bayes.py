@@ -1,31 +1,29 @@
 import re
-
-import numpy as np
-import scipy.sparse
-import pytest
 import warnings
 
+import numpy as np
+import pytest
 from scipy.special import logsumexp
 
 from sklearn.datasets import load_digits, load_iris
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.naive_bayes import GaussianNB, BernoulliNB
-from sklearn.naive_bayes import MultinomialNB, ComplementNB
-from sklearn.naive_bayes import CategoricalNB
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.naive_bayes import (
+    BernoulliNB,
+    CategoricalNB,
+    ComplementNB,
+    GaussianNB,
+    MultinomialNB,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
-
-msg = "The default value for `force_alpha` will change"
-pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -465,7 +463,8 @@ def test_discretenb_degenerate_one_class_case(
 
 
 @pytest.mark.parametrize("kind", ("dense", "sparse"))
-def test_mnnb(kind, global_random_seed):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_mnnb(kind, global_random_seed, csr_container):
     # Test Multinomial Naive Bayes classification.
     # This checks that MultinomialNB implements fit and predict and returns
     # correct values for a simple toy dataset.
@@ -474,7 +473,7 @@ def test_mnnb(kind, global_random_seed):
     if kind == "dense":
         X = X2
     elif kind == "sparse":
-        X = scipy.sparse.csr_matrix(X2)
+        X = csr_container(X2)
 
     # Check the ability to predict the learning set.
     clf = MultinomialNB()
@@ -808,11 +807,12 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
         clf.fit(X, y)
 
 
-def test_alpha():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_alpha(csr_container):
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
-    nb = BernoulliNB(alpha=0.0)
+    nb = BernoulliNB(alpha=0.0, force_alpha=False)
     msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
@@ -821,7 +821,7 @@ def test_alpha():
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = MultinomialNB(alpha=0.0)
+    nb = MultinomialNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
@@ -829,21 +829,21 @@ def test_alpha():
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = CategoricalNB(alpha=0.0)
+    nb = CategoricalNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[1.0, 0.0], [0.0, 1.0]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test sparse X
-    X = scipy.sparse.csr_matrix(X)
-    nb = BernoulliNB(alpha=0.0)
+    X = csr_container(X)
+    nb = BernoulliNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = MultinomialNB(alpha=0.0)
+    nb = MultinomialNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
@@ -857,7 +857,7 @@ def test_alpha_vector():
     # Setting alpha=np.array with same length
     # as number of features should be fine
     alpha = np.array([1, 2])
-    nb = MultinomialNB(alpha=alpha)
+    nb = MultinomialNB(alpha=alpha, force_alpha=False)
     nb.partial_fit(X, y, classes=[0, 1])
 
     # Test feature probabilities uses pseudo-counts (alpha)
@@ -870,7 +870,7 @@ def test_alpha_vector():
 
     # Test alpha non-negative
     alpha = np.array([1.0, -0.1])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=alpha, force_alpha=False)
     expected_msg = "All values in alpha must be greater than 0."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
@@ -878,13 +878,13 @@ def test_alpha_vector():
     # Test that too small pseudo-counts are replaced
     ALPHA_MIN = 1e-10
     alpha = np.array([ALPHA_MIN / 2, 0.5])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=alpha, force_alpha=False)
     m_nb.partial_fit(X, y, classes=[0, 1])
     assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
 
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=alpha, force_alpha=False)
     expected_msg = "When alpha is an array, it should contains `n_features`"
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
@@ -923,26 +923,6 @@ def test_check_accuracy_on_digits():
     assert scores.mean() > 0.86
 
 
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
-@pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
-def test_force_alpha_deprecation(Estimator, alpha):
-    if Estimator is CategoricalNB and isinstance(alpha, list):
-        pytest.skip("CategoricalNB does not support array-like alpha values.")
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    alpha_min = 1e-10
-    msg = "The default value for `force_alpha` will change to `True`"
-    est = Estimator(alpha=alpha)
-    est_force = Estimator(alpha=alpha, force_alpha=True)
-    if np.min(alpha) < alpha_min:
-        with pytest.warns(FutureWarning, match=msg):
-            est.fit(X, y)
-    else:
-        est.fit(X, y)
-    est_force.fit(X, y)
-
-
 def test_check_alpha():
     """The provided value for alpha must only be
     used if alpha < _ALPHA_MIN and force_alpha is True.
@@ -969,7 +949,7 @@ def test_check_alpha():
     with pytest.warns(UserWarning, match=msg):
         assert b._check_alpha() == _ALPHA_MIN
 
-    b = BernoulliNB(alpha=0)
+    b = BernoulliNB(alpha=0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         assert b._check_alpha() == _ALPHA_MIN
 
@@ -988,3 +968,12 @@ def test_predict_joint_proba(Estimator, global_random_seed):
     log_prob_x = logsumexp(jll, axis=1)
     log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
     assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
+
+
+@pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
+def test_categorical_input_tag(Estimator):
+    tags = Estimator().__sklearn_tags__()
+    if Estimator is CategoricalNB:
+        assert tags.input_tags.categorical
+    else:
+        assert not tags.input_tags.categorical

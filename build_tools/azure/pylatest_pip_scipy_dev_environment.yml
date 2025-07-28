@@ -2,18 +2,21 @@
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
-  - defaults
+  - conda-forge
 dependencies:
   - python
   - ccache
-  - sphinx
   - pip
   - pip:
     - threadpoolctl
     - pytest
-    - pytest-xdist==2.5.0
+    - pytest-xdist
+    - pip
+    - ninja
+    - meson-python
     - pytest-cov
     - coverage
     - pooch
-    - numpydoc
+    - sphinx
+    - numpydoc<1.9.0
     - python-dateutil

@@ -1,9 +1,11 @@
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 
+from ...utils._typedefs cimport intp_t, uint8_t
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
@@ -88,7 +90,7 @@ def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
-        const unsigned char missing_values_bin_idx,
+        const uint8_t missing_values_bin_idx,
         int n_threads,
         Y_DTYPE_C [:] out):
 
@@ -108,7 +110,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) noexcept nogil:
+        const uint8_t missing_values_bin_idx) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
@@ -147,8 +149,9 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
-    int [:] target_features,
-    Y_DTYPE_C [:] out):
+    const intp_t [:] target_features,
+    Y_DTYPE_C [:] out
+):
     """Partial dependence of the response on the ``target_features`` set.
 
     For each sample in ``X`` a tree traversal is performed.
@@ -171,7 +174,7 @@ def _compute_partial_dependence(
     X : view on 2d ndarray, shape (n_samples, n_target_features)
         The grid points on which the partial dependence should be
         evaluated.
-    target_features : view on 1d ndarray, shape (n_target_features)
+    target_features : view on 1d ndarray of intp_t, shape (n_target_features)
         The set of target features for which the partial dependence
         should be evaluated.
     out : view on 1d ndarray, shape (n_samples)
@@ -188,7 +191,7 @@ def _compute_partial_dependence(
         node_struct * current_node  # pointer to avoid copying attributes
 
         unsigned int sample_idx
-        unsigned feature_idx
+        intp_t feature_idx
         unsigned stack_size
         Y_DTYPE_C left_sample_frac
         Y_DTYPE_C current_weight
@@ -250,5 +253,4 @@ def _compute_partial_dependence(
 
         # Sanity check. Should never happen.
         if not (0.999 < total_weight < 1.001):
-            raise ValueError("Total weight should be 1.0 but was %.9f" %
-                                total_weight)
+            raise ValueError("Total weight should be 1.0 but was %.9f" %total_weight)
