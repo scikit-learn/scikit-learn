@@ -15,9 +15,13 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from sklearn.base import BaseEstimator
-
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
+from ..base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
+)
 from ..exceptions import ConvergenceWarning
 from ..metrics import check_scoring, get_scorer_names
 from ..model_selection import GridSearchCV

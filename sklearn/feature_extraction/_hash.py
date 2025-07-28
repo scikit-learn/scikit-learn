@@ -7,9 +7,8 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import metadata_routing
-
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import metadata_routing
 from ..utils._param_validation import Interval, StrOptions
 from ._hashing_fast import transform as _hashing_transform
 
