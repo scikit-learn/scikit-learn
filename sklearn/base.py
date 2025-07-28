@@ -889,6 +889,7 @@ class TransformerMixin(_SetOutputMixin):
                     ),
                     UserWarning,
                 )
+
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
             return self.fit(X, **fit_params).transform(X)
