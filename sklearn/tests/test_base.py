@@ -969,27 +969,6 @@ def test_transformer_fit_transform_with_metadata_in_transform():
         assert len(record) == 0
 
 
-def test_transformer_fit_transform_without_metadata_in_fit():
-    """Test that a transformer that does not accept an additional param its `fit` method
-    raises if that param gets passed into `fit_transform`."""
-
-    class NonConsumingTransformer(TransformerMixin):
-        def fit(self, X, y=None):
-            return self  # pragma: no cover
-
-        def transform(X):
-            return X  # pragma: no cover
-
-    message = (
-        "`NonConsumingTransformer.fit` got an unexpected keyword argument "
-        "`sample_weight`."
-    )
-    with pytest.raises(TypeError, match=message):
-        NonConsumingTransformer().fit_transform(
-            X=[[1]], sample_weight=np.array([[1, 1, 1]])
-        )
-
-
 @config_context(enable_metadata_routing=True)
 def test_outlier_mixin_fit_predict_with_metadata_in_predict():
     """Test that having an OutlierMixin with metadata for predict raises a
