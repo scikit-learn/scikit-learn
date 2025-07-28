@@ -609,7 +609,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_input=check_input,
+            check_gram=True,
         )
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
@@ -1050,7 +1050,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.precompute,
             fit_intercept=self.fit_intercept,
             copy=should_copy,
-            check_input=check_input,
+            check_gram=check_input,
             sample_weight=sample_weight,
         )
         # coordinate descent needs F-ordered arrays and _pre_fit might have

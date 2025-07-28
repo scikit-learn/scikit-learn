@@ -783,13 +783,15 @@ def _pre_fit(
     precompute,
     fit_intercept,
     copy,
-    check_input=True,
+    check_gram=True,
     sample_weight=None,
 ):
     """Function used at beginning of fit in linear models with L1 or L0 penalty.
 
     This function applies _preprocess_data and additionally computes the gram matrix
     `precompute` as needed as well as `Xy`.
+
+    It is assumed that X, y and sample_weight are already validated.
     """
     n_samples, n_features = X.shape
 
@@ -801,7 +803,7 @@ def _pre_fit(
             y,
             fit_intercept=fit_intercept,
             copy=False,
-            check_input=check_input,
+            check_input=False,
             sample_weight=sample_weight,
         )
     else:
@@ -811,7 +813,7 @@ def _pre_fit(
             y,
             fit_intercept=fit_intercept,
             copy=copy,
-            check_input=check_input,
+            check_input=False,
             sample_weight=sample_weight,
         )
         # Rescale only in dense case. Sparse cd solver directly deals with
@@ -835,7 +837,7 @@ def _pre_fit(
             # recompute Gram
             precompute = "auto"
             Xy = None
-        elif check_input:
+        elif check_gram:
             # If we're going to use the user's precomputed gram matrix, we
             # do a quick check to make sure its not totally bogus.
             _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
