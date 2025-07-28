@@ -315,7 +315,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             # coef_.dtype if warm_start=True.
             self.coef_ = xp.astype(self.coef_, X_offset.dtype, copy=False)
             if X_scale is not None:
-                self.coef_ /= X_scale
+                self.coef_ = xp.divide(self.coef_, X_scale)
 
             if self.coef_.ndim == 1:
                 self.intercept_ = y_offset - X_offset @ self.coef_
