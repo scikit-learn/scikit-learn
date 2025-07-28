@@ -9,7 +9,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array
+from ..utils import _align_api_if_sparse, _safe_indexing, check_array
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
 from ..utils._missing import is_scalar_nan
@@ -536,8 +536,8 @@ class OneHotEncoder(_BaseEncoder):
             Support for dropping infrequent categories.
 
     sparse_output : bool, default=True
-        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
-        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
+        When ``True``, it returns a SciPy sparse matrix/array
+        in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
@@ -1001,8 +1001,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If `sparse_output=True` (default), it returns an instance of
-        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+        If `sparse_output=True` (default), it returns a SciPy sparse in CSR format.
 
         If there are infrequent categories for a feature, set by specifying
         `max_categories` or `min_frequency`, the infrequent categories are
@@ -1074,15 +1073,15 @@ class OneHotEncoder(_BaseEncoder):
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
-        out = sparse.csr_matrix(
+        out = sparse.csr_array(
             (data, indices, indptr),
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse_output:
-            return out.toarray()
+        if self.sparse_output:
+            return _align_api_if_sparse(out)
         else:
-            return out
+            return out.toarray()
 
     def inverse_transform(self, X):
         """

@@ -17,7 +17,7 @@ from cython cimport final
 
 from ...utils._typedefs cimport float64_t, float32_t, intp_t
 
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import issparse, csr_matrix, csr_array
 
 {{for name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -124,8 +124,8 @@ cdef class DatasetsPair{{name_suffix}}:
         return DenseSparseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
 
     @classmethod
-    def unpack_csr_matrix(cls, X: csr_matrix):
-        """Ensure that the CSR matrix is indexed with np.int32."""
+    def unpack_csr(cls, X: csr_matrix | csr_array):
+        """Ensure that the CSR sparse is indexed with np.int32."""
         X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
         X_indices = np.asarray(X.indices, dtype=np.int32)
         X_indptr = np.asarray(X.indptr, dtype=np.int32)
@@ -223,8 +223,8 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     def __init__(self, X, Y, {{DistanceMetric}} distance_metric):
         super().__init__(distance_metric, n_features=X.shape[1])
 
-        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
-        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr(X)
+        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr(Y)
 
     @final
     cdef intp_t n_samples_X(self) noexcept nogil:
@@ -269,7 +269,7 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
     Parameters
     ----------
-    X: sparse matrix of shape (n_samples_X, n_features)
+    X: sparse matrix/array of shape (n_samples_X, n_features)
         Rows represent vectors. Must be in CSR format.
 
     Y: ndarray of shape (n_samples_Y, n_features)
@@ -283,7 +283,7 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     def __init__(self, X, Y, {{DistanceMetric}} distance_metric):
         super().__init__(distance_metric, n_features=X.shape[1])
 
-        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr(X)
 
         # We support the sparse-dense case by using the sparse-sparse interfaces
         # of `DistanceMetric` (namely `DistanceMetric.{dist_csr,rdist_csr}`) to
