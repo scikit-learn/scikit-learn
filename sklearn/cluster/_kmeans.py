@@ -20,6 +20,7 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import _euclidean_distances, euclidean_distances
 from ..utils import check_array, check_random_state
+from ..utils._backend import find_backend
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, stable_cumsum
@@ -1061,6 +1062,10 @@ class _BaseKMeans(
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
+        self._backend = find_backend(self, X, y=y, sample_weight=sample_weight)
+        if self._backend is not None:
+            self._backend.fit_predict(X, y=y, sample_weight=sample_weight)
+
         return self.fit(X, sample_weight=sample_weight).labels_
 
     def predict(self, X):
@@ -1081,6 +1086,8 @@ class _BaseKMeans(
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
+        if self._backend is not None:
+            return self._backend.predict(X)
 
         X = self._check_test_data(X)
 
@@ -1119,6 +1126,9 @@ class _BaseKMeans(
         X_new : ndarray of shape (n_samples, n_clusters)
             X transformed in the new space.
         """
+        self._backend = find_backend(self, X, y=y, sample_weight=sample_weight)
+        if self._backend is not None:
+            return self._backend.fit_transform(X, y=y, sample_weight=sample_weight)
         return self.fit(X, sample_weight=sample_weight)._transform(X)
 
     def transform(self, X):
@@ -1139,6 +1149,10 @@ class _BaseKMeans(
             X transformed in the new space.
         """
         check_is_fitted(self)
+        if self._backend is not None:
+            return self._backend.transform(
+                X,
+            )
 
         X = self._check_test_data(X)
         return self._transform(X)
@@ -1451,6 +1465,11 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        self._backend = find_backend(self, X, y=y, sample_weight=sample_weight)
+        if self._backend is not None:
+            self._backend.fit(X, y=y, sample_weight=sample_weight)
+            return self
+
         X = validate_data(
             self,
             X,
