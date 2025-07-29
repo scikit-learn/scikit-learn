@@ -1290,7 +1290,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # transformers, and whether or not a transformer is used at all, which
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
-        transformers = chain(self.transformers, [("remainder", self.remainder, None)])
+        transformers = self.transformers
+        if self.remainder not in ("drop", "passthrough"):
+            transformers = chain(transformers, [("remainder", self.remainder, None)])
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
@@ -1344,7 +1346,12 @@ def _is_empty_column_selection(column):
     boolean array).
 
     """
-    if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
+    if (
+        hasattr(column, "dtype")
+        # Not necessarily a numpy dtype, can be a pandas dtype as well
+        and isinstance(column.dtype, np.dtype)
+        and np.issubdtype(column.dtype, np.bool_)
+    ):
         return not column.any()
     elif hasattr(column, "__len__"):
         return len(column) == 0 or (

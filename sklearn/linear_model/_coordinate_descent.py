@@ -12,11 +12,9 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.utils import metadata_routing
-
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
-from ..utils import Bunch, check_array, check_scalar
+from ..utils import Bunch, check_array, check_scalar, metadata_routing
 from ..utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -149,13 +147,14 @@ def _alpha_grid(
     if Xy is not None:
         Xyw = Xy
     else:
-        X, y, X_offset, _, _ = _preprocess_data(
+        X, y, X_offset, _, _, _ = _preprocess_data(
             X,
             y,
             fit_intercept=fit_intercept,
             copy=copy_X,
             sample_weight=sample_weight,
             check_input=False,
+            rescale_with_sw=False,
         )
         if sample_weight is not None:
             if y.ndim > 1:
@@ -2688,7 +2687,7 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=False
         )
 
