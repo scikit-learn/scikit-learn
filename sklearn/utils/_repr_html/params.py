@@ -86,13 +86,6 @@ def _params_html_repr(params):
         </a>
     """
 
-    # PARAM_UNAVAILABLE_DOC_LINK_TEMPLATE = """
-    #    <a class="sk-estimator-doc-link doc_link"
-    #        style="color: white; background: black;">?
-    #        <span>Documentation for {param_name} not found</span>
-    #    </a>
-    # """
-
     rows = []
     for row in params:
         param_doc_link = None
