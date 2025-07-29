@@ -503,7 +503,7 @@ Changelog
 
 - |API| Parameter `multi_class` was deprecated in
   :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.7,
+  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.8,
   and internally, for 3 and more classes, it will always use multinomial.
   If you still want to use the one-vs-rest scheme, you can use
   `OneVsRestClassifier(LogisticRegression(..))`.

@@ -124,10 +124,10 @@ def _get_namespace_device_dtype_ids(param):
 
 
 def _check_array_api_dispatch(array_api_dispatch):
-    """Check that array_api_compat is installed and NumPy version is compatible.
+    """Checks that array API support is functional.
 
-    array_api_compat follows NEP29, which has a higher minimum NumPy version than
-    scikit-learn.
+    In particular scipy needs to be recent enough and the environment variable
+    needs to be set: SCIPY_ARRAY_API=1.
     """
     if not array_api_dispatch:
         return
