@@ -20,11 +20,13 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.base import (
+from .. import config_context
+from ..base import (
     BaseEstimator,
     BiclusterMixin,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
     DensityMixin,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -32,11 +34,6 @@ from sklearn.base import (
     OutlierMixin,
     RegressorMixin,
     TransformerMixin,
-)
-
-from .. import config_context
-from ..base import (
-    ClusterMixin,
     clone,
     is_classifier,
     is_outlier_detector,
