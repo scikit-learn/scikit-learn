@@ -427,10 +427,6 @@ def test_sigmoid_calibration():
 
 
 @pytest.mark.parametrize(
-    "clf",
-    [LogisticRegression(penalty=None, tol=1e-6, random_state=0)],
-)
-@pytest.mark.parametrize(
     "n_classes",
     [2, 3, 5],
 )
@@ -438,7 +434,7 @@ def test_sigmoid_calibration():
     "ensemble",
     [True, False],
 )
-def test_temperature_scaling(clf, n_classes, ensemble):
+def test_temperature_scaling(n_classes, ensemble):
     """Check temperature scaling calibration"""
     X, y = make_classification(
         n_samples=1000,
@@ -451,6 +447,7 @@ def test_temperature_scaling(clf, n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
+    clf = LogisticRegression(penalty=None, tol=1e-8, max_iter=200, random_state=0)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(
@@ -491,6 +488,10 @@ def test_temperature_scaling(clf, n_classes, ensemble):
             roc_auc_score(y_cal, y_scores, multi_class="ovr"),
             roc_auc_score(y_cal, y_scores_cal, multi_class="ovr"),
         )
+
+        y_scores_train = clf.predict_proba(X_train)
+        ts = _TemperatureScaling().fit(y_scores_train, y_train)
+        assert_allclose(ts.beta_, 1.0, atol=1.1e-7, rtol=0)
 
 
 def test_temperature_scaling_input_validation(global_dtype):
