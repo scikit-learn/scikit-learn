@@ -10,7 +10,7 @@ from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDReg
 
 
 # TODO(1.8): Remove
-@deprecated(  # type: ignore
+@deprecated(
     "this deprecated in version 1.6 and will be removed in 1.8."
     "Use `SGDClassifier` instead."
 )
@@ -333,7 +333,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
 
 # TODO(1.8): Remove
-@deprecated(  # type: ignore
+@deprecated(
     "this deprecated in version 1.6 and will be removed in 1.8."
     "Use `SGDRegressor` instead."
 )
