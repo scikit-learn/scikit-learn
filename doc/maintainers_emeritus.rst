@@ -1,4 +1,5 @@
 - Mathieu Blondel
+- Joris Van den Bossche
 - Matthieu Brucher
 - Lars Buitinck
 - David Cournapeau
@@ -11,23 +12,31 @@
 - Angel Soler Gollonet
 - Chris Gorgolewski
 - Jaques Grobler
+- Yaroslav Halchenko
 - Brian Holt
 - Arnaud Joly
 - Thouis (Ray) Jones
 - Kyle Kastner
-- manoj kumar
+- Manoj Kumar
 - Robert Layton
 - Wei Li
 - Paolo Losi
 - Gilles Louppe
+- Jan Hendrik Metzen
 - Vincent Michel
 - Jarrod Millman
+- Vlad Niculae
 - Alexandre Passos
 - Fabian Pedregosa
 - Peter Prettenhofer
+- Hanmin Qin
 - (Venkat) Raghav, Rajagopalan
 - Jacob Schreiber
 - 杜世橋 Du Shiqiao
+- Bertrand Thirion
+- Tom Dupré la Tour
 - Jake Vanderplas
+- Nelle Varoquaux
 - David Warde-Farley
 - Ron Weiss
+- Roman Yurchak

@@ -1,12 +1,18 @@
-{% if render_title %}
-{% if versiondata.name %}
-{{ versiondata.name }} {{ versiondata.version }} ({{ versiondata.date }})
-{{ top_underline * ((versiondata.name + versiondata.version + versiondata.date)|length + 4)}}
-{% else %}
-{{ versiondata.version }} ({{ versiondata.date }})
-{{ top_underline * ((versiondata.version + versiondata.date)|length + 3)}}
-{% endif %}
-{% endif %}
+{% set version_underscore = versiondata.version.replace('.', '_') %}
+.. _changes_{{ version_underscore }}:
+
+{% set title = "Version " + versiondata.version %}
+{{ title }}
+{{ top_underline * title|length }}
+
+{% set month_names = {
+    '01': 'January', '02': 'February', '03': 'March', '04': 'April',
+    '05': 'May', '06': 'June', '07': 'July', '08': 'August',
+    '09': 'September', '10': 'October', '11': 'November', '12': 'December'
+} %}
+{% set year, month, _ = versiondata.date.split('-') %}
+{% set release_date = month_names[month] + ' ' + year %}
+**{{ release_date }}**
 
 {% set underline = underlines[0] %}
 {% for section, content_per_category in sections.items() if content_per_category %}

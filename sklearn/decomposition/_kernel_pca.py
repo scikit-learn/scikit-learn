@@ -471,7 +471,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Transformed values.
         """
         self.fit(X, **params)
 
@@ -495,7 +495,8 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Projection of X in the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of the components.
         """
         check_is_fitted(self)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
@@ -544,8 +545,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
-            Returns the instance itself.
+        X_original : ndarray of shape (n_samples, n_features)
+            Original data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         References
         ----------
@@ -566,6 +568,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         tags.input_tags.pairwise = self.kernel == "precomputed"
         return tags

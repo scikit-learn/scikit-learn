@@ -3,7 +3,6 @@ import pickle
 import warnings
 from copy import deepcopy
 from functools import partial
-from unittest.mock import Mock
 
 import joblib
 import numpy as np
@@ -11,7 +10,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -185,7 +184,7 @@ class EstimatorWithFit(BaseEstimator):
         return self
 
 
-class EstimatorWithFitAndScore:
+class EstimatorWithFitAndScore(BaseEstimator):
     """Dummy estimator to test scoring validators"""
 
     def fit(self, X, y):
@@ -195,7 +194,7 @@ class EstimatorWithFitAndScore:
         return 1.0
 
 
-class EstimatorWithFitAndPredict:
+class EstimatorWithFitAndPredict(BaseEstimator):
     """Dummy estimator to test scoring validators"""
 
     def fit(self, X, y):
@@ -622,7 +621,7 @@ def test_classification_scorer_sample_weight():
         except TypeError as e:
             assert "sample_weight" in str(e), (
                 f"scorer {name} raises unhelpful exception when called "
-                f"with sample weights: {str(e)}"
+                f"with sample weights: {e}"
             )
 
 
@@ -668,7 +667,7 @@ def test_regression_scorer_sample_weight():
         except TypeError as e:
             assert "sample_weight" in str(e), (
                 f"scorer {name} raises unhelpful exception when called "
-                f"with sample weights: {str(e)}"
+                f"with sample weights: {e}"
             )
 
 
@@ -748,37 +747,41 @@ def test_multimetric_scorer_calls_method_once(
     expected_decision_func_count,
 ):
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
-
-    mock_est = Mock()
-    mock_est._estimator_type = "classifier"
-    fit_func = Mock(return_value=mock_est, name="fit")
-    fit_func.__name__ = "fit"
-    predict_func = Mock(return_value=y, name="predict")
-    predict_func.__name__ = "predict"
-
     pos_proba = np.random.rand(X.shape[0])
     proba = np.c_[1 - pos_proba, pos_proba]
-    predict_proba_func = Mock(return_value=proba, name="predict_proba")
-    predict_proba_func.__name__ = "predict_proba"
-    decision_function_func = Mock(return_value=pos_proba, name="decision_function")
-    decision_function_func.__name__ = "decision_function"
 
-    mock_est.fit = fit_func
-    mock_est.predict = predict_func
-    mock_est.predict_proba = predict_proba_func
-    mock_est.decision_function = decision_function_func
-    # add the classes that would be found during fit
-    mock_est.classes_ = np.array([0, 1])
+    class MyClassifier(ClassifierMixin, BaseEstimator):
+        def __init__(self):
+            self._expected_predict_count = 0
+            self._expected_predict_proba_count = 0
+            self._expected_decision_function_count = 0
 
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            return self
+
+        def predict(self, X):
+            self._expected_predict_count += 1
+            return y
+
+        def predict_proba(self, X):
+            self._expected_predict_proba_count += 1
+            return proba
+
+        def decision_function(self, X):
+            self._expected_decision_function_count += 1
+            return pos_proba
+
+    mock_est = MyClassifier().fit(X, y)
     scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
     assert set(scorers) == set(results)  # compare dict keys
 
-    assert predict_func.call_count == expected_predict_count
-    assert predict_proba_func.call_count == expected_predict_proba_count
-    assert decision_function_func.call_count == expected_decision_func_count
+    assert mock_est._expected_predict_count == expected_predict_count
+    assert mock_est._expected_predict_proba_count == expected_predict_proba_count
+    assert mock_est._expected_decision_function_count == expected_decision_func_count
 
 
 @pytest.mark.parametrize(
@@ -1351,15 +1354,42 @@ def test_multimetric_scoring_metadata_routing():
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(scorers=scorer_dict)
-    # this should fail, because metadata routing is not enabled and w/o it we
-    # don't support different metadata for different scorers.
-    # TODO: remove when enable_metadata_routing is deprecated
-    with config_context(enable_metadata_routing=False):
-        with pytest.raises(TypeError, match="got an unexpected keyword argument"):
-            multi_scorer(clf, X, y, sample_weight=1)
-
     # This passes since routing is done.
     multi_scorer(clf, X, y, sample_weight=1)
+
+
+@config_context(enable_metadata_routing=False)
+def test_multimetric_scoring_kwargs():
+    # Test that _MultimetricScorer correctly forwards kwargs
+    # to the scorers when metadata routing is disabled.
+    # `sample_weight` is only forwarded to the scorers that accept it.
+    # Other arguments are forwarded to all scorers.
+    def score1(y_true, y_pred, common_arg=None):
+        # make sure common_arg is passed
+        assert common_arg is not None
+        return 1
+
+    def score2(y_true, y_pred, common_arg=None, sample_weight=None):
+        # make sure common_arg is passed
+        assert common_arg is not None
+        # make sure sample_weight is passed
+        assert sample_weight is not None
+        return 1
+
+    scorers = {
+        "score1": make_scorer(score1),
+        "score2": make_scorer(score2),
+    }
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
+    )
+
+    clf = DecisionTreeClassifier().fit(X, y)
+
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict)
+    multi_scorer(clf, X, y, common_arg=1, sample_weight=1)
 
 
 def test_kwargs_without_metadata_routing_error():

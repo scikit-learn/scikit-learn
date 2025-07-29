@@ -47,8 +47,8 @@ from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
-    "SparseRandomProjection",
     "GaussianRandomProjection",
+    "SparseRandomProjection",
     "johnson_lindenstrauss_min_dim",
 ]
 
@@ -305,7 +305,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -463,6 +463,7 @@ class BaseRandomProjection(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -745,7 +746,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    np.float64(0.0182...)
+    np.float64(0.0182)
     """
 
     _parameter_constraints: dict = {

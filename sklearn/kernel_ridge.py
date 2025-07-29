@@ -169,6 +169,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.pairwise = self.kernel == "precomputed"
         return tags
 

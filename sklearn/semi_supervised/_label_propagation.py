@@ -336,6 +336,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.transduction_ = transduction.ravel()
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier.
@@ -359,7 +364,7 @@ class LabelPropagation(BaseLabelPropagation):
     max_iter : int, default=1000
         Change maximum number of iterations allowed.
 
-    tol : float, 1e-3
+    tol : float, default=1e-3
         Convergence tolerance: threshold to consider the system at steady
         state.
 

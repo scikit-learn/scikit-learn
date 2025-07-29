@@ -1,4 +1,0 @@
-- Add the parameter `prefit` to
-  :class:`model_selection.FixedThresholdClassifier` allowing the use of a pre-fitted
-  estimator without re-fitting it.
-  By :user:`Guillaume Lemaitre <glemaitre>`

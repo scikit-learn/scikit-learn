@@ -6,13 +6,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Steve Astels <sastels@gmail.com>
-#          John Healy <jchealy@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
-
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
@@ -134,7 +127,7 @@ def _brute_mst(mutual_reachability, min_samples):
     if n_components > 1:
         raise ValueError(
             f"Sparse mutual reachability matrix has {n_components} connected"
-            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " components. HDBSCAN cannot be performed on a disconnected graph. Ensure"
             " that the sparse distance matrix has only one connected component."
         )
 
@@ -434,10 +427,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
 
-    For an example of how to use HDBSCAN, as well as a comparison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the :ref:`plotting demo
-    <sphx_glr_auto_examples_cluster_plot_hdbscan.py>`.
-
     .. versionadded:: 1.3
 
     Parameters
@@ -627,14 +616,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
     >>> hdb = HDBSCAN(min_cluster_size=20)
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
-    >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1])
+    >>> hdb.labels_.shape == (X.shape[0],)
+    True
+    >>> np.unique(hdb.labels_).tolist()
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     """
 
     _parameter_constraints = {
@@ -1003,5 +995,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = self.metric != "precomputed"
         return tags

@@ -20,14 +20,14 @@ from .loss import (
 )
 
 __all__ = [
-    "HalfSquaredError",
     "AbsoluteError",
-    "PinballLoss",
-    "HuberLoss",
-    "HalfPoissonLoss",
+    "HalfBinomialLoss",
     "HalfGammaLoss",
+    "HalfMultinomialLoss",
+    "HalfPoissonLoss",
+    "HalfSquaredError",
     "HalfTweedieLoss",
     "HalfTweedieLossIdentity",
-    "HalfBinomialLoss",
-    "HalfMultinomialLoss",
+    "HuberLoss",
+    "PinballLoss",
 ]

@@ -3,9 +3,11 @@
 # tests to make sure estimator_checks works without pytest.
 
 import importlib
+import re
 import sys
 import unittest
 import warnings
+from inspect import isgenerator
 from numbers import Integral, Real
 
 import joblib
@@ -13,14 +15,18 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import config_context, get_config
-from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin, TransformerMixin
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import (
     load_iris,
     make_multilabel_classification,
 )
 from sklearn.decomposition import PCA
-from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.exceptions import (
+    ConvergenceWarning,
+    EstimatorCheckFailedWarning,
+    SkipTestWarning,
+)
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -33,7 +39,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils._tags import default_tags
+from sklearn.utils._test_common.instance_generator import (
+    _construct_instances,
+    _get_expected_failed_checks,
+)
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -43,6 +52,7 @@ from sklearn.utils._testing import (
     raises,
 )
 from sklearn.utils.estimator_checks import (
+    _check_name,
     _NotAnArray,
     _yield_all_checks,
     check_array_api_input,
@@ -62,6 +72,7 @@ from sklearn.utils.estimator_checks import (
     check_estimator_repr,
     check_estimator_sparse_array,
     check_estimator_sparse_matrix,
+    check_estimator_sparse_tag,
     check_estimator_tags_renamed,
     check_estimators_nan_inf,
     check_estimators_overwrite_params,
@@ -70,14 +81,17 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
+    check_mixin_order,
     check_no_attributes_set_in_init,
     check_outlier_contamination,
     check_outlier_corruption,
     check_parameters_default_constructible,
+    check_positive_only_tag_during_fit,
     check_regressor_data_not_an_array,
     check_requires_y_none,
     check_sample_weights_pandas_series,
     check_set_params,
+    estimator_checks_generator,
     set_random_state,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
@@ -422,7 +436,7 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         return self
 
 
-class SparseTransformer(BaseEstimator):
+class SparseTransformer(TransformerMixin, BaseEstimator):
     def __init__(self, sparse_container=None):
         self.sparse_container = sparse_container
 
@@ -495,20 +509,23 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        # reject sparse X to be able to call (X < 0).any()
+        X, y = validate_data(self, X, y, accept_sparse=False, multi_output=True)
         if (X < 0).any():
-            raise ValueError("negative X values not supported!")
+            raise ValueError("Negative values in data passed to X.")
         return super().fit(X, y)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        # reject sparse X to be able to call (X < 0).any()
+        tags.input_tags.sparse = False
         return tags
 
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        X, y = validate_data(self, X, y, accept_sparse=True, multi_output=True)
         if (y <= 0).any():
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
@@ -557,10 +574,6 @@ class BrokenArrayAPI(BaseEstimator):
 
 
 def test_check_array_api_input():
-    try:
-        importlib.import_module("array_api_compat")
-    except ModuleNotFoundError:
-        raise SkipTest("array_api_compat is required to run this test")
     try:
         importlib.import_module("array_api_strict")
     except ModuleNotFoundError:  # pragma: nocover
@@ -650,7 +663,7 @@ def test_check_dict_unchanged():
 def test_check_sample_weights_pandas_series():
     # check that sample_weights in fit accepts pandas.Series type
     try:
-        from pandas import Series  # noqa
+        from pandas import Series  # noqa: F401
 
         msg = (
             "Estimator NoSampleWeightPandasSeriesType raises error if "
@@ -759,6 +772,33 @@ def test_check_classifiers_one_label_sample_weights():
         )
 
 
+def test_check_estimator_not_fail_fast():
+    """Check the contents of the results returned with on_fail!="raise".
+
+    This results should contain details about the observed failures, expected
+    or not.
+    """
+    check_results = check_estimator(BaseEstimator(), on_fail=None)
+    assert isinstance(check_results, list)
+    assert len(check_results) > 0
+    assert all(
+        isinstance(item, dict)
+        and set(item.keys())
+        == {
+            "estimator",
+            "check_name",
+            "exception",
+            "status",
+            "expected_to_fail",
+            "expected_to_fail_reason",
+        }
+        for item in check_results
+    )
+    # Some tests are expected to fail, some are expected to pass.
+    assert any(item["status"] == "failed" for item in check_results)
+    assert any(item["status"] == "passed" for item in check_results)
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -805,9 +845,57 @@ def test_check_outlier_corruption():
     check_outlier_corruption(1, 2, decision)
 
 
+def test_check_estimator_sparse_tag():
+    """Test that check_estimator_sparse_tag raises error when sparse tag is
+    misaligned."""
+
+    class EstimatorWithSparseConfig(BaseEstimator):
+        def __init__(self, tag_sparse, accept_sparse, fit_error=None):
+            self.tag_sparse = tag_sparse
+            self.accept_sparse = accept_sparse
+            self.fit_error = fit_error
+
+        def fit(self, X, y=None):
+            if self.fit_error:
+                raise self.fit_error
+            validate_data(self, X, y, accept_sparse=self.accept_sparse)
+            return self
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.sparse = self.tag_sparse
+            return tags
+
+    test_cases = [
+        {"tag_sparse": True, "accept_sparse": True, "error_type": None},
+        {"tag_sparse": False, "accept_sparse": False, "error_type": None},
+        {"tag_sparse": False, "accept_sparse": True, "error_type": AssertionError},
+        {"tag_sparse": True, "accept_sparse": False, "error_type": AssertionError},
+    ]
+
+    for test_case in test_cases:
+        estimator = EstimatorWithSparseConfig(
+            test_case["tag_sparse"],
+            test_case["accept_sparse"],
+        )
+        if test_case["error_type"] is None:
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+        else:
+            with raises(test_case["error_type"]):
+                check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+
+    # estimator `tag_sparse=accept_sparse=False` fails on sparse data
+    # but does not raise the appropriate error
+    for fit_error in [TypeError("unexpected error"), KeyError("other error")]:
+        estimator = EstimatorWithSparseConfig(False, False, fit_error)
+        with raises(AssertionError):
+            check_estimator_sparse_tag(estimator.__class__.__name__, estimator)
+
+
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
-    with raises(AttributeError, ".*fit_transform.*"):
+    # but it fails since the tag is not set
+    with raises(RuntimeError, "the `transformer_tags` tag is not set"):
         check_estimator(BadTransformerWithoutMixin())
 
 
@@ -828,7 +916,9 @@ def test_check_estimator_clones():
             est = Estimator()
             set_random_state(est)
             old_hash = joblib.hash(est)
-            check_estimator(est)
+            check_estimator(
+                est, expected_failed_checks=_get_expected_failed_checks(est)
+            )
         assert old_hash == joblib.hash(est)
 
         # with fitting
@@ -837,7 +927,9 @@ def test_check_estimator_clones():
             set_random_state(est)
             est.fit(iris.data, iris.target)
             old_hash = joblib.hash(est)
-            check_estimator(est)
+            check_estimator(
+                est, expected_failed_checks=_get_expected_failed_checks(est)
+            )
         assert old_hash == joblib.hash(est)
 
 
@@ -909,7 +1001,7 @@ def test_check_estimator_pairwise():
 
     # test precomputed metric
     est = KNeighborsRegressor(metric="precomputed")
-    check_estimator(est)
+    check_estimator(est, expected_failed_checks=_get_expected_failed_checks(est))
 
 
 def test_check_classifier_data_not_an_array():
@@ -1216,12 +1308,85 @@ if __name__ == "__main__":
     run_tests_without_pytest()
 
 
-def test_xfail_ignored_in_check_estimator():
-    # Make sure checks marked as xfail are just ignored and not run by
-    # check_estimator(), but still raise a warning.
+def test_estimator_checks_generator_skipping_tests():
+    # Make sure the checks generator skips tests that are expected to fail
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    checks = estimator_checks_generator(
+        est, legacy=True, expected_failed_checks=expected_to_fail, mark="skip"
+    )
+    # making sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    skipped_checks = []
+    for estimator, check in checks:
+        try:
+            check(estimator)
+        except SkipTest:
+            skipped_checks.append(_check_name(check))
+    # all checks expected to fail are skipped
+    # some others might also be skipped, if their dependencies are not installed.
+    assert set(expected_to_fail.keys()) <= set(skipped_checks)
+
+
+def test_xfail_count_with_no_fast_fail():
+    """Test that the right number of xfail warnings are raised when on_fail is "warn".
+
+    It also checks the number of raised EstimatorCheckFailedWarning, and checks the
+    output of check_estimator.
+    """
+    est = NuSVC()
+    expected_failed_checks = _get_expected_failed_checks(est)
+    # This is to make sure we test a class that has some expected failures
+    assert len(expected_failed_checks) > 0
     with warnings.catch_warnings(record=True) as records:
-        check_estimator(NuSVC())
-    assert SkipTestWarning in [rec.category for rec in records]
+        logs = check_estimator(
+            est,
+            expected_failed_checks=expected_failed_checks,
+            on_fail="warn",
+        )
+    xfail_warns = [w for w in records if w.category != SkipTestWarning]
+    assert all([rec.category == EstimatorCheckFailedWarning for rec in xfail_warns])
+    assert len(xfail_warns) == len(expected_failed_checks)
+
+    xfailed = [log for log in logs if log["status"] == "xfail"]
+    assert len(xfailed) == len(expected_failed_checks)
+
+
+def test_check_estimator_callback():
+    """Test that the callback is called with the right arguments."""
+    call_count = {"xfail": 0, "skipped": 0, "passed": 0, "failed": 0}
+
+    def callback(
+        *,
+        estimator,
+        check_name,
+        exception,
+        status,
+        expected_to_fail,
+        expected_to_fail_reason,
+    ):
+        assert status in ("xfail", "skipped", "passed", "failed")
+        nonlocal call_count
+        call_count[status] += 1
+
+    est = NuSVC()
+    expected_failed_checks = _get_expected_failed_checks(est)
+    # This is to make sure we test a class that has some expected failures
+    assert len(expected_failed_checks) > 0
+    with warnings.catch_warnings(record=True):
+        check_estimator(
+            est,
+            expected_failed_checks=expected_failed_checks,
+            on_fail=None,
+            callback=callback,
+        )
+    all_checks_count = len(list(estimator_checks_generator(est, legacy=True)))
+    assert call_count["xfail"] == len(expected_failed_checks)
+    assert call_count["passed"] > 0
+    assert call_count["failed"] == 0
+    assert call_count["skipped"] == (
+        all_checks_count - call_count["xfail"] - call_count["passed"]
+    )
 
 
 # FIXME: this test should be uncommented when the checks will be granular
@@ -1272,22 +1437,43 @@ def test_check_requires_y_none():
     # no warnings are raised
     assert not [r.message for r in record]
 
+    # Make an estimator that throws the wrong error to make sure we catch it
+    class EstimatorWithWrongError(BaseEstimator):
+        def fit(self, X, y):
+            try:
+                X, y = check_X_y(X, y)
+            except ValueError as ve:
+                # This assertion is just to make sure we are catching the value error
+                # that comes from wrong y (=None) and not some other value error
+                assert str(ve) == (
+                    "estimator requires y to be passed, but the target y is None"
+                )
+                # Override the error message force fail
+                raise ValueError("This is the wrong message that raises error")
+
+    err_msg = (
+        "Your estimator raised a ValueError, but with the incorrect or "
+        "incomplete error message to be considered a graceful fail."
+    )
+    with raises(ValueError, match=err_msg):
+        check_requires_y_none("estimator", EstimatorWithWrongError())
+
 
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
     # will skip certain tests, refer to issue #22313 for details
-    for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
-        all_tests = list(_yield_all_checks(est(), legacy=True))
+    for Estimator in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
+        all_tests = list(_yield_all_checks(Estimator(), legacy=True))
         assert check_methods_sample_order_invariance in all_tests
         assert check_methods_subset_invariance in all_tests
 
-        class Estimator(est):
+        class MyEstimator(Estimator):
             def __sklearn_tags__(self):
-                tags = default_tags(self)
+                tags = super().__sklearn_tags__()
                 tags.non_deterministic = True
                 return tags
 
-        all_tests = list(_yield_all_checks(Estimator(), legacy=True))
+        all_tests = list(_yield_all_checks(MyEstimator(), legacy=True))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
 
@@ -1419,10 +1605,10 @@ def test_check_estimator_tags_renamed():
         def _more_tags(self):
             return None  # pragma: no cover
 
-    msg = "was removed in 1.6. Please use __sklearn_tags__ instead."
-    with raises(AssertionError, match=msg):
+    msg = "has defined either `_more_tags` or `_get_tags`"
+    with raises(TypeError, match=msg):
         check_estimator_tags_renamed("BadEstimator1", BadEstimator1())
-    with raises(AssertionError, match=msg):
+    with raises(TypeError, match=msg):
         check_estimator_tags_renamed("BadEstimator2", BadEstimator2())
 
     # This shouldn't fail since we allow both __sklearn_tags__ and _more_tags
@@ -1457,3 +1643,44 @@ def test_estimator_with_set_output():
 
         estimator = StandardScaler().set_output(transform=lib)
         check_estimator(estimator)
+
+
+def test_estimator_checks_generator():
+    """Check that checks_generator returns a generator."""
+    all_instance_gen_checks = estimator_checks_generator(LogisticRegression())
+    assert isgenerator(all_instance_gen_checks)
+
+
+def test_check_estimator_callback_with_fast_fail_error():
+    """Check that check_estimator fails correctly with on_fail='raise' and callback."""
+    with raises(
+        ValueError, match="callback cannot be provided together with on_fail='raise'"
+    ):
+        check_estimator(LogisticRegression(), on_fail="raise", callback=lambda: None)
+
+
+def test_check_mixin_order():
+    """Test that the check raises an error when the mixin order is incorrect."""
+
+    class BadEstimator(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None):
+            return self
+
+    msg = "TransformerMixin comes before/left side of BaseEstimator"
+    with raises(AssertionError, match=re.escape(msg)):
+        check_mixin_order("BadEstimator", BadEstimator())
+
+
+def test_check_positive_only_tag_during_fit():
+    class RequiresPositiveXBadTag(RequiresPositiveXRegressor):
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.positive_only = False
+            return tags
+
+    with raises(
+        AssertionError, match="This happens when passing negative input values as X."
+    ):
+        check_positive_only_tag_during_fit(
+            "RequiresPositiveXBadTag", RequiresPositiveXBadTag()
+        )

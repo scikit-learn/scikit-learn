@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from collections.abc import Iterable
 
 import numpy as np
@@ -18,7 +19,7 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 from ..tree import DecisionTreeRegressor
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
-from ..utils._optional_dependencies import check_matplotlib_support  # noqa
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa: F401
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -36,7 +37,7 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
+def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -65,6 +66,10 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         The number of equally spaced points to be placed on the grid for each
         feature.
 
+    custom_values: dict
+        Mapping from column index of X to an array-like of values where
+        the partial dependence should be calculated for that feature
+
     Returns
     -------
     grid : ndarray of shape (n_points, n_target_features)
@@ -73,8 +78,9 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
-        array ``values[j]`` is either ``grid_resolution``, or the number of
-        unique values in ``X[:, j]``, whichever is smaller.
+        array ``values[j]`` is either ``grid_resolution``, the number of
+        unique values in ``X[:, j]``, if j is not in ``custom_range``.
+        If j is in ``custom_range``, then it is the length of ``custom_range[j]``.
     """
     if not isinstance(percentiles, Iterable) or len(percentiles) != 2:
         raise ValueError("'percentiles' must be a sequence of 2 elements.")
@@ -86,43 +92,66 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
+    def _convert_custom_values(values):
+        # Convert custom types such that object types are always used for string arrays
+        dtype = object if any(isinstance(v, str) for v in values) else None
+        return np.asarray(values, dtype=dtype)
+
+    custom_values = {k: _convert_custom_values(v) for k, v in custom_values.items()}
+    if any(v.ndim != 1 for v in custom_values.values()):
+        error_string = ", ".join(
+            f"Feature {k}: {v.ndim} dimensions"
+            for k, v in custom_values.items()
+            if v.ndim != 1
+        )
+
+        raise ValueError(
+            "The custom grid for some features is not a one-dimensional array. "
+            f"{error_string}"
+        )
+
     values = []
     # TODO: we should handle missing values (i.e. `np.nan`) specifically and store them
     # in a different Bunch attribute.
     for feature, is_cat in enumerate(is_categorical):
-        try:
-            uniques = np.unique(_safe_indexing(X, feature, axis=1))
-        except TypeError as exc:
-            # `np.unique` will fail in the presence of `np.nan` and `str` categories
-            # due to sorting. Temporary, we reraise an error explaining the problem.
-            raise ValueError(
-                f"The column #{feature} contains mixed data types. Finding unique "
-                "categories fail due to sorting. It usually means that the column "
-                "contains `np.nan` values together with `str` categories. Such use "
-                "case is not yet supported in scikit-learn."
-            ) from exc
-        if is_cat or uniques.shape[0] < grid_resolution:
-            # Use the unique values either because:
-            # - feature has low resolution use unique values
-            # - feature is categorical
-            axis = uniques
+        if feature in custom_values:
+            # Use values in the custom range
+            axis = custom_values[feature]
         else:
-            # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(
-                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
-            )
-            if np.allclose(emp_percentiles[0], emp_percentiles[1]):
+            try:
+                uniques = np.unique(_safe_indexing(X, feature, axis=1))
+            except TypeError as exc:
+                # `np.unique` will fail in the presence of `np.nan` and `str` categories
+                # due to sorting. Temporary, we reraise an error explaining the problem.
                 raise ValueError(
-                    "percentiles are too close to each other, "
-                    "unable to build the grid. Please choose percentiles "
-                    "that are further apart."
+                    f"The column #{feature} contains mixed data types. Finding unique "
+                    "categories fail due to sorting. It usually means that the column "
+                    "contains `np.nan` values together with `str` categories. Such use "
+                    "case is not yet supported in scikit-learn."
+                ) from exc
+
+            if is_cat or uniques.shape[0] < grid_resolution:
+                # Use the unique values either because:
+                # - feature has low resolution use unique values
+                # - feature is categorical
+                axis = uniques
+            else:
+                # create axis based on percentiles and grid resolution
+                emp_percentiles = mquantiles(
+                    _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
                 )
-            axis = np.linspace(
-                emp_percentiles[0],
-                emp_percentiles[1],
-                num=grid_resolution,
-                endpoint=True,
-            )
+                if np.allclose(emp_percentiles[0], emp_percentiles[1]):
+                    raise ValueError(
+                        "percentiles are too close to each other, "
+                        "unable to build the grid. Please choose percentiles "
+                        "that are further apart."
+                    )
+                axis = np.linspace(
+                    emp_percentiles[0],
+                    emp_percentiles[1],
+                    num=grid_resolution,
+                    endpoint=True,
+                )
         values.append(axis)
 
     return cartesian(values), values
@@ -275,7 +304,7 @@ def _partial_dependence_brute(
         # (n_points,) for non-multioutput regressors
         # (n_points, n_tasks) for multioutput regressors
         # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2) for binary classification
+        # (n_points, 1) for binary classification (positive class already selected)
         # (n_points, n_classes) for multiclass classification
         pred, _ = _get_response_values(est, X_eval, response_method=response_method)
 
@@ -306,13 +335,9 @@ def _partial_dependence_brute(
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
     averaged_predictions = np.array(averaged_predictions).T
-    if is_regressor(est) and averaged_predictions.ndim == 1:
-        # non-multioutput regression, shape is (n_points,)
-        averaged_predictions = averaged_predictions.reshape(1, -1)
-    elif is_classifier(est) and averaged_predictions.shape[0] == 2:
-        # Binary classification, shape is (2, n_points).
-        # we output the effect of **positive** class
-        averaged_predictions = averaged_predictions[1]
+    if averaged_predictions.ndim == 1:
+        # reshape to (1, n_points) for consistency with
+        # _partial_dependence_recursion
         averaged_predictions = averaged_predictions.reshape(1, -1)
 
     return averaged_predictions, predictions
@@ -335,6 +360,7 @@ def _partial_dependence_brute(
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
+        "custom_values": [dict, None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -349,6 +375,7 @@ def partial_dependence(
     response_method="auto",
     percentiles=(0.05, 0.95),
     grid_resolution=100,
+    custom_values=None,
     method="auto",
     kind="average",
 ):
@@ -358,7 +385,9 @@ def partial_dependence(
     the average response of an estimator for each possible value of the
     feature.
 
-    Read more in the :ref:`User Guide <partial_dependence>`.
+    Read more in
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+    and the :ref:`User Guide <partial_dependence>`.
 
     .. warning::
 
@@ -436,10 +465,24 @@ def partial_dependence(
     percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
+        This parameter is overridden by `custom_values` if that parameter is set.
 
     grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
+        This parameter is overridden by `custom_values` if that parameter is set.
+
+    custom_values : dict
+        A dictionary mapping the index of an element of `features` to an array
+        of values where the partial dependence should be calculated
+        for that feature. Setting a range of values for a feature overrides
+        `grid_resolution` and `percentiles`.
+
+        See :ref:`how to use partial_dependence
+        <plt_partial_dependence_custom_values>` for an example of how this parameter can
+        be used.
+
+        .. versionadded:: 1.7
 
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
@@ -529,7 +572,7 @@ def partial_dependence(
     >>> gb = GradientBoostingClassifier(random_state=0).fit(X, y)
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
-    (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
+    (array([[-4.52,  4.52]]), [array([ 0.,  1.])])
     """
     check_is_fitted(estimator)
 
@@ -630,6 +673,12 @@ def partial_dependence(
         is_categorical = [False] * len(features_indices)
     else:
         categorical_features = np.asarray(categorical_features)
+        if categorical_features.size == 0:
+            raise ValueError(
+                "Passing an empty list (`[]`) to `categorical_features` is not "
+                "supported. Use `None` instead to indicate that there are no "
+                "categorical features."
+            )
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:
@@ -655,11 +704,42 @@ def partial_dependence(
                 f" integer, or string. Got {categorical_features.dtype} instead."
             )
 
+    custom_values = custom_values or {}
+    if isinstance(features, (str, int)):
+        features = [features]
+
+    for feature_idx, feature, is_cat in zip(features_indices, features, is_categorical):
+        if is_cat:
+            continue
+
+        if _safe_indexing(X, feature_idx, axis=1).dtype.kind in "iu":
+            # TODO(1.9): raise a ValueError instead.
+            warnings.warn(
+                f"The column {feature!r} contains integer data. Partial "
+                "dependence plots are not supported for integer data: this "
+                "can lead to implicit rounding with NumPy arrays or even errors "
+                "with newer pandas versions. Please convert numerical features"
+                "to floating point dtypes ahead of time to avoid problems. "
+                "This will raise ValueError in scikit-learn 1.9.",
+                FutureWarning,
+            )
+            # Do not warn again for other features to avoid spamming the caller.
+            break
+
+    X_subset = _safe_indexing(X, features_indices, axis=1)
+
+    custom_values_for_X_subset = {
+        index: custom_values.get(feature)
+        for index, feature in enumerate(features)
+        if feature in custom_values
+    }
+
     grid, values = _grid_from_X(
-        _safe_indexing(X, features_indices, axis=1),
+        X_subset,
         percentiles,
         is_categorical,
         grid_resolution,
+        custom_values_for_X_subset,
     )
 
     if method == "brute":

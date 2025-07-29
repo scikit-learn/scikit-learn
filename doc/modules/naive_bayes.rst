@@ -117,7 +117,7 @@ for each class :math:`y`, where :math:`n` is the number of features
 and :math:`\theta_{yi}` is the probability :math:`P(x_i \mid y)`
 of feature :math:`i` appearing in a sample belonging to class :math:`y`.
 
-The parameters :math:`\theta_y` is estimated by a smoothed
+The parameters :math:`\theta_y` are estimated by a smoothed
 version of maximum likelihood, i.e. relative frequency counting:
 
 .. math::
@@ -125,13 +125,13 @@ version of maximum likelihood, i.e. relative frequency counting:
     \hat{\theta}_{yi} = \frac{ N_{yi} + \alpha}{N_y + \alpha n}
 
 where :math:`N_{yi} = \sum_{x \in T} x_i` is
-the number of times feature :math:`i` appears in a sample of class :math:`y`
+the number of times feature :math:`i` appears in all samples of class :math:`y`
 in the training set :math:`T`,
 and :math:`N_{y} = \sum_{i=1}^{n} N_{yi}` is the total count of
 all features for class :math:`y`.
 
-The smoothing priors :math:`\alpha \ge 0` accounts for
-features not present in the learning samples and prevents zero probabilities
+The smoothing priors :math:`\alpha \ge 0` account for
+features not present in the learning samples and prevent zero probabilities
 in further computations.
 Setting :math:`\alpha = 1` is called Laplace smoothing,
 while :math:`\alpha < 1` is called Lidstone smoothing.

@@ -72,8 +72,8 @@ from .utils.validation import (
 )
 
 __all__ = [
-    "OneVsRestClassifier",
     "OneVsOneClassifier",
+    "OneVsRestClassifier",
     "OutputCodeClassifier",
 ]
 
@@ -499,10 +499,12 @@ class OneVsRestClassifier(
             maxima = np.empty(n_samples, dtype=float)
             maxima.fill(-np.inf)
             argmaxima = np.zeros(n_samples, dtype=int)
-            for i, e in enumerate(self.estimators_):
+            n_classes = len(self.estimators_)
+            # Iterate in reverse order to match np.argmax tie-breaking behavior
+            for i, e in enumerate(reversed(self.estimators_)):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
-                argmaxima[maxima == pred] = i
+                argmaxima[maxima == pred] = n_classes - i - 1
             return self.classes_[argmaxima]
         else:
             thresh = _threshold_for_binary_predict(self.estimators_[0])
@@ -553,8 +555,10 @@ class OneVsRestClassifier(
             Y = np.concatenate(((1 - Y), Y), axis=1)
 
         if not self.multilabel_:
-            # Then, probabilities should be normalized to 1.
-            Y /= np.sum(Y, axis=1)[:, np.newaxis]
+            # Then, (nonzero) sample probability distributions should be normalized.
+            row_sums = np.sum(Y, axis=1)[:, np.newaxis]
+            np.divide(Y, row_sums, out=Y, where=row_sums != 0)
+
         return Y
 
     @available_if(_estimators_has("decision_function"))
@@ -601,6 +605,7 @@ class OneVsRestClassifier(
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
     def get_metadata_routing(self):
@@ -1004,6 +1009,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
     def get_metadata_routing(self):
@@ -1276,3 +1282,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

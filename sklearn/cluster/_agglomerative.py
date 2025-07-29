@@ -2,10 +2,6 @@
 
 These routines perform some hierarchical agglomerative clustering of some
 input data.
-
-Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
-          Gael Varoquaux
-License: BSD 3 clause
 """
 
 # Authors: The scikit-learn developers
@@ -32,7 +28,6 @@ from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -41,7 +36,7 @@ from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
+from . import _hierarchical_fast as _hierarchical  # type: ignore[attr-defined]
 from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
@@ -799,7 +794,12 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
-        as input for the fit method.
+        as input for the fit method. If connectivity is None, linkage is
+        "single" and affinity is not "precomputed" any valid pairwise distance
+        metric can be assigned.
+
+        For an example of agglomerative clustering with different metrics, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`.
 
         .. versionadded:: 1.2
 
@@ -928,6 +928,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
+
+    For a comparison of Agglomerative clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -1114,7 +1117,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
 
 class FeatureAgglomeration(
-    ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+    ClassNamePrefixFeaturesOutMixin, AgglomerationTransform, AgglomerativeClustering
 ):
     """Agglomerate features.
 
@@ -1140,10 +1143,6 @@ class FeatureAgglomeration(
         as input for the fit method.
 
         .. versionadded:: 1.2
-
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -1271,7 +1270,6 @@ class FeatureAgglomeration(
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", "sparse matrix", callable, None],

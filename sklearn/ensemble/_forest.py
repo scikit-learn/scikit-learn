@@ -35,7 +35,6 @@ Single and multi-output problems are both handled.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -79,10 +78,10 @@ from ..utils.validation import (
 from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
-    "RandomForestClassifier",
-    "RandomForestRegressor",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
     "RandomTreesEmbedding",
 ]
 
@@ -513,8 +512,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         ):
             y_type = type_of_target(y)
             if y_type == "unknown" or (
-                self._estimator_type == "classifier"
-                and y_type == "multiclass-multioutput"
+                is_classifier(self) and y_type == "multiclass-multioutput"
             ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
@@ -1003,6 +1001,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1168,7 +1167,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.regressor_tags.multi_label = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1187,6 +1186,13 @@ class RandomForestClassifier(ForestClassifier):
 
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
+
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -1291,6 +1297,9 @@ class RandomForestClassifier(ForestClassifier):
         By default, :func:`~sklearn.metrics.accuracy_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1558,16 +1567,6 @@ class RandomForestClassifier(ForestClassifier):
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class RandomForestRegressor(ForestRegressor):
     """
@@ -1581,6 +1580,13 @@ class RandomForestRegressor(ForestRegressor):
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
+
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
 
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
@@ -1705,6 +1711,9 @@ class RandomForestRegressor(ForestRegressor):
         By default, :func:`~sklearn.metrics.r2_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1929,16 +1938,6 @@ class RandomForestRegressor(ForestRegressor):
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class ExtraTreesClassifier(ForestClassifier):
     """
@@ -1948,6 +1947,14 @@ class ExtraTreesClassifier(ForestClassifier):
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
+
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -2052,6 +2059,9 @@ class ExtraTreesClassifier(ForestClassifier):
         By default, :func:`~sklearn.metrics.accuracy_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2322,6 +2332,14 @@ class ExtraTreesRegressor(ForestRegressor):
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -2439,6 +2457,9 @@ class ExtraTreesRegressor(ForestRegressor):
         By default, :func:`~sklearn.metrics.r2_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2666,6 +2687,10 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     The dimensionality of the resulting representation is
     ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
     the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
+
+    For an example of applying Random Trees Embedding to non-linear
+    classification, see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`.
 
     Read more in the :ref:`User Guide <random_trees_embedding>`.
 
@@ -3016,10 +3041,5 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
+        tags.input_tags.sparse = True
         return tags

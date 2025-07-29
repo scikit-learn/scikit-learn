@@ -1,3 +1,0 @@
-- Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
-  the iterative process when `keep_empty_features` is set to `True`.
-  By :user:`Arif Qodari <arifqodari>`

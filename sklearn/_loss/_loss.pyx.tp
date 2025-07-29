@@ -121,7 +121,7 @@ doc_HalfTweedieLoss = (
         - y_true * exp((1-p) * raw_prediction) / (1-p)
 
     Notes:
-    - Poisson with p=1 and and Gamma with p=2 have different terms dropped such
+    - Poisson with p=1 and Gamma with p=2 have different terms dropped such
       that cHalfTweedieLoss is not continuous in p=power at p=1 and p=2.
     - While the Tweedie distribution only exists for p<=0 or p>=1, the range
       0<p<1 still gives a strictly consistent scoring function for the
@@ -818,6 +818,9 @@ cdef inline double_pair cgrad_hess_exponential(
 cdef class CyLossFunction:
     """Base class for convex loss functions."""
 
+    def __reduce__(self):
+        return (self.__class__, ())
+
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil:
         """Compute the loss for a single sample.
 
@@ -1011,6 +1014,11 @@ cdef class {{name}}(CyLossFunction):
     {{if param is not None}}
     def __init__(self, {{param}}):
         self.{{param}} = {{param}}
+    {{endif}}
+
+    {{if param is not None}}
+    def __reduce__(self):
+        return (self.__class__, (self.{{param}},))
     {{endif}}
 
     cdef inline double cy_loss(self, double y_true, double raw_prediction) noexcept nogil:

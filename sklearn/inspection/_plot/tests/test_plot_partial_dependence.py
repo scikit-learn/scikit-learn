@@ -34,11 +34,31 @@ def clf_diabetes(diabetes):
     return clf
 
 
+def custom_values_helper(feature, grid_resolution):
+    return np.linspace(
+        *mquantiles(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
+    )
+
+
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
-def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes):
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_plot_partial_dependence(
+    use_custom_values,
+    grid_resolution,
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
     # Test partial dependence plot function.
     # Use columns 0 & 2 as 1 is not quantitative (sex)
     feature_names = diabetes.feature_names
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            0: custom_values_helper(diabetes.data[:, 0], grid_resolution),
+            2: custom_values_helper(diabetes.data[:, 2], grid_resolution),
+        }
     disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
@@ -46,6 +66,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
         grid_resolution=grid_resolution,
         feature_names=feature_names,
         contour_kw={"cmap": "jet"},
+        custom_values=custom_values,
     )
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -172,13 +193,18 @@ def test_plot_partial_dependence_kind(
         ("array", "index"),
     ],
 )
+@pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_str_features(
     pyplot,
+    use_custom_values,
     clf_diabetes,
     diabetes,
     input_type,
     feature_names_type,
 ):
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+
     if input_type == "dataframe":
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
@@ -193,6 +219,12 @@ def test_plot_partial_dependence_str_features(
         feature_names = _convert_container(diabetes.feature_names, feature_names_type)
 
     grid_resolution = 25
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
     # check with str features and array feature names and single column
     disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
@@ -202,6 +234,7 @@ def test_plot_partial_dependence_str_features(
         feature_names=feature_names,
         n_cols=1,
         line_kw={"alpha": 0.8},
+        custom_values=custom_values,
     )
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -241,9 +274,23 @@ def test_plot_partial_dependence_str_features(
     assert ax.get_ylabel() == "bmi"
 
 
-def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_plot_partial_dependence_custom_axes(
+    use_custom_values, pyplot, clf_diabetes, diabetes
+):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
+
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
     disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
@@ -251,6 +298,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
         grid_resolution=grid_resolution,
         feature_names=diabetes.feature_names,
         ax=[ax1, ax2],
+        custom_values=custom_values,
     )
     assert fig is disp.figure_
     assert disp.bounding_ax_ is None
@@ -279,11 +327,27 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
 @pytest.mark.parametrize(
     "kind, lines", [("average", 1), ("individual", 50), ("both", 51)]
 )
+@pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_passing_numpy_axes(
-    pyplot, clf_diabetes, diabetes, kind, lines
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    use_custom_values,
+    kind,
+    lines,
 ):
     grid_resolution = 25
     feature_names = diabetes.feature_names
+
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
     disp1 = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
@@ -291,6 +355,7 @@ def test_plot_partial_dependence_passing_numpy_axes(
         kind=kind,
         grid_resolution=grid_resolution,
         feature_names=feature_names,
+        custom_values=custom_values,
     )
     assert disp1.axes_.shape == (1, 2)
     assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
@@ -317,8 +382,14 @@ def test_plot_partial_dependence_passing_numpy_axes(
 
 
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
+@pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_incorrent_num_axes(
-    pyplot, clf_diabetes, diabetes, nrows, ncols
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    use_custom_values,
+    nrows,
+    ncols,
 ):
     grid_resolution = 5
     fig, axes = pyplot.subplots(nrows, ncols)
@@ -326,12 +397,31 @@ def test_plot_partial_dependence_incorrent_num_axes(
 
     msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
 
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
     disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
         grid_resolution=grid_resolution,
         feature_names=diabetes.feature_names,
+        custom_values=custom_values,
     )
 
     for ax_format in axes_formats:
@@ -343,6 +433,7 @@ def test_plot_partial_dependence_incorrent_num_axes(
                 grid_resolution=grid_resolution,
                 feature_names=diabetes.feature_names,
                 ax=ax_format,
+                custom_values=custom_values,
             )
 
         # with axes object
@@ -350,7 +441,11 @@ def test_plot_partial_dependence_incorrent_num_axes(
             disp.plot(ax=ax_format)
 
 
-def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_plot_partial_dependence_with_same_axes(
+    use_custom_values, pyplot, clf_diabetes, diabetes
+):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
     # three axes in the figure.
@@ -363,6 +458,16 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
     # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
 
     grid_resolution = 25
+
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
+
     fig, ax = pyplot.subplots()
     PartialDependenceDisplay.from_estimator(
         clf_diabetes,
@@ -371,6 +476,7 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
         grid_resolution=grid_resolution,
         feature_names=diabetes.feature_names,
         ax=ax,
+        custom_values=custom_values,
     )
 
     msg = (
@@ -385,40 +491,74 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
             ["age", "bmi"],
             grid_resolution=grid_resolution,
             feature_names=diabetes.feature_names,
+            custom_values=custom_values,
             ax=ax,
         )
 
 
-def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes, diabetes):
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_plot_partial_dependence_feature_name_reuse(
+    use_custom_values, pyplot, clf_diabetes, diabetes
+):
     # second call to plot does not change the feature names from the first
     # call
+    grid_resolution = 10
+
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            0: custom_values_helper(diabetes.data[:, 0], grid_resolution),
+            1: custom_values_helper(diabetes.data[:, 1], grid_resolution),
+        }
 
     feature_names = diabetes.feature_names
     disp = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
         diabetes.data,
         [0, 1],
-        grid_resolution=10,
+        grid_resolution=grid_resolution,
         feature_names=feature_names,
+        custom_values=custom_values,
     )
 
     PartialDependenceDisplay.from_estimator(
-        clf_diabetes, diabetes.data, [0, 1], grid_resolution=10, ax=disp.axes_
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        grid_resolution=grid_resolution,
+        ax=disp.axes_,
+        custom_values=custom_values,
     )
 
     for i, ax in enumerate(disp.axes_.ravel()):
         assert ax.get_xlabel() == feature_names[i]
 
 
-def test_plot_partial_dependence_multiclass(pyplot):
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_plot_partial_dependence_multiclass(use_custom_values, pyplot):
     grid_resolution = 25
     clf_int = GradientBoostingClassifier(n_estimators=10, random_state=1)
     iris = load_iris()
 
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            0: custom_values_helper(iris.data[:, 0], grid_resolution),
+            1: custom_values_helper(iris.data[:, 1], grid_resolution),
+        }
+
     # Test partial dependence plot function on multi-class input.
     clf_int.fit(iris.data, iris.target)
+
     disp_target_0 = PartialDependenceDisplay.from_estimator(
-        clf_int, iris.data, [0, 3], target=0, grid_resolution=grid_resolution
+        clf_int,
+        iris.data,
+        [0, 1],
+        target=0,
+        grid_resolution=grid_resolution,
+        custom_values=custom_values,
     )
     assert disp_target_0.figure_ is pyplot.gcf()
     assert disp_target_0.axes_.shape == (1, 2)
@@ -433,8 +573,14 @@ def test_plot_partial_dependence_multiclass(pyplot):
     target = iris.target_names[iris.target]
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
+
     disp_symbol = PartialDependenceDisplay.from_estimator(
-        clf_symbol, iris.data, [0, 3], target="setosa", grid_resolution=grid_resolution
+        clf_symbol,
+        iris.data,
+        [0, 1],
+        target="setosa",
+        grid_resolution=grid_resolution,
+        custom_values=custom_values,
     )
     assert disp_symbol.figure_ is pyplot.gcf()
     assert disp_symbol.axes_.shape == (1, 2)
@@ -452,8 +598,14 @@ def test_plot_partial_dependence_multiclass(pyplot):
         assert_allclose(int_result["grid_values"], symbol_result["grid_values"])
 
     # check that the pd plots are different for another target
+
     disp_target_1 = PartialDependenceDisplay.from_estimator(
-        clf_int, iris.data, [0, 3], target=1, grid_resolution=grid_resolution
+        clf_int,
+        iris.data,
+        [0, 3],
+        target=1,
+        grid_resolution=grid_resolution,
+        custom_values=custom_values,
     )
     target_0_data_y = disp_target_0.lines_[0, 0].get_data()[1]
     target_1_data_y = disp_target_1.lines_[0, 0].get_data()[1]
@@ -464,14 +616,28 @@ multioutput_regression_data = make_regression(n_samples=50, n_targets=2, random_
 
 
 @pytest.mark.parametrize("target", [0, 1])
-def test_plot_partial_dependence_multioutput(pyplot, target):
+@pytest.mark.parametrize("use_custom_values", [True, False])
+def test_plot_partial_dependence_multioutput(use_custom_values, pyplot, target):
     # Test partial dependence plot function on multi-output input.
     X, y = multioutput_regression_data
     clf = LinearRegression().fit(X, y)
 
     grid_resolution = 25
+
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            0: custom_values_helper(X[:, 0], grid_resolution),
+            1: custom_values_helper(X[:, 1], grid_resolution),
+        }
+
     disp = PartialDependenceDisplay.from_estimator(
-        clf, X, [0, 1], target=target, grid_resolution=grid_resolution
+        clf,
+        X,
+        [0, 1],
+        target=target,
+        grid_resolution=grid_resolution,
+        custom_values=custom_values,
     )
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -704,7 +870,7 @@ def test_plot_partial_dependence_legend(pyplot):
     X = pd.DataFrame(
         {
             "col_A": ["A", "B", "C"],
-            "col_B": [1, 0, 2],
+            "col_B": [1.0, 0.0, 2.0],
             "col_C": ["C", "B", "A"],
         }
     )
@@ -733,8 +899,14 @@ def test_plot_partial_dependence_legend(pyplot):
     "kind, expected_shape",
     [("average", (1, 2)), ("individual", (1, 2, 20)), ("both", (1, 2, 21))],
 )
+@pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_subsampling(
-    pyplot, clf_diabetes, diabetes, kind, expected_shape
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    use_custom_values,
+    kind,
+    expected_shape,
 ):
     # check that the subsampling is properly working
     # non-regression test for:
@@ -742,6 +914,16 @@ def test_plot_partial_dependence_subsampling(
     matplotlib = pytest.importorskip("matplotlib")
     grid_resolution = 25
     feature_names = diabetes.feature_names
+
+    age = diabetes.data[:, diabetes.feature_names.index("age")]
+    bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
+
+    custom_values = None
+    if use_custom_values:
+        custom_values = {
+            "age": custom_values_helper(age, grid_resolution),
+            "bmi": custom_values_helper(bmi, grid_resolution),
+        }
 
     disp1 = PartialDependenceDisplay.from_estimator(
         clf_diabetes,
@@ -752,6 +934,7 @@ def test_plot_partial_dependence_subsampling(
         feature_names=feature_names,
         subsample=20,
         random_state=0,
+        custom_values=custom_values,
     )
 
     assert disp1.lines_.shape == expected_shape
@@ -1004,7 +1187,7 @@ def test_plot_partial_dependence_lines_kw(
 
     line = disp.lines_[0, 0, -1]
     assert line.get_color() == expected_colors[0], (
-        f"{line.get_color()}!={expected_colors[0]}\n" f"{line_kw} and {pd_line_kw}"
+        f"{line.get_color()}!={expected_colors[0]}\n{line_kw} and {pd_line_kw}"
     )
     if pd_line_kw is not None:
         if "linestyle" in pd_line_kw:
@@ -1015,9 +1198,9 @@ def test_plot_partial_dependence_lines_kw(
         assert line.get_linestyle() == "--"
 
     line = disp.lines_[0, 0, 0]
-    assert (
-        line.get_color() == expected_colors[1]
-    ), f"{line.get_color()}!={expected_colors[1]}"
+    assert line.get_color() == expected_colors[1], (
+        f"{line.get_color()}!={expected_colors[1]}"
+    )
     if ice_lines_kw is not None:
         if "linestyle" in ice_lines_kw:
             assert line.get_linestyle() == ice_lines_kw["linestyle"]

@@ -224,7 +224,7 @@ def _locally_linear_embedding(
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            "Expected n_neighbors < n_samples, but n_samples = %d, n_neighbors = %d"
             % (N, n_neighbors)
         )
 
@@ -240,9 +240,9 @@ def _locally_linear_embedding(
         # depending on the solver, we'll do this differently
         if M_sparse:
             M = eye(*W.shape, format=W.format) - W
-            M = M.T * M
+            M = M.T @ M
         else:
-            M = (W.T * W - W.T - W).toarray()
+            M = (W.T @ W - W.T - W).toarray()
             M.flat[:: M.shape[0] + 1] += 1  # M = W' W - W' - W + I
 
     elif method == "hessian":
@@ -413,7 +413,7 @@ def _locally_linear_embedding(
             Xi = X[neighbors[i]]
             Xi -= Xi.mean(0)
 
-            # compute n_components largest eigenvalues of Xi * Xi^T
+            # compute n_components largest eigenvalues of Xi @ Xi^T
             if use_svd:
                 v = svd(Xi, full_matrices=True)[0]
             else:

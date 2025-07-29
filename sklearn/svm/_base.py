@@ -24,12 +24,12 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _liblinear as liblinear  # type: ignore
+from . import _liblinear as liblinear  # type: ignore[attr-defined]
 
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
-from . import _libsvm as libsvm  # type: ignore
-from . import _libsvm_sparse as libsvm_sparse  # type: ignore
+from . import _libsvm as libsvm  # type: ignore[attr-defined]
+from . import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
@@ -147,6 +147,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         tags = super().__sklearn_tags__()
         # Used by cross_val_score.
         tags.input_tags.pairwise = self.kernel == "precomputed"
+        tags.input_tags.sparse = self.kernel != "precomputed"
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -999,6 +1000,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         return self._probB
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
+        return tags
+
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """Find the liblinear magic number for the solver.
@@ -1183,8 +1189,9 @@ def _fit_liblinear(
                 " in the data, but the data contains only one"
                 " class: %r" % classes_[0]
             )
-
-        class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)
+        class_weight_ = compute_class_weight(
+            class_weight, classes=classes_, y=y, sample_weight=sample_weight
+        )
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y

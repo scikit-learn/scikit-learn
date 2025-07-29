@@ -495,7 +495,7 @@ class LatentDirichletAllocation(
     def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.
 
-        update `_component` by batch VB or online VB.
+        update `component_` by batch VB or online VB.
 
         Parameters
         ----------
@@ -549,6 +549,7 @@ class LatentDirichletAllocation(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float32", "float64"]
         return tags
 
@@ -771,7 +772,7 @@ class LatentDirichletAllocation(
 
         Returns
         -------
-        X_new : ndarray array of shape (n_samples, n_features_new)
+        X_new : ndarray array of shape (n_samples, n_components)
             Transformed array.
         """
         return self.fit(X, y).transform(X, normalize=normalize)

@@ -9,8 +9,8 @@ from ._plot.decision_boundary import DecisionBoundaryDisplay
 from ._plot.partial_dependence import PartialDependenceDisplay
 
 __all__ = [
+    "DecisionBoundaryDisplay",
+    "PartialDependenceDisplay",
     "partial_dependence",
     "permutation_importance",
-    "PartialDependenceDisplay",
-    "DecisionBoundaryDisplay",
 ]

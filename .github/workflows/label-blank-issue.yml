@@ -1,4 +1,6 @@
 name: Labels Blank issues
+permissions:
+  issues: write
 
 on:
   issues:

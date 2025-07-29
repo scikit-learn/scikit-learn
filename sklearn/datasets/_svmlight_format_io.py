@@ -384,10 +384,8 @@ def load_svmlight_files(
         for f in files
     ]
 
-    if (
-        zero_based is False
-        or zero_based == "auto"
-        and all(len(tmp[1]) and np.min(tmp[1]) > 0 for tmp in r)
+    if zero_based is False or (
+        zero_based == "auto" and all(len(tmp[1]) and np.min(tmp[1]) > 0 for tmp in r)
     ):
         for _, indices, _, _, _ in r:
             indices -= 1

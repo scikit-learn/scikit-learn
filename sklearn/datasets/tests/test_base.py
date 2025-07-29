@@ -255,7 +255,7 @@ def test_load_diabetes_raw():
     get an unscaled version when setting `scaled=False`."""
     diabetes_raw = load_diabetes(scaled=False)
     assert diabetes_raw.data.shape == (442, 10)
-    assert diabetes_raw.target.size, 442
+    assert diabetes_raw.target.size == 442
     assert len(diabetes_raw.feature_names) == 10
     assert diabetes_raw.DESCR
 
@@ -367,12 +367,12 @@ def test_load_boston_error():
     """Check that we raise the ethical warning when trying to import `load_boston`."""
     msg = "The Boston housing prices dataset has an ethical problem"
     with pytest.raises(ImportError, match=msg):
-        from sklearn.datasets import load_boston  # noqa
+        from sklearn.datasets import load_boston  # noqa: F401
 
     # other non-existing function should raise the usual import error
     msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
     with pytest.raises(ImportError, match=msg):
-        from sklearn.datasets import non_existing_function  # noqa
+        from sklearn.datasets import non_existing_function  # noqa: F401
 
 
 def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):

@@ -18,7 +18,8 @@ __all__ = ["available_if"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for classifiers composed of named estimators."""
+    """Handles parameter management for estimators that are composed of named
+    sub-estimators."""
 
     steps: List[Any]
 

@@ -10,10 +10,6 @@
     <p>Jérémie du Boisberranger</p>
     </div>
     <div>
-    <a href='https://github.com/jorisvandenbossche'><img src='https://avatars.githubusercontent.com/u/1020496?v=4' class='avatar' /></a> <br />
-    <p>Joris Van den Bossche</p>
-    </div>
-    <div>
     <a href='https://github.com/lesteve'><img src='https://avatars.githubusercontent.com/u/1680079?v=4' class='avatar' /></a> <br />
     <p>Loïc Estève</p>
     </div>
@@ -28,10 +24,6 @@
     <div>
     <a href='https://github.com/ogrisel'><img src='https://avatars.githubusercontent.com/u/89061?v=4' class='avatar' /></a> <br />
     <p>Olivier Grisel</p>
-    </div>
-    <div>
-    <a href='https://github.com/yarikoptic'><img src='https://avatars.githubusercontent.com/u/39889?v=4' class='avatar' /></a> <br />
-    <p>Yaroslav Halchenko</p>
     </div>
     <div>
     <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
@@ -66,52 +58,24 @@
     <p>Christian Lorentzen</p>
     </div>
     <div>
-    <a href='https://github.com/jmetzen'><img src='https://avatars.githubusercontent.com/u/1116263?v=4' class='avatar' /></a> <br />
-    <p>Jan Hendrik Metzen</p>
-    </div>
-    <div>
     <a href='https://github.com/amueller'><img src='https://avatars.githubusercontent.com/u/449558?v=4' class='avatar' /></a> <br />
     <p>Andreas Mueller</p>
-    </div>
-    <div>
-    <a href='https://github.com/vene'><img src='https://avatars.githubusercontent.com/u/241745?v=4' class='avatar' /></a> <br />
-    <p>Vlad Niculae</p>
     </div>
     <div>
     <a href='https://github.com/jnothman'><img src='https://avatars.githubusercontent.com/u/78827?v=4' class='avatar' /></a> <br />
     <p>Joel Nothman</p>
     </div>
     <div>
-    <a href='https://github.com/qinhanmin2014'><img src='https://avatars.githubusercontent.com/u/12003569?v=4' class='avatar' /></a> <br />
-    <p>Hanmin Qin</p>
-    </div>
-    <div>
     <a href='https://github.com/OmarManzoor'><img src='https://avatars.githubusercontent.com/u/17495884?v=4' class='avatar' /></a> <br />
     <p>Omar Salman</p>
-    </div>
-    <div>
-    <a href='https://github.com/bthirion'><img src='https://avatars.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
-    <p>Bertrand Thirion</p>
-    </div>
-    <div>
-    <a href='https://github.com/TomDLT'><img src='https://avatars.githubusercontent.com/u/11065596?v=4' class='avatar' /></a> <br />
-    <p>Tom Dupré la Tour</p>
     </div>
     <div>
     <a href='https://github.com/GaelVaroquaux'><img src='https://avatars.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
     <p>Gael Varoquaux</p>
     </div>
     <div>
-    <a href='https://github.com/NelleV'><img src='https://avatars.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
-    <p>Nelle Varoquaux</p>
-    </div>
-    <div>
     <a href='https://github.com/Charlie-XIAO'><img src='https://avatars.githubusercontent.com/u/108576690?v=4' class='avatar' /></a> <br />
     <p>Yao Xiao</p>
-    </div>
-    <div>
-    <a href='https://github.com/rth'><img src='https://avatars.githubusercontent.com/u/630936?v=4' class='avatar' /></a> <br />
-    <p>Roman Yurchak</p>
     </div>
     <div>
     <a href='https://github.com/Micky774'><img src='https://avatars.githubusercontent.com/u/34613774?v=4' class='avatar' /></a> <br />

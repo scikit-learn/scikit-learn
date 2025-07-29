@@ -64,7 +64,7 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    # This is used for classifiers where the denominator might become zero exatly.
+    # This is used for classifiers where the denominator might become zero exactly.
     # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
     # denominator = hessian = 0, and we should set the node value in the line search to
     # zero as there is no improvement of the loss possible.
@@ -114,7 +114,7 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
         predictions = estimator.predict_proba(X)
         if not loss.is_multiclass:
             predictions = predictions[:, 1]  # probability of positive class
-        eps = np.finfo(np.float32).eps  # FIXME: This is quite large!
+        eps = np.finfo(np.float64).eps
         predictions = np.clip(predictions, eps, 1 - eps, dtype=np.float64)
     else:
         predictions = estimator.predict(X).astype(np.float64)
@@ -1117,6 +1117,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
@@ -1146,6 +1151,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
         Values must be in the range `[0.0, inf)`.
+
+        For an example of the effects of this parameter and its interaction with
+        ``subsample``, see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`.
 
     n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
@@ -1445,7 +1454,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
     >>> clf.score(X_test, y_test)
-    0.913...
+    0.913
     """
 
     _parameter_constraints: dict = {
@@ -1725,16 +1734,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
                 "loss=%r does not support predict_proba" % self.loss
             ) from e
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: investigate failure see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
-
 
 class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
@@ -1759,6 +1758,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         regression and is a robust loss function. 'huber' is a
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        for an example that demonstrates quantile regression for creating
+        prediction intervals with `loss='quantile'`.
 
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -2049,7 +2052,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> reg.fit(X_train, y_train)
     GradientBoostingRegressor(random_state=0)
     >>> reg.predict(X_test[1:2])
-    array([-61...])
+    array([-61.1])
     >>> reg.score(X_test, y_test)
     0.4...
 
@@ -2191,13 +2194,3 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: investigate failure see meta-issue #16298
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags

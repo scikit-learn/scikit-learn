@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.6.dev0"
+__version__ = "1.8.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -87,6 +87,7 @@ _submodules = [
     "externals",
     "feature_extraction",
     "feature_selection",
+    "frozen",
     "gaussian_process",
     "inspection",
     "isotonic",
@@ -135,15 +136,6 @@ def __getattr__(name):
             return globals()[name]
         except KeyError:
             raise AttributeError(f"Module 'sklearn' has no attribute '{name}'")
-
-
-_BUILT_WITH_MESON = False
-try:
-    import sklearn._built_with_meson  # noqa: F401
-
-    _BUILT_WITH_MESON = True
-except ModuleNotFoundError:
-    pass
 
 
 def setup_module(module):
