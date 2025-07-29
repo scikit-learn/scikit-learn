@@ -3,7 +3,6 @@ from collections import Counter
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from scipy.integrate import trapezoid
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
@@ -650,30 +649,35 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
 
     def _check_average_precision(display, constructor_name, pos_label):
         if pos_label == "cancer":
-            avg_prec_limit = 0.65
-            avg_prec_limit_multi = [0.819, 0.8803, 0.88]
+            avg_prec_limit = 0.6338
+            avg_prec_limit_multi = [0.8189, 0.8802, 0.8795]
         else:
-            avg_prec_limit = 0.95
-            avg_prec_limit_multi = [0.996, 0.998, 0.997]
+            avg_prec_limit = 0.9953
+            avg_prec_limit_multi = [0.9966, 0.9984, 0.9976]
+
+        def average_precision_uninterpolated(precision, recall):
+            return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
         if constructor_name == "from_cv_results":
             for idx, average_precision in enumerate(display.average_precision):
-                assert average_precision == pytest.approx(avg_prec_limit_multi[idx])
-                assert -trapezoid(
+                assert average_precision == pytest.approx(
+                    avg_prec_limit_multi[idx], rel=1e-3
+                )
+                assert average_precision_uninterpolated(
                     display.precision[idx], display.recall[idx]
-                ) == pytest.approx(avg_prec_limit_multi[idx])
+                ) == pytest.approx(avg_prec_limit_multi[idx], rel=1e-3)
         else:
-            assert display.average_precision == pytest.approx(avg_prec_limit)
-            assert -trapezoid(display.precision, display.recall) == pytest.approx(
-                avg_prec_limit
-            )
+            assert display.average_precision == pytest.approx(avg_prec_limit, rel=1e-3)
+            assert average_precision_uninterpolated(
+                display.precision, display.recall
+            ) == pytest.approx(avg_prec_limit, rel=1e-3)
 
-        _check_pos_label_statistics(
-            PrecisionRecallDisplay,
-            response_method,
-            constructor_name,
-            _check_average_precision,
-        )
+    _check_pos_label_statistics(
+        PrecisionRecallDisplay,
+        response_method,
+        constructor_name,
+        _check_average_precision,
+    )
 
 
 @pytest.mark.parametrize(
