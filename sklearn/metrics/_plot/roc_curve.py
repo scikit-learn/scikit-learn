@@ -132,6 +132,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         *,
         fpr,
         tpr,
+        thresholds=None,
         roc_auc=None,
         name=None,
         pos_label=None,
@@ -139,6 +140,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         self.fpr = fpr
         self.tpr = tpr
+        self.thresholds = thresholds
         self.roc_auc = roc_auc
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
@@ -148,6 +150,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         fpr = _convert_to_list_leaving_none(self.fpr)
         tpr = _convert_to_list_leaving_none(self.tpr)
+        thresholds = _convert_to_list_leaving_none(self.thresholds)
         roc_auc = _convert_to_list_leaving_none(self.roc_auc)
         name = _convert_to_list_leaving_none(name)
 
@@ -159,7 +162,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             optional=optional,
             class_name="RocCurveDisplay",
         )
-        return fpr, tpr, roc_auc, name
+        return fpr, tpr, thresholds,roc_auc, name
 
     def plot(
         self,
@@ -233,7 +236,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
+        fpr, tpr, thresholds, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
         n_curves = len(fpr)
         if not isinstance(curve_kwargs, list) and n_curves > 1:
             if roc_auc:
@@ -272,6 +275,40 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         # Return single artist if only one curve is plotted
         if len(self.line_) == 1:
             self.line_ = self.line_[0]
+
+        annot = self.ax_.annotate(
+            "", xy=(0,0), xytext=(20,20),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")
+        )
+        annot.set_visible(False)
+
+        def update_annot(ind):
+            x,y = self.line_.get_data()
+            annot.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
+
+            # Find the index of the closest point in fpr to x[ind['ind'][0]]
+            # use it to get the corresponding threshold
+            idx = np.argmin(np.abs(self.fpr - x[ind["ind"][0]]))
+
+            text = f"FPR: {x[ind['ind'][0]]:.2f}, TPR: {y[ind['ind'][0]]:.2f}, Threshold: {self.thresholds[idx]:.2f}"
+            # text = f"Threshold: {self.thresholds[idx]:.2f}"
+
+            annot.set_text(text)
+            annot.get_bbox_patch().set_alpha(0.4)        
+
+        def hover(event):
+            vis = annot.get_visible()
+            if event.inaxes == self.ax_:
+                cont, ind = self.line_.contains(event)
+                if cont:
+                    update_annot(ind)
+                    annot.set_visible(True)
+                    self.figure_.canvas.draw_idle()
+                else:
+                    if vis:
+                        annot.set_visible(False)
+                        self.figure_.canvas.draw_idle()
+
+        self.figure_.canvas.mpl_connect("motion_notify_event", hover)
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -580,7 +617,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
-        fpr, tpr, _ = roc_curve(
+        fpr, tpr, thresholds = roc_curve(
             y_true,
             y_score,
             pos_label=pos_label,
@@ -592,6 +629,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             fpr=fpr,
             tpr=tpr,
+            thresholds=thresholds,
             roc_auc=roc_auc,
             name=name,
             pos_label=pos_label_validated,
