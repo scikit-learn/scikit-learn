@@ -965,12 +965,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=False,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -2152,12 +2153,13 @@ class _RidgeGCV(LinearModel):
         self.alphas = np.asarray(self.alphas)
 
         unscaled_y = y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, sqrt_sw = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=True,
         )
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
@@ -2175,9 +2177,7 @@ class _RidgeGCV(LinearModel):
 
         n_samples = X.shape[0]
 
-        if sample_weight is not None:
-            X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
-        else:
+        if sqrt_sw is None:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
