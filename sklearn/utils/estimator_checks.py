@@ -47,6 +47,7 @@ from ..datasets import (
     make_regression,
 )
 from ..exceptions import (
+    ConvergenceWarning,
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
@@ -1559,8 +1560,10 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
         X_weighted = sparse_container(X_weighted)
         X_repeated = sparse_container(X_repeated)
 
-    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+        estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
 
     for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
