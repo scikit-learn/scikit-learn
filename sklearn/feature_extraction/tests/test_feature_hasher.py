@@ -159,6 +159,7 @@ def test_hash_collisions():
     ).fit_transform(X)
     assert Xt.data[0] == len(X[0])
 
+
 def test_feature_hasher_requires_fit_tag():
     """Test that FeatureHasher has requires_fit=False tag."""
     hasher = FeatureHasher()
@@ -170,6 +171,5 @@ def test_feature_hasher_transform_without_fit():
     """Test that FeatureHasher can transform without fitting."""
     hasher = FeatureHasher(n_features=10)
     data = [{"dog": 1, "cat": 2}, {"dog": 2, "run": 5}]
-    
     result = hasher.transform(data)
     assert result.shape == (2, 10)
