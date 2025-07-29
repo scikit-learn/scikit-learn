@@ -1,0 +1,4 @@
+- :class:`preprocessing.FunctionTransformer`'s `get_feature_names_out` now
+  returns output dataframe columns when output container is set to non-`"default"`
+  instead of raising an AttributeError.
+  By :user:`Omer Yuksel <osyuksel>`

@@ -7,6 +7,7 @@ from functools import partial
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import _safe_indexing
 from ..utils._param_validation import StrOptions
 from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._set_output import (
@@ -209,9 +210,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        """Fit transformer by checking X.
+        """Fit transformer by checking X and retrieving output column names.
 
         If ``validate`` is ``True``, ``X`` will be checked.
+        If ``feature_names_out`` is None and the output container is a dataframe,
+        then output column names will be used after executing `func` on a subset.
 
         Parameters
         ----------
@@ -236,6 +239,15 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         )
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
+
+        if (
+            self.func
+            and not self.feature_names_out
+            and hasattr(self, "_sklearn_output_config")
+            and self._sklearn_output_config["transform"] != "default"
+        ):
+            self._set_dataframe_feature_names(X)
+
         return self
 
     def transform(self, X):
@@ -330,11 +342,15 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             X = check_array(X, accept_sparse=self.accept_sparse)
         return self._transform(X, func=self.inverse_func, kw_args=self.inv_kw_args)
 
-    @available_if(lambda self: self.feature_names_out is not None)
+    @available_if(
+        lambda self: self.feature_names_out is not None
+        or hasattr(self, "_dataframe_feature_names")
+    )
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-        This method is only defined if `feature_names_out` is not None.
+        This method is only defined if `feature_names_out` is not None
+         or if `set_output` is called with a non-`"default"`.
 
         Parameters
         ----------
@@ -361,7 +377,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             - If `feature_names_out` is a callable, then it is called with two
               arguments, `self` and `input_features`, and its return value is
               returned by this method.
+            - If `feature_names_out` is None and the output container is set to
+              a non-`"default"`, then dataframe columns from output are used.
         """
+        if self.feature_names_out is None and hasattr(self, "_dataframe_feature_names"):
+            return self._dataframe_feature_names
+
         if hasattr(self, "n_features_in_") or input_features is not None:
             input_features = _check_feature_names_in(self, input_features)
         if self.feature_names_out == "one-to-one":
@@ -442,3 +463,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             name_caption="FunctionTransformer",
             doc_link_label="FunctionTransformer",
         )
+
+    def _set_dataframe_feature_names(self, X):
+        """Get output column names from `func` output."""
+        head = _safe_indexing(X, [0], axis=0)
+        head_out = self.func(head)
+
+        if (feature_names := _get_feature_names(head_out)) is not None:
+            self._dataframe_feature_names = feature_names
