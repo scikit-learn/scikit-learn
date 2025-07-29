@@ -102,6 +102,8 @@ and follows the decision-making process outlined in :ref:`governance`.
   Look for issues marked "help wanted" or similar. Helping these projects may help
   scikit-learn too. See also :ref:`related_projects`.
 
+.. _automated_contributions_policy:
+
 Automated Contributions Policy
 ==============================
 
