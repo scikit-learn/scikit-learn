@@ -68,8 +68,8 @@ def test_precision_recall_display_plotting(
     else:
         sample_weight = None
 
-    y_pred = getattr(classifier, response_method)(X)
-    y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+    y_score = getattr(classifier, response_method)(X)
+    y_score = y_score if y_score.ndim == 1 else y_score[:, pos_label]
 
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
@@ -86,7 +86,7 @@ def test_precision_recall_display_plotting(
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y,
-            y_pred,
+            y_score,
             sample_weight=sample_weight,
             pos_label=pos_label,
             drop_intermediate=drop_intermediate,
@@ -94,13 +94,13 @@ def test_precision_recall_display_plotting(
 
     precision, recall, _ = precision_recall_curve(
         y,
-        y_pred,
+        y_score,
         pos_label=pos_label,
         sample_weight=sample_weight,
         drop_intermediate=drop_intermediate,
     )
     average_precision = average_precision_score(
-        y, y_pred, pos_label=pos_label, sample_weight=sample_weight
+        y, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
     assert_allclose(display.precision, precision)
@@ -158,8 +158,8 @@ def test_precision_recall_display_from_cv_results_plotting(
         zip(cv_results["estimator"], cv_results["indices"]["test"])
     ):
         y_true = _safe_indexing(y, test_indices)
-        y_pred = getattr(estimator, response_method)(_safe_indexing(X, test_indices))
-        y_pred = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
+        y_score = getattr(estimator, response_method)(_safe_indexing(X, test_indices))
+        y_score = y_score if y_score.ndim == 1 else y_score[:, 1]
         sample_weight_test = (
             _safe_indexing(sample_weight, test_indices)
             if sample_weight is not None
@@ -167,13 +167,13 @@ def test_precision_recall_display_from_cv_results_plotting(
         )
         precision, recall, _ = precision_recall_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             drop_intermediate=drop_intermediate,
             sample_weight=sample_weight_test,
         )
         average_precision = average_precision_score(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight_test
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight_test
         )
 
         assert_allclose(display.precision[idx], precision)
@@ -353,7 +353,7 @@ def test_precision_recall_chance_level_line(
     pos_prevalence = Counter(y)[1] / len(y)
 
     lr = LogisticRegression()
-    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+    y_score = lr.fit(X, y).predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
@@ -366,7 +366,7 @@ def test_precision_recall_chance_level_line(
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y,
-            y_pred,
+            y_score,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
@@ -467,13 +467,13 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
         classifier, X, y, cv=n_cv, return_estimator=True, return_indices=True
     )
     classifier.fit(X, y)
-    y_pred = classifier.predict_proba(X)[:, pos_label]
+    y_score = classifier.predict_proba(X)[:, pos_label]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(classifier, X, y)
     elif constructor_name == "from_predictions":
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label
+            y, y_score, pos_label=pos_label
         )
     else:
         display = PrecisionRecallDisplay.from_cv_results(cv_results, X, y)
@@ -482,14 +482,14 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
         average_precision = []
         for idx in range(n_cv):
             test_indices = cv_results["indices"]["test"][idx]
-            y_pred, _ = _get_response_values_binary(
+            y_score, _ = _get_response_values_binary(
                 cv_results["estimator"][idx],
                 _safe_indexing(X, test_indices),
                 response_method="auto",
             )
             average_precision.append(
                 average_precision_score(
-                    _safe_indexing(y, test_indices), y_pred, pos_label=pos_label
+                    _safe_indexing(y, test_indices), y_score, pos_label=pos_label
                 )
             )
         # By default, only the first curve is labelled
@@ -505,7 +505,7 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
             f"{np.std(average_precision):.2f})"
         )
     else:
-        average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+        average_precision = average_precision_score(y, y_score, pos_label=pos_label)
 
         # check that the default name is used
         assert display.line_.get_label() == default_label.format(average_precision)
@@ -604,8 +604,8 @@ def test_precision_recall_display_string_labels(pyplot):
     # `from_estimator`
     display = PrecisionRecallDisplay.from_estimator(lr, X, y)
 
-    y_pred = lr.predict_proba(X)[:, 1]
-    avg_prec = average_precision_score(y, y_pred, pos_label=lr.classes_[1])
+    y_score = lr.predict_proba(X)[:, 1]
+    avg_prec = average_precision_score(y, y_score, pos_label=lr.classes_[1])
 
     assert display.average_precision == pytest.approx(avg_prec)
     assert display.name == lr.__class__.__name__
@@ -613,10 +613,10 @@ def test_precision_recall_display_string_labels(pyplot):
     # `from_predictions`
     err_msg = r"y_true takes value in {'benign', 'malignant'}"
     with pytest.raises(ValueError, match=err_msg):
-        PrecisionRecallDisplay.from_predictions(y, y_pred)
+        PrecisionRecallDisplay.from_predictions(y, y_score)
 
     display = PrecisionRecallDisplay.from_predictions(
-        y, y_pred, pos_label=lr.classes_[1]
+        y, y_score, pos_label=lr.classes_[1]
     )
     assert display.average_precision == pytest.approx(avg_prec)
 
@@ -690,7 +690,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
     cv_results = cross_validate(
         lr, X, y, cv=n_cv, return_estimator=True, return_indices=True
     )
-    y_pred = lr.fit(X, y).predict_proba(X)[:, 1]
+    y_score = lr.fit(X, y).predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
@@ -698,7 +698,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
         )
     elif constructor_name == "from_predictions":
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, plot_chance_level=False
+            y, y_score, plot_chance_level=False
         )
     else:
         display = PrecisionRecallDisplay.from_cv_results(
@@ -753,12 +753,12 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
 
-    y_pred = clf.decision_function(X)
+    y_score = clf.decision_function(X)
 
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(clf, X, y, despine=despine)
     elif constructor_name == "from_predictions":
-        display = PrecisionRecallDisplay.from_predictions(y, y_pred, despine=despine)
+        display = PrecisionRecallDisplay.from_predictions(y, y_score, despine=despine)
     else:
         display = PrecisionRecallDisplay.from_cv_results(
             cv_results, X, y, despine=despine
@@ -770,3 +770,21 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     if despine:
         for s in ["bottom", "left"]:
             assert display.ax_.spines[s].get_bounds() == (0, 1)
+
+
+# TODO(1.10): remove
+def test_y_score_and_y_pred_specified_error(pyplot):
+    """1. Check that an error is raised when both y_score and y_pred are specified.
+    2. Check that a warning is raised when y_pred is specified.
+    """
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    y_pred = np.array([0.2, 0.3, 0.5, 0.1])
+
+    with pytest.raises(
+        ValueError, match="`y_pred` and `y_score` cannot be both specified"
+    ):
+        PrecisionRecallDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
+
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
+        PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)

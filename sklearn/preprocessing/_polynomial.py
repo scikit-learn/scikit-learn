@@ -15,14 +15,13 @@ from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
-from sklearn.utils._array_api import (
+from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import check_array
+from ..utils._array_api import (
     _is_numpy_namespace,
     get_namespace_and_device,
     supported_float_dtypes,
 )
-
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array
 from ..utils._mask import _get_mask
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import parse_version, sp_version

@@ -20,11 +20,13 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.base import (
+from .. import config_context
+from ..base import (
     BaseEstimator,
     BiclusterMixin,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
     DensityMixin,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -32,11 +34,6 @@ from sklearn.base import (
     OutlierMixin,
     RegressorMixin,
     TransformerMixin,
-)
-
-from .. import config_context
-from ..base import (
-    ClusterMixin,
     clone,
     is_classifier,
     is_outlier_detector,
@@ -1093,7 +1090,8 @@ def check_array_api_input(
             f"got {attribute_ns}"
         )
 
-        assert array_device(est_xp_param) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         if check_values:
@@ -1180,7 +1178,9 @@ def check_array_api_input(
             f"got {result_ns}."
         )
 
-        assert array_device(result_xp) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(result_xp) == array_device(X_xp)
+
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
         if check_values:
@@ -1205,7 +1205,8 @@ def check_array_api_input(
                 f" {input_ns}, got {inverse_result_ns}."
             )
 
-            assert array_device(invese_result_xp) == array_device(X_xp)
+            with config_context(array_api_dispatch=True):
+                assert array_device(invese_result_xp) == array_device(X_xp)
 
             invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
             if check_values:

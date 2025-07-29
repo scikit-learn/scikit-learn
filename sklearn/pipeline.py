@@ -320,6 +320,8 @@ class Pipeline(_BaseComposition):
         return self
 
     def _validate_steps(self):
+        if not self.steps:
+            raise ValueError("The pipeline is empty. Please add steps.")
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -1289,7 +1291,6 @@ class Pipeline(_BaseComposition):
 
         An empty pipeline is considered fitted.
         """
-
         # First find the last step that is not 'passthrough'
         last_step = None
         for _, estimator in reversed(self.steps):
@@ -2037,15 +2038,23 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        # Check if Xs dimensions are valid
+        for X, (name, _) in zip(Xs, self.transformer_list):
+            if hasattr(X, "shape") and len(X.shape) != 2:
+                raise ValueError(
+                    f"Transformer '{name}' returned an array or dataframe with "
+                    f"{len(X.shape)} dimensions, but expected 2 dimensions "
+                    "(n_samples, n_features)."
+                )
+
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        return np.hstack(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)

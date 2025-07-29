@@ -12,8 +12,6 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import expit
 
-from sklearn.utils import Bunch
-
 from ._loss import HalfBinomialLoss
 from .base import (
     BaseEstimator,
@@ -28,7 +26,7 @@ from .isotonic import IsotonicRegression
 from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
-from .utils import _safe_indexing, column_or_1d, get_tags, indexable
+from .utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from .utils._param_validation import (
     HasMethods,
     Hidden,
@@ -1102,9 +1100,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The positive class when computing the calibration curve.
-        By default, `pos_label` is set to `estimators.classes_[1]` when using
-        `from_estimator` and set to 1 when using `from_predictions`.
+        The positive class when calibration curve computed.
+        If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 1.1
 
@@ -1385,7 +1382,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
-            By default `pos_label` is set to 1.
+            When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
+            `pos_label` is set to 1, otherwise an error will be raised.
 
             .. versionadded:: 1.1
 
