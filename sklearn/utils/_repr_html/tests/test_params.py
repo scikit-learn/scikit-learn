@@ -125,8 +125,9 @@ def test_params_html_repr_without_doc_links():
     )
     html_output = _params_html_repr(params)
     # Check that no doc links are generated
-    assert "Documentation for a not found" in html_output
-    assert "Documentation for b not found" in html_output
+    assert "?" not in html_output
+    assert "Documentation for a" not in html_output
+    assert "Documentation for b" not in html_output
 
 
 def test_generate_link_to_param_doc_basic():
