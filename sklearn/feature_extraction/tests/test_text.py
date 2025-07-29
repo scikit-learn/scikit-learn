@@ -1637,8 +1637,7 @@ def test_hashing_vectorizer_requires_fit_tag():
 def test_hashing_vectorizer_transform_without_fit():
     """Test that HashingVectorizer can transform without fitting."""
     vectorizer = HashingVectorizer(n_features=10)
-    corpus = ['This is test', 'Another test']
+    corpus = ["This is test", "Another test"]
     
-    # Should work without fit()
     result = vectorizer.transform(corpus)
     assert result.shape == (2, 10)
