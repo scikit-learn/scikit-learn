@@ -1004,7 +1004,7 @@ def _convert_to_logits(decision_values, eps=1e-12):
 
 
 def _temperature_scaling(predictions, labels, sample_weight=None):
-    """Probability Calibration with temperature scaling.
+    """Calibrate the temperature of temperature scaling.
 
     Parameters
     ----------
