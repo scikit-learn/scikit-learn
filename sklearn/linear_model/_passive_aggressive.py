@@ -3,10 +3,14 @@
 
 from numbers import Real
 
-from ..base import _fit_context
-from ..utils import deprecated
-from ..utils._param_validation import Interval, StrOptions
-from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
+from sklearn.base import _fit_context
+from sklearn.linear_model._stochastic_gradient import (
+    DEFAULT_EPSILON,
+    BaseSGDClassifier,
+    BaseSGDRegressor,
+)
+from sklearn.utils import deprecated
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 # TODO(1.8): Remove

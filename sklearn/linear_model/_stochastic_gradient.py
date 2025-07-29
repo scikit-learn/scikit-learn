@@ -11,8 +11,8 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
-from ..base import (
+from sklearn._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
+from sklearn.base import (
     BaseEstimator,
     OutlierMixin,
     RegressorMixin,
@@ -20,17 +20,13 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..model_selection import ShuffleSplit, StratifiedShuffleSplit
-from ..utils import check_random_state, compute_class_weight
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, SparseCoefMixin, make_dataset
-from ._sgd_fast import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    SparseCoefMixin,
+    make_dataset,
+)
+from sklearn.linear_model._sgd_fast import (
     EpsilonInsensitive,
     Hinge,
     ModifiedHuber,
@@ -38,6 +34,18 @@ from ._sgd_fast import (
     SquaredHinge,
     _plain_sgd32,
     _plain_sgd64,
+)
+from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
+from sklearn.utils import check_random_state, compute_class_weight
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
 )
 
 LEARNING_RATE_TYPES = {

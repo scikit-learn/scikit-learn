@@ -9,20 +9,26 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection import check_cv, cross_val_score
-from ..utils._metadata_requests import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.feature_selection._base import SelectorMixin
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection import check_cv, cross_val_score
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._tags import get_tags
-from ..utils.validation import check_is_fitted, validate_data
-from ._base import SelectorMixin
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
