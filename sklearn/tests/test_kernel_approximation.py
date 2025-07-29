@@ -3,6 +3,7 @@ import re
 import numpy as np
 import pytest
 
+from sklearn._config import config_context
 from sklearn.datasets import make_classification
 from sklearn.kernel_approximation import (
     AdditiveChi2Sampler,
@@ -17,7 +18,9 @@ from sklearn.metrics.pairwise import (
     polynomial_kernel,
     rbf_kernel,
 )
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -311,31 +314,37 @@ def test_input_validation(csr_container):
     RBFSampler().fit(X).transform(X)
 
 
-def test_nystroem_approximation():
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_nystroem_approximation(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
     # some basic tests
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 4))
+    X = xp.asarray(X)
 
-    # With n_components = n_samples this is exact
-    X_transformed = Nystroem(n_components=X.shape[0]).fit_transform(X)
-    K = rbf_kernel(X)
-    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+    with config_context(array_api_dispatch=True):
+        # With n_components = n_samples this is exact
+        X_transformed = Nystroem(n_components=X.shape[0]).fit_transform(X)
+        K = rbf_kernel(X)
+        assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
-    trans = Nystroem(n_components=2, random_state=rnd)
-    X_transformed = trans.fit(X).transform(X)
-    assert X_transformed.shape == (X.shape[0], 2)
-
-    # test callable kernel
-    trans = Nystroem(n_components=2, kernel=_linear_kernel, random_state=rnd)
-    X_transformed = trans.fit(X).transform(X)
-    assert X_transformed.shape == (X.shape[0], 2)
-
-    # test that available kernels fit and transform
-    kernels_available = kernel_metrics()
-    for kern in kernels_available:
-        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        trans = Nystroem(n_components=2, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
         assert X_transformed.shape == (X.shape[0], 2)
+
+        # test callable kernel
+        trans = Nystroem(n_components=2, kernel=_linear_kernel, random_state=rnd)
+        X_transformed = trans.fit(X).transform(X)
+        assert X_transformed.shape == (X.shape[0], 2)
+
+        # test that available kernels fit and transform
+        kernels_available = kernel_metrics()
+        for kern in kernels_available:
+            trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+            X_transformed = trans.fit(X).transform(X)
+            assert X_transformed.shape == (X.shape[0], 2)
 
 
 def test_nystroem_default_parameters():
