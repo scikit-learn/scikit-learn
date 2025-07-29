@@ -12,8 +12,6 @@ import numpy as np
 from scipy.optimize import minimize, minimize_scalar
 from scipy.special import expit
 
-from sklearn.utils import Bunch
-
 from ._loss import HalfBinomialLoss, HalfMultinomialLoss
 from .base import (
     BaseEstimator,
