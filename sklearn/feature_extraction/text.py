@@ -924,6 +924,10 @@ class HashingVectorizer(
         tags.input_tags.string = True
         tags.input_tags.two_d_array = False
         return tags
+    def _more_tags(self):
+        return{"requires_fit":False}
+
+ 
 
 
 def _document_frequency(X):
