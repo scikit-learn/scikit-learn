@@ -168,7 +168,9 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
 
 @pytest.mark.parametrize(["Xw", "X", "sample_weight"], _yield_xw_x_sampleweight())
 @pytest.mark.parametrize(
-    "namespace, dev, dtype", yield_namespace_device_dtype_combinations()
+    "namespace, dev, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_standard_scaler_sample_weight_array_api(
     Xw, X, sample_weight, namespace, dev, dtype
@@ -793,6 +795,7 @@ def test_preprocessing_array_api_compliance(
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",

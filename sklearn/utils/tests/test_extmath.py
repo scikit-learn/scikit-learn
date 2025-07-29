@@ -706,7 +706,9 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype, as_list):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 def test_incremental_weighted_mean_and_variance_array_api(
     rng, array_namespace, device, dtype
