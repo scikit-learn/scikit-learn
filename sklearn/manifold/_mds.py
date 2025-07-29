@@ -11,13 +11,13 @@ from numbers import Integral, Real
 import numpy as np
 from joblib import effective_n_jobs
 
-from ..base import BaseEstimator, _fit_context
-from ..isotonic import IsotonicRegression
-from ..metrics import euclidean_distances
-from ..utils import check_array, check_random_state, check_symmetric
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.isotonic import IsotonicRegression
+from sklearn.metrics import euclidean_distances
+from sklearn.utils import check_array, check_random_state, check_symmetric
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 
 def _smacof_single(

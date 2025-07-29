@@ -17,16 +17,16 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse
 from scipy.special import xlogy
 
-from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import LabelBinarizer, LabelEncoder
-from ..utils import (
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
     check_scalar,
     column_or_1d,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _average,
     _bincount,
     _count_nonzero,
@@ -40,17 +40,17 @@ from ..utils._array_api import (
     get_namespace_and_device,
     xpx,
 )
-from ..utils._param_validation import (
+from sklearn.utils._param_validation import (
     Hidden,
     Interval,
     Options,
     StrOptions,
     validate_params,
 )
-from ..utils._unique import attach_unique
-from ..utils.extmath import _nanaverage
-from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.validation import (
+from sklearn.utils._unique import attach_unique
+from sklearn.utils.extmath import _nanaverage
+from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
     _num_samples,

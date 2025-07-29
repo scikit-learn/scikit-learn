@@ -10,19 +10,19 @@ from scipy.linalg import eigh, qr, solve, svd
 from scipy.sparse import csr_matrix, eye, lil_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
     _UnstableArchMixin,
 )
-from ..neighbors import NearestNeighbors
-from ..utils import check_array, check_random_state
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import stable_cumsum
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
