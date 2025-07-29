@@ -72,9 +72,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     via :func:`~sklearn.model_selection.cross_val_predict`, which are then
     used for calibration. For prediction, the base estimator, trained using all
     the data, is used. This is the prediction method implemented when
-    `probabilities=True` for :class:`~sklearn.svm.SVC` and
-    :class:`~sklearn.svm.NuSVC` estimators
-    (see :ref:`User Guide <scores_probabilities>` for details).
+    `probabilities=True` for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
+    estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
     Already fitted classifiers can be calibrated by wrapping the model in a
     :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
@@ -109,24 +108,21 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         - 'temperature', temperature scaling.
 
         Sigmoid and isotonic calibration methods natively support only binary
-        classifiers and extend to multi-class classification using a
-        One-vs-Rest (OvR) strategy with post-hoc renormalization, i.e.,
-        adjusting the probabilities after calibration to ensure they
-        sum up to 1.
+        classifiers and extend to multi-class classification using a One-vs-Rest (OvR)
+        strategy with post-hoc renormalization, i.e., adjusting the probabilities after
+        calibration to ensure they sum up to 1.
 
-        In contrast, temperature scaling naturally supports multi-class
-        calibration by applying `softmax(beta * classifier_logits)` with
-        a value of beta that optimizes the log loss.
+        In contrast, temperature scaling naturally supports multi-class calibration by
+        applying `softmax(beta * classifier_logits)` with a value of beta that
+        optimizes the log loss.
 
         For very uncalibrated classifiers on very imbalanced datasets, sigmoid
         calibration might be preferred because it fits an additional intercept
-        parameter. This helps shift decision boundaries appropriately
-        when the classifier being calibrated is biased towards
-        the majority class.
+        parameter. This helps shift decision boundaries appropriately when the
+        classifier being calibrated is biased towards the majority class.
 
-        Isotonic calibration is not recommended when the number of
-        calibration samples is too low ``(≪1000)`` since it tends
-        to overfit.
+        Isotonic calibration is not recommended when the number of calibration samples
+        is too low ``(≪1000)`` since it tends to overfit.
 
         .. versionchanged:: 1.8
            Added option 'temperature'.
@@ -755,6 +751,28 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
 
 
 class _CalibratedClassifier:
+    """Pipeline-like chaining a fitted classifier and its fitted calibrators.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Fitted classifier.
+
+    calibrators : list of fitted estimator instances
+        List of fitted calibrators (either 'IsotonicRegression' or
+        '_SigmoidCalibration'). The number of calibrators equals the number of
+        classes. However, if there are 2 classes, the list contains only one
+        fitted calibrator.
+
+    classes : array-like of shape (n_classes,)
+        All the prediction classes.
+
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
+        The method to use for calibration. Can be 'sigmoid' which
+        corresponds to Platt's method or 'isotonic' which is a
+        non-parametric approach based on isotonic regression.
+    """
+
     def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
         self.estimator = estimator
         self.calibrators = calibrators
