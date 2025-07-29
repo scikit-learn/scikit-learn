@@ -1,9 +1,15 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from sklearn.base import ClassifierMixin
-from sklearn.datasets import load_iris
-from sklearn.linear_model import PassiveAggressiveClassifier, PassiveAggressiveRegressor
+from sklearn.datasets import load_iris, make_classification, make_regression
+from sklearn.linear_model import (
+    PassiveAggressiveClassifier,
+    PassiveAggressiveRegressor,
+    SGDClassifier,
+    SGDRegressor,
+)
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     assert_almost_equal,
@@ -290,3 +296,39 @@ def test_class_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match=f"Class {Estimator.__name__} is deprecated"):
         Estimator()
+
+
+@pytest.mark.parametrize(["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")])
+def test_passive_aggressive_classifier_vs_sgd(loss, lr):
+    """Test that both are equivalent."""
+    X, y = make_classification(
+        n_samples=100, n_features=10, n_informative=5, random_state=1234
+    )
+    pa = PassiveAggressiveClassifier(loss=loss, C=0.987, random_state=42).fit(X, y)
+    sgd = SGDClassifier(
+        loss="hinge", penalty=None, learning_rate=lr, PA_C=0.987, random_state=42
+    ).fit(X, y)
+    assert_allclose(pa.decision_function(X), sgd.decision_function(X))
+
+
+@pytest.mark.parametrize(
+    ["loss", "lr"],
+    [("epsilon_insensitive", "pa1"), ("squared_epsilon_insensitive", "pa2")],
+)
+def test_passive_aggressive_regressor_vs_sgd(loss, lr):
+    """Test that both are equivalent."""
+    X, y = make_regression(
+        n_samples=100, n_features=10, n_informative=5, random_state=1234
+    )
+    pa = PassiveAggressiveRegressor(
+        loss=loss, epsilon=0.123, C=0.987, random_state=42
+    ).fit(X, y)
+    sgd = SGDRegressor(
+        loss="epsilon_insensitive",
+        epsilon=0.123,
+        penalty=None,
+        learning_rate=lr,
+        PA_C=0.987,
+        random_state=42,
+    ).fit(X, y)
+    assert_allclose(pa.predict(X), sgd.predict(X))

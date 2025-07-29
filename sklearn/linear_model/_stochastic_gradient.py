@@ -162,6 +162,21 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 "learning_rate is 'optimal'. alpha is used "
                 "to compute the optimal learning rate."
             )
+        # TODO: Consider whether pa1 and pa2 could also work for other losses.
+        if self.learning_rate in ("pa1", "pa2"):
+            if is_classifier(self):
+                if self.loss != "hinge":
+                    msg = (
+                        f"Learning rate '{self.learning_rate}' only works with loss "
+                        "'hinge'."
+                    )
+                    raise ValueError(msg)
+            elif self.loss != "epsilon_insensitive":
+                msg = (
+                    f"Learning rate '{self.learning_rate}' only works with loss "
+                    "'epsilon_insensitive'."
+                )
+                raise ValueError(msg)
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be set when penalty is 'elasticnet'")
 
@@ -557,6 +572,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         learning_rate="optimal",
         eta0=0.0,
         power_t=0.5,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -568,6 +584,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            PA_C=PA_C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -1080,9 +1097,17 @@ class SGDClassifier(BaseSGDClassifier):
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
           `early_stopping` is `True`, the current learning rate is divided by 5.
+        - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with `loss='hinge'`.
+          Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
+        - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
+          `loss='squared_hinge'`.
+          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
 
         .. versionadded:: 0.20
             Added 'adaptive' option.
+
+        .. versionadded:: 1.8
+           Added options 'pa1' and 'pa2'
 
     eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1097,6 +1122,15 @@ class SGDClassifier(BaseSGDClassifier):
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
             an error in 1.10. Use values in the range [0.0, inf) instead.
+
+    PA_C : float, default=1
+        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        For PA-I (`'pa1'`) it is the maximum step size. For PA-II (`'pa2'`) it
+        regularizes the step size (the smaller `PA_C` the more it regularizes).
+        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
+        Only used if `learning_rate=pa1` or `pa2`.
+
+        .. versionadded:: 1.8
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1199,6 +1233,12 @@ class SGDClassifier(BaseSGDClassifier):
         ``SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant",
         penalty=None)``.
 
+    References
+    ----------
+    .. [1] Online Passive-Aggressive Algorithms
+       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+
     Examples
     --------
     >>> import numpy as np
@@ -1225,8 +1265,7 @@ class SGDClassifier(BaseSGDClassifier):
         "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
-            Hidden(StrOptions({"pa1", "pa2"})),
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
     }
@@ -1249,6 +1288,7 @@ class SGDClassifier(BaseSGDClassifier):
         learning_rate="optimal",
         eta0=0.0,
         power_t=0.5,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -1272,6 +1312,7 @@ class SGDClassifier(BaseSGDClassifier):
             learning_rate=learning_rate,
             eta0=eta0,
             power_t=power_t,
+            PA_C=PA_C,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
@@ -1428,6 +1469,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         learning_rate="invscaling",
         eta0=0.01,
         power_t=0.25,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -1438,6 +1480,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            PA_C=PA_C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -1882,9 +1925,18 @@ class SGDRegressor(BaseSGDRegressor):
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
+        - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with
+          `loss='epsilon_insensitive'`.
+          Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
+        - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
+          `loss='squared_epsilon_insensitive'`.
+          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
 
         .. versionadded:: 0.20
             Added 'adaptive' option.
+
+        .. versionadded:: 1.8
+           Added options 'pa1' and 'pa2'
 
     eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1898,6 +1950,15 @@ class SGDRegressor(BaseSGDRegressor):
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
             an error in 1.10. Use values in the range [0.0, inf) instead.
+
+    PA_C : float, default=1
+        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        For PA-I (`'pa1'`) it is the maximum step size. For PA-II (`'pa2'`) it
+        regularizes the step size (the smaller `PA_C` the more it regularizes).
+        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
+        Only used if `learning_rate=pa1` or `pa2`.
+
+        .. versionadded:: 1.8
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1988,6 +2049,12 @@ class SGDRegressor(BaseSGDRegressor):
     sklearn.svm.SVR : Epsilon-Support Vector Regression.
     TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
 
+     References
+    ----------
+    .. [1] Online Passive-Aggressive Algorithms
+       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+
     Examples
     --------
     >>> import numpy as np
@@ -2013,8 +2080,7 @@ class SGDRegressor(BaseSGDRegressor):
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
-            Hidden(StrOptions({"pa1", "pa2"})),
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
@@ -2037,6 +2103,7 @@ class SGDRegressor(BaseSGDRegressor):
         learning_rate="invscaling",
         eta0=0.01,
         power_t=0.25,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -2058,6 +2125,7 @@ class SGDRegressor(BaseSGDRegressor):
             learning_rate=learning_rate,
             eta0=eta0,
             power_t=power_t,
+            PA_C=PA_C,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,

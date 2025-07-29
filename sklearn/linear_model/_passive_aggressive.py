@@ -26,15 +26,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         and will be removed in 1.8. Instead use::
 
             clf = SGDClassifier(
-                penalty=None,
-                alpha=1.0,
-                eta0=1.0,
-                learning_rate="pa1",  # "pa1" and "pa2" are private
                 loss="hinge",
+                penalty=None,
+                learning_rate="pa1",  # or "pa2"
+                PA_C=1.0,  # for parameter C
             )
-            clf.PA_C = 1.0  # Note that this uses a private API.
-
-        With `loss="squared_hinge"`, one would set learning_rate="pa2".
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
@@ -236,6 +232,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             verbose=verbose,
             random_state=random_state,
             eta0=1.0,
+            PA_C=C,
             warm_start=warm_start,
             class_weight=class_weight,
             average=average,
@@ -352,17 +349,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         and will be removed in 1.8. Instead use::
 
             reg = SGDRegressor(
-                penalty=None,
-                alpha=1.0,
-                eta0=1.0,
-                l1_ratio=0,
-                learning_rate="pa1",  # "pa1" and "pa2" are private
                 loss="epsilon_insensitive",
+                penalty=None,
+                learning_rate="pa1",  # or "pa2"
+                PA_C = 1.0  # for parameter C
             )
-            reg.PA_C = 1.0  # Note that this uses a private API.
-
-        With `loss="squared_epsilon_insensitive"`, one would set learning_rate="pa2".
-        Use `SGDRegressor` instead.
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
@@ -540,6 +531,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             l1_ratio=0,
             epsilon=epsilon,
             eta0=1.0,
+            PA_C=C,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,
