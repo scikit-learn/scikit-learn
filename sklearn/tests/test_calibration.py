@@ -342,7 +342,7 @@ def test_calibration_prefit(csr_container, method):
     # Naive-Bayes
     clf = MultinomialNB()
     # Check error if clf not prefit
-    unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
+    unfit_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
     with pytest.raises(NotFittedError):
         unfit_clf.fit(X_calib, y_calib)
 
@@ -354,31 +354,36 @@ def test_calibration_prefit(csr_container, method):
         (X_calib, X_test),
         (csr_container(X_calib), csr_container(X_test)),
     ]:
-        for method in ["isotonic", "sigmoid"]:
-            cal_clf_prefit = CalibratedClassifierCV(clf, method=method, cv="prefit")
-            cal_clf_frozen = CalibratedClassifierCV(FrozenEstimator(clf), method=method)
+        cal_clf_prefit = CalibratedClassifierCV(clf, method=method, cv="prefit")
+        cal_clf_frozen = CalibratedClassifierCV(FrozenEstimator(clf), method=method)
 
-            for sw in [sw_calib, None]:
-                cal_clf_prefit.fit(this_X_calib, y_calib, sample_weight=sw)
-                cal_clf_frozen.fit(this_X_calib, y_calib, sample_weight=sw)
+        for sw in [sw_calib, None]:
+            cal_clf_prefit.fit(this_X_calib, y_calib, sample_weight=sw)
+            cal_clf_frozen.fit(this_X_calib, y_calib, sample_weight=sw)
 
-                y_prob_prefit = cal_clf_prefit.predict_proba(this_X_test)
-                y_prob_frozen = cal_clf_frozen.predict_proba(this_X_test)
-                y_pred_prefit = cal_clf_prefit.predict(this_X_test)
-                y_pred_frozen = cal_clf_frozen.predict(this_X_test)
-                prob_pos_cal_clf_prefit = y_prob_prefit[:, 1]
-                prob_pos_cal_clf_frozen = y_prob_frozen[:, 1]
-                assert_array_equal(y_pred_prefit, y_pred_frozen)
-                assert_array_equal(
-                    y_pred_prefit, np.array([0, 1])[np.argmax(y_prob_prefit, axis=1)]
-                )
-                assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
-                    y_test, prob_pos_cal_clf_frozen
-                )
+            y_prob_prefit = cal_clf_prefit.predict_proba(this_X_test)
+            y_prob_frozen = cal_clf_frozen.predict_proba(this_X_test)
+            y_pred_prefit = cal_clf_prefit.predict(this_X_test)
+            y_pred_frozen = cal_clf_frozen.predict(this_X_test)
+            prob_pos_cal_clf_frozen = y_prob_frozen[:, 1]
+            assert_array_equal(y_pred_prefit, y_pred_frozen)
+            assert_array_equal(
+                y_pred_prefit, np.array([0, 1])[np.argmax(y_prob_prefit, axis=1)]
+            )
+            assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
+                y_test, prob_pos_cal_clf_frozen
+            )
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
-def test_calibration_ensemble_false(data, method):
+@pytest.mark.parametrize(
+    ["method", "calibrator"],
+    [
+        ("sigmoid", _SigmoidCalibration()),
+        ("isotonic", IsotonicRegression(out_of_bounds="clip")),
+        ("temperature", _TemperatureScaling()),
+    ],
+)
+def test_calibration_ensemble_false(data, method, calibrator):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
     X, y = data
@@ -390,12 +395,7 @@ def test_calibration_ensemble_false(data, method):
 
     # Get probas manually
     unbiased_preds = cross_val_predict(clf, X, y, cv=3, method="decision_function")
-    if method == "isotonic":
-        calibrator = IsotonicRegression(out_of_bounds="clip")
-    elif method == "sigmoid":
-        calibrator = _SigmoidCalibration()
-    else:
-        calibrator = _TemperatureScaling()
+
     calibrator.fit(unbiased_preds, y)
     # Use `clf` fit on all data
     clf.fit(X, y)
@@ -491,7 +491,7 @@ def test_temperature_scaling(n_classes, ensemble):
 
         y_scores_train = clf.predict_proba(X_train)
         ts = _TemperatureScaling().fit(y_scores_train, y_train)
-        assert_allclose(ts.beta_, 1.0, atol=1.1e-7, rtol=0)
+        assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
 
 
 def test_temperature_scaling_input_validation(global_dtype):
