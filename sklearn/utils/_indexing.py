@@ -10,11 +10,10 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
-
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._param_validation import Interval, validate_params
 from .extmath import _approximate_mode
+from .fixes import PYARROW_VERSION_BELOW_17
 from .validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
