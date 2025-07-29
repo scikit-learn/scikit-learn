@@ -854,6 +854,7 @@ class TransformerMixin(_SetOutputMixin):
 
         **fit_params : dict
             Additional fit parameters.
+            Pass only if the estimator accepts additional params in its `fit` method.
 
         Returns
         -------
