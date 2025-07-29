@@ -39,6 +39,7 @@ __all__ = [
     "BaseCrossValidator",
     "GroupKFold",
     "GroupShuffleSplit",
+    "GroupTimeSeriesSplit",
     "KFold",
     "LeaveOneGroupOut",
     "LeaveOneOut",
@@ -2428,6 +2429,146 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
+
+
+class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
+    """Time Series cross-validator variant with non-overlapping groups.
+
+    Provides train/test indices to split time series data samples that are
+    observed at fixed time intervals according to a third-party provided group.
+    In each split, test indices must be higher than before, and thus shuffling
+    in cross validator is inappropriate.
+
+    The same group will not appear in two different folds (the number of
+    distinct groups has to be at least equal to the number of folds).
+
+    Note that, unlike standard cross-validation methods, successive training
+    sets are supersets of those that come before them.
+
+    The group labels should be contiguous such as the following:
+
+    .. code-block::
+
+        valid_groups = np.array([
+            'a', 'a', 'b', 'b', 'b', 'b', 'b', 'c', 'c', 'c', 'c', 'd', 'd', 'd'
+        ])
+
+    Non-contiguous groups like below will give an error.
+
+    .. code-block::
+
+        invalid_groups = np.array([
+            'a', 'a', 'b', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 'c', 'b', 'd', 'd'
+        ])
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of splits. Must be at least 2.
+
+    max_train_size : int, default=None
+        Maximum size for a single training group.
+
+    test_size : int, default=None
+        Used to limit the size of the test group.
+
+    gap : int, default=0
+        Number of groups to exclude from the end of each training group before
+        the test group.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupTimeSeriesSplit
+    >>> groups = np.array([
+    ...     'a', 'a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c', 'c', 'd', 'd', 'd']
+    ... )
+    >>> gtss = GroupTimeSeriesSplit(n_splits=3)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print(
+    ...         "TRAIN GROUP:", groups[train_idx], "TEST GROUP:", groups[test_idx]
+    ...     )
+    TRAIN: [0 1 2 3] TEST: [4 5 6]
+    TRAIN GROUP: ['a' 'a' 'a' 'a'] TEST GROUP: ['b' 'b' 'b']
+    TRAIN: [0 1 2 3 4 5 6] TEST: [ 7  8  9 10]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b'] TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10] TEST: [11 12 13]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b' 'c' 'c' 'c' 'c'] TEST GROUP: ['d' 'd' 'd']
+    """
+
+    def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+        self.max_train_size = max_train_size
+        self.test_size = test_size
+        self.gap = gap
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        if groups is None:
+            raise ValueError("The 'groups' parameter should not be None.")
+        X, y, groups = indexable(X, y, groups)
+        n_folds = self.n_splits + 1
+        # `np.unique` will reorder the group. We need to keep the original
+        # ordering.
+        reordered_unique_groups, indices = np.unique(groups, return_index=True)
+        unique_groups = reordered_unique_groups[np.argsort(indices)]
+        n_groups = len(unique_groups)
+        if n_folds > n_groups:
+            raise ValueError(
+                f"Cannot have number of folds={n_folds} "
+                f"greater than the number of groups={n_groups}"
+            )
+        seen_groups = set()
+        prev_group = None
+        for idx, group in enumerate(groups):
+            if group != prev_group and group in seen_groups:
+                raise ValueError(
+                    "The groups should be contiguous."
+                    " Found a non-contiguous group at"
+                    f" index={idx}"
+                )
+            prev_group = group
+            seen_groups.add(group)
+        tss = TimeSeriesSplit(
+            gap=self.gap,
+            max_train_size=None,
+            n_splits=self.n_splits,
+            test_size=None,
+        )
+        for train_idx, test_idx in tss.split(unique_groups):
+            train_array = np.where(np.isin(groups, unique_groups[train_idx]))[0]
+            test_array = np.where(np.isin(groups, unique_groups[test_idx]))[0]
+            train_end = len(train_array)
+            if self.max_train_size and self.max_train_size < train_end:
+                train_array = train_array[train_end - self.max_train_size : train_end]
+            if self.test_size:
+                test_array = test_array[: self.test_size]
+            yield train_array, test_array
 
 
 def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):

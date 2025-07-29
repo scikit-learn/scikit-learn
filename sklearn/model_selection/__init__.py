@@ -21,6 +21,7 @@ from sklearn.model_selection._split import (
     BaseShuffleSplit,
     GroupKFold,
     GroupShuffleSplit,
+    GroupTimeSeriesSplit,
     KFold,
     LeaveOneGroupOut,
     LeaveOneOut,
