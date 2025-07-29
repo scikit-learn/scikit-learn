@@ -52,6 +52,7 @@ from sklearn.base import (
     _fit_context,
     is_classifier,
 )
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.preprocessing import OneHotEncoder
@@ -75,8 +76,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
     "ExtraTreesClassifier",

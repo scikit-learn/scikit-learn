@@ -23,6 +23,7 @@ from sklearn.base import clone, is_classifier
 from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
+from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import device, get_namespace
@@ -42,8 +43,6 @@ from sklearn.utils.metadata_routing import (
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import _check_method_params, _num_samples
-
-from ._split import check_cv
 
 __all__ = [
     "cross_val_predict",

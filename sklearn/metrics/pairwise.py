@@ -16,6 +16,8 @@ from scipy.spatial import distance
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics._pairwise_distances_reduction import ArgKmin
+from sklearn.metrics._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from sklearn.preprocessing import normalize
 from sklearn.utils import check_array, gen_batches, gen_even_slices
 from sklearn.utils._array_api import (
@@ -43,9 +45,6 @@ from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import _num_samples, check_non_negative
-
-from ._pairwise_distances_reduction import ArgKmin
-from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
 # Utility Functions

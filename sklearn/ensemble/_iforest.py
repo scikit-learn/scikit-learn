@@ -10,6 +10,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from sklearn.base import OutlierMixin, _fit_context
+from sklearn.ensemble._bagging import BaseBagging
 from sklearn.tree import ExtraTreeRegressor
 from sklearn.tree._tree import DTYPE as tree_dtype
 from sklearn.utils import check_array, check_random_state, gen_batches
@@ -22,8 +23,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 

@@ -16,6 +16,7 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import _array_api, check_array, metadata_routing, resample
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
@@ -49,8 +50,6 @@ from sklearn.utils.validation import (
     check_random_state,
     validate_data,
 )
-
-from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 

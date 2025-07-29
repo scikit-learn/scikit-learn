@@ -23,6 +23,13 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    _preprocess_data,
+    _rescale_data,
+)
+from sklearn.linear_model._sag import sag_solver
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
@@ -57,9 +64,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
-from ._sag import sag_solver
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):

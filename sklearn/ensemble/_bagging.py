@@ -13,6 +13,7 @@ from warnings import warn
 import numpy as np
 
 from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import Bunch, _safe_indexing, check_random_state, column_or_1d
@@ -39,8 +40,6 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 

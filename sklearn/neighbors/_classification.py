@@ -13,6 +13,13 @@ from sklearn.metrics._pairwise_distances_reduction import (
     ArgKminClassMode,
     RadiusNeighborsClassMode,
 )
+from sklearn.neighbors._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _check_precomputed,
+    _get_weights,
+)
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
 from sklearn.utils.extmath import weighted_mode
@@ -22,14 +29,6 @@ from sklearn.utils.validation import (
     _num_samples,
     check_is_fitted,
     validate_data,
-)
-
-from ._base import (
-    KNeighborsMixin,
-    NeighborsBase,
-    RadiusNeighborsMixin,
-    _check_precomputed,
-    _get_weights,
 )
 
 

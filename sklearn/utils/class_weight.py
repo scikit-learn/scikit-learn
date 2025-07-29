@@ -6,8 +6,8 @@
 import numpy as np
 from scipy import sparse
 
-from ._param_validation import StrOptions, validate_params
-from .validation import _check_sample_weight
+from sklearn.utils._param_validation import StrOptions, validate_params
+from sklearn.utils.validation import _check_sample_weight
 
 
 @validate_params(

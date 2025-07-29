@@ -12,12 +12,11 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._dbscan_inner import dbscan_inner
 from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight, validate_data
-
-from ._dbscan_inner import dbscan_inner
 
 
 @validate_params(

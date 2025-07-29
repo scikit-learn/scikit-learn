@@ -32,6 +32,7 @@ from sklearn.base import (
     is_classifier,
     is_regressor,
 )
+from sklearn.ensemble._base import BaseEnsemble
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import _safe_indexing, check_random_state
@@ -48,8 +49,6 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-from ._base import BaseEnsemble
 
 __all__ = [
     "AdaBoostClassifier",

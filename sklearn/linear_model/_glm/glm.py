@@ -18,6 +18,7 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
@@ -29,8 +30,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):

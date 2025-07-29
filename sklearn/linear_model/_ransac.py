@@ -15,6 +15,7 @@ from sklearn.base import (
     clone,
 )
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearRegression
 from sklearn.utils import check_consistent_length, check_random_state, get_tags
 from sklearn.utils._bunch import Bunch
 from sklearn.utils._param_validation import (
@@ -39,8 +40,6 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-from ._base import LinearRegression
 
 _EPSILON = np.spacing(1)
 

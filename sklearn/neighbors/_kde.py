@@ -13,7 +13,9 @@ import numpy as np
 from scipy.special import gammainc
 
 from sklearn.base import BaseEstimator, _fit_context
+from sklearn.neighbors._ball_tree import BallTree
 from sklearn.neighbors._base import VALID_METRICS
+from sklearn.neighbors._kd_tree import KDTree
 from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import row_norms
@@ -22,9 +24,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
 
 VALID_KERNELS = [
     "gaussian",

@@ -15,6 +15,7 @@ import numpy as np
 from scipy import linalg
 
 from sklearn.base import _fit_context
+from sklearn.covariance import EmpiricalCovariance, empirical_covariance, log_likelihood
 from sklearn.exceptions import ConvergenceWarning
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -37,8 +38,6 @@ from sklearn.utils.validation import (
     check_scalar,
     validate_data,
 )
-
-from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
 
 # Helper functions to compute the objective and dual objective functions

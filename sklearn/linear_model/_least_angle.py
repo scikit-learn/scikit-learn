@@ -17,6 +17,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel, LinearRegression, _preprocess_data
 from sklearn.model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -36,8 +37,6 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import validate_data
-
-from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 

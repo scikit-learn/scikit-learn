@@ -21,17 +21,16 @@ from os.path import exists, join
 import joblib
 import numpy as np
 
-from sklearn.utils import Bunch, check_random_state
-from sklearn.utils import shuffle as shuffle_method
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     load_descr,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils import shuffle as shuffle_method
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz

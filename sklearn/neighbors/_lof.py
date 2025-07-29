@@ -7,12 +7,11 @@ from numbers import Real
 import numpy as np
 
 from sklearn.base import OutlierMixin, _fit_context
+from sklearn.neighbors._base import KNeighborsMixin, NeighborsBase
 from sklearn.utils import check_array
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_is_fitted
-
-from ._base import KNeighborsMixin, NeighborsBase
 
 __all__ = ["LocalOutlierFactor"]
 

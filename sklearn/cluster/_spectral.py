@@ -11,14 +11,13 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._kmeans import k_means
 from sklearn.manifold._spectral_embedding import _spectral_embedding
 from sklearn.metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
 from sklearn.neighbors import NearestNeighbors, kneighbors_graph
 from sklearn.utils import as_float_array, check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import validate_data
-
-from ._kmeans import k_means
 
 
 def cluster_qr(vectors):

@@ -17,6 +17,7 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
@@ -39,8 +40,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import SelectorMixin, _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):

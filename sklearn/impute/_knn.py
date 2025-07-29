@@ -6,6 +6,7 @@ from numbers import Integral
 import numpy as np
 
 from sklearn.base import _fit_context
+from sklearn.impute._base import _BaseImputer
 from sklearn.metrics import pairwise_distances_chunked
 from sklearn.metrics.pairwise import _NAN_METRICS
 from sklearn.neighbors._base import _get_weights
@@ -18,8 +19,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import _BaseImputer
 
 
 class KNNImputer(_BaseImputer):

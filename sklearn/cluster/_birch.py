@@ -16,14 +16,13 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.validation import check_is_fitted, validate_data
-
-from . import AgglomerativeClustering
 
 
 def _iterate_sparse_X(X):

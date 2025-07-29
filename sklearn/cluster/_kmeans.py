@@ -17,6 +17,26 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.cluster._k_means_common import (
+    CHUNK_SIZE,
+    _inertia_dense,
+    _inertia_sparse,
+    _is_same_clustering,
+)
+from sklearn.cluster._k_means_elkan import (
+    elkan_iter_chunked_dense,
+    elkan_iter_chunked_sparse,
+    init_bounds_dense,
+    init_bounds_sparse,
+)
+from sklearn.cluster._k_means_lloyd import (
+    lloyd_iter_chunked_dense,
+    lloyd_iter_chunked_sparse,
+)
+from sklearn.cluster._k_means_minibatch import (
+    _minibatch_update_dense,
+    _minibatch_update_sparse,
+)
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
 from sklearn.utils import check_array, check_random_state
@@ -35,21 +55,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._k_means_common import (
-    CHUNK_SIZE,
-    _inertia_dense,
-    _inertia_sparse,
-    _is_same_clustering,
-)
-from ._k_means_elkan import (
-    elkan_iter_chunked_dense,
-    elkan_iter_chunked_sparse,
-    init_bounds_dense,
-    init_bounds_sparse,
-)
-from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
-from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
 
 ###############################################################################
 # Initialization heuristic

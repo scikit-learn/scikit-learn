@@ -15,6 +15,14 @@ from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from sklearn.base import _fit_context
+from sklearn.linear_model._base import (
+    BaseEstimator,
+    LinearClassifierMixin,
+    SparseCoefMixin,
+)
+from sklearn.linear_model._glm.glm import NewtonCholeskySolver
+from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._sag import sag_solver
 from sklearn.metrics import get_scorer, get_scorer_names
 from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
@@ -45,11 +53,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
-from ._glm.glm import NewtonCholeskySolver
-from ._linear_loss import LinearModelLoss
-from ._sag import sag_solver
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"

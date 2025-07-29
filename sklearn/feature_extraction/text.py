@@ -23,6 +23,8 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_extraction._hash import FeatureHasher
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
 from sklearn.preprocessing import normalize
 from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
@@ -33,9 +35,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._hash import FeatureHasher
-from ._stop_words import ENGLISH_STOP_WORDS
 
 __all__ = [
     "ENGLISH_STOP_WORDS",

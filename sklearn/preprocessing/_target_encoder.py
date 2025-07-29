@@ -6,6 +6,11 @@ from numbers import Integral, Real
 import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
+from sklearn.preprocessing._encoders import _BaseEncoder
+from sklearn.preprocessing._target_encoder_fast import (
+    _fit_encoding_fast,
+    _fit_encoding_fast_auto_smooth,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
@@ -14,9 +19,6 @@ from sklearn.utils.validation import (
     check_consistent_length,
     check_is_fitted,
 )
-
-from ._encoders import _BaseEncoder
-from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):

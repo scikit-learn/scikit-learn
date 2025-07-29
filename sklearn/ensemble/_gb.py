@@ -40,6 +40,12 @@ from sklearn._loss.loss import (
 )
 from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.ensemble._gradient_boosting import (
+    _random_sample_mask,
+    predict_stage,
+    predict_stages,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -54,9 +60,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import BaseEnsemble
-from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(

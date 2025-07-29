@@ -24,6 +24,17 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
+from sklearn.tree import _criterion, _splitter, _tree
+from sklearn.tree._criterion import Criterion
+from sklearn.tree._splitter import Splitter
+from sklearn.tree._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
+from sklearn.tree._utils import _any_isnan_axis0
 from sklearn.utils import (
     Bunch,
     check_random_state,
@@ -40,18 +51,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from . import _criterion, _splitter, _tree
-from ._criterion import Criterion
-from ._splitter import Splitter
-from ._tree import (
-    BestFirstTreeBuilder,
-    DepthFirstTreeBuilder,
-    Tree,
-    _build_pruned_tree_ccp,
-    ccp_pruning_path,
-)
-from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",

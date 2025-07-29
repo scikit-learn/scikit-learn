@@ -17,6 +17,12 @@ from os.path import exists, isdir, join
 import numpy as np
 from joblib import Memory
 
+from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _fetch_remote,
+    get_data_home,
+    load_descr,
+)
 from sklearn.utils import Bunch
 from sklearn.utils._param_validation import (
     Hidden,
@@ -25,13 +31,6 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.fixes import tarfile_extractall
-
-from ._base import (
-    RemoteFileMetadata,
-    _fetch_remote,
-    get_data_home,
-    load_descr,
-)
 
 logger = logging.getLogger(__name__)
 

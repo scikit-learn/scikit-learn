@@ -9,9 +9,13 @@ import numpy as np
 
 from sklearn.base import RegressorMixin, _fit_context
 from sklearn.metrics import DistanceMetric
+from sklearn.neighbors._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _get_weights,
+)
 from sklearn.utils._param_validation import StrOptions
-
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):

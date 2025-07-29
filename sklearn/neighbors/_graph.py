@@ -6,6 +6,13 @@
 import itertools
 
 from sklearn.base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
+from sklearn.neighbors._base import (
+    VALID_METRICS,
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+)
+from sklearn.neighbors._unsupervised import NearestNeighbors
 from sklearn.utils._param_validation import (
     Integral,
     Interval,
@@ -14,9 +21,6 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_is_fitted
-
-from ._base import VALID_METRICS, KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
-from ._unsupervised import NearestNeighbors
 
 
 def _check_params(X, metric, p, metric_params):

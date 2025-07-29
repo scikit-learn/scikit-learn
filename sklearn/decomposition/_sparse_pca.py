@@ -13,13 +13,15 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.decomposition._dict_learning import (
+    MiniBatchDictionaryLearning,
+    dict_learning,
+)
 from sklearn.linear_model import ridge_regression
 from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
-
-from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
 
 
 class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):

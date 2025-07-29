@@ -37,11 +37,10 @@ from os.path import exists
 import joblib
 import numpy as np
 
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 from sklearn.utils import Bunch
 from sklearn.utils._param_validation import Interval, validate_params
-
-from . import get_data_home
-from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip

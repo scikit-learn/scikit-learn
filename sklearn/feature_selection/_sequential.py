@@ -16,6 +16,7 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
+from sklearn.feature_selection._base import SelectorMixin
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.model_selection import check_cv, cross_val_score
 from sklearn.utils._metadata_requests import (
@@ -28,8 +29,6 @@ from sklearn.utils._metadata_requests import (
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._tags import get_tags
 from sklearn.utils.validation import check_is_fitted, validate_data
-
-from ._base import SelectorMixin
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):

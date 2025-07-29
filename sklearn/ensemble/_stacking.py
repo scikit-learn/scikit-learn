@@ -19,6 +19,7 @@ from sklearn.base import (
     is_classifier,
     is_regressor,
 )
+from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression, RidgeCV
 from sklearn.model_selection import check_cv, cross_val_predict
@@ -43,8 +44,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-
-from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):

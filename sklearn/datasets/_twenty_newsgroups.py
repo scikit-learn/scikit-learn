@@ -40,19 +40,18 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import preprocessing
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.utils import Bunch, check_random_state
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.fixes import tarfile_extractall
-
-from . import get_data_home, load_files
-from ._base import (
+from sklearn.datasets import get_data_home, load_files
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 

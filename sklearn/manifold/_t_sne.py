@@ -21,16 +21,16 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.decomposition import PCA
+
+# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
+# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
+from sklearn.manifold import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 from sklearn.metrics.pairwise import _VALID_METRICS, pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _num_samples, check_non_negative, validate_data
-
-# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from . import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 

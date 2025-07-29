@@ -3,9 +3,8 @@
 
 from numbers import Real
 
+from sklearn.linear_model._stochastic_gradient import BaseSGDClassifier
 from sklearn.utils._param_validation import Interval, StrOptions
-
-from ._stochastic_gradient import BaseSGDClassifier
 
 
 class Perceptron(BaseSGDClassifier):

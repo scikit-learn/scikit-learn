@@ -12,6 +12,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, _pre_fit
 from sklearn.model_selection import check_cv
 from sklearn.utils import Bunch, as_float_array, check_array
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -24,8 +25,6 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import validate_data
-
-from ._base import LinearModel, _pre_fit
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"

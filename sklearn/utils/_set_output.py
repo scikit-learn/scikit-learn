@@ -9,8 +9,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from sklearn._config import get_config
-
-from ._available_if import available_if
+from sklearn.utils._available_if import available_if
 
 
 def check_library_installed(library):

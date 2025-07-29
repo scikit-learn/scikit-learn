@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from sklearn.base import _fit_context
-
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
+from sklearn.neighbors._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 
 
 class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):

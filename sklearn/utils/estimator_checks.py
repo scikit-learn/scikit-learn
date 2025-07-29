@@ -59,7 +59,7 @@ from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_s
 from sklearn.model_selection._validation import _safe_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
-from sklearn.utils import _safe_indexing
+from sklearn.utils import _safe_indexing, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
@@ -67,16 +67,16 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import (
+    Interval,
     InvalidParameterError,
+    StrOptions,
     generate_invalid_param_val,
     make_constraint,
+    validate_params,
 )
-
-from . import shuffle
-from ._missing import is_scalar_nan
-from ._param_validation import Interval, StrOptions, validate_params
-from ._tags import (
+from sklearn.utils._tags import (
     ClassifierTags,
     InputTags,
     RegressorTags,
@@ -84,12 +84,12 @@ from ._tags import (
     TransformerTags,
     get_tags,
 )
-from ._test_common.instance_generator import (
+from sklearn.utils._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     _get_check_estimator_ids,
     _yield_instances_for_check,
 )
-from ._testing import (
+from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
     _get_args,
@@ -103,7 +103,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .validation import _num_samples, check_is_fitted, has_fit_parameter
+from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 

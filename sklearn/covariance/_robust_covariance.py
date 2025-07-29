@@ -16,12 +16,14 @@ from scipy import linalg
 from scipy.stats import chi2
 
 from sklearn.base import _fit_context
+from sklearn.covariance._empirical_covariance import (
+    EmpiricalCovariance,
+    empirical_covariance,
+)
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils.validation import validate_data
-
-from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 
 # Minimum Covariance Determinant

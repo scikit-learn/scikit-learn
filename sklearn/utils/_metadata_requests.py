@@ -106,8 +106,7 @@ from warnings import warn
 
 from sklearn import get_config
 from sklearn.exceptions import UnsetMetadataPassedError
-
-from ._bunch import Bunch
+from sklearn.utils._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.

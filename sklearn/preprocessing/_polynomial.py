@@ -16,6 +16,11 @@ from scipy.interpolate import BSpline
 from scipy.special import comb
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._csr_polynomial_expansion import (
+    _calc_expanded_nnz,
+    _calc_total_nnz,
+    _csr_polynomial_expansion,
+)
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -32,12 +37,6 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
     validate_data,
-)
-
-from ._csr_polynomial_expansion import (
-    _calc_expanded_nnz,
-    _calc_total_nnz,
-    _csr_polynomial_expansion,
 )
 
 __all__ = [

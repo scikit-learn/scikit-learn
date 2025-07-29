@@ -8,6 +8,7 @@ from numbers import Integral
 import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import resample
 from sklearn.utils._param_validation import Interval, Options, StrOptions
 from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
@@ -18,8 +19,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):

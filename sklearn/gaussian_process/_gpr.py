@@ -18,14 +18,13 @@ from sklearn.base import (
     _fit_context,
     clone,
 )
+from sklearn.gaussian_process.kernels import RBF, Kernel
+from sklearn.gaussian_process.kernels import ConstantKernel as C
 from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.optimize import _check_optimize_result
 from sklearn.utils.validation import validate_data
-
-from .kernels import RBF, Kernel
-from .kernels import ConstantKernel as C
 
 GPR_CHOLESKY_LOWER = True
 

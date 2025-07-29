@@ -8,10 +8,9 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
 from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import Interval, StrOptions
-
-from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):

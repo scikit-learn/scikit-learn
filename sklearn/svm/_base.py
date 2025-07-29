@@ -11,6 +11,12 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import _liblinear as liblinear  # type: ignore[attr-defined]
+
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from sklearn.svm import _libsvm as libsvm  # type: ignore[attr-defined]
+from sklearn.svm import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 from sklearn.utils import (
     check_array,
     check_random_state,
@@ -32,13 +38,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from . import _liblinear as liblinear  # type: ignore[attr-defined]
-
-# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
-# (and same for other imports)
-from . import _libsvm as libsvm  # type: ignore[attr-defined]
-from . import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 

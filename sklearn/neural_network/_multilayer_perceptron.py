@@ -21,6 +21,8 @@ from sklearn.base import (
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.neural_network._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from sklearn.neural_network._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
     _safe_indexing,
@@ -44,9 +46,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
 

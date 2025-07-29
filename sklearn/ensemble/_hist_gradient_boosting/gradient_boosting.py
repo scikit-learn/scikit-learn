@@ -29,6 +29,12 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
+    _update_raw_predictions,
+)
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE, X_DTYPE, Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
@@ -48,11 +54,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._gradient_boosting import _update_raw_predictions
-from .binning import _BinMapper
-from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
-from .grower import TreeGrower
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(

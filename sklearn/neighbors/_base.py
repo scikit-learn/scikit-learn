@@ -19,15 +19,14 @@ from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics import DistanceMetric, pairwise_distances_chunked
 from sklearn.metrics._pairwise_distances_reduction import ArgKmin, RadiusNeighbors
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._kd_tree import KDTree
 from sklearn.utils import check_array, gen_even_slices, get_tags
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import _to_object_array, check_is_fitted, validate_data
-
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
 
 SCIPY_METRICS = [
     "braycurtis",

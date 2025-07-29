@@ -24,10 +24,7 @@ import numbers
 import numpy as np
 from scipy.special import xlogy
 
-from sklearn.utils import check_scalar
-from sklearn.utils.stats import _weighted_percentile
-
-from ._loss import (
+from sklearn._loss._loss import (
     CyAbsoluteError,
     CyExponentialLoss,
     CyHalfBinomialLoss,
@@ -40,7 +37,7 @@ from ._loss import (
     CyHuberLoss,
     CyPinballLoss,
 )
-from .link import (
+from sklearn._loss.link import (
     HalfLogitLink,
     IdentityLink,
     Interval,
@@ -48,6 +45,8 @@ from .link import (
     LogLink,
     MultinomialLogit,
 )
+from sklearn.utils import check_scalar
+from sklearn.utils.stats import _weighted_percentile
 
 
 # Note: The shape of raw_prediction for multiclass classifications are

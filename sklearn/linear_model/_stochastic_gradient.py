@@ -21,6 +21,20 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    SparseCoefMixin,
+    make_dataset,
+)
+from sklearn.linear_model._sgd_fast import (
+    EpsilonInsensitive,
+    Hinge,
+    ModifiedHuber,
+    SquaredEpsilonInsensitive,
+    SquaredHinge,
+    _plain_sgd32,
+    _plain_sgd64,
+)
 from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
 from sklearn.utils import check_random_state, compute_class_weight
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
@@ -32,17 +46,6 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
     validate_data,
-)
-
-from ._base import LinearClassifierMixin, SparseCoefMixin, make_dataset
-from ._sgd_fast import (
-    EpsilonInsensitive,
-    Hinge,
-    ModifiedHuber,
-    SquaredEpsilonInsensitive,
-    SquaredHinge,
-    _plain_sgd32,
-    _plain_sgd64,
 )
 
 LEARNING_RATE_TYPES = {

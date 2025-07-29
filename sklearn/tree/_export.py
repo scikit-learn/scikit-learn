@@ -12,6 +12,13 @@ from numbers import Integral
 import numpy as np
 
 from sklearn.base import is_classifier
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    _criterion,
+    _tree,
+)
+from sklearn.tree._reingold_tilford import Tree, buchheim
 from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
@@ -19,9 +26,6 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_array, check_is_fitted
-
-from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
-from ._reingold_tilford import Tree, buchheim
 
 
 def _color_brew(n):

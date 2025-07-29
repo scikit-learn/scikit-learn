@@ -9,14 +9,13 @@ import numpy as np
 
 from sklearn.base import _fit_context, is_classifier
 from sklearn.metrics._scorer import get_scorer_names
+from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._split import _yields_constant_splits, check_cv
 from sklearn.utils import resample
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import _num_samples, validate_data
-
-from . import ParameterGrid, ParameterSampler
-from ._search import BaseSearchCV
-from ._split import _yields_constant_splits, check_cv
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 

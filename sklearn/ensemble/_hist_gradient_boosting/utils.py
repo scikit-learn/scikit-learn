@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from sklearn.base import is_classifier
-
-from .binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 
 
 def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):

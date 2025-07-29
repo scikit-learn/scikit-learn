@@ -21,6 +21,7 @@ from sklearn.base import (
     _fit_context,
     clone,
 )
+from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import Bunch
@@ -41,8 +42,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-
-from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):

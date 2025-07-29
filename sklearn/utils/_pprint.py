@@ -71,8 +71,7 @@ import pprint
 
 from sklearn._config import get_config
 from sklearn.base import BaseEstimator
-
-from ._missing import is_scalar_nan
+from sklearn.utils._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):

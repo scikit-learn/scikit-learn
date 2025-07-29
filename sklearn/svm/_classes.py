@@ -11,11 +11,15 @@ from sklearn.linear_model._base import (
     LinearModel,
     SparseCoefMixin,
 )
+from sklearn.svm._base import (
+    BaseLibSVM,
+    BaseSVC,
+    _fit_liblinear,
+    _get_liblinear_solver_type,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import _num_samples, validate_data
-
-from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
 def _validate_dual_parameter(dual, loss, penalty, multi_class, X):

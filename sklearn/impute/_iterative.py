@@ -11,6 +11,7 @@ from scipy import stats
 
 from sklearn.base import _fit_context, clone
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 from sklearn.preprocessing import normalize
 from sklearn.utils import _safe_indexing, check_array, check_random_state
 from sklearn.utils._indexing import _safe_assign
@@ -30,8 +31,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]

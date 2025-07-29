@@ -13,6 +13,10 @@ from joblib import effective_n_jobs
 from scipy import sparse
 
 from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
 from sklearn.model_selection import check_cv
 from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
@@ -39,10 +43,6 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from . import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):

@@ -21,6 +21,12 @@ from sklearn.base import (
     ClusterMixin,
     _fit_context,
 )
+
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from sklearn.cluster import (  # type: ignore[attr-defined]
+    _hierarchical_fast as _hierarchical,
+)
+from sklearn.cluster._feature_agglomeration import AgglomerationTransform
 from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import METRIC_MAPPING64
 from sklearn.metrics.pairwise import _VALID_METRICS, paired_distances
@@ -34,10 +40,6 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils.graph import _fix_connected_components
 from sklearn.utils.validation import check_memory, validate_data
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore[attr-defined]
-from ._feature_agglomeration import AgglomerationTransform
 
 ###############################################################################
 # For non fully-connected graphs

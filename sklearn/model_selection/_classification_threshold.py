@@ -16,6 +16,7 @@ from sklearn.base import (
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _CurveScorer, _threshold_scores_to_class_labels
+from sklearn.model_selection._split import StratifiedShuffleSplit, check_cv
 from sklearn.utils import _safe_indexing, get_tags
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._response import _get_response_values_binary
@@ -35,8 +36,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     indexable,
 )
-
-from ._split import StratifiedShuffleSplit, check_cv
 
 
 def _check_is_fitted(estimator):

@@ -14,8 +14,7 @@ import numpy as np
 from scipy.sparse import csr_matrix, issparse
 
 from sklearn._config import config_context, get_config
-
-from .validation import _is_arraylike_not_scalar
+from sklearn.utils.validation import _is_arraylike_not_scalar
 
 
 class InvalidParameterError(ValueError, TypeError):

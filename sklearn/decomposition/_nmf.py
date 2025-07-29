@@ -21,13 +21,12 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.decomposition._cdnmf_fast import _update_cdnmf_fast
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
-
-from ._cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
 
