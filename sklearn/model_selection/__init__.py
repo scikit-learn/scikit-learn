@@ -63,6 +63,7 @@ __all__ = [
     "GridSearchCV",
     "GroupKFold",
     "GroupShuffleSplit",
+    "GroupTimeSeriesSplit",
     "HalvingGridSearchCV",
     "HalvingRandomSearchCV",
     "KFold",
