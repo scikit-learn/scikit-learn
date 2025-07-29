@@ -1,7 +1,12 @@
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.params import ParamsDict, _params_html_repr, _read_params
+from sklearn.utils._repr_html.params import (
+    ParamsDict,
+    _generate_link_to_param_doc,
+    _params_html_repr,
+    _read_params,
+)
 
 
 def test_params_dict_content():
@@ -118,5 +123,58 @@ def test_params_html_repr_without_doc_links():
     )
     html_output = _params_html_repr(params)
     # Check that no doc links are generated
-    assert "Documentation for `a` not found" in html_output
-    assert "Documentation for `b` not found" in html_output
+    assert "Documentation for a not found" in html_output
+    assert "Documentation for b not found" in html_output
+
+
+def test_generate_link_to_param_doc_basic():
+    class MockEstimator:
+        __doc__ = """
+        alpha : float
+            Regularization strength.
+        beta : int
+            Some integer parameter.
+        """
+
+    doc_link = "mock_module.MockEstimator.html"
+    # Test for 'alpha'
+    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float"
+    # Test for 'beta'
+    url = _generate_link_to_param_doc(MockEstimator, "beta", doc_link)
+    assert url == "mock_module.MockEstimator.html#:~:text=beta,-int"
+
+
+def test_generate_link_to_param_doc_param_not_found():
+    class MockEstimator:
+        __doc__ = """
+        alpha : float
+            Regularization strength.
+        """
+
+    doc_link = "mock_module.MockEstimator.html"
+    url = _generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
+    assert url is None
+
+
+def test_generate_link_to_param_doc_special_characters():
+    class MockEstimator:
+        __doc__ = """
+        param with space : {'stay', 'leave'} default='don't know'
+            Parameter with space in name.
+        """
+
+    doc_link = "mock_module.MockEstimator.html"
+    url = _generate_link_to_param_doc(MockEstimator, "param with space", doc_link)
+    # Spaces should be percent-encoded
+    assert "param%20with%20space" in url
+    assert "-%7B%27stay%27%2C%20%27leave%27%7D" in url
+
+
+def test_generate_link_to_param_doc_empty_docstring():
+    class MockEstimator:
+        __doc__ = ""
+
+    doc_link = "mock_module.MockEstimator.html"
+    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    assert url is None
