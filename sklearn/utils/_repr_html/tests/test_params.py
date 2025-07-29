@@ -83,13 +83,15 @@ def test_params_html_repr_with_doc_links():
     """Test `_params_html_repr` with valid and invalid doc links."""
 
     class MockEstimator:
-        __module__ = "sklearn.mock_module"
-        __qualname__ = "MockEstimator"
-        __doc__ = """
+        """A fake estimator class with a docstring used for testing.
+
         a : int
             Description of a.
         b : str
         """
+
+        __module__ = "sklearn.mock_module"
+        __qualname__ = "MockEstimator"
 
     params = ParamsDict(
         {"a": 1, "b": "value"},
@@ -114,7 +116,7 @@ def test_params_html_repr_without_doc_links():
     class MockEstimatorWithoutDoc:
         __module__ = "sklearn.mock_module"
         __qualname__ = "MockEstimatorWithoutDoc"
-        __doc__ = ""  # Empty docstring
+        # No docstring defined on this test class.
 
     params = ParamsDict(
         {"a": 1, "b": "value"},

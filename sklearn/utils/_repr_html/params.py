@@ -17,7 +17,8 @@ def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
     """
     docstring = estimator_class.__doc__
 
-    m = re.search(f"{param_name} : (.+)\\n", docstring)
+    m = re.search(f"{param_name} : (.+)\\n", docstring or "")
+
     if m is None:
         # No match found in the docstring, return None to indicate that we
         # cannot link.
@@ -35,6 +36,7 @@ def _read_params(name, value, non_default_params):
     """Categorizes parameters as 'default' or 'user-set' and formats their values.
     Escapes or truncates parameter values for display safety and readability.
     """
+    name = html.escape(name)
     r = reprlib.Repr()
     r.maxlist = 2  # Show only first 2 items of lists
     r.maxtuple = 1  # Show only first item of tuples
