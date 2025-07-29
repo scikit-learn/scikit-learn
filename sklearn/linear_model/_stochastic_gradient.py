@@ -585,7 +585,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         X,
         y,
         alpha,
-        PA_C,
         loss,
         learning_rate,
         max_iter,
@@ -642,7 +641,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha=alpha,
-                PA_C=PA_C,
                 learning_rate=learning_rate,
                 sample_weight=sample_weight,
                 max_iter=max_iter,
@@ -652,7 +650,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha=alpha,
-                PA_C=PA_C,
                 learning_rate=learning_rate,
                 sample_weight=sample_weight,
                 max_iter=max_iter,
@@ -670,7 +667,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         X,
         y,
         alpha,
-        PA_C,
         loss,
         learning_rate,
         coef_init=None,
@@ -708,7 +704,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha,
-            PA_C,
             loss,
             learning_rate,
             self.max_iter,
@@ -742,7 +737,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         return self
 
-    def _fit_binary(self, X, y, alpha, PA_C, sample_weight, learning_rate, max_iter):
+    def _fit_binary(self, X, y, alpha, sample_weight, learning_rate, max_iter):
         """Fit a binary classifier on X and y."""
         coef, intercept, n_iter_ = fit_binary(
             self,
@@ -750,7 +745,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha,
-            PA_C,
+            self.PA_C,
             learning_rate,
             max_iter,
             self._expanded_class_weight[1],
@@ -776,9 +771,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             # intercept is a float, need to convert it to an array of length 1
             self.intercept_ = np.atleast_1d(intercept)
 
-    def _fit_multiclass(
-        self, X, y, alpha, PA_C, learning_rate, sample_weight, max_iter
-    ):
+    def _fit_multiclass(self, X, y, alpha, learning_rate, sample_weight, max_iter):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -803,7 +796,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha,
-                PA_C,
+                self.PA_C,
                 learning_rate,
                 max_iter,
                 self._expanded_class_weight[i],
@@ -887,7 +880,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha=self.alpha,
-            PA_C=self.PA_C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -932,7 +924,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha=self.alpha,
-            PA_C=self.PA_C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,
@@ -1462,7 +1453,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         X,
         y,
         alpha,
-        PA_C,
         loss,
         learning_rate,
         max_iter,
@@ -1501,9 +1491,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
 
-        self._fit_regressor(
-            X, y, alpha, PA_C, loss, learning_rate, sample_weight, max_iter
-        )
+        self._fit_regressor(X, y, alpha, loss, learning_rate, sample_weight, max_iter)
 
         return self
 
@@ -1540,7 +1528,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             self.alpha,
-            PA_C=self.PA_C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -1554,7 +1541,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         X,
         y,
         alpha,
-        PA_C,
         loss,
         learning_rate,
         coef_init=None,
@@ -1577,7 +1563,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             alpha,
-            PA_C,
             loss,
             learning_rate,
             self.max_iter,
@@ -1642,7 +1627,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             alpha=self.alpha,
-            PA_C=self.PA_C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,
@@ -1684,9 +1668,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         """
         return self._decision_function(X)
 
-    def _fit_regressor(
-        self, X, y, alpha, PA_C, loss, learning_rate, sample_weight, max_iter
-    ):
+    def _fit_regressor(self, X, y, alpha, loss, learning_rate, sample_weight, max_iter):
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
@@ -1730,7 +1712,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss_function,
             penalty_type,
             alpha,
-            PA_C,
+            self.PA_C,
             self._get_l1_ratio(),
             dataset,
             validation_mask,
@@ -2273,7 +2255,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             average=average,
         )
 
-    def _fit_one_class(self, X, alpha, PA_C, sample_weight, learning_rate, max_iter):
+    def _fit_one_class(self, X, alpha, sample_weight, learning_rate, max_iter):
         """Uses SGD implementation with X and y=np.ones(n_samples)."""
 
         # The One-Class SVM uses the SGD implementation with
@@ -2328,7 +2310,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             self._loss_function_,
             penalty_type,
             alpha,
-            PA_C,
+            self.PA_C,
             self.l1_ratio,
             dataset,
             validation_mask,
@@ -2373,7 +2355,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self,
         X,
         alpha,
-        PA_C,
         loss,
         learning_rate,
         max_iter,
@@ -2428,7 +2409,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._fit_one_class(
             X,
             alpha=alpha,
-            PA_C=PA_C,
             learning_rate=learning_rate,
             sample_weight=sample_weight,
             max_iter=max_iter,
@@ -2463,7 +2443,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         return self._partial_fit(
             X,
             alpha,
-            PA_C=self.PA_C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -2476,7 +2455,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self,
         X,
         alpha,
-        PA_C,
         loss,
         learning_rate,
         coef_init=None,
@@ -2498,7 +2476,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._partial_fit(
             X,
             alpha,
-            PA_C,
             loss,
             learning_rate,
             self.max_iter,
@@ -2570,7 +2547,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._fit(
             X,
             alpha=alpha,
-            PA_C=self.PA_C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,
