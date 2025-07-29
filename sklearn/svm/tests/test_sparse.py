@@ -323,7 +323,7 @@ def test_sample_weights(lil_container):
 
 def test_sparse_liblinear_intercept_handling():
     # Test that sparse liblinear honours intercept_scaling param
-    test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
+    test_svm.test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC)
 
 
 @pytest.mark.parametrize(
