@@ -7,9 +7,10 @@ import numpy as np
 
 from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
+from ..utils import compute_sample_weight
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
+from ..utils.validation import _check_sample_weight, _num_samples, validate_data
 from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
@@ -1109,6 +1110,7 @@ class NuSVC(BaseSVC):
     _parameter_constraints: dict = {
         **BaseSVC._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
     }
     _parameter_constraints.pop("C")
 
@@ -1149,6 +1151,25 @@ class NuSVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state,
         )
+
+    def _finalize_sample_weight(self, sample_weight, y):
+        if self.class_weight is None:
+            return sample_weight
+
+        expanded_class_weight = compute_sample_weight(self.class_weight, y)
+
+        if sample_weight is not None:
+            return sample_weight * expanded_class_weight
+        else:
+            return expanded_class_weight
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, sample_weight=None):
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
+
+        sample_weight = self._finalize_sample_weight(sample_weight, y)
+
+        return super().fit(X, y, sample_weight=sample_weight)
 
 
 class SVR(RegressorMixin, BaseLibSVM):

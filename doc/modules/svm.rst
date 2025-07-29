@@ -265,7 +265,7 @@ classes or certain individual samples, the parameters ``class_weight`` and
 ``sample_weight`` can be used.
 
 :class:`SVC` (but not :class:`NuSVC`) implements the parameter
-``class_weight`` in the ``fit`` method. It's a dictionary of the form
+``class_weight`` in the constructor. It's a dictionary of the form
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 The figure below illustrates the decision boundary of an unbalanced problem,
