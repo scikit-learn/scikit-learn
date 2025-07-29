@@ -23,14 +23,14 @@ y = iris.target[indices]
 class MyPassiveAggressive(ClassifierMixin):
     def __init__(
         self,
-        PA_C=1.0,
+        C=1.0,
         epsilon=0.01,
         loss="hinge",
         fit_intercept=True,
         n_iter=1,
         random_state=None,
     ):
-        self.PA_C = PA_C
+        self.C = C
         self.epsilon = epsilon
         self.loss = loss
         self.fit_intercept = fit_intercept
@@ -52,9 +52,9 @@ class MyPassiveAggressive(ClassifierMixin):
                 sqnorm = np.dot(X[i], X[i])
 
                 if self.loss in ("hinge", "epsilon_insensitive"):
-                    step = min(self.PA_C, loss / sqnorm)
+                    step = min(self.C, loss / sqnorm)
                 elif self.loss in ("squared_hinge", "squared_epsilon_insensitive"):
-                    step = loss / (sqnorm + 1.0 / (2 * self.PA_C))
+                    step = loss / (sqnorm + 1.0 / (2 * self.C))
 
                 if self.loss in ("hinge", "squared_hinge"):
                     step *= y[i]
@@ -76,7 +76,7 @@ class MyPassiveAggressive(ClassifierMixin):
 def test_classifier_accuracy(csr_container, fit_intercept, average):
     data = csr_container(X) if csr_container is not None else X
     clf = PassiveAggressiveClassifier(
-        PA_C=1.0,
+        C=1.0,
         max_iter=30,
         fit_intercept=fit_intercept,
         random_state=1,
@@ -155,14 +155,14 @@ def test_class_weights():
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(
-        PA_C=0.1, max_iter=100, class_weight=None, random_state=100
+        C=0.1, max_iter=100, class_weight=None, random_state=100
     )
     clf.fit(X2, y2)
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
     # we give a small weights to class 1
     clf = PassiveAggressiveClassifier(
-        PA_C=0.1, max_iter=100, class_weight={1: 0.001}, random_state=100
+        C=0.1, max_iter=100, class_weight={1: 0.001}, random_state=100
     )
     clf.fit(X2, y2)
 
@@ -183,17 +183,15 @@ def test_partial_fit_weight_class_balanced():
 def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
-    clf = PassiveAggressiveClassifier(PA_C=0.1, tol=None, class_weight=None)
+    clf = PassiveAggressiveClassifier(C=0.1, tol=None, class_weight=None)
     clf.fit(X2, y2)
 
     # Already balanced, so "balanced" weights should have no effect
-    clf_balanced = PassiveAggressiveClassifier(
-        PA_C=0.1, tol=None, class_weight="balanced"
-    )
+    clf_balanced = PassiveAggressiveClassifier(C=0.1, tol=None, class_weight="balanced")
     clf_balanced.fit(X2, y2)
 
     clf_weighted = PassiveAggressiveClassifier(
-        PA_C=0.1, tol=None, class_weight={0: 0.5, 1: 0.5}
+        C=0.1, tol=None, class_weight={0: 0.5, 1: 0.5}
     )
     clf_weighted.fit(X2, y2)
 
@@ -223,7 +221,7 @@ def test_regressor_mse(csr_container, fit_intercept, average):
 
     data = csr_container(X) if csr_container is not None else X
     reg = PassiveAggressiveRegressor(
-        PA_C=1.0,
+        C=1.0,
         fit_intercept=fit_intercept,
         random_state=0,
         average=average,

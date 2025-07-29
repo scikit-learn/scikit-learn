@@ -40,7 +40,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    PA_C : float, default=1.0
+    C : float, default=1.0
         Aggressiveness parameter for the passive-agressive algorithm, see [1].
         For PA-I it is the maximum step size. For PA-II it regularizes the
         step size (the smaller `PA_C` the more it regularizes).
@@ -202,13 +202,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     _parameter_constraints: dict = {
         **BaseSGDClassifier._parameter_constraints,
         "loss": [StrOptions({"hinge", "squared_hinge"})],
-        "PA_C": [Interval(Real, 0, None, closed="right")],
+        "C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
         self,
         *,
-        PA_C=1.0,
+        C=1.0,
         fit_intercept=True,
         max_iter=1000,
         tol=1e-3,
@@ -242,7 +242,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             n_jobs=n_jobs,
         )
 
-        self.PA_C = PA_C
+        self.C = C
         self.loss = loss
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -286,6 +286,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                     "parameter."
                 )
 
+        # For an explanation, see
+        # https://github.com/scikit-learn/scikit-learn/pull/1259#issuecomment-9818044
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(
             X,
@@ -367,7 +369,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     Parameters
     ----------
 
-    PA_C : float, default=1.0
+    C : float, default=1.0
         Aggressiveness parameter for the passive-agressive algorithm, see [1].
         For PA-I it is the maximum step size. For PA-II it regularizes the
         step size (the smaller `PA_C` the more it regularizes).
@@ -510,14 +512,14 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     _parameter_constraints: dict = {
         **BaseSGDRegressor._parameter_constraints,
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
-        "PA_C": [Interval(Real, 0, None, closed="right")],
+        "C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
         self,
         *,
-        PA_C=1.0,
+        C=1.0,
         fit_intercept=True,
         max_iter=1000,
         tol=1e-3,
@@ -550,7 +552,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             warm_start=warm_start,
             average=average,
         )
-        self.PA_C = PA_C
+        self.C = C
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
