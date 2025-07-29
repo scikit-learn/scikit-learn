@@ -955,7 +955,7 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_to_logits(decision_values, eps=1e-8):
+def _convert_to_logits(decision_values, eps=1e-12):
     """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
