@@ -10,19 +10,19 @@ from scipy import linalg
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import NotFittedError
-from ..metrics.pairwise import pairwise_kernels
-from ..preprocessing import KernelCenterer
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import _randomized_eigsh, svd_flip
-from ..utils.validation import (
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.preprocessing import KernelCenterer
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_eigsh, svd_flip
+from sklearn.utils.validation import (
     _check_psd_eigenvalues,
     check_is_fitted,
     validate_data,

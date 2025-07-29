@@ -7,7 +7,7 @@ data for classification tasks.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._label_propagation import LabelPropagation, LabelSpreading
-from ._self_training import SelfTrainingClassifier
+from sklearn.semi_supervised._label_propagation import LabelPropagation, LabelSpreading
+from sklearn.semi_supervised._self_training import SelfTrainingClassifier
 
 __all__ = ["LabelPropagation", "LabelSpreading", "SelfTrainingClassifier"]

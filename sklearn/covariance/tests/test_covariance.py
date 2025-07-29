@@ -16,15 +16,13 @@ from sklearn.covariance import (
     oas,
     shrunk_covariance,
 )
-from sklearn.covariance._shrunk_covariance import _ledoit_wolf
+from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
-
-from .._shrunk_covariance import _oas
 
 X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]

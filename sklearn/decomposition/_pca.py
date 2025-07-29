@@ -11,15 +11,15 @@ from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, get_namespace
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.extmath import _randomized_svd, fast_logdet, stable_cumsum, svd_flip
-from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from ..utils.validation import check_is_fitted, validate_data
-from ._base import _BasePCA
+from sklearn.base import _fit_context
+from sklearn.decomposition._base import _BasePCA
+from sklearn.utils import check_random_state
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import _convert_to_numpy, get_namespace
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, stable_cumsum, svd_flip
+from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _assess_dimension(spectrum, rank, n_samples):
