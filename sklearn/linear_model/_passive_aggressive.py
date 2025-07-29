@@ -28,7 +28,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                 learning_rate="pa1",  # "pa1" and "pa2" are private
                 loss="hinge",
             )
-            clf.C = 1.0  # Note that this uses a private API.
+            clf.PA_C = 1.0  # Note that this uses a private API.
 
         With `loss="squared_hinge"`, one would set learning_rate="pa2".
 
@@ -36,8 +36,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    C : float, default=1.0
-        Maximum step size (regularization). Defaults to 1.0.
+    PA_C : float, default=1.0
+        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        For PA-I it is the maximum step size. For PA-II it regularizes the
+        step size (the smaller `PA_C` the more it regularizes).
+        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -171,9 +174,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     References
     ----------
-    Online Passive-Aggressive Algorithms
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+    .. [1] Online Passive-Aggressive Algorithms
+       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     Examples
     --------
@@ -195,13 +198,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     _parameter_constraints: dict = {
         **BaseSGDClassifier._parameter_constraints,
         "loss": [StrOptions({"hinge", "squared_hinge"})],
-        "C": [Interval(Real, 0, None, closed="right")],
+        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
         self,
         *,
-        C=1.0,
+        PA_C=1.0,
         fit_intercept=True,
         max_iter=1000,
         tol=1e-3,
@@ -235,7 +238,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             n_jobs=n_jobs,
         )
 
-        self.C = C
+        self.PA_C = PA_C
         self.loss = loss
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -284,7 +287,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             X,
             y,
             alpha=1.0,
-            C=self.C,
+            PA_C=self.PA_C,
             loss="hinge",
             learning_rate=lr,
             max_iter=1,
@@ -324,7 +327,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             X,
             y,
             alpha=1.0,
-            C=self.C,
+            PA_C=self.PA_C,
             loss="hinge",
             learning_rate=lr,
             coef_init=coef_init,
@@ -352,7 +355,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                 learning_rate="pa1",  # "pa1" and "pa2" are private
                 loss="epsilon_insensitive",
             )
-            reg.C = 1.0  # Note that this uses a private API.
+            reg.PA_C = 1.0  # Note that this uses a private API.
 
         With `loss="squared_epsilon_insensitive"`, one would set learning_rate="pa2".
         Use `SGDRegressor` instead.
@@ -362,8 +365,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     Parameters
     ----------
 
-    C : float, default=1.0
-        Maximum step size (regularization). Defaults to 1.0.
+    PA_C : float, default=1.0
+        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        For PA-I it is the maximum step size. For PA-II it regularizes the
+        step size (the smaller `PA_C` the more it regularizes).
+        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -502,14 +508,14 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     _parameter_constraints: dict = {
         **BaseSGDRegressor._parameter_constraints,
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
-        "C": [Interval(Real, 0, None, closed="right")],
+        "PA_C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
         self,
         *,
-        C=1.0,
+        PA_C=1.0,
         fit_intercept=True,
         max_iter=1000,
         tol=1e-3,
@@ -542,7 +548,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             warm_start=warm_start,
             average=average,
         )
-        self.C = C
+        self.PA_C = PA_C
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
@@ -569,7 +575,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             X,
             y,
             alpha=1.0,
-            C=self.C,
+            PA_C=self.PA_C,
             loss="epsilon_insensitive",
             learning_rate=lr,
             max_iter=1,
@@ -608,7 +614,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             X,
             y,
             alpha=1.0,
-            C=self.C,
+            PA_C=self.PA_C,
             loss="epsilon_insensitive",
             learning_rate=lr,
             coef_init=coef_init,
