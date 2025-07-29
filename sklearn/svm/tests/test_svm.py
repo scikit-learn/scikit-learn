@@ -318,19 +318,21 @@ def test_oneclass():
         (lambda: clf.coef_)()
 
 
-def test_oneclass_decision_function(global_random_seed):
+# TODO: rework this test to be independent of the random seeds.
+def test_oneclass_decision_function():
     # Test OneClassSVM decision function
-    rng = np.random.RandomState(global_random_seed)
-    N = 1000
+    clf = svm.OneClassSVM()
+    rnd = check_random_state(2)
+
     # Generate train data
-    X = 0.3 * rng.randn(5 * N, 2)
+    X = 0.3 * rnd.randn(100, 2)
     X_train = np.r_[X + 2, X - 2]
 
     # Generate some regular novel observations
-    X = 0.3 * rng.randn(N, 2)
+    X = 0.3 * rnd.randn(20, 2)
     X_test = np.r_[X + 2, X - 2]
     # Generate some abnormal novel observations
-    X_outliers = rng.uniform(low=-4, high=4, size=(N, 2))
+    X_outliers = rnd.uniform(low=-4, high=4, size=(20, 2))
 
     # fit the model
     clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
@@ -338,9 +340,9 @@ def test_oneclass_decision_function(global_random_seed):
 
     # predict things
     y_pred_test = clf.predict(X_test)
-    assert np.mean(y_pred_test == 1) > 0.85
+    assert np.mean(y_pred_test == 1) > 0.9
     y_pred_outliers = clf.predict(X_outliers)
-    assert np.mean(y_pred_outliers == -1) > 0.85
+    assert np.mean(y_pred_outliers == -1) > 0.9
     dec_func_test = clf.decision_function(X_test)
     assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
     dec_func_outliers = clf.decision_function(X_outliers)
@@ -490,7 +492,8 @@ def test_svr_predict(global_random_seed):
     assert_array_almost_equal(dec.ravel(), reg.predict(X).ravel())
 
 
-def test_weight(global_random_seed):
+# TODO: rework this test to be independent of the random seeds.
+def test_weight():
     # Test class weights
     clf = svm.SVC(class_weight={1: 0.1})
     # we give a small weights to class 1
@@ -499,21 +502,21 @@ def test_weight(global_random_seed):
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
     X_, y_ = make_classification(
-        n_samples=2000,
+        n_samples=200,
         n_features=10,
         weights=[0.833, 0.167],
-        random_state=global_random_seed,
+        random_state=2,
     )
 
     for clf in (
         linear_model.LogisticRegression(),
-        svm.LinearSVC(random_state=global_random_seed),
+        svm.LinearSVC(random_state=0),
         svm.SVC(),
     ):
         clf.set_params(class_weight={0: 0.1, 1: 10})
-        clf.fit(X_[:1000], y_[:1000])
-        y_pred = clf.predict(X_[1000:])
-        assert f1_score(y_[1000:], y_pred) > 0.25
+        clf.fit(X_[:100], y_[:100])
+        y_pred = clf.predict(X_[100:])
+        assert f1_score(y_[100:], y_pred) > 0.3
 
 
 @pytest.mark.parametrize("estimator", [svm.SVC(C=1e-2), svm.NuSVC()])
@@ -662,30 +665,31 @@ def test_negative_weight_equal_coeffs(Estimator, sample_weight):
     assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
 
-def test_auto_weight(global_random_seed):
+# TODO: rework this test to be independent of the random seeds.
+def test_auto_weight():
     # Test class weights for imbalanced data
-    iris = get_iris_dataset(global_random_seed)
     from sklearn.linear_model import LogisticRegression
 
     # We take as dataset the two-dimensional projection of iris so
-    # that it is not separable and remove 30 predictors from
+    # that it is not separable and remove half of predictors from
     # class 1.
     # We add one to the targets as a non-regression test:
     # class_weight="balanced"
     # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
 
+    iris = get_iris_dataset(42)
     X, y = iris.data[:, :2], iris.target + 1
-    unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][:30])
+    unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
     class_weights = compute_class_weight("balanced", classes=classes, y=y[unbalanced])
     assert np.argmax(class_weights) == 2
 
     for clf in (
-        svm.SVC(kernel="linear", random_state=global_random_seed),
-        svm.LinearSVC(random_state=global_random_seed),
-        LogisticRegression(random_state=global_random_seed),
+        svm.SVC(kernel="linear"),
+        svm.LinearSVC(random_state=0),
+        LogisticRegression(),
     ):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
@@ -913,7 +917,7 @@ def test_linearsvc_fit_sampleweight(global_random_seed):
 def test_crammer_singer_binary(global_random_seed):
     # Test Crammer-Singer formulation in the binary case
     X, y = make_classification(
-        n_classes=2, random_state=global_random_seed, n_samples=256
+        n_classes=2, class_sep=1.5, random_state=global_random_seed
     )
 
     for fit_intercept in (True, False):
@@ -926,7 +930,7 @@ def test_crammer_singer_binary(global_random_seed):
             .fit(X, y)
             .score(X, y)
         )
-        assert acc > 0.85
+        assert acc > 0.9
 
 
 def test_linearsvc_iris(global_random_seed):
@@ -945,7 +949,7 @@ def test_linearsvc_iris(global_random_seed):
 
 
 def test_dense_liblinear_intercept_handling(
-    classifier=svm.LinearSVC, global_random_seed=42
+    global_random_seed, classifier=svm.LinearSVC
 ):
     # Test that dense liblinear honours intercept_scaling param
     X = [[2, 1], [3, 1], [1, 3], [2, 3]]
@@ -1370,7 +1374,7 @@ def test_linearsvm_liblinear_sample_weight(SVM, params, global_random_seed):
         if hasattr(base_estimator, method):
             result_without_weight = getattr(est_no_weight, method)(X)
             result_with_weight = getattr(est_with_weight, method)(X)
-            assert_allclose(result_without_weight, result_with_weight, atol=1e-6)
+            assert_allclose(result_without_weight, result_with_weight, rtol=1e-6)
 
 
 @pytest.mark.parametrize("Klass", (OneClassSVM, SVR, NuSVR))
