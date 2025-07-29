@@ -660,10 +660,9 @@ In addition, we add the following guidelines:
 * Avoid multiple statements on one line. Prefer a line return after
   a control flow statement (``if``/``for``).
 
-* Use relative imports for references inside scikit-learn.
+* Use absolute imports
 
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
+* Unit tests should use imports, exactly as client code would.
   A corollary is that, if ``sklearn.foo`` exports a class or function
   that is implemented in ``sklearn.foo.bar.baz``,
   the test should import it from ``sklearn.foo``.
