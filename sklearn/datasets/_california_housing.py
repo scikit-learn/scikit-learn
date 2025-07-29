@@ -31,16 +31,16 @@ from os.path import exists
 import joblib
 import numpy as np
 
-from ..utils import Bunch
-from ..utils._param_validation import Interval, validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz

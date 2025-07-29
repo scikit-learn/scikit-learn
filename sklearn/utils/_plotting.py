@@ -5,12 +5,12 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from . import check_consistent_length
-from ._optional_dependencies import check_matplotlib_support
-from ._response import _get_response_values_binary
-from .fixes import parse_version
-from .multiclass import type_of_target
-from .validation import _check_pos_label_consistency, _num_samples
+from sklearn.utils import check_consistent_length
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils.fixes import parse_version
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_pos_label_consistency, _num_samples
 
 
 class _BinaryClassifierCurveDisplayMixin:

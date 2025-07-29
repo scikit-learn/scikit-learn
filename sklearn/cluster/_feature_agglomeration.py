@@ -9,8 +9,8 @@ agglomeration.
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.base import TransformerMixin
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 ###############################################################################
 # Mixin class for feature agglomeration.
