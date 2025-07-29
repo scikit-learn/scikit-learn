@@ -147,13 +147,14 @@ def _alpha_grid(
     if Xy is not None:
         Xyw = Xy
     else:
-        X, y, X_offset, _, _ = _preprocess_data(
+        X, y, X_offset, _, _, _ = _preprocess_data(
             X,
             y,
             fit_intercept=fit_intercept,
             copy=copy_X,
             sample_weight=sample_weight,
             check_input=False,
+            rescale_with_sw=False,
         )
         if sample_weight is not None:
             if y.ndim > 1:
@@ -2686,7 +2687,7 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=False
         )
 
