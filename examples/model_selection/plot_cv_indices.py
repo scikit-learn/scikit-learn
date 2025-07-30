@@ -22,6 +22,7 @@ from matplotlib.patches import Patch
 from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
+    GroupTimeSeriesSplit,
     KFold,
     ShuffleSplit,
     StratifiedGroupKFold,
@@ -60,6 +61,8 @@ y = np.hstack([[ii] * int(100 * perc) for ii, perc in enumerate(percentiles_clas
 group_prior = rng.dirichlet([2] * 10)
 groups = np.repeat(np.arange(10), rng.multinomial(100, group_prior))
 
+# Un-Evenly spaced groups repeated once
+unevengroups = np.hstack([[group] * 10 if group % 3 else [group] * 5 for group in range(12)])
 
 def visualize_groups(classes, groups, name):
     # Visualize dataset groups
@@ -197,6 +200,7 @@ cvs = [
     StratifiedKFold,
     StratifiedGroupKFold,
     GroupShuffleSplit,
+    GroupTimeSeriesSplit,
     StratifiedShuffleSplit,
     TimeSeriesSplit,
 ]
@@ -205,6 +209,8 @@ cvs = [
 for cv in cvs:
     this_cv = cv(n_splits=n_splits)
     fig, ax = plt.subplots(figsize=(6, 3))
+    if cv == GroupTimeSeriesSplit:
+        groups = unevengroups
     plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
 
     ax.legend(
