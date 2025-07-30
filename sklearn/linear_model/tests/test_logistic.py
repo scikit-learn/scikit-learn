@@ -1,7 +1,6 @@
 import itertools
 import os
 import warnings
-from functools import partial
 
 import numpy as np
 import pytest
@@ -19,13 +18,7 @@ from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model._logistic import (
-    LogisticRegression as LogisticRegressionDefault,
-)
-from sklearn.linear_model._logistic import (
-    LogisticRegressionCV as LogisticRegressionCVDefault,
-)
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
@@ -48,9 +41,6 @@ from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
 )
-# Fixing random_state helps prevent ConvergenceWarnings
-LogisticRegression = partial(LogisticRegressionDefault)
-LogisticRegressionCV = partial(LogisticRegressionCVDefault)
 
 
 SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
@@ -92,7 +82,9 @@ def test_predict_2_classes(csr_container):
     check_predictions(LogisticRegression(fit_intercept=False), csr_container(X), Y1)
 
 
-def test_logistic_cv_mock_scorer(global_random_seed):
+def test_logistic_cv_mock_scorer():
+    """Test that LogisticRegressionCV calls the scorer."""
+
     class MockScorer:
         def __init__(self):
             self.calls = 0
@@ -108,7 +100,7 @@ def test_logistic_cv_mock_scorer(global_random_seed):
     cv = 2
 
     lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
-    X, y = make_classification(random_state=global_random_seed)
+    X, y = make_classification(random_state=0)
     lr.fit(X, y)
 
     # Cs[2] has the highest score (0.8) from MockScorer
@@ -154,7 +146,7 @@ def test_predict_3_classes(csr_container):
     "clf",
     [
         LogisticRegression(C=len(iris.data), solver="liblinear", multi_class="ovr"),
-        LogisticRegression(C=len(iris.data), solver="lbfgs"),
+        LogisticRegression(C=len(iris.data), solver="lbfgs", max_iter=200),
         LogisticRegression(C=len(iris.data), solver="newton-cg"),
         LogisticRegression(
             C=len(iris.data),
@@ -177,17 +169,12 @@ def test_predict_iris(clf, global_random_seed):
     Test that both multinomial and OvR solvers handle multiclass data correctly and
     give good accuracy score (>0.95) for the training data.
     """
-    n_samples, n_features = iris.data.shape
+    n_samples, _ = iris.data.shape
     target = iris.target_names[iris.target]
 
-    if clf.solver == "lbfgs":
-        # lbfgs has convergence issues on the iris data with its default max_iter=100
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", ConvergenceWarning)
-            clf.fit(iris.data, target)
-    else:
+    if clf.solver in ("sag", "saga", "liblinear"):
         clf.set_params(random_state=global_random_seed)
-        clf.fit(iris.data, target)
+    clf.fit(iris.data, target)
     assert_array_equal(np.unique(target), clf.classes_)
 
     pred = clf.predict(iris.data)
