@@ -1765,8 +1765,9 @@ def test_sgd_oneclass_convergence():
     # that the stopping criterion is working
     for nu in [0.1, 0.5, 0.9]:
         # no need for large max_iter
-        model = SGDOneClassSVM(nu=nu, max_iter=100, tol=1e-3,
-                learning_rate="constant", eta0=1e-3)
+        model = SGDOneClassSVM(
+            nu=nu, max_iter=100, tol=1e-3, learning_rate="constant", eta0=1e-3
+        )
         model.fit(iris.data)
         # 6 is the minimal number of iterations, after which optimization can stop
         assert model.n_iter_ > 6
@@ -1776,9 +1777,10 @@ def test_sgd_oneclass_vs_linear_oneclass():
     # Test convergence vs. liblinear OCSVM with kernel="linear"
     for nu in [0.1, 0.5, 0.9]:
         # allow enough iterations, small dataset
-        model = SGDOneClassSVM(nu=nu, max_iter=20000, tol=None,
-                learning_rate="constant", eta0=1e-3)
-        model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6) # reference model
+        model = SGDOneClassSVM(
+            nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3
+        )
+        model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)  # reference model
         model.fit(iris.data)
         model_ref.fit(iris.data)
 
@@ -1792,8 +1794,8 @@ def test_sgd_oneclass_vs_linear_oneclass():
         preds_corr = np.corrcoef(preds, preds_ref)[0, 1]
         # check weights and intercept concatenated together for correlation
         coef_corr = np.corrcoef(
-                 np.concatenate([model.coef_, -model.offset_]),
-                 np.concatenate([model_ref.coef_.flatten(), model_ref.intercept_])
+            np.concatenate([model.coef_, -model.offset_]),
+            np.concatenate([model_ref.coef_.flatten(), model_ref.intercept_]),
         )[0, 1]
         # share of predicted 1's
         share_ones = (preds == 1).sum() / len(preds)
@@ -1802,7 +1804,7 @@ def test_sgd_oneclass_vs_linear_oneclass():
         assert dec_fn_corr > 0.99
         assert preds_corr > 0.95
         assert coef_corr > 0.99
-        assert_allclose( 1 - share_ones, nu )
+        assert_allclose(1 - share_ones, nu)
 
 
 def test_l1_ratio():
