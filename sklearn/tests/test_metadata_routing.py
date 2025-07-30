@@ -638,7 +638,7 @@ def test_get_routing_for_object():
 @config_context(enable_metadata_routing=True)
 def test_metadata_request_consumes_method():
     """Test that MetadataRequest().consumes() method works as expected."""
-    request = MetadataRouter(owner="test")
+    request = MetadataRequest(owner="test")
     assert request.consumes(method="fit", params={"foo"}) == set()
 
     request = MetadataRequest(owner="test")
