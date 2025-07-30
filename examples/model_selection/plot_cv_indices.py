@@ -62,7 +62,10 @@ group_prior = rng.dirichlet([2] * 10)
 groups = np.repeat(np.arange(10), rng.multinomial(100, group_prior))
 
 # Un-Evenly spaced groups repeated once
-unevengroups = np.hstack([[group] * 10 if group % 3 else [group] * 5 for group in range(12)])
+unevengroups = np.hstack(
+    [[group] * 10 if group % 3 else [group] * 5 for group in range(12)]
+)
+
 
 def visualize_groups(classes, groups, name):
     # Visualize dataset groups
@@ -167,7 +170,7 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 #   different folds.
 # - ``StratifiedGroupKFold`` to keep the constraint of ``GroupKFold`` while
 #   attempting to return stratified folds.
-cvs = [StratifiedKFold, GroupKFold, StratifiedGroupKFold]
+cvs = [StratifiedKFold, GroupKFold, StratifiedGroupKFold, GroupTimeSeriesSplit]
 
 for cv in cvs:
     fig, ax = plt.subplots(figsize=(6, 3))
