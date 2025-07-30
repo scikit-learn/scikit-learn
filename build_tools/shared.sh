@@ -29,7 +29,7 @@ show_installed_libraries(){
 activate_environment() {
     if [[ "$DISTRIB" =~ ^conda.* ]]; then
         source activate $VIRTUALENV
-    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-free-threaded" ]]; then
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         source $VIRTUALENV/bin/activate
     fi
 }
@@ -45,7 +45,7 @@ create_conda_environment_from_lock_file() {
     if [[ "$lock_file_has_pip_packages" == "false" ]]; then
         conda create --name $ENV_NAME --file $LOCK_FILE
     else
-        conda install "$(get_dep conda-lock min)" -y
+        python -m pip install "$(get_dep conda-lock min)"
         conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }

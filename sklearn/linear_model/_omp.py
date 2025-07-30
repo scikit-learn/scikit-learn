@@ -11,20 +11,20 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, as_float_array, check_array
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.metadata_routing import (
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, _pre_fit
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, as_float_array, check_array
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
-from ._base import LinearModel, _pre_fit
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -397,7 +397,7 @@ def orthogonal_mp(
     >>> coef.shape
     (100,)
     >>> X[:1,] @ coef
-    array([-78.68...])
+    array([-78.68])
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -575,7 +575,7 @@ def orthogonal_mp_gram(
     >>> coef.shape
     (100,)
     >>> X[:1,] @ coef
-    array([-78.68...])
+    array([-78.68])
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -727,9 +727,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuit().fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {
@@ -994,11 +994,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     ...                        noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.n_nonzero_coefs_
     np.int64(10)
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {

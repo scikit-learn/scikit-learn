@@ -1,6 +1,5 @@
-# Author: Andreas Mueller
-#
-# Licence: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -263,7 +262,7 @@ def elkan_iter_chunked_dense(
         # An empty array was passed, do nothing and return early (before
         # attempting to compute n_chunks). This can typically happen when
         # calling the prediction function of a bisecting k-means model with a
-        # large fraction of outiers.
+        # large fraction of outliers.
         return
 
     cdef:
@@ -506,7 +505,7 @@ def elkan_iter_chunked_sparse(
         # An empty array was passed, do nothing and return early (before
         # attempting to compute n_chunks). This can typically happen when
         # calling the prediction function of a bisecting k-means model with a
-        # large fraction of outiers.
+        # large fraction of outliers.
         return
 
     cdef:

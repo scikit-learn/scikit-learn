@@ -10,7 +10,7 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sparse
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     TransformerMixin,
@@ -19,50 +19,31 @@ from ..base import (
     is_classifier,
     is_regressor,
 )
-from ..exceptions import NotFittedError
-from ..linear_model import LogisticRegression, RidgeCV
-from ..model_selection import check_cv, cross_val_predict
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._param_validation import HasMethods, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression, RidgeCV
+from sklearn.model_selection import check_cv, cross_val_predict
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import HasMethods, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_response_method,
-    _deprecate_positional_args,
+    _estimator_has,
     check_is_fitted,
     column_or_1d,
 )
-from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `final_estimator_` if available, otherwise we check the
-    unfitted `final_estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "final_estimator_"):
-            getattr(self.final_estimator_, attr)
-        else:
-            getattr(self.final_estimator, attr)
-
-        return True
-
-    return check
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
@@ -364,7 +345,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return np.asarray(meta_names, dtype=object)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -673,11 +656,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         return names, estimators
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert afterwards, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -691,11 +670,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             numerically increasing order or lexicographic order. If the order
             matter (e.g. for ordinal regression), one should numerically encode
             the target `y` before calling :term:`fit`.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -712,7 +686,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self : object
             Returns a fitted instance of estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         check_classification_targets(y)
         if type_of_target(y) == "multilabel-indicator":
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
@@ -728,11 +703,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             self.classes_ = self._label_encoder.classes_
             y_encoded = self._label_encoder.transform(y)
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
         return super().fit(X, y_encoded, **fit_params)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -785,7 +760,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             y_pred = self._label_encoder.inverse_transform(y_pred)
         return y_pred
 
-    @available_if(_estimator_has("predict_proba"))
+    @available_if(
+        _estimator_has(
+            "predict_proba", delegates=("final_estimator_", "final_estimator")
+        )
+    )
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
 
@@ -809,7 +788,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             y_pred = np.array([preds[:, 0] for preds in y_pred]).T
         return y_pred
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(
+        _estimator_has(
+            "decision_function", delegates=("final_estimator_", "final_estimator")
+        )
+    )
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
 
@@ -1026,11 +1009,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
                 )
             )
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert afterwards, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -1041,11 +1020,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         y : array-like of shape (n_samples,)
             Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -1062,10 +1036,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         self : object
             Returns a fitted instance.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         y = column_or_1d(y, warn=True)
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
+
         return super().fit(X, y, **fit_params)
 
     def transform(self, X):
@@ -1084,11 +1058,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         """
         return self._transform(X)
 
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; pop it from `fit_params` before the `_raise_for_params` check and
-    # reinsert afterwards, for backwards compatibility
-    @_deprecate_positional_args(version="1.7")
-    def fit_transform(self, X, y, *, sample_weight=None, **fit_params):
+    def fit_transform(self, X, y, **fit_params):
         """Fit the estimators and return the predictions for X for each estimator.
 
         Parameters
@@ -1099,11 +1069,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         y : array-like of shape (n_samples,)
             Target values.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -1120,12 +1085,13 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         y_preds : ndarray of shape (n_samples, n_estimators)
             Prediction outputs for each estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         return super().fit_transform(X, y, **fit_params)
 
-    @available_if(_estimator_has("predict"))
+    @available_if(
+        _estimator_has("predict", delegates=("final_estimator_", "final_estimator"))
+    )
     def predict(self, X, **predict_params):
         """Predict target for X.
 

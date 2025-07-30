@@ -7,7 +7,6 @@ better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from math import log
 from numbers import Real
@@ -15,11 +14,22 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
-from ...utils._param_validation import Interval, StrOptions, validate_params
-from ...utils.multiclass import type_of_target
-from ...utils.validation import check_array, check_consistent_length
-from ._expected_mutual_info_fast import expected_mutual_information
+from sklearn.metrics.cluster._expected_mutual_info_fast import (
+    expected_mutual_information,
+)
+from sklearn.utils import deprecated
+from sklearn.utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+)
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import check_array, check_consistent_length
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -99,6 +109,8 @@ def contingency_matrix(
 ):
     """Build a contingency matrix describing the relationship between labels.
 
+    Read more in the :ref:`User Guide <contingency_matrix>`.
+
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
@@ -113,7 +125,7 @@ def contingency_matrix(
         If ``None``, nothing is adjusted.
 
     sparse : bool, default=False
-        If `True`, return a sparse CSR continency matrix. If `eps` is not
+        If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
         .. versionadded:: 0.18
@@ -323,7 +335,7 @@ def rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized:
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      np.float64(0.83...)
+      0.83
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -335,7 +347,7 @@ def rand_score(labels_true, labels_pred):
         # cluster. These are perfect matches hence return 1.0.
         return 1.0
 
-    return numerator / denominator
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -416,13 +428,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized::
 
       >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      0.57...
+      0.57
 
     ARI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])
-      0.57...
+      0.57
 
     If classes members are completely split across different clusters, the
     assignment is totally incomplete, hence the ARI is very low::
@@ -435,6 +447,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+    for a more detailed example.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -519,15 +534,15 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     >>> from sklearn.metrics import homogeneity_completeness_v_measure
     >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
     >>> homogeneity_completeness_v_measure(y_true, y_pred)
-    (np.float64(0.71...), np.float64(0.77...), np.float64(0.73...))
+    (0.71, 0.771, 0.74)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
     if len(labels_true) == 0:
         return 1.0, 1.0, 1.0
 
-    entropy_C = entropy(labels_true)
-    entropy_K = entropy(labels_pred)
+    entropy_C = _entropy(labels_true)
+    entropy_K = _entropy(labels_pred)
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     MI = mutual_info_score(None, None, contingency=contingency)
@@ -545,7 +560,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
             / (beta * homogeneity + completeness)
         )
 
-    return homogeneity, completeness, v_measure_score
+    return float(homogeneity), float(completeness), float(v_measure_score)
 
 
 @validate_params(
@@ -603,7 +618,7 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     Non-perfect labelings that further split classes into more clusters can be
     perfectly homogeneous::
@@ -679,7 +694,7 @@ def completeness_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import completeness_score
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     Non-perfect labelings that assign all classes members to the same clusters
     are still complete::
@@ -687,7 +702,7 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
       1.0
       >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      0.999...
+      0.999
 
     If classes members are split across different clusters, the
     assignment cannot be complete::
@@ -768,38 +783,38 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
       >>> from sklearn.metrics.cluster import v_measure_score
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
-      np.float64(1.0)
+      1.0
       >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     Labelings that assign all classes members to the same clusters
     are complete but not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
-      0.8...
+      0.8
       >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      0.66...
+      0.67
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harm completeness
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      0.8...
+      0.8
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      0.66...
+      0.67
 
     If classes members are completely split across different clusters,
     the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
-      0.0...
+      0.0
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      0.0...
+      0.0
     """
     return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
 
@@ -876,7 +891,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     >>> labels_true = [0, 1, 1, 0, 1, 0]
     >>> labels_pred = [0, 1, 0, 0, 1, 1]
     >>> mutual_info_score(labels_true, labels_pred)
-    np.float64(0.056...)
+    0.0566
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -917,7 +932,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         + contingency_nm * log_outer
     )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
-    return np.clip(mi.sum(), 0.0, None)
+    return float(np.clip(mi.sum(), 0.0, None))
 
 
 @validate_params(
@@ -1005,17 +1020,14 @@ def adjusted_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1031,6 +1043,9 @@ def adjusted_mutual_info_score(
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+    # if there is only one class or one cluster return 0.0.
+    elif classes.shape[0] == 1 or clusters.shape[0] == 1:
+        return 0.0
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     # Calculate the MI for the two clusterings
@@ -1038,7 +1053,7 @@ def adjusted_mutual_info_score(
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true, h_pred = _entropy(labels_true), _entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
     denominator = normalizer - emi
     # Avoid 0.0 / 0.0 when expectation equals maximum, i.e. a perfect match.
@@ -1049,8 +1064,13 @@ def adjusted_mutual_info_score(
         denominator = min(denominator, -np.finfo("float64").eps)
     else:
         denominator = max(denominator, np.finfo("float64").eps)
-    ami = (mi - emi) / denominator
-    return ami
+    # The same applies analogously to mi and emi.
+    numerator = mi - emi
+    if numerator < 0:
+        numerator = min(numerator, -np.finfo("float64").eps)
+    else:
+        numerator = max(numerator, np.finfo("float64").eps)
+    return float(numerator / denominator)
 
 
 @validate_params(
@@ -1124,17 +1144,14 @@ def normalized_mutual_info_score(
 
       >>> from sklearn.metrics.cluster import normalized_mutual_info_score
       >>> normalized_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
-      ... # doctest: +SKIP
       1.0
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
-      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
       >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
-      ... # doctest: +SKIP
       0.0
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1162,26 +1179,26 @@ def normalized_mutual_info_score(
         return 0.0
 
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true, h_pred = _entropy(labels_true), _entropy(labels_pred)
 
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    return mi / normalizer
+    return float(mi / normalizer)
 
 
 @validate_params(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean"],
+        "sparse": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
 
-    The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
+    The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
@@ -1210,6 +1227,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
 
+        .. deprecated:: 1.7
+            The ``sparse`` parameter is deprecated and will be removed in 1.9. It has
+            no effect.
+
     Returns
     -------
     score : float
@@ -1233,9 +1254,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> from sklearn.metrics.cluster import fowlkes_mallows_score
       >>> fowlkes_mallows_score([0, 0, 1, 1], [0, 0, 1, 1])
-      np.float64(1.0)
+      1.0
       >>> fowlkes_mallows_score([0, 0, 1, 1], [1, 1, 0, 0])
-      np.float64(1.0)
+      1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally random, hence the FMI is null::
@@ -1243,6 +1264,14 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
     """
+    # TODO(1.9): remove the sparse parameter
+    if sparse != "deprecated":
+        warnings.warn(
+            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
+            "It has no effect. Leave it to its default value to silence this warning.",
+            FutureWarning,
+        )
+
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
@@ -1251,16 +1280,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0.0 else 0.0
+    return float(np.sqrt(tk / pk) * np.sqrt(tk / qk)) if tk != 0.0 else 0.0
 
 
-@validate_params(
-    {
-        "labels": ["array-like"],
-    },
-    prefer_skip_nested_validation=True,
-)
-def entropy(labels):
+def _entropy(labels):
     """Calculate the entropy for a labeling.
 
     Parameters
@@ -1294,3 +1317,25 @@ def entropy(labels):
     # Always convert the result as a Python scalar (on CPU) instead of a device
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
+
+
+# TODO(1.10): Remove
+@deprecated("`entropy` is deprecated in 1.8 and will be removed in 1.10.")
+def entropy(labels):
+    """Calculate the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
+
+    Returns
+    -------
+    entropy : float
+       The entropy for a labeling.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+    """
+    return _entropy(labels)

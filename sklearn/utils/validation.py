@@ -7,6 +7,7 @@ import numbers
 import operator
 import sys
 import warnings
+from collections.abc import Sequence
 from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
@@ -15,14 +16,28 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from .. import get_config as _get_config
-from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
-from ..utils.deprecation import _deprecate_force_all_finite
-from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
-from ._isfinite import FiniteStatus, cy_isfinite
-from ._tags import get_tags
-from .fixes import _object_dtype_isnan
+from sklearn import get_config as _get_config
+from sklearn.exceptions import (
+    DataConversionWarning,
+    NotFittedError,
+    PositiveSpectrumWarning,
+)
+from sklearn.utils._array_api import (
+    _asarray_with_order,
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    get_namespace,
+    get_namespace_and_device,
+)
+from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
+from sklearn.utils._tags import get_tags
+from sklearn.utils.deprecation import _deprecate_force_all_finite
+from sklearn.utils.fixes import (
+    ComplexWarning,
+    _object_dtype_isnan,
+    _preserve_dia_indices_dtype,
+)
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -389,14 +404,16 @@ def _num_samples(x):
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
-            x = np.asarray(x)
+            xp, _ = get_namespace(x)
+            x = xp.asarray(x)
         else:
             raise TypeError(message)
 
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
-                "Singleton array %r cannot be considered a valid collection." % x
+                "Input should have at least 1 dimension i.e. satisfy "
+                f"`len(x.shape) > 0`, got scalar `{x!r}` instead."
             )
         # Check that shape is returning an integer or default to len
         # Dask dataframes may not return numeric shape[0] value
@@ -466,10 +483,8 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
-
     lengths = [_num_samples(X) for X in arrays if X is not None]
-    uniques = np.unique(lengths)
-    if len(uniques) > 1:
+    if len(set(lengths)) > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
             % [int(l) for l in lengths]
@@ -988,7 +1003,7 @@ def check_array(
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
         with suppress(ImportError):
-            from pandas import SparseDtype  # noqa: F811
+            from pandas import SparseDtype
 
             def is_sparse(dtype):
                 return isinstance(dtype, SparseDtype)
@@ -1097,8 +1112,8 @@ def check_array(
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
-                "Found array with dim %d. %s expected <= 2."
-                % (array.ndim, estimator_name)
+                f"Found array with dim {array.ndim},"
+                f" while dim <= 2 is required{context}."
             )
 
         if ensure_all_finite:
@@ -1412,7 +1427,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1427,6 +1442,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     warn : bool, default=False
        To control display of warnings.
+
+    device : device, default=None
+        `device` object.
+        See the :ref:`Array API User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1456,7 +1477,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1468,7 +1491,9 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(
+            xp.reshape(y, (-1,)), order="C", xp=xp, device=device
+        )
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1532,7 +1557,13 @@ def has_fit_parameter(estimator, parameter):
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
     """
-    return parameter in signature(estimator.fit).parameters
+    return (
+        # This is used during test collection in common tests. The
+        # hasattr(estimator, "fit") makes it so that we don't fail for an estimator
+        # that does not have a `fit` method during collection of checks. The right
+        # checks will fail later.
+        hasattr(estimator, "fit") and parameter in signature(estimator.fit).parameters
+    )
 
 
 def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=False):
@@ -1664,7 +1695,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
 
-    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    If no `attributes` are passed, this function will pass if an estimator is stateless.
     An estimator can indicate it's stateless by setting the `requires_fit` tag. See
     :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
     is ignored if `attributes` are passed.
@@ -1736,6 +1767,48 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     if not _is_fitted(estimator, attributes, all_or_any):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
+
+
+def _estimator_has(attr, *, delegates=("estimator_", "estimator")):
+    """Check if we can delegate a method to the underlying estimator.
+
+    We check the `delegates` in the order they are passed. By default, we first check
+    the fitted estimator if available, otherwise we check the unfitted estimator.
+
+    Parameters
+    ----------
+    attr : str
+        Name of the attribute the delegate might or might not have.
+
+    delegates: tuple of str, default=("estimator_", "estimator")
+        A tuple of sub-estimator(s) to check if we can delegate the `attr` method.
+
+    Returns
+    -------
+    check : function
+        Function to check if the delegate has the attribute.
+
+    Raises
+    ------
+    ValueError
+        Raised when none of the delegates are present in the object.
+    """
+
+    def check(self):
+        for delegate in delegates:
+            # In meta estimators with multiple sub estimators,
+            # only the attribute of the first sub estimator is checked,
+            # assuming uniformity across all sub estimators.
+            if hasattr(self, delegate):
+                delegator = getattr(self, delegate)
+                if isinstance(delegator, Sequence):
+                    return getattr(delegator[0], attr)
+                else:
+                    return getattr(delegator, attr)
+
+        raise ValueError(f"None of the delegates {delegates} are present in the class.")
+
+    return check
 
 
 def check_non_negative(X, whom):
@@ -1857,7 +1930,7 @@ def check_scalar(
     expected_include_boundaries = ("left", "right", "both", "neither")
     if include_boundaries not in expected_include_boundaries:
         raise ValueError(
-            f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
+            f"Unknown value for `include_boundaries`: {include_boundaries!r}. "
             f"Possible values are: {expected_include_boundaries}."
         )
 
@@ -2068,7 +2141,13 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, dtype=None, copy=False, ensure_non_negative=False
+    sample_weight,
+    X,
+    *,
+    dtype=None,
+    force_float_dtype=True,
+    ensure_non_negative=False,
+    copy=False,
 ):
     """Validate sample weights.
 
@@ -2085,17 +2164,25 @@ def _check_sample_weight(
     X : {ndarray, list, sparse matrix}
         Input data.
 
+    dtype : dtype, default=None
+        dtype of the validated `sample_weight`.
+        If None, and `sample_weight` is an array:
+
+            - If `sample_weight.dtype` is one of `{np.float64, np.float32}`,
+              then the dtype is preserved.
+            - Else the output has NumPy's default dtype: `np.float64`.
+
+        If `dtype` is not `{np.float32, np.float64, None}`, then output will
+        be `np.float64`.
+
+    force_float_dtype : bool, default=True
+        Whether `X` should be forced to be float dtype, when `dtype` is a non-float
+        dtype or None.
+
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
         .. versionadded:: 1.0
-
-    dtype : dtype, default=None
-        dtype of the validated `sample_weight`.
-        If None, and the input `sample_weight` is an array, the dtype of the
-        input is preserved; otherwise an array with the default numpy dtype
-        is be allocated.  If `dtype` is not one of `float32`, `float64`,
-        `None`, the output will be of dtype `float64`.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
@@ -2105,18 +2192,26 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
+    xp, _, device = get_namespace_and_device(
+        sample_weight, X, remove_types=(int, float)
+    )
+
     n_samples = _num_samples(X)
 
-    if dtype is not None and dtype not in [np.float32, np.float64]:
-        dtype = np.float64
+    max_float_type = _max_precision_float_dtype(xp, device)
+    float_dtypes = (
+        [xp.float32] if max_float_type == xp.float32 else [xp.float64, xp.float32]
+    )
+    if force_float_dtype and dtype is not None and dtype not in float_dtypes:
+        dtype = max_float_type
 
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        sample_weight = xp.ones(n_samples, dtype=dtype, device=device)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
-        if dtype is None:
-            dtype = [np.float64, np.float32]
+        if force_float_dtype and dtype is None:
+            dtype = float_dtypes
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2247,15 +2342,13 @@ def _check_method_params(X, params, indices=None):
     method_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
-    from . import _safe_indexing
+    from sklearn.utils import _safe_indexing
 
     method_params_validated = {}
     for param_key, param_value in params.items():
         if (
-            not _is_arraylike(param_value)
-            and not sp.issparse(param_value)
-            or _num_samples(param_value) != _num_samples(X)
-        ):
+            not _is_arraylike(param_value) and not sp.issparse(param_value)
+        ) or _num_samples(param_value) != _num_samples(X):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             method_params_validated[param_key] = param_value
@@ -2286,6 +2379,15 @@ def _is_pandas_df(X):
     except KeyError:
         return False
     return isinstance(X, pd.DataFrame)
+
+
+def _is_pyarrow_data(X):
+    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
+    try:
+        pa = sys.modules["pyarrow"]
+    except KeyError:
+        return False
+    return isinstance(X, (pa.Table, pa.RecordBatch, pa.Array, pa.ChunkedArray))
 
 
 def _is_polars_df_or_series(X):
@@ -2568,14 +2670,20 @@ def _check_pos_label_consistency(pos_label, y_true):
     # when elements in the two arrays are not comparable.
     if pos_label is None:
         # Compute classes only if pos_label is not specified:
-        classes = np.unique(y_true)
-        if classes.dtype.kind in "OUS" or not (
-            np.array_equal(classes, [0, 1])
-            or np.array_equal(classes, [-1, 1])
-            or np.array_equal(classes, [0])
-            or np.array_equal(classes, [-1])
-            or np.array_equal(classes, [1])
+        xp, _, device = get_namespace_and_device(y_true)
+        classes = xp.unique_values(y_true)
+        if (
+            (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS")
+            or classes.shape[0] > 2
+            or not (
+                xp.all(classes == xp.asarray([0, 1], device=device))
+                or xp.all(classes == xp.asarray([-1, 1], device=device))
+                or xp.all(classes == xp.asarray([0], device=device))
+                or xp.all(classes == xp.asarray([-1], device=device))
+                or xp.all(classes == xp.asarray([1], device=device))
+            )
         ):
+            classes = _convert_to_numpy(classes, xp=xp)
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "
@@ -2632,6 +2740,10 @@ def _check_feature_names(estimator, X, *, reset):
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`sklearn.utils.validation`.
 
+    .. note::
+        To only check feature names without conducting a full data validation, prefer
+        using `validate_data(..., skip_check_array=True)` if possible.
+
     Parameters
     ----------
     estimator : estimator instance
@@ -2642,8 +2754,10 @@ def _check_feature_names(estimator, X, *, reset):
 
     reset : bool
         Whether to reset the `feature_names_in_` attribute.
+        If True, resets the `feature_names_in_` attribute as inferred from `X`.
         If False, the input will be checked for consistency with
         feature names of data provided when reset was last True.
+
         .. note::
            It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
@@ -2719,6 +2833,10 @@ def _check_feature_names(estimator, X, *, reset):
 def _check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
+    .. note::
+        To only check n_features without conducting a full data validation, prefer
+        using `validate_data(..., skip_check_array=True)` if possible.
+
     .. versionchanged:: 1.6
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`~sklearn.utils.validation`.
@@ -2732,12 +2850,14 @@ def _check_n_features(estimator, X, reset):
         The input samples.
 
     reset : bool
+        Whether to reset the `n_features_in_` attribute.
         If True, the `n_features_in_` attribute is set to `X.shape[1]`.
         If False and the attribute exists, then check that it is equal to
         `X.shape[1]`. If False and the attribute does *not* exist, then
         the check is skipped.
+
         .. note::
-           It is recommended to call reset=True in `fit` and in the first
+           It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
            should set `reset=False`.
     """
@@ -2864,7 +2984,7 @@ def validate_data(
         )
 
     no_val_X = isinstance(X, str) and X == "no_validation"
-    no_val_y = y is None or isinstance(y, str) and y == "no_validation"
+    no_val_y = y is None or (isinstance(y, str) and y == "no_validation")
 
     if no_val_X and no_val_y:
         raise ValueError("Validation should be done on X, y or both.")

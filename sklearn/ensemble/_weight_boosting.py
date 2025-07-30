@@ -24,32 +24,31 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.special import xlogy
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
     is_regressor,
 )
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import _safe_indexing, check_random_state
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.extmath import softmax, stable_cumsum
-from ..utils.metadata_routing import (
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils.extmath import softmax, stable_cumsum
+from sklearn.utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
 )
-from ._base import BaseEnsemble
 
 __all__ = [
     "AdaBoostClassifier",
@@ -140,7 +139,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         sample_weight = _check_sample_weight(
-            sample_weight, X, np.float64, copy=True, ensure_non_negative=True
+            sample_weight, X, dtype=np.float64, copy=True, ensure_non_negative=True
         )
         sample_weight /= sample_weight.sum()
 
@@ -313,6 +312,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "feature_importances_ attribute"
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
@@ -375,16 +379,12 @@ class AdaBoostClassifier(
         a trade-off between the `learning_rate` and `n_estimators` parameters.
         Values must be in the range `(0.0, inf)`.
 
-    algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
-        If 'SAMME.R' then use the SAMME.R real boosting algorithm.
-        ``estimator`` must support calculation of class probabilities.
-        If 'SAMME' then use the SAMME discrete boosting algorithm.
-        The SAMME.R algorithm typically converges faster than SAMME,
-        achieving a lower test error with fewer boosting iterations.
+    algorithm : {'SAMME'}, default='SAMME'
+        Use the SAMME discrete boosting algorithm.
 
-        .. deprecated:: 1.4
-            `"SAMME.R"` is deprecated and will be removed in version 1.6.
-            '"SAMME"' will become the default.
+        .. deprecated:: 1.6
+            `algorithm` is deprecated and will be removed in version 1.8. This
+            estimator only implements the 'SAMME' algorithm.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `estimator` at each
@@ -470,40 +470,36 @@ class AdaBoostClassifier(
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME", random_state=0)
+    >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)
-    AdaBoostClassifier(algorithm='SAMME', n_estimators=100, random_state=0)
+    AdaBoostClassifier(n_estimators=100, random_state=0)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.96...
+    0.96
 
     For a detailed example of using AdaBoost to fit a sequence of DecisionTrees
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
 
-    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    For a detailed example of using AdaBoost to fit a non-linearly separable
     classification dataset composed of two Gaussian quantiles clusters, please
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
 
-    # TODO(1.6): Modify _parameter_constraints for "algorithm" to only check
-    # for "SAMME"
+    # TODO(1.8): remove "algorithm" entry
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
-        "algorithm": [
-            StrOptions({"SAMME", "SAMME.R"}),
-        ],
+        "algorithm": [StrOptions({"SAMME"}), Hidden(StrOptions({"deprecated"}))],
     }
 
-    # TODO(1.6): Change default "algorithm" value to "SAMME"
     def __init__(
         self,
         estimator=None,
         *,
         n_estimators=50,
         learning_rate=1.0,
-        algorithm="SAMME.R",
+        algorithm="deprecated",
         random_state=None,
     ):
         super().__init__(
@@ -519,43 +515,23 @@ class AdaBoostClassifier(
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
 
-        # TODO(1.6): Remove, as "SAMME.R" value for "algorithm" param will be
-        # removed in 1.6
-        # SAMME-R requires predict_proba-enabled base estimators
-        if self.algorithm != "SAMME":
+        if self.algorithm != "deprecated":
             warnings.warn(
-                (
-                    "The SAMME.R algorithm (the default) is deprecated and will be"
-                    " removed in 1.6. Use the SAMME algorithm to circumvent this"
-                    " warning."
-                ),
+                "The parameter 'algorithm' is deprecated in 1.6 and has no effect. "
+                "It will be removed in version 1.8.",
                 FutureWarning,
             )
-            if not hasattr(self.estimator_, "predict_proba"):
-                raise TypeError(
-                    "AdaBoostClassifier with algorithm='SAMME.R' requires "
-                    "that the weak learner supports the calculation of class "
-                    "probabilities with a predict_proba method.\n"
-                    "Please change the base estimator or set "
-                    "algorithm='SAMME' instead."
-                )
 
         if not has_fit_parameter(self.estimator_, "sample_weight"):
             raise ValueError(
                 f"{self.estimator.__class__.__name__} doesn't support sample_weight."
             )
 
-    # TODO(1.6): Redefine the scope of the `_boost` and `_boost_discrete`
-    # functions to be the same since SAMME will be the default value for the
-    # "algorithm" parameter in version 1.6. Thus, a distinguishing function is
-    # no longer needed. (Or adjust code here, if another algorithm, shall be
-    # used instead of SAMME.R.)
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
 
-        Perform a single boost according to the real multi-class SAMME.R
-        algorithm or to the discrete SAMME algorithm and return the updated
-        sample weights.
+        Perform a single boost according to the discrete SAMME algorithm and return the
+        updated sample weights.
 
         Parameters
         ----------
@@ -589,75 +565,6 @@ class AdaBoostClassifier(
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
-        if self.algorithm == "SAMME.R":
-            return self._boost_real(iboost, X, y, sample_weight, random_state)
-
-        else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight, random_state)
-
-    # TODO(1.6): Remove function. The `_boost_real` function won't be used any
-    # longer, because the SAMME.R algorithm will be deprecated in 1.6.
-    def _boost_real(self, iboost, X, y, sample_weight, random_state):
-        """Implement a single boost using the SAMME.R real algorithm."""
-        estimator = self._make_estimator(random_state=random_state)
-
-        estimator.fit(X, y, sample_weight=sample_weight)
-
-        y_predict_proba = estimator.predict_proba(X)
-
-        if iboost == 0:
-            self.classes_ = getattr(estimator, "classes_", None)
-            self.n_classes_ = len(self.classes_)
-
-        y_predict = self.classes_.take(np.argmax(y_predict_proba, axis=1), axis=0)
-
-        # Instances incorrectly classified
-        incorrect = y_predict != y
-
-        # Error fraction
-        estimator_error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
-
-        # Stop if classification is perfect
-        if estimator_error <= 0:
-            return sample_weight, 1.0, 0.0
-
-        # Construct y coding as described in Zhu et al [2]:
-        #
-        #    y_k = 1 if c == k else -1 / (K - 1)
-        #
-        # where K == n_classes_ and c, k in [0, K) are indices along the second
-        # axis of the y coding with c being the index corresponding to the true
-        # class label.
-        n_classes = self.n_classes_
-        classes = self.classes_
-        y_codes = np.array([-1.0 / (n_classes - 1), 1.0])
-        y_coding = y_codes.take(classes == y[:, np.newaxis])
-
-        # Displace zero probabilities so the log is defined.
-        # Also fix negative elements which may occur with
-        # negative sample weights.
-        proba = y_predict_proba  # alias for readability
-        np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
-
-        # Boost weight using multi-class AdaBoost SAMME.R alg
-        estimator_weight = (
-            -1.0
-            * self.learning_rate
-            * ((n_classes - 1.0) / n_classes)
-            * xlogy(y_coding, y_predict_proba).sum(axis=1)
-        )
-
-        # Only boost the weights if it will fit again
-        if not iboost == self.n_estimators - 1:
-            # Only boost positive weights
-            sample_weight *= np.exp(
-                estimator_weight * ((sample_weight > 0) | (estimator_weight < 0))
-            )
-
-        return sample_weight, 1.0, estimator_error
-
-    def _boost_discrete(self, iboost, X, y, sample_weight, random_state):
-        """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -789,21 +696,17 @@ class AdaBoostClassifier(
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
 
-        # TODO(1.6): Remove, because "algorithm" param will be deprecated in 1.6
-        if self.algorithm == "SAMME.R":
-            # The weights are all 1. for SAMME.R
-            pred = sum(
-                _samme_proba(estimator, n_classes, X) for estimator in self.estimators_
+        if n_classes == 1:
+            return np.zeros_like(X, shape=(X.shape[0], 1))
+
+        pred = sum(
+            np.where(
+                (estimator.predict(X) == classes).T,
+                w,
+                -1 / (n_classes - 1) * w,
             )
-        else:  # self.algorithm == "SAMME"
-            pred = sum(
-                np.where(
-                    (estimator.predict(X) == classes).T,
-                    w,
-                    -1 / (n_classes - 1) * w,
-                )
-                for estimator, w in zip(self.estimators_, self.estimator_weights_)
-            )
+            for estimator, w in zip(self.estimators_, self.estimator_weights_)
+        )
 
         pred /= self.estimator_weights_.sum()
         if n_classes == 2:
@@ -844,17 +747,11 @@ class AdaBoostClassifier(
         for weight, estimator in zip(self.estimator_weights_, self.estimators_):
             norm += weight
 
-            # TODO(1.6): Remove, because "algorithm" param will be deprecated in
-            # 1.6
-            if self.algorithm == "SAMME.R":
-                # The weights are all 1. for SAMME.R
-                current_pred = _samme_proba(estimator, n_classes, X)
-            else:  # elif self.algorithm == "SAMME":
-                current_pred = np.where(
-                    (estimator.predict(X) == classes).T,
-                    weight,
-                    -1 / (n_classes - 1) * weight,
-                )
+            current_pred = np.where(
+                (estimator.predict(X) == classes).T,
+                weight,
+                -1 / (n_classes - 1) * weight,
+            )
 
             if pred is None:
                 pred = current_pred
@@ -1076,9 +973,9 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([4.7972...])
+    array([4.7972])
     >>> regr.score(X, y)
-    0.9771...
+    0.9771
 
     For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
     to fit a sequence of decision trees as weak learners, please refer to
@@ -1139,7 +1036,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
             `random_state` attribute.
             Controls also the bootstrap of the weights used to train the weak
             learner.
-            replacement.
 
         Returns
         -------

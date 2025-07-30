@@ -16,19 +16,30 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..exceptions import NotFittedError
-from ..preprocessing import normalize
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils.fixes import _IS_32BIT
-from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted, validate_data
-from ._hash import FeatureHasher
-from ._stop_words import ENGLISH_STOP_WORDS
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.feature_extraction._hash import FeatureHasher
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
+from sklearn.preprocessing import normalize
+from sklearn.utils import metadata_routing
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
+    FLOAT_DTYPES,
+    check_array,
+    check_is_fitted,
+    validate_data,
+)
 
 __all__ = [
-    "HashingVectorizer",
-    "CountVectorizer",
     "ENGLISH_STOP_WORDS",
+    "CountVectorizer",
+    "HashingVectorizer",
     "TfidfTransformer",
     "TfidfVectorizer",
     "strip_accents_ascii",
@@ -1118,6 +1129,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
 
+    # raw_documents should not be in the routing mechanism. It should have been
+    # called X in the first place.
+    __metadata_request__fit = {"raw_documents": metadata_routing.UNUSED}
+    __metadata_request__transform = {"raw_documents": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
@@ -1426,7 +1442,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X_inv : list of arrays of shape (n_samples,)
+        X_original : list of arrays of shape (n_samples,)
             List of arrays of terms.
         """
         self._check_vocabulary()
@@ -1662,8 +1678,13 @@ class TfidfTransformer(
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
+            # Force the dtype of `idf_` to be the same as `df`. In NumPy < 2, the dtype
+            # was depending on the value of `n_samples`.
+            self.idf_ = np.full_like(df, fill_value=n_samples, dtype=dtype)
+            self.idf_ /= df
             # `np.log` preserves the dtype of `df` and thus `dtype`.
-            self.idf_ = np.log(n_samples / df) + 1.0
+            np.log(self.idf_, out=self.idf_)
+            self.idf_ += 1.0
 
         return self
 

@@ -12,10 +12,8 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import expit
 
-from sklearn.utils import Bunch
-
-from ._loss import HalfBinomialLoss
-from .base import (
+from sklearn._loss import HalfBinomialLoss
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -23,32 +21,33 @@ from .base import (
     _fit_context,
     clone,
 )
-from .isotonic import IsotonicRegression
-from .model_selection import LeaveOneOut, check_cv, cross_val_predict
-from .preprocessing import LabelEncoder, label_binarize
-from .svm import LinearSVC
-from .utils import (
-    _safe_indexing,
-    column_or_1d,
-    indexable,
-)
-from .utils._param_validation import (
+from sklearn.frozen import FrozenEstimator
+from sklearn.isotonic import IsotonicRegression
+from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
+from sklearn.preprocessing import LabelEncoder, label_binarize
+from sklearn.svm import LinearSVC
+from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
-from .utils._plotting import _BinaryClassifierCurveDisplayMixin
-from .utils._response import _get_response_values, _process_predict_proba
-from .utils.metadata_routing import (
+from sklearn.utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
+from sklearn.utils._response import _get_response_values, _process_predict_proba
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_pos_label_consistency,
     _check_response_method,
@@ -63,7 +62,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
-    classifier and subsequently calibrate a classifier. With default
+    classifier and subsequently calibrate a classifier. With
     `ensemble=True`, for each cv split it
     fits a copy of the base estimator to the training subset, and calibrates it
     using the testing subset. For prediction, predicted probabilities are
@@ -75,8 +74,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `probabilities=True` for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
     estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
-    Already fitted classifiers can be calibrated via the parameter
-    `cv="prefit"`. In this case, no cross-validation is used and all provided
+    Already fitted classifiers can be calibrated by wrapping the model in a
+    :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
     data is used for calibration. The user has to take care manually that data
     for model fitting and calibration are disjoint.
 
@@ -106,8 +105,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : int, cross-validation generator, iterable or "prefit", \
-            default=None
+    cv : int, cross-validation generator, or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -124,11 +122,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If "prefit" is passed, it is assumed that `estimator` has been
-        fitted already and all data is used for calibration.
-
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
+
+        .. versionchanged:: 1.6
+            `"prefit"` is deprecated. Use :class:`~sklearn.frozen.FrozenEstimator`
+            instead.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -142,9 +141,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
-    ensemble : bool, default=True
-        Determines how the calibrator is fitted when `cv` is not `'prefit'`.
-        Ignored if `cv='prefit'`.
+    ensemble : bool, or "auto", default="auto"
+        Determines how the calibrator is fitted.
+
+        "auto" will use `False` if the `estimator` is a
+        :class:`~sklearn.frozen.FrozenEstimator`, and `True` otherwise.
 
         If `True`, the `estimator` is fitted using training data, and
         calibrated using testing data, for each `cv` fold. The final estimator
@@ -160,6 +161,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.6
+            `"auto"` option is added and is the default.
 
     Attributes
     ----------
@@ -178,17 +182,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 1.0
 
-    calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
-            or `ensemble=False`)
+    calibrated_classifiers_ : list (len() equal to cv or 1 if `ensemble=False`)
         The list of classifier and calibrator pairs.
 
-        - When `cv="prefit"`, the fitted `estimator` and fitted
+        - When `ensemble=True`, `n_cv` fitted `estimator` and calibrator pairs.
+          `n_cv` is the number of cross-validation folds.
+        - When `ensemble=False`, the `estimator`, fitted on all the data, and fitted
           calibrator.
-        - When `cv` is not "prefit" and `ensemble=True`, `n_cv` fitted
-          `estimator` and calibrator pairs. `n_cv` is the number of
-          cross-validation folds.
-        - When `cv` is not "prefit" and `ensemble=False`, the `estimator`,
-          fitted on all the data, and fitted calibrator.
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
@@ -226,11 +226,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
     >>> calibrated_clf.predict_proba(X)[:5, :]
-    array([[0.110..., 0.889...],
-           [0.072..., 0.927...],
-           [0.928..., 0.071...],
-           [0.928..., 0.071...],
-           [0.071..., 0.928...]])
+    array([[0.110, 0.889],
+           [0.072, 0.927],
+           [0.928, 0.072],
+           [0.928, 0.072],
+           [0.072, 0.928]])
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
@@ -240,13 +240,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv="prefit")
+    >>> from sklearn.frozen import FrozenEstimator
+    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(base_clf))
     >>> calibrated_clf.fit(X_calib, y_calib)
     CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
-    array([[0.936..., 0.063...]])
+    array([[0.936, 0.063]])
     """
 
     _parameter_constraints: dict = {
@@ -256,9 +257,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             None,
         ],
         "method": [StrOptions({"isotonic", "sigmoid"})],
-        "cv": ["cv_object", StrOptions({"prefit"})],
+        "cv": ["cv_object", Hidden(StrOptions({"prefit"}))],
         "n_jobs": [Integral, None],
-        "ensemble": ["boolean"],
+        "ensemble": ["boolean", StrOptions({"auto"})],
     }
 
     def __init__(
@@ -268,7 +269,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         method="sigmoid",
         cv=None,
         n_jobs=None,
-        ensemble=True,
+        ensemble="auto",
     ):
         self.estimator = estimator
         self.method = method
@@ -318,13 +319,21 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
-
         estimator = self._get_estimator()
+
+        _ensemble = self.ensemble
+        if _ensemble == "auto":
+            _ensemble = not isinstance(estimator, FrozenEstimator)
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
+            # TODO(1.8): Remove this code branch and cv='prefit'
+            warnings.warn(
+                "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
+                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
+                " instead.",
+                category=FutureWarning,
+            )
             # `classes_` should be consistent with that of estimator
             check_is_fitted(self.estimator, attributes=["classes_"])
             self.classes_ = self.estimator.classes_
@@ -337,6 +346,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if predictions.ndim == 1:
                 # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
                 predictions = predictions.reshape(-1, 1)
+
+            if sample_weight is not None:
+                # Check that the sample_weight dtype is consistent with the predictions
+                # to avoid unintentional upcasts.
+                sample_weight = _check_sample_weight(
+                    sample_weight, predictions, dtype=predictions.dtype
+                )
 
             calibrated_classifier = _fit_calibrator(
                 estimator,
@@ -404,7 +420,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 )
             cv = check_cv(self.cv, y, classifier=True)
 
-            if self.ensemble:
+            if _ensemble:
                 parallel = Parallel(n_jobs=self.n_jobs)
                 self.calibrated_classifiers_ = parallel(
                     delayed(_fit_classifier_calibrator_pair)(
@@ -438,7 +454,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 if len(self.classes_) == 2:
                     # Ensure shape (n_samples, 1) in the binary case
                     if method_name == "predict_proba":
-                        # Select the probability column of the postive class
+                        # Select the probability column of the positive class
                         predictions = _process_predict_proba(
                             y_pred=predictions,
                             target_type="binary",
@@ -446,6 +462,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                             pos_label=self.classes_[1],
                         )
                     predictions = predictions.reshape(-1, 1)
+
+                if sample_weight is not None:
+                    # Check that the sample_weight dtype is consistent with the
+                    # predictions to avoid unintentional upcasts.
+                    sample_weight = _check_sample_weight(
+                        sample_weight, predictions, dtype=predictions.dtype
+                    )
 
                 this_estimator.fit(X, y, **routed_params.estimator.fit)
                 # Note: Here we don't pass on fit_params because the supported
@@ -540,6 +563,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         )
         return router
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        return tags
+
 
 def _fit_classifier_calibrator_pair(
     estimator,
@@ -607,7 +635,13 @@ def _fit_classifier_calibrator_pair(
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         predictions = predictions.reshape(-1, 1)
 
-    sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
+    if sample_weight is not None:
+        # Check that the sample_weight dtype is consistent with the predictions
+        # to avoid unintentional upcasts.
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=predictions.dtype)
+        sw_test = _safe_indexing(sample_weight, test)
+    else:
+        sw_test = None
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
@@ -972,6 +1006,13 @@ def calibration_curve(
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
 
+    See Also
+    --------
+    CalibrationDisplay.from_predictions : Plot calibration curve using true
+        and predicted labels.
+    CalibrationDisplay.from_estimator : Plot calibration curve using an
+        estimator and data.
+
     References
     ----------
     Alexandru Niculescu-Mizil and Rich Caruana (2005) Predicting Good
@@ -1062,9 +1103,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The positive class when computing the calibration curve.
-        By default, `pos_label` is set to `estimators.classes_[1]` when using
-        `from_estimator` and set to 1 when using `from_predictions`.
+        The positive class when calibration curve computed.
+        If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 1.1
 
@@ -1150,10 +1190,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {"marker": "s", "linestyle": "-"}
+        default_line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
@@ -1181,8 +1221,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         strategy="uniform",
         pos_label=None,
         name=None,
-        ref_line=True,
         ax=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1236,13 +1276,13 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Name for labeling curve. If `None`, the name of the estimator is
             used.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1304,8 +1344,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         strategy="uniform",
         pos_label=None,
         name=None,
-        ref_line=True,
         ax=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1345,20 +1385,21 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
-            By default `pos_label` is set to 1.
+            When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
+            `pos_label` is set to 1, otherwise an error will be raised.
 
             .. versionadded:: 1.1
 
         name : str, default=None
             Name for labeling curve.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.

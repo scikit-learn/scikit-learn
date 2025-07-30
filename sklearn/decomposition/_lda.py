@@ -18,25 +18,21 @@ import scipy.sparse as sp
 from joblib import effective_n_jobs
 from scipy.special import gammaln, logsumexp
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative, validate_data
-from ._online_lda_fast import (
+from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
 )
-from ._online_lda_fast import (
-    _dirichlet_expectation_2d,
-)
-from ._online_lda_fast import (
-    mean_change as cy_mean_change,
-)
+from sklearn.decomposition._online_lda_fast import _dirichlet_expectation_2d
+from sklearn.decomposition._online_lda_fast import mean_change as cy_mean_change
+from sklearn.utils import check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
 EPS = np.finfo(float).eps
 
@@ -495,7 +491,7 @@ class LatentDirichletAllocation(
     def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.
 
-        update `_component` by batch VB or online VB.
+        update `component_` by batch VB or online VB.
 
         Parameters
         ----------
@@ -549,6 +545,7 @@ class LatentDirichletAllocation(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float32", "float64"]
         return tags
 
@@ -723,7 +720,7 @@ class LatentDirichletAllocation(
 
         return doc_topic_distr
 
-    def transform(self, X):
+    def transform(self, X, *, normalize=True):
         """Transform data X according to the fitted model.
 
         .. versionchanged:: 0.18
@@ -733,6 +730,9 @@ class LatentDirichletAllocation(
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Document word matrix.
+
+        normalize : bool, default=True
+            Whether to normalize the document topic distribution.
 
         Returns
         -------
@@ -744,8 +744,34 @@ class LatentDirichletAllocation(
             X, reset_n_features=False, whom="LatentDirichletAllocation.transform"
         )
         doc_topic_distr = self._unnormalized_transform(X)
-        doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
+        if normalize:
+            doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
+
+    def fit_transform(self, X, y=None, *, normalize=True):
+        """
+        Fit to data, then transform it.
+
+        Fits transformer to `X` and `y` and returns a transformed version of `X`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input samples.
+
+        y :  array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
+            Target values (None for unsupervised transformations).
+
+        normalize : bool, default=True
+            Whether to normalize the document topic distribution in `transform`.
+
+        Returns
+        -------
+        X_new : ndarray array of shape (n_samples, n_components)
+            Transformed array.
+        """
+        return self.fit(X, y).transform(X, normalize=normalize)
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
         """Estimate the variational bound.

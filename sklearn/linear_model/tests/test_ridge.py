@@ -45,6 +45,7 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -524,7 +525,7 @@ def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
     y = rng.randn(5)
     X = rng.randn(5, 10)
-    warning_message = r"sparse_cg did not converge after" r" [0-9]+ iterations."
+    warning_message = r"sparse_cg did not converge after [0-9]+ iterations."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         ridge_regression(
             X, y, alpha=1.0, solver="sparse_cg", tol=0.0, max_iter=None, verbose=1
@@ -549,7 +550,7 @@ def test_ridge_shapes_type():
     assert isinstance(ridge.intercept_, float)
 
     ridge.fit(X, Y1)
-    assert ridge.coef_.shape == (1, n_features)
+    assert ridge.coef_.shape == (n_features,)
     assert ridge.intercept_.shape == (1,)
     assert isinstance(ridge.coef_, np.ndarray)
     assert isinstance(ridge.intercept_, np.ndarray)
@@ -749,9 +750,8 @@ def _make_sparse_offset_regression(
     "n_samples,dtype,proportion_nonzero",
     [(20, "float32", 0.1), (40, "float32", 1.0), (20, "float64", 0.2)],
 )
-@pytest.mark.parametrize("seed", np.arange(3))
 def test_solver_consistency(
-    solver, proportion_nonzero, n_samples, dtype, sparse_container, seed
+    solver, proportion_nonzero, n_samples, dtype, sparse_container, global_random_seed
 ):
     alpha = 1.0
     noise = 50.0 if proportion_nonzero > 0.9 else 500.0
@@ -760,10 +760,9 @@ def test_solver_consistency(
         n_features=30,
         proportion_nonzero=proportion_nonzero,
         noise=noise,
-        random_state=seed,
+        random_state=global_random_seed,
         n_samples=n_samples,
     )
-
     # Manually scale the data to avoid pathological cases. We use
     # minmax_scale to deal with the sparse case without breaking
     # the sparsity pattern.
@@ -777,7 +776,21 @@ def test_solver_consistency(
     if solver == "ridgecv":
         ridge = RidgeCV(alphas=[alpha])
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, alpha=alpha)
+        if solver.startswith("sag"):
+            # Avoid ConvergenceWarning for sag and saga solvers.
+            tol = 1e-7
+            max_iter = 100_000
+        else:
+            tol = 1e-10
+            max_iter = None
+
+        ridge = Ridge(
+            alpha=alpha,
+            solver=solver,
+            max_iter=max_iter,
+            tol=tol,
+            random_state=global_random_seed,
+        )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
@@ -859,9 +872,9 @@ def test_ridge_loo_cv_asym_scoring():
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(
-        loo_ridge.alpha_
-    ), f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_), (
+        f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
+    )
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
@@ -913,6 +926,8 @@ def test_ridge_gcv_sample_weights(
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
     splits = cv.split(X_tiled, y_tiled, groups=indices)
     predictions = cross_val_predict(ridge_reg, X_tiled, y_tiled, cv=splits)
+    if predictions.shape != y_tiled.shape:
+        predictions = predictions.reshape(y_tiled.shape)
     kfold_errors = (y_tiled - predictions) ** 2
     kfold_errors = [
         np.sum(kfold_errors[indices == i], axis=0) for i in np.arange(X.shape[0])
@@ -1254,7 +1269,9 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1517,9 +1534,9 @@ def test_ridgecv_alphas_conversion(Estimator):
     X = rng.randn(n_samples, n_features)
 
     ridge_est = Estimator(alphas=alphas)
-    assert (
-        ridge_est.alphas is alphas
-    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+    assert ridge_est.alphas is alphas, (
+        f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+    )
 
     ridge_est.fit(X, y)
     assert_array_equal(ridge_est.alphas, np.asarray(alphas))
@@ -2139,7 +2156,7 @@ def test_ridge_sample_weight_consistency(
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone.
+    check_sample_weight_equivalence alone.
     """
     # filter out solver that do not support sparse input
     if sparse_container is not None:
@@ -2169,8 +2186,8 @@ def test_ridge_sample_weight_consistency(
         tol=1e-12,
     )
 
-    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
-    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None,
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     reg = Ridge(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
@@ -2182,8 +2199,8 @@ def test_ridge_sample_weight_consistency(
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples
-    # same check as check_sample_weights_invariance(name, reg, kind="zeros"), but we
+    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples,
+    # another special case of check_sample_weight_equivalence(name, reg), but we
     # also test with sparse input
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
     sample_weight[-5:] = 0
@@ -2226,32 +2243,6 @@ def test_ridge_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
-
-
-# TODO(1.7): Remove
-def test_ridge_store_cv_values_deprecated():
-    """Check `store_cv_values` parameter deprecated."""
-    X, y = make_regression(n_samples=6, random_state=42)
-    ridge = RidgeCV(store_cv_values=True)
-    msg = "'store_cv_values' is deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        ridge.fit(X, y)
-
-    # Error when both set
-    ridge = RidgeCV(store_cv_results=True, store_cv_values=True)
-    msg = "Both 'store_cv_values' and 'store_cv_results' were"
-    with pytest.raises(ValueError, match=msg):
-        ridge.fit(X, y)
-
-
-def test_ridge_cv_values_deprecated():
-    """Check `cv_values_` deprecated."""
-    X, y = make_regression(n_samples=6, random_state=42)
-    ridge = RidgeCV(store_cv_results=True)
-    msg = "Attribute `cv_values_` is deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        ridge.fit(X, y)
-        ridge.cv_values_
 
 
 @pytest.mark.parametrize("with_sample_weight", [False, True])
@@ -2360,8 +2351,8 @@ def test_ridge_cv_custom_multioutput_scorer():
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_with_default_scoring(metaestimator):
     """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
     argument (`None`), don't enter into `RecursionError` when metadata is routed.
@@ -2369,7 +2360,6 @@ def test_metadata_routing_with_default_scoring(metaestimator):
     metaestimator().get_metadata_routing()
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "metaestimator, make_dataset",
     [
@@ -2377,6 +2367,7 @@ def test_metadata_routing_with_default_scoring(metaestimator):
         (RidgeClassifierCV(), make_classification),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
     """Test that `set_score_request` is set within `RidgeCV.fit()` and
     `RidgeClassifierCV.fit()` when using the default scoring and no

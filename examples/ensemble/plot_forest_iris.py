@@ -7,8 +7,8 @@ Plot the decision surfaces of forests of randomized trees trained on pairs of
 features of the iris dataset.
 
 This plot compares the decision surfaces learned by a decision tree classifier
-(first column), by a random forest classifier (second column), by an extra-
-trees classifier (third column) and by an AdaBoost classifier (fourth column).
+(first column), by a random forest classifier (second column), by an extra-trees
+classifier (third column) and by an AdaBoost classifier (fourth column).
 
 In the first row, the classifiers are built using the sepal width and
 the sepal length features only, on the second row using the petal length and
@@ -74,11 +74,7 @@ models = [
     DecisionTreeClassifier(max_depth=None),
     RandomForestClassifier(n_estimators=n_estimators),
     ExtraTreesClassifier(n_estimators=n_estimators),
-    AdaBoostClassifier(
-        DecisionTreeClassifier(max_depth=3),
-        n_estimators=n_estimators,
-        algorithm="SAMME",
-    ),
+    AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=n_estimators),
 ]
 
 for pair in ([0, 1], [0, 2], [2, 3]):

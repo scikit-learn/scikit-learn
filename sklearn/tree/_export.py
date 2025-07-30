@@ -11,11 +11,21 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import is_classifier
-from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-from ..utils.validation import check_array, check_is_fitted
-from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
-from ._reingold_tilford import Tree, buchheim
+from sklearn.base import is_classifier
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    _criterion,
+    _tree,
+)
+from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_array, check_is_fitted
 
 
 def _color_brew(n):
@@ -308,6 +318,7 @@ class _BaseTreeExporter:
             # Always write node decision criteria, except for leaves
             if self.feature_names is not None:
                 feature = self.feature_names[tree.feature[node_id]]
+                feature = self.str_escape(feature)
             else:
                 feature = "x%s%s%s" % (
                     characters[1],
@@ -383,6 +394,7 @@ class _BaseTreeExporter:
                 node_string += "class = "
             if self.class_names is not True:
                 class_name = self.class_names[np.argmax(value)]
+                class_name = self.str_escape(class_name)
             else:
                 class_name = "y%s%s%s" % (
                     characters[1],
@@ -396,6 +408,9 @@ class _BaseTreeExporter:
             node_string = node_string[: -len(characters[4])]
 
         return node_string + characters[5]
+
+    def str_escape(self, string):
+        return string
 
 
 class _DOTTreeExporter(_BaseTreeExporter):
@@ -570,6 +585,10 @@ class _DOTTreeExporter(_BaseTreeExporter):
             if parent is not None:
                 # Add edge to parent
                 self.out_file.write("%d -> %d ;\n" % (parent, node_id))
+
+    def str_escape(self, string):
+        # override default escaping for graphviz
+        return string.replace('"', r"\"")
 
 
 class _MPLTreeExporter(_BaseTreeExporter):

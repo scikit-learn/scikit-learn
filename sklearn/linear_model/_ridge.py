@@ -5,7 +5,6 @@ Ridge regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -16,41 +15,55 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
-from ..exceptions import ConvergenceWarning
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection import GridSearchCV
-from ..preprocessing import LabelBinarizer
-from ..utils import (
+from sklearn.base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    _preprocess_data,
+    _rescale_data,
+)
+from sklearn.linear_model._sag import sag_solver
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import (
     Bunch,
     check_array,
     check_consistent_length,
     check_scalar,
     column_or_1d,
     compute_sample_weight,
-    deprecated,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import _sparse_linalg_cg
-from ..utils.metadata_routing import (
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.fixes import _sparse_linalg_cg
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
-from ._sag import sag_solver
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
@@ -568,11 +581,12 @@ def ridge_regression(
     >>> rng = np.random.RandomState(0)
     >>> X = rng.randn(100, 4)
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
-    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
-    >>> list(coef)
-    [np.float64(1.9...), np.float64(-1.0...), np.float64(-0.0...), np.float64(-0.0...)]
+    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True,
+    ...                                    random_state=0)
+    >>> coef
+    array([ 1.97, -1., -2.69e-3, -9.27e-4 ])
     >>> intercept
-    np.float64(-0.0...)
+    np.float64(-.0012)
     """
     return _ridge_regression(
         X,
@@ -663,10 +677,8 @@ def _ridge_regression(
     if y.ndim > 2:
         raise ValueError("Target y has the wrong shape %s" % str(y.shape))
 
-    ravel = False
     if y.ndim == 1:
         y = xp.reshape(y, (-1, 1))
-        ravel = True
 
     n_samples_, n_targets = y.shape
 
@@ -807,7 +819,7 @@ def _ridge_regression(
             raise TypeError("SVD solver does not support sparse inputs currently")
         coef = _solve_svd(X, y, alpha, xp)
 
-    if ravel:
+    if n_targets == 1:
         coef = _ravel(coef)
 
     coef = xp.asarray(coef)
@@ -953,12 +965,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=False,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -1251,12 +1264,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
         )
         return tags
 
@@ -1577,12 +1586,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                "check_non_transformer_estimators_n_iter": (
-                    "n_iter_ cannot be easily accessed."
-                )
-            }
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
         )
         return tags
 
@@ -1682,7 +1687,7 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
-class _IdentityRegressor:
+class _IdentityRegressor(RegressorMixin, BaseEstimator):
     """Fake regressor which will directly output the prediction."""
 
     def decision_function(self, y_predict):
@@ -1692,7 +1697,7 @@ class _IdentityRegressor:
         return y_predict
 
 
-class _IdentityClassifier(LinearClassifierMixin):
+class _IdentityClassifier(LinearClassifierMixin, BaseEstimator):
     """Fake classifier which will directly output the prediction.
 
     We inherit from LinearClassifierMixin to get the proper shape for the
@@ -2148,12 +2153,13 @@ class _RidgeGCV(LinearModel):
         self.alphas = np.asarray(self.alphas)
 
         unscaled_y = y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, sqrt_sw = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=True,
         )
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
@@ -2171,9 +2177,7 @@ class _RidgeGCV(LinearModel):
 
         n_samples = X.shape[0]
 
-        if sample_weight is not None:
-            X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
-        else:
+        if sqrt_sw is None:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
@@ -2196,7 +2200,7 @@ class _RidgeGCV(LinearModel):
             else:
                 predictions = y - (c / G_inverse_diag)
                 # Rescale predictions back to original scale
-                if sample_weight is not None:  # avoid the unecessary division by ones
+                if sample_weight is not None:  # avoid the unnecessary division by ones
                     if predictions.ndim > 1:
                         predictions /= sqrt_sw[:, None]
                     else:
@@ -2240,6 +2244,8 @@ class _RidgeGCV(LinearModel):
         self.best_score_ = best_score
         self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        if y.ndim == 1 or y.shape[1] == 1:
+            self.coef_ = self.coef_.ravel()
 
         if sparse.issparse(X):
             X_offset = X_mean * X_scale
@@ -2310,9 +2316,8 @@ class _BaseRidgeCV(LinearModel):
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "cv": ["cv_object"],
         "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
-        "store_cv_results": ["boolean", Hidden(None)],
+        "store_cv_results": ["boolean"],
         "alpha_per_target": ["boolean"],
-        "store_cv_values": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -2323,9 +2328,8 @@ class _BaseRidgeCV(LinearModel):
         scoring=None,
         cv=None,
         gcv_mode=None,
-        store_cv_results=None,
+        store_cv_results=False,
         alpha_per_target=False,
-        store_cv_values="deprecated",
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
@@ -2334,7 +2338,6 @@ class _BaseRidgeCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_results = store_cv_results
         self.alpha_per_target = alpha_per_target
-        self.store_cv_values = store_cv_values
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit Ridge regression model with cv.
@@ -2370,7 +2373,7 @@ class _BaseRidgeCV(LinearModel):
         Notes
         -----
         When sample_weight is provided, the selected hyperparameter may depend
-        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        on whether we use leave-one-out cross-validation (cv=None)
         or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
@@ -2378,28 +2381,6 @@ class _BaseRidgeCV(LinearModel):
         _raise_for_params(params, self, "fit")
         cv = self.cv
         scorer = self._get_scorer()
-
-        # TODO(1.7): Remove in 1.7
-        # Also change `store_cv_results` default back to False
-        if self.store_cv_values != "deprecated":
-            if self.store_cv_results is not None:
-                raise ValueError(
-                    "Both 'store_cv_values' and 'store_cv_results' were set. "
-                    "'store_cv_values' is deprecated in version 1.5 and will be "
-                    "removed in 1.7. To avoid this error, only set 'store_cv_results'."
-                )
-            warnings.warn(
-                (
-                    "'store_cv_values' is deprecated in version 1.5 and will be "
-                    "removed in 1.7. Use 'store_cv_results' instead."
-                ),
-                FutureWarning,
-            )
-            self._store_cv_results = self.store_cv_values
-        elif self.store_cv_results is None:
-            self._store_cv_results = False
-        else:
-            self._store_cv_results = self.store_cv_results
 
         # `_RidgeGCV` does not work for alpha = 0
         if cv is None:
@@ -2450,7 +2431,7 @@ class _BaseRidgeCV(LinearModel):
                 fit_intercept=self.fit_intercept,
                 scoring=scorer,
                 gcv_mode=self.gcv_mode,
-                store_cv_results=self._store_cv_results,
+                store_cv_results=self.store_cv_results,
                 is_clf=is_classifier(self),
                 alpha_per_target=self.alpha_per_target,
             )
@@ -2462,10 +2443,10 @@ class _BaseRidgeCV(LinearModel):
             )
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
-            if self._store_cv_results:
+            if self.store_cv_results:
                 self.cv_results_ = estimator.cv_results_
         else:
-            if self._store_cv_results:
+            if self.store_cv_results:
                 raise ValueError("cv!=None and store_cv_results=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
@@ -2538,15 +2519,10 @@ class _BaseRidgeCV(LinearModel):
             scorer.set_score_request(sample_weight=True)
         return scorer
 
-    # TODO(1.7): Remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `cv_values_` is deprecated in version 1.5 and will be removed "
-        "in 1.7. Use `cv_results_` instead."
-    )
-    @property
-    def cv_values_(self):
-        return self.cv_results_
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
@@ -2576,10 +2552,14 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see :ref:`scoring_parameter`) or a scorer callable object /
-        function with signature ``scorer(estimator, X, y)``. If None, the
-        negative mean squared error if cv is 'auto' or None (i.e. when using
-        leave-one-out cross-validation), and r2 score otherwise.
+        The scoring method to use for cross-validation. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: negative :ref:`mean squared error <mean_squared_error>` if cv is
+          None (i.e. when using leave-one-out cross-validation), or
+          :ref:`coefficient of determination <r2_score>` (:math:`R^2`) otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2611,7 +2591,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     store_cv_results : bool, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
+        each alpha should be stored in the ``cv_results_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
@@ -2626,16 +2606,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         When set to `False`, a single alpha is used for all targets.
 
         .. versionadded:: 0.24
-
-    store_cv_values : bool
-        Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
-        below). This flag is only compatible with ``cv=None`` (i.e. using
-        Leave-One-Out Cross-Validation).
-
-        .. deprecated:: 1.5
-            `store_cv_values` is deprecated in version 1.5 in favor of
-            `store_cv_results` and will be removed in version 1.7.
 
     Attributes
     ----------
@@ -2729,22 +2699,13 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Notes
         -----
         When sample_weight is provided, the selected hyperparameter may depend
-        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        on whether we use leave-one-out cross-validation (cv=None)
         or another form of cross-validation, because only leave-one-out
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "GridSearchCV does not forward the weights to the scorer by default."
-            ),
-        }
-        return tags
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
@@ -2775,8 +2736,14 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         (i.e. data is expected to be centered).
 
     scoring : str, callable, default=None
-        A string (see :ref:`scoring_parameter`) or a scorer callable object /
-        function with signature ``scorer(estimator, X, y)``.
+        The scoring method to use for cross-validation. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: negative :ref:`mean squared error <mean_squared_error>` if cv is
+          None (i.e. when using leave-one-out cross-validation), or
+          :ref:`accuracy <accuracy_score>` otherwise.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2806,16 +2773,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
         .. versionchanged:: 1.5
             Parameter name changed from `store_cv_values` to `store_cv_results`.
-
-    store_cv_values : bool
-        Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
-        below). This flag is only compatible with ``cv=None`` (i.e. using
-        Leave-One-Out Cross-Validation).
-
-        .. deprecated:: 1.5
-            `store_cv_values` is deprecated in version 1.5 in favor of
-            `store_cv_results` and will be removed in version 1.7.
 
     Attributes
     ----------
@@ -2896,8 +2853,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         scoring=None,
         cv=None,
         class_weight=None,
-        store_cv_results=None,
-        store_cv_values="deprecated",
+        store_cv_results=False,
     ):
         super().__init__(
             alphas=alphas,
@@ -2905,7 +2861,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
             scoring=scoring,
             cv=cv,
             store_cv_results=store_cv_results,
-            store_cv_values=store_cv_values,
         )
         self.class_weight = class_weight
 

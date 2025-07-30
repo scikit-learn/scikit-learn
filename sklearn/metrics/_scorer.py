@@ -26,22 +26,8 @@ from traceback import format_exc
 
 import numpy as np
 
-from ..base import is_regressor
-from ..utils import Bunch
-from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
-from ..utils._response import _get_response_values
-from ..utils.metadata_routing import (
-    MetadataRequest,
-    MetadataRouter,
-    MethodMapping,
-    _MetadataRequester,
-    _raise_for_params,
-    _routing_enabled,
-    get_routing_for_object,
-    process_routing,
-)
-from ..utils.validation import _check_response_method
-from . import (
+from sklearn.base import is_regressor
+from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
@@ -69,7 +55,7 @@ from . import (
     root_mean_squared_log_error,
     top_k_accuracy_score,
 )
-from .cluster import (
+from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
@@ -80,6 +66,25 @@ from .cluster import (
     rand_score,
     v_measure_score,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils._response import _get_response_values
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    _MetadataRequester,
+    _raise_for_params,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import _check_response_method
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
@@ -129,10 +134,22 @@ class _MultimetricScorer:
         if _routing_enabled():
             routed_params = process_routing(self, "score", **kwargs)
         else:
-            # they all get the same args, and they all get them all
+            # Scorers all get the same args, and get all of them except sample_weight.
+            # Only the ones having `sample_weight` in their signature will receive it.
+            # This does not work for metadata other than sample_weight, and for those
+            # users have to enable metadata routing.
+            common_kwargs = {
+                arg: value for arg, value in kwargs.items() if arg != "sample_weight"
+            }
             routed_params = Bunch(
-                **{name: Bunch(score=kwargs) for name in self._scorers}
+                **{name: Bunch(score=common_kwargs.copy()) for name in self._scorers}
             )
+            if "sample_weight" in kwargs:
+                for name, scorer in self._scorers.items():
+                    if scorer._accept_sample_weight():
+                        routed_params[name].score["sample_weight"] = kwargs[
+                            "sample_weight"
+                        ]
 
         for name, scorer in self._scorers.items():
             try:
@@ -153,6 +170,10 @@ class _MultimetricScorer:
     def __repr__(self):
         scorers = ", ".join([f'"{s}"' for s in self._scorers])
         return f"MultiMetricScorer({scorers})"
+
+    def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        return any(scorer._accept_sample_weight() for scorer in self._scorers.values())
 
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
@@ -230,6 +251,10 @@ class _BaseScorer(_MetadataRequester):
         if "pos_label" in score_func_params:
             return score_func_params["pos_label"].default
         return None
+
+    def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        return "sample_weight" in signature(self._score_func).parameters
 
     def __repr__(self):
         sign_string = "" if self._sign > 0 else ", greater_is_better=False"
@@ -474,6 +499,10 @@ class _PassthroughScorer(_MetadataRequester):
     def __repr__(self):
         return f"{self._estimator.__class__}.score"
 
+    def _accept_sample_weight(self):
+        # TODO(slep006): remove when metadata routing is the only way
+        return "sample_weight" in signature(self._estimator.score).parameters
+
     def get_metadata_routing(self):
         """Get requested data properties.
 
@@ -605,55 +634,6 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
-def _get_response_method(response_method, needs_threshold, needs_proba):
-    """Handles deprecation of `needs_threshold` and `needs_proba` parameters in
-    favor of `response_method`.
-    """
-    needs_threshold_provided = needs_threshold != "deprecated"
-    needs_proba_provided = needs_proba != "deprecated"
-    response_method_provided = response_method is not None
-
-    needs_threshold = False if needs_threshold == "deprecated" else needs_threshold
-    needs_proba = False if needs_proba == "deprecated" else needs_proba
-
-    if response_method_provided and (needs_proba_provided or needs_threshold_provided):
-        raise ValueError(
-            "You cannot set both `response_method` and `needs_proba` or "
-            "`needs_threshold` at the same time. Only use `response_method` since "
-            "the other two are deprecated in version 1.4 and will be removed in 1.6."
-        )
-
-    if needs_proba_provided or needs_threshold_provided:
-        warnings.warn(
-            (
-                "The `needs_threshold` and `needs_proba` parameter are deprecated in "
-                "version 1.4 and will be removed in 1.6. You can either let "
-                "`response_method` be `None` or set it to `predict` to preserve the "
-                "same behaviour."
-            ),
-            FutureWarning,
-        )
-
-    if response_method_provided:
-        return response_method
-
-    if needs_proba is True and needs_threshold is True:
-        raise ValueError(
-            "You cannot set both `needs_proba` and `needs_threshold` at the same "
-            "time. Use `response_method` instead since the other two are deprecated "
-            "in version 1.4 and will be removed in 1.6."
-        )
-
-    if needs_proba is True:
-        response_method = "predict_proba"
-    elif needs_threshold is True:
-        response_method = ("decision_function", "predict_proba")
-    else:
-        response_method = "predict"
-
-    return response_method
-
-
 def _get_response_method_name(response_method):
     try:
         return response_method.__name__
@@ -669,21 +649,14 @@ def _get_response_method_name(response_method):
             list,
             tuple,
             StrOptions({"predict", "predict_proba", "decision_function"}),
+            Hidden(StrOptions({"default"})),
         ],
         "greater_is_better": ["boolean"],
-        "needs_proba": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "needs_threshold": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def make_scorer(
-    score_func,
-    *,
-    response_method=None,
-    greater_is_better=True,
-    needs_proba="deprecated",
-    needs_threshold="deprecated",
-    **kwargs,
+    score_func, *, response_method="default", greater_is_better=True, **kwargs
 ):
     """Make a scorer from a performance metric or loss function.
 
@@ -696,7 +669,7 @@ def make_scorer(
     The parameter `response_method` allows to specify which method of the estimator
     should be used to feed the scoring/loss function.
 
-    Read more in the :ref:`User Guide <scoring>`.
+    Read more in the :ref:`User Guide <scoring_callable>`.
 
     Parameters
     ----------
@@ -719,39 +692,14 @@ def make_scorer(
 
         .. versionadded:: 1.4
 
+        .. deprecated:: 1.6
+            None is equivalent to 'predict' and is deprecated. It will be removed in
+            version 1.8.
+
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is
         good, or a loss function, meaning low is good. In the latter case, the
         scorer object will sign-flip the outcome of the `score_func`.
-
-    needs_proba : bool, default=False
-        Whether `score_func` requires `predict_proba` to get probability
-        estimates out of a classifier.
-
-        If True, for binary `y_true`, the score function is supposed to accept
-        a 1D `y_pred` (i.e., probability of the positive class, shape
-        `(n_samples,)`).
-
-        .. deprecated:: 1.4
-           `needs_proba` is deprecated in version 1.4 and will be removed in
-           1.6. Use `response_method="predict_proba"` instead.
-
-    needs_threshold : bool, default=False
-        Whether `score_func` takes a continuous decision certainty.
-        This only works for binary classification using estimators that
-        have either a `decision_function` or `predict_proba` method.
-
-        If True, for binary `y_true`, the score function is supposed to accept
-        a 1D `y_pred` (i.e., probability of the positive class or the decision
-        function, shape `(n_samples,)`).
-
-        For example `average_precision` or the area under the roc curve
-        can not be computed using discrete predictions alone.
-
-        .. deprecated:: 1.4
-           `needs_threshold` is deprecated in version 1.4 and will be removed
-           in 1.6. Use `response_method=("decision_function", "predict_proba")`
-           instead to preserve the same behaviour.
 
     **kwargs : additional arguments
         Additional parameters to be passed to `score_func`.
@@ -772,10 +720,18 @@ def make_scorer(
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
     """
-    response_method = _get_response_method(
-        response_method, needs_threshold, needs_proba
-    )
     sign = 1 if greater_is_better else -1
+
+    if response_method is None:
+        warnings.warn(
+            "response_method=None is deprecated in version 1.6 and will be removed "
+            "in version 1.8. Leave it to its default value to avoid this warning.",
+            FutureWarning,
+        )
+        response_method = "predict"
+    elif response_method == "default":
+        response_method = "predict"
+
     return _Scorer(score_func, sign, kwargs, response_method)
 
 
@@ -826,11 +782,11 @@ matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 
 def positive_likelihood_ratio(y_true, y_pred):
-    return class_likelihood_ratios(y_true, y_pred)[0]
+    return class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)[0]
 
 
 def negative_likelihood_ratio(y_true, y_pred):
-    return class_likelihood_ratios(y_true, y_pred)[1]
+    return class_likelihood_ratios(y_true, y_pred, replace_undefined_by=1.0)[1]
 
 
 positive_likelihood_ratio_scorer = make_scorer(positive_likelihood_ratio)
@@ -1005,8 +961,10 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
     scoring : str, callable, list, tuple, set, or dict, default=None
         Scorer to use. If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - a single string (see :ref:`scoring_string_names`);
+        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - `None`, the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -1015,8 +973,6 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
           values are the metric scorers;
         - a dictionary with metric names as keys and callables a values. The callables
           need to have the signature `callable(estimator, X, y)`.
-
-        If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
         Whether to return None or raise an error if no `scoring` is specified and the

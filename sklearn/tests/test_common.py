@@ -23,8 +23,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
@@ -35,9 +35,9 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import get_tags
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
+    _get_expected_failed_checks,
     _tested_estimators,
 )
 from sklearn.utils._testing import (
@@ -59,7 +59,6 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
-from sklearn.utils.fixes import _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -111,7 +110,9 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+@parametrize_with_checks(
+    list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
+)
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(
@@ -120,15 +121,24 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-def test_check_estimator_generate_only():
-    all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
+# TODO(1.8): remove test when generate_only is removed
+def test_check_estimator_generate_only_deprecation():
+    """Check that check_estimator with generate_only=True raises a deprecation
+    warning."""
+    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
+        all_instance_gen_checks = check_estimator(
+            LogisticRegression(), generate_only=True
+        )
     assert isgenerator(all_instance_gen_checks)
 
 
-@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @pytest.mark.filterwarnings(
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
+)
+# TODO(1.8): remove this filter
+@pytest.mark.filterwarnings(
+    "ignore:Importing from sklearn.utils._estimator_html_repr is deprecated."
 )
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
@@ -139,7 +149,7 @@ def test_import_all_consistency():
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
-        if ".tests." in modname:
+        if ".tests." in modname or "sklearn.externals" in modname:
             continue
         # Avoid test suite depending on build dependencies, for example Cython
         if "sklearn._build_utils" in modname:
@@ -212,36 +222,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_valid_tag_types(estimator):
-    """Check that estimator tags are valid."""
-    from dataclasses import fields
-
-    from ..utils._tags import default_tags
-
-    def check_field_types(tags, defaults):
-        if tags is None:
-            return
-        tags_fields = fields(tags)
-        for field in tags_fields:
-            correct_tags = type(getattr(defaults, field.name))
-            if field.name == "_xfail_checks":
-                # _xfail_checks can be a dictionary
-                correct_tags = (correct_tags, dict)
-            assert isinstance(getattr(tags, field.name), correct_tags)
-
-    tags = get_tags(estimator)
-    defaults = default_tags(estimator)
-    check_field_types(tags, defaults)
-    check_field_types(tags.input_tags, defaults.input_tags)
-    check_field_types(tags.target_tags, defaults.target_tags)
-    check_field_types(tags.classifier_tags, defaults.classifier_tags)
-    check_field_types(tags.regressor_tags, defaults.regressor_tags)
-    check_field_types(tags.transformer_tags, defaults.transformer_tags)
-
-
 def _estimators_that_predict_in_fit():
     for estimator in _tested_estimators():
         est_params = set(estimator.get_params())
@@ -278,8 +258,9 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
-    tags = get_tags(estimator)
-    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+    if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
+        estimator
+    ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
@@ -318,7 +299,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer

@@ -40,8 +40,8 @@ this algorithm, a given supervised classifier can function as a semi-supervised
 classifier, allowing it to learn from unlabeled data.
 
 :class:`SelfTrainingClassifier` can be called with any classifier that
-implements `predict_proba`, passed as the parameter `base_classifier`. In
-each iteration, the `base_classifier` predicts labels for the unlabeled
+implements `predict_proba`, passed as the parameter `estimator`. In
+each iteration, the `estimator` predicts labels for the unlabeled
 samples and adds a subset of these labels to the labeled dataset.
 
 The choice of this subset is determined by the selection criterion. This
@@ -118,7 +118,7 @@ computing the normalized graph Laplacian matrix. This procedure is also
 used in :ref:`spectral_clustering`.
 
 Label propagation models have two built-in kernel methods. Choice of kernel
-effects both scalability and performance of the algorithms. The following are
+affects both scalability and performance of the algorithms. The following are
 available:
 
 * rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is

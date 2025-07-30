@@ -42,15 +42,24 @@ BOOL_METRICS = [
     "dice",
     "rogerstanimoto",
     "russellrao",
-    "sokalmichener",
     "sokalsneath",
 ]
+DEPRECATED_METRICS = []
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    BOOL_METRICS += ["sokalmichener"]
+if sp_base_version >= parse_version("1.15"):
+    DEPRECATED_METRICS.append("sokalmichener")
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     BOOL_METRICS += ["kulsinski"]
+if sp_base_version >= parse_version("1.9"):
+    DEPRECATED_METRICS.append("kulsinski")
 if sp_base_version < parse_version("1.9"):
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     BOOL_METRICS += ["matching"]
+if sp_base_version >= parse_version("1.0"):
+    DEPRECATED_METRICS.append("matching")
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,

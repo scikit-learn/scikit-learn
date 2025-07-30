@@ -11,8 +11,8 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
-from ..base import (
+from sklearn._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
+from sklearn.base import (
     BaseEstimator,
     OutlierMixin,
     RegressorMixin,
@@ -20,17 +20,13 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..model_selection import ShuffleSplit, StratifiedShuffleSplit
-from ..utils import check_random_state, compute_class_weight
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, SparseCoefMixin, make_dataset
-from ._sgd_fast import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    SparseCoefMixin,
+    make_dataset,
+)
+from sklearn.linear_model._sgd_fast import (
     EpsilonInsensitive,
     Hinge,
     ModifiedHuber,
@@ -38,6 +34,18 @@ from ._sgd_fast import (
     SquaredHinge,
     _plain_sgd32,
     _plain_sgd64,
+)
+from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
+from sklearn.utils import check_random_state, compute_class_weight
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
 )
 
 LEARNING_RATE_TYPES = {
@@ -87,7 +95,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "verbose": ["verbose"],
         "random_state": ["random_state"],
         "warm_start": ["boolean"],
-        "average": [Interval(Integral, 0, None, closed="left"), "boolean"],
+        "average": [Interval(Integral, 0, None, closed="neither"), "boolean"],
     }
 
     def __init__(
@@ -154,10 +162,19 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 "learning_rate is 'optimal'. alpha is used "
                 "to compute the optimal learning rate."
             )
+        if self.penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be set when penalty is 'elasticnet'")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
+
+    def _get_l1_ratio(self):
+        if self.l1_ratio is None:
+            # plain_sgd expects a float. Any value is fine since at this point
+            # penalty can't be "elsaticnet" so l1_ratio is not used.
+            return 0.0
+        return self.l1_ratio
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``."""
@@ -462,7 +479,7 @@ def fit_binary(
         penalty_type,
         alpha,
         C,
-        est.l1_ratio,
+        est._get_l1_ratio(),
         dataset,
         validation_mask,
         est.early_stopping,
@@ -597,17 +614,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             reset=first_call,
         )
 
-        if first_call:
-            # TODO(1.7) remove 0 from average parameter constraint
-            if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
-                warnings.warn(
-                    (
-                        "Passing average=0 to disable averaging is deprecated and will"
-                        " be removed in 1.7. Please use average=False instead."
-                    ),
-                    FutureWarning,
-                )
-
         n_samples, n_features = X.shape
 
         _check_partial_fit_first_call(self, classes)
@@ -683,16 +689,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             # delete the attribute otherwise _partial_fit thinks it's not the first call
             delattr(self, "classes_")
 
-        # TODO(1.7) remove 0 from average parameter constraint
-        if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
-            warnings.warn(
-                (
-                    "Passing average=0 to disable averaging is deprecated and will be "
-                    "removed in 1.7. Please use average=False instead."
-                ),
-                FutureWarning,
-            )
-
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
         y = validate_data(self, y=y)
@@ -743,6 +739,15 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 ),
                 ConvergenceWarning,
             )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
+            )
+
         return self
 
     def _fit_binary(self, X, y, alpha, C, sample_weight, learning_rate, max_iter):
@@ -941,6 +946,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight=sample_weight,
         )
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, etc.) with SGD training.
@@ -985,14 +995,19 @@ class SGDClassifier(BaseSGDClassifier):
           in classification as well; see
           :class:`~sklearn.linear_model.SGDRegressor` for a description.
 
-        More details about the losses formulas can be found in the
-        :ref:`User Guide <sgd_mathematical_formulation>`.
+        More details about the losses formulas can be found in the :ref:`User Guide
+        <sgd_mathematical_formulation>` and you can find a visualisation of the loss
+        functions in
+        :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_loss_functions.py`.
 
     penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'. No penalty is added when set to `None`.
+
+        You can see a visualisation of the penalties in
+        :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
@@ -1004,7 +1019,11 @@ class SGDClassifier(BaseSGDClassifier):
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values must be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]` or can be `None` if
+        `penalty` is not `elasticnet`.
+
+        .. versionchanged:: 1.7
+            `l1_ratio` can be `None` when `penalty` is not "elasticnet".
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -1080,7 +1099,11 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1088,6 +1111,9 @@ class SGDClassifier(BaseSGDClassifier):
         a stratified fraction of training data as validation and terminate
         training when validation score returned by the `score` method is not
         improving by at least tol for n_iter_no_change consecutive epochs.
+
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+        example of the effects of early stopping.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
@@ -1202,7 +1228,7 @@ class SGDClassifier(BaseSGDClassifier):
         **BaseSGDClassifier._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
@@ -1374,15 +1400,6 @@ class SGDClassifier(BaseSGDClassifier):
         """
         return np.log(self.predict_proba(X))
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
-
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
     loss_functions = {
@@ -1473,17 +1490,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         )
         y = y.astype(X.dtype, copy=False)
 
-        if first_call:
-            # TODO(1.7) remove 0 from average parameter constraint
-            if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
-                warnings.warn(
-                    (
-                        "Passing average=0 to disable averaging is deprecated and will"
-                        " be removed in 1.7. Please use average=False instead."
-                    ),
-                    FutureWarning,
-                )
-
         n_samples, n_features = X.shape
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1561,16 +1567,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         intercept_init=None,
         sample_weight=None,
     ):
-        # TODO(1.7) remove 0 from average parameter constraint
-        if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
-            warnings.warn(
-                (
-                    "Passing average=0 to disable averaging is deprecated and will be "
-                    "removed in 1.7. Please use average=False instead."
-                ),
-                FutureWarning,
-            )
-
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -1608,6 +1604,14 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+            )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
             )
 
         return self
@@ -1733,7 +1737,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             penalty_type,
             alpha,
             C,
-            self.l1_ratio,
+            self._get_l1_ratio(),
             dataset,
             validation_mask,
             self.early_stopping,
@@ -1772,6 +1776,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         else:
             self.intercept_ = np.atleast_1d(intercept)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class SGDRegressor(BaseSGDRegressor):
@@ -1816,6 +1825,9 @@ class SGDRegressor(BaseSGDRegressor):
         'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'. No penalty is added when set to `None`.
 
+        You can see a visualisation of the penalties in
+        :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`.
+
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
         value, the stronger the regularization. Also used to compute the
@@ -1826,7 +1838,11 @@ class SGDRegressor(BaseSGDRegressor):
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values must be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]` or can be `None` if
+        `penalty` is not `elasticnet`.
+
+        .. versionchanged:: 1.7
+            `l1_ratio` can be `None` when `penalty` is not "elasticnet".
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -1893,7 +1909,11 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1902,6 +1922,9 @@ class SGDRegressor(BaseSGDRegressor):
         training when validation score returned by the `score` method is not
         improving by at least `tol` for `n_iter_no_change` consecutive
         epochs.
+
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+        example of the effects of early stopping.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
@@ -2003,7 +2026,7 @@ class SGDRegressor(BaseSGDRegressor):
         **BaseSGDRegressor._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
@@ -2058,17 +2081,8 @@ class SGDRegressor(BaseSGDRegressor):
             average=average,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
 
-
-class SGDOneClassSVM(BaseSGD, OutlierMixin):
+class SGDOneClassSVM(OutlierMixin, BaseSGD):
     """Solves linear One-Class SVM using Stochastic Gradient Descent.
 
     This implementation is meant to be used with a kernel approximation
@@ -2137,7 +2151,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2239,7 +2257,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         average=False,
     ):
         self.nu = nu
-        super(SGDOneClassSVM, self).__init__(
+        super().__init__(
             loss="hinge",
             penalty="l2",
             C=1.0,
@@ -2381,17 +2399,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             reset=first_call,
         )
 
-        if first_call:
-            # TODO(1.7) remove 0 from average parameter constraint
-            if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
-                warnings.warn(
-                    (
-                        "Passing average=0 to disable averaging is deprecated and will"
-                        " be removed in 1.7. Please use average=False instead."
-                    ),
-                    FutureWarning,
-                )
-
         n_features = X.shape[1]
 
         # Allocate datastructures from input arguments
@@ -2482,16 +2489,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         offset_init=None,
         sample_weight=None,
     ):
-        # TODO(1.7) remove 0 from average parameter constraint
-        if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
-            warnings.warn(
-                (
-                    "Passing average=0 to disable averaging is deprecated and will be "
-                    "removed in 1.7. Please use average=False instead."
-                ),
-                FutureWarning,
-            )
-
         if self.warm_start and hasattr(self, "coef_"):
             if coef_init is None:
                 coef_init = self.coef_
@@ -2528,6 +2525,14 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+            )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
             )
 
         return self
@@ -2640,9 +2645,5 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
+        tags.input_tags.sparse = True
         return tags
