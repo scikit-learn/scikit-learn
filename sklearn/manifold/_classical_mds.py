@@ -10,12 +10,12 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, _fit_context
-from ..metrics import pairwise_distances
-from ..utils import check_symmetric
-from ..utils._param_validation import Interval
-from ..utils.extmath import svd_flip
-from ..utils.validation import validate_data
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics import pairwise_distances
+from sklearn.utils import check_symmetric
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import svd_flip
+from sklearn.utils.validation import validate_data
 
 
 class ClassicalMDS(BaseEstimator):
