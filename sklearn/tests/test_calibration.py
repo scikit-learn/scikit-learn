@@ -489,6 +489,8 @@ def test_temperature_scaling(n_classes, ensemble):
             roc_auc_score(y_cal, y_scores_cal, multi_class="ovr"),
         )
 
+        # For Logistic Regression, the optimal temperature should be close to 1.0
+        # on the training set.
         y_scores_train = clf.predict_proba(X_train)
         ts = _TemperatureScaling().fit(y_scores_train, y_train)
         assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
