@@ -2136,7 +2136,7 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
-    
+
     def _get_tags(self):
         return {**super()._get_tags(), "requires_fit": False}
 
