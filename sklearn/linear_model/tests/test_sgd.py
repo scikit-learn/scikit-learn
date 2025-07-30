@@ -1709,17 +1709,23 @@ def test_ocsvm_vs_sgdocsvm():
 
 
 def test_sgd_oneclass_convergence():
-    # Check that the optimization does not end early, that the stopping criterion is working
+    # Check that the optimization does not end early,
+    # that the stopping criterion is working
     for nu in [0.1, 0.5, 0.9]:
-        model = SGDOneClassSVM(nu=nu, max_iter=100, tol=1e-3, learning_rate="constant", eta0=1e-3) # no need for large max_iter
+        # no need for large max_iter
+        model = SGDOneClassSVM(nu=nu, max_iter=100, tol=1e-3,
+                learning_rate="constant", eta0=1e-3)
         model.fit(iris.data)
-        assert model.n_iter_ > 6 # 6 is the minimal number of iterations, after which optimization can stop
+        # 6 is the minimal number of iterations, after which optimization can stop
+        assert model.n_iter_ > 6
 
 
 def test_sgd_oneclass_vs_linear_oneclass():
     # Test convergence vs. liblinear OCSVM with kernel="linear"
     for nu in [0.1, 0.5, 0.9]:
-        model = SGDOneClassSVM(nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3) # allow enough iterations, small dataset
+        # allow enough iterations, small dataset
+        model = SGDOneClassSVM(nu=nu, max_iter=20000, tol=None,
+                learning_rate="constant", eta0=1e-3)
         model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6) # reference model
         model.fit(iris.data)
         model_ref.fit(iris.data)
@@ -1733,7 +1739,10 @@ def test_sgd_oneclass_vs_linear_oneclass():
         dec_fn_corr = np.corrcoef(dec_fn, dec_fn_ref)[0, 1]
         preds_corr = np.corrcoef(preds, preds_ref)[0, 1]
         # check weights and intercept concatenated together for correlation
-        coef_corr = np.corrcoef( np.concatenate([model.coef_, -model.offset_]), np.concatenate([model_ref.coef_.flatten(), model_ref.intercept_]) )[0, 1]
+        coef_corr = np.corrcoef(
+                 np.concatenate([model.coef_, -model.offset_]),
+                 np.concatenate([model_ref.coef_.flatten(), model_ref.intercept_])
+        )[0, 1]
         # share of predicted 1's
         share_ones = (preds == 1).sum() / len(preds)
         share_ones_ref = (preds_ref == 1).sum() / len(preds_ref)
