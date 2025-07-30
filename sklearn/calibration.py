@@ -738,7 +738,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
         for class_idx, this_pred in zip(pos_class_indices, predictions.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
-            elif method == "sigmoid":
+            else:  # "sigmoid"
                 calibrator = _SigmoidCalibration()
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
