@@ -21,7 +21,7 @@ high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
 the low-dimensional space. Here the manifold problem matches fairly
 that of representing a flat map of the Earth, as with
-`map projection <https://en.wikipedia.org/wiki/Map_projection>`.
+`map projection <https://en.wikipedia.org/wiki/Map_projection>`_.
 
 """
 
