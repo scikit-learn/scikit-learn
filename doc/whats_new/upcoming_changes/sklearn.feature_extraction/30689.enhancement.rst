@@ -1,1 +1,0 @@
-:class:`feature_extraction.FeatureHasher` and :class:`feature_extraction.HashingVectorizer` now correctly set ``requires_fit=False`` tag to reflect their stateless nature.
