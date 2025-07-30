@@ -726,7 +726,6 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
                 clf,
                 ["decision_function", "predict_proba"],
             ).__name__
-
             if response_method_name == "predict_proba":
                 predictions = np.hstack([1 - predictions, predictions])
         calibrator = _TemperatureScaling()
@@ -825,7 +824,6 @@ class _CalibratedClassifier:
                     self.estimator,
                     ["decision_function", "predict_proba"],
                 ).__name__
-
                 if response_method_name == "predict_proba":
                     predictions = np.hstack([1 - predictions, predictions])
             proba = self.calibrators[0].predict(predictions)
