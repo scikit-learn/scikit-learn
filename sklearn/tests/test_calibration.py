@@ -490,9 +490,7 @@ def test_temperature_scaling(n_classes, ensemble):
         )
 
         y_scores_train = clf.predict_proba(X_train)
-        ts = _TemperatureScaling(response_method_name="predict_proba").fit(
-            y_scores_train, y_train
-        )
+        ts = _TemperatureScaling().fit(y_scores_train, y_train)
         assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
 
 

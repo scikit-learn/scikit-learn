@@ -661,16 +661,6 @@ def _fit_classifier_calibrator_pair(
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         predictions = predictions.reshape(-1, 1)
 
-        if method == "temperature":
-            if len(classes) == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-
-                if response_method_name == "predict_proba":
-                    predictions = np.hstack([1 - predictions, predictions])
-
     if sample_weight is not None:
         # Check that the sample_weight dtype is consistent with the predictions
         # to avoid unintentional upcasts.
@@ -731,6 +721,14 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
+        if len(classes) == 2 and predictions.shape[-1] == 1:
+            response_method_name = _check_response_method(
+                clf,
+                ["decision_function", "predict_proba"],
+            ).__name__
+
+            if response_method_name == "predict_proba":
+                predictions = np.hstack([1 - predictions, predictions])
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
