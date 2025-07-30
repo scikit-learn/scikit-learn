@@ -1192,6 +1192,103 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+
+        def _temperature_scaling(predictions, labels, sample_weight=None):
+            """Calibrate the temperature of temperature scaling.
+
+            Parameters
+            ----------
+            predictions : ndarray of shape (n_samples,) or (n_samples, n_classes)
+                The output of `decision_function` or `predict_proba`. If the input
+                appears to be probabilities (i.e., values between 0 and 1 that sum to 1
+                across classes), it will be converted to logits using `np.log(p + eps)`.
+
+                Binary decision function outputs (1D) will be converted to two-class
+                logits of the form (-x, x). For shapes of the form (n_samples, 1), the
+                same process applies.
+
+            labels : ndarray of shape (n_samples,)
+                True labels for the samples.
+
+            sample_weight : array-like of shape (n_samples,), default=None
+                Sample weights. If None, then samples are equally weighted.
+
+            Returns
+            -------
+            beta : float
+                The optimised inverse temperature parameter for probability calibration,
+                with a value in the range (0, infinity).
+
+            References
+            ----------
+            On Calibration of Modern Neural Networks,
+            C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
+            """
+            check_consistent_length(predictions, labels)
+            logits = _convert_to_logits(
+                predictions
+            )  # guarantees np.float64 or np.float32
+
+            dtype_ = logits.dtype
+            labels = column_or_1d(labels, dtype=dtype_)
+
+            if sample_weight is not None:
+                sample_weight = _check_sample_weight(
+                    sample_weight, labels, dtype=dtype_
+                )
+
+            halfmulti_loss = HalfMultinomialLoss(
+                sample_weight=sample_weight, n_classes=logits.shape[1]
+            )
+
+            def log_loss(log_beta=0.0):
+                """Compute the log loss as a parameter of the inverse temperature
+                (beta).
+
+                Parameters
+                ----------
+                log_beta : float
+                    The current logarithm of the inverse temperature value during
+                    optimisation.
+
+                Returns
+                -------
+                negative_log_likelihood_loss : float
+                    The negative log likelihood loss.
+
+                """
+                # TODO: numpy 2.0
+                # Ensure raw_prediction has the same dtype as labels using .astype().
+                # Without this, dtype promotion rules differ across NumPy versions:
+                #
+                #   beta = np.float64(0)
+                #   logits = np.array([1, 2], dtype=np.float32)
+                #
+                #   result = beta * logits
+                #   - NumPy < 2: result.dtype is float32
+                #   - NumPy 2+:  result.dtype is float64
+                #
+                #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
+                raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
+                return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
+
+            log_beta_minimizer = minimize_scalar(
+                log_loss,
+                bounds=(-10.0, 10.0),
+                options={
+                    "xatol": 64 * np.finfo(float).eps,
+                },
+            )
+
+            if not log_beta_minimizer.success:  # pragma: no cover
+                raise RuntimeError(
+                    "Temperature scaling fails to optimize during calibration. "
+                    "Reason from `scipy.optimize.minimize_scalar`: "
+                    f"{log_beta_minimizer.message}"
+                )
+
+            return np.exp(log_beta_minimizer.x)
+
         X, y = indexable(X, y)
         self.beta_ = _temperature_scaling(X, y, sample_weight)
         return self
