@@ -415,8 +415,10 @@ def _plain_sgd{{name_suffix}}(
     cdef double update = 0.0
     cdef double intercept_update = 0.0
     cdef double sumloss = 0.0
+    cdef double cur_loss_val = 0.0
     cdef double score = 0.0
     cdef double objective = 0.0
+    cdef double objective_sum = 0.0
     cdef double best_objective = INFINITY
     cdef double best_score = -INFINITY
     cdef {{c_type}} y = 0.0
@@ -459,6 +461,7 @@ def _plain_sgd{{name_suffix}}(
     with nogil:
         for epoch in range(max_iter):
             sumloss = 0
+            objective_sum = 0
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
@@ -480,7 +483,17 @@ def _plain_sgd{{name_suffix}}(
                     eta = eta0 / pow(t, power_t)
 
                 if verbose or not early_stopping:
-                    sumloss += loss.cy_loss(y, p)
+                    cur_loss_val = loss.cy_loss(y, p)
+                    sumloss += cur_loss_val
+                    # sum up the optimization objective function terms (not just loss, include regularization)
+                    # SGD optimizes 0.5 * L2**2, because using weight decay
+                    objective_sum += cur_loss_val + alpha * (
+                        (1 - l1_ratio) * 0.5 * w.norm() ** 2 +
+                        l1_ratio * w.l1norm()
+                    )
+                    if one_class: # specific to One-Class SVM
+                        # nu is alpha * 2 (alpha must be nu/2, set by caller)
+                        objective_sum += intercept * (alpha * 2)
 
                 if y > 0.0:
                     class_weight = weight_pos
@@ -570,10 +583,7 @@ def _plain_sgd{{name_suffix}}(
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                objective = sumloss / train_count + alpha * (
-                    (1 - l1_ratio) * 0.5 * w.norm() ** 2 +
-                    l1_ratio * w.l1norm()
-                )
+                objective = objective_sum / train_count
                 if verbose > 0:  # report epoch information
                     with gil:
                         print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
@@ -586,7 +596,7 @@ def _plain_sgd{{name_suffix}}(
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
-                if sumloss < best_objective:
+                if objective < best_objective:
                     best_objective = objective
 
             # if there is no improvement several times in a row
