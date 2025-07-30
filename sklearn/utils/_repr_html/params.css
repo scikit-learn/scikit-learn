@@ -51,7 +51,8 @@
     color: black;
 }
 
-a:link.doc_link {
+a:link.doc-link,
+a:visited.doc-link {
     color: white;
     background: black;
 }

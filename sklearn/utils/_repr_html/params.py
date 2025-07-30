@@ -80,7 +80,7 @@ def _params_html_repr(params):
     """
 
     PARAM_AVAILABLE_DOC_LINK_TEMPLATE = """
-        <a class="sk-estimator-doc-link doc_link"
+        <a class="sk-estimator-doc-link doc-link"
             rel="noreferrer" target="_blank" href="{link}">?
             <span>Documentation for {param_name}</span>
         </a>
