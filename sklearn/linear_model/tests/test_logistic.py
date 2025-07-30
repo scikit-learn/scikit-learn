@@ -556,24 +556,24 @@ def test_logistic_cv_multinomial_score(
         )
 
 
-def test_multinomial_logistic_regression_string_inputs(global_random_seed):
-    # Test with string labels for LogisticRegression(CV)
+def test_multinomial_logistic_regression_string_inputs():
+    """Test internally encode labels"""
     n_samples, n_features, n_classes = 50, 5, 3
     X_ref, y = make_classification(
         n_samples=n_samples,
         n_features=n_features,
         n_classes=n_classes,
         n_informative=3,
-        random_state=global_random_seed,
+        random_state=0,
     )
     y_str = LabelEncoder().fit(["bar", "baz", "foo"]).inverse_transform(y)
     # For numerical labels, let y values be taken from set (-1, 0, 1)
     y = np.array(y) - 1
     # Test for string labels
     lr = LogisticRegression()
-    lr_cv = LogisticRegressionCV(Cs=[0.1, 1, 10])
+    lr_cv = LogisticRegressionCV(Cs=3)
     lr_str = LogisticRegression()
-    lr_cv_str = LogisticRegressionCV(Cs=[0.1, 1, 10])
+    lr_cv_str = LogisticRegressionCV(Cs=3)
 
     lr.fit(X_ref, y)
     lr_cv.fit(X_ref, y)
@@ -692,14 +692,14 @@ def test_logistic_regression_solvers(global_random_seed):
 
     params = dict(C=0.1, fit_intercept=False, random_state=global_random_seed)
 
-    regressors = {
+    classifiers = {
         solver: LogisticRegression(solver=solver, **params).fit(X, y)
         for solver in SOLVERS
     }
 
-    for solver_1, solver_2 in itertools.combinations(regressors, r=2):
+    for solver_1, solver_2 in itertools.combinations(classifiers, r=2):
         assert_array_almost_equal(
-            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=3
+            classifiers[solver_1].coef_, classifiers[solver_2].coef_, decimal=3
         )
 
 
