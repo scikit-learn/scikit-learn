@@ -1708,6 +1708,42 @@ def test_ocsvm_vs_sgdocsvm():
     assert corrcoef >= 0.9
 
 
+def test_sgd_oneclass_convergence():
+    # Check that the optimization does not end early, that the stopping criterion is working
+    for nu in [0.1, 0.5, 0.9]:
+        model = SGDOneClassSVM(nu=nu, max_iter=100, tol=1e-3, learning_rate="constant", eta0=1e-3) # no need for large max_iter
+        model.fit(iris.data)
+        assert model.n_iter_ > 6 # 6 is the minimal number of iterations, after which optimization can stop
+
+
+def test_sgd_oneclass_vs_linear_oneclass():
+    # Test convergence vs. liblinear OCSVM with kernel="linear"
+    for nu in [0.1, 0.5, 0.9]:
+        model = SGDOneClassSVM(nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3) # allow enough iterations, small dataset
+        model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6) # reference model
+        model.fit(iris.data)
+        model_ref.fit(iris.data)
+
+        preds = model.predict(iris.data)
+        dec_fn = model.decision_function(iris.data)
+
+        preds_ref = model_ref.predict(iris.data)
+        dec_fn_ref = model_ref.decision_function(iris.data)
+
+        dec_fn_corr = np.corrcoef(dec_fn, dec_fn_ref)[0, 1]
+        preds_corr = np.corrcoef(preds, preds_ref)[0, 1]
+        # check weights and intercept concatenated together for correlation
+        coef_corr = np.corrcoef( np.concatenate([model.coef_, -model.offset_]), np.concatenate([model_ref.coef_.flatten(), model_ref.intercept_]) )[0, 1]
+        # share of predicted 1's
+        share_ones = (preds == 1).sum() / len(preds)
+        share_ones_ref = (preds_ref == 1).sum() / len(preds_ref)
+
+        assert dec_fn_corr > 0.99
+        assert preds_corr > 0.95
+        assert coef_corr > 0.99
+        assert_allclose( 1 - share_ones, nu )
+
+
 def test_l1_ratio():
     # Test if l1 ratio extremes match L1 and L2 penalty settings.
     X, y = datasets.make_classification(
