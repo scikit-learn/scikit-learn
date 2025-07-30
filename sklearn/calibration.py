@@ -1084,8 +1084,8 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             `np.log(p + eps)`.
 
             Binary decision function outputs (1D) will be converted to two-class
-            logits of the form (-x, x). For shapes of the form (n_samples, 1), the same
-            process applies.
+            logits of the form (-x, x). For shapes of the form (n_samples, 1), the
+            same process applies.
 
         y : array-like of shape (n_samples,)
             Training target.
@@ -1213,8 +1213,8 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             `np.log(p + eps)`.
 
             Binary decision function outputs (1D) will be converted to two-class
-            logits of the form (-x, x). For shapes of the form (n_samples, 1), the same
-            process applies.
+            logits of the form (-x, x). For shapes of the form (n_samples, 1), the
+            same process applies.
 
         Returns
         -------
