@@ -373,15 +373,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
                 predictions = predictions.reshape(-1, 1)
 
-                if self.method == "temperature" and len(self.classes_) == 2:
-                    response_method_name = _check_response_method(
-                        self.estimator,
-                        ["decision_function", "predict_proba"],
-                    ).__name__
-
-                    if response_method_name == "predict_proba":
-                        predictions = np.hstack([1 - predictions, predictions])
-
             if sample_weight is not None:
                 # Check that the sample_weight dtype is consistent with the predictions
                 # to avoid unintentional upcasts.
@@ -497,9 +488,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                             pos_label=self.classes_[1],
                         )
                     predictions = predictions.reshape(-1, 1)
-
-                    if self.method == "temperature" and method_name == "predict_proba":
-                        predictions = np.hstack([1 - predictions, predictions])
 
                 if sample_weight is not None:
                     # Check that the sample_weight dtype is consistent with the
@@ -673,16 +661,6 @@ def _fit_classifier_calibrator_pair(
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         predictions = predictions.reshape(-1, 1)
 
-        if method == "temperature":
-            if len(classes) == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-
-                if response_method_name == "predict_proba":
-                    predictions = np.hstack([1 - predictions, predictions])
-
     if sample_weight is not None:
         # Check that the sample_weight dtype is consistent with the predictions
         # to avoid unintentional upcasts.
@@ -743,7 +721,11 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        calibrator = _TemperatureScaling()
+        response_method_name = _check_response_method(
+            clf,
+            ["decision_function", "predict_proba"],
+        ).__name__
+        calibrator = _TemperatureScaling(response_method_name)
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
@@ -806,16 +788,6 @@ class _CalibratedClassifier:
             predictions = predictions.reshape(-1, 1)
 
         n_classes = len(self.classes)
-
-        if self.method == "temperature":
-            if n_classes == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    self.estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-
-                if response_method_name == "predict_proba":
-                    predictions = np.hstack([1 - predictions, predictions])
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.estimator.classes_)
@@ -956,7 +928,11 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_to_logits(decision_values, eps=1e-12):
+def _convert_to_logits(
+    decision_values,
+    eps=1e-12,
+    response_method_name="decision_function",
+):
     """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
@@ -970,6 +946,7 @@ def _convert_to_logits(decision_values, eps=1e-12):
     ----------
     decision_values : array-like of shape (n_samples,) or (n_samples, 1) \
         or (n_samples, n_classes).
+
         The decision function values or probability estimates.
         - If shape is (n_samples,), converts to (n_samples, 2) with (-x, x).
         - If shape is (n_samples, 1), converts to (n_samples, 2) with (-x, x).
@@ -979,29 +956,41 @@ def _convert_to_logits(decision_values, eps=1e-12):
     eps : float
         Small positive value added to avoid log(0).
 
+    response_method_name : {"decision_function", "predict_proba"} \
+        default="decision_function"
+
+        Indicates the source of `decision_values`. Must be either
+        'decision_function' or 'predict_proba'.
+
     Returns
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
+    if response_method_name not in (
+        "decision_function",
+        "predict_proba",
+    ):  # pragma: no cover
+        raise ValueError(
+            f"Invalid `response_method_name` {response_method_name}. "
+            "Must be either 'decision_function' or 'predict_proba'."
+        )
+
     decision_values = check_array(
         decision_values, dtype=[np.float64, np.float32], ensure_2d=False
     )
-    if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
-        # Check if it is the output of predict_proba
-        entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
-        row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
 
-        if entries_zero_to_one and row_sums_to_one:
-            logits = np.log(decision_values + eps)
-        else:
-            logits = decision_values
-
-    elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        logits = np.hstack([-decision_values, decision_values])
-
-    elif decision_values.ndim == 1:
+    if decision_values.ndim == 1:
         decision_values = decision_values.reshape(-1, 1)
-        logits = np.hstack([-decision_values, decision_values])
+
+    if response_method_name == "predict_proba":
+        if decision_values.shape[-1] == 1:
+            decision_values = np.hstack([1 - decision_values, decision_values])
+        logits = np.log(decision_values + eps)
+
+    else:
+        if decision_values.shape[-1] == 1:
+            decision_values = np.hstack([-decision_values, decision_values])
+        logits = decision_values
 
     return logits
 
@@ -1066,9 +1055,18 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
+    response_method_name : {"decision_function", "predict_proba"} \
+        default="decision_function"
+
+        Indicates the source of the inputs to `.fit` and `.predict`.
+        Must be either 'decision_function' or 'predict_proba'.
+
     beta_ : float
         The optimized inverse temperature.
     """
+
+    def __init__(self, response_method_name="decision_function"):
+        self.response_method_name = response_method_name
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
@@ -1132,7 +1130,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             """
             check_consistent_length(predictions, labels)
             logits = _convert_to_logits(
-                predictions
+                predictions, response_method_name=self.response_method_name
             )  # guarantees np.float64 or np.float32
 
             dtype_ = logits.dtype
@@ -1221,7 +1219,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         X_ : ndarray of shape (n_samples, n_classes)
              The predicted data.
         """
-        logits = _convert_to_logits(X)
+        logits = _convert_to_logits(X, response_method_name=self.response_method_name)
         return softmax(self.beta_ * logits)
 
     def __sklearn_tags__(self):
