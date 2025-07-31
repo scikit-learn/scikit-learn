@@ -322,6 +322,9 @@ can increase the chances of the label being removed:
 - improve the diff to remove noise and unrelated changes
 - improve the issue or pull request title to be more descriptive
 - self review your code, especially if :ref:`you used AI tools to generate it <automated_contributions_policy>`
+- refrain from opening PRs that paraphrase existing code or documentation
+  without actually improving the correctness, clarity or educational
+  value of the existing code or documentation.
 
 
 .. _new_algorithms_inclusion_criteria:
