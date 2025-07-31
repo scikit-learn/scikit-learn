@@ -1,4 +1,6 @@
-.estimator-table summary {
+.estimator-table summary,
+.method-table summary
+{
     padding: .5rem;
     font-family: monospace;
     cursor: pointer;
@@ -10,25 +12,22 @@
     padding-bottom: 0.3rem;
 }
 
-.estimator-table .parameters-table,
-.estimator-table .methodos-table {
+.estimator-table {
     margin-left: auto !important;
     margin-right: auto !important;
 }
 
-.estimator-table .parameters-table tr:nth-child(odd),
-.estimator-table .methods-table tr:nth-child(odd)
+.estimator-table tr:nth-child(odd)
  {
     background-color: #fff;
 }
 
-.estimator-table .parameters-table tr:nth-child(even),
-.estimator-table .methods-table tr:nth-child(even) {
+.estimator-table tr:nth-child(even)
+ {
     background-color: #f6f6f6;
 }
 
-.estimator-table .parameters-table tr:hover,
-.estimator-table .methods-table tr:hover
+.estimator-table tr:hover
  {
     background-color: #e0e0e0;
 }
@@ -66,4 +65,13 @@
     width: 14px;
     height: 14px;
     cursor: pointer;
+}
+
+.methods-name {
+    border-color: transparent;
+}
+
+.methods-signature {
+    text-align: left;
+    border-left: none;
 }
