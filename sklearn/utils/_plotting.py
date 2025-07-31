@@ -3,6 +3,7 @@
 import warnings
 from collections.abc import Mapping
 from functools import partial
+
 import numpy as np
 
 from . import check_consistent_length

@@ -16,6 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import _safe_indexing, shuffle
 from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils.tests.test_plotting import _simulate_mouse_event
 
 
 @pytest.fixture(scope="module")
@@ -201,6 +202,7 @@ def test_validate_plot_params(pyplot):
     """Check `_validate_plot_params` returns the correct variables."""
     fpr = np.array([0, 0.5, 1])
     tpr = [np.array([0, 0.5, 1])]
+    thresholds = np.array([1, 0.5, 0])
     roc_auc = None
     name = "test_curve"
 
@@ -208,18 +210,21 @@ def test_validate_plot_params(pyplot):
     display = RocCurveDisplay(
         fpr=fpr,
         tpr=tpr,
+        thresholds=thresholds,
         roc_auc=roc_auc,
         name=name,
         pos_label=None,
     )
-    fpr_out, tpr_out, roc_auc_out, name_out = display._validate_plot_params(
-        ax=None, name=None
+    fpr_out, tpr_out, thresholds_out, roc_auc_out, name_out = (
+        display._validate_plot_params(ax=None, name=None)
     )
 
     assert isinstance(fpr_out, list)
     assert isinstance(tpr_out, list)
+    assert isinstance(thresholds_out, list)
     assert len(fpr_out) == 1
     assert len(tpr_out) == 1
+    assert len(thresholds_out) == 1
     assert roc_auc_out is None
     assert name_out == ["test_curve"]
 
@@ -980,3 +985,21 @@ def test_plot_roc_curve_despine(pyplot, data_binary, despine, constructor_name):
     if despine:
         for s in ["bottom", "left"]:
             assert display.ax_.spines[s].get_bounds() == (0, 1)
+
+
+def test_roc_curve_display_line_tooltip(pyplot, data_binary):
+    """Test the line tooltip on a Roc curve."""
+    X, y = data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    display = RocCurveDisplay.from_estimator(lr, X, y)
+
+    assert hasattr(display, "line_tooltip_")
+
+    # simulate a mouse event on the line
+    x, y = display.fpr[10], display.tpr[10]
+    _simulate_mouse_event(display, x, y)
+
+    assert display.line_tooltip_.get_visible()
+    text = display.line_tooltip_.get_text()
+    assert all(name in text for name in ("FPR", "TPR", "threshold"))

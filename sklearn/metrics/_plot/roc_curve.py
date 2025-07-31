@@ -7,12 +7,12 @@ import numpy as np
 from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
-    _LineTooltipMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
     _deprecate_estimator_name,
     _deprecate_y_pred_parameter,
     _despine,
+    _LineTooltipMixin,
     _validate_style_kwargs,
 )
 from ...utils._response import _get_response_values_binary
