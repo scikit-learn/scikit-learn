@@ -346,21 +346,34 @@ def test_weighted_percentile_all_nan_column():
     reason="np.quantile only accepts weights since version 2.0",
 )
 @pytest.mark.parametrize("percentile", [66, 10, 50])
-def test_weighted_percentile_like_numpy_quantile(percentile, global_random_seed):
-    """Check `_weighted_percentile` equivalent to `np.quantile` with weights.
-
-    Note currently only "inverted_cdf" method accepts weights.
-    """
+@pytest.mark.parametrize("average", [False, True])
+@pytest.mark.parametrize("uniform_weight", [False, True])
+def test_weighted_percentile_like_numpy_quantile(
+    percentile, average, uniform_weight, global_random_seed
+):
+    """Check `_weighted_percentile` equivalent to `np.quantile` with weights."""
+    # TODO: remove the following skip once no longer applicable.
+    if average and not uniform_weight:
+        pytest.skip(
+            "np.quantile does not support weights with method='averaged_inverted_cdf'"
+        )
 
     rng = np.random.RandomState(global_random_seed)
     array = rng.rand(10, 100)
-    sample_weight = rng.randint(1, 6, size=(10, 100))
+    if uniform_weight:
+        sample_weight = np.ones_like(array) * rng.randint(1, 6, size=1)
+    else:
+        sample_weight = rng.randint(1, 6, size=(10, 100))
 
     percentile_weighted_percentile = _weighted_percentile(
-        array, sample_weight, percentile
+        array, sample_weight, percentile, average=average
     )
     percentile_numpy_quantile = np.quantile(
-        array, percentile / 100, weights=sample_weight, axis=0, method="inverted_cdf"
+        array,
+        percentile / 100,
+        weights=sample_weight if not uniform_weight else None,
+        method="averaged_inverted_cdf" if average else "inverted_cdf",
+        axis=0,
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_quantile)
@@ -371,25 +384,40 @@ def test_weighted_percentile_like_numpy_quantile(percentile, global_random_seed)
     reason="np.nanquantile only accepts weights since version 2.0",
 )
 @pytest.mark.parametrize("percentile", [66, 10, 50])
-def test_weighted_percentile_like_numpy_nanquantile(percentile, global_random_seed):
-    """Check `_weighted_percentile` equivalent to `np.nanquantile` with weights.
+@pytest.mark.parametrize("average", [False, True])
+@pytest.mark.parametrize("uniform_weight", [False, True])
+def test_weighted_percentile_like_numpy_nanquantile(
+    percentile, average, uniform_weight, global_random_seed
+):
+    """Check `_weighted_percentile` equivalent to `np.nanquantile` with weights."""
+    # TODO: remove the following skip once no longer applicable.
+    if average and not uniform_weight:
+        pytest.skip(
+            "np.nanquantile does not support weights with "
+            "method='averaged_inverted_cdf'"
+        )
 
-    Note currently only "inverted_cdf" method accepts weights.
-    """
     rng = np.random.RandomState(global_random_seed)
     array_with_nans = rng.rand(10, 100)
     array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
-    sample_weight = rng.randint(1, 6, size=(10, 100))
+    if uniform_weight:
+        sample_weight = np.ones_like(array_with_nans) * rng.randint(
+            1,
+            6,
+            size=1,
+        )
+    else:
+        sample_weight = rng.randint(1, 6, size=(10, 100))
 
     percentile_weighted_percentile = _weighted_percentile(
-        array_with_nans, sample_weight, percentile
+        array_with_nans, sample_weight, percentile, average=average
     )
     percentile_numpy_nanquantile = np.nanquantile(
         array_with_nans,
         percentile / 100,
-        weights=sample_weight,
+        weights=sample_weight if not uniform_weight else None,
+        method="averaged_inverted_cdf" if average else "inverted_cdf",
         axis=0,
-        method="inverted_cdf",
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_nanquantile)
