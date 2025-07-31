@@ -358,7 +358,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                 loss="epsilon_insensitive",
                 penalty=None,
                 learning_rate="pa1",  # or "pa2"
-                PA_C = 1.0  # for parameter C
+                PA_C=1.0,  # for parameter C
             )
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
