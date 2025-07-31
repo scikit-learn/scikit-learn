@@ -1268,6 +1268,7 @@ class SGDClassifier(BaseSGDClassifier):
             StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
+        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
@@ -2084,6 +2085,7 @@ class SGDRegressor(BaseSGDRegressor):
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
+        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
