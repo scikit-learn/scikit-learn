@@ -3,13 +3,13 @@
 
 from collections import Counter
 
-from ...utils._plotting import (
+from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
+from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
-from .._ranking import average_precision_score, precision_recall_curve
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):

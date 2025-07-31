@@ -12,11 +12,11 @@ import numpy as np
 import scipy.linalg
 import scipy.optimize
 
-from ..._loss.loss import HalfSquaredError
-from ...exceptions import ConvergenceWarning
-from ...utils.fixes import _get_additional_lbfgs_options_dict
-from ...utils.optimize import _check_optimize_result
-from .._linear_loss import LinearModelLoss
+from sklearn._loss.loss import HalfSquaredError
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
 
 
 class NewtonSolver(ABC):

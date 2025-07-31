@@ -15,15 +15,15 @@ from scipy import linalg, optimize, sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
     _fit_context,
 )
-from ..utils import check_array, check_random_state
-from ..utils._array_api import (
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     get_namespace,
@@ -31,17 +31,21 @@ from ..utils._array_api import (
     indexing_dtype,
     supported_float_dtypes,
 )
-from ..utils._param_validation import Interval
-from ..utils._seq_dataset import (
+from sklearn.utils._param_validation import Interval
+from sklearn.utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
     CSRDataset32,
     CSRDataset64,
 )
-from ..utils.extmath import safe_sparse_dot
-from ..utils.parallel import Parallel, delayed
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.

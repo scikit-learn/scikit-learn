@@ -1271,7 +1271,7 @@ Suppose the function ``zero_one`` is renamed to ``zero_one_loss``, we add the de
 :class:`utils.deprecated` to ``zero_one`` and call ``zero_one_loss`` from that
 function::
 
-    from ..utils import deprecated
+    from sklearn.utils import deprecated
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation

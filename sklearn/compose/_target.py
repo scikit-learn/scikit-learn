@@ -5,20 +5,20 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
-from ..exceptions import NotFittedError
-from ..linear_model import LinearRegression
-from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _safe_indexing, check_array
-from ..utils._metadata_requests import (
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch, _safe_indexing, check_array
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import HasMethods
-from ..utils._tags import get_tags
-from ..utils.validation import check_is_fitted
+from sklearn.utils._param_validation import HasMethods
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 

@@ -11,20 +11,20 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, as_float_array, check_array
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.metadata_routing import (
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, _pre_fit
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, as_float_array, check_array
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
-from ._base import LinearModel, _pre_fit
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"

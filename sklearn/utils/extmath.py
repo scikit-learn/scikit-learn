@@ -12,8 +12,7 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import (
+from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
@@ -23,8 +22,9 @@ from ._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array, check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.sparsefuncs_fast import csr_row_norms
+from sklearn.utils.validation import check_array, check_random_state
 
 
 def squared_norm(x):
