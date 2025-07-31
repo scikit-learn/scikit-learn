@@ -105,6 +105,14 @@ from sklearn.utils.validation import (
 )
 
 
+def _mark_thread_unsafe_if_pytest_imported(f):
+    pytest = sys.modules.get("pytest")
+    if pytest is not None:
+        return pytest.mark.thread_unsafe(f)
+    else:
+        return f
+
+
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
 
@@ -799,6 +807,10 @@ def test_check_estimator_not_fail_fast():
     assert any(item["status"] == "passed" for item in check_results)
 
 
+# Some estimator checks rely on warnings in deep functions calls. This is not
+# automatically detected by pytest-run-parallel shallow AST inspection, so we
+# need to mark the test function as thread-unsafe.
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -991,6 +1003,10 @@ def test_check_no_attributes_set_in_init():
         )
 
 
+# Some estimator checks rely on warnings in deep functions calls. This is not
+# automatically detected by pytest-run-parallel shallow AST inspection, so we
+# need to mark the test function as thread-unsafe.
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
     # kernel or metric
