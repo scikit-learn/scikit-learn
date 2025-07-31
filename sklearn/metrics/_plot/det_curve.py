@@ -4,11 +4,11 @@
 import numpy as np
 import scipy as sp
 
-from ...utils._plotting import (
+from sklearn.metrics._ranking import det_curve
+from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _deprecate_y_pred_parameter,
 )
-from .._ranking import det_curve
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):

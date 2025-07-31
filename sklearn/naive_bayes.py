@@ -14,16 +14,12 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import (
-    BaseEstimator,
-    ClassifierMixin,
-    _fit_context,
-)
-from .preprocessing import LabelBinarizer, binarize, label_binarize
-from .utils._param_validation import Interval
-from .utils.extmath import safe_sparse_dot
-from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import (
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
+from sklearn.preprocessing import LabelBinarizer, binarize, label_binarize
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.validation import (
     _check_n_features,
     _check_sample_weight,
     check_is_fitted,
