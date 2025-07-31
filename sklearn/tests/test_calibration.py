@@ -492,25 +492,18 @@ def test_temperature_scaling(n_classes, ensemble):
         # For Logistic Regression, the optimal temperature should be close to 1.0
         # on the training set.
         y_scores_train = clf.predict_proba(X_train)
-        ts = _TemperatureScaling(response_method_name="predict_proba").fit(
-            y_scores_train, y_train
-        )
+        ts = _TemperatureScaling().fit(y_scores_train, y_train)
         assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
 
 
-@pytest.mark.parametrize("response_method_name", ["decision_function", "predict_proba"])
-def test_temperature_scaling_input_validation(global_dtype, response_method_name):
+def test_temperature_scaling_input_validation(global_dtype):
     # Check that _TemperatureScaling can handle 2d-array with only 1 feature
-    if response_method_name == "decision_function":
-        X = np.arange(10)
-    else:
-        X = np.random.rand(10)
-    X = X.astype(global_dtype)
+    X = np.arange(10).astype(global_dtype)
     X_2d = X.reshape(-1, 1)
     y = np.random.randint(0, 2, size=X.shape[0])
 
-    ts = _TemperatureScaling(response_method_name=response_method_name).fit(X, y)
-    ts_2d = _TemperatureScaling(response_method_name=response_method_name).fit(X_2d, y)
+    ts = _TemperatureScaling().fit(X, y)
+    ts_2d = _TemperatureScaling().fit(X_2d, y)
 
     assert get_tags(ts) == get_tags(ts_2d)
 
