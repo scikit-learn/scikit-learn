@@ -328,6 +328,9 @@ class _LineTooltipMixin:
             if self.line_tooltip_.get_visible():
                 self.line_tooltip_.set_visible(False)
 
+        # Loop through all line tooltips contained the axes and hide all but one.
+        # This is necessary in addition to the loop over the display lines above to
+        # account for the case when multiple display instances share the same axes.
         found_visible = False
         for child in self.ax_.get_children():
             if hasattr(child, "_skl_line_tooltip") and child.get_visible():
