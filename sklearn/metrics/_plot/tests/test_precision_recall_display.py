@@ -405,7 +405,7 @@ def test_estimator_name_deprecation(pyplot):
     precision = np.array([1, 0.5, 0])
     recall = np.array([0, 0.5, 1])
 
-    with pytest.warns(FutureWarning, match="estimator_name was deprecated in 1.7"):
+    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in 1.7"):
         display = PrecisionRecallDisplay(
             precision,
             recall,
