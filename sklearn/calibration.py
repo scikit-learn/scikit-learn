@@ -721,14 +721,11 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if len(classes) == 2 and predictions.shape[-1] == 1:
-            response_method_name = _check_response_method(
-                clf,
-                ["decision_function", "predict_proba"],
-            ).__name__
-            if response_method_name == "predict_proba":
-                predictions = np.hstack([1 - predictions, predictions])
-        calibrator = _TemperatureScaling()
+        response_method_name = _check_response_method(
+            clf,
+            ["decision_function", "predict_proba"],
+        ).__name__
+        calibrator = _TemperatureScaling(response_method_name=response_method_name)
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
@@ -819,13 +816,6 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
-            if n_classes == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    self.estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-                if response_method_name == "predict_proba":
-                    predictions = np.hstack([1 - predictions, predictions])
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
@@ -938,7 +928,9 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_to_logits(decision_values, eps=1e-12):
+def _convert_to_logits(
+    decision_values, eps=1e-12, response_method_name="decision_function"
+):
     """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
@@ -962,29 +954,51 @@ def _convert_to_logits(decision_values, eps=1e-12):
     eps : float
         Small positive value added to avoid log(0).
 
+    response_method_name : {"decision_function", "predict_proba"} \
+                          default="decision_function"
+
+        Indicates the source of `decision_values`. Must be either
+        'decision_function' or 'predict_proba'.
+
     Returns
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
+    if response_method_name not in (
+        "decision_function",
+        "predict_proba",
+    ):  # pragma: no cover
+        raise ValueError(
+            f"Invalid `response_method_name` {response_method_name}. "
+            "Must be either 'decision_function' or 'predict_proba'."
+        )
+
     decision_values = check_array(
         decision_values, dtype=[np.float64, np.float32], ensure_2d=False
     )
-    if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
+
+    if decision_values.ndim == 1:
+        decision_values = decision_values.reshape(-1, 1)
+
+    if response_method_name == "decision_function":
+        if decision_values.shape[-1] == 1:
+            logits = np.hstack([-decision_values, decision_values])
+        else:
+            logits = decision_values
+    else:  # Output of predict_proba
+        if decision_values.shape[-1] == 1:
+            decision_values = np.hstack([1 - decision_values, decision_values])
+
         # Check if it is the output of predict_proba
         entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
         row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
-
         if entries_zero_to_one and row_sums_to_one:
             logits = np.log(decision_values + eps)
-        else:
-            logits = decision_values
-
-    elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        logits = np.hstack([-decision_values, decision_values])
-
-    elif decision_values.ndim == 1:
-        decision_values = decision_values.reshape(-1, 1)
-        logits = np.hstack([-decision_values, decision_values])
+        else:  # pragma: no cover
+            raise ValueError(
+                f"Invalid `decision_values` for {response_method_name=}. "
+                "Expected probabilities, like the output of 'predict_proba'."
+            )
 
     return logits
 
@@ -1047,11 +1061,22 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 class _TemperatureScaling(RegressorMixin, BaseEstimator):
     """Temperature scaling model.
 
+    Parameters
+    ----------
+    response_method_name : {"decision_function", "predict_proba"} \
+                          default="decision_function"
+
+        Indicates the source of the inputs to `.fit` and `.predict`.
+        Must be either 'decision_function' or 'predict_proba'.
+
     Attributes
     ----------
     beta_ : float
         The optimized inverse temperature.
     """
+
+    def __init__(self, response_method_name="decision_function"):
+        self.response_method_name = response_method_name
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
@@ -1083,7 +1108,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         """
         X, y = indexable(X, y)
         check_consistent_length(X, y)
-        logits = _convert_to_logits(X)  # guarantees np.float64 or np.float32
+        logits = _convert_to_logits(
+            X, response_method_name=self.response_method_name
+        )  # guarantees np.float64 or np.float32
 
         dtype_ = logits.dtype
         labels = column_or_1d(y, dtype=dtype_)
@@ -1167,7 +1194,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         X_ : ndarray of shape (n_samples, n_classes)
              The predicted data.
         """
-        logits = _convert_to_logits(X)
+        logits = _convert_to_logits(X, response_method_name=self.response_method_name)
         return softmax(self.beta_ * logits)
 
     def __sklearn_tags__(self):
