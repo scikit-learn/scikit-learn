@@ -305,7 +305,7 @@ def test_regressor_undefined_methods():
 def test_class_deprecation(Estimator):
     # Check that we raise the proper deprecation warning.
 
-    with pytest.warns(FutureWarning, match=f"Class {Estimator.__name__} is deprecated"):
+    with pytest.warns(FutureWarning, match="Class PassiveAggressive.+is deprecated"):
         Estimator()
 
 
