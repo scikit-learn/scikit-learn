@@ -1367,10 +1367,9 @@ Perceptron, they include a regularization parameter ``PA_C``.
 
 For classification,
 :class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", PA_C=1.0)` can
-be used for PA-I or with ``learning_rate="pa2"`` for (PA-II). For regression,
+be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
 :class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
-PA_C=1.0)` can be used for PA-I or
-``loss='squared_epsilon_insensitive'`` (PA-II).
+PA_C=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
