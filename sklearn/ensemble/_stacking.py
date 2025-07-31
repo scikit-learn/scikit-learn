@@ -10,7 +10,7 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sparse
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     TransformerMixin,
@@ -19,31 +19,31 @@ from ..base import (
     is_classifier,
     is_regressor,
 )
-from ..exceptions import NotFittedError
-from ..linear_model import LogisticRegression, RidgeCV
-from ..model_selection import check_cv, cross_val_predict
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch
-from ..utils._param_validation import HasMethods, StrOptions
-from ..utils._repr_html.estimator import _VisualBlock
-from ..utils.metadata_routing import (
+from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression, RidgeCV
+from sklearn.model_selection import check_cv, cross_val_predict
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import HasMethods, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_response_method,
     _estimator_has,
     check_is_fitted,
     column_or_1d,
 )
-from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
