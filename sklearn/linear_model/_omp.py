@@ -24,7 +24,7 @@ from sklearn.utils.metadata_routing import (
     process_routing,
 )
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import validate_data
+from sklearn.utils.validation import FLOAT_DTYPES, validate_data
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -769,7 +769,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        FLOAT_DTYPES = (np.float64, np.float32, np.float16)
         X, y = validate_data(
             self, X, y, multi_output=True, y_numeric=True, dtype=FLOAT_DTYPES
         )
