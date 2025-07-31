@@ -10,20 +10,26 @@
     padding-bottom: 0.3rem;
 }
 
-.estimator-table .parameters-table {
+.estimator-table .parameters-table,
+.estimator-table .methodos-table {
     margin-left: auto !important;
     margin-right: auto !important;
 }
 
-.estimator-table .parameters-table tr:nth-child(odd) {
+.estimator-table .parameters-table tr:nth-child(odd),
+.estimator-table .methods-table tr:nth-child(odd)
+ {
     background-color: #fff;
 }
 
-.estimator-table .parameters-table tr:nth-child(even) {
+.estimator-table .parameters-table tr:nth-child(even),
+.estimator-table .methods-table tr:nth-child(even) {
     background-color: #f6f6f6;
 }
 
-.estimator-table .parameters-table tr:hover {
+.estimator-table .parameters-table tr:hover,
+.estimator-table .methods-table tr:hover
+ {
     background-color: #e0e0e0;
 }
 

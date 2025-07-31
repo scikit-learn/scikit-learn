@@ -88,7 +88,7 @@ def _methods_html_repr(methods):
        <div class="estimator-table">
            <details>
                <summary>Methods</summary>
-               <table class="body-table">
+               <table class="methods-table">
                  <tbody>
                    {rows}
                  </tbody>
@@ -97,9 +97,8 @@ def _methods_html_repr(methods):
        </div>
     """
     ROW_TEMPLATE = """
-       <tr class="default">
-           <td class="param">{name}&nbsp;</td>
-           <td class="value">{signature}</td>
+       <tr class="methods">
+           <td >{name}&nbsp; {signature}</td>
            <td><a class="sk-estimator-doc-link
                                  {doc_link}
                                 </a>
