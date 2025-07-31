@@ -253,12 +253,14 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
+        # Baseline: performance of a random classifier — diagonal from (0, 0) to (1, 1)
+        # A random classifier achieves TPR = FPR at all thresholds, resulting in AUC = 0.5
         default_chance_level_line_kw = {
-            "label": "Chance level (AUC = 0.5)",
+            "label": "Baseline (AUC = 0.5)",
             "color": "k",
             "linestyle": "--",
         }
-
+        
         if chance_level_kw is None:
             chance_level_kw = {}
 
@@ -288,6 +290,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         if plot_chance_level:
+            # Plot diagonal line: baseline performance of a random classifier
             (self.chance_level_,) = self.ax_.plot((0, 1), (0, 1), **chance_level_kw)
         else:
             self.chance_level_ = None
@@ -621,7 +624,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         curve_kwargs=None,
         plot_chance_level=False,
-        chance_level_kwargs=None,
+        chance_level_kw=None,
         despine=False,
     ):
         """Create a multi-fold ROC curve display given cross-validation results.
@@ -687,7 +690,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level : bool, default=False
             Whether to plot the chance level.
 
-        chance_level_kwargs : dict, default=None
+        chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the chance level line.
 
@@ -771,6 +774,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             ax=ax,
             curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kwargs,
+            chance_level_kw=chance_level_kw,
             despine=despine,
         )
