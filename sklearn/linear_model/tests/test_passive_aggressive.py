@@ -26,6 +26,7 @@ X = iris.data[indices]
 y = iris.target[indices]
 
 
+# TODO(1.10): Move to test_sgd.py
 class MyPassiveAggressive(ClassifierMixin):
     def __init__(
         self,
@@ -127,6 +128,7 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
+# TODO(1.10): Move to test_sgd.py
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("loss", ("hinge", "squared_hinge"))
@@ -263,6 +265,7 @@ def test_regressor_partial_fit(csr_container, average):
         assert hasattr(reg, "_standard_coef")
 
 
+# TODO(1.10): Move to test_sgd.py
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("loss", ("epsilon_insensitive", "squared_epsilon_insensitive"))
@@ -287,7 +290,7 @@ def test_regressor_undefined_methods():
         reg.transform(X)
 
 
-# TODO(1.8): remove
+# TODO(1.10): remove
 @pytest.mark.parametrize(
     "Estimator", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
 )

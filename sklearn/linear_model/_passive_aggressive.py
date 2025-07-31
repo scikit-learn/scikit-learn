@@ -13,17 +13,18 @@ from sklearn.utils import deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 
 
-# TODO(1.8): Remove
+# TODO(1.10): Remove
 @deprecated(
-    "this deprecated in version 1.6 and will be removed in 1.8."
-    "Use `SGDClassifier` instead."
+    "this deprecated in version 1.8 and will be removed in 1.10."
+    "Use `SGDClassifier(loss='hinge', penalty=None, learning_rate='pa1', PA_C=1.0)` "
+    "instead."
 )
 class PassiveAggressiveClassifier(BaseSGDClassifier):
     """Passive Aggressive Classifier.
 
-    .. deprecated:: 1.6
-        The whole class `PassiveAggressiveClassifier` was deprecated in version 1.6
-        and will be removed in 1.8. Instead use::
+    .. deprecated:: 1.8
+        The whole class `PassiveAggressiveClassifier` was deprecated in version 1.8
+        and will be removed in 1.10. Instead use::
 
             clf = SGDClassifier(
                 loss="hinge",
@@ -336,17 +337,18 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         )
 
 
-# TODO(1.8): Remove
+# TODO(1.10): Remove
 @deprecated(
-    "this deprecated in version 1.6 and will be removed in 1.8."
-    "Use `SGDRegressor` instead."
+    "this deprecated in version 1.8 and will be removed in 1.10."
+    "Use `SGDRegressor(loss='epsilon_insensitive', penalty=None, learning_rate='pa1', "
+    "PA_C = 1.0)` instead."
 )
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor.
 
-    .. deprecated:: 1.6
-        The whole class `PassiveAggressiveRegressor` was deprecated in version 1.6
-        and will be removed in 1.8. Instead use::
+    .. deprecated:: 1.8
+        The whole class `PassiveAggressiveRegressor` was deprecated in version 1.8
+        and will be removed in 1.10. Instead use::
 
             reg = SGDRegressor(
                 loss="epsilon_insensitive",
