@@ -3748,8 +3748,7 @@ def d2_brier_score(
     pos_label=None,
     labels=None,
 ):
-    """
-    :math:`D^2` score function, fraction of Brier score explained.
+    """:math:`D^2` score function, fraction of Brier score explained.
 
     Best possible score is 1.0 and it can be negative because the model can
     be arbitrarily worse than the null model. The null model, also known as the
