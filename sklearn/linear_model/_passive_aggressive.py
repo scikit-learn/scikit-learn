@@ -24,7 +24,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     .. deprecated:: 1.8
         The whole class `PassiveAggressiveClassifier` was deprecated in version 1.8
-        and will be removed in 1.10. Instead use::
+        and will be removed in 1.10. Instead use:
+
+        .. code-block:: python
 
             clf = SGDClassifier(
                 loss="hinge",
@@ -348,7 +350,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     .. deprecated:: 1.8
         The whole class `PassiveAggressiveRegressor` was deprecated in version 1.8
-        and will be removed in 1.10. Instead use::
+        and will be removed in 1.10. Instead use:
+
+        .. code-block:: python
 
             reg = SGDRegressor(
                 loss="epsilon_insensitive",
