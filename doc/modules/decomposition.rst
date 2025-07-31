@@ -582,11 +582,6 @@ extracted from part of the image of a raccoon face looks like.
     :scale: 50%
 
 
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
-
-
 .. rubric:: References
 
 * `"Online dictionary learning for sparse coding"
@@ -630,6 +625,10 @@ does not fit into memory.
    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 .. _FA:
 
