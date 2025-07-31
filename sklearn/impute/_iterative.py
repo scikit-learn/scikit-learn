@@ -1025,6 +1025,8 @@ class IterativeImputer(_BaseImputer):
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=MethodMapping()
+            .add(callee="fit", caller="fit")
+            .add(callee="fit_transform", caller="fit_transform"),
         )
         return router
