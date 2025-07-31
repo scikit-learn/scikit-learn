@@ -806,6 +806,11 @@ Changelog
   both axes is set to be 1 to get a square plot.
   :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
 
+- |Enhancement| Standardized the `name` parameter in :class:`metrics.PrecisionRecallDisplay`
+  to match :class:`metrics.RocCurveDisplay`. Deprecated `estimator_name` with proper
+  warnings and compatibility.
+  :pr:`31861` by :user:`AishwaryaBadlani`.
+
 - |Enhancement| Added `neg_root_mean_squared_log_error_scorer` as scorer
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 

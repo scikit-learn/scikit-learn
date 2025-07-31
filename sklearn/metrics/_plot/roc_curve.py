@@ -254,13 +254,14 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         # Baseline: performance of a random classifier — diagonal from (0, 0) to (1, 1)
-        # A random classifier achieves TPR = FPR at all thresholds, resulting in AUC = 0.5
+        # A random classifier achieves TPR = FPR at all thresholds, resulting in
+        # AUC = 0.5
         default_chance_level_line_kw = {
             "label": "Baseline (AUC = 0.5)",
             "color": "k",
             "linestyle": "--",
         }
-        
+
         if chance_level_kw is None:
             chance_level_kw = {}
 

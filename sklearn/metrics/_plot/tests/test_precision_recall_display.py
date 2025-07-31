@@ -404,7 +404,7 @@ def test_estimator_name_deprecation(pyplot):
     """Check that using estimator_name parameter raises a deprecation warning."""
     precision = np.array([1, 0.5, 0])
     recall = np.array([0, 0.5, 1])
-    
+
     with pytest.warns(FutureWarning, match="estimator_name was deprecated in 1.7"):
         display = PrecisionRecallDisplay(
             precision,
@@ -412,7 +412,7 @@ def test_estimator_name_deprecation(pyplot):
             average_precision=0.8,
             estimator_name="deprecated_estimator",
         )
-    
+
     # Check that the name is set correctly despite deprecation
     assert display.name == "deprecated_estimator"
     display.plot()

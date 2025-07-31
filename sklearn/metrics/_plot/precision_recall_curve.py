@@ -136,7 +136,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
-        # Handle deprecation: estimator_name -> name for consistency with RocCurveDisplay
+        # Handle deprecation: estimator_name -> name for consistency with
+        # RocCurveDisplay
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
         self.prevalence_pos_label = prevalence_pos_label
@@ -243,8 +244,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
-            # Baseline: expected precision of a random classifier — equals the prevalence of the positive class
-            # This represents the performance of a classifier that always predicts the positive class
+            # Baseline: expected precision of a random classifier — equals the
+            # prevalence of the positive class
+            # This represents the performance of a classifier that always
+            # predicts the positive class
             default_chance_level_line_kw = {
                 "label": f"Baseline (Precision = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
