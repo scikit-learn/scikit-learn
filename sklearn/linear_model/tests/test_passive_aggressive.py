@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from scipy.sparse import issparse
 
 from sklearn.base import ClassifierMixin
 from sklearn.datasets import load_iris, make_classification, make_regression
@@ -10,10 +11,11 @@ from sklearn.linear_model import (
     SGDClassifier,
     SGDRegressor,
 )
+from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
+from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     assert_almost_equal,
-    assert_array_almost_equal,
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -31,7 +33,7 @@ class MyPassiveAggressive(ClassifierMixin):
     def __init__(
         self,
         C=1.0,
-        epsilon=0.01,
+        epsilon=DEFAULT_EPSILON,
         loss="hinge",
         fit_intercept=True,
         n_iter=1,
@@ -47,6 +49,12 @@ class MyPassiveAggressive(ClassifierMixin):
         n_samples, n_features = X.shape
         self.w = np.zeros(n_features, dtype=np.float64)
         self.b = 0.0
+
+        # Mimic SGD's behavior for intercept
+        intercept_decay = 1.0
+        if issparse(X):
+            intercept_decay = SPARSE_INTERCEPT_DECAY
+            X = X.toarray()
 
         for t in range(self.n_iter):
             for i in range(n_samples):
@@ -70,7 +78,7 @@ class MyPassiveAggressive(ClassifierMixin):
 
                 self.w += step * X[i]
                 if self.fit_intercept:
-                    self.b += step
+                    self.b += intercept_decay * step
 
     def project(self, X):
         return np.dot(X, self.w) + self.b
@@ -135,15 +143,15 @@ def test_classifier_refit():
 def test_classifier_correctness(loss, csr_container):
     y_bin = y.copy()
     y_bin[y != 1] = -1
-
-    clf1 = MyPassiveAggressive(loss=loss, n_iter=2)
-    clf1.fit(X, y_bin)
-
     data = csr_container(X) if csr_container is not None else X
-    clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2, shuffle=False, tol=None)
+
+    clf1 = MyPassiveAggressive(loss=loss, n_iter=4)
+    clf1.fit(data, y_bin)
+
+    clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=4, shuffle=False, tol=None)
     clf2.fit(data, y_bin)
 
-    assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
+    assert_allclose(clf1.w, clf2.coef_.ravel())
 
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")
@@ -272,15 +280,15 @@ def test_regressor_partial_fit(csr_container, average):
 def test_regressor_correctness(loss, csr_container):
     y_bin = y.copy()
     y_bin[y != 1] = -1
-
-    reg1 = MyPassiveAggressive(loss=loss, n_iter=2)
-    reg1.fit(X, y_bin)
-
     data = csr_container(X) if csr_container is not None else X
-    reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2, shuffle=False)
+
+    reg1 = MyPassiveAggressive(loss=loss, n_iter=4)
+    reg1.fit(data, y_bin)
+
+    reg2 = PassiveAggressiveRegressor(loss=loss, max_iter=4, shuffle=False, tol=None)
     reg2.fit(data, y_bin)
 
-    assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
+    assert_allclose(reg1.w, reg2.coef_.ravel())
 
 
 @pytest.mark.filterwarnings("ignore::FutureWarning")

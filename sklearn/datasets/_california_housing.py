@@ -25,7 +25,7 @@ Statistics and Probability Letters, 33:291-297, 1997.
 import logging
 import tarfile
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
@@ -162,8 +162,6 @@ def fetch_california_housing(
     ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup']
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
 
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
