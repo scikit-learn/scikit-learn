@@ -616,7 +616,7 @@ def test_line_tooltip(n_curves, x_max, y_max, parametric, pyplot):
     assert display.line_tooltip_.get_text() == ""
     assert not display.line_tooltip_.get_visible()
 
-    # simulate a mouse event occuring on a line. Take the point in the middle of the
+    # simulate a mouse event occurring on a line. Take the point in the middle of the
     # last curve for instance
     x = display.x_vals[-1][50]
     y = display.y_vals[-1][50]
@@ -628,13 +628,13 @@ def test_line_tooltip(n_curves, x_max, y_max, parametric, pyplot):
     if parametric:
         assert "t" in text
 
-    # simulate a second event, not occuring on any line this time. None of these curves
+    # simulate a second event, not occurring on any line this time. None of these curves
     # ever touch the lower right corner
     _simulate_mouse_event(display, x_max, 0)
 
     assert not display.line_tooltip_.get_visible()
 
-    # simulate a third event occuring on several lines at once. (0, 0) belongs to all
+    # simulate a third event occurring on several lines at once. (0, 0) belongs to all
     # curves.
     _simulate_mouse_event(display, 0, 0)
 
@@ -656,19 +656,19 @@ def test_line_tooltip_multiple_displays(pyplot, y_max):
     assert not display.line_tooltip_.get_visible()
     assert not display2.line_tooltip_.get_visible()
 
-    # simulate a mouse event occuring on the first line
+    # simulate a mouse event occurring on the first line
     _simulate_mouse_event(display, 0.5, y_max)
 
     assert display.line_tooltip_.get_visible()
     assert not display2.line_tooltip_.get_visible()
 
-    # simulate a mouse event occuring on the second line
+    # simulate a mouse event occurring on the second line
     _simulate_mouse_event(display2, 1, y_max)
 
     assert not display.line_tooltip_.get_visible()
     assert display2.line_tooltip_.get_visible()
 
-    # simulate a mouse event occuring on both lines. Only 1 line tooltip is visible
+    # simulate a mouse event occurring on both lines. Only 1 line tooltip is visible
     _simulate_mouse_event(display, 0, 0)
 
     assert display.line_tooltip_.get_visible() != display2.line_tooltip_.get_visible()

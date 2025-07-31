@@ -254,8 +254,8 @@ class _BinaryClassifierCurveDisplayMixin:
 class _LineTooltipMixin:
     """Mixin class to add a tooltip to a line in a plot.
 
-    The tooltip displays 2 to 3 informations: the x value, the y value and an optional
-    t value for parametric curves (x(t), y(t)).
+    The tooltip displays 2 to 3 info: the x value, the y value and an optional t value
+    for parametric curves (x(t), y(t)).
     """
 
     def _add_line_tooltip(self, *, x_label, y_label, t_label=None, t_vals=None):
@@ -316,7 +316,7 @@ class _LineTooltipMixin:
         lines = _convert_to_list_leaving_none(self.line_)
         for i, line in enumerate(lines):
             contains, indexes = line.contains(event)
-            # stop at the first line on which the event occured
+            # stop at the first line on which the event occurred
             if contains:
                 idx = indexes["ind"][0]
                 x_vals, y_vals = line.get_data()
