@@ -3744,3 +3744,105 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     )
 
     return float(1 - (numerator / denominator))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_proba": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_brier_score(
+    y_true,
+    y_proba,
+    *,
+    sample_weight=None,
+    pos_label=None,
+    labels=None,
+):
+    """:math:`D^2` score function, fraction of Brier score explained.
+
+    Best possible score is 1.0 and it can be negative because the model can
+    be arbitrarily worse than the null model. The null model, also known as the
+    optimal intercept model, is a model that constantly predicts the per-class
+    proportions of `y_true`, disregarding the input features. The null model
+    gets a D^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score_classification>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+
+    y_proba : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Predicted probabilities. If `y_proba.shape = (n_samples,)`
+        the probabilities provided are assumed to be that of the
+        positive class. If `y_proba.shape = (n_samples, n_classes)`
+        the columns in `y_proba` are assumed to correspond to the
+        labels in alphabetical order, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. `pos_label` will be inferred in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    labels : array-like of shape (n_classes,), default=None
+        Class labels when `y_proba.shape = (n_samples, n_classes)`.
+        If not provided, labels will be inferred from `y_true`.
+
+    Returns
+    -------
+    d2 : float
+        The D^2 score.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier Skill Score (BSS)
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+    """
+    if _num_samples(y_proba) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # brier score of the fitted model
+    brier_score = brier_score_loss(
+        y_true=y_true,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+        labels=labels,
+    )
+
+    # brier score of the reference or baseline model
+    y_true = column_or_1d(y_true)
+    weights = _check_sample_weight(sample_weight, y_true)
+    labels = np.unique(y_true if labels is None else labels)
+
+    mask = y_true[None, :] == labels[:, None]
+    label_counts = (mask * weights).sum(axis=1)
+    y_prob = label_counts / weights.sum()
+    y_proba_ref = np.tile(y_prob, (len(y_true), 1))
+    brier_score_ref = brier_score_loss(
+        y_true=y_true,
+        y_proba=y_proba_ref,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+        labels=labels,
+    )
+
+    return 1 - brier_score / brier_score_ref
