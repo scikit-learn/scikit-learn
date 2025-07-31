@@ -15,7 +15,7 @@ from sklearn.utils._param_validation import Interval, StrOptions
 
 # TODO(1.10): Remove
 @deprecated(
-    "this deprecated in version 1.8 and will be removed in 1.10."
+    "this is deprecated in version 1.8 and will be removed in 1.10. "
     "Use `SGDClassifier(loss='hinge', penalty=None, learning_rate='pa1', PA_C=1.0)` "
     "instead."
 )
@@ -341,7 +341,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
 # TODO(1.10): Remove
 @deprecated(
-    "this deprecated in version 1.8 and will be removed in 1.10."
+    "this is deprecated in version 1.8 and will be removed in 1.10. "
     "Use `SGDRegressor(loss='epsilon_insensitive', penalty=None, learning_rate='pa1', "
     "PA_C = 1.0)` instead."
 )
