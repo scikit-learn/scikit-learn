@@ -180,7 +180,7 @@ def test_precision_recall_display_pipeline(pyplot, clf):
         PrecisionRecallDisplay.from_estimator(clf, X, y)
     clf.fit(X, y)
     display = PrecisionRecallDisplay.from_estimator(clf, X, y)
-    assert display.estimator_name == clf.__class__.__name__
+    assert display.name == clf.__class__.__name__
 
 
 def test_precision_recall_display_string_labels(pyplot):
@@ -198,7 +198,7 @@ def test_precision_recall_display_string_labels(pyplot):
     avg_prec = average_precision_score(y, y_score, pos_label=lr.classes_[1])
 
     assert display.average_precision == pytest.approx(avg_prec)
-    assert display.estimator_name == lr.__class__.__name__
+    assert display.name == lr.__class__.__name__
 
     err_msg = r"y_true takes value in {'benign', 'malignant'}"
     with pytest.raises(ValueError, match=err_msg):
@@ -211,14 +211,14 @@ def test_precision_recall_display_string_labels(pyplot):
 
 
 @pytest.mark.parametrize(
-    "average_precision, estimator_name, expected_label",
+    "average_precision, name, expected_label",
     [
         (0.9, None, "AP = 0.90"),
         (None, "my_est", "my_est"),
         (0.8, "my_est2", "my_est2 (AP = 0.80)"),
     ],
 )
-def test_default_labels(pyplot, average_precision, estimator_name, expected_label):
+def test_default_labels(pyplot, average_precision, name, expected_label):
     """Check the default labels used in the display."""
     precision = np.array([1, 0.5, 0])
     recall = np.array([0, 0.5, 1])
@@ -226,7 +226,7 @@ def test_default_labels(pyplot, average_precision, estimator_name, expected_labe
         precision,
         recall,
         average_precision=average_precision,
-        estimator_name=estimator_name,
+        name=name,
     )
     display.plot()
     assert display.line_.get_label() == expected_label
@@ -398,3 +398,22 @@ def test_y_score_and_y_pred_specified_error(pyplot):
 
     with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
         PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
+
+
+def test_estimator_name_deprecation(pyplot):
+    """Check that using estimator_name parameter raises a deprecation warning."""
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    
+    with pytest.warns(FutureWarning, match="estimator_name was deprecated in 1.7"):
+        display = PrecisionRecallDisplay(
+            precision,
+            recall,
+            average_precision=0.8,
+            estimator_name="deprecated_estimator",
+        )
+    
+    # Check that the name is set correctly despite deprecation
+    assert display.name == "deprecated_estimator"
+    display.plot()
+    assert display.line_.get_label() == "deprecated_estimator (AP = 0.80)"

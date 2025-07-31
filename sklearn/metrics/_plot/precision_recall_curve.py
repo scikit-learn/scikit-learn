@@ -6,6 +6,7 @@ from collections import Counter
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_estimator_name,
     _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
@@ -37,8 +38,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     average_precision : float, default=None
         Average precision. If None, the average precision is not shown.
 
-    estimator_name : str, default=None
-        Name of estimator. If None, then the estimator name is not shown.
+    name : str, default=None
+        Name for labeling legend entries. If `None`, no name is shown in the legend.
+
+        .. versionadded:: 1.7
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when precision and recall metrics
@@ -52,6 +55,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         even if `plot_chance_level` is set to True when plotting.
 
         .. versionadded:: 1.3
+
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+        .. deprecated:: 1.7
+            `estimator_name` is deprecated and will be removed in 1.9. Use `name`
+            instead.
 
     Attributes
     ----------
@@ -118,14 +128,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         recall,
         *,
         average_precision=None,
-        estimator_name=None,
+        name=None,
         pos_label=None,
         prevalence_pos_label=None,
+        estimator_name="deprecated",
     ):
-        self.estimator_name = estimator_name
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
+        # Handle deprecation: estimator_name -> name for consistency with RocCurveDisplay
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
         self.prevalence_pos_label = prevalence_pos_label
 
@@ -151,7 +163,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         name : str, default=None
             Name of precision recall curve for labeling. If `None`, use
-            `estimator_name` if not `None`, otherwise no labeling is shown.
+            `name` if not `None`, otherwise no labeling is shown.
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
@@ -231,8 +243,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
+            # Baseline: expected precision of a random classifier — equals the prevalence of the positive class
+            # This represents the performance of a classifier that always predicts the positive class
             default_chance_level_line_kw = {
-                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+                "label": f"Baseline (Precision = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
                 "linestyle": "--",
             }
@@ -244,6 +258,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 default_chance_level_line_kw, chance_level_kw
             )
 
+            # Plot horizontal line: baseline precision for always-positive classifier
             (self.chance_level_,) = self.ax_.plot(
                 (0, 1),
                 (self.prevalence_pos_label, self.prevalence_pos_label),
@@ -555,7 +570,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             precision=precision,
             recall=recall,
             average_precision=average_precision,
-            estimator_name=name,
+            name=name,
             pos_label=pos_label,
             prevalence_pos_label=prevalence_pos_label,
         )
