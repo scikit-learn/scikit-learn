@@ -481,7 +481,7 @@ def _plain_sgd{{name_suffix}}(
                 if verbose or not early_stopping:
                     cur_loss_val = loss.cy_loss(y, p)
                     sumloss += cur_loss_val
-                    if learning_rate != PA1 and learning_rate != PA2 and not is_perceptron:
+                    if learning_rate != PA1 and learning_rate != PA2:
                         # sum up the optimization objective function terms (not just loss, include regularization)
                         # SGD optimizes 0.5 * L2**2, because using weight decay
                         objective_sum += cur_loss_val
