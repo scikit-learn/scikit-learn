@@ -306,7 +306,7 @@ What does the "spam" label for issues or pull requests mean?
 The "spam" label is an indication for reviewers that the issue or
 pull request may not have received sufficient effort or preparation
 from the author for a productive review. The maintainers are using this label
-as a way to deal with the increase of low quality PRs and issues.
+as a way to deal with the increase of low value PRs and issues.
 
 If an issue or PR was labeled as spam and simultaneously closed, the decision
 is final. A common reason for this happening is when people open a PR for an
