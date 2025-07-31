@@ -1,34 +1,34 @@
 .estimator-table summary,
-.method-table summary
-{
+.methods-table summary {
     padding: .5rem;
     font-family: monospace;
     cursor: pointer;
 }
 
-.estimator-table details[open] {
+.estimator-table details[open],
+.methods-table details[open] {
     padding-left: 0.1rem;
     padding-right: 0.1rem;
     padding-bottom: 0.3rem;
 }
 
-.estimator-table {
+.estimator-table .parameters-table{
     margin-left: auto !important;
     margin-right: auto !important;
 }
 
-.estimator-table tr:nth-child(odd)
- {
+.estimator-table .parameters-table tr:nth-child(odd),
+.methods-table tr:nth-child(odd) {
     background-color: #fff;
 }
 
-.estimator-table tr:nth-child(even)
- {
+.estimator-table tr:nth-child(even),
+.methods-table tr:nth-child(even) {
     background-color: #f6f6f6;
 }
 
-.estimator-table tr:hover
- {
+.estimator-table tr:hover,
+.methods-table tr:hover {
     background-color: #e0e0e0;
 }
 
@@ -67,11 +67,6 @@
     cursor: pointer;
 }
 
-.methods-name {
-    border-color: transparent;
-}
-
-.methods-signature {
+.method-signature {
     text-align: left;
-    border-left: none;
 }
