@@ -1523,6 +1523,10 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     >>> clf = RidgeClassifier().fit(X, y)
     >>> clf.score(X, y)
     0.9595...
+
+    You can find a visual example here: :ref:`example_linear_model_plot_ridge_classifier`
+
+
     """
 
     _parameter_constraints: dict = {
