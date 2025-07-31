@@ -21,9 +21,12 @@ from sklearn.metrics._classification import (
     log_loss,
     matthews_corrcoef,
     multilabel_confusion_matrix,
+    npv_score,
     precision_recall_fscore_support,
     precision_score,
     recall_score,
+    specificity_score,
+    tpr_fpr_tnr_fnr_score,
     zero_one_loss,
 )
 from sklearn.metrics._dist_metrics import DistanceMetric
@@ -162,6 +165,7 @@ __all__ = [
     "nan_euclidean_distances",
     "ndcg_score",
     "normalized_mutual_info_score",
+    "npv_score",
     "pair_confusion_matrix",
     "pairwise_distances",
     "pairwise_distances_argmin",
@@ -180,7 +184,9 @@ __all__ = [
     "root_mean_squared_log_error",
     "silhouette_samples",
     "silhouette_score",
+    "specificity_score",
     "top_k_accuracy_score",
+    "tpr_fpr_tnr_fnr_score",
     "v_measure_score",
     "zero_one_loss",
 ]

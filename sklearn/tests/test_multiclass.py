@@ -19,7 +19,12 @@ from sklearn.linear_model import (
     Ridge,
     SGDClassifier,
 )
-from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import (
+    npv_score,
+    precision_score,
+    recall_score,
+    specificity_score,
+)
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -359,7 +364,13 @@ def test_ovr_fit_predict_svc():
 
 def test_ovr_multilabel_dataset():
     base_clf = MultinomialNB(alpha=1)
-    for au, prec, recall in zip((True, False), (0.51, 0.66), (0.51, 0.80)):
+    for au, prec, recall, specificity, npv in zip(
+        (True, False),
+        (0.51, 0.66),
+        (0.51, 0.80),
+        (0.66, 0.71),
+        (0.66, 0.84),
+    ):
         X, Y = datasets.make_multilabel_classification(
             n_samples=100,
             n_features=20,
@@ -381,6 +392,10 @@ def test_ovr_multilabel_dataset():
         assert_almost_equal(
             recall_score(Y_test, Y_pred, average="micro"), recall, decimal=2
         )
+        assert_almost_equal(
+            specificity_score(Y_test, Y_pred, average="micro"), specificity, decimal=2
+        )
+        assert_almost_equal(npv_score(Y_test, Y_pred, average="micro"), npv, decimal=2)
 
 
 def test_ovr_multilabel_predict_proba():

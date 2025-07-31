@@ -34,10 +34,12 @@ from sklearn.metrics import (
     log_loss,
     make_scorer,
     matthews_corrcoef,
+    npv_score,
     precision_score,
     r2_score,
     recall_score,
     roc_auc_score,
+    specificity_score,
     top_k_accuracy_score,
 )
 from sklearn.metrics import cluster as cluster_module
@@ -115,6 +117,14 @@ CLF_SCORERS = [
     "matthews_corrcoef",
     "positive_likelihood_ratio",
     "neg_negative_likelihood_ratio",
+    "specificity",
+    "specificity_weighted",
+    "specificity_macro",
+    "specificity_micro",
+    "npv",
+    "npv_weighted",
+    "npv_macro",
+    "npv_micro",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
@@ -135,6 +145,8 @@ MULTILABEL_ONLY_SCORERS = [
     "recall_samples",
     "f1_samples",
     "jaccard_samples",
+    "specificity_samples",
+    "npv_samples",
 ]
 
 REQUIRE_POSITIVE_Y_SCORERS = ["neg_mean_poisson_deviance", "neg_mean_gamma_deviance"]
@@ -378,6 +390,8 @@ def test_check_scoring_gridsearchcv():
         ("jaccard_micro", partial(jaccard_score, average="micro")),
         ("top_k_accuracy", top_k_accuracy_score),
         ("matthews_corrcoef", matthews_corrcoef),
+        ("specificity", specificity_score),
+        ("npv", npv_score),
     ],
 )
 def test_classification_binary_scores(scorer_name, metric):
@@ -410,6 +424,12 @@ def test_classification_binary_scores(scorer_name, metric):
         ("jaccard_weighted", partial(jaccard_score, average="weighted")),
         ("jaccard_macro", partial(jaccard_score, average="macro")),
         ("jaccard_micro", partial(jaccard_score, average="micro")),
+        ("specificity_weighted", partial(specificity_score, average="weighted")),
+        ("specificity_macro", partial(specificity_score, average="macro")),
+        ("specificity_micro", partial(specificity_score, average="micro")),
+        ("npv_weighted", partial(npv_score, average="weighted")),
+        ("npv_macro", partial(npv_score, average="macro")),
+        ("npv_micro", partial(npv_score, average="micro")),
     ],
 )
 def test_classification_multiclass_scores(scorer_name, metric):
@@ -1130,7 +1150,15 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
 
 
 @pytest.mark.parametrize(
-    "score_func", [f1_score, precision_score, recall_score, jaccard_score]
+    "score_func",
+    [
+        f1_score,
+        precision_score,
+        recall_score,
+        jaccard_score,
+        specificity_score,
+        npv_score,
+    ],
 )
 def test_non_symmetric_metric_pos_label(
     score_func, string_labeled_classification_problem
