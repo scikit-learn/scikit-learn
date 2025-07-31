@@ -50,7 +50,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin, _LineTooltipMixin):
         .. versionchanged:: 1.7
             Now accepts a list for plotting multiple curves.
 
-    threshold : ndarray or list of ndarrays, default=None
+    thresholds : ndarray or list of ndarrays, default=None
         The thresholds at which the fpr and tpr have been computed. Each ndarray should
         contain values for a single curve. If plotting multiple curves, list should be
         of same length as `fpr` and `tpr`.
