@@ -7,11 +7,10 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
 from sklearn.utils import metadata_routing
-
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._param_validation import Interval, StrOptions
-from ._hashing_fast import transform as _hashing_transform
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _iteritems(d):

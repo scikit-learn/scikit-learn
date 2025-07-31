@@ -12,10 +12,11 @@ import numpy as np
 import scipy.linalg
 import scipy.optimize
 
-from ..._loss.loss import HalfSquaredError
-from ...exceptions import ConvergenceWarning
-from ...utils.optimize import _check_optimize_result
-from .._linear_loss import LinearModelLoss
+from sklearn._loss.loss import HalfSquaredError
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
 
 
 class NewtonSolver(ABC):
@@ -178,21 +179,22 @@ class NewtonSolver(ABC):
             - self.coef
             - self.converged
         """
+        max_iter = self.max_iter - self.iteration
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
             self.coef,
             method="L-BFGS-B",
             jac=True,
             options={
-                "maxiter": self.max_iter - self.iteration,
+                "maxiter": max_iter,
                 "maxls": 50,  # default is 20
-                "iprint": self.verbose - 1,
                 "gtol": self.tol,
                 "ftol": 64 * np.finfo(np.float64).eps,
+                **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
-        self.iteration += _check_optimize_result("lbfgs", opt_res)
+        self.iteration += _check_optimize_result("lbfgs", opt_res, max_iter=max_iter)
         self.coef = opt_res.x
         self.converged = opt_res.status == 0
 
@@ -254,7 +256,7 @@ class NewtonSolver(ABC):
             check = loss_improvement <= t * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={t}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
                     f"<= {t * armijo_term} {check}"
                 )
@@ -300,7 +302,7 @@ class NewtonSolver(ABC):
         self.raw_prediction = raw
         if is_verbose:
             print(
-                f"    line search successful after {i+1} iterations with "
+                f"    line search successful after {i + 1} iterations with "
                 f"loss={self.loss_value}."
             )
 

@@ -8,7 +8,6 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
@@ -16,7 +15,7 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -25,26 +24,22 @@ from .base import (
     clone,
     is_classifier,
 )
-from .model_selection import cross_val_predict
-from .utils import Bunch, check_random_state, get_tags
-from .utils._param_validation import (
-    HasMethods,
-    Hidden,
-    StrOptions,
-)
-from .utils._response import _get_response_values
-from .utils._user_interface import _print_elapsed_time
-from .utils.metadata_routing import (
+from sklearn.model_selection import cross_val_predict
+from sklearn.utils import Bunch, check_random_state, get_tags
+from sklearn.utils._param_validation import HasMethods, Hidden, StrOptions
+from sklearn.utils._response import _get_response_values
+from sklearn.utils._user_interface import _print_elapsed_time
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from .utils.metaestimators import available_if
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_response_method,
     check_is_fitted,
@@ -407,7 +402,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> X, y = load_linnerud(return_X_y=True)
     >>> regr = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
     >>> regr.predict(X[[0]])
-    array([[176..., 35..., 57...]])
+    array([[176, 35.1, 57.1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
@@ -687,7 +682,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             )
 
         if self.base_estimator != "deprecated":
-
             warning_msg = (
                 "`base_estimator` as an argument was deprecated in 1.7 and will be"
                 " removed in 1.9. Use `estimator` instead."
@@ -1020,9 +1014,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [1., 0., 0.],
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
-    array([[0.8387..., 0.9431..., 0.4576...],
-           [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0626...]])
+    array([[0.8387, 0.9431, 0.4576],
+           [0.8878, 0.3684, 0.2640],
+           [0.0321, 0.9935, 0.0626]])
     """
 
     _parameter_constraints: dict = {

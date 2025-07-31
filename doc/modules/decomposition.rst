@@ -739,7 +739,7 @@ implemented in scikit-learn using the :class:`Fast ICA <FastICA>`
 algorithm. Typically, ICA is not used for reducing dimensionality but
 for separating superimposed signals. Since the ICA model does not include
 a noise term, for the model to be correct, whitening must be applied.
-This can be done internally using the whiten argument or manually using one
+This can be done internally using the `whiten` argument or manually using one
 of the PCA variants.
 
 It is classically used to separate mixed signals (a problem known as

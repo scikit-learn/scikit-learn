@@ -21,7 +21,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import _IS_WASM
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype="f")
@@ -305,16 +304,16 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
-    assert clf_lda_eigen.explained_variance_ratio_.shape == (
-        2,
-    ), "Unexpected length for explained_variance_ratio_"
+    assert clf_lda_eigen.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_"
+    )
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
-    assert clf_lda_svd.explained_variance_ratio_.shape == (
-        2,
-    ), "Unexpected length for explained_variance_ratio_"
+    assert clf_lda_svd.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_"
+    )
 
     assert_array_almost_equal(
         clf_lda_svd.explained_variance_ratio_, clf_lda_eigen.explained_variance_ratio_
@@ -594,13 +593,6 @@ def test_qda_store_covariance():
     )
 
 
-@pytest.mark.xfail(
-    _IS_WASM,
-    reason=(
-        "no floating point exceptions, see"
-        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
-    ),
-)
 def test_qda_regularization():
     # The default is reg_param=0. and will cause issues when there is a
     # constant variable.

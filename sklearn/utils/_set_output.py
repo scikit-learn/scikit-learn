@@ -8,9 +8,8 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from scipy.sparse import issparse
 
-from .._config import get_config
-from ._available_if import available_if
-from .fixes import _create_pandas_dataframe_from_non_pandas_container
+from sklearn._config import get_config
+from sklearn.utils._available_if import available_if
 
 
 def check_library_installed(library):
@@ -125,16 +124,14 @@ class PandasAdapter:
             # because `list` exposes an `index` attribute.
             if isinstance(X_output, pd.DataFrame):
                 index = X_output.index
-            elif isinstance(X_original, pd.DataFrame):
+            elif isinstance(X_original, (pd.DataFrame, pd.Series)):
                 index = X_original.index
             else:
                 index = None
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
-            X_output = _create_pandas_dataframe_from_non_pandas_container(
-                X=X_output, index=index, copy=not inplace
-            )
+            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
 
         if columns is not None:
             return self.rename_columns(X_output, columns)

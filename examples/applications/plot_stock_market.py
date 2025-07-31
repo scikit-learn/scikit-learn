@@ -213,7 +213,7 @@ plt.scatter(
 )
 
 # Plot the edges
-start_idx, end_idx = np.where(non_zero)
+start_idx, end_idx = non_zero.nonzero()
 # a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [

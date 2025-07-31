@@ -12,25 +12,29 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.utils import metadata_routing
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, check_array, check_scalar
-from ..utils._metadata_requests import (
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     get_routing_for_object,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metadata_routing import (
-    _routing_enabled,
-    process_routing,
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,
@@ -39,10 +43,6 @@ from ..utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from . import _cd_fast as cd_fast  # type: ignore
-from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):
@@ -149,13 +149,14 @@ def _alpha_grid(
     if Xy is not None:
         Xyw = Xy
     else:
-        X, y, X_offset, _, _ = _preprocess_data(
+        X, y, X_offset, _, _, _ = _preprocess_data(
             X,
             y,
             fit_intercept=fit_intercept,
             copy=copy_X,
             sample_weight=sample_weight,
             check_input=False,
+            rescale_with_sw=False,
         )
         if sample_weight is not None:
             if y.ndim > 1:
@@ -535,16 +536,16 @@ def enet_path(
     ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
     ... )
     >>> true_coef
-    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
     >>> alphas, estimated_coef, _ = enet_path(X, y, n_alphas=3)
     >>> alphas.shape
     (3,)
     >>> estimated_coef
-     array([[ 0.        ,  0.78...,  0.56...],
-            [ 0.        ,  1.12...,  0.61...],
-            [-0.        , -2.12..., -1.12...],
-            [ 0.        , 23.04..., 88.93...],
-            [ 0.        , 10.63..., 41.56...]])
+     array([[ 0.,  0.787,  0.568],
+            [ 0.,  1.120,  0.620],
+            [-0., -2.129, -1.128],
+            [ 0., 23.046, 88.939],
+            [ 0., 10.637, 41.566]])
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
@@ -872,9 +873,13 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(regr.coef_)
     [18.83816048 64.55968825]
     >>> print(regr.intercept_)
-    1.451...
+    1.451
     >>> print(regr.predict([[0, 0]]))
-    [1.451...]
+    [1.451]
+
+    -   :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+        showcases ElasticNet alongside Lasso and ARD Regression for sparse
+        signal recovery in the presence of noise and feature correlation.
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1303,7 +1308,12 @@ class Lasso(ElasticNet):
     >>> print(clf.coef_)
     [0.85 0.  ]
     >>> print(clf.intercept_)
-    0.15...
+    0.15
+
+    -   :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+        compares Lasso with other L1-based regression models (ElasticNet and ARD
+        Regression) for sparse signal recovery in the presence of noise and
+        feature correlation.
     """
 
     _parameter_constraints: dict = {
@@ -1493,8 +1503,17 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     _parameter_constraints: dict = {
         "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 1, None, closed="left")],
-        "alphas": ["array-like", None],
+        "n_alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        # TODO(1.9): remove "warn" and None options.
+        "alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
         "fit_intercept": ["boolean"],
         "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -1512,8 +1531,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def __init__(
         self,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -1594,6 +1613,40 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Returns an instance of fitted model.
         """
         _raise_for_params(params, self, "fit")
+
+        # TODO(1.9): remove n_alphas and alphas={"warn", None}; set alphas=100 by
+        # default. Remove these deprecations messages and use self.alphas directly
+        # instead of self._alphas.
+        if self.n_alphas == "deprecated":
+            self._alphas = 100
+        else:
+            warnings.warn(
+                "'n_alphas' was deprecated in 1.7 and will be removed in 1.9. "
+                "'alphas' now accepts an integer value which removes the need to pass "
+                "'n_alphas'. The default value of 'alphas' will change from None to "
+                "100 in 1.9. Pass an explicit value to 'alphas' and leave 'n_alphas' "
+                "to its default value to silence this warning.",
+                FutureWarning,
+            )
+            self._alphas = self.n_alphas
+
+        if isinstance(self.alphas, str) and self.alphas == "warn":
+            # - If self.n_alphas == "deprecated", both are left to their default values
+            #   so we don't warn since the future default behavior will be the same as
+            #   the current default behavior.
+            # - If self.n_alphas != "deprecated", then we already warned about it
+            #   and the warning message mentions the future self.alphas default, so
+            #   no need to warn a second time.
+            pass
+        elif self.alphas is None:
+            warnings.warn(
+                "'alphas=None' is deprecated and will be removed in 1.9, at which "
+                "point the default value will be set to 100. Set 'alphas=100' "
+                "to silence this warning.",
+                FutureWarning,
+            )
+        else:
+            self._alphas = self.alphas
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1692,7 +1745,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
-        alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
 
         check_scalar_alpha = partial(
@@ -1702,7 +1754,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             include_boundaries="left",
         )
 
-        if alphas is None:
+        if isinstance(self._alphas, Integral):
             alphas = [
                 _alpha_grid(
                     X,
@@ -1710,7 +1762,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     l1_ratio=l1_ratio,
                     fit_intercept=self.fit_intercept,
                     eps=self.eps,
-                    n_alphas=self.n_alphas,
+                    n_alphas=self._alphas,
                     copy_X=self.copy_X,
                     sample_weight=sample_weight,
                 )
@@ -1718,10 +1770,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             ]
         else:
             # Making sure alphas entries are scalars.
-            for index, alpha in enumerate(alphas):
+            for index, alpha in enumerate(self._alphas):
                 check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
-            alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+            alphas = np.tile(np.sort(self._alphas)[::-1], (n_l1_ratio, 1))
 
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
@@ -1807,7 +1859,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        if self.alphas is None:
+        if isinstance(self._alphas, Integral):
             self.alphas_ = np.asarray(alphas)
             if n_l1_ratio == 1:
                 self.alphas_ = self.alphas_[0]
@@ -1897,9 +1949,22 @@ class LassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If ``None`` alphas are set automatically.
+        .. deprecated:: 1.7
+            `n_alphas` was deprecated in 1.7 and will be removed in 1.9. Use `alphas`
+            instead.
+
+    alphas : array-like or int, default=None
+        Values of alphas to test along the regularization path.
+        If int, `alphas` values are generated automatically.
+        If array-like, list of alpha values to use.
+
+        .. versionchanged:: 1.7
+            `alphas` accepts an integer value which removes the need to pass
+            `n_alphas`.
+
+        .. deprecated:: 1.7
+            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
+            point the default value will be set to 100.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2038,9 +2103,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9993...
+    0.9993
     >>> reg.predict(X[:1,])
-    array([-78.4951...])
+    array([-78.4951])
     """
 
     path = staticmethod(lasso_path)
@@ -2049,8 +2114,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
         self,
         *,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -2155,9 +2220,22 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path, used for each l1_ratio.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If None alphas are set automatically.
+        .. deprecated:: 1.7
+            `n_alphas` was deprecated in 1.7 and will be removed in 1.9. Use `alphas`
+            instead.
+
+    alphas : array-like or int, default=None
+        Values of alphas to test along the regularization path, used for each l1_ratio.
+        If int, `alphas` values are generated automatically.
+        If array-like, list of alpha values to use.
+
+        .. versionchanged:: 1.7
+            `alphas` accepts an integer value which removes the need to pass
+            `n_alphas`.
+
+        .. deprecated:: 1.7
+            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
+            point the default value will be set to 100.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2307,11 +2385,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     >>> regr.fit(X, y)
     ElasticNetCV(cv=5, random_state=0)
     >>> print(regr.alpha_)
-    0.199...
+    0.199
     >>> print(regr.intercept_)
-    0.398...
+    0.398
     >>> print(regr.predict([[0, 0]]))
-    [0.398...]
+    [0.398]
     """
 
     _parameter_constraints: dict = {
@@ -2326,8 +2404,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         *,
         l1_ratio=0.5,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         precompute="auto",
         max_iter=1000,
@@ -2611,7 +2689,7 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=False
         )
 
@@ -2845,9 +2923,22 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If not provided, set automatically.
+        .. deprecated:: 1.7
+            `n_alphas` was deprecated in 1.7 and will be removed in 1.9. Use `alphas`
+            instead.
+
+    alphas : array-like or int, default=None
+        Values of alphas to test along the regularization path, used for each l1_ratio.
+        If int, `alphas` values are generated automatically.
+        If array-like, list of alpha values to use.
+
+        .. versionchanged:: 1.7
+            `alphas` accepts an integer value which removes the need to pass
+            `n_alphas`.
+
+        .. deprecated:: 1.7
+            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
+            point the default value will be set to 100.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2991,8 +3082,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         *,
         l1_ratio=0.5,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         max_iter=1000,
         tol=1e-4,
@@ -3088,9 +3179,22 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : array-like, default=None
-        List of alphas where to compute the models.
-        If not provided, set automatically.
+        .. deprecated:: 1.7
+            `n_alphas` was deprecated in 1.7 and will be removed in 1.9. Use `alphas`
+            instead.
+
+    alphas : array-like or int, default=None
+        Values of alphas to test along the regularization path.
+        If int, `alphas` values are generated automatically.
+        If array-like, list of alpha values to use.
+
+        .. versionchanged:: 1.7
+            `alphas` accepts an integer value which removes the need to pass
+            `n_alphas`.
+
+        .. deprecated:: 1.7
+            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
+            point the default value will be set to 100.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -3211,11 +3315,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
     >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
     >>> r2_score(y, reg.predict(X))
-    0.9994...
+    0.9994
     >>> reg.alpha_
-    np.float64(0.5713...)
+    np.float64(0.5713)
     >>> reg.predict(X[:1,])
-    array([[153.7971...,  94.9015...]])
+    array([[153.7971,  94.9015]])
     """
 
     _parameter_constraints: dict = {
@@ -3230,8 +3334,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         self,
         *,
         eps=1e-3,
-        n_alphas=100,
-        alphas=None,
+        n_alphas="deprecated",
+        alphas="warn",
         fit_intercept=True,
         max_iter=1000,
         tol=1e-4,
