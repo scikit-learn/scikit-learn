@@ -7,6 +7,7 @@ import numpy as np
 from ...utils import _safe_indexing
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _LineTooltipMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
     _deprecate_estimator_name,
@@ -18,7 +19,7 @@ from ...utils._response import _get_response_values_binary
 from .._ranking import auc, roc_curve
 
 
-class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
+class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin, _LineTooltipMixin):
     """ROC Curve visualization.
 
     It is recommended to use
@@ -48,6 +49,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionchanged:: 1.7
             Now accepts a list for plotting multiple curves.
+
+    threshold : ndarray or list of ndarrays, default=None
+        The thresholds at which the fpr and tpr have been computed. Each ndarray should
+        contain values for a single curve. If plotting multiple curves, list should be
+        of same length as `fpr` and `tpr`.
+        Only used to display the threshold values along the curve as a tooltip. If None,
+        only the fpr and tpr values are displayed.
 
     roc_auc : float or list of floats, default=None
         Area under ROC curve, used for labeling each curve in the legend.
@@ -162,7 +170,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             optional=optional,
             class_name="RocCurveDisplay",
         )
-        return fpr, tpr, thresholds,roc_auc, name
+        return fpr, tpr, thresholds, roc_auc, name
 
     def plot(
         self,
@@ -236,7 +244,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        fpr, tpr, thresholds, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
+        fpr, tpr, thresholds, roc_auc, name = self._validate_plot_params(
+            ax=ax, name=name
+        )
         n_curves = len(fpr)
         if not isinstance(curve_kwargs, list) and n_curves > 1:
             if roc_auc:
@@ -276,39 +286,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if len(self.line_) == 1:
             self.line_ = self.line_[0]
 
-        annot = self.ax_.annotate(
-            "", xy=(0,0), xytext=(20,20),textcoords="offset points", bbox=dict(boxstyle="round", fc="w"), arrowprops=dict(arrowstyle="->")
+        self._add_line_tooltip(
+            x_label="FPR", y_label="TPR", t_label="threshold", t_vals=thresholds
         )
-        annot.set_visible(False)
-
-        def update_annot(ind):
-            x,y = self.line_.get_data()
-            annot.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
-
-            # Find the index of the closest point in fpr to x[ind['ind'][0]]
-            # use it to get the corresponding threshold
-            idx = np.argmin(np.abs(self.fpr - x[ind["ind"][0]]))
-
-            text = f"FPR: {x[ind['ind'][0]]:.2f}, TPR: {y[ind['ind'][0]]:.2f}, Threshold: {self.thresholds[idx]:.2f}"
-            # text = f"Threshold: {self.thresholds[idx]:.2f}"
-
-            annot.set_text(text)
-            annot.get_bbox_patch().set_alpha(0.4)        
-
-        def hover(event):
-            vis = annot.get_visible()
-            if event.inaxes == self.ax_:
-                cont, ind = self.line_.contains(event)
-                if cont:
-                    update_annot(ind)
-                    annot.set_visible(True)
-                    self.figure_.canvas.draw_idle()
-                else:
-                    if vis:
-                        annot.set_visible(False)
-                        self.figure_.canvas.draw_idle()
-
-        self.figure_.canvas.mpl_connect("motion_notify_event", hover)
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -769,7 +749,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
         )
 
-        fpr_folds, tpr_folds, auc_folds = [], [], []
+        fpr_folds, tpr_folds, thresholds_folds, auc_folds = [], [], [], []
         for estimator, test_indices in zip(
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
@@ -785,7 +765,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 if sample_weight is None
                 else _safe_indexing(sample_weight, test_indices)
             )
-            fpr, tpr, _ = roc_curve(
+            fpr, tpr, thresholds = roc_curve(
                 y_true,
                 y_pred,
                 pos_label=pos_label_,
@@ -796,11 +776,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             fpr_folds.append(fpr)
             tpr_folds.append(tpr)
+            thresholds_folds.append(thresholds)
             auc_folds.append(roc_auc)
 
         viz = cls(
             fpr=fpr_folds,
             tpr=tpr_folds,
+            thresholds=thresholds_folds,
             roc_auc=auc_folds,
             name=name,
             pos_label=pos_label_,
