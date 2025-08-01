@@ -2,7 +2,6 @@ import io
 import re
 import warnings
 from itertools import product
-import pickle
 
 import numpy as np
 import pytest
@@ -22,7 +21,6 @@ from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline, make_union
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils import murmurhash3_32
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -1518,9 +1516,6 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
         ),
         ("a", ["min_value", "min_valuevalue"], object, "a", 2),
         ("min_value", ["min_value", "min_value", "value"], object, "z", 2),
-        # array of uncomparable object dtype
-        (min(['a', None, 0], key=lambda x: murmurhash3_32(pickle.dumps(x))),
-          ['a', None], object, 0, 1),
         # array of numeric dtype
         (10, [1, 2, 3], int, 10, 2),
         (1, [1, 1, 2], int, 10, 1),
@@ -1532,6 +1527,26 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+@pytest.mark.parametrize(
+    "expected,array",
+    [
+        ("a", ["a", "b"]),
+        (1, [1, 2]),
+        (None, [None, "a"]),
+        (None, [None, 1]),
+        (None, [None, "a", 1]),
+        (1, [1, "1"]),
+        (1, ["1", 1]),
+    ],
+)
+def test_most_frequent_tie_object(expected, array):
+    """Check the tie breaking behavior of the most frequent strategy.
+
+    Non-regression test for issue #31717.
+    """
+    assert expected == _most_frequent(np.array(array, dtype=object), None, 0)
 
 
 @pytest.mark.parametrize(
