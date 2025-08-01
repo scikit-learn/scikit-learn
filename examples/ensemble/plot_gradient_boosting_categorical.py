@@ -5,25 +5,28 @@ Categorical Feature Support in Gradient Boosting
 
 .. currentmodule:: sklearn
 
-In this example, we will compare the training times and prediction
-performances of :class:`~ensemble.HistGradientBoostingRegressor` with
-different encoding strategies for categorical features. In
-particular, we will evaluate:
+In this example, we compare the training times and prediction performances of
+:class:`~ensemble.HistGradientBoostingRegressor` with different encoding
+strategies for categorical features. In particular, we evaluate:
 
 - "Dropped": dropping the categorical features;
 - "One Hot": using a :class:`~preprocessing.OneHotEncoder`;
 - "Ordinal": using an :class:`~preprocessing.OrdinalEncoder` and treat
   categories as ordered, equidistant quantities;
-- "Native": using an :class:`~preprocessing.OrdinalEncoder` and rely on the
-  :ref:`native category support <categorical_support_gbdt>` of the
+- "Native": relying on the :ref:`native category support
+  <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
 
-We will work with the Ames Iowa Housing dataset which consists of numerical
-and categorical features, where the houses' sales prices is the target.
+For such purpose we use the Ames Iowa Housing dataset, which consists of
+numerical and categorical features, where the target is the house sale price.
 
 See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
 example showcasing some other features of
 :class:`~ensemble.HistGradientBoostingRegressor`.
+
+See :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py` for a
+comparison of encoding strategies in the presence of high cardinality
+categorical features.
 
 """
 
@@ -97,8 +100,8 @@ hist_dropped
 # %%
 # Gradient boosting estimator with one-hot encoding
 # -------------------------------------------------
-# Next, we create a pipeline that will one-hot encode the categorical features
-# and let the rest of the numerical data to passthrough:
+# Next, we create a pipeline to one-hot encode the categorical features,
+# while letting the remaining features `"passthrough"` unchanged:
 
 from sklearn.preprocessing import OneHotEncoder
 
@@ -118,9 +121,9 @@ hist_one_hot
 # %%
 # Gradient boosting estimator with ordinal encoding
 # -------------------------------------------------
-# Next, we create a pipeline that will treat categorical features as if they
-# were ordered quantities, i.e. the categories will be encoded as 0, 1, 2,
-# etc., and treated as continuous features.
+# Next, we create a pipeline that treats categorical features as ordered
+# quantities, i.e. the categories are encoded as 0, 1, 2, etc., and treated as
+# continuous features.
 
 import numpy as np
 
@@ -132,10 +135,6 @@ ordinal_encoder = make_column_transformer(
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
-    # Use short feature names to make it easier to specify the categorical
-    # variables in the HistGradientBoostingRegressor in the next step
-    # of the pipeline.
-    verbose_feature_names_out=False,
 )
 
 hist_ordinal = make_pipeline(
@@ -147,14 +146,19 @@ hist_ordinal
 # Gradient boosting estimator with native categorical support
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
-# that will natively handle categorical features. This estimator will not treat
-# categorical features as ordered quantities. We set
-# `categorical_features="from_dtype"` such that features with categorical dtype
-# are considered categorical features.
+# that can natively handle categorical features without explicit encoding. Such
+# functionality can be enabled by setting `categorical_features="from_dtype"`,
+# which automatically detects features with categorical dtypes.
 #
-# The main difference between this estimator and the previous one is that in
-# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` detect
-# which features are categorical from the DataFrame columns' dtypes.
+# Unlike previous encoding approaches, the estimator partitions categories into
+# two groups at each split using a heuristic that sorts them by their effect on
+# the target variable. This avoids imposing an arbitrary order and allows more
+# meaningful splits than ordinal encoding.
+#
+# While arbitrary ordering may work for low-cardinality features, it
+# becomes problematic for high-cardinality ones, as meaningful splits would
+# require deeper trees and risk overfitting on other features. Avoiding
+# artificial order mitigates such potential issue.
 
 hist_native = HistGradientBoostingRegressor(
     random_state=42, categorical_features="from_dtype"
@@ -167,7 +171,7 @@ hist_native
 # Here we use :term:`cross validation` to compare the models performance in
 # terms of :func:`~metrics.mean_absolute_percentage_error` and fit times. In the
 # upcoming plots, error bars represent 1 standard deviation as computed across
-# folds.
+# cross-validation splits.
 
 from sklearn.model_selection import cross_validate
 
@@ -258,18 +262,18 @@ plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
 # down-left corner, as indicated by the arrow. Those models would indeed
 # correspond to faster fitting and lower error.
 #
-# We see that the model with one-hot-encoded data is by far the slowest. This
-# is to be expected, since one-hot-encoding creates one additional feature per
-# category value (for each categorical feature), and thus more split points
-# need to be considered during fitting. In theory, we expect the native
-# handling of categorical features to be slightly slower than treating
-# categories as ordered quantities ('Ordinal'), since native handling requires
-# :ref:`sorting categories <categorical_support_gbdt>`. Fitting times should
-# however be close when the number of categories is small, and this may not
-# always be reflected in practice.
+# The model using one-hot encoded data is the slowest. This is to be expected,
+# as one-hot encoding creates an additional feature for each category value of
+# every categorical feature, greatly increasing the number of split candidates
+# during training. In theory, we expect the native handling of categorical
+# features to be slightly slower than treating categories as ordered quantities
+# ('Ordinal'), since native handling requires :ref:`sorting categories
+# <categorical_support_gbdt>`. Fitting times should however be close when the
+# number of categories is small, and this may not always be reflected in
+# practice.
 #
-# In terms of prediction performance, dropping the categorical features leads
-# to poorer performance. The three models that use categorical features have
+# In terms of prediction performance, dropping the categorical features leads to
+# the worst performance. The three models that use categorical features have
 # comparable error rates, with a slight edge for the native handling.
 
 # %%
@@ -322,8 +326,9 @@ plot_performance_tradeoff(
 )
 
 # %%
-# The results for these under-fitting models confirm our previous intuition:
-# the native category handling strategy performs the best when the splitting
-# budget is constrained. The two other strategies (one-hot encoding and
-# treating categories as ordinal values) lead to error values comparable
-# to the baseline model that just dropped the categorical features altogether.
+# The results for these underfitting models confirm our previous intuition: the
+# native category handling strategy performs the best when the splitting budget
+# is constrained. The two explicit encoding strategies (one-hot and ordinal
+# encoding) lead to slightly larger errors than the estimator's native handling,
+# but still perform better than the baseline model that just dropped the
+# categorical features altogether.
