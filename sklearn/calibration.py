@@ -114,8 +114,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         calibration to ensure they sum up to 1.
 
         In contrast, temperature scaling naturally supports multi-class calibration by
-        applying `softmax(beta * classifier_logits)` with a value of beta that
-        optimizes the log loss.
+        applying `softmax(classifier_logits/T)` with a value of `T` (temperature)
+        that optimizes the log loss.
 
         For very uncalibrated classifiers on very imbalanced datasets, sigmoid
         calibration might be preferred because it fits an additional intercept
