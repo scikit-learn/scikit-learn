@@ -142,6 +142,9 @@ def test_solution_inside_bounds(kernel):
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels[:2])
 def test_lml_gradient(kernel):
+    # Clone the kernel object prior to mutating it to avoid any side effects between
+    # GP tests:
+    kernel = clone(kernel)
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     length_scales = np.linspace(1, 25, 1_000)
