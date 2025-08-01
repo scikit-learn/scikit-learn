@@ -23,6 +23,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.stats import _averaged_weighted_percentile
 from sklearn.utils.validation import check_is_fitted
 
 
@@ -75,6 +76,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     if len(distinct_values) <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
         from numpy.lib.stride_tricks import sliding_window_view
+
         bin_thresholds = sliding_window_view(distinct_values).mean(axis=1)
     elif sample_weight is None:
         # We compute bin edges using the output of np.percentile with
