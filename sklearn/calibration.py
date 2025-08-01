@@ -123,7 +123,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         classifier being calibrated is biased towards the majority class.
 
         Isotonic calibration is not recommended when the number of calibration samples
-        is too low ``(≪1000)`` since it tends to overfit.
+        is too low ``(≪1000)`` since it then tends to overfit.
 
         .. versionchanged:: 1.8
            Added option 'temperature'.
