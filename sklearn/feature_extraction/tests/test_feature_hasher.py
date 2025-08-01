@@ -166,6 +166,7 @@ def test_feature_hasher_requires_fit_tag():
     tags = hasher.__sklearn_tags__()
     assert not tags.requires_fit
 
+
 def test_feature_hasher_transform_without_fit():
     """Test that FeatureHasher can transform without fitting."""
     hasher = FeatureHasher(n_features=10)

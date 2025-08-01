@@ -1634,6 +1634,7 @@ def test_hashing_vectorizer_requires_fit_tag():
     tags = vectorizer.__sklearn_tags__()
     assert not tags.requires_fit
 
+
 def test_hashing_vectorizer_transform_without_fit():
     """Test that HashingVectorizer can transform without fitting."""
     vectorizer = HashingVectorizer(n_features=10)
