@@ -111,11 +111,6 @@ addopts = [
     "--color=yes",
     "--import-mode=importlib",
 ]
-# TODO(1.10): remove warning filter
-filterwarnings = [
-    "ignore:PassiveAggressiveClassifier:FutureWarning",
-    "ignore:PassiveAggressiveRegressor:FutureWarning",
-]
 
 [tool.ruff]
 line-length = 88
