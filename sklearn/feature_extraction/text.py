@@ -923,6 +923,7 @@ class HashingVectorizer(
         tags = super().__sklearn_tags__()
         tags.input_tags.string = True
         tags.input_tags.two_d_array = False
+        tags.requires_fit = False
         return tags
 
 
