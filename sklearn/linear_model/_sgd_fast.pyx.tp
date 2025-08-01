@@ -365,8 +365,8 @@ def _plain_sgd{{name_suffix}}(
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
         (4) adaptive decrease
-        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x)), see [1]
-        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha), see [1]
+        (5) Passive Aggressive-I, eta = min(PA_C, loss/norm(x)**2), see [1]
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x)**2 + 0.5/PA_C), see [1]
     eta0 : double
         The initial learning rate.
     power_t : double
