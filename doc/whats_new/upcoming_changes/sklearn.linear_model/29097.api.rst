@@ -1,0 +1,6 @@
+- `PassiveAggressiveClassifier` and `PassiveAggressiveRegressor` are deprecated
+  and will be removed in 1.10. Equivalent estimators are available with `SGDClassifier`
+  and `SGDRegressor`, both of which expose the options `learning_rate="pa1"` and
+  `"pa2"` as well as the new parameter `PA_C` for the aggressiveness parameter of the
+  Passive-Aggressive-Algorithms.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
