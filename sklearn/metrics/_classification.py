@@ -498,6 +498,11 @@ def confusion_matrix(
     # for the sake of consistency with other metric functions with array API support.
     y_true = _convert_to_numpy(y_true, xp)
     y_pred = _convert_to_numpy(y_pred, xp)
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
+    else:
+        sample_weight = _convert_to_numpy(sample_weight, xp)
+
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
@@ -516,13 +521,6 @@ def confusion_matrix(
             return np.zeros((n_labels, n_labels), dtype=int)
         elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
-
-    if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-    else:
-        sample_weight = _convert_to_numpy(sample_weight, xp)
-
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
