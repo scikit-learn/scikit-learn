@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+from scipy.stats import kstest
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
@@ -231,6 +232,26 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
     X_trans_weighted = est_weighted.transform(X)
     X_trans_repeated = est_repeated.transform(X)
     assert_array_equal(X_trans_weighted, X_trans_repeated)
+
+
+@pytest.mark.parametrize("n_bins", [3, 5])
+def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 300
+    X = rng.randn(n_samples, 3)
+
+    sw = rng.randint(0, 5, size=n_samples)
+    X_repeated = np.repeat(X, sw, axis=0)
+
+    est_weighted = _BinMapper(n_bins=n_bins, subsample=100).fit(X, sample_weight=sw)
+    est_repeated = _BinMapper(n_bins=n_bins, subsample=100).fit(
+        X_repeated, sample_weight=None
+    )
+    kstest_pval = kstest(
+        est_weighted.bin_thresholds_, est_repeated.bin_thresholds_
+    ).pvalue
+    assert kstest_pval[0] > 0.025
 
 
 @pytest.mark.parametrize(

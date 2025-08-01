@@ -77,7 +77,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # Calculate midpoints if distinct values <= max_bins
         from numpy.lib.stride_tricks import sliding_window_view
 
-        bin_thresholds = sliding_window_view(distinct_values).mean(axis=1)
+        bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
     elif sample_weight is None:
         # We compute bin edges using the output of np.percentile with
         # the "averaged_inverted_cdf" interpolation method that is consistent
