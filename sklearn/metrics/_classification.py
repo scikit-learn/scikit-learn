@@ -503,10 +503,19 @@ def confusion_matrix(
     else:
         sample_weight = _convert_to_numpy(sample_weight, xp)
 
+    if len(sample_weight) > 0:
+        y_type, y_true, y_pred, sample_weight = _check_targets(
+            y_true, y_pred, sample_weight
+        )
+    else:
+        # This is needed to handle the special case where y_true, y_pred and
+        # sample_weight are all empty.
+        # In this case we don't pass sample_weight to _check_targets that would
+        # check that sample_weight is not empty and we don't reuse the returned
+        # sample_weight
+        y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
-        y_true, y_pred, sample_weight
-    )
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
