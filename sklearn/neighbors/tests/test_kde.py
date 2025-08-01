@@ -250,3 +250,113 @@ def test_bandwidth(bandwidth):
     else:
         h = bandwidth
     assert kde.bandwidth_ == pytest.approx(h)
+
+
+@pytest.mark.parametrize(
+    "n_dims, expected_counts",
+    [
+        (1, (2, 1)),
+        (2, (4, 4, 1)),
+        (3, (8, 12, 6, 1)),
+        (4, (16, 32, 24, 8, 1)),
+        (5, (32, 80, 80, 40, 10, 1)),
+        (6, (64, 192, 240, 160, 60, 12, 1)),
+    ],
+)
+def test_kde_hypercube_faces(n_dims, expected_counts):
+    # Check that the number of faces of each kind match theory from
+    # https://en.wikipedia.org/wiki/Hypercube#Faces.
+    bounds = np.arange(2 * n_dims).reshape((n_dims, 2))
+    kde = KernelDensity(bounds=bounds)
+    faces = kde._evaluate_hypercube_faces()
+    n_nans = np.isnan(faces).sum(axis=1)
+    actual_counts = np.bincount(n_nans)
+    np.testing.assert_array_equal(actual_counts, expected_counts)
+
+
+def test_kde_with_bounds_invalid():
+    with pytest.raises(ValueError, match="invalid bounds"):
+        KernelDensity(bounds=[(3, 1)]).fit(None)
+
+    kde = KernelDensity(bounds=[(0, 2)]).fit(np.ones((3, 1)))
+    with pytest.raises(NotImplementedError):
+        kde.sample()
+
+    with pytest.raises(ValueError, match="samples must be larger"):
+        KernelDensity(bounds=[(1, 2)]).fit(np.zeros((3, 1)))
+
+    with pytest.raises(ValueError, match="samples must be smaller"):
+        KernelDensity(bounds=[(1, 2)]).fit(3 * np.ones((3, 1)))
+
+
+def test_kde_bounded_density():
+    n_samples, n_features = (100_000, 2)
+    rng = np.random.RandomState(0)
+    X_train = rng.rand(n_samples, n_features)
+
+    # Create a mesh over the box so we can evaluate the bias. The form is as follows.
+    #
+    # 0 1 2
+    # 3 4 5
+    # 6 7 8
+    lin = np.arange(3) / 2
+    X_test = np.stack(np.meshgrid(lin, lin)).reshape((2, 9)).T
+
+    # Without any bounds, we expect a bias to 0.25 at the corners, 0.5 at the edges, and
+    # no bias in the center.
+    kde = KernelDensity(bandwidth="scott").fit(X_train)
+    np.testing.assert_allclose(
+        np.exp(kde.score_samples(X_test)),
+        np.ravel(
+            [
+                [0.25, 0.5, 0.25],
+                [0.5, 1.0, 0.5],
+                [0.25, 0.5, 0.25],
+            ]
+        ),
+        atol=0.05,
+    )
+
+    # With full bounds, we don't get any bias.
+    kde = KernelDensity(bandwidth="scott", bounds=[[0, 1], [0, 1]]).fit(X_train)
+    np.testing.assert_allclose(
+        np.exp(kde.score_samples(X_test)),
+        1,
+        atol=0.05,
+    )
+
+    # With only bounds in one dimension, we get no bias on those edges but 0.5 at the
+    # other edges.
+    kde = KernelDensity(
+        bandwidth="scott",
+        bounds=[[0, 1], [-np.inf, np.inf]],
+    ).fit(X_train)
+    np.testing.assert_allclose(
+        np.exp(kde.score_samples(X_test)),
+        np.ravel(
+            [
+                [0.5, 0.5, 0.5],
+                [1.0, 1.0, 1.0],
+                [0.5, 0.5, 0.5],
+            ]
+        ),
+        atol=0.05,
+    )
+
+    # With full bounds in one dimension and half bounds on the other, we get asymmetric
+    # bias.
+    kde = KernelDensity(
+        bandwidth="scott",
+        bounds=[[0, 1], [0, np.inf]],
+    ).fit(X_train)
+    np.testing.assert_allclose(
+        np.exp(kde.score_samples(X_test)),
+        np.ravel(
+            [
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [0.5, 0.5, 0.5],
+            ]
+        ),
+        atol=0.05,
+    )
