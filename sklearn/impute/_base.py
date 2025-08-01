@@ -49,7 +49,7 @@ def _safe_min(items):
     except TypeError as e:
         if "'<' not supported between" in str(e):
             return min(items, key=lambda x: (str(type(x)), str(x)))
-        raise
+        raise  # pragma: no cover
 
 
 def _most_frequent(array, extra_value, n_repeat):
