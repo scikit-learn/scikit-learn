@@ -46,13 +46,15 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     """
     # ignore missing values when computing bin thresholds
     missing_mask = np.isnan(col_data)
-    if missing_mask.any():
+    any_missing = missing_mask.any()
+    if any_missing:
         col_data = col_data[~missing_mask]
 
     # If sample_weight is not None and 0-weighted values exist, we need to
     # remove those before calculating the distinct points.
     if sample_weight is not None:
-        sample_weight = sample_weight[~missing_mask]
+        if any_missing:
+            sample_weight = sample_weight[~missing_mask]
         nnz_sw = sample_weight != 0
         col_data = col_data[nnz_sw]
         sample_weight = sample_weight[nnz_sw]
@@ -68,10 +70,12 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
 
     if len(distinct_values) <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
-        bin_thresholds = 0.5 * (distinct_values[:-1] + distinct_values[1:])
+        from numpy.lib.stride_tricks import sliding_window_view
+        bin_thresholds = sliding_window_view(distinct_values).mean(axis=1)
     elif sample_weight is None:
-        # We compute approximate midpoint percentiles using the output of
-        # np.percentile with averaged_inverted_cdf
+        # We compute bin edges using the output of np.percentile with
+        # the "averaged_inverted_cdf" interpolation method that is consistent
+        # with the code for the sample_weight != None case.
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         bin_thresholds = np.percentile(
