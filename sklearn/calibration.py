@@ -235,8 +235,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
 
-    .. [5] On Calibration of Modern Neural Networks,
-           C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
+    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. 2017.
+       :doi:`On Calibration of Modern Neural Networks<10.48550/arXiv.1706.04599>`.
+       Proceedings of the 34th International Conference on Machine Learning,
+       PMLR 70:1321-1330, 2017
 
     Examples
     --------
