@@ -12,10 +12,8 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.special import expit
 
-from sklearn.utils import Bunch
-
-from ._loss import HalfBinomialLoss
-from .base import (
+from sklearn._loss import HalfBinomialLoss
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -23,30 +21,33 @@ from .base import (
     _fit_context,
     clone,
 )
-from .frozen import FrozenEstimator
-from .isotonic import IsotonicRegression
-from .model_selection import LeaveOneOut, check_cv, cross_val_predict
-from .preprocessing import LabelEncoder, label_binarize
-from .svm import LinearSVC
-from .utils import _safe_indexing, column_or_1d, get_tags, indexable
-from .utils._param_validation import (
+from sklearn.frozen import FrozenEstimator
+from sklearn.isotonic import IsotonicRegression
+from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
+from sklearn.preprocessing import LabelEncoder, label_binarize
+from sklearn.svm import LinearSVC
+from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils._param_validation import (
     HasMethods,
     Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
-from .utils._plotting import _BinaryClassifierCurveDisplayMixin, _validate_style_kwargs
-from .utils._response import _get_response_values, _process_predict_proba
-from .utils.metadata_routing import (
+from sklearn.utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
+from sklearn.utils._response import _get_response_values, _process_predict_proba
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_pos_label_consistency,
     _check_response_method,

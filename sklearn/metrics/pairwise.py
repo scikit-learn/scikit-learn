@@ -14,11 +14,13 @@ from joblib import effective_n_jobs
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial import distance
 
-from .. import config_context
-from ..exceptions import DataConversionWarning
-from ..preprocessing import normalize
-from ..utils import check_array, gen_batches, gen_even_slices
-from ..utils._array_api import (
+from sklearn import config_context
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics._pairwise_distances_reduction import ArgKmin
+from sklearn.metrics._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from sklearn.preprocessing import normalize
+from sklearn.utils import check_array, gen_batches, gen_even_slices
+from sklearn.utils._array_api import (
     _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -27,10 +29,10 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import (
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import (
     Hidden,
     Interval,
     MissingValues,
@@ -38,13 +40,11 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.deprecation import _deprecate_force_all_finite
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import parse_version, sp_base_version
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_non_negative
-from ._pairwise_distances_reduction import ArgKmin
-from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from sklearn.utils.deprecation import _deprecate_force_all_finite
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.fixes import parse_version, sp_base_version
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _num_samples, check_non_negative
 
 
 # Utility Functions
@@ -1060,7 +1060,7 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from ..metrics import DistanceMetric
+    from sklearn.metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
@@ -1968,7 +1968,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_transposed_dist_wrapper)
-    # Transpose `ret` such that a given thread writes its ouput to a contiguous chunk.
+    # Transpose `ret` such that a given thread writes its output to a contiguous chunk.
     # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
     # https://github.com/data-apis/array-api/issues/571 for details.
     # We assume that currently (April 2025) all array API compatible namespaces
@@ -2680,7 +2680,7 @@ def pairwise_kernels(
            [1., 2.]])
     """
     # import GPKernel locally to prevent circular imports
-    from ..gaussian_process.kernels import Kernel as GPKernel
+    from sklearn.gaussian_process.kernels import Kernel as GPKernel
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
