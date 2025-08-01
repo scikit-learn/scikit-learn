@@ -479,6 +479,11 @@ def confusion_matrix(
         ensure_all_finite=False,
         ensure_min_samples=0,
     )
+    # Convert the input arrays to NumPy (on CPU) irrespective of the original
+    # namespace and device so as to be able to leverage the the efficient
+    # counting operations implemented by SciPy in the coo_matrix constructor.
+    # The final results will be converted back to the input namespace and device
+    # for the sake of consistency with other metric functions with array API support.
     y_true = _convert_to_numpy(y_true, xp)
     y_pred = _convert_to_numpy(y_pred, xp)
     y_true, y_pred = attach_unique(y_true, y_pred)
