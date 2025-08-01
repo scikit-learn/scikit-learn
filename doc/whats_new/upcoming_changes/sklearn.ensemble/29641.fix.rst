@@ -2,7 +2,7 @@
   when calculating bin edges. When `n_samples` is greater than 2e5 and
   sample weights is not None, subsampling is done with replacement using
   the normalised sample weights as probabilities. Bin edges are then
-  calculated on the subsampled data. When `n_samples` is less than 2e5 the
-  and sample weights is not None a weighted percentile calculation is used
-  calculate bin edges.
+  calculated on the subsampled data. When `n_samples` is less than 2e5
+  and sample weights is not None a weighted percentile calculation is
+  performed to calculate bin edges.
   By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
