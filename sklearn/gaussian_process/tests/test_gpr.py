@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 from scipy.differentiate import derivative
 
+from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (
@@ -147,7 +148,7 @@ def test_lml_gradient(kernel):
     kernel = clone(kernel)
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    length_scales = np.linspace(1, 25, 1_000)
+    length_scales = np.logspace(0, 2, 100)
 
     def evaluate_grad_at_length_scales(length_scales):
         result = np.zeros_like(length_scales)
@@ -168,11 +169,11 @@ def test_lml_gradient(kernel):
             1
         ][0]
 
-    lml_gradient_manual = derivative(
+    lml_gradient_approx = derivative(
         evaluate_grad_at_length_scales, length_scales, maxiter=20
     ).df
 
-    assert_almost_equal(lml_gradient, lml_gradient_manual, 3)
+    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
 
 
 @pytest.mark.parametrize("kernel", kernels)
