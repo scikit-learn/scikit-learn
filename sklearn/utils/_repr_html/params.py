@@ -15,7 +15,7 @@ def _read_params(name, value, non_default_params):
     r = reprlib.Repr()
     r.maxlist = 2  # Show only first 2 items of lists
     r.maxtuple = 1  # Show only first item of tuples
-    r.maxstring = 50  # Limit string length
+    r.maxstring = 15  # Limit string length
     cleaned_value = html.escape(r.repr(value))
 
     param_type = "user-set" if name in non_default_params else "default"

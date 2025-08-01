@@ -109,7 +109,8 @@ def _methods_html_repr(methods):
     r = reprlib.Repr()
     r.maxlist = 2  # Show only first 2 items of lists
     r.maxtuple = 1  # Show only first item of tuples
-    r.maxstring = 50  # Limit string length
+    r.maxlong = 15  # Limit string length
+
     rows = [
         ROW_TEMPLATE.format(
             name=name,

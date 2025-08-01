@@ -67,6 +67,11 @@
     cursor: pointer;
 }
 
+.methods {
+    border-color: red;
+}
+
 .method-signature {
     text-align: left;
+    padding: 0;
 }
