@@ -20,11 +20,13 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
+from sklearn import config_context
 from sklearn.base import (
     BaseEstimator,
     BiclusterMixin,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
     DensityMixin,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -32,53 +34,49 @@ from sklearn.base import (
     OutlierMixin,
     RegressorMixin,
     TransformerMixin,
-)
-
-from .. import config_context
-from ..base import (
-    ClusterMixin,
     clone,
     is_classifier,
     is_outlier_detector,
     is_regressor,
 )
-from ..datasets import (
+from sklearn.datasets import (
     load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
     make_regression,
 )
-from ..exceptions import (
+from sklearn.exceptions import (
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
     SkipTestWarning,
 )
-from ..linear_model._base import LinearClassifierMixin
-from ..metrics import accuracy_score, adjusted_rand_score, f1_score
-from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
-from ..model_selection._validation import _safe_split
-from ..pipeline import make_pipeline
-from ..preprocessing import StandardScaler, scale
-from ..utils import _safe_indexing
-from ..utils._array_api import (
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
+from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
+from sklearn.model_selection._validation import _safe_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler, scale
+from sklearn.utils import _safe_indexing, shuffle
+from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
-from ..utils._array_api import device as array_device
-from ..utils._param_validation import (
+from sklearn.utils._array_api import device as array_device
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import (
+    Interval,
     InvalidParameterError,
+    StrOptions,
     generate_invalid_param_val,
     make_constraint,
+    validate_params,
 )
-from . import shuffle
-from ._missing import is_scalar_nan
-from ._param_validation import Interval, StrOptions, validate_params
-from ._tags import (
+from sklearn.utils._tags import (
     ClassifierTags,
     InputTags,
     RegressorTags,
@@ -86,12 +84,12 @@ from ._tags import (
     TransformerTags,
     get_tags,
 )
-from ._test_common.instance_generator import (
+from sklearn.utils._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     _get_check_estimator_ids,
     _yield_instances_for_check,
 )
-from ._testing import (
+from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
     _get_args,
@@ -105,7 +103,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .validation import _num_samples, check_is_fitted, has_fit_parameter
+from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 
@@ -1093,7 +1091,8 @@ def check_array_api_input(
             f"got {attribute_ns}"
         )
 
-        assert array_device(est_xp_param) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         if check_values:
@@ -1180,7 +1179,9 @@ def check_array_api_input(
             f"got {result_ns}."
         )
 
-        assert array_device(result_xp) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(result_xp) == array_device(X_xp)
+
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
         if check_values:
@@ -1205,7 +1206,8 @@ def check_array_api_input(
                 f" {input_ns}, got {inverse_result_ns}."
             )
 
-            assert array_device(invese_result_xp) == array_device(X_xp)
+            with config_context(array_api_dispatch=True):
+                assert array_device(invese_result_xp) == array_device(X_xp)
 
             invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
             if check_values:

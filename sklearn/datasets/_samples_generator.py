@@ -14,13 +14,11 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
-from sklearn.utils import Bunch
-
-from ..preprocessing import MultiLabelBinarizer
-from ..utils import check_array, check_random_state
-from ..utils import shuffle as util_shuffle
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.random import sample_without_replacement
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.utils import Bunch, check_array, check_random_state
+from sklearn.utils import shuffle as util_shuffle
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.random import sample_without_replacement
 
 
 def _generate_hypercube(samples, dimensions, rng):

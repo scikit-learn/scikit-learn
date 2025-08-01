@@ -12,19 +12,15 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import ClassifierMixin, RegressorMixin, _fit_context
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import (
-    Bunch,
-    _safe_indexing,
-    check_random_state,
-    column_or_1d,
-)
-from ..utils._mask import indices_to_mask
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, column_or_1d
+from sklearn.utils._mask import indices_to_mask
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
@@ -32,11 +28,11 @@ from ..utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     _estimator_has,
@@ -44,7 +40,6 @@ from ..utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 
@@ -150,7 +145,7 @@ def _parallel_build_estimators(
             estimator_fit = estimator.fit
 
         # Draw random feature, sample indices (using normalized sample_weight
-        # as probabilites if provided).
+        # as probabilities if provided).
         features, indices = _generate_bagging_indices(
             random_state,
             bootstrap_features,

@@ -707,6 +707,7 @@ def test_standard_check_array_of_inverse_transform():
     "estimator",
     [
         MaxAbsScaler(),
+        MaxAbsScaler(clip=True),
         MinMaxScaler(),
         MinMaxScaler(clip=True),
         KernelCenterer(),
@@ -1042,10 +1043,10 @@ def test_scale_sparse_with_mean_raise_exception(sparse_container):
 
 
 def test_scale_input_finiteness_validation():
-    # Check if non finite inputs raise ValueError
+    # Check if non-finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(
-        ValueError, match="Input contains infinity or a value too large"
+        ValueError, match=r"Input X contains infinity or a value too large for dtype"
     ):
         scale(X)
 
@@ -2517,6 +2518,8 @@ def test_minmax_scaler_clip(feature_range):
     # test behaviour of the parameter 'clip' in MinMaxScaler
     X = iris.data
     scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
+    # create a test sample with features outside the training feature range:
+    # first 2 features < min(X) and last 2 features > max(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
     X_transformed = scaler.transform(X_test)
@@ -2524,6 +2527,25 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0], feature_range[1], feature_range[1]]],
     )
+
+
+@pytest.mark.parametrize(
+    "data_constructor", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_maxabs_scaler_clip(data_constructor):
+    # test behaviour of the parameter 'clip' in MaxAbsScaler
+    X = data_constructor(iris.data)
+    is_sparse = sparse.issparse(X)
+    scaler = MaxAbsScaler(clip=True).fit(X)
+    # create a test sample with features outside the training max abs range:
+    # first 2 features > max(abs(X)) and last 2 features < -max(abs(X))
+    max_abs = np.max(np.abs(X), axis=0)
+    max_abs = max_abs.data if is_sparse else max_abs
+    X_test = data_constructor(
+        np.hstack((max_abs[:2] + 10, -max_abs[2:] - 10)).reshape(1, -1)
+    )
+    X_transformed = scaler.transform(X_test)
+    assert_allclose_dense_sparse(X_transformed, data_constructor([[1, 1, -1, -1]]))
 
 
 def test_standard_scaler_raise_error_for_1d_input():

@@ -233,6 +233,7 @@ Scoring string name                    Function                                 
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 'd2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
+'d2_brier_score'                       :func:`metrics.d2_brier_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -2156,7 +2157,7 @@ D² score for classification
 The D² score computes the fraction of deviance explained.
 It is a generalization of R², where the squared error is generalized and replaced
 by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Log loss). D² is a form of a *skill score*.
+(e.g., Log loss, Brier score,). D² is a form of a *skill score*.
 It is calculated as
 
 .. math::
@@ -2164,7 +2165,7 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+(e.g., the per-class proportion of `y_true` in the case of the Log loss and Brier score).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts
@@ -2209,6 +2210,50 @@ of 0.0.
     >>> d2_log_loss_score(y_true, y_pred)
     -0.552
 
+
+|details-start|
+**D2 Brier score**
+|details-split|
+
+The :func:`d2_brier_score` function implements the special case
+of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+
+This is also referred to as the Brier Skill Score (BSS).
+
+Here are some usage examples of the :func:`d2_brier_score` function::
+
+  >>> from sklearn.metrics import d2_brier_score
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.98, 0.01, 0.01],
+  ...    [0.01, 0.98, 0.01],
+  ...    [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.9991
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  -0.370...
+
+|details-end|
 
 .. _multilabel_ranking_metrics:
 
