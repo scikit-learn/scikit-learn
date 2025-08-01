@@ -12,20 +12,17 @@ from itertools import chain, islice
 import numpy as np
 from scipy import sparse
 
-from .base import TransformerMixin, _fit_context, clone
-from .exceptions import NotFittedError
-from .preprocessing import FunctionTransformer
-from .utils import Bunch
-from .utils._metadata_requests import METHODS
-from .utils._param_validation import HasMethods, Hidden
-from .utils._repr_html.estimator import _VisualBlock
-from .utils._set_output import (
-    _get_container_adapter,
-    _safe_set_output,
-)
-from .utils._tags import get_tags
-from .utils._user_interface import _print_elapsed_time
-from .utils.metadata_routing import (
+from sklearn.base import TransformerMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch
+from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._param_validation import HasMethods, Hidden
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import _get_container_adapter, _safe_set_output
+from sklearn.utils._tags import get_tags
+from sklearn.utils._user_interface import _print_elapsed_time
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
@@ -33,9 +30,9 @@ from .utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from .utils.metaestimators import _BaseComposition, available_if
-from .utils.parallel import Parallel, delayed
-from .utils.validation import check_is_fitted, check_memory
+from sklearn.utils.metaestimators import _BaseComposition, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, check_memory
 
 __all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
 
