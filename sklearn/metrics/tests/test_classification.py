@@ -3634,4 +3634,4 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
     with config_context(array_api_dispatch=True):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
-        assert array_api_device(result) == array_api_device(y_pred)        
+        assert array_api_device(result) == array_api_device(y_pred)
