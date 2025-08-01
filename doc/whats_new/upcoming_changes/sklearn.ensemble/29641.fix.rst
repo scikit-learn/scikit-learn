@@ -1,5 +1,7 @@
-- :class:`BaseHistGradientBoosting` now uses sample weights when binning data
-  either by using sample weights in the `_averaged_weighted_percentile` or
-  by subsampling using normalised sample weights when `n_samples` is greater
-  than 2e5 within the `_find_binning_thresholds` function.
+- :class:`BaseHistGradientBoosting` now uses sample weights correctly
+  when calculating bin edges. When `n_samples` is greater than 2e5 and
+  sample weights is not None, subsampling is done with replacement using
+  the normalised sample weights and bin edges are calculated on the subsampled
+  data. When `n_samples` is less than 2e5 the and sample weights is not None
+  a weighted percentile calculation is used calculate bin edges.
   By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
