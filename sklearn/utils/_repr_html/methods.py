@@ -88,7 +88,7 @@ def _methods_html_repr(methods):
        <div class="methods-table">
            <details>
                <summary>Methods</summary>
-               <table class="methods-table">
+               <table>
                  <tbody>
                    {rows}
                  </tbody>
@@ -98,7 +98,7 @@ def _methods_html_repr(methods):
     """
     ROW_TEMPLATE = """
        <tr class="methods">
-           <td class="method-name">{name}&nbsp;</td>
+           <td class="method-name">{name}</td>
            <td class="method-signature">{signature}</td>
            <td><a class="sk-estimator-doc-link
                                  {doc_link}
@@ -109,7 +109,7 @@ def _methods_html_repr(methods):
     r = reprlib.Repr()
     r.maxlist = 2  # Show only first 2 items of lists
     r.maxtuple = 1  # Show only first item of tuples
-    r.maxlong = 15  # Limit string length
+    r.maxstring = 16  # Limit string length
 
     rows = [
         ROW_TEMPLATE.format(

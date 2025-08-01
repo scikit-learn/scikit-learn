@@ -5,14 +5,15 @@
     cursor: pointer;
 }
 
-.estimator-table details[open],
-.methods-table details[open] {
+.estimator-table details[open]
+ {
     padding-left: 0.1rem;
     padding-right: 0.1rem;
     padding-bottom: 0.3rem;
 }
 
-.estimator-table .parameters-table{
+.estimator-table .parameters-table
+{
     margin-left: auto !important;
     margin-right: auto !important;
 }
@@ -67,11 +68,16 @@
     cursor: pointer;
 }
 
-.methods {
-    border-color: red;
+.methods-table table {
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
 }
-
 .method-signature {
     text-align: left;
     padding: 0;
+}
+
+.methods td{
+    margin: 0;
 }
