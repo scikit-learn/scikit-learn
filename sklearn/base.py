@@ -13,17 +13,17 @@ from collections import defaultdict
 
 import numpy as np
 
-from . import __version__
-from ._config import config_context, get_config
-from .exceptions import InconsistentVersionWarning
-from .utils._metadata_requests import _MetadataRequester, _routing_enabled
-from .utils._missing import is_scalar_nan
-from .utils._param_validation import validate_parameter_constraints
-from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
-from .utils._repr_html.estimator import estimator_html_repr
-from .utils._repr_html.params import ParamsDict
-from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
+from sklearn import __version__
+from sklearn._config import config_context, get_config
+from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import validate_parameter_constraints
+from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.params import ParamsDict
+from sklearn.utils._set_output import _SetOutputMixin
+from sklearn.utils._tags import (
     ClassifierTags,
     RegressorTags,
     Tags,
@@ -31,8 +31,8 @@ from .utils._tags import (
     TransformerTags,
     get_tags,
 )
-from .utils.fixes import _IS_32BIT
-from .utils.validation import (
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
     _is_fitted,
@@ -366,7 +366,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         # characters to render. We pass it as an optional parameter to ease
         # the tests.
 
-        from .utils._pprint import _EstimatorPrettyPrinter
+        from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
@@ -543,7 +543,7 @@ class ClassifierMixin:
         score : float
             Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
-        from .metrics import accuracy_score
+        from sklearn.metrics import accuracy_score
 
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
@@ -633,7 +633,7 @@ class RegressorMixin:
         :class:`~sklearn.multioutput.MultiOutputRegressor`).
         """
 
-        from .metrics import r2_score
+        from sklearn.metrics import r2_score
 
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
@@ -854,6 +854,7 @@ class TransformerMixin(_SetOutputMixin):
 
         **fit_params : dict
             Additional fit parameters.
+            Pass only if the estimator accepts additional params in its `fit` method.
 
         Returns
         -------
