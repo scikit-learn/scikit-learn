@@ -151,26 +151,16 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pylatest_conda_mkl_no_openmp",
+        "name": "pylatest_conda_forge_mkl_no_openmp",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
-        "channels": ["defaults"],
-        "conda_dependencies": remove_from(
-            common_dependencies, ["cython", "threadpoolctl", "meson-python"]
-        )
-        + ["ccache"],
+        "channels": ["conda-forge"],
+        "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
-            # TODO: release scipy constraint when 1.13 is available in the "default"
-            # channel.
-            "scipy": "<1.12",
         },
-        # TODO: put cython, threadpoolctl and meson-python back to conda
-        # dependencies when required version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
         "name": "pymin_conda_forge_openblas_min_dependencies",
@@ -219,7 +209,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
@@ -238,7 +228,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
@@ -326,13 +316,13 @@ build_metadata_list = [
             "plotly",
             "polars",
             "pooch",
+            "sphinxext-opengraph",
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
             "towncrier",
         ],
         "pip_dependencies": [
-            "sphinxext-opengraph",
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
@@ -386,10 +376,10 @@ build_metadata_list = [
             "sphinx-design",
             "pydata-sphinx-theme",
             "towncrier",
-        ],
-        "pip_dependencies": [
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
+        ],
+        "pip_dependencies": [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {

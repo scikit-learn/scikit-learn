@@ -15,29 +15,31 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     _fit_context,
 )
-from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING64
-from ..metrics.pairwise import _VALID_METRICS, paired_distances
-from ..utils import check_array
-from ..utils._fast_dict import IntFloatDict
-from ..utils._param_validation import (
+
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from sklearn.cluster import (  # type: ignore[attr-defined]
+    _hierarchical_fast as _hierarchical,
+)
+from sklearn.cluster._feature_agglomeration import AgglomerationTransform
+from sklearn.metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import METRIC_MAPPING64
+from sklearn.metrics.pairwise import _VALID_METRICS, paired_distances
+from sklearn.utils import check_array
+from sklearn.utils._fast_dict import IntFloatDict
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory, validate_data
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore[attr-defined]
-from ._feature_agglomeration import AgglomerationTransform
+from sklearn.utils.graph import _fix_connected_components
+from sklearn.utils.validation import check_memory, validate_data
 
 ###############################################################################
 # For non fully-connected graphs

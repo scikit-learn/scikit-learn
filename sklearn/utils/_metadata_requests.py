@@ -104,9 +104,9 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
-from .. import get_config
-from ..exceptions import UnsetMetadataPassedError
-from ._bunch import Bunch
+from sklearn import get_config
+from sklearn.exceptions import UnsetMetadataPassedError
+from sklearn.utils._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
@@ -501,26 +501,26 @@ class MethodMetadataRequest:
         return res
 
     def _consumes(self, params):
-        """Check whether the given metadata are consumed by this method.
+        """Return subset of `params` consumed by the method that owns this instance.
 
         Parameters
         ----------
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameter names to test for consumption.
 
         Returns
         -------
-        consumed : set of str
-            A set of parameters which are consumed by this method.
+        consumed_params : set of str
+            A subset of parameters from `params` which are consumed by this method.
         """
         params = set(params)
-        res = set()
-        for prop, alias in self._requests.items():
-            if alias is True and prop in params:
-                res.add(prop)
+        consumed_params = set()
+        for metadata_name, alias in self._requests.items():
+            if alias is True and metadata_name in params:
+                consumed_params.add(metadata_name)
             elif isinstance(alias, str) and alias in params:
-                res.add(alias)
-        return res
+                consumed_params.add(alias)
+        return consumed_params
 
     def _serialize(self):
         """Serialize the object.
@@ -571,22 +571,27 @@ class MetadataRequest:
             )
 
     def consumes(self, method, params):
-        """Check whether the given metadata are consumed by the given method.
+        """Return params consumed as metadata in a :term:`consumer`.
+
+        This method returns the subset of given `params` that are consumed by the
+        given `method`. It can be used to check if parameters are used as metadata in
+        the specified method of the :term:`consumer` that owns this `MetadataRequest`
+        instance.
 
         .. versionadded:: 1.4
 
         Parameters
         ----------
         method : str
-            The name of the method to check.
+            The name of the method for which to determine consumed parameters.
 
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameter names to test for consumption.
 
         Returns
         -------
-        consumed : set of str
-            A set of parameters which are consumed by the given method.
+        consumed_params : set of str
+            A subset of parameters from `params` which are consumed by the given method.
         """
         return getattr(self, method)._consumes(params=params)
 
@@ -900,35 +905,42 @@ class MetadataRouter:
         return self
 
     def consumes(self, method, params):
-        """Check whether the given metadata is consumed by the given method.
+        """Return params consumed as metadata in a :term:`router` or its sub-estimators.
+
+        This method returns the subset of `params` that are consumed by the
+        `method`. A `param` is considered consumed if it is used in the specified
+        method of the :term:`router` itself or any of its sub-estimators (or their
+        sub-estimators).
 
         .. versionadded:: 1.4
 
         Parameters
         ----------
         method : str
-            The name of the method to check.
+            The name of the method for which to determine consumed parameters.
 
         params : iterable of str
-            An iterable of parameters to check.
+            An iterable of parameter names to test for consumption.
 
         Returns
         -------
-        consumed : set of str
-            A set of parameters which are consumed by the given method.
+        consumed_params : set of str
+            A subset of parameters from `params` which are consumed by this method.
         """
-        res = set()
+        consumed_params = set()
         if self._self_request:
-            res = res | self._self_request.consumes(method=method, params=params)
+            consumed_params.update(
+                self._self_request.consumes(method=method, params=params)
+            )
 
         for _, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
                 if caller == method:
-                    res = res | route_mapping.router.consumes(
-                        method=callee, params=params
+                    consumed_params.update(
+                        route_mapping.router.consumes(method=callee, params=params)
                     )
 
-        return res
+        return consumed_params
 
     def _get_param_names(self, *, method, return_alias, ignore_self_request):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -1197,8 +1209,8 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
-REQUESTER_DOC = """
-Configure whether metadata should be requested to be passed to the ``{method}`` method.
+REQUESTER_DOC = """        Configure whether metadata should be requested to be \
+passed to the ``{method}`` method.
 
         Note that this method is only relevant when this estimator is used as a
         sub-estimator within a :term:`meta-estimator` and metadata routing is enabled
