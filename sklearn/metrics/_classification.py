@@ -29,6 +29,7 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _average,
     _bincount,
+    _convert_to_reference,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -364,7 +365,10 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = _convert_to_reference(
+        reference=y_pred, arrays=(y_true, sample_weight)
+    )
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
