@@ -7,6 +7,7 @@ from sklearn.utils._plotting import (
     _deprecate_estimator_name,
     _despine,
     _interval_max_min_ratio,
+    _LineTooltipMixin,
     _validate_score_name,
     _validate_style_kwargs,
 )
@@ -542,3 +543,132 @@ def test_deprecate_estimator_name(estimator_name, name):
         )
         with pytest.raises(ValueError, match=error_message):
             _deprecate_estimator_name(estimator_name, name, version)
+
+
+class _TestCurveDisplay(_LineTooltipMixin):
+    def __init__(self, n_curves=1, x_max=1.0, y_max=1.0, parametric=False):
+        self.n_curves = n_curves
+        self.x_max = x_max
+        self.y_max = y_max
+        self.parametric = parametric
+
+    def plot(self, ax=None):
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            _, ax = plt.subplots()
+        self.ax_, self.figure_ = ax, ax.figure
+
+        self.line_ = []
+        self.t_vals, self.x_vals, self.y_vals = [], [], []
+        x_ends = np.linspace(
+            self.x_max if self.n_curves == 1 else self.x_max / 2,
+            self.x_max,
+            self.n_curves,
+        )
+        for i, x_end in enumerate(x_ends):
+            self.t_vals.append(t := np.linspace(0, 1, 100))
+            self.x_vals.append(x := x_end * t)
+            self.y_vals.append(y := self.y_max * t)
+            self.line_.extend(self.ax_.plot(x, y, label=f"curve {i + 1}"))
+
+        params = {"t_label": "t", "t_vals": self.t_vals} if self.parametric else {}
+        self._add_line_tooltip(x_label="x", y_label="y", **params)
+
+        return self
+
+
+def _simulate_mouse_event(display, x, y):
+    """Emit a mouse location event at data coordinates (x, y)."""
+    import matplotlib as mpl
+
+    # needed to update xlim and ylim before using transData since we're not calling
+    # plt.show(). See https://github.com/matplotlib/matplotlib/issues/28075.
+    display.ax_.autoscale_view()
+
+    x_display, y_display = display.ax_.transData.transform((x, y))
+    event = mpl.backend_bases.MouseEvent(
+        name="motion_notify_event",
+        canvas=display.figure_.canvas,
+        x=x_display,
+        y=y_display,
+    )
+    display.ax_.figure.canvas.callbacks.process("motion_notify_event", event)
+
+
+@pytest.mark.parametrize("n_curves", [1, 5])
+@pytest.mark.parametrize("x_max", [1, 10])
+@pytest.mark.parametrize("y_max", [1, 10])
+@pytest.mark.parametrize("parametric", [True, False])
+def test_line_tooltip(n_curves, x_max, y_max, parametric, pyplot):
+    """Test the behavior for the line tooltip."""
+    import matplotlib as mpl
+
+    display = _TestCurveDisplay(
+        n_curves=n_curves,
+        x_max=x_max,
+        y_max=y_max,
+        parametric=parametric,
+    ).plot()
+
+    assert hasattr(display, "line_tooltip_")
+    assert isinstance(display.line_tooltip_, mpl.text.Annotation)
+    assert display.line_tooltip_.get_text() == ""
+    assert not display.line_tooltip_.get_visible()
+
+    # simulate a mouse event occurring on a line. Take the point in the middle of the
+    # last curve for instance
+    x = display.x_vals[-1][50]
+    y = display.y_vals[-1][50]
+    _simulate_mouse_event(display, x, y)
+
+    assert display.line_tooltip_.get_visible()
+    text = display.line_tooltip_.get_text()
+    assert all(name in text for name in ("x", "y"))
+    if parametric:
+        assert "t" in text
+
+    # simulate a second event, not occurring on any line this time. None of these curves
+    # ever touch the lower right corner
+    _simulate_mouse_event(display, x_max, 0)
+
+    assert not display.line_tooltip_.get_visible()
+
+    # simulate a third event occurring on several lines at once. (0, 0) belongs to all
+    # curves.
+    _simulate_mouse_event(display, 0, 0)
+
+    assert display.line_tooltip_.get_visible()
+    text = display.line_tooltip_.get_text()
+    assert all(name in text for name in ("x", "y"))
+    if parametric:
+        assert "t" in text
+
+
+@pytest.mark.parametrize("y_max", [1, 10])
+def test_line_tooltip_multiple_displays(pyplot, y_max):
+    """Test the line tooltip when different displays share the same axes."""
+    display = _TestCurveDisplay(x_max=0.5, y_max=y_max).plot()
+    display2 = _TestCurveDisplay(x_max=1, y_max=y_max).plot(ax=display.ax_)
+
+    assert hasattr(display, "line_tooltip_")
+    assert hasattr(display2, "line_tooltip_")
+    assert not display.line_tooltip_.get_visible()
+    assert not display2.line_tooltip_.get_visible()
+
+    # simulate a mouse event occurring on the first line
+    _simulate_mouse_event(display, 0.5, y_max)
+
+    assert display.line_tooltip_.get_visible()
+    assert not display2.line_tooltip_.get_visible()
+
+    # simulate a mouse event occurring on the second line
+    _simulate_mouse_event(display2, 1, y_max)
+
+    assert not display.line_tooltip_.get_visible()
+    assert display2.line_tooltip_.get_visible()
+
+    # simulate a mouse event occurring on both lines. Only 1 line tooltip is visible
+    _simulate_mouse_event(display, 0, 0)
+
+    assert display.line_tooltip_.get_visible() != display2.line_tooltip_.get_visible()
