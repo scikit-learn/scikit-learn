@@ -41,6 +41,11 @@ def dbscan(
 ):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
+    This function is a wrapper around :class:`~cluster.DBSCAN`, suitable for
+    quick, standalone clustering tasks. For estimator-based workflows, where
+    estimator attributes or pipeline integration is required, prefer
+    :class:`~cluster.DBSCAN`.
+
     DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a
     density-based clustering algorithm that groups together points that are
     closely packed while marking points in low-density regions as outliers.
@@ -49,7 +54,7 @@ def dbscan(
 
     Parameters
     ----------
-    X : {array-like, sparse (CSR) matrix} of shape (n_samples, n_features) or \
+    X : {array-like, scipy sparse matrix} of shape (n_samples, n_features) or \
             (n_samples, n_samples)
         A feature array, or array of distances between samples if
         ``metric='precomputed'``. When using precomputed distances, X must
@@ -60,14 +65,14 @@ def dbscan(
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
         important DBSCAN parameter to choose appropriately for your data set
-        and distance function. Smaller values will result in more clusters,
-        while larger values will merge clusters together.
+        and distance function. Smaller values result in more clusters,
+        while larger values result in fewer, larger clusters.
 
     min_samples : int, default=5
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
-        Higher values will result in more conservative clustering (fewer,
-        denser clusters), while lower values will create more clusters.
+        Higher values yield fewer, denser clusters, while lower values yield
+        more, sparser clusters.
 
     metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
@@ -89,7 +94,7 @@ def dbscan(
         to compute pointwise distances and find nearest neighbors.
         'auto' will attempt to decide the most appropriate algorithm
         based on the values passed to :meth:`fit` method.
-        See NearestNeighbors module documentation for details.
+        See :class:`~neighbors.NearestNeighbors` documentation for details.
 
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
@@ -99,9 +104,10 @@ def dbscan(
         lead to faster queries but slower construction.
 
     p : float, default=2
-        The power of the Minkowski metric to be used to calculate distance
-        between points. When p=1, this is equivalent to Manhattan distance,
-        and when p=2, this is equivalent to Euclidean distance.
+        Power parameter for the Minkowski metric. When p = 1, this is equivalent
+        to using manhattan_distance (l1), and euclidean_distance (l2) for p = 2.
+        For arbitrary p, minkowski_distance (l_p) is used. This parameter is expected
+        to be positive.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weight of each sample, such that a sample with a weight of at least
@@ -247,7 +253,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         to compute pointwise distances and find nearest neighbors.
         'auto' will attempt to decide the most appropriate algorithm
         based on the values passed to :meth:`fit` method.
-        See NearestNeighbors module documentation for details.
+        See :class:`~neighbors.NearestNeighbors` documentation for details.
 
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
@@ -469,7 +475,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """Compute clusters from a data or distance matrix and predict labels.
 
         This method fits the model and returns the cluster labels in a single step.
-        It is equivalent to calling fit(X).labels_ but more efficient.
+        It is equivalent to calling fit(X).labels_.
 
         Parameters
         ----------
