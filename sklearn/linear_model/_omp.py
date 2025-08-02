@@ -24,7 +24,7 @@ from sklearn.utils.metadata_routing import (
     process_routing,
 )
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import validate_data
+from sklearn.utils.validation import FLOAT_DTYPES, validate_data
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -665,8 +665,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
-        :term:`n_samples` is very large. Note that if you already have such
-        matrices, you can pass them directly to the fit method.
+        :term:`n_samples` is very large.
 
     Attributes
     ----------
@@ -769,11 +768,19 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = validate_data(self, X, y, multi_output=True, y_numeric=True)
+        X, y = validate_data(
+            self, X, y, multi_output=True, y_numeric=True, dtype=FLOAT_DTYPES
+        )
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
-            X, y, None, self.precompute, self.fit_intercept, copy=True
+            X,
+            y,
+            None,
+            self.precompute,
+            self.fit_intercept,
+            copy=True,
+            check_gram=False,
         )
 
         if y.ndim == 1:
