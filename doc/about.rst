@@ -142,7 +142,8 @@ If you want to cite scikit-learn for its API or design, you may also want to con
 following paper:
 
 :arxiv:`API design for machine learning software: experiences from the scikit-learn
-project <1309.0238>`, Buitinck *et al.*, 2013.
+project <1309.0238>`, Buitinck *et al.*, in **ECML PKDD Workshop: Languages for Data Mining
+and Machine Learning**, pp. 108–122, 2013.
 
 Bibtex entry::
 
