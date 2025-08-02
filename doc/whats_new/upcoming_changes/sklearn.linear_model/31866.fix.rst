@@ -1,0 +1,6 @@
+- Fixed a bug in class:`linear_model:LogisticRegression` when used with
+ `solver="newton-cholesky"`and `warm_start=True` on multi-class problems, either
+  with `fit_intercept=True` or with `penalty=None` (both resulting in unpenalized
+  parameters for the solver). The coefficients and intercepts of the last class as
+  provided by warm start were partially wrongly overwritten by zero.
+  By :user:`Christian Lorentzen <lorentzenchr>`
