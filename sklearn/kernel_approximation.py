@@ -30,6 +30,10 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
+from sklearn.utils._array_api import (
+    _find_matching_floating_dtype,
+    get_namespace,
+)
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
@@ -383,7 +387,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             # output data type during `transform`.
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
-https://github.com/scikit-learn/scikit-learn/pull/29661/conflict?name=sklearn%252Fkernel_approximation.py&ancestor_oid=02c8af755baeaa53ffe13c33371167dcc2aeeb6e&base_oid=5c2b9644b785dbacab572069e0ad04f8318ea265&head_oid=bd60f8494bf61c4d1c85559c2f9929cd0131721d
         self._n_features_out = self.n_components
         return self
 
@@ -1014,10 +1017,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         """
 
         xp, _ = get_namespace(X)
-        if X.ndim < 2:
-            X = xp.reshape(X, (1, -1))
-        if y is not None:
-            y = xp.asarray(y, device=device(X))
         X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
