@@ -10,6 +10,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
+from sklearn.base import config_context
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -43,8 +44,16 @@ from sklearn.metrics._classification import (
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
+from sklearn.utils._array_api import (
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1269,7 +1278,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 @pytest.mark.parametrize(
     "labels, err_msg",
     [
-        ([], "'labels' should contains at least one label."),
+        ([], "'labels' should contain at least one label."),
         ([3, 4], "At least one label specified must be in y_true"),
     ],
     ids=["empty list", "unknown labels"],
@@ -1283,10 +1292,14 @@ def test_confusion_matrix_error(labels, err_msg):
 @pytest.mark.parametrize(
     "labels", (None, [0, 1], [0, 1, 2]), ids=["None", "binary", "multiclass"]
 )
-def test_confusion_matrix_on_zero_length_input(labels):
+@pytest.mark.parametrize(
+    "sample_weight",
+    (None, []),
+)
+def test_confusion_matrix_on_zero_length_input(labels, sample_weight):
     expected_n_classes = len(labels) if labels else 0
     expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
-    cm = confusion_matrix([], [], labels=labels)
+    cm = confusion_matrix([], [], sample_weight=sample_weight, labels=labels)
     assert_array_equal(cm, expected)
 
 
@@ -3608,3 +3621,21 @@ def test_d2_brier_score_warning_on_less_than_two_samples():
     warning_message = "not well-defined with less than two samples"
     with pytest.warns(UndefinedMetricWarning, match=warning_message):
         d2_brier_score(y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_confusion_matrix_array_api(array_namespace, device, _):
+    """Test that `confusion_matrix` works for all array types when `labels` are passed
+    such that the inner boolean `need_index_conversion` evaluates to `True`."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    y_true = xp.asarray([1, 2, 3], device=device)
+    y_pred = xp.asarray([4, 5, 6], device=device)
+    labels = xp.asarray([1, 2, 3], device=device)
+
+    with config_context(array_api_dispatch=True):
+        result = confusion_matrix(y_true, y_pred, labels=labels)
+        assert get_namespace(result)[0] == get_namespace(y_pred)[0]
+        assert array_api_device(result) == array_api_device(y_pred)

@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.confusion_matrix` now supports Array API compatible inputs.
+  By :user:`Stefanie Senger <StefanieSenger>`

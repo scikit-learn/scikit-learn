@@ -29,6 +29,7 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _average,
     _bincount,
+    _convert_to_numpy,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -413,7 +414,7 @@ def confusion_matrix(
     y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array-like of shape (n_classes), default=None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
@@ -475,27 +476,60 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
-        y_true, y_pred, sample_weight
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
+    y_true = check_array(
+        y_true,
+        dtype=None,
+        ensure_2d=False,
+        ensure_all_finite=False,
+        ensure_min_samples=0,
     )
+    y_pred = check_array(
+        y_pred,
+        dtype=None,
+        ensure_2d=False,
+        ensure_all_finite=False,
+        ensure_min_samples=0,
+    )
+    # Convert the input arrays to NumPy (on CPU) irrespective of the original
+    # namespace and device so as to be able to leverage the the efficient
+    # counting operations implemented by SciPy in the coo_matrix constructor.
+    # The final results will be converted back to the input namespace and device
+    # for the sake of consistency with other metric functions with array API support.
+    y_true = _convert_to_numpy(y_true, xp)
+    y_pred = _convert_to_numpy(y_pred, xp)
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
+    else:
+        sample_weight = _convert_to_numpy(sample_weight, xp)
+
+    if len(sample_weight) > 0:
+        y_type, y_true, y_pred, sample_weight = _check_targets(
+            y_true, y_pred, sample_weight
+        )
+    else:
+        # This is needed to handle the special case where y_true, y_pred and
+        # sample_weight are all empty.
+        # In this case we don't pass sample_weight to _check_targets that would
+        # check that sample_weight is not empty and we don't reuse the returned
+        # sample_weight
+        y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+
+    y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels)
+        labels = _convert_to_numpy(labels, xp)
         n_labels = labels.size
         if n_labels == 0:
-            raise ValueError("'labels' should contains at least one label.")
+            raise ValueError("'labels' should contain at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
         elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
-
-    if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -507,9 +541,9 @@ def confusion_matrix(
         and y_pred.min() >= 0
     )
     if need_index_conversion:
-        label_to_ind = {y: x for x, y in enumerate(labels)}
-        y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-        y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+        label_to_ind = {label: index for index, label in enumerate(labels)}
+        y_pred = np.array([label_to_ind.get(label, n_labels + 1) for label in y_pred])
+        y_true = np.array([label_to_ind.get(label, n_labels + 1) for label in y_true])
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
@@ -550,7 +584,7 @@ def confusion_matrix(
             UserWarning,
         )
 
-    return cm
+    return xp.asarray(cm, device=device_)
 
 
 @validate_params(
