@@ -10,18 +10,21 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.fft import fft, ifft
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from .metrics.pairwise import KERNEL_PARAMS, PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
-from .utils import check_random_state
-from .utils._array_api import _find_matching_floating_dtype, device, get_namespace
-from .utils._param_validation import Interval, StrOptions
-from .utils.extmath import safe_sparse_dot
-from .utils.validation import (
+from sklearn.metrics.pairwise import (
+    KERNEL_PARAMS,
+    PAIRWISE_KERNEL_FUNCTIONS,
+    pairwise_kernels,
+)
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
     validate_data,
@@ -380,7 +383,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             # output data type during `transform`.
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
-
+https://github.com/scikit-learn/scikit-learn/pull/29661/conflict?name=sklearn%252Fkernel_approximation.py&ancestor_oid=02c8af755baeaa53ffe13c33371167dcc2aeeb6e&base_oid=5c2b9644b785dbacab572069e0ad04f8318ea265&head_oid=bd60f8494bf61c4d1c85559c2f9929cd0131721d
         self._n_features_out = self.n_components
         return self
 

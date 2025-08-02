@@ -12,11 +12,11 @@ import scipy
 import scipy.sparse as sp
 import scipy.special as special
 
-from .._config import get_config
-from ..externals import array_api_compat
-from ..externals import array_api_extra as xpx
-from ..externals.array_api_compat import numpy as np_compat
-from .fixes import parse_version
+from sklearn._config import get_config
+from sklearn.externals import array_api_compat
+from sklearn.externals import array_api_extra as xpx
+from sklearn.externals.array_api_compat import numpy as np_compat
+from sklearn.utils.fixes import parse_version
 
 # TODO: complete __all__
 __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
@@ -235,7 +235,7 @@ def _is_numpy_namespace(xp):
 def _union1d(a, b, xp):
     if _is_numpy_namespace(xp):
         # avoid circular import
-        from ._unique import cached_unique
+        from sklearn.utils._unique import cached_unique
 
         a_unique, b_unique = cached_unique(a, b, xp=xp)
         return xp.asarray(numpy.union1d(a_unique, b_unique))
@@ -971,7 +971,7 @@ def _count_nonzero(X, axis=None, sample_weight=None, xp=None, device=None):
     If the array `X` is sparse, and we are using the numpy namespace then we
     simply call the original function. This function only supports 2D arrays.
     """
-    from .sparsefuncs import count_nonzero
+    from sklearn.utils.sparsefuncs import count_nonzero
 
     xp, _ = get_namespace(X, sample_weight, xp=xp)
     if _is_numpy_namespace(xp) and sp.issparse(X):

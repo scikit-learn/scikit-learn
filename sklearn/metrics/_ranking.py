@@ -19,25 +19,25 @@ from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
-from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import label_binarize
-from ..utils import (
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
+from sklearn.preprocessing import label_binarize
+from sklearn.utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
     size,
 )
-from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.multiclass import type_of_target
-from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
-from ._base import _average_binary_score, _average_multiclass_ovo_score
+from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.sparsefuncs import count_nonzero
+from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
 
 
 @validate_params(
