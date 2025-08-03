@@ -5,6 +5,7 @@
 
 import array
 import re
+import string
 import unicodedata
 import warnings
 from collections import defaultdict
@@ -72,6 +73,34 @@ def _preprocess(doc, accent_function=None, lower=False):
     if accent_function is not None:
         doc = accent_function(doc)
     return doc
+
+
+def _indic_tokenizer(text):
+    """Tokenize text, preserving Unicode words and removing punctuation.
+
+    This tokenizer is designed to handle scripts like Indic languages (e.g., Telugu,
+    Hindi) by treating sequences of non-whitespace Unicode characters as single
+    tokens after removing punctuation. It overrides the default `token_pattern`
+    when used in `CountVectorizer`.
+
+    Parameters
+    ----------
+    text : str
+        The input string to tokenize.
+
+    Returns
+    -------
+    tokens : list
+        A list of tokens extracted from the text.
+
+    Examples
+    --------
+    >>> text = "ప్రధానమంత్రిని కలుసుకున్నారు, They met."
+    >>> _indic_tokenizer(text)
+    ['ప్రధానమంత్రిని', 'కలుసుకున్నారు', 'They', 'met']
+    """
+    text = text.translate(str.maketrans("", "", string.punctuation))
+    return re.findall(r"(?u)\S+", text)
 
 
 def _analyze(
