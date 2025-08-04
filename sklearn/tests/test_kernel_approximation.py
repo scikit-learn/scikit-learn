@@ -19,9 +19,9 @@ from sklearn.metrics.pairwise import (
     rbf_kernel,
 )
 from sklearn.utils._array_api import (
-    yield_namespace_device_dtype_combinations, 
     _convert_to_numpy,
     get_namespace,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -322,6 +322,7 @@ def test_input_validation(csr_container):
     X = csr_container(X)
     RBFSampler().fit(X).transform(X)
 
+
 def test_nystroem_approximation():
     # some basic tests
     rnd = np.random.RandomState(0)
@@ -347,6 +348,7 @@ def test_nystroem_approximation():
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
         assert X_transformed.shape == (X.shape[0], 2)
+
 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
@@ -401,6 +403,7 @@ def test_nystroem_default_parameters():
     K2 = np.dot(X_transformed, X_transformed.T)
     assert_array_almost_equal(K, K2)
 
+
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
@@ -444,6 +447,7 @@ def test_nystroem_singular_kernel():
     assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
     assert np.all(np.isfinite(Y))
 
+
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
@@ -456,7 +460,6 @@ def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name)
     X_xp = xp.asarray(X_np)
 
     with config_context(array_api_dispatch=True):
-
         gamma = 100
         N = Nystroem(gamma=gamma, n_components=X_xp.shape[0]).fit(X_xp)
         X_xp_transformed = N.transform(X_xp)
@@ -466,6 +469,7 @@ def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name)
 
         assert_array_almost_equal(K, np.dot(X_xp_transformed_np, X_xp_transformed_np.T))
         assert np.all(np.isfinite(Y))
+
 
 def test_nystroem_poly_kernel_params():
     # Non-regression: Nystroem should pass other parameters beside gamma.
@@ -478,6 +482,7 @@ def test_nystroem_poly_kernel_params():
     )
     X_transformed = nystroem.fit_transform(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
@@ -547,6 +552,7 @@ def test_nystroem_precomputed_kernel():
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
 
+
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
@@ -571,6 +577,7 @@ def test_nystroem_precomputed_kernel_array_api(array_namespace, device, dtype_na
         ny = Nystroem(kernel="precomputed", n_components=X_xp.shape[0], **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
+
 
 def test_nystroem_component_indices():
     """Check that `component_indices_` corresponds to the subset of

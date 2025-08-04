@@ -22,6 +22,10 @@ from sklearn.metrics.pairwise import (
     pairwise_kernels,
 )
 from sklearn.utils import check_random_state
+from sklearn.utils._array_api import (
+    _find_matching_floating_dtype,
+    get_namespace,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import (
@@ -30,10 +34,6 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-from sklearn.utils._array_api import (
-    _find_matching_floating_dtype,
-    get_namespace,
-)
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
@@ -1080,7 +1080,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         xp, _ = get_namespace(X)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(
