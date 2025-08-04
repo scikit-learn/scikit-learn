@@ -19,7 +19,13 @@ from sklearn.utils.validation import validate_data
 
 
 class ClassicalMDS(BaseEstimator):
-    """Classical multidimensional scaling.
+    """Classical multidimensional scaling (MDS). This is also known as
+    principal coordinates analysis (PCoA) or Torgerson's scaling.
+
+    This is a version of MDS that has exact solution in terms of
+    eigendecomposition. If the input dissimilarity matrix consists of the
+    pairwise Euclidean distances between some vectors, then classical MDS
+    is equivalent to PCA applied to this set of vectors.
 
     Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
