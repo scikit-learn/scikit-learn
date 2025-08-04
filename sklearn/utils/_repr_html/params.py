@@ -92,19 +92,23 @@ def _params_html_repr(params):
     docstring = None
     if estimator_class_docs:
         docstring = docscrape.NumpyDocString(estimator_class_docs)
+        param_map = {
+            param_docstring.name: param_docstring
+            for param_docstring in docstring["Parameters"]
+        }
 
     rows = []
     for row in params:
         param_doc_link = None
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
-
         param_description = None
         if docstring:
-            for param_numpydoc in docstring["Parameters"]:
-                if param_numpydoc.name == row:
-                    param_description = "<br>".join(param_numpydoc.desc)
-                    break
+            param_numpydoc = param_map.get(row)
+            if param_numpydoc:
+                param_description = "".join(param_numpydoc.desc)
+            else:
+                param_description = None
 
         if params.doc_link and link:
             param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
