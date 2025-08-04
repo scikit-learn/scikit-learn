@@ -486,7 +486,7 @@ def _plain_sgd{{name_suffix}}(
                         # SGD optimizes 0.5 * L2**2, because using weight decay
                         objective_sum += cur_loss_val
                         if penalty_type > 0: # if regularization is enabled
-                            objective_sum + alpha * (
+                            objective_sum += alpha * (
                                 (1 - l1_ratio) * 0.5 * w.norm() ** 2 +
                                 l1_ratio * w.l1norm()
                             )
