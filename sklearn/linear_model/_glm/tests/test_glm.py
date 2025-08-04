@@ -29,7 +29,7 @@ from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_allclose
 
-SOLVERS = ["lbfgs", "newton-cholesky"]
+SOLVERS = ["lbfgs", "newton-cd", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -349,9 +349,11 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-12,
+        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
+        tol=1e-13 if solver == "newton-cd" else 1e-12,
         max_iter=1000,
     )
+    is_newton_solver = solver.startswith("newton")
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -362,7 +364,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         intercept = 0
 
     with warnings.catch_warnings():
-        if solver.startswith("newton") and n_samples < n_features:
+        if solver == "newton-cholesky" and n_samples < n_features:
             # The newton solvers should warn and automatically fallback to LBFGS
             # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
@@ -384,13 +386,13 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 5e-5
-        if solver == "newton-cholesky":
+        if is_newton_solver:
             rtol = 5e-4
         assert_allclose(model.predict(X), y, rtol=rtol)
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
-        if solver == "newton-cholesky":
+        if is_newton_solver:
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
             if norm_model < (1 + 1e-12) * norm_solution:
@@ -432,9 +434,11 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-12,
+        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
+        tol=1e-13 if solver == "newton-cd" else 1e-12,
         max_iter=1000,
     )
+    is_newton_solver = solver.startswith("newton")
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -453,7 +457,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
-        if solver.startswith("newton"):
+        if solver == "newton-cholesky":
             # The newton solvers should warn and automatically fallback to LBFGS
             # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
@@ -477,13 +481,18 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
         rtol = 1e-4
-        assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
+        if solver == "newton-cd":
+            # This solver finds a solution, but a different linear combination.
+            p = coef.shape[0]
+            assert_allclose(model_coef[:p] + model_coef[p:], 2 * coef, rtol=rtol)
+        else:
+            assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
         assert_allclose(model.predict(X), y, rtol=rtol)
-        if (solver == "lbfgs" and fit_intercept) or solver == "newton-cholesky":
+        if (solver == "lbfgs" and fit_intercept) or is_newton_solver:
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -518,9 +527,11 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-12,
+        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
+        tol=1e-13 if solver == "newton-cd" else 1e-12,
         max_iter=1000,
     )
+    is_newton_solver = solver.startswith("newton")
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -534,7 +545,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     y = np.r_[y, y]
 
     with warnings.catch_warnings():
-        if solver.startswith("newton") and n_samples < n_features:
+        if solver == "newton-cholesky" and n_samples < n_features:
             # The newton solvers should warn and automatically fallback to LBFGS
             # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
@@ -557,7 +568,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
-        if solver == "newton-cholesky":
+        if is_newton_solver:
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
             if not (norm_model > (1 + 1e-12) * norm_solution):
@@ -569,7 +580,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             # equal.
             assert norm_model > (1 + 1e-12) * norm_solution
         else:
-            rtol = 1e-5 if solver == "newton-cholesky" else 1e-4
+            rtol = 1e-5 if is_newton_solver else 1e-4
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -714,7 +725,8 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
         alpha=0,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-8,
+        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
+        tol=1e-13 if solver == "newton-cd" else 1e-8,
     )
     if fit_intercept:
         res = glm.fit(X[:, :-1], y)
@@ -855,7 +867,7 @@ def test_normal_ridge_comparison(
     assert_allclose(glm.predict(X_test), ridge.predict(X_test), rtol=2e-4)
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
+@pytest.mark.parametrize("solver", SOLVERS)
 def test_poisson_glmnet(solver):
     """Compare Poisson regression with L2 regularization and LogLink to glmnet"""
     # library("glmnet")
