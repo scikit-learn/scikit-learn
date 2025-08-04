@@ -39,6 +39,9 @@ case, the business metric depends on the amount of each individual transaction.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
+%matplotlib widget
+
+# %%
 # Cost-sensitive learning with constant gains and costs
 # -----------------------------------------------------
 #
