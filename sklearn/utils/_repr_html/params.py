@@ -106,7 +106,10 @@ def _params_html_repr(params):
         if docstring:
             param_numpydoc = param_map.get(row)
             if param_numpydoc:
-                param_description = "".join(param_numpydoc.desc)
+                param_description = (
+                    f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
+                    f"{''.join(param_numpydoc.desc)}"
+                )
             else:
                 param_description = None
 
