@@ -24,7 +24,10 @@ from sklearn.linear_model._base import (
     LinearClassifierMixin,
     SparseCoefMixin,
 )
-from sklearn.linear_model._glm.glm import NewtonCholeskySolver
+from sklearn.linear_model._glm._newton_solver import (
+    NewtonCDGramSolver,
+    NewtonCholeskySolver,
+)
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import sag_solver
 from sklearn.metrics import get_scorer, get_scorer_names
@@ -73,7 +76,7 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", None):
+    if solver not in ["liblinear", "newton-cd", "saga"] and penalty not in ("l2", None):
         raise ValueError(
             f"Solver {solver} supports only 'l2' or None penalties, got {penalty} "
             "penalty."
@@ -81,7 +84,7 @@ def _check_solver(solver, penalty, dual):
     if solver != "liblinear" and dual:
         raise ValueError(f"Solver {solver} supports only dual=False, got dual={dual}")
 
-    if penalty == "elasticnet" and solver != "saga":
+    if penalty == "elasticnet" and solver not in ("saga", "newton-cd"):
         raise ValueError(
             f"Only 'saga' solver supports elasticnet penalty, got solver={solver}."
         )
@@ -162,8 +165,8 @@ def _logistic_regression_path(
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd', 'newton-cg', 'newton-cholesky', \
+            'sag', 'saga'}, default='lbfgs'
         Numerical solver to use.
 
     coef : array-like of shape (n_classes, features + int(fit_intercept)) or \
@@ -270,7 +273,7 @@ def _logistic_regression_path(
             X,
             accept_sparse="csr",
             dtype=[xp.float64, xp.float32],
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga", "newton-cd"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -335,7 +338,7 @@ def _logistic_regression_path(
     #     C * sum(pointwise_loss) + penalty
     # instead of (as LinearModelLoss does)
     #     mean(pointwise_loss) + 1/C * penalty
-    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+    if solver in ["lbfgs", "newton-cd", "newton-cg", "newton-cholesky"]:
         # This needs to be calculated after sample_weight is multiplied by
         # class_weight. It is even tested that passing class_weight is equivalent to
         # passing sample_weights according to class_weight.
@@ -398,7 +401,7 @@ def _logistic_regression_path(
             fit_intercept=fit_intercept,
         )
         target = Y_multi
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver in ["lbfgs", "newton-cd", "newton-cg", "newton-cholesky"]:
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
@@ -426,7 +429,7 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(X, target, sample_weight, l2_reg_strength, n_threads),
+                args=(X, target, sample_weight, 0, l2_reg_strength, n_threads),
                 options={
                     "maxiter": max_iter,
                     "maxls": 50,  # default is 20
@@ -444,7 +447,7 @@ def _logistic_regression_path(
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
-            args = (X, target, sample_weight, l2_reg_strength, n_threads)
+            args = (X, target, sample_weight, 0, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 grad_hess=hess,
                 func=func,
@@ -460,6 +463,25 @@ def _logistic_regression_path(
             sol = NewtonCholeskySolver(
                 coef=w0,
                 linear_loss=loss,
+                l2_reg_strength=l2_reg_strength,
+                tol=tol,
+                max_iter=max_iter,
+                n_threads=n_threads,
+                verbose=verbose,
+            )
+            w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
+            n_iter_i = sol.iteration
+        elif solver == "newton-cd":
+            if penalty == "l1":
+                l1_ratio = 1.0
+            elif penalty == "l2":
+                l1_ratio = 0
+            l1_reg_strength = l1_ratio / (C * sw_sum)
+            l2_reg_strength = (1.0 - l1_ratio) / (C * sw_sum)
+            sol = NewtonCDGramSolver(
+                coef=w0,
+                linear_loss=loss,
+                l1_reg_strength=l1_reg_strength,
                 l2_reg_strength=l2_reg_strength,
                 tol=tol,
                 max_iter=max_iter,
@@ -539,7 +561,7 @@ def _logistic_regression_path(
                 xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device_)
             )
         else:
-            if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+            if solver in ["lbfgs", "newton-cd", "newton-cg", "newton-cholesky"]:
                 multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
             else:
                 multi_w0 = w0
@@ -921,6 +943,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
            'sag'             l1_ratio=0               yes
@@ -1079,7 +1102,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "random_state": ["random_state"],
         "solver": [
             StrOptions(
-                {"lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"}
+                {
+                    "lbfgs",
+                    "liblinear",
+                    "newton-cd",
+                    "newton-cg",
+                    "newton-cholesky",
+                    "sag",
+                    "saga",
+                }
             )
         ],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -1231,7 +1262,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             accept_sparse="csr",
             dtype=[xp.float64, xp.float32],
             order="C",
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga", "newton-cd"],
         )
         n_features = X.shape[1]
         check_classification_targets(y)
@@ -1527,6 +1558,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
            'sag'             l1_ratio=0               yes
@@ -1912,7 +1944,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_sparse="csr",
             dtype=np.float64,
             order="C",
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga", "newton-cd"],
         )
         n_features = X.shape[1]
         check_classification_targets(y)
