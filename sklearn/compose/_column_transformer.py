@@ -16,30 +16,34 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from ..base import TransformerMixin, _fit_context, clone
-from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
-from ..preprocessing import FunctionTransformer
-from ..utils import Bunch
-from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_indexing
-from ..utils._metadata_requests import METHODS
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils._repr_html.estimator import _VisualBlock
-from ..utils._set_output import (
+from sklearn.base import TransformerMixin, _fit_context, clone
+from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch
+from sklearn.utils._indexing import (
+    _determine_key_type,
+    _get_column_indices,
+    _safe_indexing,
+)
+from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import (
     _get_container_adapter,
     _get_output_config,
     _safe_set_output,
 )
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import _BaseComposition
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import _BaseComposition
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,

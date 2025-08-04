@@ -4,8 +4,9 @@
 
 import numpy as np
 
-from ...utils import _safe_indexing
-from ...utils._plotting import (
+from sklearn.metrics._ranking import auc, roc_curve
+from sklearn.utils import _safe_indexing
+from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
@@ -15,8 +16,7 @@ from ...utils._plotting import (
     _LineTooltipMixin,
     _validate_style_kwargs,
 )
-from ...utils._response import _get_response_values_binary
-from .._ranking import auc, roc_curve
+from sklearn.utils._response import _get_response_values_binary
 
 
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin, _LineTooltipMixin):

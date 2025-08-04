@@ -12,23 +12,29 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, check_array, check_scalar, metadata_routing
-from ..utils._metadata_requests import (
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     get_routing_for_object,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metadata_routing import (
-    _routing_enabled,
-    process_routing,
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,
@@ -37,10 +43,6 @@ from ..utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from . import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):
@@ -610,7 +612,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_input=check_input,
+            check_gram=True,
         )
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
@@ -1051,7 +1053,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.precompute,
             fit_intercept=self.fit_intercept,
             copy=should_copy,
-            check_input=check_input,
+            check_gram=check_input,
             sample_weight=sample_weight,
         )
         # coordinate descent needs F-ordered arrays and _pre_fit might have
