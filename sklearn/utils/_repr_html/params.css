@@ -58,7 +58,7 @@ a:visited.doc-link {
 }
 a.doc-link:hover span {
   width: max-content;
-  max-width: 83em;
+  max-width: 83ch;
   text-align: left;
   height: max-content;
 }
