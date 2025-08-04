@@ -581,7 +581,7 @@ The disadvantages to using t-SNE are roughly:
   initializing points with PCA (using `init='pca'`).
 
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_013.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_015.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
