@@ -8,8 +8,7 @@ import reprlib
 from collections import UserDict
 from urllib.parse import quote
 
-from numpydoc import docscrape
-
+from sklearn.externals._numpydoc import docscrape
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
