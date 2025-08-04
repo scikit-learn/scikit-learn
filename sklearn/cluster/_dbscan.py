@@ -94,7 +94,8 @@ def dbscan(
         to compute pointwise distances and find nearest neighbors.
         'auto' will attempt to decide the most appropriate algorithm
         based on the values passed to :meth:`fit` method.
-        See :class:`~neighbors.NearestNeighbors` documentation for details.
+        See :class:`~sklearn.neighbors.NearestNeighbors` documentation for
+        details.
 
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
@@ -253,7 +254,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         to compute pointwise distances and find nearest neighbors.
         'auto' will attempt to decide the most appropriate algorithm
         based on the values passed to :meth:`fit` method.
-        See :class:`~neighbors.NearestNeighbors` documentation for details.
+        See :class:`~sklearn.neighbors.NearestNeighbors` documentation for
+        details.
 
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
