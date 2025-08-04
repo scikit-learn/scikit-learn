@@ -11,9 +11,9 @@ contribute. It is hosted on https://github.com/scikit-learn/scikit-learn.
 The decision making process and governance structure of scikit-learn is laid
 out in :ref:`governance`.
 
-Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
-adding new algorithms, and the best way to contribute and to help the project
-is to start working on known issues.
+Scikit-learn is :ref:`selective <selectiveness>` when it comes to
+adding new algorithms and features. This means the best way to contribute
+and help the project is to start working on known issues.
 See :ref:`new_contributors` to get started.
 
 .. topic:: **Our community, our values**
@@ -47,20 +47,17 @@ welcome to post feature requests or pull requests.
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn, with the most common ones
-being contribution of code or documentation to the project. Improving the
-documentation is no less important than improving the library itself.  If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-create a GitHub issue or preferably submit a GitHub pull request.
-Full documentation can be found under the doc/ directory.
+There are many ways to contribute to scikit-learn. Improving the
+documentation is no less important than improving the code of the library
+itself. If you find a typo in the documentation, or have made improvements, do
+not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
 
-But there are many other ways to help. In particular helping to
+There are many ways to help. In particular helping to
 :ref:`improve, triage, and investigate issues <bug_triaging>` and
 :ref:`reviewing other developers' pull requests <code_review>` are very
-valuable contributions that decrease the burden on the project
-maintainers.
+valuable contributions that move the project forward.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs
+Another way to contribute is to report issues you are facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
@@ -188,8 +185,10 @@ Contributing code
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
-  so far. In order to claim an issue for yourself, please comment exactly
-  ``/take`` on it for the CI to automatically assign the issue to you.
+  so far. If you'd like to work on such issue, leave a comment with your idea of
+  how you plan to approach it, and start working on it. If somebody else has
+  already said they'd be working on the issue in the past 2-3 weeks, please let
+  them finish their work, otherwise consider it stalled and take it over.
 
 To maintain the quality of the codebase and ease the review process, any
 contribution must conform to the project's :ref:`coding guidelines
@@ -269,7 +268,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
+        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 .. _upstream:
 
@@ -282,14 +281,20 @@ how to set up your git repository:
         git remote add upstream git@github.com:scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running `git remote -v` which should display:
+   by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+   This should display:
 
    .. code-block:: text
 
-        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin	git@github.com:YourLogin/scikit-learn.git (push)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin    git@github.com:YourLogin/scikit-learn.git (push)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
@@ -694,7 +699,8 @@ underestimate how easy an issue is to solve!
 Documentation
 =============
 
-We are glad to accept any sort of documentation:
+We welcome thoughtful contributions to the documentation and are happy to review
+additions in the following areas:
 
 * **Function/method/class docstrings:** Also known as "API documentation", these
   describe what the object does and detail any parameters, attributes and
@@ -719,6 +725,19 @@ We are glad to accept any sort of documentation:
 
 
 .. dropdown:: Guidelines for writing docstrings
+
+  * You can use `pytest` to test docstrings, e.g. assuming the
+    `RandomForestClassifier` docstring has been modified, the following command
+    would test its docstring compliance:
+
+    .. prompt:: bash
+
+      pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
+
+  * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples.
+    See the `numpydoc documentation
+    <https://numpydoc.readthedocs.io/en/latest/format.html#sections>`_ for
+    information on other possible sections.
 
   * When documenting the parameters and attributes, here is a list of some
     well-formatted examples
@@ -785,7 +804,15 @@ We are glad to accept any sort of documentation:
       SelectKBest : Select features based on the k highest scores.
       SelectFpr : Select features based on a false positive rate test.
 
-  * Add one or two snippets of code in "Example" section to show how it can be used.
+  * The "Notes" section is optional. It is meant to provide information on
+    specific behavior of a function/class/classmethod/method.
+
+  * A `Note` can also be added to an attribute, but in that case it requires
+    using the `.. rubric:: Note` directive.
+
+  * Add one or two **snippets** of code in "Example" section to show how it can
+    be used. The code should be runable as is, i.e. it should include all
+    required imports. Keep this section as brief as possible.
 
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
@@ -1244,7 +1271,7 @@ Suppose the function ``zero_one`` is renamed to ``zero_one_loss``, we add the de
 :class:`utils.deprecated` to ``zero_one`` and call ``zero_one_loss`` from that
 function::
 
-    from ..utils import deprecated
+    from sklearn.utils import deprecated
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation
@@ -1559,7 +1586,7 @@ make this task easier and faster (in no particular order).
     variable) in the code base.
 
 - Configure `git blame` to ignore the commit that migrated the code style to
-  `black`.
+  `black` and then `ruff`.
 
   .. prompt:: bash
 

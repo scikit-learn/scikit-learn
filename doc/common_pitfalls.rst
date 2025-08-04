@@ -549,10 +549,10 @@ When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
 data, but we also want to make sure that the estimator is robust w.r.t. its
 random initialization. For example, we would like the random weights
-initialization of a :class:`~sklearn.linear_model.SGDClassifier` to be
+initialization of an :class:`~sklearn.linear_model.SGDClassifier` to be
 consistently good across all folds: otherwise, when we train that estimator
 on new data, we might get unlucky and the random initialization may lead to
-bad performance. Similarly, we want a random forest to be robust w.r.t the
+bad performance. Similarly, we want a random forest to be robust w.r.t. the
 set of randomly selected features that each tree will be using.
 
 For these reasons, it is preferable to evaluate the cross-validation

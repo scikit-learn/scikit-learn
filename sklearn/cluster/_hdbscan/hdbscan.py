@@ -38,25 +38,29 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin, _fit_context
-from ...metrics import pairwise_distances
-from ...metrics._dist_metrics import DistanceMetric
-from ...metrics.pairwise import _VALID_METRICS
-from ...neighbors import BallTree, KDTree, NearestNeighbors
-from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import (
-    _allclose_dense_sparse,
-    _assert_all_finite,
-    validate_data,
-)
-from ._linkage import (
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._hdbscan._linkage import (
     MST_edge_dtype,
     make_single_linkage,
     mst_from_data_matrix,
     mst_from_mutual_reachability,
 )
-from ._reachability import mutual_reachability_graph
-from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
+from sklearn.cluster._hdbscan._reachability import mutual_reachability_graph
+from sklearn.cluster._hdbscan._tree import (
+    HIERARCHY_dtype,
+    labelling_at_cut,
+    tree_to_labels,
+)
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 
 FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
@@ -426,10 +430,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     This allows HDBSCAN to find clusters of varying densities (unlike
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
-
-    For an example of how to use HDBSCAN, as well as a comparison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the :ref:`plotting demo
-    <sphx_glr_auto_examples_cluster_plot_hdbscan.py>`.
 
     .. versionadded:: 1.3
 

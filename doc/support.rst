@@ -88,6 +88,16 @@ Include in your report:
 
 **Tip**: Gists are Git repositories; you can push data files to them using Git.
 
+Paid support
+============
+
+The following companies (listed in alphabetical order) offer support services
+related to scikit-learn and have a proven track record of employing long-term
+maintainers of scikit-learn and related open source projects:
+
+- `:probabl. <https://support.probabl.ai/?utm_source=scikit_learn_docs&utm_medium=documentation&utm_campaign=pro_support>`__
+- `Quansight <https://quansight.com/open-source-services>`__
+
 .. _social_media:
 
 Social Media

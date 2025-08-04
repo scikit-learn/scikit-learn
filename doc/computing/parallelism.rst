@@ -72,7 +72,7 @@ In practice, whether parallelism is helpful at improving runtime depends on
 many factors. It is usually a good idea to experiment rather than assuming
 that increasing the number of workers is always a good thing. In some cases
 it can be highly detrimental to performance to run multiple copies of some
-estimators or functions in parallel (see oversubscription below).
+estimators or functions in parallel (see :ref:`oversubscription<oversubscription>` below).
 
 Lower-level parallelism with OpenMP
 ...................................
@@ -126,6 +126,8 @@ for different values of `OMP_NUM_THREADS`:
     channel from Anaconda.org (i.e. the ones installed via ``conda install``)
     are linked by default with MKL.
 
+
+.. _oversubscription:
 
 Oversubscription: spawning too many threads
 ...........................................

@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.roc_curve` now supports Array API compatible inputs.
+  By :user:`Thomas Li <lithomas1>`

@@ -10,11 +10,11 @@ from operator import attrgetter
 import numpy as np
 from scipy.sparse import csc_matrix, issparse
 
-from ..base import TransformerMixin
-from ..utils import _safe_indexing, check_array, safe_sqr
-from ..utils._set_output import _get_output_config
-from ..utils._tags import get_tags
-from ..utils.validation import (
+from sklearn.base import TransformerMixin
+from sklearn.utils import _safe_indexing, check_array, safe_sqr
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _is_pandas_df,
     check_is_fitted,
@@ -70,7 +70,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             values are indices into the input feature vector.
         """
         mask = self._get_support_mask()
-        return mask if not indices else np.where(mask)[0]
+        return mask if not indices else np.nonzero(mask)[0]
 
     @abstractmethod
     def _get_support_mask(self):
@@ -141,7 +141,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         Returns
         -------
-        X_r : array of shape [n_samples, n_original_features]
+        X_original : array of shape [n_samples, n_original_features]
             `X` with columns of zeros inserted where features would have
             been removed by :meth:`transform`.
         """
@@ -260,8 +260,8 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     else:
         raise ValueError(
             "Valid values for `transform_func` are "
-            + "None, 'norm' and 'square'. Those two "
-            + "transformation are only supported now"
+            "None, 'norm' and 'square'. Those two "
+            "transformation are only supported now"
         )
 
     return importances

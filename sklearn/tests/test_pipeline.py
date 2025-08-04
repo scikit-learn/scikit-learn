@@ -6,7 +6,6 @@ import itertools
 import re
 import shutil
 import time
-import warnings
 from tempfile import mkdtemp
 
 import joblib
@@ -281,6 +280,16 @@ def test_pipeline_invalid_parameters():
     params2.pop("svc")
     params2.pop("anova")
     assert params == params2
+
+
+def test_empty_pipeline():
+    X = iris.data
+    y = iris.target
+
+    pipe = Pipeline([])
+    msg = "The pipeline is empty. Please add steps."
+    with pytest.raises(ValueError, match=msg):
+        pipe.fit(X, y)
 
 
 def test_pipeline_init_tuple():
@@ -1891,24 +1900,20 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
-# TODO(1.7): remove this test
-def test_pipeline_inverse_transform_Xt_deprecation():
-    X = np.random.RandomState(0).normal(size=(10, 5))
-    pipe = Pipeline([("pca", PCA(n_components=2))])
-    X = pipe.fit_transform(X)
+def test_feature_union_1d_output():
+    """Test that FeatureUnion raises error for 1D transformer outputs."""
+    X = np.arange(6).reshape(3, 2)
 
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        pipe.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        pipe.inverse_transform(X=X, Xt=X)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        pipe.inverse_transform(X)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        pipe.inverse_transform(Xt=X)
+    with pytest.raises(
+        ValueError,
+        match="Transformer 'b' returned an array or dataframe with 1 dimensions",
+    ):
+        FeatureUnion(
+            [
+                ("a", FunctionTransformer(lambda X: X)),
+                ("b", FunctionTransformer(lambda X: X[:, 1])),
+            ]
+        ).fit_transform(X)
 
 
 # transform_input tests
