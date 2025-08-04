@@ -12,6 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
+  - numpydoc
   - pandas
   - pyamg
   - pytest
