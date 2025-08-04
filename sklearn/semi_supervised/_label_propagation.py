@@ -463,15 +463,7 @@ class LabelPropagation(BaseLabelPropagation):
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=0)
         if sparse.issparse(affinity_matrix):
-            normalizer = np.array(normalizer)  # convert np.matrix to np.array
-            if normalizer.ndim == 2:
-                # old spmatrix treatment. RHS is a scalar (b/c normalizer is 2D row)
-                affinity_matrix.data /= np.diag(normalizer)
-            else:
-                # We could use the (questionable) spmatrix treatment using:
-                # affinity_matrix.data /= np.diag(np.array(normalizer[np.newaxis, :]))
-                # Instead: use  numpy treatment dividing each row by its normalizer.
-                affinity_matrix.data /= normalizer[affinity_matrix.indices]
+            affinity_matrix.data /= np.diag(np.array(normalizer))
         else:
             affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
