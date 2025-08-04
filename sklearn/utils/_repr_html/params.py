@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
+import inspect
 import re
 import reprlib
 from collections import UserDict
 from urllib.parse import quote
+
+from numpydoc import docscrape
 
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
@@ -82,9 +85,14 @@ def _params_html_repr(params):
     PARAM_AVAILABLE_DOC_LINK_TEMPLATE = """
         <a class="sk-estimator-doc-link doc-link"
             rel="noreferrer" target="_blank" href="{link}">?
-            <span>Documentation for {param_name}</span>
+            <span>{param_description}<br><br>Click to access the
+            full documentation for {param_name}</span>
         </a>
     """
+    estimator_class_docs = inspect.getdoc(params.estimator_class)
+    docstring = None
+    if estimator_class_docs:
+        docstring = docscrape.NumpyDocString(estimator_class_docs)
 
     rows = []
     for row in params:
@@ -92,9 +100,18 @@ def _params_html_repr(params):
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
 
+        param_description = None
+        if docstring:
+            for param_numpydoc in docstring["Parameters"]:
+                if param_numpydoc.name == row:
+                    param_description = "<br>".join(param_numpydoc.desc)
+                    break
+
         if params.doc_link and link:
             param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
-                link=link, param_name=param["param_name"]
+                link=link,
+                param_name=param["param_name"],
+                param_description=param_description,
             )
 
         rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))

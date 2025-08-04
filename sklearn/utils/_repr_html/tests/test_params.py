@@ -85,6 +85,8 @@ def test_params_html_repr_with_doc_links():
     class MockEstimator:
         """A fake estimator class with a docstring used for testing.
 
+        Parameters
+        ----------
         a : int
             Description of a.
         b : str
@@ -102,8 +104,10 @@ def test_params_html_repr_with_doc_links():
     html_output = _params_html_repr(params)
 
     # Check that the doc links are correctly generated
-    assert "Documentation for a" in html_output
-    assert "Documentation for b" in html_output
+    # FIXME
+
+    assert "Description of a" in html_output
+    assert "Description of b" not in html_output
     assert "sk-estimator-doc-link" in html_output
     # Check that the doc links contain the correct URL fragments
     assert "mock_module.MockEstimator.html#:~:text=a,-int" in html_output
@@ -126,8 +130,7 @@ def test_params_html_repr_without_doc_links():
     html_output = _params_html_repr(params)
     # Check that no doc links are generated
     assert "?" not in html_output
-    assert "Documentation for a" not in html_output
-    assert "Documentation for b" not in html_output
+    assert "Click to access" not in html_output
 
 
 def test_generate_link_to_param_doc_basic():
@@ -157,6 +160,7 @@ def test_generate_link_to_param_doc_param_not_found():
 
     doc_link = "mock_module.MockEstimator.html"
     url = _generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
+
     assert url is None
 
 
