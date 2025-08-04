@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs
-from libc.time cimport timespec, timespec_get
 import numpy as np
 
 from cython cimport floating
@@ -16,11 +15,6 @@ from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
 from ..utils._typedefs cimport uint32_t
 from ..utils._random cimport our_rand_r
 
-
-# Cython errors inside nogil with
-# from libc.time cimport TIME_UTC
-cdef extern from "<time.h>" nogil:
-    enum: TIME_UTC
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -114,8 +108,7 @@ def enet_coordinate_descent(
     floating tol,
     object rng,
     bint random=0,
-    bint positive=0,
-    bint verbose=0,
+    bint positive=0
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -141,12 +134,6 @@ def enet_coordinate_descent(
     else:
         dtype = np.float64
 
-    cdef timespec ts_start, ts_end
-    timespec_get(&ts_start, TIME_UTC)
-    cdef double t_init = 0
-    cdef double t_loop = 0
-    cdef double t_convergence = 0
-    cdef int count_convergence = 0
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
@@ -193,11 +180,7 @@ def enet_coordinate_descent(
         # tol *= np.dot(y, y)
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
-        timespec_get(&ts_end, TIME_UTC)
-        t_init += <double>(ts_end.tv_sec - ts_start.tv_sec) + 1e-9*<double>(ts_end.tv_nsec - ts_start.tv_nsec)
-
         for n_iter in range(max_iter):
-            timespec_get(&ts_start, TIME_UTC)
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
@@ -234,15 +217,11 @@ def enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            timespec_get(&ts_end, TIME_UTC)
-            t_loop += <double>(ts_end.tv_sec - ts_start.tv_sec) + 1e-9*<double>(ts_end.tv_nsec - ts_start.tv_nsec)
             if (
                 w_max == 0.0
                 or d_w_max / w_max < d_w_tol
                 or n_iter == max_iter - 1
             ):
-                timespec_get(&ts_start, TIME_UTC)
-                count_convergence += 1
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
@@ -278,8 +257,6 @@ def enet_coordinate_descent(
                 gap += (alpha * l1_norm
                         - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
                         + 0.5 * beta * (1 + const_ ** 2) * (w_norm2))
-                timespec_get(&ts_end, TIME_UTC)
-                t_convergence += <double>(ts_end.tv_sec - ts_start.tv_sec) + 1e-9*<double>(ts_end.tv_nsec - ts_start.tv_nsec)
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -296,11 +273,6 @@ def enet_coordinate_descent(
                     message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
-    if verbose:
-        print(f"  Init time = {t_init}")
-        print(f"  Time feature loop = {t_loop} s")
-        print(f"  Time convergence = {t_convergence} s")
-        print(f"    Number of convergence checks = {count_convergence} in {n_iter + 1} iterations")
     return np.asarray(w), gap, tol, n_iter + 1
 
 
@@ -603,8 +575,7 @@ def enet_coordinate_descent_gram(
     floating tol,
     object rng,
     bint random=0,
-    bint positive=0,
-    bint verbose=0,
+    bint positive=0
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -634,12 +605,6 @@ def enet_coordinate_descent_gram(
     else:
         dtype = np.float64
 
-    cdef timespec ts_start, ts_end
-    timespec_get(&ts_start, TIME_UTC)
-    cdef double t_init = 0
-    cdef double t_loop = 0
-    cdef double t_convergence = 0
-    cdef int count_convergence = 0
     # get the data information into easy vars
     cdef unsigned int n_features = Q.shape[0]
 
@@ -670,13 +635,10 @@ def enet_coordinate_descent_gram(
             "lead to unexpected results and is discouraged. "
             "Set l1_ratio > 0 to add L1 regularization."
         )
-    timespec_get(&ts_end, TIME_UTC)
-    t_init += <double>(ts_end.tv_sec - ts_start.tv_sec) + 1e-9*<double>(ts_end.tv_nsec - ts_start.tv_nsec)
 
     with nogil:
         tol *= y_norm2
         for n_iter in range(max_iter):
-            timespec_get(&ts_start, TIME_UTC)
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
@@ -712,11 +674,7 @@ def enet_coordinate_descent_gram(
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
-            timespec_get(&ts_end, TIME_UTC)
-            t_loop += <double>(ts_end.tv_sec - ts_start.tv_sec) + 1e-9*<double>(ts_end.tv_nsec - ts_start.tv_nsec)
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
-                timespec_get(&ts_start, TIME_UTC)
-                count_convergence += 1
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -755,8 +713,6 @@ def enet_coordinate_descent_gram(
                     + const_ * q_dot_w
                     + 0.5 * beta * (1 + const_ ** 2) * w_norm2
                 )
-                timespec_get(&ts_end, TIME_UTC)
-                t_convergence += <double>(ts_end.tv_sec - ts_start.tv_sec) + 1e-9*<double>(ts_end.tv_nsec - ts_start.tv_nsec)
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -771,11 +727,6 @@ def enet_coordinate_descent_gram(
                 )
                 warnings.warn(message, ConvergenceWarning)
 
-    if verbose:
-        print(f"  Init time = {t_init}")
-        print(f"  Time feature loop = {t_loop} s")
-        print(f"  Time convergence = {t_convergence} s")
-        print(f"  Number of convergence checks = {count_convergence} in {n_iter + 1} iterations")
     return np.asarray(w), gap, tol, n_iter + 1
 
 

@@ -7,7 +7,6 @@ import warnings
 from abc import ABC, abstractmethod
 from functools import partial
 from numbers import Integral, Real
-from time import time
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -692,21 +691,10 @@ def enet_path(
                 rng,
                 random,
                 positive,
-                verbose,
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                verbose,
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, positive
             )
         else:
             raise ValueError(
@@ -823,9 +811,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    verbose : bool or int, default=False
-        Amount of verbosity.
-
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
@@ -913,7 +898,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         "positive": ["boolean"],
         "random_state": ["random_state"],
         "selection": [StrOptions({"cyclic", "random"})],
-        "verbose": ["verbose"],
     }
 
     path = staticmethod(enet_path)
@@ -932,7 +916,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         positive=False,
         random_state=None,
         selection="cyclic",
-        verbose=False,
     ):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -945,7 +928,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
-        self.verbose = verbose
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
@@ -986,8 +968,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        if self.verbose:
-            tic = time()
         if self.alpha == 0:
             warnings.warn(
                 (
@@ -1003,8 +983,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # We expect X and y to be float64 or float32 Fortran ordered arrays
         # when bypassing checks
         if check_input:
-            if self.verbose:
-                tic2 = time()
             X_copied = self.copy_X and self.fit_intercept
             X, y = validate_data(
                 self,
@@ -1022,9 +1000,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             y = check_array(
                 y, order="F", copy=False, dtype=X.dtype.type, ensure_2d=False
             )
-            if self.verbose:
-                toc2 = time()
-                print(f"  Time in fit validation = {toc2 - tic2} s")
 
         n_samples, n_features = X.shape
         alpha = self.alpha
@@ -1071,8 +1046,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # X and y will be rescaled if sample_weight is not None, order='F'
         # ensures that the returned X and y are still F-contiguous.
         should_copy = self.copy_X and not X_copied
-        if self.verbose:
-            tic2 = time()
         X, y, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
             X,
             y,
@@ -1083,9 +1056,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             check_gram=check_input,
             sample_weight=sample_weight,
         )
-        if self.verbose:
-            toc2 = time()
-            print(f"  Time in fit _pre_fit = {toc2 - tic2} s")
         # coordinate descent needs F-ordered arrays and _pre_fit might have
         # called _rescale_data
         if check_input or sample_weight is not None:
@@ -1107,10 +1077,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        if self.verbose:
-            toc = time()
-            print(f"Time in fit preprocessing = {toc - tic} s")
-            tic = time()
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -1127,7 +1093,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 Xy=this_Xy,
                 copy_X=True,
                 coef_init=coef_[k],
-                verbose=self.verbose,
+                verbose=False,
                 return_n_iter=True,
                 positive=self.positive,
                 check_input=False,
@@ -1143,11 +1109,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
-
-        if self.verbose:
-            toc = time()
-            print(f"Time in fit path function = {toc - tic} s")
-            tic = time()
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
@@ -1167,9 +1128,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 " be preprocessed."
             )
 
-        if self.verbose:
-            toc = time()
-            print(f"Time in fit postprocessing = {toc - tic} s")
         # return self for chaining fit and predict calls
         return self
 
@@ -1271,9 +1229,6 @@ class Lasso(ElasticNet):
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
-
-    verbose : bool or int, default=False
-        Amount of verbosity.
 
     Attributes
     ----------
@@ -1381,7 +1336,6 @@ class Lasso(ElasticNet):
         positive=False,
         random_state=None,
         selection="cyclic",
-        verbose=False,
     ):
         super().__init__(
             alpha=alpha,
@@ -1395,7 +1349,6 @@ class Lasso(ElasticNet):
             positive=positive,
             random_state=random_state,
             selection=selection,
-            verbose=verbose,
         )
 
 
