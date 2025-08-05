@@ -881,6 +881,38 @@ def test_format_invariance_with_1d_vectors(name):
                     metric(y1_row, y2_row)
 
 
+@pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
+def test_classification_with_invalid_sample_weight(metric):
+    # Check invalid `sample_weight` raises correct error
+    random_state = check_random_state(0)
+    n_samples = 20
+    y1 = random_state.randint(0, 2, size=(n_samples,))
+    y2 = random_state.randint(0, 2, size=(n_samples,))
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y1[:3], y2[:3], sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize(
     "name", sorted(set(CLASSIFICATION_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
 )
@@ -1614,6 +1646,19 @@ def test_regression_with_invalid_sample_weight(name):
     with pytest.raises(ValueError, match="Found input variables with inconsistent"):
         metric(y_true, y_pred, sample_weight=sample_weight)
 
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true[:3], y_pred[:3], sample_weight=sample_weight)
+
     sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
         (n_samples, 2)
     )
@@ -2179,6 +2224,10 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
+    ],
+    confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
     ],
     f1_score: [
         check_array_api_binary_classification_metric,

@@ -10,30 +10,36 @@ from numbers import Integral
 import numpy as np
 from joblib import effective_n_jobs
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import get_scorer
-from ..model_selection import check_cv
-from ..model_selection._validation import _score
-from ..utils import Bunch, metadata_routing
-from ..utils._metadata_requests import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import check_cv
+from sklearn.model_selection._validation import _score
+from sklearn.utils import Bunch, metadata_routing
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import get_tags
-from ..utils.metaestimators import _safe_split, available_if
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metaestimators import _safe_split, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _deprecate_positional_args,
     _estimator_has,
     check_is_fitted,
     validate_data,
 )
-from ._base import SelectorMixin, _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):

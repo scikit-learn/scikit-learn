@@ -15,23 +15,28 @@ from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array
-from ..utils._mask import _get_mask
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import parse_version, sp_version
-from ..utils.stats import _weighted_percentile
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._csr_polynomial_expansion import (
+    _calc_expanded_nnz,
+    _calc_total_nnz,
+    _csr_polynomial_expansion,
+)
+from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    get_namespace_and_device,
+    supported_float_dtypes,
+)
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _check_sample_weight,
     check_is_fitted,
     validate_data,
-)
-from ._csr_polynomial_expansion import (
-    _calc_expanded_nnz,
-    _calc_total_nnz,
-    _csr_polynomial_expansion,
 )
 
 __all__ = [
@@ -416,18 +421,18 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             `csr_matrix`.
         """
         check_is_fitted(self)
-
+        xp, _, device_ = get_namespace_and_device(X)
         X = validate_data(
             self,
             X,
             order="F",
-            dtype=FLOAT_DTYPES,
+            dtype=supported_float_dtypes(xp=xp, device=device_),
             reset=False,
             accept_sparse=("csr", "csc"),
         )
 
         n_samples, n_features = X.shape
-        max_int32 = np.iinfo(np.int32).max
+        max_int32 = xp.iinfo(xp.int32).max
         if sparse.issparse(X) and X.format == "csr":
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
@@ -497,8 +502,19 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         else:
             # Do as if _min_degree = 0 and cut down array after the
             # computation, i.e. use _n_out_full instead of n_output_features_.
-            XP = np.empty(
-                shape=(n_samples, self._n_out_full), dtype=X.dtype, order=self.order
+            order_kwargs = {}
+            if _is_numpy_namespace(xp=xp):
+                order_kwargs["order"] = self.order
+            elif self.order == "F":
+                raise ValueError(
+                    "PolynomialFeatures does not support order='F' for non-numpy arrays"
+                )
+
+            XP = xp.empty(
+                shape=(n_samples, self._n_out_full),
+                dtype=X.dtype,
+                device=device_,
+                **order_kwargs,
             )
 
             # What follows is a faster implementation of:
@@ -544,12 +560,18 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         break
                     # XP[:, start:end] are terms of degree d - 1
                     # that exclude feature #feature_idx.
-                    np.multiply(
-                        XP[:, start:end],
-                        X[:, feature_idx : feature_idx + 1],
-                        out=XP[:, current_col:next_col],
-                        casting="no",
-                    )
+                    if _is_numpy_namespace(xp):
+                        # numpy performs this multiplication in place
+                        np.multiply(
+                            XP[:, start:end],
+                            X[:, feature_idx : feature_idx + 1],
+                            out=XP[:, current_col:next_col],
+                            casting="no",
+                        )
+                    else:
+                        XP[:, current_col:next_col] = xp.multiply(
+                            XP[:, start:end], X[:, feature_idx : feature_idx + 1]
+                        )
                     current_col = next_col
 
                 new_index.append(current_col)
@@ -558,19 +580,23 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             if self._min_degree > 1:
                 n_XP, n_Xout = self._n_out_full, self.n_output_features_
                 if self.include_bias:
-                    Xout = np.empty(
-                        shape=(n_samples, n_Xout), dtype=XP.dtype, order=self.order
+                    Xout = xp.empty(
+                        shape=(n_samples, n_Xout),
+                        dtype=XP.dtype,
+                        device=device_,
+                        **order_kwargs,
                     )
                     Xout[:, 0] = 1
                     Xout[:, 1:] = XP[:, n_XP - n_Xout + 1 :]
                 else:
-                    Xout = XP[:, n_XP - n_Xout :].copy()
+                    Xout = xp.asarray(XP[:, n_XP - n_Xout :], copy=True)
                 XP = Xout
         return XP
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
+        tags.array_api_support = True
         return tags
 
 

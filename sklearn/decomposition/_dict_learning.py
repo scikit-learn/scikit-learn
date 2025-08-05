@@ -12,18 +12,18 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
-from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import _randomized_svd, row_norms, svd_flip
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from sklearn.utils import check_array, check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _randomized_svd, row_norms, svd_flip
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _check_positive_coding(method, positive):
