@@ -495,7 +495,7 @@ coordinates :math:`Z` of the embedded points.
 
 Classical MDS, also known as
 *principal coordinates analysis (PCoA)* or *Torgerson's scaling*, is implemented
-in the separate :class:`ClassicalMDS` class. Classical  MDS replaces the stress
+in the separate :class:`ClassicalMDS` class. Classical MDS replaces the stress
 loss function with a different loss function called *strain*, which has an
 exact solution in terms of eigendecomposition of the double-centered matrix
 of squared dissimilarities. If the dissimilarity matrix consists of the pairwise
