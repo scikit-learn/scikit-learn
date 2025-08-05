@@ -107,7 +107,7 @@ def _params_html_repr(params):
 
         param_description = (
             f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-            f"{''.join(param_numpydoc.desc)}"
+            f"{' '.join(param_numpydoc.desc)}"
             if param_numpydoc
             else None
         )
