@@ -8,13 +8,13 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._config import config_context
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..metrics import euclidean_distances, pairwise_distances_argmin
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import euclidean_distances, pairwise_distances_argmin
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _equal_similarities_and_preferences(S, preference):

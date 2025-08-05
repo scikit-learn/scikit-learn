@@ -99,6 +99,8 @@ and follows the decision-making process outlined in :ref:`governance`.
   Look for issues marked "help wanted" or similar. Helping these projects may help
   scikit-learn too. See also :ref:`related_projects`.
 
+.. _automated_contributions_policy:
+
 Automated Contributions Policy
 ==============================
 
@@ -107,7 +109,17 @@ fully-automated tools. Maintainers reserve the right, at their sole discretion,
 to close such submissions and to block any account responsible for them.
 
 Ideally, contributions should follow from a human-to-human discussion in the
-form of an issue.
+form of an issue. In particular, please do not paste AI generated text in the
+description of issues, PRs or in comments as it makes it significantly harder for
+reviewers to assess the relevance of your contribution and the potential value it
+brings to future end-users of the library. Note that it's fine to use AI tools
+to proofread or improve your draft text if you are not a native English speaker,
+but reviewers are not interested in unknowingly interacting back and forth with
+automated chatbots that fundamentally do not care about the value of our open
+source project.
+
+Please self review all code or documentation changes made by AI tools before
+submitting them under your name.
 
 Submitting a bug report or a feature request
 ============================================
@@ -1271,7 +1283,7 @@ Suppose the function ``zero_one`` is renamed to ``zero_one_loss``, we add the de
 :class:`utils.deprecated` to ``zero_one`` and call ``zero_one_loss`` from that
 function::
 
-    from ..utils import deprecated
+    from sklearn.utils import deprecated
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation

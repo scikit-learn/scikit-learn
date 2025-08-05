@@ -17,15 +17,20 @@ from os.path import exists, isdir, join
 import numpy as np
 from joblib import Memory
 
-from ..utils import Bunch
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.fixes import tarfile_extractall
-from ._base import (
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _fetch_remote,
     get_data_home,
     load_descr,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
