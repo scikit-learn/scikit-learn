@@ -146,8 +146,8 @@ def _routing_repr(obj):
     This is most usable for Scorers which can give a nice representation of what they
     are. This is done by implementing a `_routing_repr` method on the object.
 
-    Since the `owner` object could potentially be the type name (str), we return that
-    string if the given `obj` is a string, otherwise we return the object's type name.
+    Since the `owner` object could be the type name (str), we return that string if the
+    given `obj` is a string, otherwise we return the object's type name.
 
     .. versionadded:: 1.8
     """
@@ -1450,9 +1450,9 @@ class _MetadataRequester:
     def _get_class_level_metadata_request_values(cls, method: str):
         """Get class level metadata request values.
 
-        This method first checks the `method`'s signature to check which metadata are
-        available, and then it checks the `__metadata_request__*` class attributes to
-        get the metadata request values set at class level.
+        This method first checks the `method`'s signature for passable metadata and then
+        updates these with the metadata request values set at class level via the
+        ``__metadata_request__{method}`` class attributes.
 
         This method (being a class-method), does not take request values set at
         instance level into account.
@@ -1476,9 +1476,8 @@ class _MetadataRequester:
             },
         )
         # Then overwrite those defaults with the ones provided in
-        # __metadata_request__* attributes. Defaults set in
-        # __metadata_request__* attributes take precedence over signature
-        # sniffing.
+        # `__metadata_request__{method}` class attributes, which take precedence over
+        # signature sniffing.
 
         # need to go through the MRO since this is a classmethod and
         # ``vars`` doesn't report the parent class attributes. We go through
