@@ -115,7 +115,7 @@ Ideally, contributions should follow from a human-to-human discussion in the
 form of an issue. In particular, please do not paste AI generated text in the
 description of issues, PRs or in comments as it makes it significantly harder for
 reviewers to assess the relevance of your contribution and the potential value it
-brings to future end-users of the library. Note that it's fine to use AI tool
+brings to future end-users of the library. Note that it's fine to use AI tools
 to proofread or improve your draft text if you are not a native English speaker
 but reviewers are not interested in unknowingly interacting back and forth with
 automated chatbots that fundamentally do not care about the value of our open
