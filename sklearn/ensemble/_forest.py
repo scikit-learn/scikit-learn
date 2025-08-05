@@ -104,10 +104,11 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     max_samples : int or float
         The maximum number of samples to draw.
 
-        - If None, then draw `n_samples` samples.
+        - If None, then draw `n_samples` unweighted samples or
+          `sample_weight.sum()` weighted samples.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * n_samples` unweighted samples
-          or `max_samples * sample_weight.sum()` weighted samples.
+        - If float, then draw `max_samples * n_samples` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     sample_weight : array of shape (n_samples,) or None
         Sample weights.
@@ -118,7 +119,17 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
         The total number of samples to draw for the bootstrap sample.
     """
     if max_samples is None:
-        return n_samples
+        if sample_weight is None:
+            return n_samples
+        else:
+            sw_sum = np.sum(sample_weight)
+            if sw_sum <= 1:
+                raise ValueError(
+                    f"The total sum of sample weights is {sw_sum}, which prevents "
+                    f"resampling when {max_samples=}. Either pass max_samples as "
+                    "an integer or use a larger sample_weight."
+                )
+            return max(int(sw_sum), 1)
 
     if isinstance(max_samples, Integral):
         if max_samples > n_samples:
@@ -1418,12 +1429,17 @@ class RandomForestClassifier(ForestClassifier):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` unweighted samples
+          or `sample_weight.sum()` weighted samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
+
+        .. versionchanged:: 1.8
+            The default `max_samples=None` draws `sample_weight.sum()` instead of
+            `X.shape[0]` weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1806,12 +1822,17 @@ class RandomForestRegressor(ForestRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` unweighted samples
+          or `sample_weight.sum()` weighted samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
+
+        .. versionchanged:: 1.8
+            The default `max_samples=None` draws `sample_weight.sum()` instead of
+            `X.shape[0]` weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2184,12 +2205,17 @@ class ExtraTreesClassifier(ForestClassifier):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` unweighted samples
+          or `sample_weight.sum()` weighted samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
+
+        .. versionchanged:: 1.8
+            The default `max_samples=None` draws `sample_weight.sum()` instead of
+            `X.shape[0]` weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2556,12 +2582,17 @@ class ExtraTreesRegressor(ForestRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` unweighted samples
+          or `sample_weight.sum()` weighted samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
 
         .. versionadded:: 0.22
+
+        .. versionchanged:: 1.8
+            The default `max_samples=None` draws `sample_weight.sum()` instead of
+            `X.shape[0]` weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
