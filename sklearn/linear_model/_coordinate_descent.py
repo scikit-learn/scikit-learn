@@ -554,6 +554,7 @@ def enet_path(
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
+    do_screening = params.pop("do_screening", False)
 
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
@@ -694,7 +695,17 @@ def enet_path(
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, positive
+                coef_,
+                l1_reg,
+                l2_reg,
+                X,
+                y,
+                max_iter,
+                tol,
+                rng,
+                random,
+                positive,
+                do_screening,
             )
         else:
             raise ValueError(
@@ -928,6 +939,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self._do_screening = True
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
@@ -1105,6 +1117,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 random_state=self.random_state,
                 selection=self.selection,
                 sample_weight=sample_weight,
+                do_screening=self._do_screening,
             )
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -1559,6 +1572,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self._do_screening = True
 
     @abstractmethod
     def _get_estimator(self):
@@ -1745,6 +1759,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
+        if hasattr(self, "_do_screening"):
+            path_params["do_screening"] = self._do_screening
+
         n_l1_ratio = len(l1_ratios)
 
         check_scalar_alpha = partial(
@@ -1877,6 +1894,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
+        if hasattr(model, "_do_screening"):
+            model._do_screening = self._do_screening
         precompute = getattr(self, "precompute", None)
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
@@ -2433,6 +2452,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self._do_screening = True
 
     def _get_estimator(self):
         return ElasticNet()
