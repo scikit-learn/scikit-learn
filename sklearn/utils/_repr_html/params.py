@@ -103,15 +103,13 @@ def _params_html_repr(params):
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
         param_description = None
-        if docstring:
-            param_numpydoc = param_map.get(row)
-            if param_numpydoc:
-                param_description = (
-                    f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-                    f"{''.join(param_numpydoc.desc)}"
-                )
-            else:
-                param_description = None
+        if docstring and (param_numpydoc := param_map.get(row)):
+            param_description = (
+                f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
+                f"{''.join(param_numpydoc.desc)}"
+            )
+        else:
+            param_description = None
 
         if params.doc_link and link:
             param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
