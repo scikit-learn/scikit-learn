@@ -1,4 +1,5 @@
-class LabelEncoder(TransformerMixin, BaseEstimator):
+# fixes/fix_scikit-learn_26711.py
 
-if __name__ == '__main__':
-    print('✅ Aegis fix test complete.')
+class LabelEncoder:
+    def set_output(self, transform=None):
+        pass  # placeholder for compatibility
