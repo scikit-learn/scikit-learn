@@ -131,7 +131,7 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, eps=1e-6),
+    "Metric MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, eps=1e-6),
     "Non-metric MDS embedding": MDS(
         n_components=2, n_init=1, max_iter=120, eps=1e-6, metric=False
     ),

@@ -442,11 +442,15 @@ and, instead of approximating distances, approximates pairwise scalar products,
 which is an easier optimization problem with an analytic solution
 in terms of eigendecomposition.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
+.. |MMDS_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
+    :target: ../auto_examples/manifold/plot_lle_digits.html
+    :scale: 50
 
+.. |NMDS_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_011.png
+    :target: ../auto_examples/manifold/plot_lle_digits.html
+    :scale: 50
+
+.. centered:: |MMDS_img| |NMDS_img|
 
 Let :math:`\delta_{ij}` be the dissimilarity matrix between the
 :math:`n` input points (possibly arising as some pairwise distances
