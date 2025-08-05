@@ -99,25 +99,28 @@ def _params_html_repr(params):
 
     rows = []
     for row in params:
-        param_doc_link = None
-        param = _read_params(row, params[row], params.non_default)
+        value = params[row]
+        param = _read_params(row, value, params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
-        param_description = None
-        if docstring and (param_numpydoc := param_map.get(row)):
-            param_description = (
-                f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-                f"{''.join(param_numpydoc.desc)}"
-            )
-        else:
-            param_description = None
 
-        if params.doc_link and link:
-            param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
+        param_numpydoc = param_map.get(row) if docstring else None
+
+        param_description = (
+            f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
+            f"{''.join(param_numpydoc.desc)}"
+            if param_numpydoc
+            else None
+        )
+
+        param_doc_link = (
+            PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
                 link=link,
                 param_name=param["param_name"],
                 param_description=param_description,
             )
-
+            if params.doc_link and link
+            else None
+        )
         rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))
 
     return PARAMS_TABLE_TEMPLATE.format(rows="\n".join(rows))
