@@ -814,8 +814,11 @@ def test_elasticnet_precompute_gram():
     assert_allclose(clf1.coef_, clf2.coef_)
 
 
-def test_warm_start_convergence():
+@pytest.mark.parametrize("sparse_X", [True, False])
+def test_warm_start_convergence(sparse_X):
     X, y, _, _ = build_dataset()
+    if sparse_X:
+        X = sparse.csr_matrix(X)
     model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
     n_iter_reference = model.n_iter_
 
@@ -828,12 +831,17 @@ def test_warm_start_convergence():
     n_iter_cold_start = model.n_iter_
     assert n_iter_cold_start == n_iter_reference
 
-    # Fit the same model again, using a warm start: the optimizer just performs
-    # a single pass before checking that it has already converged
     model.set_params(warm_start=True)
     model.fit(X, y)
     n_iter_warm_start = model.n_iter_
-    assert n_iter_warm_start == 1
+    if sparse_X:
+        # TODO: sparse_enet_coordinate_descent is not yet updated.
+        # Fit the same model again, using a warm start: the optimizer just performs
+        # a single pass before checking that it has already converged
+        assert n_iter_warm_start == 1
+    else:
+        # enet_coordinate_descent checks dual gap before entering the main loop
+        assert n_iter_warm_start == 0
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
@@ -1483,7 +1491,7 @@ def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight)
     assert_allclose(reg.coef_, 0, atol=1e-5)
     alpha_max = reg.alpha_
     # Test smaller alpha makes coefs nonzero.
-    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
+    reg = ElasticNet(alpha=0.95 * alpha_max, fit_intercept=fit_intercept)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 

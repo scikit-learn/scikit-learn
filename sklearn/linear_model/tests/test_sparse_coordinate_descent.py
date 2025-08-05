@@ -291,7 +291,7 @@ def test_sparse_dense_equality(
     else:
         sw = None
     Xs = csc_container(X)
-    params = {"fit_intercept": fit_intercept}
+    params = {"fit_intercept": fit_intercept, "tol": 1e-6}
     reg_dense = Model(**params).fit(X, y, sample_weight=sw)
     reg_sparse = Model(**params).fit(Xs, y, sample_weight=sw)
     if fit_intercept:

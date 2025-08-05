@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.math cimport fabs
+from libc.math cimport fabs, sqrt
 import numpy as np
 
 from cython cimport floating
@@ -12,7 +12,7 @@ from ..utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
 )
 from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-from ..utils._typedefs cimport uint32_t
+from ..utils._typedefs cimport uint8_t, uint32_t
 from ..utils._random cimport our_rand_r
 
 
@@ -47,7 +47,7 @@ cdef inline floating fsign(floating f) noexcept nogil:
         return -1.0
 
 
-cdef floating abs_max(int n, const floating* a) noexcept nogil:
+cdef inline floating abs_max(int n, const floating* a) noexcept nogil:
     """np.max(np.abs(a))"""
     cdef int i
     cdef floating m = fabs(a[0])
@@ -59,7 +59,7 @@ cdef floating abs_max(int n, const floating* a) noexcept nogil:
     return m
 
 
-cdef floating max(int n, floating* a) noexcept nogil:
+cdef inline floating max(int n, floating* a) noexcept nogil:
     """np.max(a)"""
     cdef int i
     cdef floating m = a[0]
@@ -71,7 +71,7 @@ cdef floating max(int n, floating* a) noexcept nogil:
     return m
 
 
-cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil:
+cdef inline floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
     cdef floating m = fabs(a[0] - b[0])
@@ -98,6 +98,62 @@ message_ridge = (
 )
 
 
+cdef (floating, floating) gap_enet(
+    int n_samples,
+    int n_features,
+    const floating[::1] w,
+    floating alpha,  # L1 penalty
+    floating beta,  # L2 penalty
+    const floating[::1, :] X,
+    const floating[::1] y,
+    const floating[::1] R,  # current residuals = y - X@w
+    floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    bint positive,
+) noexcept nogil:
+    """Compute dual gap for use in enet_coordinate_descent."""
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating w_norm2 = 0.0
+    cdef floating l1_norm
+    cdef floating A_norm2
+
+    # XtA = np.dot(X.T, R) - beta * w
+    _copy(n_features, &w[0], 1, &XtA[0], 1)
+    _gemv(ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+          n_samples, &R[0], 1,
+          -beta, &XtA[0], 1)
+
+    if positive:
+        dual_norm_XtA = max(n_features, &XtA[0])
+    else:
+        dual_norm_XtA = abs_max(n_features, &XtA[0])
+
+    # R_norm2 = np.dot(R, R)
+    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+
+    # w_norm2 = np.dot(w, w)
+    if beta > 0:
+        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+
+    if (dual_norm_XtA > alpha):
+        const_ = alpha / dual_norm_XtA
+        A_norm2 = R_norm2 * (const_ ** 2)
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    l1_norm = _asum(n_features, &w[0], 1)
+
+    gap += (
+        alpha * l1_norm
+        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
+        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    )
+    return gap, dual_norm_XtA
+
+
 def enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
@@ -108,7 +164,8 @@ def enet_coordinate_descent(
     floating tol,
     object rng,
     bint random=0,
-    bint positive=0
+    bint positive=0,
+    bint do_screening=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -138,9 +195,9 @@ def enet_coordinate_descent(
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    # compute norms of the columns of X
-    # same as norm_cols_X = np.square(X).sum(axis=0)
-    cdef floating[::1] norm_cols_X = np.einsum(
+    # compute squared norms of the columns of X
+    # same as norm2_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm2_cols_X = np.einsum(
         "ij,ij->j", X, X, dtype=dtype, order="C"
     )
 
@@ -148,20 +205,21 @@ def enet_coordinate_descent(
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
 
+    cdef floating d_j
+    cdef floating Xj_theta
     cdef floating tmp
-    cdef floating w_ii
+    cdef floating w_j
     cdef floating d_w_max
     cdef floating w_max
-    cdef floating d_w_ii
+    cdef floating d_w_j
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
-    cdef floating R_norm2
-    cdef floating w_norm2
-    cdef floating l1_norm
-    cdef floating const_
-    cdef floating A_norm2
-    cdef unsigned int ii
+    cdef unsigned int n_active = n_features
+    cdef uint32_t[::1] active_set
+    # TODO: use binset insteaf of array of bools
+    cdef uint8_t[::1] excluded_set
+    cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -170,6 +228,10 @@ def enet_coordinate_descent(
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
                       "unexpected results and is discouraged.")
+
+    if do_screening:
+        active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
+        excluded_set = np.empty(n_features, dtype=np.uint8)
 
     with nogil:
         # R = y - np.dot(X, w)
@@ -180,42 +242,74 @@ def enet_coordinate_descent(
         # tol *= np.dot(y, y)
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
+        # Check convergence before entering the main loop.
+        gap, dual_norm_XtA = gap_enet(
+            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
+        )
+        if gap < tol:
+            with gil:
+                return np.asarray(w), gap, tol, 0
+
+        # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+        if do_screening:
+            n_active = 0
+            for j in range(n_features):
+                if norm2_cols_X[j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                    continue
+                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
+                if d_j <= sqrt(2 * gap) / alpha:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # R += w_j * X[:,j]
+                    _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
+                    w[j] = 0
+                    excluded_set[j] = 1
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_active, rand_r_state)
                 else:
-                    ii = f_iter
+                    j = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if do_screening:
+                    j = active_set[j]
+
+                if norm2_cols_X[j] == 0.0:
                     continue
 
-                w_ii = w[ii]  # Store previous value
+                w_j = w[j]  # Store previous value
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
-                    _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
+                if w_j != 0.0:
+                    # R += w_j * X[:,j]
+                    _axpy(n_samples, w_j, &X[0, j], 1, &R[0], 1)
 
-                # tmp = (X[:,ii]*R).sum()
-                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                # tmp = (X[:,j]*R).sum()
+                tmp = _dot(n_samples, &X[0, j], 1, &R[0], 1)
 
                 if positive and tmp < 0:
-                    w[ii] = 0.0
+                    w[j] = 0.0
                 else:
-                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
-                             / (norm_cols_X[ii] + beta))
+                    w[j] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                            / (norm2_cols_X[j] + beta))
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
-                    _axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
+                if w[j] != 0.0:
+                    # R -=  w[j] * X[:,j] # Update residual
+                    _axpy(n_samples, -w[j], &X[0, j], 1, &R[0], 1)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                d_w_max = fmax(d_w_max, d_w_ii)
+                d_w_j = fabs(w[j] - w_j)
+                d_w_max = fmax(d_w_max, d_w_j)
 
-                w_max = fmax(w_max, fabs(w[ii]))
+                w_max = fmax(w_max, fabs(w[j]))
 
             if (
                 w_max == 0.0
@@ -225,42 +319,32 @@ def enet_coordinate_descent(
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
-
-                # XtA = np.dot(X.T, R) - beta * w
-                _copy(n_features, &w[0], 1, &XtA[0], 1)
-                _gemv(ColMajor, Trans,
-                      n_samples, n_features, 1.0, &X[0, 0], n_samples,
-                      &R[0], 1,
-                      -beta, &XtA[0], 1)
-
-                if positive:
-                    dual_norm_XtA = max(n_features, &XtA[0])
-                else:
-                    dual_norm_XtA = abs_max(n_features, &XtA[0])
-
-                # R_norm2 = np.dot(R, R)
-                R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
-
-                # w_norm2 = np.dot(w, w)
-                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-
-                if (dual_norm_XtA > alpha):
-                    const_ = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const_ ** 2)
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const_ = 1.0
-                    gap = R_norm2
-
-                l1_norm = _asum(n_features, &w[0], 1)
-
-                gap += (alpha * l1_norm
-                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
-                        + 0.5 * beta * (1 + const_ ** 2) * (w_norm2))
+                gap, dual_norm_XtA = gap_enet(
+                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
+                )
 
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+
+                # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+                if do_screening:
+                    n_active = 0
+                    for j in range(n_features):
+                        if excluded_set[j]:
+                            continue
+                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
+                        d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
+                        if d_j <= sqrt(2 * gap) / alpha:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # R += w_j * X[:,j]
+                            _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
+                            w[j] = 0
+                            excluded_set[j] = 1
 
         else:
             # for/else, runs if for doesn't end with a `break`
