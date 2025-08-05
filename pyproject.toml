@@ -137,7 +137,7 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
-extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF"]
+extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF", "TID252"]
 ignore=[
     # do not assign a lambda expression, use a def
     "E731",
@@ -175,13 +175,16 @@ ignore=[
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
 
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
 "**/tests/*"=["CPY001"]
-"asv_benchmarks/*"=["CPY001"]
+"asv_benchmarks/*"=["CPY001", "TID252"]
 "benchmarks/*"=["CPY001"]
 "doc/*"=["CPY001"]
 "build_tools/*"=["CPY001"]
@@ -277,7 +280,7 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./build_tools/wheels/LICENSE_windows.txt", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]

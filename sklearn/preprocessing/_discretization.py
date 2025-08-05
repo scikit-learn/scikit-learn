@@ -7,18 +7,18 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import resample
-from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._encoders import OneHotEncoder
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, Options, StrOptions
+from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_array,
     check_is_fitted,
     validate_data,
 )
-from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -373,7 +373,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
             elif self.strategy == "kmeans":
-                from ..cluster import KMeans  # fixes import loops
+                from sklearn.cluster import KMeans  # fixes import loops
 
                 # Deterministic initialization with uniform spacing
                 uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)

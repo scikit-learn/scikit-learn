@@ -3,9 +3,9 @@
 
 import itertools
 
-from ... import __version__
-from ..._config import get_config
-from ..fixes import parse_version
+from sklearn import __version__
+from sklearn._config import get_config
+from sklearn.utils.fixes import parse_version
 
 
 class _HTMLDocumentationLinkMixin:
