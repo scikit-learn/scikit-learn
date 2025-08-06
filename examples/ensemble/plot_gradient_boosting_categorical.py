@@ -151,12 +151,14 @@ hist_ordinal
 # which automatically detects features with categorical dtypes, or more explicitly
 # by `categorical_features=categorical_columns_subset`.
 #
-# Unlike previous encoding approaches, the estimator natively deals with the categorical
-# features. At each split, it partitions the categories of such a feature into
-# disjoint sets using a heuristic that sorts them by their effect on
-# the target variable, see https://scikit-learn.org/stable/modules/ensemble.html#split-finding-with-categorical-features for details. This avoids imposing an arbitrary order and allows more
-# meaningful splits than ordinal encoding. The advantage over one-hot encoding is
-# the omitted preprocessing and faster fit and predict time.
+# Unlike previous encoding approaches, the estimator natively deals with the
+# categorical features. At each split, it partitions the categories of such a
+# feature into disjoint sets using a heuristic that sorts them by their effect
+# on the target variable, see `Split finding with categorical features
+# <https://scikit-learn.org/stable/modules/ensemble.html#split-finding-with-categorical-features>`_
+# for details. This avoids imposing an arbitrary order and allows more
+# meaningful splits than ordinal encoding. The advantage over one-hot encoding
+# is the omitted preprocessing and faster fit and predict time.
 #
 # While arbitrary ordering may work for low-cardinality features, it
 # becomes problematic for high-cardinality ones, as meaningful splits would
