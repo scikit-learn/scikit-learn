@@ -179,27 +179,20 @@ def test_rbm_verbose():
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_and_verbose(csc_container):
+def test_sparse_and_verbose(csc_container, capsys):
     # Make sure RBM works with sparse input when verbose=True
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     X = csc_container([[0.0], [1.0]])
     rbm = BernoulliRBM(
         n_components=2, batch_size=2, n_iter=1, random_state=42, verbose=True
     )
-    try:
-        rbm.fit(X)
-        s = sys.stdout.getvalue()
-        # make sure output is sound
-        assert re.match(
-            r"\[BernoulliRBM\] Iteration 1,"
-            r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
-            r" time = (\d|\.)+s",
-            s,
-        )
-    finally:
-        sys.stdout = old_stdout
+    rbm.fit(X)
+    # Make sure the captured standard output is sound.
+    assert re.match(
+        r"\[BernoulliRBM\] Iteration 1,"
+        r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
+        r" time = (\d|\.)+s",
+        capsys.readouterr().out,
+    )
 
 
 @pytest.mark.parametrize(
