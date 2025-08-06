@@ -1649,6 +1649,7 @@ def test_check_classifier_not_supporting_multiclass():
 
 
 # Test that set_output doesn't make the tests to fail.
+@_mark_thread_unsafe_if_pytest_imported
 def test_estimator_with_set_output():
     # Doing this since pytest is not available for this file.
     for lib in ["pandas", "polars"]:
