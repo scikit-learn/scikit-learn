@@ -1324,6 +1324,7 @@ if __name__ == "__main__":
     run_tests_without_pytest()
 
 
+@_mark_thread_unsafe_if_pytest_imported  # Some checks use warnings.
 def test_estimator_checks_generator_skipping_tests():
     # Make sure the checks generator skips tests that are expected to fail
     est = next(_construct_instances(NuSVC))
