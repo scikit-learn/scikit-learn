@@ -161,6 +161,7 @@ def contingency_matrix(
 
     xp, _, device = get_namespace_and_device(labels_pred, labels_true)
 
+    # todo: try remove xp.asarray
     classes, class_idx = xp.unique_inverse(xp.asarray(labels_true))
     clusters, cluster_idx = xp.unique_inverse(xp.asarray(labels_pred))
     class_idx = _convert_to_numpy(class_idx, xp)
