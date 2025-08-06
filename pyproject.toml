@@ -113,8 +113,8 @@ addopts = [
 ]
 # Used by pytest-run-parallel when testing thread-safety (with or without GIL).
 thread_unsafe_fixtures = [
-  "monkeypatch",  # inherently thread unsafe
-  "hide_available_pandas",  # relies on monkeypatch
+  "hide_available_pandas",  # relies on monkeypatching
+  "tmp_path",  # does not isolate temporary directories across threads
 ]
 
 

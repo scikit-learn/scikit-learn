@@ -88,6 +88,7 @@ def test_category_dir_2(load_files_root):
     _remove_dir(test_category_dir2)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
 def test_data_home(path_container, data_home):
     # get_data_home will point to a pre-existing folder

@@ -61,6 +61,7 @@ from sklearn.utils.estimator_checks import (
 )
 
 
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
