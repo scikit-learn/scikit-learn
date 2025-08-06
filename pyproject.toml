@@ -115,6 +115,7 @@ addopts = [
 thread_unsafe_fixtures = [
   "hide_available_pandas",  # relies on monkeypatching
   "tmp_path",  # does not isolate temporary directories across threads
+  "pyplot",  # some tests might mutate some shared state of pyplot.
 ]
 
 
