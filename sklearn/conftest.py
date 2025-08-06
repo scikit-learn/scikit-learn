@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import builtins
+import faulthandler
 import platform
 import sys
 from contextlib import suppress
@@ -59,7 +60,7 @@ def raccoon_face_or_skip():
             raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
         try:
-            import pooch  # noqa
+            import pooch  # noqa: F401
         except ImportError:
             raise SkipTest("test requires pooch to be installed")
 
@@ -185,14 +186,14 @@ def pytest_collection_modifyitems(config, items):
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "
-                    "https://github.com/scikit-learn/scikit-learn/issues/17797"  # noqa
+                    "https://github.com/scikit-learn/scikit-learn/issues/17797"
                 )
             )
             item.add_marker(marker)
 
     skip_doctests = False
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         skip_doctests = True
         reason = "matplotlib is required to run the doctests"
@@ -237,7 +238,7 @@ def pytest_collection_modifyitems(config, items):
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         pillow_installed = True
     except ImportError:
@@ -341,6 +342,11 @@ def pytest_configure(config):
         for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
 
+    faulthandler_timeout = int(environ.get("SKLEARN_FAULTHANDLER_TIMEOUT", "0"))
+    if faulthandler_timeout > 0:
+        faulthandler.enable()
+        faulthandler.dump_traceback_later(faulthandler_timeout, exit=True)
+
 
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
@@ -366,3 +372,4 @@ def print_changed_only_false():
 if dt_config is not None:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
+    # dt_config.rtol = 0.01

@@ -271,12 +271,12 @@ plt.show()
 #        Niculescu-Mizil & R. Caruana, ICML 2005
 #
 # .. [2] `Beyond independence: Conditions for the optimality of the simple
-#        bayesian classifier
+#        Bayesian classifier
 #        <https://www.ics.uci.edu/~pazzani/Publications/mlc96-pedro.pdf>`_
 #        Domingos, P., & Pazzani, M., Proc. 13th Intl. Conf. Machine Learning.
 #        1996.
 #
 # .. [3] `Obtaining calibrated probability estimates from decision trees and
 #        naive Bayesian classifiers
-#        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
+#        <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.

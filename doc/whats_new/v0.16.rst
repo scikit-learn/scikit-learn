@@ -26,7 +26,7 @@ Bug fixes
   caused unstable result in :class:`calibration.CalibratedClassifierCV` by
   `Jan Hendrik Metzen`_.
 
-- Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+- Fix sorting of labels in :func:`preprocessing.label_binarize` by Michael Heilman.
 
 - Fix several stability and convergence issues in
   :class:`cross_decomposition.CCA` and

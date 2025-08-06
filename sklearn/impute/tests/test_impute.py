@@ -14,7 +14,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import ConvergenceWarning
 
 # make IterativeImputer available
-from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer, KNNImputer, MissingIndicator, SimpleImputer
 from sklearn.impute._base import _most_frequent
 from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
@@ -1355,7 +1355,7 @@ def test_missing_indicator_sparse_no_explicit_zeros(csr_container):
     mi = MissingIndicator(features="all", missing_values=1)
     Xt = mi.fit_transform(X)
 
-    assert Xt.getnnz() == Xt.sum()
+    assert Xt.nnz == Xt.sum()
 
 
 @pytest.mark.parametrize("imputer_constructor", [SimpleImputer, IterativeImputer])

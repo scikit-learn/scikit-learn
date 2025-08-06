@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .validation import check_random_state
+from sklearn.utils.validation import check_random_state
 
 
 def _init_arpack_v0(size, random_state):

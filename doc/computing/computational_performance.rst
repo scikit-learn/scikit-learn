@@ -352,7 +352,7 @@ feature selection components in a pipeline once we know which features to
 keep from a previous run. Finally, it can help reduce processing time and I/O
 usage upstream in the data access and feature extraction layers by not
 collecting and building features that are discarded by the model. For instance
-if the raw data come from a database, it can make it possible to write simpler
+if the raw data come from a database, it is possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.
