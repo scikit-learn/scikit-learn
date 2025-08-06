@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
@@ -143,6 +144,7 @@ def test_none_iter():
 )
 @pytest.mark.parametrize("y", [y_train_missing_labels, y_train_missing_strings])
 def test_zero_iterations(estimator, y):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     # Check classification for zero iterations.
     # Fitting a SelfTrainingClassifier with zero iterations should give the
     # same results as fitting a supervised classifier.
