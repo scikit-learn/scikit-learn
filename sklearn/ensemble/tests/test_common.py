@@ -19,7 +19,7 @@ from sklearn.ensemble import (
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR
+from sklearn.svm import SVC, SVR, LinearSVC
 
 X, y = load_iris(return_X_y=True)
 
@@ -55,7 +55,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR()),
+                    ("svm", SVR(kernel="linear")),
                     ("rf", RandomForestRegressor(n_estimators=5, max_depth=3)),
                 ],
                 cv=2,
@@ -66,7 +66,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             VotingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR()),
+                    ("svm", SVR(kernel="linear")),
                     ("rf", RandomForestRegressor(n_estimators=5, max_depth=3)),
                 ]
             ),
