@@ -51,7 +51,7 @@ X_2d_grid = np.hstack(
 )
 
 
-def test_gradient_descent_stops():
+def test_gradient_descent_stops(capsys):
     # Test stopping conditions of gradient descent.
     class ObjectiveSmallGradient:
         def __init__(self):
@@ -65,76 +65,55 @@ def test_gradient_descent_stops():
         return 0.0, np.ones(1)
 
     # Gradient norm
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(),
-            np.zeros(1),
-            0,
-            max_iter=100,
-            n_iter_without_progress=100,
-            momentum=0.0,
-            learning_rate=0.0,
-            min_gain=0.0,
-            min_grad_norm=1e-5,
-            verbose=2,
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    _, error, it = _gradient_descent(
+        ObjectiveSmallGradient(),
+        np.zeros(1),
+        0,
+        max_iter=100,
+        n_iter_without_progress=100,
+        momentum=0.0,
+        learning_rate=0.0,
+        min_gain=0.0,
+        min_grad_norm=1e-5,
+        verbose=2,
+    )
     assert error == 1.0
     assert it == 0
-    assert "gradient norm" in out
+    assert "gradient norm" in capsys.readouterr().out
 
     # Maximum number of iterations without improvement
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            flat_function,
-            np.zeros(1),
-            0,
-            max_iter=100,
-            n_iter_without_progress=10,
-            momentum=0.0,
-            learning_rate=0.0,
-            min_gain=0.0,
-            min_grad_norm=0.0,
-            verbose=2,
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    _, error, it = _gradient_descent(
+        flat_function,
+        np.zeros(1),
+        0,
+        max_iter=100,
+        n_iter_without_progress=10,
+        momentum=0.0,
+        learning_rate=0.0,
+        min_gain=0.0,
+        min_grad_norm=0.0,
+        verbose=2,
+    )
     assert error == 0.0
     assert it == 11
-    assert "did not make any progress" in out
+    assert "did not make any progress" in capsys.readouterr().out
 
     # Maximum number of iterations
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(),
-            np.zeros(1),
-            0,
-            max_iter=11,
-            n_iter_without_progress=100,
-            momentum=0.0,
-            learning_rate=0.0,
-            min_gain=0.0,
-            min_grad_norm=0.0,
-            verbose=2,
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    _, error, it = _gradient_descent(
+        ObjectiveSmallGradient(),
+        np.zeros(1),
+        0,
+        max_iter=11,
+        n_iter_without_progress=100,
+        momentum=0.0,
+        learning_rate=0.0,
+        min_gain=0.0,
+        min_grad_norm=0.0,
+        verbose=2,
+    )
     assert error == 0.0
     assert it == 10
-    assert "Iteration 10" in out
+    assert "Iteration 10" in capsys.readouterr().out
 
 
 def test_binary_search():
