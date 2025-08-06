@@ -521,6 +521,7 @@ def test_weight():
 
 @pytest.mark.parametrize("estimator", [svm.SVC(C=1e-2), svm.NuSVC()])
 def test_svm_classifier_sided_sample_weight(estimator):
+    estimator = base.clone(estimator)  # Avoid side effects from previous tests.
     # fit a linear SVM and check that giving more weight to opposed samples
     # in the space will flip the decision toward these samples.
     X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
