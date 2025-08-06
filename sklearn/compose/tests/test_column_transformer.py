@@ -2599,12 +2599,12 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
     parse_version(joblib.__version__) < parse_version("1.3"),
     reason="requires joblib >= 1.3",
 )
-def test_column_transformer_auto_memmap():
+def test_column_transformer_auto_memmap(global_random_seed):
     """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
 
     non-regression test for issue #28781
     """
-    X = np.random.RandomState(0).uniform(size=(3, 4))
+    X = np.random.RandomState(global_random_seed).uniform(size=(3, 4))
 
     scaler = StandardScaler(copy=False)
 

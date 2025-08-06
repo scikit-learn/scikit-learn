@@ -188,8 +188,10 @@ Contributing code
 
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
-  so far. In order to claim an issue for yourself, please comment exactly
-  ``/take`` on it for the CI to automatically assign the issue to you.
+  so far. If you'd like to work on such issue, leave a comment with your idea of
+  how you plan to approach it, and start working on it. If somebody else has
+  already said they'd be working on the issue in the past 2-3 weeks, please let
+  them finish their work, otherwise consider it stalled and take it over.
 
 To maintain the quality of the codebase and ease the review process, any
 contribution must conform to the project's :ref:`coding guidelines

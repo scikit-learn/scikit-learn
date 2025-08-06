@@ -8,7 +8,9 @@ dependencies:
   - numpy
   - blas[build=mkl]
   - scipy<1.12
+  - cython
   - joblib
+  - threadpoolctl
   - matplotlib
   - pandas
   - pyamg
@@ -17,12 +19,7 @@ dependencies:
   - pillow
   - pip
   - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache
-  - pip
-  - pip:
-    - cython
-    - threadpoolctl
-    - meson-python
-    - meson

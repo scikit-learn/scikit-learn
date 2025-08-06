@@ -445,7 +445,7 @@ Miscellaneous
 
 - |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
   joblib methods exposed in ``sklearn.utils``, except for
-  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  `utils.parallel_backend` and `utils.register_parallel_backend`,
   which allow users to configure parallel computation in scikit-learn.
   Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
   package and should be used directly, by installing it.

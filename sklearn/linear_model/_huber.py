@@ -10,6 +10,7 @@ from ..base import BaseEstimator, RegressorMixin, _fit_context
 from ..utils._mask import axis0_safe_slice
 from ..utils._param_validation import Interval
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import _get_additional_lbfgs_options_dict
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _check_sample_weight, validate_data
 from ._base import LinearModel
@@ -329,7 +330,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             method="L-BFGS-B",
             jac=True,
             args=(X, y, self.epsilon, self.alpha, sample_weight),
-            options={"maxiter": self.max_iter, "gtol": self.tol, "iprint": -1},
+            options={
+                "maxiter": self.max_iter,
+                "gtol": self.tol,
+                **_get_additional_lbfgs_options_dict("iprint", -1),
+            },
             bounds=bounds,
         )
 

@@ -20,10 +20,10 @@ from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_indexing
 from ..utils._metadata_requests import METHODS
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils._repr_html.estimator import _VisualBlock
 from ..utils._set_output import (
     _get_container_adapter,
     _get_output_config,

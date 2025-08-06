@@ -308,7 +308,7 @@ values.
   all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
   categories. This can quickly become prohibitive when :math:`K` is large.
   Fortunately, since gradient boosting trees are always regression trees (even
-  for classification problems), there exist a faster strategy that can yield
+  for classification problems), there exists a faster strategy that can yield
   equivalent splits. First, the categories of a feature are sorted according to
   the variance of the target, for each category `k`. Once the categories are
   sorted, one can consider *continuous partitions*, i.e. treat the categories
@@ -369,13 +369,17 @@ following modelling constraint:
 
 Also, monotonic constraints are not supported for multiclass classification.
 
+For a practical implementation of monotonic constraints with the histogram-based
+gradient boosting, including how they can improve generalization when domain knowledge
+is available, see
+:ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`.
+
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
     monotonic constraints on categorical features.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:
@@ -961,7 +965,7 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the features values of
+best split is found through an exhaustive search of the feature values of
 either all input features or a random subset of size ``max_features``.
 (See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
@@ -1587,7 +1591,7 @@ Note that it is also possible to get the output of the stacked
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
-strengths of the these predictors. However, training a stacking predictor is
+strengths of these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::

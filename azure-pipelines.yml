@@ -253,9 +253,9 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      pymin_conda_forge_mkl:
+      pymin_conda_forge_openblas:
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_mkl_win-64_conda.lock
+        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_openblas_win-64_conda.lock
         SKLEARN_WARNINGS_AS_ERRORS: '1'
         # The Azure Windows runner is typically much slower than other CI
         # runners due to the lack of compiler cache. Running the tests with
