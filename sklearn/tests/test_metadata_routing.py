@@ -102,7 +102,7 @@ class SimplePipeline(BaseEstimator):
         return self.steps_[-1].predict(X_transformed, **params.predictor.predict)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         for i, step in enumerate(self.steps[:-1]):
             router.add(
                 **{f"step_{i}": step},

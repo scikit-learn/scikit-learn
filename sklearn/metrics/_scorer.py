@@ -210,7 +210,7 @@ class _MultimetricScorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return MetadataRouter(owner=self.__class__.__name__).add(
+        return MetadataRouter(owner=self).add(
             **self._scorers,
             method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
@@ -358,7 +358,7 @@ class _BaseScorer(_MetadataRequester):
             ),
             kwargs=kwargs,
         )
-        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        self._metadata_request = MetadataRequest(owner=self)
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
@@ -484,7 +484,7 @@ class _PassthroughScorer(_MetadataRequester):
     def __init__(self, estimator):
         self._estimator = estimator
 
-        requests = MetadataRequest(owner=self.__class__.__name__)
+        requests = MetadataRequest(owner=self)
         try:
             requests.score = copy.deepcopy(estimator._metadata_request.score)
         except AttributeError:
