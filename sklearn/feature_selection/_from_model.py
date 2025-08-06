@@ -6,25 +6,25 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..exceptions import NotFittedError
-from ..utils._param_validation import HasMethods, Interval, Options
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
+from sklearn.utils._param_validation import HasMethods, Interval, Options
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import (
     _check_feature_names,
     _estimator_has,
     _num_features,
     check_is_fitted,
     check_scalar,
 )
-from ._base import SelectorMixin, _get_feature_importances
 
 
 def _calculate_threshold(estimator, importances, threshold):

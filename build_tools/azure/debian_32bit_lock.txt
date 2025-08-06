@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=build_tools/azure/debian_32bit_lock.txt build_tools/azure/debian_32bit_requirements.txt
 #
-coverage[toml]==7.9.2
+coverage[toml]==7.10.2
     # via pytest-cov
 cython==3.1.2
     # via -r build_tools/azure/debian_32bit_requirements.txt
@@ -12,7 +12,7 @@ iniconfig==2.1.0
     # via pytest
 joblib==1.5.1
     # via -r build_tools/azure/debian_32bit_requirements.txt
-meson==1.8.2
+meson==1.8.3
     # via meson-python
 meson-python==0.18.0
     # via -r build_tools/azure/debian_32bit_requirements.txt

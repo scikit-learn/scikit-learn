@@ -9,24 +9,20 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import OutlierMixin, _fit_context
-from ..tree import ExtraTreeRegressor
-from ..tree._tree import DTYPE as tree_dtype
-from ..utils import (
-    check_array,
-    check_random_state,
-    gen_batches,
-)
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.ensemble._bagging import BaseBagging
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree._tree import DTYPE as tree_dtype
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
