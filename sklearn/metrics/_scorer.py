@@ -266,8 +266,8 @@ class _BaseScorer(_MetadataRequester):
             f"{response_method_string}{kwargs_string})"
         )
 
-    # TODO (1.9): remove in 1.9
-    @_deprecate_positional_args(version="1.9")
+    # TODO (1.10): remove in 1.10
+    @_deprecate_positional_args(version="1.10")
     def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
@@ -309,6 +309,8 @@ class _BaseScorer(_MetadataRequester):
         _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
+        # TODO(1.10): remove this when sample_weight is removed from the `__call__`
+        # signature
         if sample_weight is not None:
             _kwargs["sample_weight"] = sample_weight
 
@@ -362,7 +364,7 @@ class _BaseScorer(_MetadataRequester):
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
 
-    def get_metadata_routing(self):
+    def _get_metadata_request(self):
         """Get requested data properties.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
@@ -378,7 +380,15 @@ class _BaseScorer(_MetadataRequester):
         else:
             requests = self._get_default_requests(
                 score_method=self._score_func,
-                ignore_params={"y_true", "y_pred"},
+                ignore_params={
+                    "y_true",
+                    "y_pred",
+                    "y_prob",
+                    "y_proba",
+                    "y_score",
+                    "labels_true",
+                    "labels_pred",
+                },
             )
 
         return requests

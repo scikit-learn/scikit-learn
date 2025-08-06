@@ -2242,8 +2242,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    # TODO(1.9): remove this when sample_weight is removed from the `score` signature
-    # and remove `sample_weight` from the `score` signature
+    # TODO(1.10): remove this decorator along with `sample_weight` from the `score`
+    #  signature
     @_deprecate_positional_args(version="1.9")
     def score(self, X, y, *, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
@@ -2274,6 +2274,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Score of self.predict(X) w.r.t. y.
         """
         _raise_for_params(score_params, self, "score")
+        # TODO(1.10): remove this when sample_weight is removed from the `score`
+        # signature
         if sample_weight is not None:
             score_params["sample_weight"] = sample_weight
 

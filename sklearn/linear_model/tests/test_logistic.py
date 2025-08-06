@@ -1,5 +1,6 @@
 import itertools
 import os
+import re
 import warnings
 
 import numpy as np
@@ -2340,6 +2341,12 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed)
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
 
     # sample_weight cannot be passed to lr_cv1.score since it's unrequested.
+    err_msg = (
+        "LogisticRegressionCV.score got unexpected argument(s) {'sample_weight'},"
+        " which are not routed to any object."
+    )
+    with pytest.raises(TypeError, match=re.escape(err_msg)):
+        lr_cv1.score(X_t, y_t, **kwargs)
     score_1 = lr_cv1.score(X_t, y_t)
     score_2 = lr_cv2.score(X_t, y_t, **kwargs)
 
