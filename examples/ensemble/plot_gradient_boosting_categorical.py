@@ -156,14 +156,13 @@ hist_ordinal
 # feature into disjoint sets using a heuristic that sorts them by their effect
 # on the target variable, see `Split finding with categorical features
 # <https://scikit-learn.org/stable/modules/ensemble.html#split-finding-with-categorical-features>`_
-# for details. This avoids imposing an arbitrary order and allows more
-# meaningful splits than ordinal encoding. The advantage over one-hot encoding
-# is the omitted preprocessing and faster fit and predict time.
+# for details.
 #
-# While arbitrary ordering may work for low-cardinality features, it
-# becomes problematic for high-cardinality ones, as meaningful splits would
-# require deeper trees and risk overfitting on other features. Avoiding
-# artificial order mitigates such potential issue.
+# While ordinal encoding may work well for low-cardinality features even if
+# categories have no natural order, reaching meaningful splits requires deeper
+# trees as the cardinality increases. The native categorical support avoids this
+# by directly working with unordered categories. The advantage over one-hot
+# encoding is the omitted preprocessing and faster fit and predict time.
 
 hist_native = HistGradientBoostingRegressor(
     random_state=42, categorical_features="from_dtype"
