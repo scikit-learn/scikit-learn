@@ -148,12 +148,15 @@ hist_ordinal
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
 # that can natively handle categorical features without explicit encoding. Such
 # functionality can be enabled by setting `categorical_features="from_dtype"`,
-# which automatically detects features with categorical dtypes.
+# which automatically detects features with categorical dtypes, or more explicitly
+# by `categorical_features=categorical_columns_subset`.
 #
-# Unlike previous encoding approaches, the estimator partitions categories into
-# two groups at each split using a heuristic that sorts them by their effect on
-# the target variable. This avoids imposing an arbitrary order and allows more
-# meaningful splits than ordinal encoding.
+# Unlike previous encoding approaches, the estimator natively deals with the categorical
+# features. At each split, it partitions the categories of such a feature into
+# disjoint sets using a heuristic that sorts them by their effect on
+# the target variable, see https://scikit-learn.org/stable/modules/ensemble.html#split-finding-with-categorical-features for details. This avoids imposing an arbitrary order and allows more
+# meaningful splits than ordinal encoding. The advantage over one-hot encoding is
+# the omitted preprocessing and faster fit and predict time.
 #
 # While arbitrary ordering may work for low-cardinality features, it
 # becomes problematic for high-cardinality ones, as meaningful splits would
