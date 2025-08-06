@@ -20,6 +20,7 @@ from sklearn.metrics.cluster import (
     silhouette_score,
     v_measure_score,
 )
+from sklearn.metrics.tests.test_common import check_array_api_metric
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
@@ -244,7 +245,8 @@ def test_returned_value_consistency(name):
     assert not isinstance(score, (np.float64, np.float32))
 
 
-def check_array_api_metric(
+# TODO: remove or rename
+def _check_array_api_metric(
     metric,
     array_namespace,
     device,
@@ -276,8 +278,9 @@ def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype
         metric,
         array_namespace,
         device,
-        labels_true=labels_true,
-        labels_pred=labels_pred,
+        int_dtype,
+        labels_true,
+        labels_pred,
     )
 
 
