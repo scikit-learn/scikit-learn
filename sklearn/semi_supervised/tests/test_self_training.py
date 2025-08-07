@@ -50,6 +50,7 @@ def test_warns_k_best():
 )
 @pytest.mark.parametrize("selection_crit", ["threshold", "k_best"])
 def test_classification(estimator, selection_crit):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
