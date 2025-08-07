@@ -75,10 +75,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     distinct_values = np.unique(col_data).astype(X_DTYPE)
 
     if len(distinct_values) == 1:
-        raise ValueError(
-            "Features have only one class of distinct values, "
-            "cannot calculate bin edges"
-        )
+        return np.asarray([])
 
     if len(distinct_values) <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
