@@ -21,27 +21,22 @@ structured vs unstructured Ward).
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import time
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.datasets import make_swiss_roll
-from sklearn.neighbors import kneighbors_graph
-
 # %%
 # Generate data
 # -------------
 # Generate the Swiss Roll dataset.
+import time
+
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import make_swiss_roll
+
 n_samples = 1500
 noise = 0.05
 X, _ = make_swiss_roll(n_samples, noise=noise)
 X[:, 1] *= 0.5  # Make the roll thinner
 
-# %%
 # Compute clustering without connectivity constraints
-# --------------------------------------------------
+# ---------------------------------------------------
 print("Compute unstructured hierarchical clustering...")
 st = time.time()
 ward_unstructured = AgglomerativeClustering(n_clusters=6, linkage="ward").fit(X)
@@ -52,6 +47,9 @@ print(f"Number of points: {label_unstructured.size}")
 
 # %%
 # Plot unstructured clustering results
+import matplotlib.pyplot as plt
+import numpy as np
+
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111, projection="3d", elev=7, azim=-80)
 ax1.set_position([0, 0, 0.95, 1])
@@ -71,6 +69,8 @@ fig1.suptitle(
 # %%
 # Compute connectivity graph
 # --------------------------
+from sklearn.neighbors import kneighbors_graph
+
 connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
 
 # %%
