@@ -1491,7 +1491,7 @@ def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight)
     assert_allclose(reg.coef_, 0, atol=1e-5)
     alpha_max = reg.alpha_
     # Test smaller alpha makes coefs nonzero.
-    reg = ElasticNet(alpha=0.95 * alpha_max, fit_intercept=fit_intercept)
+    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept, tol=1e-8)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 
