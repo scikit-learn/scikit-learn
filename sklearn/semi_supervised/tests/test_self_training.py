@@ -8,6 +8,7 @@ from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -46,7 +47,7 @@ def test_warns_k_best():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [KNeighborsClassifier(), LogisticRegression()],
 )
 @pytest.mark.parametrize("selection_crit", ["threshold", "k_best"])
 def test_classification(estimator, selection_crit):
