@@ -83,6 +83,7 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
     # check that the behavior of `estimators`, `estimators_`,
     # `named_estimators`, `named_estimators_` is consistent across all
     # ensemble classes and when using `set_params()`.
+    estimator = clone(estimator)  # Avoid side effects from shared instances
 
     # before fit
     assert "svm" in estimator.named_estimators
