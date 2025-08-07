@@ -2093,6 +2093,9 @@ def test_penalty_none(global_random_seed, solver):
     assert_array_equal(pred_none, pred_l2_C_inf)
 
 
+# XXX: investigate thread-safety bug that might be related to:
+# https://github.com/scikit-learn/scikit-learn/issues/31883
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "params",
     [
