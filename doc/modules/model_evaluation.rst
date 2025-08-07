@@ -507,7 +507,6 @@ Some of these are restricted to the binary classification case:
    roc_curve
    class_likelihood_ratios
    det_curve
-   d2_brier_score
 
 
 Others also work in the multiclass case:
