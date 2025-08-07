@@ -278,9 +278,10 @@ def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype
         metric,
         array_namespace,
         device,
-        int_dtype,
+        None,
         labels_true,
         labels_pred,
+        use_allclose=False,
     )
 
 
