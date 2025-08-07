@@ -32,7 +32,11 @@ from sklearn.utils._array_api import (
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import _array_api_for_tests, assert_almost_equal
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_almost_equal,
+    skip_if_array_api_compat_not_configured,
+)
 
 score_funcs = [
     adjusted_rand_score,
@@ -533,9 +537,7 @@ def test_fowlkes_mallows_sparse_deprecated(sparse):
         fowlkes_mallows_score([0, 1], [1, 1], sparse=sparse)
 
 
-# @pytest.mark.skipif(
-#     os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
-# )
+@skip_if_array_api_compat_not_configured
 def test_contingency_matrix_array_api_sparse():
     with config_context(array_api_dispatch=True):
         res = contingency_matrix(
