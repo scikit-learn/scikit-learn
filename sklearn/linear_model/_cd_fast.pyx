@@ -652,7 +652,7 @@ def enet_coordinate_descent_gram(
 
                 w_ii = w[ii]  # Store previous value
 
-                # tmp = X[:,ii] @ (y - X @ w + X[:, ii] * w_ii)
+                # if Q = X.T @ X then tmp = X[:,ii] @ (y - X @ w + X[:, ii] * w_ii)
                 tmp = q[ii] - Qw[ii] + w_ii * Q[ii, ii]
 
                 if positive and tmp < 0:
@@ -662,7 +662,7 @@ def enet_coordinate_descent_gram(
                         / (Q[ii, ii] + beta)
 
                 if w[ii] != 0.0 or w_ii != 0.0:
-                    # Qw +=  (w[ii] - w_ii) * Q[ii] # Update Qw = X.T X w
+                    # Qw +=  (w[ii] - w_ii) * Q[ii]  # Update Qw = Q @ w
                     _axpy(n_features, w[ii] - w_ii, &Q[ii, 0], 1,
                           &Qw[0], 1)
 
@@ -679,7 +679,7 @@ def enet_coordinate_descent_gram(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                # q_dot_w = np.dot(w, q)
+                # q_dot_w = w @ q
                 q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
 
                 for ii in range(n_features):
@@ -689,13 +689,11 @@ def enet_coordinate_descent_gram(
                 else:
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-                # temp = np.sum(w * Qw)
-                tmp = 0.0
-                for ii in range(n_features):
-                    tmp += w[ii] * Qw[ii]
+                # temp = w @ Q @ w
+                tmp = _dot(n_features, &w[0], 1, &Qw[0], 1)
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
-                # w_norm2 = np.dot(w, w)
+                # w_norm2 = w @ w
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
