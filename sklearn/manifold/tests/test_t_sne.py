@@ -790,7 +790,7 @@ def test_barnes_hut_angle():
 
 
 @skip_if_32bit
-def test_n_iter_without_progress():
+def test_n_iter_without_progress(capsys):
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
     X = random_state.randn(100, 10)
@@ -806,37 +806,24 @@ def test_n_iter_without_progress():
         )
         tsne._N_ITER_CHECK = 1
         tsne._EXPLORATION_MAX_ITER = 0
-
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        try:
-            tsne.fit_transform(X)
-        finally:
-            out = sys.stdout.getvalue()
-            sys.stdout.close()
-            sys.stdout = old_stdout
+        tsne.fit_transform(X)
 
         # The output needs to contain the value of n_iter_without_progress
-        assert "did not make any progress during the last -1 episodes. Finished." in out
+        assert (
+            "did not make any progress during the last -1 episodes. Finished."
+            in capsys.readouterr().out
+        )
 
 
-def test_min_grad_norm():
+def test_min_grad_norm(capsys):
     # Make sure that the parameter min_grad_norm is used correctly
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     min_grad_norm = 0.002
     tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2, random_state=0, method="exact")
 
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        tsne.fit_transform(X)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
-    lines_out = out.split("\n")
+    tsne.fit_transform(X)
+    lines_out = capsys.readouterr().out.split("\n")
 
     # extract the gradient norm from the verbose output
     gradient_norm_values = []
@@ -863,7 +850,7 @@ def test_min_grad_norm():
     assert n_smaller_gradient_norms <= 1
 
 
-def test_accessible_kl_divergence():
+def test_accessible_kl_divergence(capsys):
     # Ensures that the accessible kl_divergence matches the computed value
     random_state = check_random_state(0)
     X = random_state.randn(50, 2)
@@ -875,18 +862,10 @@ def test_accessible_kl_divergence():
         max_iter=500,
     )
 
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        tsne.fit_transform(X)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
+    tsne.fit_transform(X)
     # The output needs to contain the accessible kl_divergence as the error at
     # the last iteration
-    for line in out.split("\n")[::-1]:
+    for line in capsys.readouterr().out.split("\n")[::-1]:
         if "Iteration" in line:
             _, _, error = line.partition("error = ")
             if error:
