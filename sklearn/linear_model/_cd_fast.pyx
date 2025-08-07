@@ -609,7 +609,7 @@ def enet_coordinate_descent_gram(
     cdef unsigned int n_features = Q.shape[0]
 
     # initial value "Q w" which will be kept of up to date in the iterations
-    cdef floating[::1] H = np.dot(Q, w)
+    cdef floating[::1] Qw = np.dot(Q, w)
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
@@ -653,7 +653,7 @@ def enet_coordinate_descent_gram(
                 w_ii = w[ii]  # Store previous value
 
                 # tmp = X[:,ii] @ (y - X @ w + X[:, ii] * w_ii)
-                tmp = q[ii] - H[ii] + w_ii * Q[ii, ii]
+                tmp = q[ii] - Qw[ii] + w_ii * Q[ii, ii]
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -662,9 +662,9 @@ def enet_coordinate_descent_gram(
                         / (Q[ii, ii] + beta)
 
                 if w[ii] != 0.0 or w_ii != 0.0:
-                    # H +=  (w[ii] - w_ii) * Q[ii] # Update H = X.T X w
+                    # Qw +=  (w[ii] - w_ii) * Q[ii] # Update Qw = X.T X w
                     _axpy(n_features, w[ii] - w_ii, &Q[ii, 0], 1,
-                          &H[0], 1)
+                          &Qw[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -683,16 +683,16 @@ def enet_coordinate_descent_gram(
                 q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
 
                 for ii in range(n_features):
-                    XtA[ii] = q[ii] - H[ii] - beta * w[ii]
+                    XtA[ii] = q[ii] - Qw[ii] - beta * w[ii]
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
                 else:
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-                # temp = np.sum(w * H)
+                # temp = np.sum(w * Qw)
                 tmp = 0.0
                 for ii in range(n_features):
-                    tmp += w[ii] * H[ii]
+                    tmp += w[ii] * Qw[ii]
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
                 # w_norm2 = np.dot(w, w)
