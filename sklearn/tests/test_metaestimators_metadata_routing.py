@@ -215,6 +215,10 @@ METAESTIMATORS: list = [
         "y": y_binary,
         "estimator_routing_methods": ["fit"],
         "preserves_metadata": "subset",
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit", "score"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
     },
     {
         "metaestimator": OneVsRestClassifier,
@@ -864,6 +868,8 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         # This test only makes sense for CV estimators
         return
 
+    X = metaestimator["X"]
+    y = metaestimator["y"]
     metaestimator_class = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
     method_mapping = metaestimator.get("method_mapping", {})
