@@ -25,7 +25,7 @@ class _HTMLDocumentationLinkMixin:
     The method :meth:`_get_doc_link` generates the link to the API documentation for a
     given estimator.
 
-    This useful provides all the necessary states for
+    This mixin provides all the necessary states for
     :func:`sklearn.utils.estimator_html_repr` to generate a link to the API
     documentation for the estimator HTML diagram.
 
