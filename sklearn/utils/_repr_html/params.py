@@ -6,6 +6,7 @@ import inspect
 import re
 import reprlib
 from collections import UserDict
+from functools import lru_cache
 from urllib.parse import quote
 
 from sklearn.externals._numpydoc import docscrape
@@ -50,6 +51,11 @@ def _read_params(name, value, non_default_params):
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
 
 
+@lru_cache
+def _get_estimator_docstring(estimator_class_docs):
+    return docscrape.NumpyDocString(estimator_class_docs)
+
+
 def _params_html_repr(params):
     """Generate HTML representation of estimator parameters.
 
@@ -91,7 +97,7 @@ def _params_html_repr(params):
     estimator_class_docs = inspect.getdoc(params.estimator_class)
     docstring = None
     if estimator_class_docs:
-        docstring = docscrape.NumpyDocString(estimator_class_docs)
+        docstring = _get_estimator_docstring(estimator_class_docs)
         param_map = {
             param_docstring.name: param_docstring
             for param_docstring in docstring["Parameters"]
@@ -99,28 +105,26 @@ def _params_html_repr(params):
 
     rows = []
     for row in params:
+        param_description = None
+        param_doc_link = None
         value = params[row]
         param = _read_params(row, value, params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
 
         param_numpydoc = param_map.get(row) if docstring else None
 
-        param_description = (
-            f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-            f"{' '.join(param_numpydoc.desc)}"
-            if param_numpydoc
-            else None
-        )
+        if param_numpydoc:
+            param_description = (
+                f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
+                f"{' '.join(param_numpydoc.desc)}"
+            )
 
-        param_doc_link = (
-            PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
+        if params.doc_link and link:
+            param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
                 link=link,
                 param_name=param["param_name"],
                 param_description=param_description,
             )
-            if params.doc_link and link
-            else None
-        )
         rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))
 
     return PARAMS_TABLE_TEMPLATE.format(rows="\n".join(rows))
