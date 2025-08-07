@@ -102,6 +102,14 @@ def _cached_call(cache, estimator, response_method, *args, **kwargs):
     return result
 
 
+def _get_func_repr_or_name(func):
+    """Returns the name of the function or repr of a partial."""
+    if isinstance(func, partial):
+        return repr(func)
+
+    return func.__name__
+
+
 class _MultimetricScorer:
     """Callable for multimetric scoring used to avoid repeated calls
     to `predict_proba`, `predict`, and `decision_function`.
@@ -262,7 +270,7 @@ class _BaseScorer(_MetadataRequester):
         kwargs_string = "".join([f", {k}={v}" for k, v in self._kwargs.items()])
 
         return (
-            f"make_scorer({self._score_func.__name__}{sign_string}"
+            f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
 
