@@ -217,6 +217,9 @@ def test_dict_learning_reconstruction():
     # nonzero atoms is right.
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_dict_learning_reconstruction_parallel():
     # regression test that parallel reconstruction works with n_jobs>1
     n_components = 12
