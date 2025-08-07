@@ -86,7 +86,7 @@ def test_calibration(data, method, csr_container, ensemble):
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
-    X -= X.min()  # MultinomialNB only allows positive X
+    X = X - X.min()  # MultinomialNB only allows positive X
 
     # split train and test
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
