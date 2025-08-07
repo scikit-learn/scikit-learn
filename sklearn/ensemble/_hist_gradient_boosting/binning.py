@@ -10,6 +10,7 @@ approximately the same number of samples.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.ensemble._hist_gradient_boosting._binning import _map_to_bins
@@ -75,8 +76,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
 
     if len(distinct_values) <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
-        from numpy.lib.stride_tricks import sliding_window_view
-
         bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
     elif sample_weight is None:
         # We compute bin edges using the output of np.percentile with
