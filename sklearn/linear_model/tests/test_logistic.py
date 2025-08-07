@@ -438,6 +438,9 @@ def test_logistic_regression_path_convergence_fail():
     assert "linear_model.html#logistic-regression" in warn_msg
 
 
+# XXX: investigate thread-safety bug that might be related to:
+# https://github.com/scikit-learn/scikit-learn/issues/31883
+@pytest.mark.thread_unsafe
 def test_liblinear_dual_random_state(global_random_seed):
     # random_state is relevant for liblinear solver only if dual=True
     X, y = make_classification(n_samples=20, random_state=global_random_seed)
