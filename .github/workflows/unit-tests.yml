@@ -71,7 +71,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ matrix.name }}-${{ hashFiles('**/*.c', '**/*.cpp') }}
+          key: ccache-${{ matrix.name }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp') }}
           restore-keys: ccache-${{ matrix.name }}
 
       - name: Build scikit-learn
