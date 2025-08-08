@@ -5,13 +5,13 @@ import warnings
 
 import numpy as np
 
-from ...base import is_regressor
-from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._response import _get_response_values
-from ...utils._set_output import _get_adapter_from_container
-from ...utils.validation import (
+from sklearn.base import is_regressor
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import _safe_indexing
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._response import _get_response_values
+from sklearn.utils._set_output import _get_adapter_from_container
+from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
     _is_pandas_df,
     _is_polars_df,

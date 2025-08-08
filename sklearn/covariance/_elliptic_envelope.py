@@ -5,11 +5,11 @@ from numbers import Real
 
 import numpy as np
 
-from ..base import OutlierMixin, _fit_context
-from ..metrics import accuracy_score
-from ..utils._param_validation import Interval
-from ..utils.validation import check_is_fitted
-from ._robust_covariance import MinCovDet
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.covariance._robust_covariance import MinCovDet
+from sklearn.metrics import accuracy_score
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.validation import check_is_fitted
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):

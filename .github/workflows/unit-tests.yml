@@ -1,4 +1,4 @@
-name: Unit test for ARM
+name: Unit tests
 permissions:
   contents: read
 
@@ -9,6 +9,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
+
+env:
+  VIRTUALENV: testvenv
+  TEST_DIR: ${{ github.workspace }}/tmp_folder
 
 jobs:
   lint:
@@ -35,20 +39,34 @@ jobs:
           pip install ninja meson scipy
           python build_tools/check-meson-openmp-dependencies.py
 
-  run-unit-tests:
-    name: Run unit tests
-    runs-on: ubuntu-24.04-arm
+  unit-tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint]
+    strategy:
+      # Ensures that all builds run to completion even if one of them fails
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux pymin_conda_forge_arm
+            os: ubuntu-24.04-arm
+            DISTRIB: conda
+            LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+
+    env: ${{ matrix }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: mamba-org/setup-micromamba@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          environment-file: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
-          environment-name: ci
-          cache-environment: true
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
 
-      - name: Build and run tests
-        shell: bash -el {0}
-        run: bash build_tools/github/build_test_arm.sh
+      - name: Build scikit-learn
+        run: bash -l build_tools/azure/install.sh
+
+      - name: Run tests
+        run: bash -l build_tools/azure/test_script.sh

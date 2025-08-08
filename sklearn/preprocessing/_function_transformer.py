@@ -6,15 +6,12 @@ from functools import partial
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._param_validation import StrOptions
-from ..utils._repr_html.estimator import _VisualBlock
-from ..utils._set_output import (
-    _get_adapter_from_container,
-    _get_output_config,
-)
-from ..utils.metaestimators import available_if
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import _get_adapter_from_container, _get_output_config
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
     _get_feature_names,

@@ -17,18 +17,19 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse
 from scipy.special import xlogy
 
-from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import LabelBinarizer, LabelEncoder
-from ..utils import (
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
     check_scalar,
     column_or_1d,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _average,
     _bincount,
+    _convert_to_numpy,
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -40,17 +41,17 @@ from ..utils._array_api import (
     get_namespace_and_device,
     xpx,
 )
-from ..utils._param_validation import (
+from sklearn.utils._param_validation import (
     Hidden,
     Interval,
     Options,
     StrOptions,
     validate_params,
 )
-from ..utils._unique import attach_unique
-from ..utils.extmath import _nanaverage
-from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.validation import (
+from sklearn.utils._unique import attach_unique
+from sklearn.utils.extmath import _nanaverage
+from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
     _num_samples,
@@ -66,7 +67,7 @@ def _check_zero_division(zero_division):
         return np.nan
 
 
-def _check_targets(y_true, y_pred):
+def _check_targets(y_true, y_pred, sample_weight=None):
     """Check that y_true and y_pred belong to the same classification task.
 
     This converts multiclass or binary types to a common shape, and raises a
@@ -83,6 +84,8 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array-like
 
+    sample_weight : array-like, default=None
+
     Returns
     -------
     type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
@@ -92,11 +95,17 @@ def _check_targets(y_true, y_pred):
     y_true : array or indicator matrix
 
     y_pred : array or indicator matrix
+
+    sample_weight : array or None
     """
-    xp, _ = get_namespace(y_true, y_pred)
-    check_consistent_length(y_true, y_pred)
+    xp, _ = get_namespace(y_true, y_pred, sample_weight)
+    check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_true, force_float_dtype=False
+        )
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -148,7 +157,7 @@ def _check_targets(y_true, y_pred):
             y_pred = csr_matrix(y_pred)
         y_type = "multilabel-indicator"
 
-    return y_type, y_true, y_pred
+    return y_type, y_true, y_pred, sample_weight
 
 
 def _validate_multiclass_probabilistic_prediction(
@@ -200,6 +209,9 @@ def _validate_multiclass_probabilistic_prediction(
         raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
+
     lb = LabelBinarizer()
 
     if labels is not None:
@@ -356,8 +368,9 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
@@ -401,7 +414,7 @@ def confusion_matrix(
     y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array-like of shape (n_classes), default=None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
@@ -463,29 +476,60 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
     """
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
+    y_true = check_array(
+        y_true,
+        dtype=None,
+        ensure_2d=False,
+        ensure_all_finite=False,
+        ensure_min_samples=0,
+    )
+    y_pred = check_array(
+        y_pred,
+        dtype=None,
+        ensure_2d=False,
+        ensure_all_finite=False,
+        ensure_min_samples=0,
+    )
+    # Convert the input arrays to NumPy (on CPU) irrespective of the original
+    # namespace and device so as to be able to leverage the the efficient
+    # counting operations implemented by SciPy in the coo_matrix constructor.
+    # The final results will be converted back to the input namespace and device
+    # for the sake of consistency with other metric functions with array API support.
+    y_true = _convert_to_numpy(y_true, xp)
+    y_pred = _convert_to_numpy(y_pred, xp)
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
+    else:
+        sample_weight = _convert_to_numpy(sample_weight, xp)
+
+    if len(sample_weight) > 0:
+        y_type, y_true, y_pred, sample_weight = _check_targets(
+            y_true, y_pred, sample_weight
+        )
+    else:
+        # This is needed to handle the special case where y_true, y_pred and
+        # sample_weight are all empty.
+        # In this case we don't pass sample_weight to _check_targets that would
+        # check that sample_weight is not empty and we don't reuse the returned
+        # sample_weight
+        y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels)
+        labels = _convert_to_numpy(labels, xp)
         n_labels = labels.size
         if n_labels == 0:
-            raise ValueError("'labels' should contains at least one label.")
+            raise ValueError("'labels' should contain at least one label.")
         elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=int)
         elif len(np.intersect1d(y_true, labels)) == 0:
             raise ValueError("At least one label specified must be in y_true")
-
-    if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-    else:
-        sample_weight = np.asarray(sample_weight)
-
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
@@ -497,9 +541,9 @@ def confusion_matrix(
         and y_pred.min() >= 0
     )
     if need_index_conversion:
-        label_to_ind = {y: x for x, y in enumerate(labels)}
-        y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
-        y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+        label_to_ind = {label: index for index, label in enumerate(labels)}
+        y_pred = np.array([label_to_ind.get(label, n_labels + 1) for label in y_pred])
+        y_true = np.array([label_to_ind.get(label, n_labels + 1) for label in y_true])
 
     # intersect y_pred, y_true with labels, eliminate items not in labels
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
@@ -540,7 +584,7 @@ def confusion_matrix(
             UserWarning,
         )
 
-    return cm
+    return xp.asarray(cm, device=device_)
 
 
 @validate_params(
@@ -654,11 +698,10 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight, device=device_)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
@@ -1171,8 +1214,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
@@ -1759,7 +1803,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         raise ValueError("average has to be one of " + str(average_options))
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
     present_labels = _tolist(unique_labels(y_true, y_pred))
@@ -2227,7 +2271,9 @@ def class_likelihood_ratios(
     # remove `FutureWarning`, and the Warns section in the docstring should not mention
     # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
     if y_type != "binary":
         raise ValueError(
             "class_likelihood_ratios only supports binary classification "
@@ -2945,7 +2991,9 @@ def classification_report(
     """
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -3134,15 +3182,15 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     0.75
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight
+    )
 
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
 
     if sample_weight is None:
         weight_average = 1.0
     else:
-        sample_weight = xp.asarray(sample_weight, device=device)
         weight_average = _average(sample_weight, xp=xp)
 
     if y_type.startswith("multilabel"):
@@ -3440,6 +3488,8 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     assert_all_finite(y_prob)
 
     check_consistent_length(y_prob, y_true, sample_weight)
+    if sample_weight is not None:
+        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3728,3 +3778,105 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     )
 
     return float(1 - (numerator / denominator))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_proba": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_brier_score(
+    y_true,
+    y_proba,
+    *,
+    sample_weight=None,
+    pos_label=None,
+    labels=None,
+):
+    """:math:`D^2` score function, fraction of Brier score explained.
+
+    Best possible score is 1.0 and it can be negative because the model can
+    be arbitrarily worse than the null model. The null model, also known as the
+    optimal intercept model, is a model that constantly predicts the per-class
+    proportions of `y_true`, disregarding the input features. The null model
+    gets a D^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score_classification>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+
+    y_proba : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Predicted probabilities. If `y_proba.shape = (n_samples,)`
+        the probabilities provided are assumed to be that of the
+        positive class. If `y_proba.shape = (n_samples, n_classes)`
+        the columns in `y_proba` are assumed to correspond to the
+        labels in alphabetical order, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. `pos_label` will be inferred in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    labels : array-like of shape (n_classes,), default=None
+        Class labels when `y_proba.shape = (n_samples, n_classes)`.
+        If not provided, labels will be inferred from `y_true`.
+
+    Returns
+    -------
+    d2 : float
+        The D^2 score.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier Skill Score (BSS)
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+    """
+    if _num_samples(y_proba) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # brier score of the fitted model
+    brier_score = brier_score_loss(
+        y_true=y_true,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+        labels=labels,
+    )
+
+    # brier score of the reference or baseline model
+    y_true = column_or_1d(y_true)
+    weights = _check_sample_weight(sample_weight, y_true)
+    labels = np.unique(y_true if labels is None else labels)
+
+    mask = y_true[None, :] == labels[:, None]
+    label_counts = (mask * weights).sum(axis=1)
+    y_prob = label_counts / weights.sum()
+    y_proba_ref = np.tile(y_prob, (len(y_true), 1))
+    brier_score_ref = brier_score_loss(
+        y_true=y_true,
+        y_proba=y_proba_ref,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+        labels=labels,
+    )
+
+    return 1 - brier_score / brier_score_ref

@@ -16,9 +16,13 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from .. import get_config as _get_config
-from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import (
+from sklearn import get_config as _get_config
+from sklearn.exceptions import (
+    DataConversionWarning,
+    NotFittedError,
+    PositiveSpectrumWarning,
+)
+from sklearn.utils._array_api import (
     _asarray_with_order,
     _convert_to_numpy,
     _is_numpy_namespace,
@@ -26,11 +30,14 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils.deprecation import _deprecate_force_all_finite
-from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
-from ._isfinite import FiniteStatus, cy_isfinite
-from ._tags import get_tags
-from .fixes import _object_dtype_isnan
+from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
+from sklearn.utils._tags import get_tags
+from sklearn.utils.deprecation import _deprecate_force_all_finite
+from sklearn.utils.fixes import (
+    ComplexWarning,
+    _object_dtype_isnan,
+    _preserve_dia_indices_dtype,
+)
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -2134,7 +2141,13 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, *, dtype=None, ensure_non_negative=False, copy=False
+    sample_weight,
+    X,
+    *,
+    dtype=None,
+    force_float_dtype=True,
+    ensure_non_negative=False,
+    copy=False,
 ):
     """Validate sample weights.
 
@@ -2162,6 +2175,10 @@ def _check_sample_weight(
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
 
+    force_float_dtype : bool, default=True
+        Whether `X` should be forced to be float dtype, when `dtype` is a non-float
+        dtype or None.
+
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
@@ -2185,7 +2202,7 @@ def _check_sample_weight(
     float_dtypes = (
         [xp.float32] if max_float_type == xp.float32 else [xp.float64, xp.float32]
     )
-    if dtype is not None and dtype not in float_dtypes:
+    if force_float_dtype and dtype is not None and dtype not in float_dtypes:
         dtype = max_float_type
 
     if sample_weight is None:
@@ -2193,7 +2210,7 @@ def _check_sample_weight(
     elif isinstance(sample_weight, numbers.Number):
         sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
-        if dtype is None:
+        if force_float_dtype and dtype is None:
             dtype = float_dtypes
         sample_weight = check_array(
             sample_weight,
@@ -2205,7 +2222,11 @@ def _check_sample_weight(
             input_name="sample_weight",
         )
         if sample_weight.ndim != 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+            raise ValueError(
+                f"Sample weights must be 1D array or scalar, got "
+                f"{sample_weight.ndim}D array. Expected either a scalar value "
+                f"or a 1D array of length {n_samples}."
+            )
 
         if sample_weight.shape != (n_samples,):
             raise ValueError(
@@ -2325,7 +2346,7 @@ def _check_method_params(X, params, indices=None):
     method_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
-    from . import _safe_indexing
+    from sklearn.utils import _safe_indexing
 
     method_params_validated = {}
     for param_key, param_value in params.items():
