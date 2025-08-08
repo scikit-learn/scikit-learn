@@ -1910,7 +1910,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=check_cv(self.cv),
