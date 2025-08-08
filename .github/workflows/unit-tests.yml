@@ -13,6 +13,7 @@ concurrency:
 env:
   VIRTUALENV: testvenv
   TEST_DIR: ${{ github.workspace }}/tmp_folder
+  CCACHE_DIR: ${{ github.workspace }}/ccache
 
 jobs:
   lint:
@@ -59,7 +60,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
+
+      - name: Create cache for ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-${{ matrix.name }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', matrix.LOCK_FILE)) }}
+          restore-keys: ccache-${{ matrix.name }}
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
           auto-activate-base: true
