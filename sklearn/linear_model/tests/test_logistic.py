@@ -2280,6 +2280,21 @@ def test_large_sparse_matrix(solver, global_random_seed, csr_container):
         LogisticRegression(solver=solver).fit(X, y)
 
 
+def test_liblinear_with_large_values():
+    # Liblinear raises error when data size is more than 1e100.
+
+    # generate sparse matrix with int64 indices
+    X = np.array([0, 1e100]).reshape(-1, 1)
+    y = np.array([0, 1])
+
+    msg = (
+        "Using the 'liblinear' solver while X contains a maximum "
+        "value>1e30 results in a frozen fit. Please choose another solver."
+    )
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(solver="liblinear").fit(X, y)
+
+
 def test_single_feature_newton_cg():
     # Test that Newton-CG works with a single feature and intercept.
     # Non-regression test for issue #23605.
