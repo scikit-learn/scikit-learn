@@ -17,6 +17,10 @@ The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
 
+Related documentation:
+- `scikit-learn classifiers <https://scikit-learn.org/stable/supervised_learning.html>`_
+- `Decision boundaries visualization <https://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html>`_
+
 """
 
 # Authors: The scikit-learn developers
