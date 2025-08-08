@@ -378,6 +378,7 @@ build_metadata_list = [
             "towncrier",
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
+            "ipympl",
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
