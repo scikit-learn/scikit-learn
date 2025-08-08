@@ -34,6 +34,7 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils._indexing import _safe_indexing
+from sklearn.utils._sparse import _sparse_eye
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
@@ -74,7 +75,7 @@ class SparseMatrixTrans(BaseEstimator):
 
     def transform(self, X, y=None):
         n_samples = len(X)
-        return self.csr_container(sparse.eye(n_samples, n_samples))
+        return self.csr_container(_sparse_eye(n_samples))
 
 
 class TransNo2D(BaseEstimator):
@@ -470,7 +471,7 @@ def test_column_transformer_output_indices_df():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_column_transformer_sparse_array(csr_container):
-    X_sparse = csr_container(sparse.eye(3, 2))
+    X_sparse = csr_container(_sparse_eye(3, 2))
 
     # no distinction between 1D and 2D
     X_res_first = X_sparse[:, [0]]

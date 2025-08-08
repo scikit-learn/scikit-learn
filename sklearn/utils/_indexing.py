@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
+from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
@@ -32,8 +32,12 @@ def _array_indexing(array, key, key_dtype, axis):
     xp, is_array_api = get_namespace(array)
     if is_array_api:
         return xp.take(array, key, axis=axis)
-    if issparse(array) and key_dtype == "bool":
-        key = np.asarray(key)
+    if issparse(array):
+        if key_dtype == "bool":
+            key = np.asarray(key)
+        elif SCIPY_VERSION_BELOW_1_12:
+            if isinstance(key, numbers.Integral):
+                key = [key]
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
@@ -569,8 +573,8 @@ def resample(
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
@@ -580,7 +584,7 @@ def resample(
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 4 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
@@ -727,8 +731,8 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
@@ -738,7 +742,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 3 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()

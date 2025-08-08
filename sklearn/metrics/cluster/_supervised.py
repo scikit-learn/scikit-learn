@@ -17,7 +17,7 @@ from scipy import sparse as sp
 from sklearn.metrics.cluster._expected_mutual_info_fast import (
     expected_mutual_information,
 )
-from sklearn.utils import deprecated
+from sklearn.utils import _align_api_if_sparse, deprecated
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
@@ -139,11 +139,11 @@ def contingency_matrix(
     -------
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
         Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
-        true class :math:`i` and in predicted class :math:`j`. If
-        ``eps is None``, the dtype of this array will be integer unless set
+        true class :math:`i` and in predicted class :math:`j`.
+        If ``eps is None``, the dtype of this array will be integer unless set
         otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype
         will be float.
-        Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
+        If ``sparse=True`` will be a sparse CSR contingency.
 
     Examples
     --------
@@ -166,12 +166,13 @@ def contingency_matrix(
     # Using coo_matrix to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
     # Currently, coo_matrix is faster than histogram2d for simple cases
-    contingency = sp.coo_matrix(
+    contingency = sp.coo_array(
         (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
         shape=(n_classes, n_clusters),
         dtype=dtype,
     )
     if sparse:
+        contingency = _align_api_if_sparse(contingency)
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
     else:
