@@ -992,6 +992,9 @@ def test_feature_union_weights():
     assert X_fit_transformed_wo_method.shape == (X.shape[0], 7)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_feature_union_parallel():
     # test that n_jobs work for FeatureUnion
     X = JUNK_FOOD_DOCS
