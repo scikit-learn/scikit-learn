@@ -2030,7 +2030,7 @@ def test_group_time_series_fail_groups_are_none():
 def test_group_time_series_ordering_and_group_preserved():
     # With this test we check that we are only evaluating
     # unseen groups in the future
-    groups = np.repeat(['a', 'b', 'c', 'd'], repeats=3)
+    groups = np.repeat(["a", "b", "c", "d"], repeats=3)
     n_samples = len(groups)
     n_splits = 3
 
@@ -2090,9 +2090,7 @@ def test_group_time_series_max_train_size():
 
 
 def test_group_time_series_non_overlap_group():
-    letters = list("abcdefghijk")
-    counts = [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3]
-    groups = np.repeat(letters, counts)
+    groups = np.repeat(list("abcdefghijk"), [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3])
     gtss = GroupTimeSeriesSplit(n_splits=3)
     splits = gtss.split(groups, groups=groups)
     train, test = next(splits)
@@ -2100,18 +2098,14 @@ def test_group_time_series_non_overlap_group():
     assert_array_equal(test, np.array([13, 14, 15, 16, 17]))
     assert_array_equal(
         groups[train],
-        np.repeat(["a", "b", "c", "d", "e"], [3, 2, 3, 2, 3]),
+        np.repeat(list("abcde"), [3, 2, 3, 2, 3]),
     )
-    assert_array_equal(groups[test], np.array(["f", "f", "g", "g", "g"]))
+    assert_array_equal(groups[test], np.repeat(list("fg"), [2, 3]))
 
     train, test = next(splits)
-    assert_array_equal(
-        train, np.arange(0, 18)
-    )
+    assert_array_equal(train, np.arange(0, 18))
     assert_array_equal(test, np.arange(18, 23))
-    assert_array_equal(
-        groups[train], np.repeat(list("abcdefg"), [3, 2, 3, 2, 3, 2, 3])
-    )
+    assert_array_equal(groups[train], np.repeat(list("abcdefg"), [3, 2, 3, 2, 3, 2, 3]))
     assert_array_equal(groups[test], np.repeat(list("hi"), [2, 3]))
 
     train, test = next(splits)
@@ -2121,8 +2115,7 @@ def test_group_time_series_non_overlap_group():
     )
     assert_array_equal(test, np.arange(23, 28))
     assert_array_equal(
-        groups[train],
-        np.repeat(list("abcdefghi"), [3, 2, 3, 2, 3, 2, 3, 2, 3])
+        groups[train], np.repeat(list("abcdefghi"), [3, 2, 3, 2, 3, 2, 3, 2, 3])
     )
     assert_array_equal(groups[test], np.repeat(list("jk"), [2, 3]))
 
@@ -2134,15 +2127,11 @@ def test_group_time_series_non_overlap_group_with_gap():
     train, test = next(splits)
     assert_array_equal(train, np.arange(0, 10))
     assert_array_equal(test, np.arange(13, 18))
-    assert_array_equal(
-        groups[train], np.repeat(list("abcd"), [3, 2, 3, 2])
-    )
+    assert_array_equal(groups[train], np.repeat(list("abcd"), [3, 2, 3, 2]))
     assert_array_equal(groups[test], np.repeat(list("fg"), [2, 3]))
 
     train, test = next(splits)
-    assert_array_equal(
-        train, np.arange(0, 15)
-    )
+    assert_array_equal(train, np.arange(0, 15))
     assert_array_equal(test, np.arange(18, 23))
     assert_array_equal(
         groups[train],
@@ -2176,27 +2165,17 @@ def test_group_time_series_non_overlap_group_imbalanced():
         test,
         np.arange(67, 117),
     )
-    assert_array_equal(
-        groups[train], np.repeat(list("abcd"), [20, 12, 30, 2])
-    )
-    assert_array_equal(
-        groups[test], np.repeat(list("fg"), [20, 30])
-    )
+    assert_array_equal(groups[train], np.repeat(list("abcd"), [20, 12, 30, 2]))
+    assert_array_equal(groups[test], np.repeat(list("fg"), [20, 30]))
 
     train, test = next(splits)
-    assert_array_equal(
-        train, np.arange(0, 87)
-    )
+    assert_array_equal(train, np.arange(0, 87))
     assert_array_equal(test, np.arange(117, 122))
-    assert_array_equal(
-        groups[train], np.repeat(list("abcdef"), [20, 12, 30, 2, 3, 20])
-    )
+    assert_array_equal(groups[train], np.repeat(list("abcdef"), [20, 12, 30, 2, 3, 20]))
     assert_array_equal(groups[test], np.repeat(list("hi"), [2, 3]))
 
     train, test = next(splits)
-    assert_array_equal(
-        train, np.arange(0, 119)
-    )
+    assert_array_equal(train, np.arange(0, 119))
     assert_array_equal(test, np.arange(122, 127))
     assert_array_equal(
         groups[train], np.repeat(list("abcdefgh"), [20, 12, 30, 2, 3, 20, 30, 2])
