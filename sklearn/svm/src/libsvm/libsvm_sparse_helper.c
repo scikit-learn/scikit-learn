@@ -8,7 +8,6 @@
 #ifndef MAX
     #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
-// test comment
 
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
