@@ -251,6 +251,16 @@ class _BinaryClassifierCurveDisplayMixin:
         return curve_kwargs_
 
 
+try:
+    from matplotlib.text import Annotation
+
+    class LineTooltip(Annotation):
+        """Custom annotation class to be able identify it among the axes children."""
+
+except:
+    pass
+
+
 class _LineTooltipMixin:
     """Mixin class to add a tooltip to a line in a plot.
 
@@ -289,11 +299,8 @@ class _LineTooltipMixin:
             arrowprops=dict(arrowstyle="-"),
             zorder=10,  # bring to front
         )
+        self.line_tooltip_.__class__ = LineTooltip
         self.line_tooltip_.set_visible(False)
-
-        # Set an attribute on the axes annotation to be able to keep only one visible
-        # at a time when there are multiple display instances that share an axes.
-        setattr(self.line_tooltip_, "_skl_line_tooltip", True)
 
         self.ax_.figure.canvas.mpl_connect(
             "motion_notify_event", partial(self._hover, t_vals=t_vals)
@@ -333,7 +340,7 @@ class _LineTooltipMixin:
         # account for the case when multiple display instances share the same axes.
         found_visible = False
         for child in self.ax_.get_children():
-            if hasattr(child, "_skl_line_tooltip") and child.get_visible():
+            if isinstance(child, LineTooltip) and child.get_visible():
                 if not found_visible:
                     found_visible = True
                 else:
