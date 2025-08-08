@@ -6,9 +6,9 @@ from collections import Counter
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
-    _LineTooltipMixin,
     _deprecate_y_pred_parameter,
     _despine,
+    _LineTooltipMixin,
     _validate_style_kwargs,
 )
 

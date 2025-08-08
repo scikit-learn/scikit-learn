@@ -257,7 +257,7 @@ try:
     class LineTooltip(Annotation):
         """Custom annotation class to be able identify it among the axes children."""
 
-except:
+except ImportError:
     pass
 
 
