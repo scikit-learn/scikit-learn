@@ -1491,6 +1491,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
+    For an example illustrating the use of monotonic constraints with
+    `HistGradientBoostingRegressor`, see:
+    :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+
     .. versionadded:: 0.21
 
     Parameters
