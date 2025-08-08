@@ -4,10 +4,12 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
+PLATFORM_ID=$2
 
 FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
 
-if [[ $FREE_THREADED_BUILD == "False" ]]; then
+# Currently Windows ARM64 runners do not have Docker support.
+if [[ $FREE_THREADED_BUILD == "False" && "$PLATFORM_ID" != "win_arm64" ]]; then
     # Prepare a minimal Windows environment without any developer runtime libraries
     # installed to check that the scikit-learn wheel does not implicitly rely on
     # external DLLs when running the tests.
