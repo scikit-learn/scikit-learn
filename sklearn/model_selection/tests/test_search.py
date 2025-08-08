@@ -1446,6 +1446,7 @@ def test_search_cv_sample_weight_equivalence(estimator):
     ],
 )
 def test_search_cv_score_samples_method(search_cv):
+    search_cv = clone(search_cv)  # Avoid side effects from previous tests.
     # Set parameters
     rng = np.random.RandomState(42)
     n_samples = 300
