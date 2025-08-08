@@ -96,12 +96,14 @@ def _params_html_repr(params):
     """
     estimator_class_docs = inspect.getdoc(params.estimator_class)
     docstring = None
+    param_map = {}
     if estimator_class_docs:
         docstring = _get_estimator_docstring(estimator_class_docs)
-        param_map = {
-            param_docstring.name: param_docstring
-            for param_docstring in docstring["Parameters"]
-        }
+        if docstring:
+            param_map = {
+                param_docstring.name: param_docstring
+                for param_docstring in docstring["Parameters"]
+            }
 
     rows = []
     for row in params:
@@ -112,7 +114,7 @@ def _params_html_repr(params):
         if docstring:
             param_numpydoc = param_map.get(row)
 
-        if param_numpydoc:
+        if param_numpydoc and param_map:
             param_description = (
                 f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
                 f"{' '.join(param_numpydoc.desc)}"
