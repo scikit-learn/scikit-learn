@@ -105,7 +105,7 @@ def _params_html_repr(params):
 
     rows = []
     for row in params:
-        param_description = param_doc_link = param_numpydoc = None
+        param_description = param_doc_link = param_numpydoc = link = None
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
 
