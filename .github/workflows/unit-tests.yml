@@ -74,7 +74,7 @@ jobs:
       - name: Create cache for ccache
         uses: actions/cache@v4
         with:
-          path: ${{ github.workspace }}/ccache
+          path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ runner.os }}-${{ steps.get-compiler.outputs.compiler }}
           restore-keys: |
             ccache-${{ runner.os }}-
