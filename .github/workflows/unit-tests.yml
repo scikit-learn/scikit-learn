@@ -71,8 +71,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ matrix.name }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', '${{ matrix.LOCK_FILE }}') }}
+          #key: ccache-${{ matrix.name }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp') }}
+          key: ccache-${{ matrix.name }}-${{ hashFiles(format("'**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', '{0}'", matrix.LOCK_FILE)) }}
           restore-keys: ccache-${{ matrix.name }}
+
+          # hashFiles(format('{0}/**', matrix.bla)) }}
 
       - name: Build scikit-learn
         run: bash -l build_tools/azure/install.sh
