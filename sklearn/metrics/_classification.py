@@ -14,6 +14,7 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
+from joblib import Parallel, delayed
 from scipy.sparse import coo_matrix, csr_matrix, issparse
 from scipy.special import xlogy
 
@@ -1516,6 +1517,94 @@ def f1_score(
         sample_weight=sample_weight,
         zero_division=zero_division,
     )
+
+
+def batch_f1_score(
+    y_true, y_pred, batch_size=None, average="binary", n_jobs=-1, **kwargs
+):
+    """
+    Compute F1 score in batches with parallel processing.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values.
+    batch_size : int, default=None
+        Size of batches. If None, compute F1 score without batching.
+    average : str, default='binary'
+        Type of averaging: 'micro', 'macro', 'weighted', 'binary', or None.
+    n_jobs : int, default=-1
+        Number of jobs to run in parallel. -1 uses all available cores.
+    **kwargs : additional arguments
+        Additional arguments to pass to f1_score.
+
+    Returns
+    -------
+    score : float or array-like
+        F1 score, either a single value (if average is not None) or per-batch scores.
+    """
+    if batch_size is None:
+        return f1_score(y_true, y_pred, average=average, **kwargs)
+
+    n_samples = len(y_true)
+    batches = [
+        (i, min(i + batch_size, n_samples)) for i in range(0, n_samples, batch_size)
+    ]
+
+    def compute_batch(start, end):
+        if average in ["micro", "macro", "weighted"]:
+            # Compute confusion matrix components for aggregation
+            from sklearn.metrics import confusion_matrix
+
+            cm = confusion_matrix(
+                y_true[start:end], y_pred[start:end], labels=np.unique(y_true)
+            )
+            return cm
+        return f1_score(y_true[start:end], y_pred[start:end], average=average, **kwargs)
+
+    results = Parallel(n_jobs=n_jobs)(
+        delayed(compute_batch)(start, end) for start, end in batches
+    )
+
+    if average in ["micro", "macro", "weighted"]:
+        # Aggregate confusion matrices
+        total_cm = sum(results)
+        # Compute precision, recall, and F1 for each class
+        n_classes = total_cm.shape[0]
+        f1_scores = []
+        for i in range(n_classes):
+            tp = total_cm[i, i]
+            fp = total_cm[:, i].sum() - tp
+            fn = total_cm[i, :].sum() - tp
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            f1 = (
+                2 * (precision * recall) / (precision + recall)
+                if (precision + recall) > 0
+                else 0
+            )
+            f1_scores.append(f1)
+
+        if average == "macro":
+            return np.mean(f1_scores)
+        elif average == "micro":
+            tp = total_cm.diagonal().sum()
+            fp = total_cm.sum() - tp
+            fn = fp  # Symmetric for binary/multiclass
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+            return (
+                2 * (precision * recall) / (precision + recall)
+                if (precision + recall) > 0
+                else 0
+            )
+        elif average == "weighted":
+            weights = total_cm.sum(axis=1)
+            return np.average(f1_scores, weights=weights)
+
+    return np.array(results)
 
 
 @validate_params(
