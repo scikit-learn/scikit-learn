@@ -1397,25 +1397,18 @@ cdef class BinaryTree{{name_suffix}}:
         kernel_density(X, h, kernel='gaussian', atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False)
 
-        Compute the kernel density estimate at points X with the given kernel,
-        using the distance metric specified at tree creation.
+        Compute the kernel density estimate at points `X`.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            An array of points to query.  Last dimension should match dimension
-            of training data.
+            The data points to query. Unlike :class:`~sklearn.neighbors.KernelDensity`,
+            data must be scaled to unit covariance here.
         h : float
-            the bandwidth of the kernel
-        kernel : str, default="gaussian"
-            specify the kernel to use.  Options are
-            - 'gaussian'
-            - 'tophat'
-            - 'epanechnikov'
-            - 'exponential'
-            - 'linear'
-            - 'cosine'
-            Default is kernel = 'gaussian'
+            The bandwidth of the kernel.
+        kernel : {"gaussian", "tophat", "epanechnikov", "exponential", "linear", \
+            "cosine"}, default="gaussian"
+            The kernel to use.
         atol : float, default=0
             Specify the desired absolute tolerance of the result.
             If the true result is `K_true`, then the returned result `K_ret`
@@ -1436,8 +1429,8 @@ cdef class BinaryTree{{name_suffix}}:
 
         Returns
         -------
-        density : ndarray of shape X.shape[:-1]
-            The array of (log)-density evaluations
+        density : ndarray of shape (n_samples,)
+            The array of (log)-density evaluations.
         """
         cdef float64_t h_c = h
         cdef float64_t log_atol = log(atol)
