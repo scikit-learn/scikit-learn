@@ -1257,11 +1257,19 @@ def test_class_weights(name):
         ],
         random_state=0,
     )
+    if isinstance(clf3, RandomForestClassifier):
+        # In a RandomForest, the default max_samples=None gives
+        # n_samples_bootstrap = sample_weight.sum() but here
+        # sample_weight.sum() differs between clf2 and clf3.
+        # We specify max_samples to get the same n_samples_bootstrap as clf2.
+        clf3.set_params(max_samples=clf2._n_samples_bootstrap)
     clf3.fit(iris.data, iris_multi)
+    assert_almost_equal(clf3._sample_weight, 4)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "balanced" which should also have no effect
     clf4 = ForestClassifier(class_weight="balanced", random_state=0)
     clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf4._sample_weight, 1)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
     # Inflate importance of class 1, check against user-defined weights
@@ -1272,6 +1280,7 @@ def test_class_weights(name):
     clf1.fit(iris.data, iris.target, sample_weight)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
@@ -1279,6 +1288,7 @@ def test_class_weights(name):
     clf1.fit(iris.data, iris.target, sample_weight**2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
