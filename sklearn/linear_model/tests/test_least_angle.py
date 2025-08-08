@@ -739,6 +739,7 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
 
 @pytest.mark.parametrize("est", (LassoLars(alpha=1e-3), Lars()))
 def test_lars_with_jitter(est):
+    est = clone(est)  # Avoid side effects from previous tests.
     # Test that a small amount of jitter helps stability,
     # using example provided in issue #2746
 

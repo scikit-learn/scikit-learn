@@ -155,6 +155,9 @@ def _weight_func(dist):
 WEIGHTS = ["uniform", "distance", _weight_func]
 
 
+# XXX: probably related to the thread-safety bug tracked at:
+# https://github.com/scikit-learn/scikit-learn/issues/31884
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "n_samples, n_features, n_query_pts, n_neighbors",
     [

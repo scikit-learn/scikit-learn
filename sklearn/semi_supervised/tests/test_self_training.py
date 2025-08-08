@@ -4,9 +4,11 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -45,10 +47,11 @@ def test_warns_k_best():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [KNeighborsClassifier(), LogisticRegression()],
 )
 @pytest.mark.parametrize("selection_crit", ["threshold", "k_best"])
 def test_classification(estimator, selection_crit):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
@@ -143,6 +146,7 @@ def test_none_iter():
 )
 @pytest.mark.parametrize("y", [y_train_missing_labels, y_train_missing_strings])
 def test_zero_iterations(estimator, y):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     # Check classification for zero iterations.
     # Fitting a SelfTrainingClassifier with zero iterations should give the
     # same results as fitting a supervised classifier.

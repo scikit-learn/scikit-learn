@@ -3151,6 +3151,9 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
     assert f1_score(y_true, y_pred, zero_division=1.0) == pytest.approx(expected_score)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "scoring",
     [

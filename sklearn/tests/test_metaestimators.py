@@ -7,7 +7,7 @@ from inspect import signature
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, is_regressor
+from sklearn.base import BaseEstimator, clone, is_regressor
 from sklearn.datasets import make_classification
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
@@ -313,6 +313,9 @@ def _get_meta_estimator_id(estimator):
 def test_meta_estimators_delegate_data_validation(estimator):
     # Check that meta-estimators delegate data validation to the inner
     # estimator(s).
+
+    # clone to avoid side effects and ensure thread-safe test execution.
+    estimator = clone(estimator)
     rng = np.random.RandomState(0)
     set_random_state(estimator)
 
