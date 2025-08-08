@@ -67,18 +67,12 @@ jobs:
           auto-activate-base: true
           activate-environment: ""
 
-      - name: Set compiler ID
-        id: get-compiler
-        run: echo "compiler=$(cc --version | head -n 1 | tr ' ' '_' | tr -d '()')" >> $GITHUB_OUTPUT
-
       - name: Create cache for ccache
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ steps.get-compiler.outputs.compiler }}
-          restore-keys: |
-            ccache-${{ runner.os }}-
-            ccache-
+          key: ccache-${{ matrix.name }}-${{ hashFiles('**/*.c', '**/*.cpp') }}
+          restore-keys: ccache-${{ matrix.name }}
 
       - name: Build scikit-learn
         run: bash -l build_tools/azure/install.sh
