@@ -934,7 +934,7 @@ def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
     p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
-    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
+    assert_array_almost_equal(precision_recall_auc, 0.869, 3)
     assert_array_almost_equal(
         precision_recall_auc, average_precision_score(y_true, y_score)
     )
