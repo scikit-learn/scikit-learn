@@ -118,6 +118,36 @@ FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
 
+def test_get_n_samples_bootstrap():
+    # Test without sample_weight
+    # absolute max_samples (int)
+    assert _get_n_samples_bootstrap(100, 10, None) == 10
+    # relative max_samples (float)
+    assert _get_n_samples_bootstrap(100, 1.0, None) == 100
+    assert _get_n_samples_bootstrap(100, 0.5, None) == 50
+    # None equivalent to relative max_samples=1.0
+    assert _get_n_samples_bootstrap(100, None, None) == 100
+    # case max_samples * n_samples < 1
+    assert _get_n_samples_bootstrap(100, 0.9 / 100, None) == 1
+
+    # Test with sample_weight
+    sw = np.full(100, fill_value=2)
+    # absolute max_samples (int)
+    assert _get_n_samples_bootstrap(100, 10, sw) == 10
+    # relative max_samples (float)
+    assert _get_n_samples_bootstrap(100, 1.0, sw) == int(sw.sum())
+    assert _get_n_samples_bootstrap(100, 0.5, sw) == int(0.5 * sw.sum())
+    # None equivalent to relative max_samples=1.0
+    assert _get_n_samples_bootstrap(100, None, sw) == int(sw.sum())
+    # case max_samples * sw_sum < 1
+    assert _get_n_samples_bootstrap(100, 0.9 / sw.sum(), sw) == 1
+    # error raised for sw_sum < 1
+    sw_small = np.full(100, fill_value=0.001)
+    msg = f"The total sum of sample weights is {sw_small.sum()}, which"
+    with pytest.raises(ValueError, match=msg):
+        _get_n_samples_bootstrap(100, 1.0, sw_small)
+
+
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 def test_classification_toy(name):
     """Check classification on a toy dataset."""
@@ -643,7 +673,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     )
     estimator.fit(X, y)
 
-    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples, None)
     n_samples_test = X.shape[0] // 4
     oob_pred = np.zeros([n_samples_test, 2])
     for sample_idx, sample in enumerate(X[:n_samples_test]):
@@ -651,7 +681,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
             oob_unsampled_indices = _generate_unsampled_indices(
-                tree.random_state, len(X), n_samples_bootstrap
+                tree.random_state, len(X), n_samples_bootstrap, None
             )
             if sample_idx in oob_unsampled_indices:
                 n_samples_oob += 1
@@ -1161,15 +1191,59 @@ def test_1d_input(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+def test_validate_y_class_weight(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(random_state=0)
+    # toy dataset with two classes
+    y = np.array([1, 1, 1, 0, 0, 0])
+    sw = np.array([1, 2, 3, 1, 1, 1])
+    weighted_frequency = np.array([sw[y == i].sum() / sw.sum() for i in [0, 1]])
+    balanced_class_weight = 1 / (2 * weighted_frequency)
+    # validation in fit reshapes y as (n_samples, 1)
+    y_reshaped = np.reshape(y, (-1, 1))
+    clf._n_samples, clf.n_outputs_ = y_reshaped.shape
+
+    # checking dict class_weight
+    class_weight = np.array([1, 7])
+    class_weight_dict = dict(enumerate(class_weight))
+    clf.set_params(class_weight=class_weight_dict)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, class_weight[y])
+
+    # checking class_weight="balanced"
+    clf.set_params(class_weight="balanced")
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, balanced_class_weight[y])
+
+    # checking class_weight="balanced_subsample" with bootstrap=False
+    # (should be equivalent to "balanced")
+    clf.set_params(class_weight="balanced_subsample", bootstrap=False)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, balanced_class_weight[y])
+
+    # checking class_weight="balanced_subsample" with bootstrap=True
+    # (should be None)
+    clf.set_params(class_weight="balanced_subsample", bootstrap=True)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert expanded_class_weight is None
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 def test_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    # Iris is balanced, so no effect expected for using 'balanced' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights.
+    # Using the class_weight="balanced" option is then equivalent to fit with
+    # all ones sample_weight. However we cannot guarantee the same fit for
+    # sample_weight = None vs all ones, because the indices are drawn by
+    # different rng functions (choice vs randint). Thus we explicitly pass
+    # the sample_weight as all ones in clf1 fit.
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target)
+    clf1.fit(iris.data, iris.target, sample_weight=np.ones_like(iris.target))
     clf2 = ForestClassifier(class_weight="balanced", random_state=0)
     clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf2._sample_weight, 1)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Make a multi-output problem with three copies of Iris
@@ -1183,11 +1257,19 @@ def test_class_weights(name):
         ],
         random_state=0,
     )
+    if isinstance(clf3, RandomForestClassifier):
+        # In a RandomForest, the default max_samples=None gives
+        # n_samples_bootstrap = sample_weight.sum() but here
+        # sample_weight.sum() differs between clf2 and clf3.
+        # We specify max_samples to get the same n_samples_bootstrap as clf2.
+        clf3.set_params(max_samples=clf2._n_samples_bootstrap)
     clf3.fit(iris.data, iris_multi)
+    assert_almost_equal(clf3._sample_weight, 4)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "balanced" which should also have no effect
     clf4 = ForestClassifier(class_weight="balanced", random_state=0)
     clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf4._sample_weight, 1)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
     # Inflate importance of class 1, check against user-defined weights
@@ -1198,6 +1280,7 @@ def test_class_weights(name):
     clf1.fit(iris.data, iris.target, sample_weight)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
@@ -1205,6 +1288,7 @@ def test_class_weights(name):
     clf1.fit(iris.data, iris.target, sample_weight**2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
@@ -1537,6 +1621,15 @@ def test_max_samples_bootstrap(name):
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, y)
+    est.set_params(bootstrap=True)
+    n_samples = len(y)
+    sample_weight = np.full(n_samples, 0.1 / n_samples)
+    err_msg = (
+        f"The total sum of sample weights is {sample_weight.sum()}, which prevents "
+        "resampling with a fractional value for max_samples"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y, sample_weight)
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
