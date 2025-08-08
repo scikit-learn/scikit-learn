@@ -477,7 +477,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         elif self.bootstrap:
             n_samples_bootstrap = _get_n_samples_bootstrap(
-                X.shape[0], self.max_samples, sample_weight
+                X.shape[0], self.max_samples, _sample_weight
             )
         else:
             n_samples_bootstrap = None
