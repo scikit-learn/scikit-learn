@@ -84,7 +84,7 @@ from sklearn.utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from sklearn.utils.validation import _check_response_method
+from sklearn.utils.validation import _check_response_method, _deprecate_positional_args
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
@@ -100,6 +100,14 @@ def _cached_call(cache, estimator, response_method, *args, **kwargs):
         cache[response_method] = result
 
     return result
+
+
+def _get_func_repr_or_name(func):
+    """Returns the name of the function or repr of a partial."""
+    if isinstance(func, partial):
+        return repr(func)
+
+    return func.__name__
 
 
 class _MultimetricScorer:
@@ -262,11 +270,13 @@ class _BaseScorer(_MetadataRequester):
         kwargs_string = "".join([f", {k}={v}" for k, v in self._kwargs.items()])
 
         return (
-            f"make_scorer({self._score_func.__name__}{sign_string}"
+            f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
+    # TODO (1.10): remove in 1.10
+    @_deprecate_positional_args(version="1.10")
+    def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -307,6 +317,8 @@ class _BaseScorer(_MetadataRequester):
         _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
+        # TODO(1.10): remove this when sample_weight is removed from the `__call__`
+        # signature
         if sample_weight is not None:
             _kwargs["sample_weight"] = sample_weight
 
@@ -359,6 +371,35 @@ class _BaseScorer(_MetadataRequester):
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
+
+    def _get_metadata_request(self):
+        """Get requested data properties.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        request : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+        """
+        if hasattr(self, "_metadata_request"):
+            requests = get_routing_for_object(self._metadata_request)
+        else:
+            requests = self._get_default_requests(
+                score_method=self._score_func,
+                ignore_params={
+                    "y_true",
+                    "y_pred",
+                    "y_prob",
+                    "y_proba",
+                    "y_score",
+                    "labels_true",
+                    "labels_pred",
+                },
+            )
+
+        return requests
 
 
 class _Scorer(_BaseScorer):
