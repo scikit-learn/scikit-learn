@@ -504,6 +504,9 @@ def test_parallel_classification():
     assert_array_almost_equal(decisions1, decisions3)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel_regression():
     # Check parallel regression.
     rng = check_random_state(0)
