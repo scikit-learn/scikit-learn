@@ -9,6 +9,7 @@ from collections import UserDict
 from functools import lru_cache
 from urllib.parse import quote
 
+from sklearn.externals._numpydoc import docscrape
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
@@ -52,8 +53,7 @@ def _read_params(name, value, non_default_params):
 
 @lru_cache
 def _get_estimator_docstring(estimator_class_docs):
-    # return docscrape.NumpyDocString(estimator_class_docs)
-    return
+    return docscrape.NumpyDocString(estimator_class_docs)
 
 
 def _params_html_repr(params):
@@ -98,11 +98,10 @@ def _params_html_repr(params):
     docstring = None
     if estimator_class_docs:
         docstring = _get_estimator_docstring(estimator_class_docs)
-        if docstring:
-            param_map = {
-                param_docstring.name: param_docstring
-                for param_docstring in docstring["Parameters"]
-            }
+        param_map = {
+            param_docstring.name: param_docstring
+            for param_docstring in docstring["Parameters"]
+        }
 
     rows = []
     for row in params:
