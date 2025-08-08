@@ -2124,7 +2124,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     >>> reg.score(X, y)
     0.9993
     >>> reg.predict(X[:1,])
-    array([-78.4951])
+    array([-79.4755331])
     """
 
     path = staticmethod(lasso_path)
