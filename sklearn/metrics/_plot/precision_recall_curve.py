@@ -6,13 +6,14 @@ from collections import Counter
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _LineTooltipMixin,
     _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
 
 
-class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
+class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin, _LineTooltipMixin):
     """Precision Recall visualization.
 
     It is recommended to use
@@ -33,6 +34,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     recall : ndarray
         Recall values.
+
+    thresholds : ndarray or list of ndarrays, default=None
+        The thresholds at which the fpr and tpr have been computed. Each ndarray should
+        contain values for a single curve. If plotting multiple curves, list should be
+        of same length as `fpr` and `tpr`.
+        Only used to display the threshold values along the curve as a tooltip. If None,
+        only the fpr and tpr values are displayed.
 
     average_precision : float, default=None
         Average precision. If None, the average precision is not shown.
@@ -117,6 +125,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         precision,
         recall,
         *,
+        thresholds=None,
         average_precision=None,
         estimator_name=None,
         pos_label=None,
@@ -125,6 +134,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         self.estimator_name = estimator_name
         self.precision = precision
         self.recall = recall
+        self.thresholds = thresholds
         self.average_precision = average_precision
         self.pos_label = pos_label
         self.prevalence_pos_label = prevalence_pos_label
@@ -205,6 +215,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
+
+        self._add_line_tooltip(
+            x_label="R", y_label="P", t_label="threshold", t_vals=[self.thresholds]
+        )
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -537,7 +551,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
-        precision, recall, _ = precision_recall_curve(
+        precision, recall, thresholds = precision_recall_curve(
             y_true,
             y_score,
             pos_label=pos_label,
@@ -554,6 +568,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             precision=precision,
             recall=recall,
+            thresholds=thresholds,
             average_precision=average_precision,
             estimator_name=name,
             pos_label=pos_label,
