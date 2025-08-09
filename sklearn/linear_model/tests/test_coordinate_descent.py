@@ -94,10 +94,7 @@ def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    # _cd_fast.pyx tests for gap < tol, but here we get 0.0 < 0.0
-    # should probably be changed to gap <= tol ?
-    with ignore_warnings(category=ConvergenceWarning):
-        clf = Lasso(alpha=0.1).fit(X, y)
+    clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
@@ -105,6 +102,7 @@ def test_lasso_zero():
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")  # overflow and similar
 def test_enet_nonfinite_params():
     # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
@@ -521,6 +519,7 @@ def test_warm_start():
     assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
+@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
 def test_lasso_alpha_warning():
     X = [[-1], [0], [1]]
     Y = [-1, 0, 1]  # just a straight line
@@ -1140,13 +1139,18 @@ def test_warm_start_multitask_lasso():
 )
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
-    clf = klass(max_iter=2, **kwargs)
-    n_samples = 5
-    n_features = 2
-    X = np.ones((n_samples, n_features)) * 1e50
-    y = np.ones((n_samples, n_classes))
-    if klass == Lasso:
-        y = y.ravel()
+    clf = klass(
+        alpha=1e-10,
+        fit_intercept=False,
+        warm_start=True,
+        max_iter=1,
+        tol=1e-10,
+        **kwargs,
+    )
+    # Set initial coefficients to very bad values.
+    clf.coef_ = np.array([1, 1, 1, 1000])
+    X = np.array([[-1, -1, 1, 1], [1, 1, -1, -1]])
+    y = np.array([-1, 1])
     warning_message = (
         "Objective did not converge. You might want to"
         " increase the number of iterations."
@@ -1730,6 +1734,7 @@ def test_linear_model_cv_deprecated_alphas_none(Estimator):
 
 
 # TODO(1.9): remove
+@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
 @pytest.mark.parametrize(
     "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
 )
@@ -1749,6 +1754,7 @@ def test_linear_model_cv_alphas_n_alphas_unset(Estimator):
 
 # TODO(1.9): remove
 @pytest.mark.filterwarnings("ignore:'n_alphas' was deprecated in 1.7")
+@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
 @pytest.mark.parametrize(
     "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
 )

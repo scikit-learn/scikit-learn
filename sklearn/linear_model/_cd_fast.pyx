@@ -219,7 +219,7 @@ def enet_coordinate_descent(
 
             if (
                 w_max == 0.0
-                or d_w_max / w_max < d_w_tol
+                or d_w_max / w_max <= d_w_tol
                 or n_iter == max_iter - 1
             ):
                 # the biggest coordinate update of this iteration was smaller
@@ -258,7 +258,7 @@ def enet_coordinate_descent(
                         - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
                         + 0.5 * beta * (1 + const_ ** 2) * (w_norm2))
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
 
@@ -499,7 +499,7 @@ def sparse_enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -546,7 +546,7 @@ def sparse_enet_coordinate_descent(
                         - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
                         + 0.5 * beta * (1 + const_ ** 2) * w_norm2)
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
 
@@ -674,7 +674,7 @@ def enet_coordinate_descent_gram(
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -712,7 +712,7 @@ def enet_coordinate_descent_gram(
                     + 0.5 * beta * (1 + const_ ** 2) * w_norm2
                 )
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
 
@@ -891,7 +891,7 @@ def enet_coordinate_descent_multi_task(
                 if W_ii_abs_max > w_max:
                     w_max = W_ii_abs_max
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
