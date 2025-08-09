@@ -2365,3 +2365,42 @@ def test_encoder_not_fitted(Encoder):
     encoder = Encoder(categories=[["A", "B", "C"]])
     with pytest.raises(NotFittedError):
         encoder.transform(X)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 3},
+        {"min_frequency": 6},
+        {"min_frequency": 9},
+        {"min_frequency": 0.24},
+        {"min_frequency": 0.16},
+        {"max_categories": 3, "min_frequency": 8},
+        {"max_categories": 4, "min_frequency": 6},
+    ],
+)
+def test_ordinal_encoder_infrequent_if_exist(kwargs):
+    """Check that OrdinalEncoder correctly encodes unknown values as infrequent in
+    'infrequent_if_exist' configuration."""
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ordinal = OrdinalEncoder(handle_unknown="infrequent_if_exist", **kwargs).fit(
+        X_train
+    )
+    assert_array_equal(ordinal.categories_, [["a", "b", "c", "d"]])
+    assert_array_equal(ordinal.infrequent_categories_, [["a", "d"]])
+
+    X_test = [["a"], ["b"], ["c"], ["d"], ["z"]]
+    expected_trans = [[2], [0], [1], [2], [2]]
+
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, expected_trans)
+
+    X_inverse = ordinal.inverse_transform(X_trans)
+    expected_inverse = [
+        ["infrequent_sklearn"],
+        ["b"],
+        ["c"],
+        ["infrequent_sklearn"],
+        ["infrequent_sklearn"],
+    ]
+    assert_array_equal(X_inverse, expected_inverse)

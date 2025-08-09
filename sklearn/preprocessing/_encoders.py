@@ -1286,14 +1286,25 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     dtype : number type, default=np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'use_encoded_value'}, default='error'
-        When set to 'error' an error will be raised in case an unknown
-        categorical feature is present during transform. When set to
-        'use_encoded_value', the encoded value of unknown categories will be
-        set to the value given for the parameter `unknown_value`. In
-        :meth:`inverse_transform`, an unknown category will be denoted as None.
+    handle_unknown : {'error', 'use_encoded_value', 'infrequent_if_exist'}, \
+                     default='error'
+        - 'error' : Raise an error if an unknown category is present during transform.
+        - 'use_encoded_value' : The encoded value of unknown categories will be
+          set to the value given for the parameter `unknown_value`.
+        - 'infrequent_if_exist' : When an unknown category is encountered during
+          transform, the resulting encoding for this feature will map to the infrequent
+          category if it exists. The infrequent category will be mapped to the last
+          position in the encoding. During inverse transform, an unknown category
+          will be mapped to the category denoted `'infrequent'` if it exists.
+          If the `'infrequent'` category does not exist, then :meth:`transform`
+          and :meth:`inverse_transform` will handle an unknown category as
+          with `handle_unknown='ignore'`. Infrequent categories exist based on
+          `min_frequency` and `max_categories`. Read more in the :ref:`User Guide
+          <encoder_infrequent_categories>`.
 
         .. versionadded:: 0.24
+        .. versionchanged:: 1.8
+            Added 'infrequent_if_exist' option.
 
     unknown_value : int or np.nan, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
@@ -1446,7 +1457,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "categories": [StrOptions({"auto"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
-        "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
+        "handle_unknown": [
+            StrOptions({"error", "use_encoded_value", "infrequent_if_exist"})
+        ],
         "unknown_value": [Integral, type(np.nan), None],
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
