@@ -857,9 +857,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     The precise stopping criteria based on `tol` are the following: First, check that
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
-    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
-    If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
+    is smaller or equal to `tol` times the maximum absolute coefficient,
+    :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
+    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\text{samples}}`.
 
     Examples
     --------
@@ -1285,9 +1285,9 @@ class Lasso(ElasticNet):
 
     The precise stopping criteria based on `tol` are the following: First, check that
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
-    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
-    If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\\text{samples}}`.
+    is smaller or equal to `tol` times the maximum absolute coefficient,
+    :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
+    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\text{samples}}`.
 
     The target can be a 2-dimensional array, resulting in the optimization of the
     following objective::
