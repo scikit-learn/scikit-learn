@@ -12,7 +12,7 @@ SCIPY_MIN_VERSION = "1.8.0"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "3.1.0"
 PYTEST_MIN_VERSION = "7.1.2"
-CYTHON_MIN_VERSION = "3.0.10"
+CYTHON_MIN_VERSION = "3.1.2"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.

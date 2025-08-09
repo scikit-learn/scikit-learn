@@ -8,7 +8,7 @@ dependencies:
   - numpy=1.22.0  # min
   - blas
   - scipy=1.8.0  # min
-  - cython=3.0.10  # min
+  - cython=3.1.2  # min
   - joblib
   - threadpoolctl
   - matplotlib=3.5.0  # min
