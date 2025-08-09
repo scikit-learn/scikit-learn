@@ -16,6 +16,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from warnings import warn
+from io import BytesIO
 
 import numpy as np
 
@@ -519,56 +520,43 @@ def _load_arff_response(
     """
     gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
     with closing(gzip_file):
-        md5 = hashlib.md5()
-        for chunk in iter(lambda: gzip_file.read(4096), b""):
-            md5.update(chunk)
-        actual_md5_checksum = md5.hexdigest()
+        file_content = gzip_file.read()
+        actual_md5_checksum = hashlib.md5(file_content).hexdigest()
 
-    if actual_md5_checksum != md5_checksum:
-        raise ValueError(
-            f"md5 checksum of local file for {url} does not match description: "
-            f"expected: {md5_checksum} but got {actual_md5_checksum}. "
-            "Downloaded file could have been modified / corrupted, clean cache "
-            "and retry..."
+        if actual_md5_checksum != md5_checksum:
+            raise ValueError(
+                f"md5 checksum of local file for {url} does not match description: "
+                f"expected: {md5_checksum} but got {actual_md5_checksum}. "
+                "Downloaded file could have been modified / corrupted, clean cache "
+                "and retry..."
+            )
+    
+        content_stream = BytesIO(file_content)
+        arff_params: Dict = dict(
+            parser=parser,
+            output_type=output_type,
+            openml_columns_info=openml_columns_info,
+            feature_names_to_select=feature_names_to_select,
+            target_names_to_select=target_names_to_select,
+            shape=shape,
+            read_csv_kwargs=read_csv_kwargs or {},
         )
 
-    def _open_url_and_load_gzip_file(url, data_home, n_retries, delay, arff_params):
-        gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
-        with closing(gzip_file):
-            return load_arff_from_gzip_file(gzip_file, **arff_params)
+        try:
+            return load_arff_from_gzip_file(content_stream, **arff_params)
+        except Exception as exc:
+            if parser != "pandas":
+                raise
+            from pandas.errors import ParserError
+            if not isinstance(exc, ParserError):
+                raise
 
-    arff_params: Dict = dict(
-        parser=parser,
-        output_type=output_type,
-        openml_columns_info=openml_columns_info,
-        feature_names_to_select=feature_names_to_select,
-        target_names_to_select=target_names_to_select,
-        shape=shape,
-        read_csv_kwargs=read_csv_kwargs or {},
-    )
-    try:
-        X, y, frame, categories = _open_url_and_load_gzip_file(
-            url, data_home, n_retries, delay, arff_params
-        )
-    except Exception as exc:
-        if parser != "pandas":
-            raise
-
-        from pandas.errors import ParserError
-
-        if not isinstance(exc, ParserError):
-            raise
-
-        # A parsing error could come from providing the wrong quotechar
-        # to pandas. By default, we use a double quote. Thus, we retry
-        # with a single quote before to raise the error.
-        arff_params["read_csv_kwargs"].update(quotechar="'")
-        X, y, frame, categories = _open_url_and_load_gzip_file(
-            url, data_home, n_retries, delay, arff_params
-        )
-
-    return X, y, frame, categories
-
+            # A parsing error could come from providing the wrong quotechar
+            # to pandas. By default, we use a double quote. Thus, we retry
+            # with a single quote before to raise the error.
+            arff_params["read_csv_kwargs"].update(quotechar="'")
+            content_stream.seek(0)
+            return load_arff_from_gzip_file(content_stream, **arff_params)
 
 def _download_data_to_bunch(
     url: str,
