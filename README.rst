@@ -141,8 +141,8 @@ directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
 See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
-    Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
+    To control random number generation during testing, set the environment variable:
+    ```export SKLEARN_SEED=<seed_value>```
 
 Submitting a Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
