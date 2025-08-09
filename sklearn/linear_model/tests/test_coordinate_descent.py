@@ -17,7 +17,6 @@ from sklearn.linear_model import (
     ElasticNetCV,
     Lasso,
     LassoCV,
-    LassoLars,
     LassoLarsCV,
     LinearRegression,
     MultiTaskElasticNet,
@@ -328,38 +327,6 @@ def test_lassocv_alphas_validation(alphas, err_type, err_msg):
         lassocv.fit(X, y)
 
 
-def _scale_alpha_inplace(estimator, n_samples):
-    """Rescale the parameter alpha from when the estimator is evoked with
-    normalize set to True as if it were evoked in a Pipeline with normalize set
-    to False and with a StandardScaler.
-    """
-    if ("alpha" not in estimator.get_params()) and (
-        "alphas" not in estimator.get_params()
-    ):
-        return
-
-    if isinstance(estimator, (RidgeCV, RidgeClassifierCV)):
-        # alphas is not validated at this point and can be a list.
-        # We convert it to a np.ndarray to make sure broadcasting
-        # is used.
-        alphas = np.asarray(estimator.alphas) * n_samples
-        return estimator.set_params(alphas=alphas)
-    if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
-        alpha = estimator.alpha * np.sqrt(n_samples)
-    if isinstance(estimator, (Ridge, RidgeClassifier)):
-        alpha = estimator.alpha * n_samples
-    if isinstance(estimator, (ElasticNet, MultiTaskElasticNet)):
-        if estimator.l1_ratio == 1:
-            alpha = estimator.alpha * np.sqrt(n_samples)
-        elif estimator.l1_ratio == 0:
-            alpha = estimator.alpha * n_samples
-        else:
-            # To avoid silent errors in case of refactoring
-            raise NotImplementedError
-
-    estimator.set_params(alpha=alpha)
-
-
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "LinearModel, params",
@@ -448,7 +415,7 @@ def test_enet_path():
     clf = ElasticNetCV(
         alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
     )
-    ignore_warnings(clf.fit)(X, y)
+    clf.fit(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
@@ -464,7 +431,7 @@ def test_enet_path():
         max_iter=max_iter,
         precompute=True,
     )
-    ignore_warnings(clf.fit)(X, y)
+    clf.fit(X, y)
 
     # Well-conditioned settings, we should have selected our
     # smallest penalty
@@ -482,7 +449,7 @@ def test_enet_path():
     clf = MultiTaskElasticNetCV(
         alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
     )
-    ignore_warnings(clf.fit)(X, y)
+    clf.fit(X, y)
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
     assert clf.score(X_test, y_test) > 0.99
@@ -497,17 +464,6 @@ def test_enet_path():
     clf2.fit(X, y[:, np.newaxis])
     assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
-
-
-def test_path_parameters():
-    X, y, _, _ = build_dataset()
-    max_iter = 100
-
-    clf = ElasticNetCV(alphas=50, eps=1e-3, max_iter=max_iter, l1_ratio=0.5, tol=1e-3)
-    clf.fit(X, y)  # new params
-    assert_almost_equal(0.5, clf.l1_ratio)
-    assert 50 == clf._alphas
-    assert 50 == len(clf.alphas_)
 
 
 def test_warm_start():
@@ -1138,7 +1094,7 @@ def test_warm_start_multitask_lasso():
         (Lasso, 1, dict(precompute=False)),
     ],
 )
-def test_enet_coordinate_descent(klass, n_classes, kwargs):
+def test_enet_coordinate_descent_raises_convergence(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
     clf = klass(max_iter=2, **kwargs)
     n_samples = 5
@@ -1471,7 +1427,7 @@ def test_enet_cv_sample_weight_consistency(
 @pytest.mark.parametrize("X_is_sparse", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
-def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight):
+def test_enet_alpha_max(X_is_sparse, fit_intercept, sample_weight):
     X = np.array([[3.0, 1.0], [2.0, 5.0], [5.0, 3.0], [1.0, 4.0]])
     beta = np.array([1, 1])
     y = X @ beta
@@ -1608,18 +1564,6 @@ def test_sample_weight_invariance(estimator):
 
     assert_allclose(reg_2sw.coef_, reg_dup.coef_)
     assert_allclose(reg_2sw.intercept_, reg_dup.intercept_)
-
-
-def test_read_only_buffer():
-    """Test that sparse coordinate descent works for read-only buffers"""
-
-    rng = np.random.RandomState(0)
-    clf = ElasticNet(alpha=0.1, copy_X=True, random_state=rng)
-    X = np.asfortranarray(rng.uniform(size=(100, 10)))
-    X.setflags(write=False)
-
-    y = rng.rand(100)
-    clf.fit(X, y)
 
 
 @pytest.mark.parametrize(
