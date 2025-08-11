@@ -59,7 +59,7 @@ https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhd8ed1ab_1.conda#4
 https://conda.anaconda.org/conda-forge/osx-64/cython-3.1.2-py313h9efc8c2_2.conda#c37814cffeee2c9184595d522b381b95
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.1-pyhd8ed1ab_1.conda#a71efeae2c160f6789900ba2631a2c90
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_1.conda#6837f3eff7dcea42ecd714ce1ac2b108
-https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.4.8-py313ha0b1807_1.conda#32cf8c99c5559e08f336d79436fbe873
+https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.4.9-py313hb91e98b_0.conda#394079d0497d6d3eaf401d8a361f9adc
 https://conda.anaconda.org/conda-forge/osx-64/lcms2-2.17-h72f5680_0.conda#bf210d0c63f2afb9e414a858b79f0eaa
 https://conda.anaconda.org/conda-forge/osx-64/ld64_osx-64-954.16-hf1c22e8_1.conda#c58dd9842c39dc9269124f2eb716d70c
 https://conda.anaconda.org/conda-forge/osx-64/libclang-cpp19.1-19.1.7-default_h3571c67_3.conda#2ec1f70656609b17b438ac07e1b2b611
@@ -83,7 +83,7 @@ https://conda.anaconda.org/conda-forge/osx-64/tbb-2021.13.0-hc025b3e_2.conda#dc4
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda#9d64911b31d57ca443e9f1e36b04385f
 https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhd8ed1ab_1.conda#b0dd904de08b7db706167240bf37b164
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.2.1-pyhe01879c_2.conda#30a0a26c8abccf4b7991d590fe17c699
-https://conda.anaconda.org/conda-forge/osx-64/tornado-6.5.1-py313h63b0ddb_0.conda#7554d07cbe64f41c73a403e99bccf3c6
+https://conda.anaconda.org/conda-forge/osx-64/tornado-6.5.2-py313h585f44e_0.conda#80dbd1e0d4eb09da8a97b3315a26d904
 https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.14.1-pyhe01879c_0.conda#e523f4f1e980ed7a4240d7e27e9ec81f
 https://conda.anaconda.org/conda-forge/osx-64/ccache-4.11.3-h33566b8_0.conda#b65cad834bd6c1f660c101cca09430bf
 https://conda.anaconda.org/conda-forge/osx-64/clang-19-19.1.7-default_h3571c67_3.conda#5bd5cda534488611b3970b768139127c
