@@ -203,7 +203,7 @@ def set_config(
         - `"sparray"`: Return sparse as SciPy sparse array
         - `"spmatrix"`: Return sparse as SciPy sparse matrix
 
-        .. versionadded:: 1.7
+        .. versionadded:: 1.8
 
     See Also
     --------
@@ -383,7 +383,7 @@ def config_context(
         - `"sparray"`: Return sparse as SciPy sparse array
         - `"spmatrix"`: Return sparse as SciPy sparse matrix
 
-        .. versionadded:: 1.7
+        .. versionadded:: 1.8
 
     Yields
     ------
