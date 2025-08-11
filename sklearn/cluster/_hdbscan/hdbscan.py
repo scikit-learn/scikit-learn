@@ -655,7 +655,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean"],
+        "copy": ["boolean",None],
     }
 
     def __init__(
@@ -673,7 +673,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        copy=False,
+        copy=None,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -717,6 +717,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 "Cannot store centers when using a precomputed distance matrix."
             )
 
+        if self.copy is None:
+            self.copy = self.metric == "precomputed"
+            
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
@@ -770,7 +773,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
             X = validate_data(
-                self, X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
+                self, 
+                X, 
+                ensure_all_finite=False, 
+                dtype=np.float64,
+                force_writeable=True,
             )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed
