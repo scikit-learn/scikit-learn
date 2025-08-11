@@ -718,8 +718,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
             )
-        # If copy is not specified, we default to True for precomputed and
-        # False for all other metrics.
+        
+        # If copy is not specified, we default to True for precomputed
+        # to avoid inplace modifications and False for all other metrics.
         if self.copy is None:
             self.copy = self.metric == "precomputed"
             
