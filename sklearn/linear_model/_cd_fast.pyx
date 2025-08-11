@@ -106,7 +106,7 @@ cdef (floating, floating) gap_enet(
     floating beta,  # L2 penalty
     const floating[::1, :] X,
     const floating[::1] y,
-    const floating[::1] R,  # current residuals = y - X@w
+    const floating[::1] R,  # current residuals = y - X @ w
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
 ) noexcept nogil:
@@ -117,8 +117,9 @@ cdef (floating, floating) gap_enet(
     cdef floating w_norm2 = 0.0
     cdef floating l1_norm
     cdef floating A_norm2
+    cdef floating const_
 
-    # XtA = np.dot(X.T, R) - beta * w
+    # XtA = X.T @ R - beta * w
     _copy(n_features, &w[0], 1, &XtA[0], 1)
     _gemv(ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
           n_samples, &R[0], 1,
@@ -129,10 +130,10 @@ cdef (floating, floating) gap_enet(
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    # R_norm2 = np.dot(R, R)
+    # R_norm2 = R @ R
     R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
 
-    # w_norm2 = np.dot(w, w)
+    # w_norm2 = w @ w
     if beta > 0:
         w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
@@ -148,7 +149,7 @@ cdef (floating, floating) gap_enet(
 
     gap += (
         alpha * l1_norm
-        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
+        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
         + 0.5 * beta * (1 + const_ ** 2) * w_norm2
     )
     return gap, dual_norm_XtA
