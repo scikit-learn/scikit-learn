@@ -169,6 +169,7 @@ def test_predict_iris(clf, global_random_seed):
     Test that both multinomial and OvR solvers handle multiclass data correctly and
     give good accuracy score (>0.95) for the training data.
     """
+    clf = clone(clf)  # Avoid side effects from shared instances
     n_samples, _ = iris.data.shape
     target = iris.target_names[iris.target]
 
