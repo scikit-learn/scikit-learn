@@ -1232,6 +1232,12 @@ def test_validate_y_class_weight(name):
 def test_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(random_state=0)
+    if clf.bootstrap:
+        # When bootstrap=True, the only way to reproduce n_samples_bootstrap
+        # across estimators is to specify an absolute (integer) max_samples,
+        # otherwise it is relative to sample_weight.sum().
+        clf.set_params(max_samples=10)
 
     # Iris is balanced, so no effect expected for using 'balanced' weights.
     # Using the class_weight="balanced" option is then equivalent to fit with
@@ -1239,9 +1245,9 @@ def test_class_weights(name):
     # sample_weight = None vs all ones, because the indices are drawn by
     # different rng functions (choice vs randint). Thus we explicitly pass
     # the sample_weight as all ones in clf1 fit.
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = clone(clf)
     clf1.fit(iris.data, iris.target, sample_weight=np.ones_like(iris.target))
-    clf2 = ForestClassifier(class_weight="balanced", random_state=0)
+    clf2 = clone(clf).set_params(class_weight="balanced")
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf2._sample_weight, 1)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1249,25 +1255,18 @@ def test_class_weights(name):
     # Make a multi-output problem with three copies of Iris
     iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
     # Create user-defined weights that should balance over the outputs
-    clf3 = ForestClassifier(
+    clf3 = clone(clf).set_params(
         class_weight=[
             {0: 2.0, 1: 2.0, 2: 1.0},
             {0: 2.0, 1: 1.0, 2: 2.0},
             {0: 1.0, 1: 2.0, 2: 2.0},
-        ],
-        random_state=0,
+        ]
     )
-    if isinstance(clf3, RandomForestClassifier):
-        # In a RandomForest, the default max_samples=None gives
-        # n_samples_bootstrap = sample_weight.sum() but here
-        # sample_weight.sum() differs between clf2 and clf3.
-        # We specify max_samples to get the same n_samples_bootstrap as clf2.
-        clf3.set_params(max_samples=clf2._n_samples_bootstrap)
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf3._sample_weight, 4)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "balanced" which should also have no effect
-    clf4 = ForestClassifier(class_weight="balanced", random_state=0)
+    clf4 = clone(clf).set_params(class_weight="balanced")
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf4._sample_weight, 1)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
@@ -1276,17 +1275,17 @@ def test_class_weights(name):
     sample_weight = np.ones(iris.target.shape)
     sample_weight[iris.target == 1] *= 100
     class_weight = {0: 1.0, 1: 100.0, 2: 1.0}
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = clone(clf)
     clf1.fit(iris.data, iris.target, sample_weight)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = clone(clf).set_params(class_weight=class_weight)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = clone(clf)
     clf1.fit(iris.data, iris.target, sample_weight**2)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = clone(clf).set_params(class_weight=class_weight)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
