@@ -128,7 +128,8 @@ def enet_coordinate_descent(
         X -> (           X)    y -> (y)
              (sqrt(beta) I)         (0)
 
-    Note that y - X w also enters as current estimation of a dual feasible point v.
+    Note that the residual y - X w is an important ingredient for the estimation of a
+    dual feasible point v.
     At optimum of primal w* and dual v*, one has
 
         v = y* - X w*
