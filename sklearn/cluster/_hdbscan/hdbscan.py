@@ -658,7 +658,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean",None],
+        "copy": ["boolean", None],
     }
 
     def __init__(
@@ -719,14 +719,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
             )
-        
-        #a copy of the copy parameter is made to avoid modifying the original
-        copy_val=self.copy
+
+        copy_val = self.copy
         # If copy_val is not specified, we default it to True for 'precomputed'
-        # metrics to avoid inplace modifications and False for all other metrics.
+        # and not sparseto avoid inplace modifications and
+        # False for all other metrics.
         if copy_val is None:
             copy_val = self.metric == "precomputed" and not issparse(X)
-            
+
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
@@ -780,9 +780,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
             X = validate_data(
-                self, 
-                X, 
-                ensure_all_finite=False, 
+                self,
+                X,
+                ensure_all_finite=False,
                 dtype=np.float64,
                 force_writeable=True,
             )
