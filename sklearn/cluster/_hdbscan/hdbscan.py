@@ -534,7 +534,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Currently, it only applies when `metric="precomputed"`, when passing
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
         If None (default), the behavior is chosen automatically:
-        copy=True if metric='precomputed'; otherwise copy=False.
+        copy=True if metric='precomputed' and X is not sparse;
+        otherwise copy=False.
 
     Attributes
     ----------
@@ -719,10 +720,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 "Cannot store centers when using a precomputed distance matrix."
             )
         
-        # If copy is not specified, we default to True for precomputed
-        # to avoid inplace modifications and False for all other metrics.
-        if self.copy is None:
-            self.copy = self.metric == "precomputed"
+        #a copy of the copy parameter is made to avoid modifying the original
+        copy_val=self.copy
+        # If copy_val is not specified, we default it to True for 'precomputed'
+        # metrics to avoid inplace modifications and False for all other metrics.
+        if copy_val is None:
+            copy_val = self.metric == "precomputed" and not issparse(X)
             
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
@@ -831,7 +834,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = copy_val
             elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -844,7 +847,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = copy_val
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
