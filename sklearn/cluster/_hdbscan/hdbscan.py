@@ -527,12 +527,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           depend on a euclidean metric.
         - `"both"` which computes and stores both forms of centers.
 
-    copy : bool, default=False
+    copy : bool, default=None
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged.
         Currently, it only applies when `metric="precomputed"`, when passing
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
+        If None (default), the behavior is chosen automatically:
+        copy=True if metric='precomputed'; otherwise copy=False.
 
     Attributes
     ----------
@@ -716,7 +718,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
             )
-
+        # If copy is not specified, we default to True for precomputed and
+        # False for all other metrics.
         if self.copy is None:
             self.copy = self.metric == "precomputed"
             
