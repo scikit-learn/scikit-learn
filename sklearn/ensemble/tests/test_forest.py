@@ -1263,7 +1263,8 @@ def test_class_weights(name):
         ]
     )
     clf3.fit(iris.data, iris_multi)
-    assert_almost_equal(clf3._sample_weight, 4)
+    # for multi-output, weights are multiplied
+    assert_almost_equal(clf3._sample_weight, 2 * 2 * 1)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "balanced" which should also have no effect
     clf4 = clone(clf).set_params(class_weight="balanced")
