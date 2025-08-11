@@ -1138,7 +1138,7 @@ class _CurveScorer(_BaseScorer):
             kwargs=scorer._kwargs,
         )
         # transfer the metadata request
-        instance._metadata_request = scorer._get_metadata_request()
+        instance._metadata_request = scorer.get_metadata_routing()
         return instance
 
     def _score(self, method_caller, estimator, X, y_true, **kwargs):
