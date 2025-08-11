@@ -7,5 +7,5 @@
   computing regularization paths like the \*CV-variants of the above estimators do.
   There is now an additional check of the stopping criterion before entering the main
   loop of descent steps. As the stopping criterion requires the computation of the dual
-  gap, the screening happens whenever the dual gap is computed..
+  gap, the screening happens whenever the dual gap is computed.
   By :user:`Christian Lorentzen <lorentzenchr>`.

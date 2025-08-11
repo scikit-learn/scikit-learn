@@ -311,7 +311,7 @@ with the soft-thresholding function
 Note that the soft-thresholding function is exactly zero whenever
 :math:`\alpha \geq |z|`.
 The CD solver then loops over the features either in a cycle, picking one feature after
-the other in the order given by `X` (`selection="cyclic"`), or by candomly picking
+the other in the order given by `X` (`selection="cyclic"`), or by randomly picking
 features (`selection="random"`).
 It stops if the duality gap is smaller than the provided tolerance `tol`.
 
@@ -349,11 +349,11 @@ tool. Anywhere during the optimization algorithm, they can tell which feature we
   * :doi:`Friedman, Hastie & Tibshirani. (2010).
     Regularization Path For Generalized linear Models by Coordinate Descent.
     J Stat Softw 33(1), 1-22 <10.18637/jss.v033.i01>`
-  * arxiv:`O. Fercoq, A. Gramfort, J. Salmon. (2015).
+  * :arxiv:`O. Fercoq, A. Gramfort, J. Salmon. (2015).
     Mind the duality gap: safer rules for the Lasso.
     Proceedings of Machine Learning Research 37:333-342, 2015.
     <1505.03410>`
-  * arxiv:`E. Ndiaye, O. Fercoq, A. Gramfort, J. Salmon. (2017).
+  * :arxiv:`E. Ndiaye, O. Fercoq, A. Gramfort, J. Salmon. (2017).
     Gap Safe Screening Rules for Sparsity Enforcing Penalties.
     Journal of Machine Learning Research 18(128):1-33, 2017.
     <1611.05780>`
