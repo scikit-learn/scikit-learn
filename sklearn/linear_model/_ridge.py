@@ -30,7 +30,7 @@ from sklearn.linear_model._base import (
     _rescale_data,
 )
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics import check_scoring, get_scorer, get_scorer_names
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
@@ -1359,6 +1359,12 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         tags.classifier_tags.multi_label = True
         return tags
 
+    def _get_scorer_instance(self):
+        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        parent class. This is used for routing `sample_weight`.
+        """
+        return get_scorer("accuracy")
+
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
@@ -2499,7 +2505,7 @@ class _BaseRidgeCV(LinearModel):
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
             .add(
-                scorer=self.scoring,
+                scorer=self._get_scorer(),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
             .add(
@@ -2510,14 +2516,20 @@ class _BaseRidgeCV(LinearModel):
         return router
 
     def _get_scorer(self):
-        scorer = check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
+        """Make sure the sorer is weighted if necessary.
+
+        This uses `self._get_scorer_instance()` implemented in child objects to get the
+        raw scorer instance of the estimator, which will be ignored if `self.scoring` is
+        not None.
+        """
         if _routing_enabled() and self.scoring is None:
             # This estimator passes an array of 1s as sample_weight even if
             # sample_weight is not provided by the user. Therefore we need to
             # always request it. But we don't set it if it's passed explicitly
             # by the user.
-            scorer.set_score_request(sample_weight=True)
-        return scorer
+            return self._get_scorer_instance().set_score_request(sample_weight=True)
+
+        return check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2706,6 +2718,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def _get_scorer_instance(self):
+        """Return a scorer which corresponds to what's defined in RegressorMixin
+        parent class. This is used for routing `sample_weight`.
+        """
+        return get_scorer("r2")
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
