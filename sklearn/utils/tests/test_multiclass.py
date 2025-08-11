@@ -401,17 +401,17 @@ def test_is_multilabel():
                     )
                 ]
                 for exmpl_sparse in examples_sparse:
-                    assert sparse_exp == is_multilabel(exmpl_sparse), (
-                        f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
-                    )
+                    assert sparse_exp == is_multilabel(
+                        exmpl_sparse
+                    ), f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
 
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
 
-            assert dense_exp == is_multilabel(example), (
-                f"is_multilabel({example!r}) should be {dense_exp}"
-            )
+            assert dense_exp == is_multilabel(
+                example
+            ), f"is_multilabel({example!r}) should be {dense_exp}"
 
 
 @pytest.mark.parametrize(
@@ -432,9 +432,9 @@ def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name)
             example = xp.asarray(example, device=device)
 
             with config_context(array_api_dispatch=True):
-                assert dense_exp == is_multilabel(example), (
-                    f"is_multilabel({example!r}) should be {dense_exp}"
-                )
+                assert dense_exp == is_multilabel(
+                    example
+                ), f"is_multilabel({example!r}) should be {dense_exp}"
 
 
 def test_check_classification_targets():

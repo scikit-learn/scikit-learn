@@ -424,9 +424,9 @@ latest_highlights = sorted(release_highlights_dir.glob("plot_release_highlights_
     -1
 ]
 latest_highlights = latest_highlights.with_suffix("").name
-html_context["release_highlights"] = (
-    f"auto_examples/release_highlights/{latest_highlights}"
-)
+html_context[
+    "release_highlights"
+] = f"auto_examples/release_highlights/{latest_highlights}"
 
 # get version from highlight name assuming highlights have the form
 # plot_release_highlights_0_22_0
@@ -994,9 +994,9 @@ def infer_next_release_versions():
         all_previous_tag["final"] = stable_version.base_version
 
         # Bug-fix
-        all_version_full["bf"] = (
-            f"{stable_version.major}.{stable_version.minor}.{stable_version.micro + 1}"
-        )
+        all_version_full[
+            "bf"
+        ] = f"{stable_version.major}.{stable_version.minor}.{stable_version.micro + 1}"
         all_version_short["bf"] = f"{stable_version.major}.{stable_version.minor}"
         all_previous_tag["bf"] = last_stable_version.base_version
     except Exception as e:

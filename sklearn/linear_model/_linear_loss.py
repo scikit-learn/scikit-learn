@@ -537,9 +537,9 @@ class LinearModelLoss:
                 # The L2 penalty enters the Hessian on the diagonal only. To add those
                 # terms, we use a flattened view of the array.
                 order = "C" if hess.flags.c_contiguous else "F"
-                hess.reshape(-1, order=order)[: (n_features * n_dof) : (n_dof + 1)] += (
-                    l2_reg_strength
-                )
+                hess.reshape(-1, order=order)[
+                    : (n_features * n_dof) : (n_dof + 1)
+                ] += l2_reg_strength
 
             if self.fit_intercept:
                 # With intercept included as added column to X, the hessian becomes
@@ -632,9 +632,9 @@ class LinearModelLoss:
                         n_classes * n_features + k,
                         k : n_classes * n_features : n_classes,
                     ] = Xh
-                    hess[n_classes * n_features + k, n_classes * n_features + k] = (
-                        h.sum()
-                    )
+                    hess[
+                        n_classes * n_features + k, n_classes * n_features + k
+                    ] = h.sum()
                 # Off diagonal terms (in classes) hess_kl.
                 for l in range(k + 1, n_classes):
                     # Upper triangle (in classes).
@@ -653,9 +653,9 @@ class LinearModelLoss:
                             n_classes * n_features + k,
                             l : n_classes * n_features : n_classes,
                         ] = Xh
-                        hess[n_classes * n_features + k, n_classes * n_features + l] = (
-                            h.sum()
-                        )
+                        hess[
+                            n_classes * n_features + k, n_classes * n_features + l
+                        ] = h.sum()
                     # Fill lower triangle (in classes).
                     hess[l::n_classes, k::n_classes] = hess[k::n_classes, l::n_classes]
 

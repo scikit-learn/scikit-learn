@@ -542,10 +542,15 @@ amount = credit_card.frame["Amount"].to_numpy()
 # %%
 from sklearn.model_selection import train_test_split
 
-data_train, data_test, target_train, target_test, amount_train, amount_test = (
-    train_test_split(
-        data, target, amount, stratify=target, test_size=0.5, random_state=42
-    )
+(
+    data_train,
+    data_test,
+    target_train,
+    target_test,
+    amount_train,
+    amount_test,
+) = train_test_split(
+    data, target, amount, stratify=target, test_size=0.5, random_state=42
 )
 
 # %%

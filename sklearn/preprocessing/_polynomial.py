@@ -1245,9 +1245,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                             XBS_sparse = XBS_sparse.tolil()
                             XBS_sparse[below_xmin_mask, j] = linear_extr
                         else:
-                            XBS[below_xmin_mask, feature_idx * n_splines + j] = (
-                                linear_extr
-                            )
+                            XBS[
+                                below_xmin_mask, feature_idx * n_splines + j
+                            ] = linear_extr
 
                     above_xmax_mask = X[:, feature_idx] > xmax
                     if np.any(above_xmax_mask):
@@ -1263,9 +1263,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                                 :, None
                             ]
                         else:
-                            XBS[above_xmax_mask, feature_idx * n_splines + k] = (
-                                linear_extr
-                            )
+                            XBS[
+                                above_xmax_mask, feature_idx * n_splines + k
+                            ] = linear_extr
 
             if use_sparse:
                 XBS_sparse = XBS_sparse.tocsr()

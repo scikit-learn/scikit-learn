@@ -21,9 +21,9 @@ min_dependencies_tag_to_pyproject_section = {
     "install": "project.dependencies",
 }
 for tag in min_depencies_tag_to_packages_without_version:
-    min_dependencies_tag_to_pyproject_section[tag] = (
-        f"project.optional-dependencies.{tag}"
-    )
+    min_dependencies_tag_to_pyproject_section[
+        tag
+    ] = f"project.optional-dependencies.{tag}"
 
 
 def test_min_dependencies_readme():

@@ -1069,10 +1069,10 @@ def test_min_weight_fraction_leaf(name):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
+        assert (
+            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
+        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
+            name, est.min_weight_fraction_leaf
         )
 
 

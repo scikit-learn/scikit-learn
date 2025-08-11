@@ -93,9 +93,9 @@ def check_sample_int_distribution(sample_without_replacement):
 
         output = {}
         for i in range(n_trials):
-            output[frozenset(sample_without_replacement(n_population, n_samples))] = (
-                None
-            )
+            output[
+                frozenset(sample_without_replacement(n_population, n_samples))
+            ] = None
 
             if len(output) == n_expected:
                 break

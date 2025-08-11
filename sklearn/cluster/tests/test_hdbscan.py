@@ -584,23 +584,29 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
 
 def test_hdbscan_input_not_modified_precomputed():
     """Test that HDBSCAN does not modify input precomputed distance matrix.
-    
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/31907
     """
     D = euclidean_distances(X)
     D_original = D.copy()
-    
+
     # Test with default parameters (copy=False)
     HDBSCAN(metric="precomputed").fit_predict(D)
-    assert_allclose(D, D_original, err_msg="HDBSCAN modified input matrix with default parameters")
-    
+    assert_allclose(
+        D, D_original, err_msg="HDBSCAN modified input matrix with default parameters"
+    )
+
     # Test with explicit copy=False
     D_test = D_original.copy()
     HDBSCAN(metric="precomputed", copy=False).fit_predict(D_test)
-    assert_allclose(D_test, D_original, err_msg="HDBSCAN modified input matrix with copy=False")
-    
+    assert_allclose(
+        D_test, D_original, err_msg="HDBSCAN modified input matrix with copy=False"
+    )
+
     # Test with copy=True should still not modify input
     D_test = D_original.copy()
     HDBSCAN(metric="precomputed", copy=True).fit_predict(D_test)
-    assert_allclose(D_test, D_original, err_msg="HDBSCAN modified input matrix with copy=True")
+    assert_allclose(
+        D_test, D_original, err_msg="HDBSCAN modified input matrix with copy=True"
+    )

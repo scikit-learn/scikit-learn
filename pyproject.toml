@@ -156,7 +156,6 @@ ignore=[
     "RUF005",
     "RUF012",
     "RUF015",
-    "RUF021",
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
     "W191",
     "E111",

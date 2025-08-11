@@ -228,9 +228,9 @@ def _non_trivial_radius(
     # on average. Yielding too many results would make the test slow (because
     # checking the results is expensive for large result sets), yielding 0 most
     # of the time would make the test useless.
-    assert precomputed_dists is not None or metric is not None, (
-        "Either metric or precomputed_dists must be provided."
-    )
+    assert (
+        precomputed_dists is not None or metric is not None
+    ), "Either metric or precomputed_dists must be provided."
 
     if precomputed_dists is None:
         assert X is not None

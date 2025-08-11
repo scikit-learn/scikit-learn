@@ -4778,9 +4778,9 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     else:
         n_features_out = X_transform.shape[1]
 
-    assert len(feature_names_out) == n_features_out, (
-        f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
-    )
+    assert (
+        len(feature_names_out) == n_features_out
+    ), f"Expected {n_features_out} feature names, got {len(feature_names_out)}"
 
 
 def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
@@ -4835,9 +4835,9 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
     else:
         n_features_out = X_transform.shape[1]
 
-    assert len(feature_names_out_default) == n_features_out, (
-        f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
-    )
+    assert (
+        len(feature_names_out_default) == n_features_out
+    ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
 
 
 def check_param_validation(name, estimator_orig):

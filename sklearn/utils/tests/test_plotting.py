@@ -43,15 +43,17 @@ def test_validate_and_get_response_values(pyplot, pos_label, name, response_meth
     y = np.array([0, 0, 2, 2])
     estimator = LogisticRegression().fit(X, y)
 
-    y_pred, pos_label, name_out = (
-        _BinaryClassifierCurveDisplayMixin._validate_and_get_response_values(
-            estimator,
-            X,
-            y,
-            response_method=response_method,
-            pos_label=pos_label,
-            name=name,
-        )
+    (
+        y_pred,
+        pos_label,
+        name_out,
+    ) = _BinaryClassifierCurveDisplayMixin._validate_and_get_response_values(
+        estimator,
+        X,
+        y,
+        response_method=response_method,
+        pos_label=pos_label,
+        name=name,
     )
 
     expected_y_pred, expected_pos_label = _get_response_values_binary(
@@ -99,14 +101,15 @@ def test_validate_from_predictions_params_errors(pyplot, y_true, error_message):
 def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_true):
     """Check `_validate_from_predictions_params` returns the correct values."""
     y_pred = np.array([0.1, 0.2, 0.3, 0.4])
-    pos_label_out, name_out = (
-        _BinaryClassifierCurveDisplayMixin._validate_from_predictions_params(
-            y_true=y_true,
-            y_pred=y_pred,
-            sample_weight=None,
-            pos_label=pos_label,
-            name=name,
-        )
+    (
+        pos_label_out,
+        name_out,
+    ) = _BinaryClassifierCurveDisplayMixin._validate_from_predictions_params(
+        y_true=y_true,
+        y_pred=y_pred,
+        sample_weight=None,
+        pos_label=pos_label,
+        name=name,
     )
 
     # Check name is handled correctly

@@ -534,13 +534,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged.
-        
+
         .. note::
            For precomputed distance matrices, HDBSCAN will always make a copy
            to avoid modifying the input data, regardless of this parameter's value.
            This ensures compliance with scikit-learn's principle of not modifying
            input data.
-        
+
         Currently, this parameter only applies to non-precomputed data when
         `algorithm="brute"`.
 

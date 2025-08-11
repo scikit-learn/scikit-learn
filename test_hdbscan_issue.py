@@ -7,9 +7,10 @@ should not modify their input data unless explicitly requested.
 """
 
 import numpy as np
+
 from sklearn.cluster import HDBSCAN
-from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets import make_blobs
+from sklearn.metrics.pairwise import euclidean_distances
 
 # Generate sample data
 X, y = make_blobs(n_samples=50, random_state=10)
@@ -50,7 +51,9 @@ print(f"After HDBSCAN - matrix[0,1]: {D_test[0, 1]:.6f}")
 print(f"Matrix modified: {not np.allclose(D_test, D_original)}")
 
 print("\n--- Analysis ---")
-print("The issue is that when copy=False (default), HDBSCAN modifies the input matrix in-place")
+print(
+    "The issue is that when copy=False (default), HDBSCAN modifies the input matrix in-place"
+)
 print("This happens in two places:")
 print("1. distance_matrix /= alpha  # Division by alpha parameter")
 print("2. mutual_reachability_graph(distance_matrix, ...)  # In-place computation")

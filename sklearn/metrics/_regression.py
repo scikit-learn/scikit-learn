@@ -279,10 +279,14 @@ def mean_absolute_error(
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
 
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     output_errors = _average(
@@ -378,10 +382,14 @@ def mean_pinball_loss(
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
 
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     diff = y_true - y_pred
@@ -484,10 +492,14 @@ def mean_absolute_percentage_error(
     xp, _, device_ = get_namespace_and_device(
         y_true, y_pred, sample_weight, multioutput
     )
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
     epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype, device=device_)
     y_true_abs = xp.abs(y_true)
@@ -575,10 +587,14 @@ def mean_squared_error(
     0.825...
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
     output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
@@ -751,10 +767,14 @@ def mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -829,10 +849,14 @@ def root_mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -1102,10 +1126,14 @@ def explained_variance_score(
     """
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight, multioutput)
 
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0)
@@ -1272,10 +1300,14 @@ def r2_score(
         y_true, y_pred, sample_weight, multioutput
     )
 
-    _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+    (
+        _,
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+    ) = _check_reg_targets_with_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
     if _num_samples(y_pred) < 2:
