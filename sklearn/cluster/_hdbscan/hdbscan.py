@@ -246,7 +246,10 @@ def _hdbscan_brute(
                 " matrix was constructed correctly."
             )
 
-        distance_matrix = X.copy() if copy else X
+        # For precomputed distance matrices, always copy to avoid modifying input data.
+        # This ensures scikit-learn's principle of not modifying input data is preserved.
+        # The copy parameter is kept for backwards compatibility.
+        distance_matrix = X.copy()
     else:
         distance_matrix = pairwise_distances(
             X, metric=metric, n_jobs=n_jobs, **metric_params
@@ -531,8 +534,15 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged.
-        Currently, it only applies when `metric="precomputed"`, when passing
-        a dense array or a CSR sparse matrix and when `algorithm="brute"`.
+        
+        .. note::
+           For precomputed distance matrices, HDBSCAN will always make a copy
+           to avoid modifying the input data, regardless of this parameter's value.
+           This ensures compliance with scikit-learn's principle of not modifying
+           input data.
+        
+        Currently, this parameter only applies to non-precomputed data when
+        `algorithm="brute"`.
 
     Attributes
     ----------
