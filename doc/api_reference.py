@@ -731,6 +731,7 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",
                     "det_curve",
