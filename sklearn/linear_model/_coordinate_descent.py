@@ -859,7 +859,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
     is smaller or equal to `tol` times the maximum absolute coefficient,
     :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
-    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\text{samples}}`.
+    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
 
     Examples
     --------
@@ -1287,7 +1287,7 @@ class Lasso(ElasticNet):
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
     is smaller or equal to `tol` times the maximum absolute coefficient,
     :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
-    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\text{samples}}`.
+    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
 
     The target can be a 2-dimensional array, resulting in the optimization of the
     following objective::
