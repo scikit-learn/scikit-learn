@@ -383,7 +383,7 @@ scikit-learn.
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
   where :math:`\sigma^2` is an estimate of the noise variance,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
@@ -837,13 +837,11 @@ prior over all :math:`\lambda_i` is chosen to be the same gamma distribution
 given by the hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 ARD is also known in the literature as *Sparse Bayesian Learning* and *Relevance
-Vector Machine* [3]_ [4]_. For a worked-out comparison between ARD and `Bayesian
-Ridge Regression`_, see the example below.
+Vector Machine* [3]_ [4]_.
 
-.. rubric:: Examples
+See :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a worked-out comparison between ARD and `Bayesian Ridge Regression`_.
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
-
+See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py` for a comparison between various methods - Lasso, ARD and ElasticNet - on correlated data.
 
 .. rubric:: References
 

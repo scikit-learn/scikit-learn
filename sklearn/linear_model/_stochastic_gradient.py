@@ -11,8 +11,8 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
-from ..base import (
+from sklearn._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
+from sklearn.base import (
     BaseEstimator,
     OutlierMixin,
     RegressorMixin,
@@ -20,17 +20,13 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..model_selection import ShuffleSplit, StratifiedShuffleSplit
-from ..utils import check_random_state, compute_class_weight
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, SparseCoefMixin, make_dataset
-from ._sgd_fast import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    SparseCoefMixin,
+    make_dataset,
+)
+from sklearn.linear_model._sgd_fast import (
     EpsilonInsensitive,
     Hinge,
     ModifiedHuber,
@@ -38,6 +34,18 @@ from ._sgd_fast import (
     SquaredHinge,
     _plain_sgd32,
     _plain_sgd64,
+)
+from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
+from sklearn.utils import check_random_state, compute_class_weight
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
 )
 
 LEARNING_RATE_TYPES = {
@@ -731,6 +739,15 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 ),
                 ConvergenceWarning,
             )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
+            )
+
         return self
 
     def _fit_binary(self, X, y, alpha, C, sample_weight, learning_rate, max_iter):
@@ -1082,7 +1099,11 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1585,6 +1606,14 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                 ConvergenceWarning,
             )
 
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
+            )
+
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1880,7 +1909,11 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -2118,7 +2151,11 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2488,6 +2525,14 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+            )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
             )
 
         return self

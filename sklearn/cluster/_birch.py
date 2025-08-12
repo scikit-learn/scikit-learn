@@ -8,21 +8,21 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from .._config import config_context
-from ..base import (
+from sklearn._config import config_context
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics import pairwise_distances_argmin
-from ..metrics.pairwise import euclidean_distances
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import check_is_fitted, validate_data
-from . import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances_argmin
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _iterate_sparse_X(X):
