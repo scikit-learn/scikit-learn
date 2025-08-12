@@ -63,17 +63,15 @@ def sag(
     y,
     step_size,
     alpha,
-    n_iter=1,
+    sample_weight=None,
+    max_iter=1,
     dloss=None,
     sparse=False,
-    sample_weight=None,
     fit_intercept=True,
     saga=False,
     tol=0,
-    true_weights=None,
+    callback=None,
 ):
-    if true_weights is not None:
-        convergence = []
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(X.shape[1])
@@ -92,7 +90,7 @@ def sag(
     if sparse:
         decay = 0.01
 
-    for epoch in range(n_iter):
+    for epoch in range(max_iter):
         previous_weights = weights.copy()
         for k in range(n_samples):
             idx = int(rng.rand() * n_samples)
@@ -124,24 +122,19 @@ def sag(
                 intercept -= step_size * intercept_sum_gradient / S_seen * decay
                 if saga:
                     intercept -= gradient_correction * step_size * (1 - 1.0 / S_seen)
-
-        # tracking convergence
-        if true_weights is not None:
-            l2_norm = np.sum((weights - true_weights) ** 2)
-            convergence.append(l2_norm)
+        # callback on epoch end
+        if callable(callback):
+            callback(dict(weights=weights, intercept=intercept, epoch=epoch))
         # stopping criteria
         max_weight = np.abs(weights).max()
         max_change = np.abs(weights - previous_weights).max()
         if (max_weight != 0 and max_change / max_weight <= tol) or (
             max_weight == 0 and max_change == 0
         ):
-            print(f"sag convergence after {epoch + 1} epochs")
             break
 
-    if true_weights is not None:
-        convergence = np.array(convergence)
-        return weights, intercept, convergence
-    return weights, intercept
+    n_iter = epoch + 1
+    return weights, intercept, n_iter
 
 
 def sag_sparse(
@@ -149,12 +142,14 @@ def sag_sparse(
     y,
     step_size,
     alpha,
-    n_iter=1,
-    dloss=None,
     sample_weight=None,
+    max_iter=1,
+    dloss=None,
     sparse=False,
     fit_intercept=True,
     saga=False,
+    tol=0,
+    callback=None,
     random_state=0,
 ):
     if step_size * alpha == 1.0:
@@ -174,14 +169,15 @@ def sag_sparse(
     decay = 1.0
     seen = set()
 
-    c_sum = np.zeros(n_iter * n_samples)
+    c_sum = np.zeros(max_iter * n_samples)
 
     # sparse data has a fixed decay of .01
     if sparse:
         decay = 0.01
 
     counter = 0
-    for epoch in range(n_iter):
+    for epoch in range(max_iter):
+        previous_weights = weights.copy()
         for k in range(n_samples):
             # idx = k
             idx = int(rng.rand() * n_samples)
@@ -249,6 +245,16 @@ def sag_sparse(
                 wscale = 1.0
 
             counter += 1
+        # callback on epoch end
+        if callable(callback):
+            callback(dict(weights=weights, intercept=intercept, epoch=epoch))
+        # stopping criteria
+        max_weight = np.abs(weights).max()
+        max_change = np.abs(weights - previous_weights).max()
+        if (max_weight != 0 and max_change / max_weight <= tol) or (
+            max_weight == 0 and max_change == 0
+        ):
+            break
 
     for j in range(n_features):
         if last_updated[j] == 0:
@@ -258,7 +264,9 @@ def sag_sparse(
                 c_sum[counter - 1] - c_sum[last_updated[j] - 1]
             ) * sum_gradient[j]
     weights *= wscale
-    return weights, intercept
+
+    n_iter = epoch + 1
+    return weights, intercept, n_iter
 
 
 def get_step_size(X, alpha, fit_intercept, classification=True, sample_weight=None):
@@ -282,36 +290,36 @@ def test_classifier_matching():
     step_size = get_step_size(X, alpha, fit_intercept)
     for solver in ["sag", "saga"]:
         if solver == "sag":
-            n_iter = 80
+            max_iter = 80
         else:
             # SAGA variance w.r.t. stream order is higher
-            n_iter = 300
+            max_iter = 300
         clf = LogisticRegression(
             solver=solver,
             fit_intercept=fit_intercept,
             tol=1e-11,
             C=1.0 / alpha / n_samples,
-            max_iter=n_iter,
+            max_iter=max_iter,
             random_state=10,
         )
         clf.fit(X, y)
 
-        weights, intercept = sag_sparse(
+        weights, intercept, n_iter = sag_sparse(
             X,
             2 * y - 1,  # y must be -1 or +1
             step_size,
             alpha,
-            n_iter=n_iter,
+            max_iter=max_iter,
             dloss=log_dloss,
             fit_intercept=fit_intercept,
             saga=solver == "saga",
         )
-        weights2, intercept2 = sag(
+        weights2, intercept2, n_iter2 = sag(
             X,
             2 * y - 1,  # y must be -1 or +1
             step_size,
             alpha,
-            n_iter=n_iter,
+            max_iter=max_iter,
             dloss=log_dloss,
             fit_intercept=fit_intercept,
             saga=solver == "saga",
@@ -337,7 +345,7 @@ def test_regressor_matching():
     y = X.dot(true_w)
 
     alpha = 1.0
-    n_iter = 100
+    max_iter = 100
     fit_intercept = True
 
     step_size = get_step_size(X, alpha, fit_intercept, classification=False)
@@ -346,25 +354,25 @@ def test_regressor_matching():
         tol=0.00000000001,
         solver="sag",
         alpha=alpha * n_samples,
-        max_iter=n_iter,
+        max_iter=max_iter,
     )
     clf.fit(X, y)
 
-    weights1, intercept1 = sag_sparse(
+    weights1, intercept1, n_iter1 = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=n_iter,
+        max_iter=max_iter,
         dloss=squared_dloss,
         fit_intercept=fit_intercept,
     )
-    weights2, intercept2 = sag(
+    weights2, intercept2, n_iter2 = sag(
         X,
         y,
         step_size,
         alpha,
-        n_iter=n_iter,
+        max_iter=max_iter,
         dloss=squared_dloss,
         fit_intercept=fit_intercept,
     )
@@ -421,7 +429,7 @@ def test_sag_pobj_matches_ridge_regression(csr_container):
     n_samples = 100
     n_features = 10
     alpha = 1.0
-    n_iter = 100
+    max_iter = 100
     fit_intercept = False
     rng = np.random.RandomState(10)
     X = rng.normal(size=(n_samples, n_features))
@@ -433,7 +441,7 @@ def test_sag_pobj_matches_ridge_regression(csr_container):
         tol=0.00000000001,
         solver="sag",
         alpha=alpha,
-        max_iter=n_iter,
+        max_iter=max_iter,
         random_state=42,
     )
     clf2 = clone(clf1)
@@ -442,7 +450,7 @@ def test_sag_pobj_matches_ridge_regression(csr_container):
         tol=0.00001,
         solver="lsqr",
         alpha=alpha,
-        max_iter=n_iter,
+        max_iter=max_iter,
         random_state=42,
     )
 
@@ -488,23 +496,23 @@ def test_sag_regressor_computed_correctly(csr_container):
     clf1.fit(X, y)
     clf2.fit(csr_container(X), y)
 
-    spweights1, spintercept1 = sag_sparse(
+    spweights1, spintercept1, sp_n_iter1 = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=max_iter,
+        max_iter=max_iter,
         dloss=squared_dloss,
         fit_intercept=fit_intercept,
         random_state=rng,
     )
 
-    spweights2, spintercept2 = sag_sparse(
+    spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=max_iter,
+        max_iter=max_iter,
         dloss=squared_dloss,
         sparse=True,
         fit_intercept=fit_intercept,
@@ -620,7 +628,7 @@ def test_sag_classifier_computed_correctly(csr_container):
     """tests if the binary classifier is computed correctly"""
     alpha = 0.1
     n_samples = 50
-    n_iter = 50
+    max_iter = 50
     tol = 0.00001
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
@@ -633,7 +641,7 @@ def test_sag_classifier_computed_correctly(csr_container):
     clf1 = LogisticRegression(
         solver="sag",
         C=1.0 / alpha / n_samples,
-        max_iter=n_iter,
+        max_iter=max_iter,
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
@@ -643,21 +651,21 @@ def test_sag_classifier_computed_correctly(csr_container):
     clf1.fit(X, y)
     clf2.fit(csr_container(X), y)
 
-    spweights, spintercept = sag_sparse(
+    spweights, spintercept, sp_n_iter = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=n_iter,
+        max_iter=max_iter,
         dloss=log_dloss,
         fit_intercept=fit_intercept,
     )
-    spweights2, spintercept2 = sag_sparse(
+    spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=n_iter,
+        max_iter=max_iter,
         dloss=log_dloss,
         sparse=True,
         fit_intercept=fit_intercept,
@@ -706,22 +714,22 @@ def test_sag_multiclass_computed_correctly(csr_container):
         y_encoded = np.ones(n_samples)
         y_encoded[y != cl] = -1
 
-        spweights1, spintercept1 = sag_sparse(
+        spweights1, spintercept1, sp_n_iter1 = sag_sparse(
             X,
             y_encoded,
             step_size,
             alpha,
             dloss=log_dloss,
-            n_iter=max_iter,
+            max_iter=max_iter,
             fit_intercept=fit_intercept,
         )
-        spweights2, spintercept2 = sag_sparse(
+        spweights2, spintercept2, sp_n_iter2 = sag_sparse(
             X,
             y_encoded,
             step_size,
             alpha,
             dloss=log_dloss,
-            n_iter=max_iter,
+            max_iter=max_iter,
             sparse=True,
             fit_intercept=fit_intercept,
         )
@@ -781,7 +789,7 @@ def test_binary_classifier_class_weight(csr_container):
     """tests binary classifier with classweights for each class"""
     alpha = 0.1
     n_samples = 50
-    n_iter = 20
+    max_iter = 20
     tol = 0.00001
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=10, cluster_std=0.1)
@@ -795,7 +803,7 @@ def test_binary_classifier_class_weight(csr_container):
     clf1 = LogisticRegression(
         solver="sag",
         C=1.0 / alpha / n_samples,
-        max_iter=n_iter,
+        max_iter=max_iter,
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
@@ -809,22 +817,22 @@ def test_binary_classifier_class_weight(csr_container):
     le = LabelEncoder()
     class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
-    spweights, spintercept = sag_sparse(
+    spweights, spintercept, sp_n_iter = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=n_iter,
+        max_iter=max_iter,
         dloss=log_dloss,
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
     )
-    spweights2, spintercept2 = sag_sparse(
+    spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
         y,
         step_size,
         alpha,
-        n_iter=n_iter,
+        max_iter=max_iter,
         dloss=log_dloss,
         sparse=True,
         sample_weight=sample_weight,
