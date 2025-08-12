@@ -92,6 +92,9 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
             dense_svm.predict(X_test)
 
 
+# XXX: probability=True is not thread-safe:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 @skip_if_32bit
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",
@@ -111,7 +114,7 @@ def test_svc(X_train, y_train, X_test, kernel, sparse_container):
     clf = svm.SVC(
         gamma=1,
         kernel=kernel,
-        probability=False,
+        probability=True,
         random_state=0,
         decision_function_shape="ovo",
     )
