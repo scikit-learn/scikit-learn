@@ -15,7 +15,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
-from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
