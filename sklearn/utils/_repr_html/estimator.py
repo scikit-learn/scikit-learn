@@ -112,6 +112,7 @@ def _write_label_html(
     name_details,
     name_caption=None,
     doc_link_label=None,
+    features="",
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
@@ -190,7 +191,7 @@ def _write_label_html(
             if name_caption is None
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
-        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
+        name_caption_div = f"<div><div>{name}</div>{name_caption_div} {features} </div>"
         links_div = (
             f"<div>{doc_link}{is_fitted_icon}</div>"
             if doc_link or is_fitted_icon
@@ -317,6 +318,10 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
+    if hasattr(estimator, "_get_features"):
+        features = estimator._get_features()
+    else:
+        features = ""
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
@@ -336,6 +341,7 @@ def _write_estimator_html(
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
+                features=features,
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
                 param_prefix=param_prefix,
@@ -382,6 +388,11 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
+        if hasattr(estimator, "_get_features"):
+            features = estimator._get_features()
+        else:
+            features = ""
+
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
         else:
@@ -398,6 +409,7 @@ def _write_estimator_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
+            features=features,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
             param_prefix=param_prefix,
@@ -475,7 +487,6 @@ def estimator_html_repr(estimator):
             "</div>"
             '<div class="sk-container" hidden>'
         )
-
         out.write(html_template)
         _write_estimator_html(
             out,
