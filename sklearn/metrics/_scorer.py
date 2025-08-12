@@ -533,7 +533,7 @@ class _PassthroughScorer(_MetadataRequester):
             can be one of ``{True, False, None, str}``.
         """
         raise AttributeError(
-            "This method is not available on _PassthroughScorer. "
+            "`_PassthroughScorer` object has no attribute `set_score_request`."
             "Use the estimator's set_score_request method instead."
         )
 
