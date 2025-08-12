@@ -786,10 +786,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         If ``True``, X will be copied; else, it may be overwritten.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``, see Notes below.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``, see Notes below.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -1205,13 +1204,12 @@ class Lasso(ElasticNet):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``, see Notes below.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``, see Notes below.
 
     warm_start : bool, default=False
-        When set to True, reuse the solution of the previous call to fit as
+        When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
@@ -1981,10 +1979,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2252,10 +2249,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2525,10 +2521,9 @@ class MultiTaskElasticNet(Lasso):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -2770,10 +2765,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -2949,10 +2943,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -3205,10 +3198,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
