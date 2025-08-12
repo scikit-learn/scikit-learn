@@ -61,7 +61,7 @@ X, y = make_classification(
 # classifier that would always predict the most frequent class.
 #
 # In the following plot, quantile coverage is represented in grey, though the
-# AUC value is reported in terms of the mean and standar deviation.
+# AUC value is reported in terms of the mean and standard deviation.
 
 import matplotlib.pyplot as plt
 import numpy as np
