@@ -267,21 +267,21 @@ def test_verbose_k_best(capsys):
 
 def test_k_best_selects_best():
     # Tests that the labels added by st really are the 10 best labels.
-    svc = SVC(gamma="scale", probability=True, random_state=0)
-    st = SelfTrainingClassifier(svc, criterion="k_best", max_iter=1, k_best=10)
+    est = LogisticRegression(random_state=0)
+    st = SelfTrainingClassifier(est, criterion="k_best", max_iter=1, k_best=10)
     has_label = y_train_missing_labels != -1
     st.fit(X_train, y_train_missing_labels)
 
     got_label = ~has_label & (st.transduction_ != -1)
 
-    svc.fit(X_train[has_label], y_train_missing_labels[has_label])
-    pred = svc.predict_proba(X_train[~has_label])
+    est.fit(X_train[has_label], y_train_missing_labels[has_label])
+    pred = est.predict_proba(X_train[~has_label])
     max_proba = np.max(pred, axis=1)
 
-    most_confident_svc = X_train[~has_label][np.argsort(max_proba)[-10:]]
+    most_confident_est = X_train[~has_label][np.argsort(max_proba)[-10:]]
     added_by_st = X_train[np.where(got_label)].tolist()
 
-    for row in most_confident_svc.tolist():
+    for row in most_confident_est.tolist():
         assert row in added_by_st
 
 
