@@ -1100,7 +1100,7 @@ class SGDClassifier(BaseSGDClassifier):
         - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with `loss='hinge'`.
           Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
         - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
-          `loss='squared_hinge'`.
+          `loss='hinge'`.
           Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
 
         .. versionadded:: 0.20
@@ -1930,7 +1930,7 @@ class SGDRegressor(BaseSGDRegressor):
           `loss='epsilon_insensitive'`.
           Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
         - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
-          `loss='squared_epsilon_insensitive'`.
+          `loss='epsilon_insensitive'`.
           Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
 
         .. versionadded:: 0.20
