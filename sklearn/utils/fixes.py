@@ -21,8 +21,8 @@ try:
 except ImportError:
     pd = None
 
-from ..externals._packaging.version import parse as parse_version
-from .parallel import _get_threadpool_controller
+from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.utils.parallel import _get_threadpool_controller
 
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
@@ -354,11 +354,22 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian
+    from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:
     from scipy.sparse.csgraph import (
         laplacian,  # noqa: F401  # pragma: no cover
     )
+
+
+# TODO: Remove when Python min version >= 3.12.
+def tarfile_extractall(tarfile, path):
+    try:
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
+        tarfile.extractall(path, filter="data")
+    except TypeError:
+        tarfile.extractall(path)
 
 
 def _in_unstable_openblas_configuration():
@@ -392,3 +403,25 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version. In scipy 1.15,
+# the internal info details (via 'iprint' and 'disp' options) were dropped,
+# following the LBFGS rewrite from Fortran to C, see
+# https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035. For
+# scipy 1.15, 'iprint' and 'disp' have no effect and for scipy >= 1.16 a
+# DeprecationWarning is emitted.
+def _get_additional_lbfgs_options_dict(key, value):
+    return {} if sp_version >= parse_version("1.15") else {key: value}
+
+
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
+PYARROW_VERSION_BELOW_17 = False
+try:
+    import pyarrow
+
+    pyarrow_version = parse_version(pyarrow.__version__)
+    if pyarrow_version < parse_version("17.0.0"):
+        PYARROW_VERSION_BELOW_17 = True
+except ModuleNotFoundError:  # pragma: no cover
+    pass

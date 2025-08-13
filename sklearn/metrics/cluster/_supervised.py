@@ -14,11 +14,22 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
-from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ...utils.multiclass import type_of_target
-from ...utils.validation import check_array, check_consistent_length
-from ._expected_mutual_info_fast import expected_mutual_information
+from sklearn.metrics.cluster._expected_mutual_info_fast import (
+    expected_mutual_information,
+)
+from sklearn.utils import deprecated
+from sklearn.utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+)
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import check_array, check_consistent_length
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -530,8 +541,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     if len(labels_true) == 0:
         return 1.0, 1.0, 1.0
 
-    entropy_C = entropy(labels_true)
-    entropy_K = entropy(labels_pred)
+    entropy_C = _entropy(labels_true)
+    entropy_K = _entropy(labels_pred)
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     MI = mutual_info_score(None, None, contingency=contingency)
@@ -1042,7 +1053,7 @@ def adjusted_mutual_info_score(
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true, h_pred = _entropy(labels_true), _entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
     denominator = normalizer - emi
     # Avoid 0.0 / 0.0 when expectation equals maximum, i.e. a perfect match.
@@ -1168,7 +1179,7 @@ def normalized_mutual_info_score(
         return 0.0
 
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true, h_pred = _entropy(labels_true), _entropy(labels_pred)
 
     normalizer = _generalized_average(h_true, h_pred, average_method)
     return float(mi / normalizer)
@@ -1272,13 +1283,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
     return float(np.sqrt(tk / pk) * np.sqrt(tk / qk)) if tk != 0.0 else 0.0
 
 
-@validate_params(
-    {
-        "labels": ["array-like"],
-    },
-    prefer_skip_nested_validation=True,
-)
-def entropy(labels):
+def _entropy(labels):
     """Calculate the entropy for a labeling.
 
     Parameters
@@ -1312,3 +1317,25 @@ def entropy(labels):
     # Always convert the result as a Python scalar (on CPU) instead of a device
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
+
+
+# TODO(1.10): Remove
+@deprecated("`entropy` is deprecated in 1.8 and will be removed in 1.10.")
+def entropy(labels):
+    """Calculate the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
+
+    Returns
+    -------
+    entropy : float
+       The entropy for a labeling.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+    """
+    return _entropy(labels)
