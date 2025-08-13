@@ -27,7 +27,8 @@ __all__ = [
 ]
 
 
-class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
+class LabelEncoder(TransformerMixin, BaseEstimator):
+
     """Encode target labels with value between 0 and n_classes-1.
 
     This transformer should be used to encode target values, *i.e.* `y`, and
@@ -162,6 +163,23 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
             raise ValueError("y contains previously unseen labels: %s" % str(diff))
         y = xp.asarray(y)
         return xp.take(self.classes_, y, axis=0)
+    
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+    
+    Parameters
+    ----------
+    input_features : array-like of str or None, default=None
+        Not used, since LabelEncoder produces a single output.
+        
+    Returns
+    -------
+    feature_names_out : ndarray of shape (1,), dtype=str"""
+        if input_features is not None and len(input_features) >= 1:
+            return np.array([input_features[0]], dtype=object)
+        else:
+            return np.array(['labelencoder_output'], dtype=object)
+
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
