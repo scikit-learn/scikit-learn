@@ -3,4 +3,4 @@
   and `SGDRegressor`, both of which expose the options `learning_rate="pa1"` and
   `"pa2"`. The parameter `eta0` can be used to specify the aggressiveness parameter of
   the Passive-Aggressive-Algorithms, called C in the reference paper.
-  By :user:`Christian Lorentzen <lorentzenchr>`.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31932` and
