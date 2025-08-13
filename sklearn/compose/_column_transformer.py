@@ -1228,8 +1228,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         filtered_transformers = [tr for tr in transformers if "remainder" not in tr]
 
         if not (isinstance(self.remainder, str) and self.remainder == "drop"):
-            # We can find the columns of remainder only when it's fitted
-            # because only when it's fitted it has a remainder
+            # We can find remainder and its column only when it's fitted
             if hasattr(self, "_remainder"):
                 remainder_columns = self._remainder[2]
                 if (
