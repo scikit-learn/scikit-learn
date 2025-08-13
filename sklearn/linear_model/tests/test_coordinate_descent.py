@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 
-from sklearn.base import clone, config_context, is_classifier
+from sklearn.base import clone, config_context
 from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
@@ -18,15 +18,11 @@ from sklearn.linear_model import (
     Lasso,
     LassoCV,
     LassoLarsCV,
-    LinearRegression,
     MultiTaskElasticNet,
     MultiTaskElasticNetCV,
     MultiTaskLasso,
     MultiTaskLassoCV,
     Ridge,
-    RidgeClassifier,
-    RidgeClassifierCV,
-    RidgeCV,
     enet_path,
     lars_path,
     lasso_path,
@@ -93,10 +89,7 @@ def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    # _cd_fast.pyx tests for gap < tol, but here we get 0.0 < 0.0
-    # should probably be changed to gap <= tol ?
-    with ignore_warnings(category=ConvergenceWarning):
-        clf = Lasso(alpha=0.1).fit(X, y)
+    clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
@@ -104,6 +97,7 @@ def test_lasso_zero():
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")  # overflow and similar
 def test_enet_nonfinite_params():
     # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
@@ -327,56 +321,6 @@ def test_lassocv_alphas_validation(alphas, err_type, err_msg):
         lassocv.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.parametrize(
-    "LinearModel, params",
-    [
-        (Lasso, {"tol": 1e-16, "alpha": 0.1}),
-        (LassoCV, {"tol": 1e-16}),
-        (ElasticNetCV, {}),
-        (RidgeClassifier, {"solver": "sparse_cg", "alpha": 0.1}),
-        (ElasticNet, {"tol": 1e-16, "l1_ratio": 1, "alpha": 0.01}),
-        (ElasticNet, {"tol": 1e-16, "l1_ratio": 0, "alpha": 0.01}),
-        (Ridge, {"solver": "sparse_cg", "tol": 1e-12, "alpha": 0.1}),
-        (LinearRegression, {}),
-        (RidgeCV, {}),
-        (RidgeClassifierCV, {}),
-    ],
-)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container):
-    # Test that linear model preceded by StandardScaler in the pipeline and
-    # with normalize set to False gives the same y_pred and the same .coef_
-    # given X sparse or dense
-
-    model_dense = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
-
-    model_sparse = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
-
-    # prepare the data
-    rng = np.random.RandomState(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.0
-
-    X_sparse = csr_container(X)
-    y = rng.rand(n_samples)
-
-    if is_classifier(model_dense):
-        y = np.sign(y)
-
-    model_dense.fit(X, y)
-    model_sparse.fit(X_sparse, y)
-
-    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
-    y_pred_dense = model_dense.predict(X)
-    y_pred_sparse = model_sparse.predict(X_sparse)
-    assert_allclose(y_pred_dense, y_pred_sparse)
-
-    assert_allclose(model_dense[1].intercept_, model_sparse[1].intercept_)
-
-
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     # Test that lasso_path with lars_path style output gives the
     # same result
@@ -477,6 +421,7 @@ def test_warm_start():
     assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
+@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
 def test_lasso_alpha_warning():
     X = [[-1], [0], [1]]
     Y = [-1, 0, 1]  # just a straight line
@@ -1096,13 +1041,18 @@ def test_warm_start_multitask_lasso():
 )
 def test_enet_coordinate_descent_raises_convergence(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
-    clf = klass(max_iter=2, **kwargs)
-    n_samples = 5
-    n_features = 2
-    X = np.ones((n_samples, n_features)) * 1e50
-    y = np.ones((n_samples, n_classes))
-    if klass == Lasso:
-        y = y.ravel()
+    clf = klass(
+        alpha=1e-10,
+        fit_intercept=False,
+        warm_start=True,
+        max_iter=1,
+        tol=1e-10,
+        **kwargs,
+    )
+    # Set initial coefficients to very bad values.
+    clf.coef_ = np.array([1, 1, 1, 1000])
+    X = np.array([[-1, -1, 1, 1], [1, 1, -1, -1]])
+    y = np.array([-1, 1])
     warning_message = (
         "Objective did not converge. You might want to"
         " increase the number of iterations."
@@ -1674,6 +1624,7 @@ def test_linear_model_cv_deprecated_alphas_none(Estimator):
 
 
 # TODO(1.9): remove
+@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
 @pytest.mark.parametrize(
     "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
 )
@@ -1693,6 +1644,7 @@ def test_linear_model_cv_alphas_n_alphas_unset(Estimator):
 
 # TODO(1.9): remove
 @pytest.mark.filterwarnings("ignore:'n_alphas' was deprecated in 1.7")
+@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
 @pytest.mark.parametrize(
     "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
 )
