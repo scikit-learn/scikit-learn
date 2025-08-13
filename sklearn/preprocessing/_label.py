@@ -48,6 +48,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         scheme.
     OneHotEncoder : Encode categorical features as a one-hot numeric array.
 
+    Notes
+    -----
+    This transformer is designed for encoding the target `y` (a 1-dimensional array)
+    and does not support the `set_output` API.
+
     Examples
     --------
     `LabelEncoder` can be used to normalize labels.
