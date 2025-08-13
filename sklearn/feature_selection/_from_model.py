@@ -320,7 +320,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "max_features",
                 Integral,
                 min_val=0,
-                max_val=n_features,
+                max_val=None,
             )
             self.max_features_ = max_features
 
