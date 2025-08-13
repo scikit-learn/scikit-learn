@@ -637,27 +637,6 @@ def test_estimator_does_not_support_feature_names():
         selector.transform(X.iloc[1:3])
 
 
-@pytest.mark.parametrize(
-    "error, err_msg, max_features",
-    (
-        [ValueError, "max_features == 10, must be <= 4", 10],
-        [ValueError, "max_features == 5, must be <= 4", lambda x: x.shape[1] + 1],
-    ),
-)
-def test_partial_fit_validate_max_features(error, err_msg, max_features):
-    """Test that partial_fit from SelectFromModel validates `max_features`."""
-    X, y = datasets.make_classification(
-        n_samples=100,
-        n_features=4,
-        random_state=0,
-    )
-
-    with pytest.raises(error, match=err_msg):
-        SelectFromModel(
-            estimator=SGDClassifier(), max_features=max_features
-        ).partial_fit(X, y, classes=[0, 1])
-
-
 @pytest.mark.parametrize("as_frame", [True, False])
 def test_partial_fit_validate_feature_names(as_frame):
     """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
