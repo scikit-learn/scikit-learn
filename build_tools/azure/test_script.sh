@@ -42,7 +42,7 @@ show_installed_libraries
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
-    # Note: --cov-report= is used to disable to long text output report in the
+    # Note: --cov-report= is used to disable too long text output report in the
     # CI logs. The coverage data is consolidated by codecov to get an online
     # web report across all the platforms so there is no need for this text
     # report that otherwise hides the test failures and forces long scrolls in
