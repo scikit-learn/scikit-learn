@@ -188,9 +188,6 @@ to enable OpenMP support:
 
 - or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
-You can install the `macos/arm64`
-distribution of conda using the `conda-forge installer
-<https://conda-forge.org/download/>`_
 
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
