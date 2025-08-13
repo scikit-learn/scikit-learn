@@ -91,6 +91,10 @@ or ``conda``::
 
     conda install -c conda-forge scikit-learn
 
+verify installation::
+
+    python -c "import sklearn; print(sklearn.__version__)"
+
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
 
 
