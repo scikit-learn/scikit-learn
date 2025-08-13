@@ -90,5 +90,6 @@ jobs:
         uses: codecov/codecov-action@v5
         if: ${{ env.COVERAGE == 'true' }} # also condition on that SELECTED_TESTS is empty?
         with:
-          files: coverage.xml
+          files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
