@@ -177,7 +177,7 @@ def sag_sparse(
 
     counter = 0
     for epoch in range(max_iter):
-        previous_weights = weights.copy()
+        previous_weights = weights * wscale
         for k in range(n_samples):
             # idx = k
             idx = int(rng.rand() * n_samples)
@@ -246,11 +246,12 @@ def sag_sparse(
 
             counter += 1
         # callback on epoch end
+        scaled_weights = weights * wscale
         if callable(callback):
-            callback(dict(weights=weights, intercept=intercept, epoch=epoch))
+            callback(dict(weights=scaled_weights, intercept=intercept, epoch=epoch))
         # stopping criteria
-        max_weight = np.abs(weights).max()
-        max_change = np.abs(weights - previous_weights).max()
+        max_weight = np.abs(scaled_weights).max()
+        max_change = np.abs(scaled_weights - previous_weights).max()
         if (max_weight != 0 and max_change / max_weight <= tol) or (
             max_weight == 0 and max_change == 0
         ):
