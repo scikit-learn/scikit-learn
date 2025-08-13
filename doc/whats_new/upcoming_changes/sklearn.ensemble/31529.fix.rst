@@ -4,4 +4,7 @@
   multiplied by a uniformly sampled mask to the underlying estimators.
   Furthermore, `max_samples` is now interpreted as a fraction of
   `sample_weight.sum()` instead of `X.shape[0]` when passed as a float.
+  In particular, when `max_sample=None`, each tree is fitted with
+  `sample_weight.sum()` data points instead of `X.shape[0]` data points
+  as previously.
   By :user:`Antoine Baker <antoinebaker>`.
