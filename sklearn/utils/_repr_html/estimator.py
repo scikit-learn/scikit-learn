@@ -186,12 +186,20 @@ def _write_label_html(
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
 
+        if features is None or features == "":
+            features_div = ""
+        else:
+            features_div = f'<div class="features"><hr>{features} Features</div>'
+
         name_caption_div = (
             ""
             if name_caption is None
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
-        name_caption_div = f"<div><div>{name}</div>{name_caption_div} {features} </div>"
+        name_caption_div = (
+            f"<div><div>{name}</div>{name_caption_div}{features_div}</div>"
+        )
+
         links_div = (
             f"<div>{doc_link}{is_fitted_icon}</div>"
             if doc_link or is_fitted_icon
