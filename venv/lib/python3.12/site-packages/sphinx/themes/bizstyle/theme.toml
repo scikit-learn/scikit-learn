@@ -1,0 +1,12 @@
+[theme]
+inherit = "basic"
+stylesheets = [
+    "bizstyle.css",
+]
+pygments_style = { default = "friendly" }
+
+[options]
+rightsidebar = "false"
+sidebarwidth = "210"
+
+maincolor = "#336699"

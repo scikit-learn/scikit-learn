@@ -1,0 +1,58 @@
+{# Sphinx layout template for the haiku theme. #}
+{%- extends "basic/layout.html" %}
+
+{# do not display relbars #}
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+
+{% macro nav() %}
+        <p>
+        {%- block haikurel1 %}
+        {%- endblock %}
+        {%- if prev %}
+        «&#160;&#160;<a href="{{ prev.link|e }}">{{ prev.title }}</a>
+        &#160;&#160;::&#160;&#160;
+        {%- endif %}
+        <a class="uplink" href="{{ pathto(root_doc)|e }}">{{ _('Contents') }}</a>
+        {%- if next %}
+        &#160;&#160;::&#160;&#160;
+        <a href="{{ next.link|e }}">{{ next.title }}</a>&#160;&#160;»
+        {%- endif %}
+        {%- block haikurel2 %}
+        {%- endblock %}
+        </p>
+{% endmacro %}
+
+{% block content %}
+      <div class="header" role="banner">
+        {%- block haikuheader %}
+        {%- if theme_full_logo != "false" %}
+        <a href="{{ pathto(root_doc)|e }}">
+          <img class="logo" src="{{ logo_url|e }}" alt="{{ logo_alt|e }}"/>
+        </a>
+        {%- else %}
+        {%- if logo -%}
+          <img class="rightlogo" src="{{ logo_url|e }}" alt="{{ logo_alt|e }}"/>
+        {%- endif -%}
+        <h1 class="heading"><a href="{{ pathto(root_doc)|e }}">
+          <span>{{ shorttitle|e }}</span></a></h1>
+        <h2 class="heading"><span>{{ title|striptags|e }}</span></h2>
+        {%- endif %}
+        {%- endblock %}
+      </div>
+      <div class="topnav" role="navigation" aria-label="Top">
+      {{ nav() }}
+      </div>
+      <div class="content" role="main">
+        {#{%- if display_toc %}
+        <div id="toc">
+          <h3>{{ _('Table of Contents') }}</h3>
+          {{ toc }}
+        </div>
+        {%- endif %}#}
+        {% block body %}{% endblock %}
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
+      {{ nav() }}
+      </div>
+{% endblock %}

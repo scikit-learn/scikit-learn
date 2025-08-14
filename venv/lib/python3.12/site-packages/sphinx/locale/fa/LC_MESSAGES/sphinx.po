@@ -1,0 +1,4117 @@
+# Translations template for Sphinx.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the Sphinx project.
+# 
+# Translators:
+# Hadi F <h_adi_f@yahoo.com>, 2020
+# Hadi F <h_adi_f@yahoo.com>, 2020-2021
+# Pikhosh <pikhosh@gmail.com>, 2020
+# Pikhosh <pikhosh@gmail.com>, 2020
+msgid ""
+msgstr ""
+"Project-Id-Version: Sphinx\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-12-29 22:39+0000\n"
+"PO-Revision-Date: 2013-04-02 08:44+0000\n"
+"Last-Translator: Hadi F <h_adi_f@yahoo.com>, 2020-2021\n"
+"Language-Team: Persian (http://app.transifex.com/sphinx-doc/sphinx-1/language/fa/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+"Language: fa\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: events.py:77
+#, python-format
+msgid "Event %r already present"
+msgstr "رویداد %r در حال حاضر موجود است"
+
+#: events.py:370
+#, python-format
+msgid "Unknown event name: %s"
+msgstr "نوع اتفاق نامشخّص است: %s"
+
+#: events.py:416
+#, python-format
+msgid "Handler %r for event %r threw an exception"
+msgstr "مدیر %r برای رویداد %r یک باعث ایراد شد"
+
+#: application.py:190
+#, python-format
+msgid "Cannot find source directory (%s)"
+msgstr "شاخه‌ی منبع(%s) پیدا نشد."
+
+#: application.py:194
+#, python-format
+msgid "Output directory (%s) is not a directory"
+msgstr "نشانی (%s) شاخه نیست"
+
+#: application.py:198
+msgid "Source directory and destination directory cannot be identical"
+msgstr "شاخه‌های مبدأ و مقصد نمی توانند یکسان باشند"
+
+#: application.py:228
+#, python-format
+msgid "Running Sphinx v%s"
+msgstr "اجرای اسفینکس نگارش %s"
+
+#: application.py:250
+#, python-format
+msgid ""
+"This project needs at least Sphinx v%s and therefore cannot be built with "
+"this version."
+msgstr "این پروژه دست که به افینکس نگارش%s نیاز دارد و برای همین با این نسخه قابل ساخت نیست."
+
+#: application.py:266
+msgid "making output directory"
+msgstr "ایجاد پوشه ی برون داد"
+
+#: application.py:271 registry.py:452
+#, python-format
+msgid "while setting up extension %s:"
+msgstr "در حال راه اندازی افزونه‌ی%s:"
+
+#: application.py:277
+msgid ""
+"'setup' as currently defined in conf.py isn't a Python callable. Please "
+"modify its definition to make it a callable function. This is needed for "
+"conf.py to behave as a Sphinx extension."
+msgstr "'setup' آن طور که در conf.py تعریف شده شیئ قابل فراخوانی پایتون نیست. لطفاً تعریفش را تغییر دهید تا تابع قابل فراخوان پایتون شود. این کار لازمه‌ی conf.py است تا به عنوان افزنه‌ی اسفینکس کار کند."
+
+#: application.py:312
+#, python-format
+msgid "loading translations [%s]... "
+msgstr "بارگذاری ترجمه ها [%s]... "
+
+#: application.py:329 util/display.py:88
+msgid "done"
+msgstr "انجام شد"
+
+#: application.py:331
+msgid "not available for built-in messages"
+msgstr "برای پیام‌های داخلی در دسترس نیست"
+
+#: application.py:345
+msgid "loading pickled environment"
+msgstr "بارگذاری محیط pckle شده"
+
+#: application.py:353
+#, python-format
+msgid "failed: %s"
+msgstr "شکست خورد: %s"
+
+#: application.py:366
+msgid "No builder selected, using default: html"
+msgstr "هیچ سازنده‌ای برگزیده نشده، استفاده از قالب خروجی پیش‌فرض: html"
+
+#: application.py:398
+msgid "build finished with problems."
+msgstr ""
+
+#: application.py:400
+msgid "build succeeded."
+msgstr ""
+
+#: application.py:404
+msgid ""
+"build finished with problems, 1 warning (with warnings treated as errors)."
+msgstr ""
+
+#: application.py:407
+msgid "build finished with problems, 1 warning."
+msgstr ""
+
+#: application.py:409
+msgid "build succeeded, 1 warning."
+msgstr ""
+
+#: application.py:414
+#, python-format
+msgid ""
+"build finished with problems, %s warnings (with warnings treated as errors)."
+msgstr ""
+
+#: application.py:417
+#, python-format
+msgid "build finished with problems, %s warnings."
+msgstr ""
+
+#: application.py:419
+#, python-format
+msgid "build succeeded, %s warnings."
+msgstr ""
+
+#: application.py:968
+#, python-format
+msgid "node class %r is already registered, its visitors will be overridden"
+msgstr "بست کلاس %r در حال حاضر ثبت نام شده است، بازدیدکنندگان این پیوند نادیده گرفته خواهد شد"
+
+#: application.py:1047
+#, python-format
+msgid "directive %r is already registered, it will be overridden"
+msgstr "دستور %r از قبل ثبت شده که مقدار قبلی نادیده گرفته خواهد شد"
+
+#: application.py:1069 application.py:1094
+#, python-format
+msgid "role %r is already registered, it will be overridden"
+msgstr "نقش %r از قبل ثبت شده که مقدار قبلی نادیده گرفته خواهد شد"
+
+#: application.py:1644
+#, python-format
+msgid ""
+"the %s extension does not declare if it is safe for parallel reading, "
+"assuming it isn't - please ask the extension author to check and make it "
+"explicit"
+msgstr "افزونه‌ی %s مشخّص نکرده که آیا برای خواندن موازی امن هست یا نه. که فرض می‌گیریم نیست. لطفاً از نویسنده‌ی افزونه بخواهید این موضوع را بررسی و آن را مشخّص کند"
+
+#: application.py:1648
+#, python-format
+msgid "the %s extension is not safe for parallel reading"
+msgstr "افزونه ی %sبرای خواندن موازی امن نیست"
+
+#: application.py:1651
+#, python-format
+msgid ""
+"the %s extension does not declare if it is safe for parallel writing, "
+"assuming it isn't - please ask the extension author to check and make it "
+"explicit"
+msgstr "افزونه‌ی %s مشخّص نکرده که آیا برای نوشتن موازی امن هست یا نه. که فرض می‌گیریم نیست. لطفاً از نویسنده‌ی افزونه بخواهید این موضوع را بررسی و آن را مشخّص کند"
+
+#: application.py:1655
+#, python-format
+msgid "the %s extension is not safe for parallel writing"
+msgstr "افزونه‌ی %s برای نوشتن موازی امن نیست"
+
+#: application.py:1663 application.py:1667
+#, python-format
+msgid "doing serial %s"
+msgstr "انجام چندباره‌ی %s"
+
+#: roles.py:208
+#, python-format
+msgid "Common Vulnerabilities and Exposures; CVE %s"
+msgstr ""
+
+#: roles.py:231
+#, python-format
+msgid "invalid CVE number %s"
+msgstr ""
+
+#: roles.py:253
+#, python-format
+msgid "Common Weakness Enumeration; CWE %s"
+msgstr ""
+
+#: roles.py:276
+#, python-format
+msgid "invalid CWE number %s"
+msgstr ""
+
+#: roles.py:296
+#, python-format
+msgid "Python Enhancement Proposals; PEP %s"
+msgstr "Python Enhancement Proposals; PEP %s"
+
+#: roles.py:319
+#, python-format
+msgid "invalid PEP number %s"
+msgstr ""
+
+#: roles.py:357
+#, python-format
+msgid "invalid RFC number %s"
+msgstr ""
+
+#: registry.py:144
+#, python-format
+msgid "Builder class %s has no \"name\" attribute"
+msgstr "کلاس سازنده %s هیچ ویژگی‌ای به عنوان \"name\" ندارد"
+
+#: registry.py:146
+#, python-format
+msgid "Builder %r already exists (in module %s)"
+msgstr "سازنده %r در حال حاضر وجود دارد (در پیمانه‌ی %s)"
+
+#: registry.py:159
+#, python-format
+msgid "Builder name %s not registered or available through entry point"
+msgstr "نام سازنده %s یا ثبت شده نیست و یا فقط از طریق نقطه ورود در دسترس است"
+
+#: registry.py:166
+#, python-format
+msgid "Builder name %s not registered"
+msgstr "نام سازنده %s ثبت نشده است"
+
+#: registry.py:173
+#, python-format
+msgid "domain %s already registered"
+msgstr "دامنه ی %sپیش تر ثبت شده"
+
+#: registry.py:196 registry.py:209 registry.py:220
+#, python-format
+msgid "domain %s not yet registered"
+msgstr "دامنه %s هنوز ثبت نشده است"
+
+#: registry.py:200
+#, python-format
+msgid "The %r directive is already registered to domain %s"
+msgstr "دستورالعمل %r قبلاً برای دامنه %s ثبت شده"
+
+#: registry.py:212
+#, python-format
+msgid "The %r role is already registered to domain %s"
+msgstr "نقش %r قبلاً برای دامنه %s ثبت شده"
+
+#: registry.py:223
+#, python-format
+msgid "The %r index is already registered to domain %s"
+msgstr "شاخص %r قبلاً برای دامنه %s ثبت شده"
+
+#: registry.py:254
+#, python-format
+msgid "The %r object_type is already registered"
+msgstr "نوع شیئ (object_type) %r قبلاً برای دامنه ثبت شده"
+
+#: registry.py:280
+#, python-format
+msgid "The %r crossref_type is already registered"
+msgstr "ارجاع متقابل (crossref_type) %r قبلاً ثبت شده"
+
+#: registry.py:287
+#, python-format
+msgid "source_suffix %r is already registered"
+msgstr "پسوند (source_suffix) %r قبلاً ثبت شده است"
+
+#: registry.py:296
+#, python-format
+msgid "source_parser for %r is already registered"
+msgstr "تحلیل‌گر منبع (source_parser) %r قبلاً ثبت شده است"
+
+#: registry.py:304
+#, python-format
+msgid "Source parser for %s not registered"
+msgstr "تجزیه کننده مبدإ برای %s ثبت نشده است"
+
+#: registry.py:320
+#, python-format
+msgid "Translator for %r already exists"
+msgstr "در حال حاضر برای %r مترجم وجود دارد"
+
+#: registry.py:336
+#, python-format
+msgid "kwargs for add_node() must be a (visit, depart) function tuple: %r=%r"
+msgstr "مؤلّفه‌های کلیدی برای تابع add_node() باید تاپل تابعی (بازدید، خروج) باشند: %r=%r"
+
+#: registry.py:419
+#, python-format
+msgid "enumerable_node %r already registered"
+msgstr "بست قابل شمارش (enumerable_node) %r قبلاً ثبت شده است"
+
+#: registry.py:431
+#, python-format
+msgid "math renderer %s is already registered"
+msgstr "ترسیم‌گر ریاضی %s قبلاً ثبت شده"
+
+#: registry.py:446
+#, python-format
+msgid ""
+"the extension %r was already merged with Sphinx since version %s; this "
+"extension is ignored."
+msgstr "افزونه‌ی %r از نسخه‌ی %s اسفینکس به بعد، در آن ادغام شده؛ بنابراین نادیده گرفته می‌شود."
+
+#: registry.py:457
+msgid "Original exception:\n"
+msgstr "ایراد اصلی:\n"
+
+#: registry.py:458
+#, python-format
+msgid "Could not import extension %s"
+msgstr "امکان وارد کردن افزونه‌ی %s نبود"
+
+#: registry.py:463
+#, python-format
+msgid ""
+"extension %r has no setup() function; is it really a Sphinx extension "
+"module?"
+msgstr "افزونه‌ی %r  هیچ تابع setup()ی ندارد؛ آیا این مورد واقعاً یک پیمانه‌ی افزونه‌ی اسفینکس است؟"
+
+#: registry.py:472
+#, python-format
+msgid ""
+"The %s extension used by this project needs at least Sphinx v%s; it "
+"therefore cannot be built with this version."
+msgstr "افزونه‌ی %s که در این پروژه استفاده شده دست کم نیازمند اسفینکس نسخه‌ی %s است؛ بنابراین با این نسخه قابل ساخت نیست."
+
+#: registry.py:480
+#, python-format
+msgid ""
+"extension %r returned an unsupported object from its setup() function; it "
+"should return None or a metadata dictionary"
+msgstr "افزونه‌ی %r شیئ پشتیبانی نشده‌‌ای از تابع setup()ش برگرداند؛ در حالی که می بایست مقدار تهی/هیچ و یا یک دیکشنری فراداده‌ برمی‌گرداند"
+
+#: registry.py:514
+#, python-format
+msgid "`None` is not a valid filetype for %r."
+msgstr ""
+
+#: project.py:71
+#, python-format
+msgid ""
+"multiple files found for the document \"%s\": %s\n"
+"Use %r for the build."
+msgstr ""
+
+#: project.py:87
+#, python-format
+msgid "Ignored unreadable document %r."
+msgstr ""
+
+#: highlighting.py:168
+#, python-format
+msgid "Pygments lexer name %r is not known"
+msgstr "نام رنگ‌مایه خوان %r شناخته شده نیست"
+
+#: highlighting.py:202
+#, python-format
+msgid ""
+"Lexing literal_block %r as \"%s\" resulted in an error at token: %r. "
+"Retrying in relaxed mode."
+msgstr ""
+
+#: extension.py:55
+#, python-format
+msgid ""
+"The %s extension is required by needs_extensions settings, but it is not "
+"loaded."
+msgstr "تنظیمات needs_extensions (نیازهای افزونه) افزونه‌ی %s را نیاز دارد، ولی بارگذاری نمی شود."
+
+#: extension.py:76
+#, python-format
+msgid ""
+"This project needs the extension %s at least in version %s and therefore "
+"cannot be built with the loaded version (%s)."
+msgstr "این پروژه افزونه‌ی %s (دست کم نسخه‌ی %s) را نیاز دارد، بنابراین نمی تواند با نسخه بارگذاری شده (%s) ساخته شود."
+
+#: theming.py:114
+#, python-format
+msgid ""
+"Theme configuration sections other than [theme] and [options] are not "
+"supported (tried to get a value from %r)."
+msgstr ""
+
+#: theming.py:120
+#, python-format
+msgid "setting %s.%s occurs in none of the searched theme configs"
+msgstr "تنظیمات %s. %s در هیچ یک از پیکربندی‌های جستجو شده رخ نمی‌دهد"
+
+#: theming.py:135
+#, python-format
+msgid "unsupported theme option %r given"
+msgstr "گزینه‌ی پشتیبانی نشده‌ی زمینه %r داده شده"
+
+#: theming.py:207
+#, python-format
+msgid "file %r on theme path is not a valid zipfile or contains no theme"
+msgstr "پرونده‌ی %r که مسیر زمینه به آن اشاره دارد یا پرونده زیپ معتبری نیست یا هیچ زمینه‌ای درونش ندارد"
+
+#: theming.py:228
+#, python-format
+msgid "no theme named %r found (missing theme.toml?)"
+msgstr ""
+
+#: theming.py:268
+#, python-format
+msgid "The %r theme has circular inheritance"
+msgstr ""
+
+#: theming.py:275
+#, python-format
+msgid ""
+"The %r theme inherits from %r, which is not a loaded theme. Loaded themes "
+"are: %s"
+msgstr ""
+
+#: theming.py:282
+#, python-format
+msgid "The %r theme has too many ancestors"
+msgstr ""
+
+#: theming.py:310
+#, python-format
+msgid "no theme configuration file found in %r"
+msgstr ""
+
+#: theming.py:335 theming.py:388
+#, python-format
+msgid "theme %r doesn't have the \"theme\" table"
+msgstr ""
+
+#: theming.py:339
+#, python-format
+msgid "The %r theme \"[theme]\" table is not a table"
+msgstr ""
+
+#: theming.py:343 theming.py:391
+#, python-format
+msgid "The %r theme must define the \"theme.inherit\" setting"
+msgstr ""
+
+#: theming.py:347
+#, python-format
+msgid "The %r theme \"[options]\" table is not a table"
+msgstr ""
+
+#: theming.py:366
+#, python-format
+msgid "The \"theme.pygments_style\" setting must be a table. Hint: \"%s\""
+msgstr ""
+
+#: config.py:309
+#, python-format
+msgid "config directory doesn't contain a conf.py file (%s)"
+msgstr "شاخه‌ی پیکربندی(%s)، پرونده‌ی conf.py را ندارد"
+
+#: config.py:318
+msgid ""
+"Invalid configuration value found: 'language = None'. Update your "
+"configuration to a valid language code. Falling back to 'en' (English)."
+msgstr ""
+
+#: config.py:341
+#, python-format
+msgid ""
+"cannot override dictionary config setting %r, ignoring (use %r to set "
+"individual elements)"
+msgstr "امکان لغو تنظیمات پیکربندیdictionary %r ، نادیده گرفته می‌شود (برای تعیین تک تک عناصر %r را به کار ببرید)"
+
+#: config.py:350
+#, python-format
+msgid "invalid number %r for config value %r, ignoring"
+msgstr "شماره نامعتبر %r برای پیکربندی مقدار %r، نادیده گرفته می‌شود"
+
+#: config.py:356
+#, python-format
+msgid "cannot override config setting %r with unsupported type, ignoring"
+msgstr "امکان لغو تنظیمات پیکربندی %r با نوع پشتیبانی نشده نبود، نادیده گرفته می‌شود"
+
+#: config.py:377
+#, python-format
+msgid "unknown config value %r in override, ignoring"
+msgstr "مقدار پیکربندی ناشناخته %r در ابطال، نادیده گرفته شد"
+
+#: config.py:430
+#, python-format
+msgid "No such config value: %r"
+msgstr ""
+
+#: config.py:453
+#, python-format
+msgid "Config value %r already present"
+msgstr "مقدار پیکربندی %r از قبل موجود است"
+
+#: config.py:489
+#, python-format
+msgid ""
+"cannot cache unpickable configuration value: %r (because it contains a "
+"function, class, or module object)"
+msgstr ""
+
+#: config.py:527
+#, python-format
+msgid "There is a syntax error in your configuration file: %s\n"
+msgstr "خطای نحوی در پرونده‌ی پیکربندی شما وجود دارد: %s\n"
+
+#: config.py:530
+msgid ""
+"The configuration file (or one of the modules it imports) called sys.exit()"
+msgstr "پرونده‌ی پیکربندی (یا یکی از ماژول هایی که وارد می کند)  sys.exit() را فراخواند"
+
+#: config.py:537
+#, python-format
+msgid ""
+"There is a programmable error in your configuration file:\n"
+"\n"
+"%s"
+msgstr "یک خطای قابل برنامه ریزی در پرونده‌ی پیکربندی شما وجود دارد:\n\n%s"
+
+#: config.py:560
+#, python-format
+msgid "Failed to convert %r to a set or tuple"
+msgstr ""
+
+#: config.py:581 config.py:586
+#, python-format
+msgid "Converting `source_suffix = %r` to `source_suffix = %r`."
+msgstr ""
+
+#: config.py:589
+#, python-format
+msgid ""
+"The config value `source_suffix' expects a dictionary, a string, or a list "
+"of strings. Got `%r' instead (type %s)."
+msgstr ""
+
+#: config.py:608
+#, python-format
+msgid "Section %s"
+msgstr "بخش%s"
+
+#: config.py:609
+#, python-format
+msgid "Fig. %s"
+msgstr "شکل %s"
+
+#: config.py:610
+#, python-format
+msgid "Table %s"
+msgstr "جدول %s"
+
+#: config.py:611
+#, python-format
+msgid "Listing %s"
+msgstr "فهرست %s"
+
+#: config.py:718
+msgid ""
+"The config value `{name}` has to be a one of {candidates}, but `{current}` "
+"is given."
+msgstr "مقدار پیکربندی '{name}' باید یکی از {candidates} باشد، اما '{current}' داده شده."
+
+#: config.py:742
+msgid ""
+"The config value `{name}' has type `{current.__name__}'; expected "
+"{permitted}."
+msgstr "مقدار پیکربندی '{name}' دارای نوع '{current.__name__}' است، ولی انتظار می‌رفت {permitted} می‌بود."
+
+#: config.py:755
+msgid ""
+"The config value `{name}' has type `{current.__name__}', defaults to "
+"`{default.__name__}'."
+msgstr "مقدار پیکربندی '{name}' دارای نوع '{current.__name__}' است، حالت پیش‌فرض {permitted} است."
+
+#: config.py:766
+#, python-format
+msgid "primary_domain %r not found, ignored."
+msgstr "دامنه‌ی اصلی %r یافت نشد، نادیده گرفته می‌شوند."
+
+#: config.py:778
+msgid ""
+"Since v2.0, Sphinx uses \"index\" as root_doc by default. Please add "
+"\"root_doc = 'contents'\" to your conf.py."
+msgstr "از زمان نسخه‌ی ۲ تا به حال، اسفیکنس به صورت پیش فرض از \"index\" به عنوان ریشه‌ی سند(root_doc) استفاده می‌کند. لطفاً \"root_doc = 'contents'\" را به پرونده  conf.py تان اضافه کنید."
+
+#: domains/rst.py:128 domains/rst.py:185
+#, python-format
+msgid "%s (directive)"
+msgstr "%s (دستورالمعل)"
+
+#: domains/rst.py:186 domains/rst.py:190
+#, python-format
+msgid ":%s: (directive option)"
+msgstr "%s (گزینه‌ی دستورالمعل)"
+
+#: domains/rst.py:214
+#, python-format
+msgid "%s (role)"
+msgstr "%s (نقش)"
+
+#: domains/rst.py:224
+msgid "directive"
+msgstr "دستورالمعل"
+
+#: domains/rst.py:225
+msgid "directive-option"
+msgstr "گزینه‌ی دستورالمعل"
+
+#: domains/rst.py:226
+msgid "role"
+msgstr "نقش"
+
+#: domains/rst.py:248
+#, python-format
+msgid "duplicate description of %s %s, other instance in %s"
+msgstr "توضیح تکراری از %s %s، مورد دیگر در %s قرار دارد"
+
+#: domains/javascript.py:165
+#, python-format
+msgid "%s() (built-in function)"
+msgstr "%s() (توابع درونی)"
+
+#: domains/javascript.py:166 domains/python/__init__.py:253
+#, python-format
+msgid "%s() (%s method)"
+msgstr "%s() (%s متد)"
+
+#: domains/javascript.py:168
+#, python-format
+msgid "%s() (class)"
+msgstr "%s (کلاس)"
+
+#: domains/javascript.py:170
+#, python-format
+msgid "%s (global variable or constant)"
+msgstr "%s (متغیّر عمومی یا مقدار ثابت)"
+
+#: domains/javascript.py:172 domains/python/__init__.py:338
+#, python-format
+msgid "%s (%s attribute)"
+msgstr "%s (%s مشخصه)"
+
+#: domains/javascript.py:255
+msgid "Arguments"
+msgstr "نشانوندها"
+
+#: domains/cpp/__init__.py:447 domains/javascript.py:258
+msgid "Throws"
+msgstr "ایجاد"
+
+#: domains/c/__init__.py:310 domains/cpp/__init__.py:458
+#: domains/javascript.py:261 domains/python/_object.py:176
+msgid "Returns"
+msgstr "بازگشت ها"
+
+#: domains/c/__init__.py:312 domains/javascript.py:263
+#: domains/python/_object.py:178
+msgid "Return type"
+msgstr "نوع برگشتی"
+
+#: domains/javascript.py:334
+#, python-format
+msgid "%s (module)"
+msgstr "%s (ماژول)"
+
+#: domains/c/__init__.py:681 domains/cpp/__init__.py:859
+#: domains/javascript.py:371 domains/python/__init__.py:660
+msgid "function"
+msgstr "تابع"
+
+#: domains/javascript.py:372 domains/python/__init__.py:664
+msgid "method"
+msgstr "متد"
+
+#: domains/cpp/__init__.py:857 domains/javascript.py:373
+#: domains/python/__init__.py:662
+msgid "class"
+msgstr "کلاس"
+
+#: domains/javascript.py:374 domains/python/__init__.py:661
+msgid "data"
+msgstr "داده"
+
+#: domains/javascript.py:375 domains/python/__init__.py:667
+msgid "attribute"
+msgstr "مشخّصه"
+
+#: domains/javascript.py:376 domains/python/__init__.py:670
+msgid "module"
+msgstr "ماژول"
+
+#: domains/javascript.py:407
+#, python-format
+msgid "duplicate %s description of %s, other %s in %s"
+msgstr "توضیح %s تکراری از %s، مورد دیگر%s در %s قرار دارد"
+
+#: domains/changeset.py:25
+#, python-format
+msgid "Added in version %s"
+msgstr ""
+
+#: domains/changeset.py:26
+#, python-format
+msgid "Changed in version %s"
+msgstr "تغییر داده شده در نسخه %s"
+
+#: domains/changeset.py:27
+#, python-format
+msgid "Deprecated since version %s"
+msgstr "منسوخ شده از نسخه %s"
+
+#: domains/changeset.py:28
+#, python-format
+msgid "Removed in version %s"
+msgstr ""
+
+#: domains/__init__.py:299
+#, python-format
+msgid "%s %s"
+msgstr "%s %s"
+
+#: domains/citation.py:73
+#, python-format
+msgid "duplicate citation %s, other instance in %s"
+msgstr "نقل‌قول %s تکراری، مورد دیگر در %s قرار دارد"
+
+#: domains/citation.py:84
+#, python-format
+msgid "Citation [%s] is not referenced."
+msgstr "نقل [%s] قول ارجاع داده نشده."
+
+#: domains/math.py:63
+#, python-format
+msgid "duplicate label of equation %s, other instance in %s"
+msgstr "بر چسب معادله ی %s تکرار است، مورد دیگر در %s قرار دارد"
+
+#: domains/math.py:119 writers/latex.py:2479
+#, python-format
+msgid "Invalid math_eqref_format: %r"
+msgstr "قالب مرجع معادله‌‌ی ریاضی (math_eqref_format) نامعتبر: %r"
+
+#: environment/__init__.py:81
+msgid "new config"
+msgstr "پیکربندی جدید"
+
+#: environment/__init__.py:82
+msgid "config changed"
+msgstr "پیکربندی تغییر داده شد"
+
+#: environment/__init__.py:83
+msgid "extensions changed"
+msgstr "افزونه‌ها تغییر کردند"
+
+#: environment/__init__.py:249
+msgid "build environment version not current"
+msgstr "نسخه‌ی محیط ساخت به‌روز نیست"
+
+#: environment/__init__.py:251
+msgid "source directory has changed"
+msgstr "شاخه ی منبع تغییر کرد"
+
+#: environment/__init__.py:313
+#, python-format
+msgid "The configuration has changed (1 option: %r)"
+msgstr ""
+
+#: environment/__init__.py:318
+#, python-format
+msgid "The configuration has changed (%d options: %s)"
+msgstr ""
+
+#: environment/__init__.py:324
+#, python-format
+msgid "The configuration has changed (%d options: %s, ...)"
+msgstr ""
+
+#: environment/__init__.py:366
+msgid ""
+"This environment is incompatible with the selected builder, please choose "
+"another doctree directory."
+msgstr "این محیط با سازنده‌ی انتخاب شده سازگار نیست، لطفاً یک خوشه‌ی اسناد دیگری را انتخاب کنید."
+
+#: environment/__init__.py:473
+#, python-format
+msgid "Failed to scan documents in %s: %r"
+msgstr "پویش اسناد %s: %r شکست خورد"
+
+#: environment/__init__.py:626
+#, python-format
+msgid "Domain %r is not registered"
+msgstr "دامنه ی %r ثبت نشده"
+
+#: environment/__init__.py:777
+msgid "document isn't included in any toctree"
+msgstr "سند در هیچ درختواره‌ی فهرست مطالبی گنجانده نشده"
+
+#: environment/__init__.py:810
+msgid "self referenced toctree found. Ignored."
+msgstr "درختواره‌ی فهرست مطالب با ارجاع به خود پیدا شده. نادیده گرفته می‌شود."
+
+#: environment/__init__.py:839
+#, python-format
+msgid "document is referenced in multiple toctrees: %s, selecting: %s <- %s"
+msgstr ""
+
+#: locale/__init__.py:229
+msgid "Attention"
+msgstr "دقت"
+
+#: locale/__init__.py:230
+msgid "Caution"
+msgstr "ملاحظه"
+
+#: locale/__init__.py:231
+msgid "Danger"
+msgstr "خطر"
+
+#: locale/__init__.py:232
+msgid "Error"
+msgstr "خطا"
+
+#: locale/__init__.py:233
+msgid "Hint"
+msgstr "راهنمایی"
+
+#: locale/__init__.py:234
+msgid "Important"
+msgstr "مهم"
+
+#: locale/__init__.py:235
+msgid "Note"
+msgstr "توجه"
+
+#: locale/__init__.py:236
+msgid "See also"
+msgstr "همچنین ملاحظه نمائید"
+
+#: locale/__init__.py:237
+msgid "Tip"
+msgstr "نکته"
+
+#: locale/__init__.py:238
+msgid "Warning"
+msgstr "هشدار"
+
+#: cmd/quickstart.py:43
+msgid "automatically insert docstrings from modules"
+msgstr "درج خودکار رشته‌مستندات را از پیمانه‌ها"
+
+#: cmd/quickstart.py:44
+msgid "automatically test code snippets in doctest blocks"
+msgstr "آزمایش خودکار تکّه‌کدها در قسمت‌های مختلف پیمانه‌ی doctest"
+
+#: cmd/quickstart.py:45
+msgid "link between Sphinx documentation of different projects"
+msgstr "پیوند بین اسناد Sphinx از پروژه های گوناگون"
+
+#: cmd/quickstart.py:46
+msgid "write \"todo\" entries that can be shown or hidden on build"
+msgstr "نوشتن مدخل‌های لیست اقدام‌ها (\"todo\")که در ساخت می تواند نشان داده و یا پنهان شوند"
+
+#: cmd/quickstart.py:47
+msgid "checks for documentation coverage"
+msgstr "بررسی برای پوشش اسناد"
+
+#: cmd/quickstart.py:48
+msgid "include math, rendered as PNG or SVG images"
+msgstr "گنجاندن رابطه‌های ریاضی که در قالب PNG یا SVG به نمایش در آمده"
+
+#: cmd/quickstart.py:49
+msgid "include math, rendered in the browser by MathJax"
+msgstr "گنجاندن رابطه‌های ریاضی که MathJax در مرورگر نمایش در آورده"
+
+#: cmd/quickstart.py:50
+msgid "conditional inclusion of content based on config values"
+msgstr "گنجاندن شرطی محتوا بر اساس مقادیر پیکربندی"
+
+#: cmd/quickstart.py:51
+msgid "include links to the source code of documented Python objects"
+msgstr "گنجاندن ویندهای کد منبع اشیاء مستند شده‌ی پایتون"
+
+#: cmd/quickstart.py:52
+msgid "create .nojekyll file to publish the document on GitHub pages"
+msgstr "ساخت پرونده‌ی nojekyll  برای انتشار سند در صفحات گیت-هاب"
+
+#: cmd/quickstart.py:94
+msgid "Please enter a valid path name."
+msgstr "لطفاً نام مسیر معتبری را وارد کنید."
+
+#: cmd/quickstart.py:110
+msgid "Please enter some text."
+msgstr "لطفاً متنی وارد کنید."
+
+#: cmd/quickstart.py:117
+#, python-format
+msgid "Please enter one of %s."
+msgstr "لطفاً یکی از  %s وارد کنید."
+
+#: cmd/quickstart.py:125
+msgid "Please enter either 'y' or 'n'."
+msgstr "لطفاً یا y و یا n وارد کنید."
+
+#: cmd/quickstart.py:131
+msgid "Please enter a file suffix, e.g. '.rst' or '.txt'."
+msgstr "لطفاً یک پسوند را وارد کنید، مثل: '.rst'  یا '.txt'."
+
+#: cmd/quickstart.py:215
+#, python-format
+msgid "Welcome to the Sphinx %s quickstart utility."
+msgstr "به ابزار شروع سریع اسفینکس %s خوش آمدید."
+
+#: cmd/quickstart.py:219
+msgid ""
+"Please enter values for the following settings (just press Enter to\n"
+"accept a default value, if one is given in brackets)."
+msgstr "لطفاً مقدارهای تنظیمات زیر را وارد کنید\n(اگر مقدار پیش‌گزیده‌ای درون داده کروشه شده بود، برای برای پذیرش آن فقط کلید Enter‌را فشار دهید)."
+
+#: cmd/quickstart.py:227
+#, python-format
+msgid "Selected root path: %s"
+msgstr "مسیر برگزیده‌ی ریشه‌ی مستندات: %s"
+
+#: cmd/quickstart.py:230
+msgid "Enter the root path for documentation."
+msgstr "مسیر ریشه‌ی مستندات را وارد کنید."
+
+#: cmd/quickstart.py:231
+msgid "Root path for the documentation"
+msgstr "مسیر ریشه‌ی مستندات"
+
+#: cmd/quickstart.py:239
+msgid "Error: an existing conf.py has been found in the selected root path."
+msgstr "خطا: در مسیر ریشه‌ی انتخاب شده‌، پرونده‌ی conf.pyی دیگری یپدا شد."
+
+#: cmd/quickstart.py:245
+msgid "sphinx-quickstart will not overwrite existing Sphinx projects."
+msgstr "ابراز شروع سریع اسفینکس روی پروژه‌های از قبل موجود اسفینکس بازنویسی نمی‌کند."
+
+#: cmd/quickstart.py:248
+msgid "Please enter a new root path (or just Enter to exit)"
+msgstr "لطفاً یک مسیر ریشه‌ی جدید وارد کنید (یا برای خروج Enter‌ را بزنید)"
+
+#: cmd/quickstart.py:258
+msgid ""
+"You have two options for placing the build directory for Sphinx output.\n"
+"Either, you use a directory \"_build\" within the root path, or you separate\n"
+"\"source\" and \"build\" directories within the root path."
+msgstr "شما برای تعیین شاخه‌ی ساخت برای برون‌داد اسفینکس دو گزینه دارید.\nیا از شاخه‌ای با نام \"_build\" درون شاخه‌ی ریشه استفاده کنید،\nو یا شاخه‌های را درون یک مسیر ریشه با نام‌های منبع (source) و ساخت (build) جدا کنید."
+
+#: cmd/quickstart.py:265
+msgid "Separate source and build directories (y/n)"
+msgstr "شاخه‌های منبع و ساخت از یکدیگر جدا شوند؟(y/n)"
+
+#: cmd/quickstart.py:271
+msgid ""
+"Inside the root directory, two more directories will be created; \"_templates\"\n"
+"for custom HTML templates and \"_static\" for custom stylesheets and other static\n"
+"files. You can enter another prefix (such as \".\") to replace the underscore."
+msgstr "درون شاخه‌ی ریشه، دو شاخه‌ی دیگر ساخته خواهد شد؛\n\"_templates\" برای قالب‌های سفارشی HTML و \"_static\" برای قالب برگه‌ها و بقیّه‌ی پرونده‌های ثابت.\nشما می‌توانید پیشوند دیگری (مانند «.») برای جایگزینی نویسه‌ی خط به کار ببرید."
+
+#: cmd/quickstart.py:277
+msgid "Name prefix for templates and static dir"
+msgstr "برای  شاخه‌های قالب‌ها (templates) و ثابت‌ها (static) نویسه‌ی پیشوندی را بنویسید"
+
+#: cmd/quickstart.py:282
+msgid ""
+"The project name will occur in several places in the built documentation."
+msgstr "نام پروژه در چندین جا در سند ساخته شده به کار می‌رود."
+
+#: cmd/quickstart.py:286
+msgid "Project name"
+msgstr "نام پروژه"
+
+#: cmd/quickstart.py:288
+msgid "Author name(s)"
+msgstr "نام نویسنده (ها)"
+
+#: cmd/quickstart.py:293
+msgid ""
+"Sphinx has the notion of a \"version\" and a \"release\" for the\n"
+"software. Each version can have multiple releases. For example, for\n"
+"Python the version is something like 2.5 or 3.0, while the release is\n"
+"something like 2.5.1 or 3.0a1. If you don't need this dual structure,\n"
+"just set both to the same value."
+msgstr "اسفینکس نظریّه‌ای برای یک «نسخه» و یک «نگارش» برای نرم افزار دارد.\nهر نسخه‌ای می تواند چندید نگارش داشته باشد.\n مثلاً برای پایتون نسخه‌ چیزی شبیه به ۲/۵ یا ۳/۰ است،\n در حالی که انتشار چیزیست شبیه به ۲/۵/۱ یا ۳/۰a۱ \n.\nاگر شما نیازی به این ساختار دوگانه ندارید، هر دو را یکی تعیین کنید."
+
+#: cmd/quickstart.py:301
+msgid "Project version"
+msgstr "نسخه انتشار پروژه"
+
+#: cmd/quickstart.py:303
+msgid "Project release"
+msgstr "انتشار پروژه"
+
+#: cmd/quickstart.py:308
+msgid ""
+"If the documents are to be written in a language other than English,\n"
+"you can select a language here by its language code. Sphinx will then\n"
+"translate text that it generates into that language.\n"
+"\n"
+"For a list of supported codes, see\n"
+"https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language."
+msgstr "اگر مستندات قرار است با زبانی غیر از انگلیسی نوشته شود،\nمی توانید همین‌جا یک زبان را با انتخاب کد زبانیش انتخاب کنید.\nاسفینکس سپس متن‌هایی را که تولید می‌کند را به آن زبان ترجمه می‌کند.\n\nبرای فهرست زبان‌های پشتیبانی شده، به این نشانی مراجعه کنید\nhttps://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language."
+
+#: cmd/quickstart.py:317
+msgid "Project language"
+msgstr "زبان پروژه"
+
+#: cmd/quickstart.py:324
+msgid ""
+"The file name suffix for source files. Commonly, this is either \".txt\"\n"
+"or \".rst\". Only files with this suffix are considered documents."
+msgstr "پسوند نام پرونده برای پرونده‌های منبع. معمولاً این پسوند یا \".txt\" است و یا \".rst\".\nفقط پرونده‌هایی بای این پسوند به عنوان اسناد در نظر گرفته می‌شوند."
+
+#: cmd/quickstart.py:329
+msgid "Source file suffix"
+msgstr "پسوند پرونده‌ی منبع"
+
+#: cmd/quickstart.py:334
+msgid ""
+"One document is special in that it is considered the top node of the\n"
+"\"contents tree\", that is, it is the root of the hierarchical structure\n"
+"of the documents. Normally, this is \"index\", but if your \"index\"\n"
+"document is a custom template, you can also set this to another filename."
+msgstr "یک سند از آن جهت خاص است که  به عنوان بست بالایی «درختواره‌ی محتوا» در نظر گرفته می‌شود.\nیعنی، این سند ریشه‌ی ساختار سلسله مراتبی اسناد است.\nمعمولاً سند این کار «نمایه» است، ولی اگر سند «نمایه‌»‌ی شما قالب سفارشی است؛ می توانید آن را به نام دیگری تغییر دهید."
+
+#: cmd/quickstart.py:342
+msgid "Name of your master document (without suffix)"
+msgstr "نام سند اصلی شما (بدون پسوند)"
+
+#: cmd/quickstart.py:352
+#, python-format
+msgid ""
+"Error: the master file %s has already been found in the selected root path."
+msgstr "خطا: پرونده‌ی اصلی %s از قبل در مسیر ریشه‌ی برگزیده بوده‌است."
+
+#: cmd/quickstart.py:359
+msgid "sphinx-quickstart will not overwrite the existing file."
+msgstr "ابراز شروع سریع اسفینکس روی پرونده‌های از قبل موجود بازنویسی نمی‌کند."
+
+#: cmd/quickstart.py:362
+msgid ""
+"Please enter a new file name, or rename the existing file and press Enter"
+msgstr "لطفاُ یک نام جدید وارد کنید، یا نام پرونده‌ی موجود را تغییر دهید و Enter‌ را فشار دهید"
+
+#: cmd/quickstart.py:371
+msgid "Indicate which of the following Sphinx extensions should be enabled:"
+msgstr "مشخّص کنید کدام یک از این افزونه‌های اسفینکس باید فعّال باشد:"
+
+#: cmd/quickstart.py:381
+msgid ""
+"Note: imgmath and mathjax cannot be enabled at the same time. imgmath has "
+"been deselected."
+msgstr "یادداشت: ابزارهای‌ imgmath و mathjax نمی‌توانند در یک زمان فعّال باشند. انتخاب imgmath لغو شد."
+
+#: cmd/quickstart.py:391
+msgid ""
+"A Makefile and a Windows command file can be generated for you so that you\n"
+"only have to run e.g. `make html' instead of invoking sphinx-build\n"
+"directly."
+msgstr "پرونده‌های خط‌فرمان ویندوز و Makefile می‌توانند برای شما تولید شوند، به گونه‌ای که شما فقط نیاز باشد تا مثلاً فرمان `make html' را به جای فراخوان مستقیم ابزار ساخت اسفینکس اجرا کنید."
+
+#: cmd/quickstart.py:397
+msgid "Create Makefile? (y/n)"
+msgstr "آیا پرونده‌ی‌ make ایجاد شود؟ (y/n)"
+
+#: cmd/quickstart.py:401
+msgid "Create Windows command file? (y/n)"
+msgstr "آیا پرونده‌ی خط فرمان ویندوز ساخته شود؟ (y/n)ٍ"
+
+#: cmd/quickstart.py:453 ext/apidoc.py:92
+#, python-format
+msgid "Creating file %s."
+msgstr "ایجاد پرونده‌ی %s."
+
+#: cmd/quickstart.py:458 ext/apidoc.py:89
+#, python-format
+msgid "File %s already exists, skipping."
+msgstr "پرونده‌ی %s در حال حاضر وجود دارد، رد شدن."
+
+#: cmd/quickstart.py:501
+msgid "Finished: An initial directory structure has been created."
+msgstr "پایان یافت: ساختار آغازین شاخه ایجاد شد."
+
+#: cmd/quickstart.py:504
+#, python-format
+msgid ""
+"You should now populate your master file %s and create other documentation\n"
+"source files. "
+msgstr "شما باید حالا دیگر پرونده‌ی اصلی‌تان %s را جمع آوری کنید\n و بقیّه‌ی پرونده‌های منبع مستندات را ایجاد کنید. "
+
+#: cmd/quickstart.py:512
+msgid ""
+"Use the Makefile to build the docs, like so:\n"
+"   make builder"
+msgstr "از Makefile  برای ساختن مستندات استفاده کنید، مانند این:\n   make builder"
+
+#: cmd/quickstart.py:515
+#, python-format
+msgid ""
+"Use the sphinx-build command to build the docs, like so:\n"
+"   sphinx-build -b builder %s %s"
+msgstr "از فرمان ساخت اسفینکس برای ساختن مستندات استفاده کنید، مانند این:\n   sphinx-build -b builder %s %s"
+
+#: cmd/quickstart.py:522
+msgid ""
+"where \"builder\" is one of the supported builders, e.g. html, latex or "
+"linkcheck."
+msgstr "که در آن سازنده یکی از سازنده‌های پشتیبانی شده است، مانند html, latex و یا linkcheck."
+
+#: cmd/quickstart.py:557
+msgid ""
+"\n"
+"Generate required files for a Sphinx project.\n"
+"\n"
+"sphinx-quickstart is an interactive tool that asks some questions about your\n"
+"project and then generates a complete documentation directory and sample\n"
+"Makefile to be used with sphinx-build.\n"
+msgstr "\nتولید پرونده‌های مورد نیاز برای یک پروژه‌ی اسفینکس\n\nابزار شروع سریع اسفینکس ابزاری تعاملی است که شماری سؤال درباره‌ی پروژه‌یتان از شما می پرسد\nو سپس یک شاخه‌ی کامل مستندات و پرونده ساخت Makefile را برای استفاده به همراه ابزار ساخت اسفینکس تولید می‌کند.\n"
+
+#: cmd/build.py:153 cmd/quickstart.py:567 ext/apidoc.py:374
+#: ext/autosummary/generate.py:766
+msgid "For more information, visit <https://www.sphinx-doc.org/>."
+msgstr "برای اطّلاعات بیشتر به <https://www.sphinx-doc.org/> بروید."
+
+#: cmd/quickstart.py:577
+msgid "quiet mode"
+msgstr "حالت سکوت"
+
+#: cmd/quickstart.py:587
+msgid "project root"
+msgstr "ریشه‌ی پروژه"
+
+#: cmd/quickstart.py:590
+msgid "Structure options"
+msgstr "گزینه‌های ساختار"
+
+#: cmd/quickstart.py:596
+msgid "if specified, separate source and build dirs"
+msgstr "در صورتی مشخّص شدن، شاخه‌های منبع و ساخت از یکدیگر جدا می‌شوند"
+
+#: cmd/quickstart.py:602
+msgid "if specified, create build dir under source dir"
+msgstr "در صورت مشخّص بودن، شاخه‌ی build (ساخت) را درون شاخه‌ی منبع بساز"
+
+#: cmd/quickstart.py:608
+msgid "replacement for dot in _templates etc."
+msgstr "جایگزینی نقطه در _templates (قالب‌ها) و ... ."
+
+#: cmd/quickstart.py:611
+msgid "Project basic options"
+msgstr "گزینه‌های اساسی پروژه"
+
+#: cmd/quickstart.py:613
+msgid "project name"
+msgstr "نام پروژه"
+
+#: cmd/quickstart.py:616
+msgid "author names"
+msgstr "نام نویسندگان"
+
+#: cmd/quickstart.py:623
+msgid "version of project"
+msgstr "نسخه انتشار پروژه"
+
+#: cmd/quickstart.py:630
+msgid "release of project"
+msgstr "انتشار پروژه"
+
+#: cmd/quickstart.py:637
+msgid "document language"
+msgstr "زبان سند"
+
+#: cmd/quickstart.py:640
+msgid "source file suffix"
+msgstr "پسوند پرونده‌ی منبع"
+
+#: cmd/quickstart.py:643
+msgid "master document name"
+msgstr "نام سند اصلی"
+
+#: cmd/quickstart.py:646
+msgid "use epub"
+msgstr "استفاده epub"
+
+#: cmd/quickstart.py:649
+msgid "Extension options"
+msgstr "گزینه‌های افزونه"
+
+#: cmd/quickstart.py:656 ext/apidoc.py:578
+#, python-format
+msgid "enable %s extension"
+msgstr "فعّال‌سازی %s افزونه"
+
+#: cmd/quickstart.py:663 ext/apidoc.py:570
+msgid "enable arbitrary extensions"
+msgstr "فعّال‌سازی افزونه‌های اختیاری"
+
+#: cmd/quickstart.py:666
+msgid "Makefile and Batchfile creation"
+msgstr "ایجاد Makefile و Batchfile"
+
+#: cmd/quickstart.py:672
+msgid "create makefile"
+msgstr "ایجاد پرونده‌ی سازنده (makefile)"
+
+#: cmd/quickstart.py:678
+msgid "do not create makefile"
+msgstr "پرونده‌ی سازنده (makefile) را ایجاد نکن"
+
+#: cmd/quickstart.py:685
+msgid "create batchfile"
+msgstr "ایجاد Batchfile"
+
+#: cmd/quickstart.py:691
+msgid "do not create batchfile"
+msgstr "batchfile را ایجاد نکن"
+
+#: cmd/quickstart.py:700
+msgid "use make-mode for Makefile/make.bat"
+msgstr "اسفتاده از حالت ایجاد برای پرونده‌های Makefile/make.bat"
+
+#: cmd/quickstart.py:703 ext/apidoc.py:581
+msgid "Project templating"
+msgstr "قالب سازی پروژه"
+
+#: cmd/quickstart.py:709 ext/apidoc.py:587
+msgid "template directory for template files"
+msgstr "شاخه‌ی قالب شامل پرونده‌های قالب"
+
+#: cmd/quickstart.py:716
+msgid "define a template variable"
+msgstr "تعریف متغیّر قالب"
+
+#: cmd/quickstart.py:751
+msgid "\"quiet\" is specified, but any of \"project\" or \"author\" is not specified."
+msgstr "حالت «ساکت» تعیین شده، ولی یکی از موارد «پروژه» یا «نویسنده» مشخّص نشده."
+
+#: cmd/quickstart.py:770
+msgid ""
+"Error: specified path is not a directory, or sphinx files already exist."
+msgstr "خطا: مسیر مشخّص شده پوشه نیست، یا از قبل پرونده‌های اسفینکس وجود داشته‌اند."
+
+#: cmd/quickstart.py:777
+msgid ""
+"sphinx-quickstart only generate into a empty directory. Please specify a new"
+" root path."
+msgstr "ابزار شروع سریع اسفینکس فقط یک پوشه‌ی خالی درست می کند. لطفاً یک مسیر ریشه‌ی جدید مشخّص کنید."
+
+#: cmd/quickstart.py:795
+#, python-format
+msgid "Invalid template variable: %s"
+msgstr "متغیرهای نامعتبرقالب؛ %s"
+
+#: cmd/build.py:49
+msgid "Exception occurred while building, starting debugger:"
+msgstr "در حین ساخت ایرادی رخ داد، شروع اشکال زدا:"
+
+#: _cli/util/errors.py:129 cmd/build.py:65
+msgid "Interrupted!"
+msgstr "قطع شد!"
+
+#: cmd/build.py:67
+msgid "reST markup error:"
+msgstr "خطای نشانه‌گذاری متن بازساختمند (reST)"
+
+#: _cli/util/errors.py:143 cmd/build.py:73
+msgid "Encoding error:"
+msgstr "خطای کدگذاری نویسه:"
+
+#: cmd/build.py:78 cmd/build.py:108
+#, python-format
+msgid ""
+"The full traceback has been saved in %s, if you want to report the issue to "
+"the developers."
+msgstr "اگر می‌‌خواهید مشکل را به توسعه‌دهندگان گزارش دهید، ردیابی کامل خطا در %s ذخیره شده است."
+
+#: _cli/util/errors.py:148 cmd/build.py:90
+msgid "Recursion error:"
+msgstr "خطای بازگشتی:"
+
+#: _cli/util/errors.py:152 cmd/build.py:94
+msgid ""
+"This can happen with very large or deeply nested source files. You can "
+"carefully increase the default Python recursion limit of 1000 in conf.py "
+"with e.g.:"
+msgstr "این اتّفاق ممکن است برای پرونده‌های بسیار تو در توی منبع بیافتد. شما می‌توانید محدودیّت ۱۰۰۰ تایی مقدار پیش‌فرض اجرای بازگشت پایتون را در conf.py زیاد کنید، مثلاً با:"
+
+#: _cli/util/errors.py:165 cmd/build.py:103
+msgid "Exception occurred:"
+msgstr "ایراد رخ داد:"
+
+#: _cli/util/errors.py:178 cmd/build.py:117
+msgid ""
+"Please also report this if it was a user error, so that a better error "
+"message can be provided next time."
+msgstr "لطفاً اگر این مورد خطای کاربر بوده، آن را گزارش دهید تا برای بارهای بعدی پیام خطای بهتری بتواند ارائه شود."
+
+#: cmd/build.py:124
+msgid ""
+"A bug report can be filed in the tracker at <https://github.com/sphinx-"
+"doc/sphinx/issues>. Thanks!"
+msgstr "گزارش اشکال می تواند در ردیاب در مسیر <https://github.com/sphinx-doc/sphinx/issues> ثبت شود. با سپاس!"
+
+#: cmd/build.py:144
+msgid "job number should be a positive number"
+msgstr "شماره‌ی کار باید یک عدد مثبت باشد"
+
+#: cmd/build.py:154
+msgid ""
+"\n"
+"Generate documentation from source files.\n"
+"\n"
+"sphinx-build generates documentation from the files in SOURCEDIR and places it\n"
+"in OUTPUTDIR. It looks for 'conf.py' in SOURCEDIR for the configuration\n"
+"settings. The 'sphinx-quickstart' tool may be used to generate template files,\n"
+"including 'conf.py'\n"
+"\n"
+"sphinx-build can create documentation in different formats. A format is\n"
+"selected by specifying the builder name on the command line; it defaults to\n"
+"HTML. Builders can also perform other tasks related to documentation\n"
+"processing.\n"
+"\n"
+"By default, everything that is outdated is built. Output only for selected\n"
+"files can be built by specifying individual filenames.\n"
+msgstr "\nایجاد مستندات از پرونده‌های مبدأ.\n\nسازنده‌ی اسفنکس مستندات را از روی پرونده های مبنع در پوشه‌‌ی منبع تولید کرده در پوشه‌ی برون‌داد قرار می‌دهد.\nاین سازنده در پوشه‌ی مبدأ به دنبال پرونده 'conf.py' تنظیمات پیکربندی می‌گردد.\nاین امکان وجود دارد که از ابزار شروع سریع اسفینکس ('sphinx-quickstart') برای تولید پرونده‌های قالب، که شامل پرونده 'conf.py' هم می‌شود استفاده شود.\n\nسازنده‌ی اسفینکس می توند مستندات را در قالب‌های گوناگونی از پرونده‌های خروجی ایجاد کند. قالب پرونده خروجی با مشخّص کردن نام سازنده در خط فرمان مشخّص می‌شود که به صورت پیش فرض HTML است.  همچنین، سازنده‌ها می‌توانند کارهای دیگر مربوط به فرآیند پردازش مستندسازی را انجام دهند.\n\nبه صورت پیش فرض، هر چیزی که منسوخ شده باشد تولید می‌شود. برون‌داد برای پرونده‌های منتخب می‌تواند فقط با مشخّص کردن نام تک تک پرونده‌ها ساخته شود.\n"
+
+#: cmd/build.py:180
+msgid "path to documentation source files"
+msgstr "مسیر پرونده‌های مستندات"
+
+#: cmd/build.py:183
+msgid "path to output directory"
+msgstr "مسیری برای شاخه‌ی برون داد"
+
+#: cmd/build.py:188
+msgid ""
+"(optional) a list of specific files to rebuild. Ignored if --write-all is "
+"specified"
+msgstr ""
+
+#: cmd/build.py:194
+msgid "general options"
+msgstr "گزینه‌های کلی"
+
+#: cmd/build.py:201
+msgid "builder to use (default: 'html')"
+msgstr ""
+
+#: cmd/build.py:210
+msgid ""
+"run in parallel with N processes, when possible. 'auto' uses the number of "
+"CPU cores"
+msgstr ""
+
+#: cmd/build.py:220
+msgid "write all files (default: only write new and changed files)"
+msgstr "نوشتن همه‌ی پرونده‌ها (پیش‌گزیده: فقط پرونده‌های جدید نو تغییر یافته را بنویس)"
+
+#: cmd/build.py:227
+msgid "don't use a saved environment, always read all files"
+msgstr "از محیط ذخیره شده استفاده نکن، همیشه همه پرونده ها را بخوان"
+
+#: cmd/build.py:230
+msgid "path options"
+msgstr ""
+
+#: cmd/build.py:236
+msgid ""
+"directory for doctree and environment files (default: OUTPUT_DIR/.doctrees)"
+msgstr ""
+
+#: cmd/build.py:246
+msgid "directory for the configuration file (conf.py) (default: SOURCE_DIR)"
+msgstr ""
+
+#: cmd/build.py:255
+msgid "use no configuration file, only use settings from -D options"
+msgstr ""
+
+#: cmd/build.py:264
+msgid "override a setting in configuration file"
+msgstr "نادیده گرفتن تنظیماتی در پرونده‌ی پیکره‌بندی"
+
+#: cmd/build.py:273
+msgid "pass a value into HTML templates"
+msgstr "مقداری را به قالب‌های HTML بدهید"
+
+#: cmd/build.py:282
+msgid "define tag: include \"only\" blocks with TAG"
+msgstr "تعریف برچسب: «فقط» تکّه‌های با برچسب گنجانده شود"
+
+#: cmd/build.py:289
+msgid "nitpicky mode: warn about all missing references"
+msgstr ""
+
+#: cmd/build.py:292
+msgid "console output options"
+msgstr "گزنیه‌های برون‌داد میز فرمان"
+
+#: cmd/build.py:299
+msgid "increase verbosity (can be repeated)"
+msgstr "افزایش ارائه‌ی جزئیّات (می تواند تکرار شود)"
+
+#: cmd/build.py:306 ext/apidoc.py:413
+msgid "no output on stdout, just warnings on stderr"
+msgstr "بدون برون‌داد در درگاه خروجی استاندارد(stdout)، فقط هشدارها در درگاه استاندارد خطاها (stderr)"
+
+#: cmd/build.py:313
+msgid "no output at all, not even warnings"
+msgstr "بدون هیچ برون‌داد، حتّی بدون هشدار"
+
+#: cmd/build.py:321
+msgid "do emit colored output (default: auto-detect)"
+msgstr "خروجی رنگ شده منتشر شود (پیش‌فرض: تشخیص خودکار)"
+
+#: cmd/build.py:329
+msgid "do not emit colored output (default: auto-detect)"
+msgstr "خروجی رنگ شده منتشر نشود (پیش‌فرض: تشخیص خودکار)"
+
+#: cmd/build.py:332
+msgid "warning control options"
+msgstr ""
+
+#: cmd/build.py:338
+msgid "write warnings (and errors) to given file"
+msgstr "نوشتن هشدارها (و خطاها) در پرونده‌ی داده شده"
+
+#: cmd/build.py:345
+msgid "turn warnings into errors"
+msgstr "تغییر هشدارها به خطاها"
+
+#: cmd/build.py:353
+msgid "show full traceback on exception"
+msgstr "نمایش گزارش کامل ردیابی ایراد"
+
+#: cmd/build.py:356
+msgid "run Pdb on exception"
+msgstr "ایراد در اجرای Pdb"
+
+#: cmd/build.py:362
+msgid "raise an exception on warnings"
+msgstr ""
+
+#: cmd/build.py:405
+msgid "cannot combine -a option and filenames"
+msgstr "نمی توان گزینه‌ی -a را با نام پرونده‌ها ترکیب کرد"
+
+#: cmd/build.py:437
+#, python-format
+msgid "cannot open warning file '%s': %s"
+msgstr ""
+
+#: cmd/build.py:456
+msgid "-D option argument must be in the form name=value"
+msgstr "نشانوند گزینه‌ی D- می‌بایست در قالب نام=مقدار (name=value) باشد"
+
+#: cmd/build.py:463
+msgid "-A option argument must be in the form name=value"
+msgstr "نشانوند گزینه‌ی A- می‌بایست در قالب نام=مقدار (name=value) باشد"
+
+#: builders/dummy.py:19
+msgid "The dummy builder generates no files."
+msgstr "سازنده‌ی بدلی هیچ پرونده‌ای تولید نمی کند."
+
+#: builders/linkcheck.py:75
+#, python-format
+msgid "Look for any errors in the above output or in %(outdir)s/output.txt"
+msgstr "به دنبال هر یک از خطاهای بالا در یا در برون‌داد و یا در %(outdir)s/output.txt بگردید"
+
+#: builders/linkcheck.py:146
+#, python-format
+msgid "broken link: %s (%s)"
+msgstr "پیوند خراب:  %s (%s)"
+
+#: builders/linkcheck.py:540
+#, python-format
+msgid "Anchor '%s' not found"
+msgstr "مهار '%s' پیدا نشد"
+
+#: builders/linkcheck.py:742
+#, python-format
+msgid "Failed to compile regex in linkcheck_allowed_redirects: %r %s"
+msgstr "شکست در گردآوری عبارات باقاعده در linkcheck_allowed_redirects: %r %s"
+
+#: builders/singlehtml.py:37
+#, python-format
+msgid "The HTML page is in %(outdir)s."
+msgstr "صفحه HTML در %(outdir)s است."
+
+#: builders/singlehtml.py:173
+msgid "assembling single document"
+msgstr "سر جمع کرد تک سند"
+
+#: builders/latex/__init__.py:346 builders/manpage.py:56
+#: builders/singlehtml.py:178 builders/texinfo.py:121
+msgid "writing"
+msgstr "در حال نوشتن"
+
+#: builders/singlehtml.py:191
+msgid "writing additional files"
+msgstr "نوشتن پرونده‌های اضافی"
+
+#: builders/manpage.py:39
+#, python-format
+msgid "The manual pages are in %(outdir)s."
+msgstr "صفحات راهنما در %(outdir)s است."
+
+#: builders/manpage.py:47
+msgid "no \"man_pages\" config value found; no manual pages will be written"
+msgstr "هیچ مقداری برای تنظیمات «صفحات راهنما» ا نشد؛ بنابراین هیچ صفحه‌ی راهنمایی نوشته نخواهد شد"
+
+#: builders/manpage.py:73
+#, python-format
+msgid "\"man_pages\" config value references unknown document %s"
+msgstr "پیکربندی مقدارهای «صفحات راهنما» به سند ناشناخته‌ای ارجاع می‌دهند %s"
+
+#: builders/text.py:34
+#, python-format
+msgid "The text files are in %(outdir)s."
+msgstr "پرونده‌ی متنی در پوشه‌ی %(outdir)s است."
+
+#: builders/html/__init__.py:1239 builders/text.py:81 builders/xml.py:97
+#, python-format
+msgid "error writing file %s: %s"
+msgstr "خطای نوشتن پرونده: %s, %s"
+
+#: builders/xml.py:38
+#, python-format
+msgid "The XML files are in %(outdir)s."
+msgstr "پرونده‌ی XML در پوشه‌ی %(outdir)s است."
+
+#: builders/xml.py:110
+#, python-format
+msgid "The pseudo-XML files are in %(outdir)s."
+msgstr "پرونده‌های شبه XML در پوشه‌ی %(outdir)s."
+
+#: builders/texinfo.py:47
+#, python-format
+msgid "The Texinfo files are in %(outdir)s."
+msgstr "پرونده‌ی اطّلاعات متن در پوشه‌ی %(outdir)s است."
+
+#: builders/texinfo.py:49
+msgid ""
+"\n"
+"Run 'make' in that directory to run these through makeinfo\n"
+"(use 'make info' here to do that automatically)."
+msgstr "\nدر آن شاخه فرمان 'make' را اجرا کنید تا این‌ها رh با makeinfo اجرا کند\n(برای انجام خودکار `make info' را به کار ببرید)."
+
+#: builders/texinfo.py:78
+msgid "no \"texinfo_documents\" config value found; no documents will be written"
+msgstr "هیچ تنظیماتی برای «صفحات راهنما» پیدا نشد؛ بنابراین هیچ صفحه‌ی راهنمایی نوشته نخواهد شد"
+
+#: builders/texinfo.py:90
+#, python-format
+msgid "\"texinfo_documents\" config value references unknown document %s"
+msgstr "مقدار پیکربندی اطّلاعات متن سندها (texinfo_documents) به سند ناشناخته‌ی %s ارجاع می‌دهد"
+
+#: builders/latex/__init__.py:324 builders/texinfo.py:115
+#, python-format
+msgid "processing %s"
+msgstr "در حال پردازش %s"
+
+#: builders/latex/__init__.py:404 builders/texinfo.py:174
+msgid "resolving references..."
+msgstr "حل ارجاع‌ها..."
+
+#: builders/latex/__init__.py:415 builders/texinfo.py:184
+msgid " (in "
+msgstr " (در "
+
+#: builders/_epub_base.py:423 builders/html/__init__.py:778
+#: builders/latex/__init__.py:482 builders/texinfo.py:202
+msgid "copying images... "
+msgstr "در حال رونوشت از تصاویر... "
+
+#: builders/_epub_base.py:445 builders/latex/__init__.py:497
+#: builders/texinfo.py:219
+#, python-format
+msgid "cannot copy image file %r: %s"
+msgstr "نمی تواند پرونده‌ی تصویر %r: %s را کپی کند"
+
+#: builders/texinfo.py:226
+msgid "copying Texinfo support files"
+msgstr "رونوشت از پرونده‌های با پشتیبانی اطلاعات متن"
+
+#: builders/texinfo.py:234
+#, python-format
+msgid "error writing file Makefile: %s"
+msgstr "خطای نوشتن پرونده‌ی ساخت (Makefile) : %s"
+
+#: builders/gettext.py:230
+#, python-format
+msgid "The message catalogs are in %(outdir)s."
+msgstr "سیاهه‌های پیام‌ها در %(outdir)s است."
+
+#: builders/__init__.py:383 builders/gettext.py:251
+#, python-format
+msgid "building [%s]: "
+msgstr "ساخت [%s]: "
+
+#: builders/gettext.py:252
+#, python-format
+msgid "targets for %d template files"
+msgstr "مقصد‌های قالب پرونده‌های %d"
+
+#: builders/gettext.py:257
+msgid "reading templates... "
+msgstr "خواندن قالب‌ها... "
+
+#: builders/gettext.py:292
+msgid "writing message catalogs... "
+msgstr "نوشتن سیاهه‌های پیام... "
+
+#: builders/__init__.py:212
+#, python-format
+msgid "a suitable image for %s builder not found: %s (%s)"
+msgstr "تصویر مناسبی برای سازنده‌ی %s پیدا نشد: %s (%s)"
+
+#: builders/__init__.py:220
+#, python-format
+msgid "a suitable image for %s builder not found: %s"
+msgstr "تصویر مناسبی برای سازنده‌ی %s پیدا نشد: %s"
+
+#: builders/__init__.py:243
+msgid "building [mo]: "
+msgstr "ساخت پرونده‌ی [mo]: "
+
+#: builders/__init__.py:246 builders/__init__.py:741 builders/__init__.py:773
+msgid "writing output... "
+msgstr "نوشتن برون‌داد... "
+
+#: builders/__init__.py:263
+#, python-format
+msgid "all of %d po files"
+msgstr "همه‌ی پرونده‌های %d po"
+
+#: builders/__init__.py:285
+#, python-format
+msgid "targets for %d po files that are specified"
+msgstr "اهداف برای %d پرونده‌های poی که مشخّص شده"
+
+#: builders/__init__.py:297
+#, python-format
+msgid "targets for %d po files that are out of date"
+msgstr "مقصد‌های %d پرونده‌های poی هستند که منسوخ شده‌اند"
+
+#: builders/__init__.py:307
+msgid "all source files"
+msgstr "همه‌ی پرونده‌های منبع"
+
+#: builders/__init__.py:319
+#, python-format
+msgid "file %r given on command line does not exist, "
+msgstr ""
+
+#: builders/__init__.py:325
+#, python-format
+msgid ""
+"file %r given on command line is not under the source directory, ignoring"
+msgstr "پرونده‌ی %r که در خط فرمان داده شده، در شاخه‌ی منبع نیست, نادیده گرفته می‌شود"
+
+#: builders/__init__.py:336
+#, python-format
+msgid "file %r given on command line is not a valid document, ignoring"
+msgstr ""
+
+#: builders/__init__.py:351
+#, python-format
+msgid "%d source files given on command line"
+msgstr "پرونده‌های منبع %d داده شده در خط فرمان"
+
+#: builders/__init__.py:366
+#, python-format
+msgid "targets for %d source files that are out of date"
+msgstr "مقصد‌های %d پرونده‌های منبعی هستند که منسوخ شده‌اند"
+
+#: builders/__init__.py:394
+msgid "looking for now-outdated files... "
+msgstr "در پی پرونده‌هایی که الآن منسوخ هستند... "
+
+#: builders/__init__.py:398
+#, python-format
+msgid "%d found"
+msgstr "%d تا مورد پیدا شد"
+
+#: builders/__init__.py:400
+msgid "none found"
+msgstr "چیزی پیدا نشد"
+
+#: builders/__init__.py:407
+msgid "pickling environment"
+msgstr "بارگذاری محیط pickle شده"
+
+#: builders/__init__.py:414
+msgid "checking consistency"
+msgstr "بررسی ثبات"
+
+#: builders/__init__.py:418
+msgid "no targets are out of date."
+msgstr "هیچ مقدار تاریخ منسوخ نیست."
+
+#: builders/__init__.py:458
+msgid "updating environment: "
+msgstr "به روز رسانی محیط: "
+
+#: builders/__init__.py:483
+#, python-format
+msgid "%s added, %s changed, %s removed"
+msgstr "%s اضافه شد، %s تغییر کرد، %s حذف شد"
+
+#: builders/__init__.py:519
+#, python-format
+msgid ""
+"Sphinx is unable to load the master document (%s) because it matches a "
+"built-in exclude pattern %r. Please move your master document to a different"
+" location."
+msgstr ""
+
+#: builders/__init__.py:528
+#, python-format
+msgid ""
+"Sphinx is unable to load the master document (%s) because it matches an "
+"exclude pattern specified in conf.py, %r. Please remove this pattern from "
+"conf.py."
+msgstr ""
+
+#: builders/__init__.py:539
+#, python-format
+msgid ""
+"Sphinx is unable to load the master document (%s) because it is not included"
+" in the custom include_patterns = %r. Ensure that a pattern in "
+"include_patterns matches the master document."
+msgstr ""
+
+#: builders/__init__.py:546
+#, python-format
+msgid ""
+"Sphinx is unable to load the master document (%s). The master document must "
+"be within the source directory or a subdirectory of it."
+msgstr ""
+
+#: builders/__init__.py:565 builders/__init__.py:581
+msgid "reading sources... "
+msgstr "خواندن منبع‌ها... "
+
+#: builders/__init__.py:698
+#, python-format
+msgid "docnames to write: %s"
+msgstr "نام مستندات برای نوشتن: %s"
+
+#: builders/__init__.py:711
+msgid "preparing documents"
+msgstr "آماده سازی اسناد"
+
+#: builders/__init__.py:714
+msgid "copying assets"
+msgstr ""
+
+#: builders/__init__.py:866
+#, python-format
+msgid "undecodable source characters, replacing with \"?\": %r"
+msgstr "نویسه‌ی منبع غیرقابل رمزگشایی، جایگزین با «؟» : %r"
+
+#: builders/epub3.py:83
+#, python-format
+msgid "The ePub file is in %(outdir)s."
+msgstr "پرونده‌ی ePub در پوشه‌ی %(outdir)s است."
+
+#: builders/epub3.py:189
+msgid "writing nav.xhtml file..."
+msgstr "نوشتن پرونده‌ی nav.xhtml..."
+
+#: builders/epub3.py:220
+msgid "conf value \"epub_language\" (or \"language\") should not be empty for EPUB3"
+msgstr "مقدار پیکربندی زبان پرونده epub (\"epub_language\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:227
+msgid "conf value \"epub_uid\" should be XML NAME for EPUB3"
+msgstr "مقدار پیکربندی شناسه‌ی یکتای انتشار الکترونیکی (\"epub_uid\") باید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) یک XML NAME باشد"
+
+#: builders/epub3.py:231
+msgid "conf value \"epub_title\" (or \"html_title\") should not be empty for EPUB3"
+msgstr "مقدار پیکربندی عنوان (\"html_title\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:238
+msgid "conf value \"epub_author\" should not be empty for EPUB3"
+msgstr "مقدار پیکربندی مؤلّف (\"epub_author\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:242
+msgid "conf value \"epub_contributor\" should not be empty for EPUB3"
+msgstr "مقدار پیکربندی حامی (\"epub_contributor\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:247
+msgid "conf value \"epub_description\" should not be empty for EPUB3"
+msgstr "مقدار پیکربندی توضیحات (\"epub_description\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:251
+msgid "conf value \"epub_publisher\" should not be empty for EPUB3"
+msgstr "مقدار پیکربندی ناشر (\"epub_publisher\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:255
+msgid "conf value \"epub_copyright\" (or \"copyright\")should not be empty for EPUB3"
+msgstr "مقدار پیکربندی حق انتشار (\"epub_copyright\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:262
+msgid "conf value \"epub_identifier\" should not be empty for EPUB3"
+msgstr "مقدار پیکربندی شناسه (\"epub_identifier\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:265
+msgid "conf value \"version\" should not be empty for EPUB3"
+msgstr "مقدار پیکربندی ویراست (\"version\") نباید برای نسخه‌ی سوم پرونده‌های انتشار الکترونیک(EPUB3) خالی باشد"
+
+#: builders/epub3.py:279 builders/html/__init__.py:1289
+#, python-format
+msgid "invalid css_file: %r, ignored"
+msgstr "پرونده‌ی css نامعتبر%r: نادیده گرفته می‌شود"
+
+#: builders/_epub_base.py:222
+#, python-format
+msgid "duplicated ToC entry found: %s"
+msgstr "عنوان تکراری در فهرست مطالب پیدا شد:%s"
+
+#: builders/_epub_base.py:434
+#, python-format
+msgid "cannot read image file %r: copying it instead"
+msgstr "امکان خواندن پرونده‌ی تصویری %r نبود: در عوض کپی می‌شود"
+
+#: builders/_epub_base.py:465
+#, python-format
+msgid "cannot write image file %r: %s"
+msgstr "نمی تواند پرونده‌ی تصویری %r: %s را بنویسد"
+
+#: builders/_epub_base.py:477
+msgid "Pillow not found - copying image files"
+msgstr "Pillow پیدا نشد- رونوشت برداشتن از پرونده‌های تصویری"
+
+#: builders/_epub_base.py:512
+msgid "writing mimetype file..."
+msgstr "نوشتن پرونده‌های نوع رسانه..."
+
+#: builders/_epub_base.py:521
+msgid "writing META-INF/container.xml file..."
+msgstr "نوشتن پرونده META-INF/container.xml..."
+
+#: builders/_epub_base.py:558
+msgid "writing content.opf file..."
+msgstr "نوشتن پرونده‌ی content.opf..."
+
+#: builders/_epub_base.py:590
+#, python-format
+msgid "unknown mimetype for %s, ignoring"
+msgstr "نوع رسانه‌ی ناشناخته %s، نادیده گرفته شد"
+
+#: builders/_epub_base.py:745
+msgid "node has an invalid level"
+msgstr ""
+
+#: builders/_epub_base.py:764
+msgid "writing toc.ncx file..."
+msgstr "نوشتن پرونده‌ی خلاصه toc.ncx..."
+
+#: builders/_epub_base.py:793
+#, python-format
+msgid "writing %s file..."
+msgstr "نوشتن پرونده‌ی %s..."
+
+#: builders/changes.py:33
+#, python-format
+msgid "The overview file is in %(outdir)s."
+msgstr "پرونده‌ی بازبینی در پوشه‌ی %(outdir)s است."
+
+#: builders/changes.py:60
+#, python-format
+msgid "no changes in version %s."
+msgstr "بدون تغییرات در نسخه‌ی %s."
+
+#: builders/changes.py:62
+msgid "writing summary file..."
+msgstr "نوشتن پرونده‌ی خلاصه..."
+
+#: builders/changes.py:74
+msgid "Builtins"
+msgstr "درونی سازی"
+
+#: builders/changes.py:76
+msgid "Module level"
+msgstr "در سطح ماژول"
+
+#: builders/changes.py:128
+msgid "copying source files..."
+msgstr "رونوشت از پرونده‌های مبدأ..."
+
+#: builders/changes.py:137
+#, python-format
+msgid "could not read %r for changelog creation"
+msgstr "نمی‌توان %r را برای ایجاد گزارش تغییرات خواند"
+
+#: util/rst.py:72
+#, python-format
+msgid "default role %s not found"
+msgstr "نقش پیش‌فرض %s یافت نشد"
+
+#: util/docfields.py:95
+#, python-format
+msgid ""
+"Problem in %s domain: field is supposed to use role '%s', but that role is "
+"not in the domain."
+msgstr ""
+
+#: util/osutil.py:130
+#, python-format
+msgid ""
+"Aborted attempted copy from %s to %s (the destination path has existing "
+"data)."
+msgstr ""
+
+#: util/nodes.py:419
+#, python-format
+msgid ""
+"%r is deprecated for index entries (from entry %r). Use 'pair: %s' instead."
+msgstr ""
+
+#: util/nodes.py:487
+#, python-format
+msgid "toctree contains ref to nonexisting file %r"
+msgstr "درختواره‌ی فهرست مطالب شامل ارجاع به پرونده ناموجود %r است"
+
+#: util/nodes.py:701
+#, python-format
+msgid "exception while evaluating only directive expression: %s"
+msgstr "ایراد در هنگام ارزیابی تنها عبارت دستور العمل: %s"
+
+#: util/fileutil.py:74
+#, python-format
+msgid ""
+"Aborted attempted copy from rendered template %s to %s (the destination path"
+" has existing data)."
+msgstr ""
+
+#: util/fileutil.py:89
+#, python-format
+msgid "Writing evaluated template result to %s"
+msgstr ""
+
+#: util/inventory.py:170
+#, python-format
+msgid "inventory <%s> contains duplicate definitions of %s"
+msgstr ""
+
+#: util/inventory.py:185
+#, python-format
+msgid "inventory <%s> contains multiple definitions for %s"
+msgstr ""
+
+#: util/docutils.py:284
+#, python-format
+msgid "unknown directive or role name: %s:%s"
+msgstr "نام نقش یا دستورالعمل ناشناخته: %s:%s"
+
+#: util/docutils.py:747
+#, python-format
+msgid "unknown node type: %r"
+msgstr "بست از نوع ناشناخته: %r"
+
+#: util/display.py:81
+msgid "skipped"
+msgstr "رد شدن و نادیده انگاشتن"
+
+#: util/display.py:86
+msgid "failed"
+msgstr "شکست خورد"
+
+#: util/i18n.py:103
+#, python-format
+msgid "reading error: %s, %s"
+msgstr "خطای خواندن: %s, %s"
+
+#: util/i18n.py:110
+#, python-format
+msgid "writing error: %s, %s"
+msgstr "خطای نوشتن: %s, %s"
+
+#: util/i18n.py:138
+#, python-format
+msgid "locale_dir %s does not exist"
+msgstr ""
+
+#: util/i18n.py:230
+#, python-format
+msgid ""
+"Invalid date format. Quote the string by single quote if you want to output "
+"it directly: %s"
+msgstr "قالب تاریخ ناشناخته. اگر می‌خواهید از رشته‌متن مستقیماً خروجی بگیرید، آن را با نقل قول رشته‌متنی محصور کنید: %s"
+
+#: directives/patches.py:66
+msgid ""
+"\":file:\" option for csv-table directive now recognizes an absolute path as"
+" a relative path from source directory. Please update your document."
+msgstr "گزینه‌ی \":file:\" برای دستورالمعل جدول داده‌های جداشده با کاما (csv-table) حالا دیگر مسیر ثابت را یک مسیر نسبی از شاخه‌ی منبع در نظر می گیرد. لطفاُ سندتان را به روز رسانی کنید."
+
+#: directives/code.py:66
+msgid "non-whitespace stripped by dedent"
+msgstr "غیرفاصله‌ در فرآیند حذف فاصله‌ از ابتدای سطر حذف شد"
+
+#: directives/code.py:87
+#, python-format
+msgid "Invalid caption: %s"
+msgstr "برچسب نامعتبر:%s"
+
+#: directives/code.py:132 directives/code.py:297 directives/code.py:484
+#, python-format
+msgid "line number spec is out of range(1-%d): %r"
+msgstr "شماره‌ی سطر مشخّص شده خارج از بازه‌ی (1-%d) است: %r"
+
+#: directives/code.py:216
+#, python-format
+msgid "Cannot use both \"%s\" and \"%s\" options"
+msgstr "امکان استفاده از هر دوی %sو%s نیست"
+
+#: directives/code.py:231
+#, python-format
+msgid "Include file '%s' not found or reading it failed"
+msgstr ""
+
+#: directives/code.py:234
+#, python-format
+msgid ""
+"Encoding %r used for reading included file '%s' seems to be wrong, try "
+"giving an :encoding: option"
+msgstr ""
+
+#: directives/code.py:276
+#, python-format
+msgid "Object named %r not found in include file %r"
+msgstr "شیئ با نام %r در پرونده‌ی %r پیدا نشد"
+
+#: directives/code.py:309
+msgid "Cannot use \"lineno-match\" with a disjoint set of \"lines\""
+msgstr "امکان استفاده‌ی گزینه‌ی «هم‌خوان شماره‌ی سطر» (lineno-match) با مجموعه‌ی سطرهای گسیخته وجود ندارد"
+
+#: directives/code.py:314
+#, python-format
+msgid "Line spec %r: no lines pulled from include file %r"
+msgstr "سطر مشخّص شده %r: هیچ سطری از پرونده‌ی گنجانده شده %r بیرون کشیده نشده"
+
+#: directives/other.py:122
+#, python-format
+msgid "toctree glob pattern %r didn't match any documents"
+msgstr ""
+
+#: directives/other.py:155 environment/adapters/toctree.py:355
+#, python-format
+msgid "toctree contains reference to excluded document %r"
+msgstr "درختواره‌ی فهرست مطالب ارجاعی به سند کنار گذاشته شده %r را دارد"
+
+#: directives/other.py:158 environment/adapters/toctree.py:359
+#, python-format
+msgid "toctree contains reference to nonexisting document %r"
+msgstr "فهرست مطالب شامل ارجاع به سند ناموجود %r است"
+
+#: directives/other.py:171
+#, python-format
+msgid "duplicated entry found in toctree: %s"
+msgstr ""
+
+#: directives/other.py:204
+msgid "Section author: "
+msgstr "نویسنده این بخش: "
+
+#: directives/other.py:206
+msgid "Module author: "
+msgstr "نویسنده این ماژول: "
+
+#: directives/other.py:208
+msgid "Code author: "
+msgstr "نویسنده ی کد: "
+
+#: directives/other.py:210
+msgid "Author: "
+msgstr "نویسنده: "
+
+#: directives/other.py:284
+msgid ".. acks content is not a list"
+msgstr ""
+
+#: directives/other.py:309
+msgid ".. hlist content is not a list"
+msgstr ""
+
+#: _cli/__init__.py:73
+msgid "Usage:"
+msgstr ""
+
+#: _cli/__init__.py:75
+msgid "{0} [OPTIONS] <COMMAND> [<ARGS>]"
+msgstr ""
+
+#: _cli/__init__.py:78
+msgid "  The Sphinx documentation generator."
+msgstr ""
+
+#: _cli/__init__.py:87
+msgid "Commands:"
+msgstr ""
+
+#: _cli/__init__.py:98
+msgid "Options"
+msgstr ""
+
+#: _cli/__init__.py:112 _cli/__init__.py:183
+msgid "For more information, visit https://www.sphinx-doc.org/en/master/man/."
+msgstr ""
+
+#: _cli/__init__.py:172
+msgid ""
+"{0}: error: {1}\n"
+"Run '{0} --help' for information"
+msgstr ""
+
+#: _cli/__init__.py:182
+msgid "   Manage documentation with Sphinx."
+msgstr ""
+
+#: _cli/__init__.py:194
+msgid "Show the version and exit."
+msgstr ""
+
+#: _cli/__init__.py:202
+msgid "Show this message and exit."
+msgstr ""
+
+#: _cli/__init__.py:206
+msgid "Logging"
+msgstr ""
+
+#: _cli/__init__.py:213
+msgid "Increase verbosity (can be repeated)"
+msgstr ""
+
+#: _cli/__init__.py:221
+msgid "Only print errors and warnings."
+msgstr ""
+
+#: _cli/__init__.py:228
+msgid "No output at all"
+msgstr ""
+
+#: _cli/__init__.py:234
+msgid "<command>"
+msgstr ""
+
+#: _cli/__init__.py:265
+msgid "See 'sphinx --help'.\n"
+msgstr ""
+
+#: builders/html/__init__.py:486 builders/latex/__init__.py:198
+#: transforms/__init__.py:133 writers/manpage.py:102 writers/texinfo.py:219
+#, python-format
+msgid "%b %d, %Y"
+msgstr "%b %d, %Y"
+
+#: transforms/__init__.py:143
+msgid "could not calculate translation progress!"
+msgstr ""
+
+#: transforms/__init__.py:148
+msgid "no translated elements!"
+msgstr ""
+
+#: transforms/__init__.py:267
+#, python-format
+msgid ""
+"4 column based index found. It might be a bug of extensions you use: %r"
+msgstr "نمایه‌ای بر پایه‌ی ۴ ستون پیدا شد. شاید یک اشکال برنامه‌نویسی از افزونه‌هایی که استفاده می‌کنید باشد: %r"
+
+#: transforms/__init__.py:313
+#, python-format
+msgid "Footnote [%s] is not referenced."
+msgstr "پانویس [%s] ارجاع داده نشده است."
+
+#: transforms/__init__.py:322
+msgid "Footnote [*] is not referenced."
+msgstr ""
+
+#: transforms/__init__.py:333
+msgid "Footnote [#] is not referenced."
+msgstr "پانویس [#] ارجاع داده نشده است."
+
+#: transforms/i18n.py:228 transforms/i18n.py:303
+msgid ""
+"inconsistent footnote references in translated message. original: {0}, "
+"translated: {1}"
+msgstr "ارجاعات پانویس ناهناهنگ در پیام‌های ترجمه شده. اصلی:{0}، ترجمه شده:{1}"
+
+#: transforms/i18n.py:273
+msgid ""
+"inconsistent references in translated message. original: {0}, translated: "
+"{1}"
+msgstr "ارجاعات ناهناهنگ در پیام‌های ترجمه شده. اصلی:{0}، ترجمه شده:{1}"
+
+#: transforms/i18n.py:323
+msgid ""
+"inconsistent citation references in translated message. original: {0}, "
+"translated: {1}"
+msgstr "ارجاعات نقل قول ادبی ناهناهنگ در پیام‌های ترجمه شده. اصلی:{0}، ترجمه شده:{1}"
+
+#: transforms/i18n.py:345
+msgid ""
+"inconsistent term references in translated message. original: {0}, "
+"translated: {1}"
+msgstr "ارجاعات اصطلاحی ناهناهنگ در پیام‌های ترجمه شده. اصلی:{0}، ترجمه شده:{1}"
+
+#: ext/linkcode.py:75 ext/viewcode.py:201
+msgid "[source]"
+msgstr "[منبع]"
+
+#: ext/imgconverter.py:40
+#, python-format
+msgid ""
+"Unable to run the image conversion command %r. 'sphinx.ext.imgconverter' requires ImageMagick by default. Ensure it is installed, or set the 'image_converter' option to a custom conversion command.\n"
+"\n"
+"Traceback: %s"
+msgstr ""
+
+#: ext/imgconverter.py:49 ext/imgconverter.py:73
+#, python-format
+msgid ""
+"convert exited with error:\n"
+"[stderr]\n"
+"%r\n"
+"[stdout]\n"
+"%r"
+msgstr "تبدیل با خطایی از کار افتاد:\n[stderr]\n%r\n[stdout]\n%r"
+
+#: ext/imgconverter.py:68
+#, python-format
+msgid "convert command %r cannot be run, check the image_converter setting"
+msgstr "فرمان تبدیل %r را نمی توان اجرا کرد، تنظیمات image_converter را بررسی کنید"
+
+#: ext/viewcode.py:258
+msgid "highlighting module code... "
+msgstr "برجسته کردن کد پیمانه... "
+
+#: ext/viewcode.py:286
+msgid "[docs]"
+msgstr "[مستندات]"
+
+#: ext/viewcode.py:306
+msgid "Module code"
+msgstr "کد ماژول"
+
+#: ext/viewcode.py:312
+#, python-format
+msgid "<h1>Source code for %s</h1>"
+msgstr "<h1>کد منبع برای %s </h1>"
+
+#: ext/viewcode.py:338
+msgid "Overview: module code"
+msgstr "بررسی اجمالی: کد ماژول"
+
+#: ext/viewcode.py:339
+msgid "<h1>All modules for which code is available</h1>"
+msgstr "<h1> همه‌ی پیمانه‌هایی که برایشان کد در دسترس است</h1>"
+
+#: ext/coverage.py:47
+#, python-format
+msgid "invalid regex %r in %s"
+msgstr "عبارت باقاعده‌ی نامعتبر %r در %s"
+
+#: ext/coverage.py:134 ext/coverage.py:280
+#, python-format
+msgid "module %s could not be imported: %s"
+msgstr "امکان وارد کردن پیمانه‎ی %s نبود: %s"
+
+#: ext/coverage.py:141
+#, python-format
+msgid ""
+"the following modules are documented but were not specified in "
+"coverage_modules: %s"
+msgstr ""
+
+#: ext/coverage.py:149
+msgid ""
+"the following modules are specified in coverage_modules but were not "
+"documented"
+msgstr ""
+
+#: ext/coverage.py:163
+#, python-format
+msgid ""
+"Testing of coverage in the sources finished, look at the results in "
+"%(outdir)spython.txt."
+msgstr "آزمودن پوشش  منابع پایان یافت، به نتایج در %(outdir)spython.txt نگاهی بیاندازید."
+
+#: ext/coverage.py:177
+#, python-format
+msgid "invalid regex %r in coverage_c_regexes"
+msgstr "عبارات باقاعده‌ی نامعتبر %r در پوشش عبارت باقاعده‌ی زبان سی (coverage_c_regexes)"
+
+#: ext/coverage.py:245
+#, python-format
+msgid "undocumented c api: %s [%s] in file %s"
+msgstr "رابط برنامه‌نویسی مستند نشده‌ی C: %s [%s] در پرونده‌ی %s"
+
+#: ext/coverage.py:429
+#, python-format
+msgid "undocumented python function: %s :: %s"
+msgstr "تابع پایتونی بدون مستندات: %s :: %s"
+
+#: ext/coverage.py:445
+#, python-format
+msgid "undocumented python class: %s :: %s"
+msgstr "کلاس مستندسازی نشده‌ی پایتون: %s :: %s"
+
+#: ext/coverage.py:458
+#, python-format
+msgid "undocumented python method: %s :: %s :: %s"
+msgstr "شگرد مستندسازی نشده‌ی پایتون: %s :: %s :: %s"
+
+#: ext/todo.py:71
+msgid "Todo"
+msgstr "در دست انجام"
+
+#: ext/todo.py:104
+#, python-format
+msgid "TODO entry found: %s"
+msgstr "مدخل فهرست اقدام پیدا شد: %s"
+
+#: ext/todo.py:163
+msgid "<<original entry>>"
+msgstr "<<original entry>>"
+
+#: ext/todo.py:165
+#, python-format
+msgid "(The <<original entry>> is located in %s, line %d.)"
+msgstr "(<original entry> در%s و سطر %d جای گرفته است.)"
+
+#: ext/todo.py:175
+msgid "original entry"
+msgstr "مدخل اصلی"
+
+#: ext/extlinks.py:82
+#, python-format
+msgid ""
+"hardcoded link %r could be replaced by an extlink (try using %r instead)"
+msgstr ""
+
+#: ext/doctest.py:115
+#, python-format
+msgid "missing '+' or '-' in '%s' option."
+msgstr "فاقد «+» یا «-» در گزینه‌ی '%s'."
+
+#: ext/doctest.py:120
+#, python-format
+msgid "'%s' is not a valid option."
+msgstr "\"%s\" یک گزینه‌ی معتبر نیست."
+
+#: ext/doctest.py:134
+#, python-format
+msgid "'%s' is not a valid pyversion option"
+msgstr "'%s' یک گزینه‌ی معتبر نسخه‌ی پایتون (pyversion) نیست"
+
+#: ext/doctest.py:220
+msgid "invalid TestCode type"
+msgstr "نوع TestCode  نامعتبر"
+
+#: ext/doctest.py:281
+#, python-format
+msgid ""
+"Testing of doctests in the sources finished, look at the results in "
+"%(outdir)s/output.txt."
+msgstr "آزمایش مستندات منابع به پایان رسید، به نتایج در %(outdir)s/output.txt نگاهی بیاندازید."
+
+#: ext/doctest.py:434
+#, python-format
+msgid "no code/output in %s block at %s:%s"
+msgstr "بدون کد/خروجی در تکّه‌ی %s در %s:%s"
+
+#: ext/doctest.py:522
+#, python-format
+msgid "ignoring invalid doctest code: %r"
+msgstr "نادیده گرفتن کد پیمانه‌ی doctest : %r"
+
+#: ext/graphviz.py:135
+msgid "Graphviz directive cannot have both content and a filename argument"
+msgstr "دستورالعمل Graphviz نمی تواند هم نشانوند محتوا را داشته باشد و هم نام پرونده"
+
+#: ext/graphviz.py:145
+#, python-format
+msgid "External Graphviz file %r not found or reading it failed"
+msgstr "پرونده گنجانده شده‌ی خارجی Graphviz  %r یا پیدا نشد و یا خواندنش با شکست رو به رو شد"
+
+#: ext/graphviz.py:152
+msgid "Ignoring \"graphviz\" directive without content."
+msgstr "نادیده گرفتن دستورالعمل «graphviz» بدون محتوا."
+
+#: ext/graphviz.py:268
+#, python-format
+msgid "graphviz_dot executable path must be set! %r"
+msgstr ""
+
+#: ext/graphviz.py:303
+#, python-format
+msgid ""
+"dot command %r cannot be run (needed for graphviz output), check the "
+"graphviz_dot setting"
+msgstr "فرمان dot %r نمی‌تواند اجرا شود (زیرا نیازمند برون‌داد graphviz است)، تنظیمات graphviz_dot را بررسی کنید"
+
+#: ext/graphviz.py:310
+#, python-format
+msgid ""
+"dot exited with error:\n"
+"[stderr]\n"
+"%r\n"
+"[stdout]\n"
+"%r"
+msgstr "dot  با خطایی از کار افتاد:\n[stderr]\n%r\n[stdout]\n%r"
+
+#: ext/graphviz.py:313
+#, python-format
+msgid ""
+"dot did not produce an output file:\n"
+"[stderr]\n"
+"%r\n"
+"[stdout]\n"
+"%r"
+msgstr "dot  هیچ پرونده‌ی برون‌دادی تولید نکرد:\n[stderr]\n%r\n[stdout]\n%r"
+
+#: ext/graphviz.py:329
+#, python-format
+msgid "graphviz_output_format must be one of 'png', 'svg', but is %r"
+msgstr "قالب خروجی graphviz باید یکی از قالب های 'png' یا  'svg' باشد ولی %r است"
+
+#: ext/graphviz.py:333 ext/graphviz.py:386 ext/graphviz.py:423
+#, python-format
+msgid "dot code %r: %s"
+msgstr "کد دات: %r: %s"
+
+#: ext/graphviz.py:436 ext/graphviz.py:444
+#, python-format
+msgid "[graph: %s]"
+msgstr "[گراف:%s]"
+
+#: ext/graphviz.py:438 ext/graphviz.py:446
+msgid "[graph]"
+msgstr "[گراف:]"
+
+#: ext/imgmath.py:369 ext/mathjax.py:52
+msgid "Link to this equation"
+msgstr ""
+
+#: ext/apidoc.py:85
+#, python-format
+msgid "Would create file %s."
+msgstr "پرونده‌ی %s را می سازد."
+
+#: ext/apidoc.py:375
+msgid ""
+"\n"
+"Look recursively in <MODULE_PATH> for Python modules and packages and create\n"
+"one reST file with automodule directives per package in the <OUTPUT_PATH>.\n"
+"\n"
+"The <EXCLUDE_PATTERN>s can be file and/or directory patterns that will be\n"
+"excluded from generation.\n"
+"\n"
+"Note: By default this script will not overwrite already created files."
+msgstr "\nبه صورت بازگشتی در مسیر <MODULE_PATH> دنبال پیمانه‌هاو بسته‌های پایتون بگرد و \nبا به ازای دستورالمعل‌های خودکار پیمانه‌ی هر بسته در مسیر خروجی <OUTPUT_PATH> یک پرونده‌ی reST بساز.\n\nالگوی استثتاء های <EXCLUDE_PATTERN> می‌تواند الگوی پرونده‌ها و یا شاخه‌هایی باشد که از تولید کنار گذاشته شده‌اند.\n\nتوجّه: به صورت پیش فرض این اسکریپت روی پرونده‌های از پیش ساخته شده دوباره نویسی نمی‌کند."
+
+#: ext/apidoc.py:392
+msgid "path to module to document"
+msgstr "مسیر پیمانه به سند"
+
+#: ext/apidoc.py:396
+msgid ""
+"fnmatch-style file and/or directory patterns to exclude from generation"
+msgstr "الگوها‌ی به سبک fnmatch در پرونده و یا شاخه برای کنار گذاشتن از تولید"
+
+#: ext/apidoc.py:407
+msgid "directory to place all output"
+msgstr "پوشه‌ای برای قرار دادن همه‌ی برون دادها"
+
+#: ext/apidoc.py:422
+msgid "maximum depth of submodules to show in the TOC (default: 4)"
+msgstr "نهایت عمق زیر پیمانه‌ها برای نشان دادن در فهرست مطالب (پیش‌گزیده: ۴)"
+
+#: ext/apidoc.py:429
+msgid "overwrite existing files"
+msgstr "بازنویسی پرونده‌های موجود"
+
+#: ext/apidoc.py:437
+msgid ""
+"follow symbolic links. Powerful when combined with "
+"collective.recipe.omelette."
+msgstr "ردگیری پیوند نمادین. وقتی با collective.recipe.omelette ترکیب می‌شود توانمند است."
+
+#: ext/apidoc.py:446
+msgid "run the script without creating files"
+msgstr "اجرای اسکریپت بدون ساخت پرونده"
+
+#: ext/apidoc.py:453
+msgid "put documentation for each module on its own page"
+msgstr "قرار دادن مستندات هر پیمانه در صفحه‌ی خودش"
+
+#: ext/apidoc.py:460
+msgid "include \"_private\" modules"
+msgstr "در برداشتن پیمانه‌های «خصوصی»(_private)"
+
+#: ext/apidoc.py:467
+msgid "filename of table of contents (default: modules)"
+msgstr "نام پرونده فهرست مطالب (پیش‌گزیده: پیمانه‌ها)"
+
+#: ext/apidoc.py:474
+msgid "don't create a table of contents file"
+msgstr "پرونده‌ی فهرست مطالب را ایجاد نکن"
+
+#: ext/apidoc.py:481
+msgid ""
+"don't create headings for the module/package packages (e.g. when the "
+"docstrings already contain them)"
+msgstr "برای بسته‌ها و پیمانه‌ها سربرگ نساز (مثلاً وقتی رشته‌متن‌های مستندات از قبل آن‌ها را داشته باشند)"
+
+#: ext/apidoc.py:492
+msgid "put module documentation before submodule documentation"
+msgstr "قرار دادن مستندات پیمانه پیش از مستندات پیمانه‌ی زیرمجموعه‌‌اش"
+
+#: ext/apidoc.py:498
+msgid ""
+"interpret module paths according to PEP-0420 implicit namespaces "
+"specification"
+msgstr "تفسیر مسیرهای پیمانه بر اساس ویژگی‌های ضمنی فضای نام‌ها در PEP -0420"
+
+#: ext/apidoc.py:508
+msgid "file suffix (default: rst)"
+msgstr "پسوند پرونده ( پیش فرض: rst)"
+
+#: ext/apidoc.py:515 ext/autosummary/generate.py:839
+msgid "Remove existing files in the output directory that were not generated"
+msgstr ""
+
+#: ext/apidoc.py:524
+msgid "generate a full project with sphinx-quickstart"
+msgstr "تولید یک پروژه‌ی کامل با ابزار شروع سریع اسفینکس"
+
+#: ext/apidoc.py:531
+msgid "append module_path to sys.path, used when --full is given"
+msgstr "پیوست مسیر پیمانه (module_path) به مسیر سیستم (sys.path)، هنگامی به کار می‌رود که گزینه‌ی full-- داده شود"
+
+#: ext/apidoc.py:538
+msgid "project name (default: root module name)"
+msgstr "نام پروژه (پیش‌گزیده: نام پیمانه‌ی ریشه)"
+
+#: ext/apidoc.py:545
+msgid "project author(s), used when --full is given"
+msgstr "نویسنده(های) پروژه، وقتی که گزینه‌ی --full داده شده باشد استفاده می شود"
+
+#: ext/apidoc.py:552
+msgid "project version, used when --full is given"
+msgstr "نسخه‌ی پروژه، وقتی که گزینه‌ی --full داده شده باشد استفاده می شود"
+
+#: ext/apidoc.py:559
+msgid "project release, used when --full is given, defaults to --doc-version"
+msgstr "نگارش پروژه، وقتی که گزینه‌ی --full داده شده باشد استفاده می شود، پیش‌گزیده همان شماره‌ی نسخه (--doc-version) است"
+
+#: ext/apidoc.py:564
+msgid "extension options"
+msgstr "گزینه های افزونه"
+
+#: ext/apidoc.py:638
+#, python-format
+msgid "%s is not a directory."
+msgstr "%s شاخه نیست."
+
+#: ext/apidoc.py:710 ext/autosummary/generate.py:875
+#, python-format
+msgid "Failed to remove %s: %s"
+msgstr ""
+
+#: ext/autosectionlabel.py:48
+#, python-format
+msgid "section \"%s\" gets labeled as \"%s\""
+msgstr ""
+
+#: domains/std/__init__.py:703 domains/std/__init__.py:812
+#: ext/autosectionlabel.py:52
+#, python-format
+msgid "duplicate label %s, other instance in %s"
+msgstr "بر چسب تکراری %s، مورد دیگر در %s قرار دارد"
+
+#: ext/duration.py:85
+msgid ""
+"====================== slowest reading durations ======================="
+msgstr "====================== کند ترین زمان خواندن ======================="
+
+#: ext/imgmath.py:159
+#, python-format
+msgid ""
+"LaTeX command %r cannot be run (needed for math display), check the "
+"imgmath_latex setting"
+msgstr "فرمان لتکس %r را نمی توان اجرا کرد(برای نمایش ریاضی لازم است)، تنظیمات imgmath_latex را بررسی کنید"
+
+#: ext/imgmath.py:174
+#, python-format
+msgid ""
+"%s command %r cannot be run (needed for math display), check the imgmath_%s "
+"setting"
+msgstr "%sفرمان %r را نمی توان اجرا کرد(برای نمایش ریاضی لازم است)، تنظیمات imgmath_%s را بررسی کنید"
+
+#: ext/imgmath.py:328
+#, python-format
+msgid "display latex %r: %s"
+msgstr "نمایش لتکس: %r: %s"
+
+#: ext/imgmath.py:362
+#, python-format
+msgid "inline latex %r: %s"
+msgstr "لتکس بین سطری: %r: %s"
+
+#: writers/latex.py:1090 writers/manpage.py:263 writers/texinfo.py:662
+msgid "Footnotes"
+msgstr "پانویس ها"
+
+#: writers/manpage.py:309 writers/text.py:936
+#, python-format
+msgid "[image: %s]"
+msgstr "[تصویر%s]"
+
+#: writers/manpage.py:310 writers/text.py:937
+msgid "[image]"
+msgstr "[تصویر]"
+
+#: writers/html5.py:99 writers/html5.py:108
+msgid "Link to this definition"
+msgstr ""
+
+#: writers/html5.py:415
+#, python-format
+msgid "numfig_format is not defined for %s"
+msgstr "قالب عدد شکل برای %s تعریف نشده"
+
+#: writers/html5.py:427
+#, python-format
+msgid "Any IDs not assigned for %s node"
+msgstr "هر کدام از شناسه‌هایی که به بست %s اختصاص داده نشده"
+
+#: writers/html5.py:482
+msgid "Link to this term"
+msgstr ""
+
+#: writers/html5.py:525 writers/html5.py:530
+msgid "Link to this heading"
+msgstr ""
+
+#: writers/html5.py:535
+msgid "Link to this table"
+msgstr ""
+
+#: writers/html5.py:549 writers/latex.py:1099
+#, python-format
+msgid "unsupported rubric heading level: %s"
+msgstr ""
+
+#: writers/html5.py:613
+msgid "Link to this code"
+msgstr ""
+
+#: writers/html5.py:615
+msgid "Link to this image"
+msgstr ""
+
+#: writers/html5.py:617
+msgid "Link to this toctree"
+msgstr ""
+
+#: writers/html5.py:758
+msgid "Could not obtain image size. :scale: option is ignored."
+msgstr "امکان دست یابی به اندازه‌ی عکس نبود. گزینه‌ی تغییر اندازه :scale: نادیده گرفته می‌شود."
+
+#: builders/latex/__init__.py:205 domains/std/__init__.py:646
+#: domains/std/__init__.py:658 templates/latex/latex.tex.jinja:106
+#: themes/basic/genindex-single.html:22 themes/basic/genindex-single.html:48
+#: themes/basic/genindex-split.html:3 themes/basic/genindex-split.html:6
+#: themes/basic/genindex.html:3 themes/basic/genindex.html:26
+#: themes/basic/genindex.html:59 themes/basic/layout.html:127
+#: writers/texinfo.py:513
+msgid "Index"
+msgstr "فهرست"
+
+#: writers/latex.py:743 writers/texinfo.py:644
+msgid ""
+"encountered title node not in section, topic, table, admonition or sidebar"
+msgstr "به بست عنوانی برخورد که در قسمت، موضوع، جدول، اندرز یا نوارکناری نبود"
+
+#: writers/texinfo.py:1216
+msgid "caption not inside a figure."
+msgstr "عنوان درون شکل نیست."
+
+#: writers/texinfo.py:1302
+#, python-format
+msgid "unimplemented node type: %r"
+msgstr "بست به کار نرفته: %r"
+
+#: writers/latex.py:360
+#, python-format
+msgid "unknown %r toplevel_sectioning for class %r"
+msgstr "قسمت‌بندی رده‌بالای %r ناشناخته برای کلاس %r"
+
+#: builders/latex/__init__.py:223 writers/latex.py:410
+#, python-format
+msgid "no Babel option known for language %r"
+msgstr "بدون گزینه‌ی Babel شناخته شده برای زبان %r"
+
+#: writers/latex.py:428
+msgid "too large :maxdepth:, ignored."
+msgstr "مقدار بسیار بزرگ :maxdepth:، نادیده گرفته شد."
+
+#: writers/latex.py:590
+#, python-format
+msgid "template %s not found; loading from legacy %s instead"
+msgstr ""
+
+#: writers/latex.py:708
+msgid "document title is not a single Text node"
+msgstr "عنوان سند یک بست متنی نیست"
+
+#: writers/latex.py:1175
+msgid ""
+"both tabularcolumns and :widths: option are given. :widths: is ignored."
+msgstr "هر دو مقدار tabularcolumns و :widths: داده شده، بنابراین :widths: حذف می شود."
+
+#: writers/latex.py:1573
+#, python-format
+msgid "dimension unit %s is invalid. Ignored."
+msgstr "ابعاد واحد %sنامعتبر است و نادیده گرفته شد."
+
+#: writers/latex.py:1931
+#, python-format
+msgid "unknown index entry type %s found"
+msgstr "نوع ناشناخته مدخل نمایه%s پیدا شد"
+
+#: domains/std/__init__.py:87 domains/std/__init__.py:104
+#, python-format
+msgid "environment variable; %s"
+msgstr "متغیرهای عمومی؛ %s"
+
+#: domains/std/__init__.py:112
+#, python-format
+msgid "%s; configuration value"
+msgstr ""
+
+#: domains/std/__init__.py:166
+msgid "Type"
+msgstr ""
+
+#: domains/std/__init__.py:176
+msgid "Default"
+msgstr ""
+
+#: domains/std/__init__.py:235
+#, python-format
+msgid ""
+"Malformed option description %r, should look like \"opt\", \"-opt args\", \""
+"--opt args\", \"/opt args\" or \"+opt args\""
+msgstr "توضیح بدشکل برای گزینه‌ی %r، باید شبیه این‌ها باشد \"opt\", \"-opt args\", \"--opt args\", \"/opt args\" یا \"+opt args\""
+
+#: domains/std/__init__.py:306
+#, python-format
+msgid "%s command line option"
+msgstr "%s گزینه‌ی خط فرمان"
+
+#: domains/std/__init__.py:308
+msgid "command line option"
+msgstr "گزینه خط فرمان"
+
+#: domains/std/__init__.py:430
+msgid "glossary term must be preceded by empty line"
+msgstr "یک خط خالی باید پیش از اصطلاح واژه‌نامه باشد"
+
+#: domains/std/__init__.py:438
+msgid "glossary terms must not be separated by empty lines"
+msgstr "اصطلاحات واژه‌نامه نباید با خطوط خالی از هم جدا شوند"
+
+#: domains/std/__init__.py:444 domains/std/__init__.py:457
+msgid "glossary seems to be misformatted, check indentation"
+msgstr "به نظر می رسد واژه‌نامه اشتباه شکل داده شده است، فاصله‌گذاری از ابتدای سطر را بررسی کنید"
+
+#: domains/std/__init__.py:602
+msgid "glossary term"
+msgstr "اصطلاح واژه‌نامه"
+
+#: domains/std/__init__.py:603
+msgid "grammar token"
+msgstr "نشانه ی گرامری"
+
+#: domains/std/__init__.py:604
+msgid "reference label"
+msgstr "برچسب ارجاع"
+
+#: domains/std/__init__.py:607
+msgid "environment variable"
+msgstr "متغیّر عمومی"
+
+#: domains/std/__init__.py:608
+msgid "program option"
+msgstr "اختیارات برنامه"
+
+#: domains/std/__init__.py:609
+msgid "document"
+msgstr "سند"
+
+#: domains/std/__init__.py:647 domains/std/__init__.py:659
+msgid "Module Index"
+msgstr "فهرست ماژول ها"
+
+#: domains/std/__init__.py:648 domains/std/__init__.py:660
+#: themes/basic/defindex.html:18
+msgid "Search Page"
+msgstr "صفحه جستجو"
+
+#: domains/std/__init__.py:722
+#, python-format
+msgid "duplicate %s description of %s, other instance in %s"
+msgstr "تکرار توضیح %s از %s، مورد دیگر در%s قرار دارد"
+
+#: domains/std/__init__.py:932
+msgid "numfig is disabled. :numref: is ignored."
+msgstr "شماره‌ی شکل غیر فعّال است. گزینه‌ی :numref: نادیده گرفته می‌شود."
+
+#: domains/std/__init__.py:940
+#, python-format
+msgid "Failed to create a cross reference. Any number is not assigned: %s"
+msgstr "شکست در ایجاد ارجاع متقابل. هیچ شماره انتساب داده نشده: %s"
+
+#: domains/std/__init__.py:952
+#, python-format
+msgid "the link has no caption: %s"
+msgstr "پیوند هیچ برچسبی ندارد: %s"
+
+#: domains/std/__init__.py:966
+#, python-format
+msgid "invalid numfig_format: %s (%r)"
+msgstr "قالب شماره‌ی شکل نامعتبر: %s (%r)"
+
+#: domains/std/__init__.py:969
+#, python-format
+msgid "invalid numfig_format: %s"
+msgstr "قالب شماره‌ی شکل نامعتبر:  %s"
+
+#: domains/std/__init__.py:1200
+#, python-format
+msgid "undefined label: %r"
+msgstr ""
+
+#: domains/std/__init__.py:1202
+#, python-format
+msgid "Failed to create a cross reference. A title or caption not found: %r"
+msgstr ""
+
+#: domains/python/__init__.py:107 domains/python/__init__.py:244
+#, python-format
+msgid "%s() (in module %s)"
+msgstr "%s() (در ماژول %s)"
+
+#: domains/python/__init__.py:167 domains/python/__init__.py:334
+#: domains/python/__init__.py:385 domains/python/__init__.py:424
+#, python-format
+msgid "%s (in module %s)"
+msgstr "%s (در ماژول %s)"
+
+#: domains/python/__init__.py:169
+#, python-format
+msgid "%s (built-in variable)"
+msgstr "%s (متغیر درونی)"
+
+#: domains/python/__init__.py:194
+#, python-format
+msgid "%s (built-in class)"
+msgstr "%s (کلاس درونی)"
+
+#: domains/python/__init__.py:195
+#, python-format
+msgid "%s (class in %s)"
+msgstr "%s (کلاس در %s)"
+
+#: domains/python/__init__.py:249
+#, python-format
+msgid "%s() (%s class method)"
+msgstr "%s() (%s شگرد کلاس)"
+
+#: domains/python/__init__.py:251
+#, python-format
+msgid "%s() (%s static method)"
+msgstr "%s() (%s متد استاتیک)"
+
+#: domains/python/__init__.py:389
+#, python-format
+msgid "%s (%s property)"
+msgstr "%s(%sویژگی)"
+
+#: domains/python/__init__.py:428
+#, python-format
+msgid "%s (type alias in %s)"
+msgstr ""
+
+#: domains/python/__init__.py:559
+msgid "Python Module Index"
+msgstr "نمایه ی ماژول های پایتون"
+
+#: domains/python/__init__.py:560
+msgid "modules"
+msgstr "ماژول ها"
+
+#: domains/python/__init__.py:637
+msgid "Deprecated"
+msgstr "منسوخ شده"
+
+#: domains/python/__init__.py:663
+msgid "exception"
+msgstr "ایراد"
+
+#: domains/python/__init__.py:665
+msgid "class method"
+msgstr "class method"
+
+#: domains/python/__init__.py:666
+msgid "static method"
+msgstr "متد استاتیک"
+
+#: domains/python/__init__.py:668
+msgid "property"
+msgstr "ویژگی"
+
+#: domains/python/__init__.py:669
+msgid "type alias"
+msgstr ""
+
+#: domains/python/__init__.py:729
+#, python-format
+msgid ""
+"duplicate object description of %s, other instance in %s, use :no-index: for"
+" one of them"
+msgstr ""
+
+#: domains/python/__init__.py:858
+#, python-format
+msgid "more than one target found for cross-reference %r: %s"
+msgstr "برای ارجاع متقابل %r بیش از یک هدف پیدا شد: %s"
+
+#: domains/python/__init__.py:920
+msgid " (deprecated)"
+msgstr " (منسوخ)"
+
+#: domains/c/__init__.py:304 domains/cpp/__init__.py:441
+#: domains/python/_object.py:164 ext/napoleon/docstring.py:786
+msgid "Parameters"
+msgstr "پارامترها"
+
+#: domains/python/_object.py:169
+msgid "Variables"
+msgstr "متغیر ها"
+
+#: domains/python/_object.py:173
+msgid "Raises"
+msgstr "برانگیختن"
+
+#: domains/c/__init__.py:199
+#, python-format
+msgid "%s (C %s)"
+msgstr "%s (C %s)"
+
+#: domains/c/__init__.py:260 domains/c/_symbol.py:510
+#, python-format
+msgid ""
+"Duplicate C declaration, also defined at %s:%s.\n"
+"Declaration is '.. c:%s:: %s'."
+msgstr "اعلان C تکراری، که در %s:%s هم تعریف شده.\nاعلان '.. c:%s:: %s' است."
+
+#: domains/c/__init__.py:307 domains/cpp/__init__.py:454
+msgid "Return values"
+msgstr ""
+
+#: domains/c/__init__.py:679 domains/cpp/__init__.py:860
+msgid "member"
+msgstr "عضو"
+
+#: domains/c/__init__.py:680
+msgid "variable"
+msgstr "متغیّر"
+
+#: domains/c/__init__.py:682
+msgid "macro"
+msgstr "ماکرو"
+
+#: domains/c/__init__.py:683
+msgid "struct"
+msgstr "ساختار"
+
+#: domains/c/__init__.py:684 domains/cpp/__init__.py:858
+msgid "union"
+msgstr "اجتماع"
+
+#: domains/c/__init__.py:685 domains/cpp/__init__.py:863
+msgid "enum"
+msgstr "شمارش"
+
+#: domains/c/__init__.py:686 domains/cpp/__init__.py:864
+msgid "enumerator"
+msgstr "شمارنده"
+
+#: domains/c/__init__.py:687 domains/cpp/__init__.py:861
+msgid "type"
+msgstr "گونه"
+
+#: domains/c/__init__.py:689 domains/cpp/__init__.py:866
+msgid "function parameter"
+msgstr "مؤلّفه‌ی تابع"
+
+#: domains/cpp/__init__.py:155
+msgid "Template Parameters"
+msgstr "پارامترهای قالب"
+
+#: domains/cpp/__init__.py:277
+#, python-format
+msgid "%s (C++ %s)"
+msgstr "%s (C++ %s)"
+
+#: domains/cpp/__init__.py:360 domains/cpp/_symbol.py:793
+#, python-format
+msgid ""
+"Duplicate C++ declaration, also defined at %s:%s.\n"
+"Declaration is '.. cpp:%s:: %s'."
+msgstr "اعلان ++C تکراری، که در %s:%s هم تعریف شده.\nاعلان '.. cpp:%s:: %s' است."
+
+#: domains/cpp/__init__.py:862
+msgid "concept"
+msgstr "کانسپت"
+
+#: domains/cpp/__init__.py:867
+msgid "template parameter"
+msgstr "مؤلّفه‌ی قالب"
+
+#: themes/haiku/layout.html:16
+msgid "Contents"
+msgstr "محتوا ها"
+
+#: themes/agogo/layout.html:29 themes/basic/globaltoc.html:2
+#: themes/basic/localtoc.html:4 themes/scrolls/layout.html:32
+msgid "Table of Contents"
+msgstr "فهرست عناوین"
+
+#: themes/agogo/layout.html:34 themes/basic/layout.html:130
+#: themes/basic/search.html:3 themes/basic/search.html:15
+msgid "Search"
+msgstr "جستجو"
+
+#: themes/agogo/layout.html:37 themes/basic/searchbox.html:8
+#: themes/basic/searchfield.html:12
+msgid "Go"
+msgstr "برو"
+
+#: themes/agogo/layout.html:81 themes/basic/sourcelink.html:7
+msgid "Show Source"
+msgstr "نمایش سورس"
+
+#: themes/classic/layout.html:12 themes/classic/static/sidebar.js.jinja:51
+msgid "Collapse sidebar"
+msgstr "تا کردن نوار کناره"
+
+#: themes/basic/layout.html:18
+msgid "Navigation"
+msgstr "ناوبری"
+
+#: themes/basic/layout.html:115
+#, python-format
+msgid "Search within %(docstitle)s"
+msgstr "جستجو در %(docstitle)s"
+
+#: themes/basic/layout.html:124
+msgid "About these documents"
+msgstr "درباره این مستندات"
+
+#: themes/basic/layout.html:133 themes/basic/layout.html:177
+#: themes/basic/layout.html:179
+msgid "Copyright"
+msgstr "کپی رایت"
+
+#: themes/basic/layout.html:183 themes/basic/layout.html:189
+#, python-format
+msgid "&#169; %(copyright_prefix)s %(copyright)s."
+msgstr ""
+
+#: themes/basic/layout.html:201
+#, python-format
+msgid "Last updated on %(last_updated)s."
+msgstr "آخرین بروز رسانی در %(last_updated)s ."
+
+#: themes/basic/layout.html:204
+#, python-format
+msgid ""
+"Created using <a href=\"https://www.sphinx-doc.org/\">Sphinx</a> "
+"%(sphinx_version)s."
+msgstr "ایجاد شده با<a href=\"https://www.sphinx-doc.org/\">Sphinx</a> %(sphinx_version)s."
+
+#: themes/basic/genindex-single.html:26
+#, python-format
+msgid "Index &#x2013; %(key)s"
+msgstr ""
+
+#: themes/basic/genindex-single.html:54 themes/basic/genindex-split.html:16
+#: themes/basic/genindex-split.html:30 themes/basic/genindex.html:65
+msgid "Full index on one page"
+msgstr "فهرست کامل در یک صفحه"
+
+#: themes/basic/genindex-split.html:8
+msgid "Index pages by letter"
+msgstr "فهرست صفحات بر اساس حروف"
+
+#: themes/basic/genindex-split.html:17
+msgid "can be huge"
+msgstr "ممکن است سترگ باشد"
+
+#: themes/basic/opensearch.xml:4
+#, python-format
+msgid "Search %(docstitle)s"
+msgstr "جستجو %(docstitle)s"
+
+#: themes/basic/sourcelink.html:4
+msgid "This Page"
+msgstr "صفحه فعلی"
+
+#: themes/basic/defindex.html:4
+msgid "Overview"
+msgstr "بررسی اجمالی"
+
+#: themes/basic/defindex.html:8
+msgid "Welcome! This is"
+msgstr "خوش آمدید! این"
+
+#: themes/basic/defindex.html:9
+msgid "the documentation for"
+msgstr "مستندات برای"
+
+#: themes/basic/defindex.html:10
+msgid "last updated"
+msgstr "آخرین بروزرسانی"
+
+#: themes/basic/defindex.html:13
+msgid "Indices and tables:"
+msgstr "ایندکس ها و جداول:"
+
+#: themes/basic/defindex.html:16
+msgid "Complete Table of Contents"
+msgstr "فهرست کامل مطالب"
+
+#: themes/basic/defindex.html:17
+msgid "lists all sections and subsections"
+msgstr "فهرست تمامی بخش ها و زیر مجموعه ها"
+
+#: themes/basic/defindex.html:19
+msgid "search this documentation"
+msgstr "جستجو در این اسناد"
+
+#: themes/basic/defindex.html:21
+msgid "Global Module Index"
+msgstr "فهرست کلی ماژول ها"
+
+#: themes/basic/defindex.html:22
+msgid "quick access to all modules"
+msgstr "دسترسی سریع به تمامی متدها"
+
+#: builders/html/__init__.py:507 themes/basic/defindex.html:23
+msgid "General Index"
+msgstr "فهرست کلی"
+
+#: themes/basic/defindex.html:24
+msgid "all functions, classes, terms"
+msgstr "تمامی توابع ، کلاس ها ، اصطلاحات"
+
+#: themes/basic/searchbox.html:4
+msgid "Quick search"
+msgstr "جستجو سریع"
+
+#: themes/basic/search.html:20
+msgid ""
+"Please activate JavaScript to enable the search\n"
+"    functionality."
+msgstr "لطفاً برای فعّال کردن کارکرد جستجو\nجاوا اسکریپت را فعّال کنید."
+
+#: themes/basic/search.html:28
+msgid ""
+"Searching for multiple words only shows matches that contain\n"
+"    all words."
+msgstr "در حال جستجو برای چندین واژه. فقط واژگانی را نشان می‌دهد که شامل این موارد باشد:\n    همه‌ی کلمه‌ها."
+
+#: themes/basic/search.html:35
+msgid "search"
+msgstr "جستجو"
+
+#: themes/basic/relations.html:4
+msgid "Previous topic"
+msgstr "موضوع قبلی"
+
+#: themes/basic/relations.html:6
+msgid "previous chapter"
+msgstr "فصل قبلی"
+
+#: themes/basic/relations.html:11
+msgid "Next topic"
+msgstr "موضوع  بعدی"
+
+#: themes/basic/relations.html:13
+msgid "next chapter"
+msgstr "فصل بعدی"
+
+#: themes/classic/static/sidebar.js.jinja:42
+msgid "Expand sidebar"
+msgstr "گسترش نوار کناره"
+
+#: themes/basic/changes/frameset.html:5
+#: themes/basic/changes/versionchanges.html:12
+#, python-format
+msgid "Changes in Version %(version)s &#8212; %(docstitle)s"
+msgstr "تغییرات در نسخه %(version)s &#8212; %(docstitle)s"
+
+#: themes/basic/changes/versionchanges.html:17
+#, python-format
+msgid "Automatically generated list of changes in version %(version)s"
+msgstr "لیست تولید شده خودکار از تغییرات در نسخه %(version)s"
+
+#: themes/basic/changes/versionchanges.html:18
+msgid "Library changes"
+msgstr "تغییرات کتابخانه ایی"
+
+#: themes/basic/changes/versionchanges.html:23
+msgid "C API changes"
+msgstr "C API تغییرات"
+
+#: themes/basic/changes/versionchanges.html:25
+msgid "Other changes"
+msgstr "دگر تغییرات"
+
+#: themes/basic/changes/rstsource.html:5
+#, python-format
+msgid "%(filename)s &#8212; %(docstitle)s"
+msgstr "%(filename)s &#8212; %(docstitle)s"
+
+#: themes/basic/static/sphinx_highlight.js:112
+msgid "Hide Search Matches"
+msgstr "عدم نمایش نتایج یافت شده"
+
+#: themes/basic/static/searchtools.js:117
+msgid "Search Results"
+msgstr "نتایج جستجو"
+
+#: themes/basic/static/searchtools.js:119
+msgid ""
+"Your search did not match any documents. Please make sure that all words are"
+" spelled correctly and that you've selected enough categories."
+msgstr "جستجوی شما با هیچ سندی هم خوانی نداشت. لطفاً اطمینان حاصل کنید که همه ی واژه ها املای درستی دارند و دسته بندی های کافی را انتخاب کرده اید."
+
+#: themes/basic/static/searchtools.js:123
+msgid "Search finished, found one page matching the search query."
+msgid_plural ""
+"Search finished, found ${resultCount} pages matching the search query."
+msgstr[0] ""
+msgstr[1] ""
+
+#: themes/basic/static/searchtools.js:253
+msgid "Searching"
+msgstr "در حال جست و جو"
+
+#: themes/basic/static/searchtools.js:270
+msgid "Preparing search..."
+msgstr "آماده سازی جست و جو..."
+
+#: themes/basic/static/searchtools.js:474
+msgid ", in "
+msgstr "، در "
+
+#: environment/collectors/asset.py:96
+#, python-format
+msgid "image file not readable: %s"
+msgstr "پرونده‌ی تصویر خوانا نیست: %s"
+
+#: environment/collectors/asset.py:124
+#, python-format
+msgid "image file %s not readable: %s"
+msgstr "پرونده‌ی عکس  %s خوانا نیست:  %s"
+
+#: environment/collectors/asset.py:161
+#, python-format
+msgid "download file not readable: %s"
+msgstr "پرونده‌ی دریافت شده خوانا نیست: %s"
+
+#: environment/collectors/toctree.py:258
+#, python-format
+msgid "%s is already assigned section numbers (nested numbered toctree?)"
+msgstr "شماره‌ی قسمت‌ها پیش‌تر به %s نسبت داده شده ( آیا درختواره‌ی فهرست مطالب شماره‌گذاری تو در تو دارد؟)"
+
+#: environment/adapters/toctree.py:318
+#, python-format
+msgid "circular toctree references detected, ignoring: %s <- %s"
+msgstr "دور تسلسل در درختواره‌ی ارجاعات فهرست مطالب تشخیص داده شده، نادیده گرفته می‌شوند: %s <- %s"
+
+#: environment/adapters/toctree.py:342
+#, python-format
+msgid ""
+"toctree contains reference to document %r that doesn't have a title: no link"
+" will be generated"
+msgstr "فهرست مطالب دارای ارجاع به سند %r است که عنوانی ندارد: هیچ پیوندی تولید نخواهد شد"
+
+#: environment/adapters/toctree.py:357
+#, python-format
+msgid "toctree contains reference to non-included document %r"
+msgstr ""
+
+#: environment/adapters/indexentries.py:126
+#, python-format
+msgid "see %s"
+msgstr "%s را ببینید"
+
+#: environment/adapters/indexentries.py:136
+#, python-format
+msgid "see also %s"
+msgstr "%s را هم ببینید"
+
+#: environment/adapters/indexentries.py:144
+#, python-format
+msgid "unknown index entry type %r"
+msgstr "نوع ناشناخته مدخل نمایه %r"
+
+#: environment/adapters/indexentries.py:270
+#: templates/latex/sphinxmessages.sty.jinja:11
+msgid "Symbols"
+msgstr "نماد ها"
+
+#: builders/html/_build_info.py:32
+msgid "failed to read broken build info file (unknown version)"
+msgstr ""
+
+#: builders/html/_build_info.py:36
+msgid "failed to read broken build info file (missing config entry)"
+msgstr ""
+
+#: builders/html/_build_info.py:39
+msgid "failed to read broken build info file (missing tags entry)"
+msgstr ""
+
+#: builders/html/__init__.py:113
+#, python-format
+msgid "The HTML pages are in %(outdir)s."
+msgstr "صفحات HTML در %(outdir)s است."
+
+#: builders/html/__init__.py:348
+#, python-format
+msgid "Failed to read build info file: %r"
+msgstr "شکست در خواندن پرونده‌ی اطّلاعات ساخت: %r"
+
+#: builders/html/__init__.py:363
+msgid "build_info mismatch, copying .buildinfo to .buildinfo.bak"
+msgstr ""
+
+#: builders/html/__init__.py:366
+msgid "building [html]: "
+msgstr ""
+
+#: builders/html/__init__.py:382
+#, python-format
+msgid ""
+"template %s has been changed since the previous build, all docs will be "
+"rebuilt"
+msgstr ""
+
+#: builders/html/__init__.py:507
+msgid "index"
+msgstr "فهرست"
+
+#: builders/html/__init__.py:560
+#, python-format
+msgid "Logo of %s"
+msgstr ""
+
+#: builders/html/__init__.py:589
+msgid "next"
+msgstr "بعدی"
+
+#: builders/html/__init__.py:598
+msgid "previous"
+msgstr "قبلی"
+
+#: builders/html/__init__.py:695
+msgid "generating indices"
+msgstr "تولید نمایه‌ها"
+
+#: builders/html/__init__.py:710
+msgid "writing additional pages"
+msgstr "نوشتن صفحات اضافی"
+
+#: builders/html/__init__.py:793
+#, python-format
+msgid "cannot copy image file '%s': %s"
+msgstr ""
+
+#: builders/html/__init__.py:805
+msgid "copying downloadable files... "
+msgstr "رونوشت از پرونده‌های قابل دریافت... "
+
+#: builders/html/__init__.py:817
+#, python-format
+msgid "cannot copy downloadable file %r: %s"
+msgstr "نمی تواند از پرونده‌ی قابل دریافت %r: %s رونوشت بگیرد"
+
+#: builders/html/__init__.py:863
+#, python-format
+msgid "Failed to copy a file in the theme's 'static' directory: %s: %r"
+msgstr ""
+
+#: builders/html/__init__.py:881
+#, python-format
+msgid "Failed to copy a file in html_static_file: %s: %r"
+msgstr "شکست در رونوشت یک پرونده‌ی به html_static_file: %s: %r"
+
+#: builders/html/__init__.py:916
+msgid "copying static files"
+msgstr "رونوشت از پرونده‌های ثابت"
+
+#: builders/html/__init__.py:933
+#, python-format
+msgid "cannot copy static file %r"
+msgstr "نمی تواند از پرونده‌ی ثابت %r رونوشت بگیرد"
+
+#: builders/html/__init__.py:938
+msgid "copying extra files"
+msgstr "رونوشت برداری از پرونده‌های اضافی"
+
+#: builders/html/__init__.py:948
+#, python-format
+msgid "cannot copy extra file %r"
+msgstr "نمی تواند از پرونده‌ی اضافه‌ی %r رونوشت بگیرد"
+
+#: builders/html/__init__.py:954
+#, python-format
+msgid "Failed to write build info file: %r"
+msgstr "شکست در نوشتن پرونده‌ی اطّلاعات ساخت: %r"
+
+#: builders/html/__init__.py:1003
+msgid ""
+"search index couldn't be loaded, but not all documents will be built: the "
+"index will be incomplete."
+msgstr "نمایه‌ی جستجو نمی‌تواند بارگزاری شود، ولی برای همه‌ی مستندات ساخته‌ نمی‌شود: نمایه‌ ناقص خواهد بود."
+
+#: builders/html/__init__.py:1051
+#, python-format
+msgid "page %s matches two patterns in html_sidebars: %r and %r"
+msgstr "صفحه‌ی %s با دو الگو در نوار کناری صفحه (html_sidebars) هم‌خوانی دارد: %r و%r"
+
+#: builders/html/__init__.py:1213
+#, python-format
+msgid ""
+"a Unicode error occurred when rendering the page %s. Please make sure all "
+"config values that contain non-ASCII content are Unicode strings."
+msgstr "هنگام ارائه‌ی صفحه‌ی %s خطای یونیکد رخ داد. لطفاً اطمینان حاصل کنید که تمام مقدارهای پیکربندی‌ها دارای محتوای غیر اَسکی، رشته‌متن‌های یونکد هستند."
+
+#: builders/html/__init__.py:1222
+#, python-format
+msgid ""
+"An error happened in rendering the page %s.\n"
+"Reason: %r"
+msgstr "خطایی در نمایش صفحه‌ی %s رخ داد.\nعلّت: %r"
+
+#: builders/html/__init__.py:1255
+msgid "dumping object inventory"
+msgstr "خالی کردن فهرست اشیاء"
+
+#: builders/html/__init__.py:1263
+#, python-format
+msgid "dumping search index in %s"
+msgstr "خالی کردن نمایه‌ی جستجو در %s"
+
+#: builders/html/__init__.py:1306
+#, python-format
+msgid "invalid js_file: %r, ignored"
+msgstr "پرونده‌ی js نامعتبر%r: نادیده گرفته می‌شود"
+
+#: builders/html/__init__.py:1339
+msgid "Many math_renderers are registered. But no math_renderer is selected."
+msgstr "ارا‌ئه کننده‌های ریاضی زیادی ثبت شده‌اند، ولی هیچ کدام انتخاب نشده."
+
+#: builders/html/__init__.py:1344
+#, python-format
+msgid "Unknown math_renderer %r is given."
+msgstr "نمایش‌دهنده‌ی ریاضی نامشخّص %r داده شده."
+
+#: builders/html/__init__.py:1358
+#, python-format
+msgid "html_extra_path entry %r is placed inside outdir"
+msgstr "مدخل مسیر اضافی (html_extra_path) %r درون شاخه‌ی خارجی قرار دارد"
+
+#: builders/html/__init__.py:1363
+#, python-format
+msgid "html_extra_path entry %r does not exist"
+msgstr "مدخل مسیر اضافی (html_extra_path) %r وجود ندارد"
+
+#: builders/html/__init__.py:1378
+#, python-format
+msgid "html_static_path entry %r is placed inside outdir"
+msgstr "مدخل مسیر ثابت (html_static_path) %r درون شاخه‌ی خارجی قرار دارد"
+
+#: builders/html/__init__.py:1383
+#, python-format
+msgid "html_static_path entry %r does not exist"
+msgstr "مدخل مسیر ثابت (html_static_path) %r وجود ندارد"
+
+#: builders/html/__init__.py:1394 builders/latex/__init__.py:504
+#, python-format
+msgid "logo file %r does not exist"
+msgstr "پرونده‌ی آرم %r وجود ندارد"
+
+#: builders/html/__init__.py:1405
+#, python-format
+msgid "favicon file %r does not exist"
+msgstr "پرونده‌ی آیکون مورد علاقه %r وجود ندارد"
+
+#: builders/html/__init__.py:1417
+#, python-format
+msgid ""
+"Values in 'html_sidebars' must be a list of strings. At least one pattern "
+"has a string value: %s. Change to `html_sidebars = %r`."
+msgstr ""
+
+#: builders/html/__init__.py:1430
+msgid ""
+"HTML 4 is no longer supported by Sphinx. (\"html4_writer=True\" detected in "
+"configuration options)"
+msgstr ""
+
+#: builders/html/__init__.py:1447
+#, python-format
+msgid "%s %s documentation"
+msgstr "مستندات %s%s"
+
+#: builders/latex/transforms.py:118
+msgid "Failed to get a docname!"
+msgstr ""
+
+#: builders/latex/transforms.py:119
+#, python-format
+msgid "Failed to get a docname for source %r!"
+msgstr ""
+
+#: builders/latex/transforms.py:485
+#, python-format
+msgid "No footnote was found for given reference node %r"
+msgstr ""
+
+#: builders/latex/__init__.py:117
+#, python-format
+msgid "The LaTeX files are in %(outdir)s."
+msgstr "پرونده‌ی LaTeX در پوشه‌ی %(outdir)s است."
+
+#: builders/latex/__init__.py:119
+msgid ""
+"\n"
+"Run 'make' in that directory to run these through (pdf)latex\n"
+"(use `make latexpdf' here to do that automatically)."
+msgstr "\nدر آن شاخه فرمان 'make' را اجرا کنید تا این‌ها را با لتکس(pdf) اجرا کند\n(برای انجام خودکار `make latexpdf' را به کار ببرید)."
+
+#: builders/latex/__init__.py:157
+msgid "no \"latex_documents\" config value found; no documents will be written"
+msgstr "هیچ مقدار پیکربندی اسناد لتکسی (latex_documents) پیدا نشد؛ بنابراین هیچ سندی نوشته نخواهد شد"
+
+#: builders/latex/__init__.py:169
+#, python-format
+msgid "\"latex_documents\" config value references unknown document %s"
+msgstr "مقدار پیکربندی سندهای لتکس (latex_documents) به سند ناشناخته‌ی %s ارجاع می‌دهد"
+
+#: builders/latex/__init__.py:208 templates/latex/latex.tex.jinja:91
+msgid "Release"
+msgstr "انتشار"
+
+#: builders/latex/__init__.py:429
+msgid "copying TeX support files"
+msgstr "رونوشت از پرونده‌های پشتیبانی لتکس"
+
+#: builders/latex/__init__.py:466
+msgid "copying additional files"
+msgstr "رونوشت برداری از پرونده‌های اضافی"
+
+#: builders/latex/__init__.py:540
+#, python-format
+msgid "Unknown configure key: latex_elements[%r], ignored."
+msgstr "کلید پیکربندی ناشناخته: latex_elements[%r]، نادیده گرفته می‌شود."
+
+#: builders/latex/__init__.py:548
+#, python-format
+msgid "Unknown theme option: latex_theme_options[%r], ignored."
+msgstr "کلید زمینه‌ی ناشناخته: latex_theme_options[%r]، نادیده گرفته می‌شود."
+
+#: builders/latex/theming.py:87
+#, python-format
+msgid "%r doesn't have \"theme\" setting"
+msgstr "%r فاقد تنظیمات زمینه است"
+
+#: builders/latex/theming.py:90
+#, python-format
+msgid "%r doesn't have \"%s\" setting"
+msgstr "%r فاقد تنظیمات  \"%s\"  است"
+
+#: _cli/util/errors.py:124
+msgid "Exception occurred, starting debugger:"
+msgstr ""
+
+#: _cli/util/errors.py:133
+msgid "reStructuredText markup error:"
+msgstr ""
+
+#: _cli/util/errors.py:168
+msgid "The full traceback has been saved in:"
+msgstr ""
+
+#: _cli/util/errors.py:172
+msgid ""
+"To report this error to the developers, please open an issue at "
+"<https://github.com/sphinx-doc/sphinx/issues/>. Thanks!"
+msgstr ""
+
+#: transforms/post_transforms/__init__.py:125
+msgid ""
+"Could not determine the fallback text for the cross-reference. Might be a "
+"bug."
+msgstr "امکان تشخیص متن جایگزین برای ارجاع متقابل نبود. شاید یک اشکال برنامه نویسی باشد."
+
+#: transforms/post_transforms/__init__.py:185
+#, python-format
+msgid "more than one target found for 'any' cross-reference %r: could be %s"
+msgstr "برای «هر» ارجاع متقابل بیشتر از یک هفد پیدا شد: %r شاید %s باشد"
+
+#: transforms/post_transforms/__init__.py:251
+#, python-format
+msgid "%s:%s reference target not found: %s"
+msgstr "%s:%s  مرجع هدف پیدا نشد: %s"
+
+#: transforms/post_transforms/__init__.py:257
+#, python-format
+msgid "%r reference target not found: %s"
+msgstr "مقصد ارجاع %r پیدا نشد %s"
+
+#: transforms/post_transforms/images.py:77
+#, python-format
+msgid "Could not fetch remote image: %s [%s]"
+msgstr "امکان دریافت تصویر از منبع راه دور نبود: %s [%s]"
+
+#: transforms/post_transforms/images.py:94
+#, python-format
+msgid "Could not fetch remote image: %s [%d]"
+msgstr "امکان دریافت تصویر از منبع راه دور نبود: %s [%d]"
+
+#: transforms/post_transforms/images.py:141
+#, python-format
+msgid "Unknown image format: %s..."
+msgstr "قالب تصویر ناشناخته: %s..."
+
+#: ext/napoleon/docstring.py:707
+msgid "Example"
+msgstr "مثال"
+
+#: ext/napoleon/docstring.py:708
+msgid "Examples"
+msgstr "نمونه‎ها"
+
+#: ext/napoleon/__init__.py:344 ext/napoleon/docstring.py:752
+msgid "Keyword Arguments"
+msgstr "نشانوندهای کلیدی"
+
+#: ext/napoleon/docstring.py:768
+msgid "Notes"
+msgstr "یادداشت‌ها"
+
+#: ext/napoleon/docstring.py:777
+msgid "Other Parameters"
+msgstr "مؤلّفه‌های دیگر"
+
+#: ext/napoleon/docstring.py:813
+msgid "Receives"
+msgstr "دریافت‌ها"
+
+#: ext/napoleon/docstring.py:817
+msgid "References"
+msgstr "منابع"
+
+#: ext/napoleon/docstring.py:849
+msgid "Warns"
+msgstr "هشدارها"
+
+#: ext/napoleon/docstring.py:853
+msgid "Yields"
+msgstr "فرآورده"
+
+#: ext/napoleon/docstring.py:1015
+#, python-format
+msgid "invalid value set (missing closing brace): %s"
+msgstr "مقدار نامعتبر تعیین شده (بدون کمانک انتهایی): %s"
+
+#: ext/napoleon/docstring.py:1022
+#, python-format
+msgid "invalid value set (missing opening brace): %s"
+msgstr "مقدار نامعتبر تعیین شده (بدون کمانک ابتدایی): %s"
+
+#: ext/napoleon/docstring.py:1029
+#, python-format
+msgid "malformed string literal (missing closing quote): %s"
+msgstr "رشته‌متن ادبی ناقص (بدون علامت نقل‌قول انتهایی): %s"
+
+#: ext/napoleon/docstring.py:1036
+#, python-format
+msgid "malformed string literal (missing opening quote): %s"
+msgstr "رشته‌متن ادبی ناقص (بدون علامت نقل‌قول ابتدایی): %s"
+
+#: ext/autosummary/__init__.py:256
+#, python-format
+msgid "autosummary references excluded document %r. Ignored."
+msgstr "ارجاعات خلاصه‌ی خودکار سند %r حذف کنار گذاشته. نادیده گرفته می‌شود."
+
+#: ext/autosummary/__init__.py:258
+#, python-format
+msgid ""
+"autosummary: stub file not found %r. Check your autosummary_generate "
+"setting."
+msgstr "خلاصه‌ی خودکار: خرده‌پرونده‌ی %r پیدا نشد. تنظیمات تولید خلاصه‌ی خودکار(autosummary_generate) را بررسی کنید."
+
+#: ext/autosummary/__init__.py:277
+msgid "A captioned autosummary requires :toctree: option. ignored."
+msgstr "خلاصه‌ی خودکار عنوان‌ٔار نیازمند گزینه‌ی :toctree: است، نادیده گرفته می‌شود."
+
+#: ext/autosummary/__init__.py:330
+#, python-format
+msgid ""
+"autosummary: failed to import %s.\n"
+"Possible hints:\n"
+"%s"
+msgstr ""
+
+#: ext/autosummary/__init__.py:344
+#, python-format
+msgid "failed to parse name %s"
+msgstr "شکست در تجزیه تحلیل نام %s"
+
+#: ext/autosummary/__init__.py:349
+#, python-format
+msgid "failed to import object %s"
+msgstr "شکست در وارد کردن شیئ %s"
+
+#: ext/autosummary/__init__.py:648
+#, python-format
+msgid ""
+"Summarised items should not include the current module. Replace %r with %r."
+msgstr ""
+
+#: ext/autosummary/__init__.py:819
+#, python-format
+msgid "autosummary_generate: file not found: %s"
+msgstr "تولید خلاصه خودکار: پرونده پیدا نشد: %s"
+
+#: ext/autosummary/__init__.py:827
+msgid ""
+"autosummary generates .rst files internally. But your source_suffix does not"
+" contain .rst. Skipped."
+msgstr ""
+
+#: ext/autosummary/generate.py:215 ext/autosummary/generate.py:391
+#, python-format
+msgid ""
+"autosummary: failed to determine %r to be documented, the following exception was raised:\n"
+"%s"
+msgstr "خلاصه‌ی خودکار: شکست در تشخیص %r برای مستندسازی، این ایراد به وجود آمد:\n%s"
+
+#: ext/autosummary/generate.py:526
+#, python-format
+msgid "[autosummary] generating autosummary for: %s"
+msgstr "[خلاصه‌ی خودکار] تولید خلاصه‌ی خودکار برای: %s"
+
+#: ext/autosummary/generate.py:530
+#, python-format
+msgid "[autosummary] writing to %s"
+msgstr "[خلاصه‌ی خودکار] نوشتن در %s"
+
+#: ext/autosummary/generate.py:572
+#, python-format
+msgid ""
+"[autosummary] failed to import %s.\n"
+"Possible hints:\n"
+"%s"
+msgstr ""
+
+#: ext/autosummary/generate.py:767
+msgid ""
+"\n"
+"Generate ReStructuredText using autosummary directives.\n"
+"\n"
+"sphinx-autogen is a frontend to sphinx.ext.autosummary.generate. It generates\n"
+"the reStructuredText files from the autosummary directives contained in the\n"
+"given input files.\n"
+"\n"
+"The format of the autosummary directive is documented in the\n"
+"``sphinx.ext.autosummary`` Python module and can be read using::\n"
+"\n"
+"  pydoc sphinx.ext.autosummary\n"
+msgstr "\nتولید ReStructuredText با استفاده از دستورالعمل‌های خلاصه‌ی خودکار.\n\nخودکارساز اسفینکس رابط کابر پسندی برای sphinx.ext.autosummary.generate (پیمانه‌ی افزونه‌ی خلاصه‌ساز اسفنیکس) است.\nاین افزونه پرونده های متن reStructuredText را از دستورالعمل‌های خلاصه‌ی خودکاری تولید می‌کند که در پرونده‌های درون‌داد مشخّص شده قرار دارد.\n\nقالب دستورالعمل خلاصه‌ی خودکار درپیمانه‌ی افزونه‌ی خلاصه‌ی خودکار اسفنیکس (sphinx.ext.autosummary) مستند سازی شده می توان آن را با دستور زیر خواند::\n\n  pydoc sphinx.ext.autosummary\n"
+
+#: ext/autosummary/generate.py:789
+msgid "source files to generate rST files for"
+msgstr "پرونده‌های منبع برای تولید پرونده‌های rST"
+
+#: ext/autosummary/generate.py:797
+msgid "directory to place all output in"
+msgstr "پوشه‌ای برای قرار دادن همه‌ی برون دادها در آن"
+
+#: ext/autosummary/generate.py:805
+#, python-format
+msgid "default suffix for files (default: %(default)s)"
+msgstr "پسوند پیش فرض برای پرونده‌ها (پیش‌فرض: %(default)s)"
+
+#: ext/autosummary/generate.py:813
+#, python-format
+msgid "custom template directory (default: %(default)s)"
+msgstr "شاخه‌ی سفارشی قالب (پیش‌گزیده: %(default)s)"
+
+#: ext/autosummary/generate.py:821
+#, python-format
+msgid "document imported members (default: %(default)s)"
+msgstr "اجزای فراخوان شده‌ی سند (پیش‌گزیده: %(default)s)"
+
+#: ext/autosummary/generate.py:829
+#, python-format
+msgid ""
+"document exactly the members in module __all__ attribute. (default: "
+"%(default)s)"
+msgstr ""
+
+#: ext/intersphinx/_resolve.py:47
+#, python-format
+msgid "(in %s v%s)"
+msgstr "(در %s v%s)"
+
+#: ext/intersphinx/_resolve.py:49
+#, python-format
+msgid "(in %s)"
+msgstr "(در %s )"
+
+#: ext/intersphinx/_resolve.py:103
+#, python-format
+msgid "inventory '%s': duplicate matches found for %s:%s"
+msgstr ""
+
+#: ext/intersphinx/_resolve.py:113
+#, python-format
+msgid "inventory '%s': multiple matches found for %s:%s"
+msgstr ""
+
+#: ext/intersphinx/_resolve.py:359
+#, python-format
+msgid "inventory for external cross-reference not found: %r"
+msgstr ""
+
+#: ext/intersphinx/_resolve.py:367
+#, python-format
+msgid "invalid external cross-reference suffix: %r"
+msgstr ""
+
+#: ext/intersphinx/_resolve.py:378
+#, python-format
+msgid "domain for external cross-reference not found: %r"
+msgstr ""
+
+#: ext/intersphinx/_resolve.py:585
+#, python-format
+msgid "external %s:%s reference target not found: %s"
+msgstr ""
+
+#: ext/intersphinx/_load.py:59
+#, python-format
+msgid ""
+"Invalid intersphinx project identifier `%r` in intersphinx_mapping. Project "
+"identifiers must be non-empty strings."
+msgstr ""
+
+#: ext/intersphinx/_load.py:70
+#, python-format
+msgid ""
+"Invalid value `%r` in intersphinx_mapping[%r]. Expected a two-element tuple "
+"or list."
+msgstr ""
+
+#: ext/intersphinx/_load.py:81
+#, python-format
+msgid ""
+"Invalid value `%r` in intersphinx_mapping[%r]. Values must be a (target URI,"
+" inventory locations) pair."
+msgstr ""
+
+#: ext/intersphinx/_load.py:92
+#, python-format
+msgid ""
+"Invalid target URI value `%r` in intersphinx_mapping[%r][0]. Target URIs "
+"must be unique non-empty strings."
+msgstr ""
+
+#: ext/intersphinx/_load.py:101
+#, python-format
+msgid ""
+"Invalid target URI value `%r` in intersphinx_mapping[%r][0]. Target URIs "
+"must be unique (other instance in intersphinx_mapping[%r])."
+msgstr ""
+
+#: ext/intersphinx/_load.py:120
+#, python-format
+msgid ""
+"Invalid inventory location value `%r` in intersphinx_mapping[%r][1]. "
+"Inventory locations must be non-empty strings or None."
+msgstr ""
+
+#: ext/intersphinx/_load.py:131
+msgid "Invalid `intersphinx_mapping` configuration (1 error)."
+msgstr ""
+
+#: ext/intersphinx/_load.py:134
+#, python-format
+msgid "Invalid `intersphinx_mapping` configuration (%s errors)."
+msgstr ""
+
+#: ext/intersphinx/_load.py:155
+msgid "An invalid intersphinx_mapping entry was added after normalisation."
+msgstr ""
+
+#: ext/intersphinx/_load.py:240
+#, python-format
+msgid "loading intersphinx inventory '%s' from %s ..."
+msgstr ""
+
+#: ext/intersphinx/_load.py:265
+msgid ""
+"encountered some issues with some of the inventories, but they had working "
+"alternatives:"
+msgstr "مشکلاتی در برخی از سیاهه‌ها به وجود آمد،ولی این مشکلات راه‌های جایگزین های داشته‌اند:"
+
+#: ext/intersphinx/_load.py:275
+msgid "failed to reach any of the inventories with the following issues:"
+msgstr "شکست در رسیدن به یکی از سیاهه‌ها به خاطر مشکلات زیر:"
+
+#: ext/intersphinx/_load.py:319
+#, python-format
+msgid "intersphinx inventory has moved: %s -> %s"
+msgstr "سیاهه‌ی بین اسفینکس جا به جایی را انجام داد: %s -> %s"
+
+#: ext/autodoc/type_comment.py:132
+#, python-format
+msgid "Failed to update signature for %r: parameter not found: %s"
+msgstr "شکست در به روز رسانی امضا برای %r: مؤلّفه پیدا نشد: %s"
+
+#: ext/autodoc/type_comment.py:135
+#, python-format
+msgid "Failed to parse type_comment for %r: %s"
+msgstr "شکست در تحلیل نوع یادداشت برای %r: %s"
+
+#: ext/autodoc/__init__.py:142
+#, python-format
+msgid "invalid value for member-order option: %s"
+msgstr "مقدار نامعتبر برای گزینه‌ی ترتیب اعضا (member-order): %s"
+
+#: ext/autodoc/__init__.py:150
+#, python-format
+msgid "invalid value for class-doc-from option: %s"
+msgstr "مقدار نامعتبر برای گزینه‌ی «از مستندات کلاس» class-doc-from:%s"
+
+#: ext/autodoc/__init__.py:415
+#, python-format
+msgid "invalid signature for auto%s (%r)"
+msgstr "امضای ناشناخته‌ برای %s (%r)"
+
+#: ext/autodoc/__init__.py:532
+#, python-format
+msgid "error while formatting arguments for %s: %s"
+msgstr "خطا در قالب بندی نشانوند برای %s: %s"
+
+#: ext/autodoc/__init__.py:807
+#, python-format
+msgid ""
+"autodoc: failed to determine %s.%s (%r) to be documented, the following exception was raised:\n"
+"%s"
+msgstr ""
+
+#: ext/autodoc/__init__.py:902
+#, python-format
+msgid ""
+"don't know which module to import for autodocumenting %r (try placing a "
+"\"module\" or \"currentmodule\" directive in the document, or giving an "
+"explicit module name)"
+msgstr "مشخّص نیست کدام پیمانه را برای مستندسازی خودکار فراخوان کند %r (سعی کنید دستورالعمل «module» یا «currentmodule» را در سند قرار دهید، یا یک نام واضح برای پیمانه ارائه دهید)"
+
+#: ext/autodoc/__init__.py:946
+#, python-format
+msgid "A mocked object is detected: %r"
+msgstr "شیئ ساختگی شناسایی شد: %r"
+
+#: ext/autodoc/__init__.py:965
+#, python-format
+msgid "error while formatting signature for %s: %s"
+msgstr "خطا در قالب بندی امضا برای %s: %s"
+
+#: ext/autodoc/__init__.py:1028
+msgid "\"::\" in automodule name doesn't make sense"
+msgstr "\"::\"  در پیمانه‌ی خودکار معنی نمی‌دهد"
+
+#: ext/autodoc/__init__.py:1035
+#, python-format
+msgid "signature arguments or return annotation given for automodule %s"
+msgstr "نشانوند‌های امضا یا یادداشت مقدار برگشتی داده شده برای پیمانه‌ی خودکار %s"
+
+#: ext/autodoc/__init__.py:1048
+#, python-format
+msgid ""
+"__all__ should be a list of strings, not %r (in module %s) -- ignoring "
+"__all__"
+msgstr "__all__ باید لیستی از رشته‌متن ها باشد، نه %r (در پیمانه‌ی %s) -- __all__ نادیده گرفته می‌شود"
+
+#: ext/autodoc/__init__.py:1114
+#, python-format
+msgid ""
+"missing attribute mentioned in :members: option: module %s, attribute %s"
+msgstr "ویژگی نایاب در گزینه‌ی :members: قید شده: پیمانه‌ی:%s، ویژگی %s"
+
+#: ext/autodoc/__init__.py:1337 ext/autodoc/__init__.py:1414
+#: ext/autodoc/__init__.py:2829
+#, python-format
+msgid "Failed to get a function signature for %s: %s"
+msgstr "شکست در دریافت امضای تابع برای %s: مؤلّفه پیدا نشد: %s"
+
+#: ext/autodoc/__init__.py:1633
+#, python-format
+msgid "Failed to get a constructor signature for %s: %s"
+msgstr "شکست در دریافت امضای سازنده‌ی شیئ برای %s: مؤلّفه پیدا نشد: %s"
+
+#: ext/autodoc/__init__.py:1760
+#, python-format
+msgid "Bases: %s"
+msgstr "پایه ها:%s"
+
+#: ext/autodoc/__init__.py:1774
+#, python-format
+msgid "missing attribute %s in object %s"
+msgstr "ویژگی ناموجود %s در شیئ %s"
+
+#: ext/autodoc/__init__.py:1855 ext/autodoc/__init__.py:1892
+#: ext/autodoc/__init__.py:1987
+#, python-format
+msgid "alias of %s"
+msgstr "نام جانشین %s"
+
+#: ext/autodoc/__init__.py:1875
+#, python-format
+msgid "alias of TypeVar(%s)"
+msgstr "نام جانشین نوع متغیر(%s)"
+
+#: ext/autodoc/__init__.py:2217 ext/autodoc/__init__.py:2317
+#, python-format
+msgid "Failed to get a method signature for %s: %s"
+msgstr "شکست در دریافت امضای شگرد برای %s: مؤلّفه پیدا نشد: %s"
+
+#: ext/autodoc/__init__.py:2448
+#, python-format
+msgid "Invalid __slots__ found on %s. Ignored."
+msgstr "__slots__ نامعتبر در %sیدا شد و نادیده گرفته شد."
+
+#: ext/autodoc/preserve_defaults.py:190
+#, python-format
+msgid "Failed to parse a default argument value for %r: %s"
+msgstr "شکست در تحلیل مقدار پیش‌گزیده‌‌ی نشانوند برای %r: %s"
+
+#: templates/latex/longtable.tex.jinja:52
+#: templates/latex/sphinxmessages.sty.jinja:8
+msgid "continued from previous page"
+msgstr "ادامه از صفحه‌ی قبل"
+
+#: templates/latex/longtable.tex.jinja:63
+#: templates/latex/sphinxmessages.sty.jinja:9
+msgid "continues on next page"
+msgstr "ادامه در صفحه‌ی بعد"
+
+#: templates/latex/sphinxmessages.sty.jinja:10
+msgid "Non-alphabetical"
+msgstr "غیر الفبایی"
+
+#: templates/latex/sphinxmessages.sty.jinja:12
+msgid "Numbers"
+msgstr "شماره ها"
+
+#: templates/latex/sphinxmessages.sty.jinja:13
+msgid "page"
+msgstr "صفحه"

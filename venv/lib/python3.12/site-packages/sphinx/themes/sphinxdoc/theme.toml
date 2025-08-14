@@ -1,0 +1,6 @@
+[theme]
+inherit = "basic"
+stylesheets = [
+    "sphinxdoc.css",
+]
+pygments_style = { default = "friendly" }

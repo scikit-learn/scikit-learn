@@ -1,0 +1,14 @@
+{# Sphinx layout template for the bizstyle theme. #}
+{% extends "basic/layout.html" %}
+
+{%- block scripts %}
+    {{ super() }}
+    <script src="{{ pathto('_static/bizstyle.js', 1) }}"></script>
+{%- endblock %}
+
+{%- block extrahead %}
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+{%- endblock %}
