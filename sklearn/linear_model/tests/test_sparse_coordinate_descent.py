@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -378,7 +379,7 @@ def test_sparse_read_only_buffer(copy_X):
     rng = np.random.RandomState(0)
 
     clf = ElasticNet(alpha=0.1, copy_X=copy_X, random_state=rng)
-    X = sp.random(100, 20, format="csc", random_state=rng)
+    X = _sparse_random((100, 20), format="csc", rng=rng)
 
     # Make X.data read-only
     X.data = create_memmap_backed_data(X.data)

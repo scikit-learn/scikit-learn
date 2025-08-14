@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
+from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
 from sklearn.utils.fixes import _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
@@ -467,16 +468,20 @@ class SimpleImputer(_BaseImputer):
         if strategy == "constant":
             # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
             # for empty features to drop them later.
-            if not self.keep_empty_features and any(
-                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
-            ):
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
+            if not self.keep_empty_features:
+                mm = missing_mask
+                if SCIPY_VERSION_BELOW_1_12:
+                    all_mm = (all(mm[:, [i]].data) for i in range(mm.shape[1]))
+                else:
+                    all_mm = (all(mm[:, i].data) for i in range(mm.shape[1]))
+                if any(all_mm):
+                    warnings.warn(
+                        "Currently, when `keep_empty_feature=False` and "
+                        '`strategy="constant"`, empty features are not dropped. '
+                        "This behaviour will change in version 1.8. Set "
+                        "`keep_empty_feature=True` to preserve this behaviour.",
+                        FutureWarning,
+                    )
 
             # for constant strategy, self.statistics_ is used to store
             # fill_value in each column
@@ -925,7 +930,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                 n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
-                imputer_mask = sp.csc_matrix(imputer_mask)
+                imputer_mask = _align_api_if_sparse(sp.csc_array(imputer_mask))
 
         if self.features == "all":
             features_indices = np.arange(X.shape[1])

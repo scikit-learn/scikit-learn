@@ -2,10 +2,10 @@
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import check_random_state
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import assert_allclose, assert_array_less
 
 SVD_SOLVERS = ["arpack", "randomized"]
@@ -15,7 +15,7 @@ SVD_SOLVERS = ["arpack", "randomized"]
 def X_sparse():
     # Make an X that looks somewhat like a small tf-idf matrix.
     rng = check_random_state(42)
-    X = sp.random(60, 55, density=0.2, format="csr", random_state=rng)
+    X = _sparse_random((60, 55), density=0.2, format="csr", rng=rng)
     X.data[:] = 1 + np.log(X.data)
     return X
 
