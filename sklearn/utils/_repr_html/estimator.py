@@ -393,7 +393,10 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        if callable(getattr(estimator, "get_feature_names_out", None)):
+        if (
+            callable(getattr(estimator, "get_feature_names_out", None))
+            and is_fitted_css_class
+        ):
             features = str(len(estimator.get_feature_names_out()))
         else:
             features = ""
