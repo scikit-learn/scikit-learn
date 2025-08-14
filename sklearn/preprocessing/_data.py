@@ -3482,7 +3482,14 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             The original data.
         """
         check_is_fitted(self)
-        X = self._check_input(X, in_fit=False, check_shape=True)
+        X = check_array(
+            X,
+            ensure_2d=True,
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
+        )
 
         if self.standardize:
             X = self._scaler.inverse_transform(X)
