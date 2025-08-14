@@ -34,6 +34,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.metadata_routing import _routing_enabled, process_routing
 from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -100,10 +101,13 @@ def _alpha_grid(
     fit_intercept=True,
     eps=1e-3,
     n_alphas=100,
-    copy_X=True,
     sample_weight=None,
 ):
     """Compute the grid of alpha values for elastic net parameter search
+
+    Computes alpha_max which results in coef=0 and then uses a multiplicative grid of
+    length `eps`.
+    `X` is never copied.
 
     Parameters
     ----------
@@ -134,10 +138,12 @@ def _alpha_grid(
     fit_intercept : bool, default=True
         Whether to fit an intercept or not
 
-    copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     sample_weight : ndarray of shape (n_samples,), default=None
+
+    Returns
+    -------
+    np.ndarray
+        Grid of alpha values.
     """
     if l1_ratio == 0:
         raise ValueError(
@@ -149,26 +155,30 @@ def _alpha_grid(
     if Xy is not None:
         Xyw = Xy
     else:
-        X, y, X_offset, _, _, _ = _preprocess_data(
-            X,
-            y,
-            fit_intercept=fit_intercept,
-            copy=copy_X,
-            sample_weight=sample_weight,
-            check_input=False,
-            rescale_with_sw=False,
-        )
-        if sample_weight is not None:
+        if fit_intercept:
+            # TODO: For y.ndim >> 1, think about avoiding memory of y = y - y.mean()
+            y = y - np.average(y, axis=0, weights=sample_weight)
+            if sparse.issparse(X):
+                X_mean, _ = mean_variance_axis(X, axis=0, weights=sample_weight)
+            else:
+                X_mean = np.average(X, axis=0, weights=sample_weight)
+
+        if sample_weight is None:
+            yw = y
+        else:
             if y.ndim > 1:
                 yw = y * sample_weight.reshape(-1, 1)
             else:
                 yw = y * sample_weight
+
+        if fit_intercept:
+            # Avoid copy of X, i.e. avoid explicitly computing X - X_mean
+            if y.ndim > 1:
+                Xyw = X.T @ yw - X_mean[:, None] * np.sum(yw, axis=0)
+            else:
+                Xyw = X.T @ yw - X_mean * np.sum(yw, axis=0)
         else:
-            yw = y
-        if sparse.issparse(X):
-            Xyw = safe_sparse_dot(X.T, yw, dense_output=True) - np.sum(yw) * X_offset
-        else:
-            Xyw = np.dot(X.T, yw)
+            Xyw = X.T @ yw
 
     if Xyw.ndim == 1:
         Xyw = Xyw[:, np.newaxis]
@@ -176,7 +186,9 @@ def _alpha_grid(
         n_samples = sample_weight.sum()
     else:
         n_samples = X.shape[0]
-    alpha_max = np.sqrt(np.sum(Xyw**2, axis=1)).max() / (n_samples * l1_ratio)
+    # Compute np.max(np.sqrt(np.sum(Xyw**2, axis=1))). We switch sqrt and max to avoid
+    # many computations of sqrt. This, however, needs an additional np.abs.
+    alpha_max = np.sqrt(np.max(np.abs(np.sum(Xyw**2, axis=1)))) / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(np.float64).resolution:
         return np.full(n_alphas, np.finfo(np.float64).resolution)
@@ -615,8 +627,8 @@ def enet_path(
             check_gram=True,
         )
     if alphas is None:
-        # No need to normalize of fit_intercept: it has been done
-        # above
+        # fit_intercept and sample_weight have already been dealt with in calling
+        # methods like ElasticNet.fit.
         alphas = _alpha_grid(
             X,
             y,
@@ -625,7 +637,6 @@ def enet_path(
             fit_intercept=False,
             eps=eps,
             n_alphas=n_alphas,
-            copy_X=False,
         )
     elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
@@ -1649,8 +1660,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
-        # lot of duplication of memory
-        copy_X = self.copy_X and self.fit_intercept
+        # lot of duplication of memory.
+        # There is no need copy X if the model is fit without an intercept.
+        copy_X = self.copy_X and self.fit_intercept  # TODO: Sample_weights?
 
         check_y_params = dict(
             copy=False, dtype=[np.float64, np.float32], ensure_2d=False
@@ -1658,9 +1670,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(X, np.ndarray) or sparse.issparse(X):
             # Keep a reference to X
             reference_to_old_X = X
-            # Let us not impose fortran ordering so far: it is
-            # not useful for the cross-validation loop and will be done
-            # by the model fitting itself
+            # Let us not impose Fortran-contiguity so far: In the cross-validation
+            # loop, rows of X will be subsampled and produce non-F-contiguous X_fold
+            # anyway. _path_residual will take care about it.
 
             # Need to validate separately here.
             # We can't pass multi_output=True because that would allow y to be
@@ -1680,10 +1692,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 if hasattr(reference_to_old_X, "data") and not np.may_share_memory(
                     reference_to_old_X.data, X.data
                 ):
-                    # X is a sparse matrix and has been copied
+                    # X is a sparse matrix and has been copied. No need to copy again.
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
-                # X has been copied
+                # X has been copied. No need to copy again.
                 copy_X = False
             del reference_to_old_X
         else:
@@ -1713,7 +1725,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             y = column_or_1d(y, warn=True)
         else:
             if sparse.issparse(X):
-                raise TypeError("X should be dense but a sparse matrix waspassed")
+                raise TypeError("X should be dense but a sparse matrix was passed.")
             elif y.ndim == 1:
                 raise ValueError(
                     "For mono-task outputs, use %sCV" % self.__class__.__name__[9:]
@@ -1729,7 +1741,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
 
-        # Pop `intercept` that is not parameter of the path function
+        # fit_intercept is not a parameter of the path function
         path_params.pop("fit_intercept", None)
 
         if "l1_ratio" in path_params:
@@ -1761,7 +1773,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     fit_intercept=self.fit_intercept,
                     eps=self.eps,
                     n_alphas=self._alphas,
-                    copy_X=self.copy_X,
                     sample_weight=sample_weight,
                 )
                 for l1_ratio in l1_ratios

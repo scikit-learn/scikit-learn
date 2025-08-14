@@ -1,0 +1,4 @@
+- :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNetCV` and :class:`linear_model.MultiTaskLassoCV`
+  avoid an additional copy of `X` with default `copy_X=True`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
