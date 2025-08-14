@@ -326,16 +326,18 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
-    if hasattr(estimator, "_get_features"):
-        features = estimator._get_features()
-    else:
-        features = ""
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
+            breakpoint()
+            if callable(getattr(estimator, "get_feature_names_out", None)):
+                features = str(len(estimator.get_feature_names_out()))
+            else:
+                features = ""
             if hasattr(estimator, "get_params") and hasattr(
                 estimator, "_get_params_html"
             ):
@@ -396,11 +398,12 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        if hasattr(estimator, "_get_features"):
-            features = estimator._get_features()
+        breakpoint()
+        if callable(getattr(estimator, "get_feature_names_out", None)):
+            features = str(len(estimator.get_feature_names_out()))
         else:
             features = ""
-
+        breakpoint()
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
         else:
