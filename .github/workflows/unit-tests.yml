@@ -82,7 +82,7 @@ jobs:
       - name: Run tests
         run: bash -l build_tools/azure/test_script.sh
 
-      - name: Combine coverage reports
+      - name: Combine coverage reports from parallel test runners
         run: bash -l build_tools/azure/combine_coverage_reports.sh
         if: ${{ env.COVERAGE == 'true' }}
 
@@ -92,4 +92,5 @@ jobs:
         with:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
-          disable_search: true
+          #disable_search: true
+          verbose: true
