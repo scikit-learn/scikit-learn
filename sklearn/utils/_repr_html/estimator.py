@@ -189,7 +189,7 @@ def _write_label_html(
         if features is None or features == "":
             features_div = ""
         else:
-            features_div = f'<div class="features"><hr>{features} Output features</div>'
+            features_div = f'<div class="features">{features} Output features</div>'
 
         name_caption_div = (
             ""

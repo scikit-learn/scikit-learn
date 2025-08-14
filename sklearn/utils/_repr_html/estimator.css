@@ -414,11 +414,10 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 .features {
     font-size: smaller;
-}
-
-.features hr {
     width: 100%;
-    margin-top: 5%;
-    border: none;
-    border-top: .1em solid black;
+    padding-top: 3%;
+    padding-bottom: 3%;
+    text-align: center;
+    background: var(--sklearn-color-fitted-level-1);
+    border-top: 1px solid gray;
 }
