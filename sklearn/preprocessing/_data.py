@@ -3493,8 +3493,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if not X.shape[1] == len(self.lambdas_):
             raise ValueError(
-                "Input data has a different number of features "
-                "than fitting data. Should have {n}, data has {m}".format(
+                "X has {m} features, but PowerTransformer is expecting {n} features".format(
                     n=len(self.lambdas_), m=X.shape[1]
                 )
             )
