@@ -1208,7 +1208,7 @@ def test_learning_curve():
         assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
         # Cannot use assert_array_almost_equal for fit and score times because
-        # the values are hardware-dependant
+        # the values are hardware-dependent
         assert fit_times.dtype == "float64"
         assert score_times.dtype == "float64"
 
