@@ -382,7 +382,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             regressor=self._get_regressor(),
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")

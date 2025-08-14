@@ -218,7 +218,7 @@ class _MultimetricScorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return MetadataRouter(owner=self.__class__.__name__).add(
+        return MetadataRouter(owner=self).add(
             **self._scorers,
             method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
@@ -273,6 +273,9 @@ class _BaseScorer(_MetadataRequester):
             f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
+
+    def _routing_repr(self):
+        return repr(self)
 
     def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
@@ -363,7 +366,7 @@ class _BaseScorer(_MetadataRequester):
             ),
             kwargs=kwargs,
         )
-        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        self._metadata_request = MetadataRequest(owner=self)
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
@@ -489,7 +492,7 @@ class _PassthroughScorer(_MetadataRequester):
     def __init__(self, estimator):
         self._estimator = estimator
 
-        requests = MetadataRequest(owner=self.__class__.__name__)
+        requests = MetadataRequest(owner=self)
         try:
             requests.score = copy.deepcopy(estimator._metadata_request.score)
         except AttributeError:
@@ -505,7 +508,10 @@ class _PassthroughScorer(_MetadataRequester):
         return estimator.score(*args, **kwargs)
 
     def __repr__(self):
-        return f"{self._estimator.__class__}.score"
+        return f"{type(self._estimator).__name__}.score"
+
+    def _routing_repr(self):
+        return repr(self)
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
