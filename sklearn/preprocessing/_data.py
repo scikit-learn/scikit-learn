@@ -3491,6 +3491,14 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             ensure_all_finite="allow-nan",
         )
 
+        if not X.shape[1] == len(self.lambdas_):
+            raise ValueError(
+                "Input data has a different number of features "
+                "than fitting data. Should have {n}, data has {m}".format(
+                    n=len(self.lambdas_), m=X.shape[1]
+                )
+            )
+
         if self.standardize:
             X = self._scaler.inverse_transform(X)
 
