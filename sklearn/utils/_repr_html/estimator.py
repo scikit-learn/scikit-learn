@@ -333,11 +333,6 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            breakpoint()
-            if callable(getattr(estimator, "get_feature_names_out", None)):
-                features = str(len(estimator.get_feature_names_out()))
-            else:
-                features = ""
             if hasattr(estimator, "get_params") and hasattr(
                 estimator, "_get_params_html"
             ):
@@ -351,7 +346,7 @@ def _write_estimator_html(
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
-                features=features,
+                features="",
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
                 param_prefix=param_prefix,
@@ -398,12 +393,10 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        breakpoint()
         if callable(getattr(estimator, "get_feature_names_out", None)):
             features = str(len(estimator.get_feature_names_out()))
         else:
             features = ""
-        breakpoint()
         if hasattr(estimator, "_get_params_html"):
             params = estimator._get_params_html()._repr_html_inner()
         else:

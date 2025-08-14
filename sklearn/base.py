@@ -199,17 +199,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     _html_repr = estimator_html_repr
 
-    def _get_features(self):
-        est = getattr(self.__init__, "deprecated_original", self)
-
-        if est is object.__init__:
-            # No explicit constructor to instrospect
-            return []
-
-        n_features = getattr(est, "n_features_in_", None)
-
-        return n_features
-
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
