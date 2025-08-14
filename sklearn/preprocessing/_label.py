@@ -166,21 +166,23 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, since LabelEncoder produces a single output.
-
-        Returns
-        -------
-        feature_names_out : ndarray of shape (1,), dtype=str
-            Output feature name.
-        """
-        check_is_fitted(self)  # ADD THIS LINE!
+    Parameters
+    ----------
+    input_features : array-like of str or None, default=None
+        Not used, since LabelEncoder produces a single output.
+        
+    Returns
+    -------
+    feature_names_out : ndarray of shape (1,), dtype=str
+        Output feature name.
+    """
+        check_is_fitted(self)
         if input_features is not None and len(input_features) >= 1:
-            return np.array([input_features[0]], dtype=object)
+            return np.array([input_features[0]], dtype=object)  # Take first element!
         else:
-            return np.array(["labelencoder_output"], dtype=object)
+            return np.array(['labelencoder_output'], dtype=object)
+
+
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
