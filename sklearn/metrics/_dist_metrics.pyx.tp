@@ -232,6 +232,7 @@ cdef class DistanceMetric:
 # metric mappings
 #  These map from metric id strings to class names
 METRIC_MAPPING{{name_suffix}} = {
+    'precomputed': PrecomputedDistanceMatrix{{name_suffix}}
     'euclidean': EuclideanDistance{{name_suffix}},
     'l2': EuclideanDistance{{name_suffix}},
     'minkowski': MinkowskiDistance{{name_suffix}},
@@ -359,13 +360,17 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
 
     **User-defined distance:**
 
-    ===========    ===============    =======
-    identifier     class name         args
-    -----------    ---------------    -------
-    "pyfunc"       PyFuncDistance     func
-    ===========    ===============    =======
+    ===========    ===============            =======
+    identifier     class name                 args
+    -----------    ---------------            -------
+    "precomputed"  PrecomputedDistanceMatrix  precomputed
+    "pyfunc"       PyFuncDistance             func
+    ===========    ===============            =======
 
-    Here ``func`` is a function which takes two one-dimensional numpy
+    "precomputed" indicates that the user has the distance computed 
+    and wants to pass in the precomputed as an argument.
+
+    ``func`` is a function which takes two one-dimensional numpy
     arrays, and returns a distance.  Note that in order to be used within
     the BallTree, the distance must be a true metric:
     i.e. it must satisfy the following properties
