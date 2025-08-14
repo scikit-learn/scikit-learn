@@ -2404,3 +2404,86 @@ def test_ordinal_encoder_infrequent_if_exist(kwargs):
         ["infrequent_sklearn"],
     ]
     assert_array_equal(X_inverse, expected_inverse)
+
+
+def test_ordinal_encoder_with_infrequent_if_exist_multi_feature():
+    X = np.array([[0, 2, 2], [0, 1, 3], [1, 1, 2]])
+    X2 = np.array([[4, 1, 8]])
+
+    oe = OrdinalEncoder(handle_unknown="infrequent_if_exist", min_frequency=2)
+    oe.fit(X)
+    X2_passed = X2.copy()
+    expected = np.array([[1.0, 0.0, 1.0]])
+
+    X_trans = oe.transform(X2_passed)
+    assert_allclose(X_trans, expected, equal_nan=True)
+    # ensure transformed data was not modified in place
+    assert_allclose(X2, X2_passed)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 1},
+        {"min_frequency": 100},
+    ],
+)
+def test_ordinal_encoder_with_infrequent_if_exist_all_infrequent_or_unknown(kwargs):
+    """When all categories are infrequent or unknown with
+    `handle_unknown='infrequent_if_exist'`, they are all encoded as zero."""
+    X_train = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
+    ).T
+    encoder = OrdinalEncoder(**kwargs, handle_unknown="infrequent_if_exist").fit(
+        X_train
+    )
+
+    X_test = [["a"], ["b"], ["c"], ["d"], ["e"]]
+    assert_allclose(encoder.transform(X_test), [[0], [0], [0], [0], [0]])
+
+
+def test_ordinal_encoder_with_infrequent_if_exist_missing_appears_frequent():
+    """Check behavior when missing value appears frequently with
+    `handle_unknown='infrequent_if_exist'`."""
+    X = np.array(
+        [[np.nan] * 20 + ["dog"] * 10 + ["cat"] * 5 + ["snake"] + ["deer"]],
+        dtype=object,
+    ).T
+    ordinal = OrdinalEncoder(
+        max_categories=3, handle_unknown="infrequent_if_exist"
+    ).fit(X)
+
+    X_test = np.array([["snake", "cat", "dog", np.nan, "bear"]], dtype=object).T
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, [[2], [0], [1], [np.nan], [2]])
+
+
+def test_ordinal_encoder_with_infrequent_if_exist_nan_semantics():
+    """Check behavior when np.nan appears with `handle_unknown='infrequent_if_exist'`"""
+
+    # feature 0 nan is an infrequent category
+    # feature 1 nan is an unknown category
+    X = np.array(
+        [
+            [np.nan] + ["dog"] * 10 + ["cat"] * 5 + ["snake"] + ["deer"],
+            ["red"] * 9 + ["green"] * 8 + ["bear"],
+        ],
+        dtype=object,
+    ).T
+    ordinal = OrdinalEncoder(min_frequency=4, handle_unknown="infrequent_if_exist").fit(
+        X
+    )
+
+    X_test = np.array(
+        [
+            ["snake", "red"],
+            ["deer", "green"],
+            [np.nan, "green"],
+            ["dog", "green"],
+            ["cat", "red"],
+            ["bear", np.nan],
+        ],
+        dtype=object,
+    )
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1], [2, 2]])
