@@ -88,8 +88,10 @@ jobs:
 
       - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v5
-        # This step (also the previous step) should depend on whether we run the whole
-        # test suite (maybe adding && env.SELECTED_TESTS == ''):
+        # TODO: should depend on whether we run the whole test suite (could be by adding
+        # && env.SELECTED_TESTS == '' as in build_tools/azure/posix.yml, or setting
+        # env.COVERAGE == 'false' before the "Run tests" step, so reports are not
+        # generated at all)
         if: ${{ env.COVERAGE == 'true' }}
         with:
           files: ./coverage.xml

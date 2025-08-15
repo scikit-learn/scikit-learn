@@ -20,8 +20,7 @@ coverage:
 codecov:
   notify:
     # Prevent codecov from calculating the coverage results before all expected uploads
-    # are in. This value is set to the total number of jobs uploading coverage reports:
-    # 6 Azure Pipeline jobs plus 1 GitHub Actions job.
+    # are in. This value is set to the total number of jobs uploading coverage reports.
     after_n_builds: 7
 
 ignore:
