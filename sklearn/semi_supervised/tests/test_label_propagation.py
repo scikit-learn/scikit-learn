@@ -145,8 +145,8 @@ def test_sparse_input_types(
 
 
 @pytest.mark.parametrize("constructor", CONSTRUCTOR_TYPES)
-@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS[1:2])
-def test_build_graph_normalized(constructor, Estimator, parameters):
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS[:2])
+def test_label_propagation_build_graph_normalized(constructor, Estimator, parameters):
     # required but unused X and labels values
     X = np.array([[1.0, 0.0], [1.0, 1.0], [1.0, 3.0]])
     labels = [0, 1, -1]
