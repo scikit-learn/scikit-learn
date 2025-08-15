@@ -1308,6 +1308,59 @@ if __name__ == "__main__":
     run_tests_without_pytest()
 
 
+def test_estimator_checks_generator_strict_none():
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    # If we don't pass strict, it should not appear in the xfail mark either
+    # This way the behaviour configured in pytest.ini takes precedence.
+    checks = estimator_checks_generator(
+        est,
+        legacy=True,
+        expected_failed_checks=expected_to_fail,
+        mark="xfail",
+    )
+    # making sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    # xfail'ed checks are wrapped in a ParameterSet, so below we extract
+    # the things we need via a bit of a crutch: len()
+    marked_checks = [c for c in checks if len(c) == 3]
+
+    for parameter_set in marked_checks:
+        (_, check), marks, _ = parameter_set
+        mark = marks[0]
+        assert "strict" not in mark.kwargs
+
+
+def test_estimator_checks_generator_strict_xfail_tests():
+    # Make sure that the checks generator marks tests that are expected to fail
+    # as strict xfail
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    checks = estimator_checks_generator(
+        est,
+        legacy=True,
+        expected_failed_checks=expected_to_fail,
+        mark="xfail",
+        strict=True,
+    )
+    # making sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    strict_xfailed_checks = []
+
+    # xfail'ed checks are wrapped in a ParameterSet, so below we extract
+    # the things we need via a bit of a crutch: len()
+    marked_checks = [c for c in checks if len(c) == 3]
+
+    for parameter_set in marked_checks:
+        (_, check), marks, _ = parameter_set
+        mark = marks[0]
+        if mark.kwargs["strict"]:
+            strict_xfailed_checks.append(_check_name(check))
+
+    # all checks expected to fail are marked as strict xfail
+    assert set(expected_to_fail.keys()) == set(strict_xfailed_checks)
+
+
 def test_estimator_checks_generator_skipping_tests():
     # Make sure the checks generator skips tests that are expected to fail
     est = next(_construct_instances(NuSVC))
