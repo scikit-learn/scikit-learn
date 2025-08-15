@@ -107,7 +107,7 @@ def test_converged_to_local_maximum(kernel):
 
 
 @pytest.mark.xfail(raises=AssertionError)
-@pytest.mark.parametrize("kernel", non_fixed_kernels[:-1])
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_gradient(kernel):
     # Clone the kernel object prior to mutating it to avoid any side effects between
     # GP tests:
@@ -123,11 +123,16 @@ def test_lml_gradient(kernel):
         result = np.zeros_like(length_scales)
         for i, length_scale in enumerate(length_scales):
             kernel.length_scale = length_scale
-            result[i] = (
-                gpc.log_marginal_likelihood(kernel.theta)
-                if len(kernel.theta) == 1
-                else [gpc.log_marginal_likelihood([theta]) for theta in kernel.theta]
-            )
+            if kernel not in non_fixed_kernels[2:]:
+                result[i] = (
+                    gpc.log_marginal_likelihood(kernel.theta)
+                    if len(kernel.theta) == 1
+                    else [
+                        gpc.log_marginal_likelihood([theta]) for theta in kernel.theta
+                    ]
+                )
+            else:
+                result[i] = gpc.log_marginal_likelihood(kernel.theta)
         return result
 
     lml_gradient = np.zeros_like(length_scales)
