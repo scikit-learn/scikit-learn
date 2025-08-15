@@ -12,25 +12,29 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.utils import metadata_routing
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, check_array, check_scalar
-from ..utils._metadata_requests import (
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     get_routing_for_object,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metadata_routing import (
-    _routing_enabled,
-    process_routing,
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,
@@ -39,10 +43,6 @@ from ..utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from . import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):
@@ -149,13 +149,14 @@ def _alpha_grid(
     if Xy is not None:
         Xyw = Xy
     else:
-        X, y, X_offset, _, _ = _preprocess_data(
+        X, y, X_offset, _, _, _ = _preprocess_data(
             X,
             y,
             fit_intercept=fit_intercept,
             copy=copy_X,
             sample_weight=sample_weight,
             check_input=False,
+            rescale_with_sw=False,
         )
         if sample_weight is not None:
             if y.ndim > 1:
@@ -611,7 +612,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_input=check_input,
+            check_gram=True,
         )
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
@@ -785,10 +786,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         If ``True``, X will be copied; else, it may be overwritten.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``, see Notes below.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``, see Notes below.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -856,9 +856,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     The precise stopping criteria based on `tol` are the following: First, check that
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
-    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
-    If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
+    is smaller or equal to `tol` times the maximum absolute coefficient,
+    :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
+    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
 
     Examples
     --------
@@ -1052,7 +1052,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.precompute,
             fit_intercept=self.fit_intercept,
             copy=should_copy,
-            check_input=check_input,
+            check_gram=check_input,
             sample_weight=sample_weight,
         )
         # coordinate descent needs F-ordered arrays and _pre_fit might have
@@ -1204,13 +1204,12 @@ class Lasso(ElasticNet):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``, see Notes below.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``, see Notes below.
 
     warm_start : bool, default=False
-        When set to True, reuse the solution of the previous call to fit as
+        When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
@@ -1284,9 +1283,9 @@ class Lasso(ElasticNet):
 
     The precise stopping criteria based on `tol` are the following: First, check that
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
-    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
-    If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\\text{samples}}`.
+    is smaller or equal to `tol` times the maximum absolute coefficient,
+    :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
+    smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
 
     The target can be a 2-dimensional array, resulting in the optimization of the
     following objective::
@@ -1980,10 +1979,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2251,10 +2249,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2524,10 +2521,9 @@ class MultiTaskElasticNet(Lasso):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -2688,7 +2684,7 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=False
         )
 
@@ -2769,10 +2765,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -2948,10 +2943,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -3204,10 +3198,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         The maximum number of iterations.
 
     tol : float, default=1e-4
-        The tolerance for the optimization: if the updates are
-        smaller than ``tol``, the optimization code checks the
-        dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        The tolerance for the optimization: if the updates are smaller or equal to
+        ``tol``, the optimization code checks the dual gap for optimality and continues
+        until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.

@@ -9,11 +9,9 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import metadata_routing
-
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array
-from ..utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import check_array, metadata_routing
+from sklearn.utils.validation import check_is_fitted
 
 
 class DictVectorizer(TransformerMixin, BaseEstimator):

@@ -1,5 +1,6 @@
 import numbers
 import pickle
+import re
 import warnings
 from copy import deepcopy
 from functools import partial
@@ -216,6 +217,15 @@ def test_all_scorers_repr():
     # Test that all scorers have a working repr
     for name in get_scorer_names():
         repr(get_scorer(name))
+
+
+def test_repr_partial():
+    metric = partial(precision_score, pos_label=1)
+    scorer = make_scorer(metric)
+    pattern = (
+        "functools\\.partial\\(<function\\ precision_score\\ at\\ .*>,\\ pos_label=1\\)"
+    )
+    assert re.search(pattern, repr(scorer))
 
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):

@@ -19,17 +19,17 @@ from warnings import warn
 
 import numpy as np
 
-from ..utils import Bunch
-from ..utils._optional_dependencies import check_pandas_support
-from ..utils._param_validation import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._arff_parser import load_arff_from_gzip_file
+from sklearn.utils import Bunch
+from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils._param_validation import (
     Integral,
     Interval,
     Real,
     StrOptions,
     validate_params,
 )
-from . import get_data_home
-from ._arff_parser import load_arff_from_gzip_file
 
 __all__ = ["fetch_openml"]
 

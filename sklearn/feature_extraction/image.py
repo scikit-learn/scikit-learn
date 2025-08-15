@@ -10,9 +10,14 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    RealNotInt,
+    validate_params,
+)
 
 __all__ = [
     "PatchExtractor",
@@ -22,7 +27,7 @@ __all__ = [
     "reconstruct_from_patches_2d",
 ]
 
-from ..utils.validation import validate_data
+from sklearn.utils.validation import validate_data
 
 ###############################################################################
 # From an image to a graph
