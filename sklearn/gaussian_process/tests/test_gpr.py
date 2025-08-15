@@ -151,9 +151,7 @@ def test_lml_gradient(kernel):
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
-    # XXX: try to make this test pass without raising an error with scales
-    # lower than 1.0: np.logspace(-3, 3, 100)
-    length_scales = np.logspace(0, 2, 100)
+    length_scales = np.logspace(-3, 3, 100)
 
     def evaluate_grad_at_length_scales(length_scales):
         result = np.zeros_like(length_scales)
