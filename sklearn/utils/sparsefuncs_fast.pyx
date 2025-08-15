@@ -15,6 +15,10 @@ ctypedef fused integral:
     int32_t
     int64_t
 
+ctypedef fused integral2:
+    int32_t
+    int64_t
+
 
 def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
@@ -645,8 +649,8 @@ def csr_matmul_csr_to_dense(
     const integral[:] a_indices,
     const integral[:] a_indptr,
     const floating[:] b_data,
-    const integral[:] b_indices,
-    const integral[:] b_indptr,
+    const integral2[:] b_indices,
+    const integral2[:] b_indptr,
     floating[:, :] out,
     uint64_t n1,
     uint64_t n2,
@@ -660,7 +664,7 @@ def csr_matmul_csr_to_dense(
     """
     cdef uint64_t i
     cdef uint64_t j
-    cdef integral j_ind
+    cdef integral2 j_ind
     cdef uint64_t k
     cdef integral k_ind
     cdef floating a_value
