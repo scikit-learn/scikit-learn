@@ -1,0 +1,5 @@
+- :class:`linear_model.ElasticNetCV` now accepts a `store_cv_models` parameter to
+  store all coefficients, intercepts, alphas, and MSEs computed during cross-validation
+  for each fold and each parameter setting. This enables detailed inspection and analysis
+  of the full regularization path.
+  By :user:`Guilherme Henriques <henriquessss>` and :user:`Guilherme Peixoto <guilhermecsnpeixoto>`
