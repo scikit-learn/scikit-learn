@@ -1517,6 +1517,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "copy_X": ["boolean"],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "verbose": ["verbose"],
         "n_jobs": [Integral, None],
@@ -1536,6 +1537,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -1551,6 +1553,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.max_iter = max_iter
         self.tol = tol
         self.copy_X = copy_X
+        self.refit = refit
         self.cv = cv
         self.verbose = verbose
         self.n_jobs = n_jobs
@@ -1740,6 +1743,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             l1_ratios = [
                 1,
             ]
+        path_params.pop("refit", None)
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
 
@@ -1865,6 +1869,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         else:
             self.alphas_ = np.asarray(alphas[0])
 
+        if not self.refit:
+            return self
+
         # Refit the model with the parameters selected
         common_params = {
             name: value
@@ -1985,6 +1992,10 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2118,6 +2129,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -2134,6 +2146,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             max_iter=max_iter,
             tol=tol,
             copy_X=copy_X,
+            refit=refit,
             cv=cv,
             verbose=verbose,
             n_jobs=n_jobs,
@@ -2252,6 +2265,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         The tolerance for the optimization: if the updates are smaller or equal to
         ``tol``, the optimization code checks the dual gap for optimality and continues
         until it is smaller or equal to ``tol``.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2406,6 +2423,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         precompute="auto",
         max_iter=1000,
         tol=1e-4,
+        refit=True,
         cv=None,
         copy_X=True,
         verbose=0,
@@ -2422,6 +2440,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
+        self.refit = refit
         self.cv = cv
         self.copy_X = copy_X
         self.verbose = verbose
@@ -2947,6 +2966,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         ``tol``, the optimization code checks the dual gap for optimality and continues
         until it is smaller or equal to ``tol``.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
+
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -3080,6 +3103,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         fit_intercept=True,
         max_iter=1000,
         tol=1e-4,
+        refit=True,
         cv=None,
         copy_X=True,
         verbose=0,
@@ -3094,6 +3118,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.tol = tol
+        self.refit = refit
         self.cv = cv
         self.copy_X = copy_X
         self.verbose = verbose
@@ -3204,6 +3229,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -3332,6 +3361,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         max_iter=1000,
         tol=1e-4,
         copy_X=True,
+        refit=True,
         cv=None,
         verbose=False,
         n_jobs=None,
@@ -3346,6 +3376,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             max_iter=max_iter,
             tol=tol,
             copy_X=copy_X,
+            refit=refit,
             cv=cv,
             verbose=verbose,
             n_jobs=n_jobs,
