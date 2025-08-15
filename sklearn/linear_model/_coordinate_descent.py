@@ -331,7 +331,7 @@ def lasso_path(
     interpolation can be used to retrieve model coefficients between the
     values output by lars_path.
 
-    The underlying coordinate descent solver uses gap safe screening rules so speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
@@ -531,7 +531,7 @@ def enet_path(
     :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
-    The underlying coordinate descent solver uses gap safe screening rules so speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
@@ -878,7 +878,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     If so, then additionally check whether the dual gap is smaller than `tol` times
     :math:`||y||_2^2 / n_{\text{samples}}`.
 
-    The underlying coordinate descent solver uses gap safe screening rules so speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
@@ -1321,7 +1321,7 @@ class Lasso(ElasticNet):
     instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
     sparsity in the coefficients.
 
-    The underlying coordinate descent solver uses gap safe screening rules so speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
@@ -2127,7 +2127,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     regularization path. It tends to speed up the hyperparameter
     search.
 
-    The underlying coordinate descent solver uses gap safe screening rules so speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
@@ -2409,7 +2409,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     :ref:`examples/linear_model/plot_lasso_model_selection.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
-    The underlying coordinate descent solver uses gap safe screening rules so speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples

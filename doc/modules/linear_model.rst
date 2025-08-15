@@ -296,15 +296,15 @@ computes the coefficients along the full path of possible values.
 Coordinate Descent with Gap Safe Screening Rules
 ------------------------------------------------
 
-Coordinate descent (CD) is a strategy so solve the minimization problem that considers a
-single features :math:`j` at a time. This way, the optimization problem becomes
-1-dimensional and is easy to solve:
+Coordinate descent (CD) is a strategy so solve a minimization problem that considers a
+single feature :math:`j` at a time. This way, the optimization problem is reduced to a
+1-dimensional problem which is easier to solve:
 
 .. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2 ^ 2 + \alpha |w_j|}
 
 with index :math:`-j` meaning all features but :math:`j`. The solution is
 
-.. math:: w_j = \frac{S(x_j (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
 
 with the soft-thresholding function
 :math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
@@ -317,11 +317,12 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
 .. dropdown:: Mathematical details
 
-  The duality gap is an upper bound of the objective function at its minimum. It is
-  given by :math:`G(w, v) = P(w) - D(v)` with primal :math:`P(w)`, the objective
-  function of the Lasso, and its dual
+  The duality gap :math:`G(w, v)` is an upper bound of the difference between the
+  current primal objective function of the Lasso, :math:`P(w)`, and its minimum
+  :math:`P(w^\star)`, i.e. :math:`G(w, v) \leq P(w) - P(w^\star)`. It is given by
+  :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
-  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(yv - ||v||_2^2)
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
   With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
@@ -338,8 +339,9 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
   .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} < G(w, cr)\,.
 
 A clever method to speedup the coordinate descent algorithm is to screen features such
-that we know for certain that :math:`w_j = 0`. Gap safe screening rules are such a
-tool. Anywhere during the optimization algorithm, they can tell which feature we can safely exclude, i.e., set to zero with certainty.
+that at optimum :math:`w_j = 0`. Gap safe screening rules are such a
+tool. Anywhere during the optimization algorithm, they can tell which feature we can
+safely exclude, i.e., set to zero with certainty.
 
 .. dropdown:: References
 
