@@ -123,7 +123,8 @@ def fetch_rcv1(
     ----------
     data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
-        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in the operating system's standard
+        cache directory.
 
     subset : {'train', 'test', 'all'}, default='all'
         Select the dataset to load: 'train' for the training set
