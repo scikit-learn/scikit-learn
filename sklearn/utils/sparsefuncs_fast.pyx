@@ -638,3 +638,96 @@ def assign_rows_csr(
             for ind in range(indptr[rX], indptr[rX + 1]):
                 j = indices[ind]
                 out[out_rows[i], j] = data[ind]
+
+
+def csr_matmul_csr_to_dense(
+    const floating[:] a_data,
+    const integral[:] a_indices,
+    const integral[:] a_indptr,
+    const floating[:] b_data,
+    const integral[:] b_indices,
+    const integral[:] b_indptr,
+    floating[:, :] out,
+    uint64_t n1,
+    uint64_t n2,
+    uint64_t n3,
+):
+    """Computes a @ b for sparse csr a and b, returns dense array."""
+    cdef uint64_t i
+    cdef uint64_t j
+    cdef integral j_ind
+    cdef uint64_t k
+    cdef integral k_ind
+    cdef floating a_value
+
+    for i in range(n1):
+        for j in range(n3):
+            out[i, j] = 0
+        for k_ind in range(a_indptr[i], a_indptr[i + 1]):  # n2
+            k = a_indices[k_ind]
+            a_value = a_data[k_ind]
+            for j_ind in range(b_indptr[k], b_indptr[k + 1]):  # n3
+                j = b_indices[j_ind]
+                # out[i, j] += a[i, k] * b[k, j]
+                out[i, j] += a_value * b_data[j_ind]
+
+
+def csr_matmul_csc_to_dense(
+    const floating[:] a_data,
+    const integral[:] a_indices,
+    const integral[:] a_indptr,
+    const floating[:] b_data,
+    const integral[:] b_indices,
+    const integral[:] b_indptr,
+    floating[:, :] out,
+    uint64_t n1,
+    uint64_t n2,
+    uint64_t n3,
+):
+    """Computes a @ b for sparse csr a and csc b, returns dense array.
+
+    See also
+    Gamma: Leveraging Gustavson’s Algorithm to Accelerate Sparse Matrix Multiplication
+    https://dl.acm.org/doi/pdf/10.1145/3445814.3446702
+    """
+    cdef uint64_t i
+    cdef uint64_t j
+    cdef uint64_t k
+    cdef uint64_t k_a
+    cdef uint64_t k_b
+    cdef integral a_indp
+    cdef integral a_indp_end
+    cdef integral b_indp
+    cdef integral b_indp_end
+
+    with nogil:
+        for i in range(n1):  # n1
+            for j in range(n3):  # n3
+                out[i, j] = 0
+                a_indp = a_indptr[i]
+                a_indp_end = a_indptr[i + 1]
+                k_a = a_indices[a_indp]
+                b_indp = b_indptr[j]
+                b_indp_end = b_indptr[j + 1]
+                k_b = b_indices[b_indp]
+                for k in range(n2):  # n2 maximum number of iterations
+                    if k_a < k_b:
+                        a_indp += 1
+                        if a_indp >= a_indp_end:
+                            break  # end of for k
+                        k_a = a_indices[a_indp]
+                    elif k_b < k_a:
+                        b_indp += 1
+                        if b_indp >= b_indp_end:
+                            break  # end of for k
+                        k_b = b_indices[b_indp]
+                    else:
+                        out[i, j] += a_data[a_indp] * b_data[b_indp]
+                        a_indp += 1
+                        if a_indp >= a_indp_end:
+                            break  # end of for k
+                        k_a = a_indices[a_indp]
+                        b_indp += 1
+                        if b_indp >= b_indp_end:
+                            break  # end of for k
+                        k_b = b_indices[b_indp]
