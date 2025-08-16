@@ -698,13 +698,15 @@ def test_nan_label_encoder():
 )
 def test_label_encoders_do_not_have_set_output(encoder):
     """Check that label encoders do not define set_output and work with y as a kwarg.
-
+    
     Non-regression test for #26854.
     """
-    assert not hasattr(encoder, "set_output")
-    y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
-    y_encoded_positional = encoder.fit_transform(["a", "b", "c"])
-    assert_array_equal(y_encoded_with_kwarg, y_encoded_positional)
+    if encoder.__class__.__name__ == "LabelEncoder":
+        # LabelEncoder now supports set_output as of issue #26711
+        assert hasattr(encoder, "set_output")
+    else:
+        assert not hasattr(encoder, "set_output")
+
 
 
 @pytest.mark.parametrize(

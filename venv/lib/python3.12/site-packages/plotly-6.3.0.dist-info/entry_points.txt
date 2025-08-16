@@ -1,0 +1,2 @@
+[console_scripts]
+plotly_get_chrome = plotly.io._kaleido:plotly_get_chrome
