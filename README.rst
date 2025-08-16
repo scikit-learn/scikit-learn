@@ -20,7 +20,7 @@
 .. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
    :target: https://pypi.org/project/scikit-learn/
 
-.. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
+.. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
@@ -77,7 +77,7 @@ classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
+|SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
