@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from collections.abc import Mapping
+from functools import partial
 
 import numpy as np
 
@@ -248,6 +249,132 @@ class _BinaryClassifierCurveDisplayMixin:
             for fold_idx, label in enumerate(labels)
         ]
         return curve_kwargs_
+
+
+try:
+    from matplotlib.text import Annotation
+
+    class LineTooltip(Annotation):
+        """Custom annotation class to be able identify it among the axes children."""
+
+except ImportError:
+    pass
+
+
+class _LineTooltipMixin:
+    """Mixin class to add a tooltip to a line in a plot.
+
+    The tooltip displays 2 to 3 info: the x value, the y value and an optional t value
+    for parametric curves (x(t), y(t)).
+    """
+
+    def _add_line_tooltip(self, *, x_label, y_label, t_label=None, t_vals=None):
+        """Create the line tooltip and connect it to a mouse hover event.
+
+        Parameters
+        ----------
+        x_label : str
+            The label for the x value.
+
+        y_label : str
+            The label for the y value.
+
+        t_label : str, default=None
+            The label for the parameter value.
+
+        t_vals : list of ndarrays, default=None
+            The parameter values along the line.
+        """
+        self._x_label_short = x_label
+        self._y_label_short = y_label
+        self._t_label = t_label
+
+        self.line_tooltip_ = self.ax_.annotate(
+            text="",
+            xy=(0, 0),
+            xytext=(20, 20),
+            textcoords="offset points",
+            fontsize="small",
+            bbox=dict(boxstyle="round", fc=(0.8, 0.8, 0.8, 0.8)),
+            arrowprops=dict(arrowstyle="-"),
+            zorder=10,  # bring to front
+        )
+        self.line_tooltip_.__class__ = LineTooltip
+        self.line_tooltip_.set_visible(False)
+
+        self.ax_.figure.canvas.mpl_connect(
+            "motion_notify_event", partial(self._hover, t_vals=t_vals)
+        )
+
+    def _hover(self, event, t_vals):
+        """Callback for the mouse over event.
+
+        Parameters
+        ----------
+        event : matplotlib event
+            the event triggering the callback.
+
+        t_vals : list of ndarrays or None
+            The parameter values along the line.
+        """
+        if event.inaxes != self.ax_:
+            return
+
+        lines = _convert_to_list_leaving_none(self.line_)
+        for i, line in enumerate(lines):
+            contains, indexes = line.contains(event)
+            # stop at the first line on which the event occurred
+            if contains:
+                idx = indexes["ind"][0]
+                x_vals, y_vals = line.get_data()
+                t = t_vals[i][idx] if t_vals is not None else t_vals
+                self._update_line_tooltip(x_vals[idx], y_vals[idx], t)
+                self.line_tooltip_.set_visible(True)
+                break
+        else:  # hide the tooltip if the event didn't occur on any line
+            if self.line_tooltip_.get_visible():
+                self.line_tooltip_.set_visible(False)
+
+        # Loop through all line tooltips contained the axes and hide all but one.
+        # This is necessary in addition to the loop over the display lines above to
+        # account for the case when multiple display instances share the same axes.
+        found_visible = False
+        for child in self.ax_.get_children():
+            if isinstance(child, LineTooltip) and child.get_visible():
+                if not found_visible:
+                    found_visible = True
+                else:
+                    child.set_visible(False)
+
+        self.figure_.canvas.draw_idle()
+
+    def _update_line_tooltip(self, x, y, t):
+        """Update the text in the line tooltip.
+
+        Parameters
+        ----------
+        x : float
+            the x value to display.
+
+        y : float
+            the y value to display.
+
+        t : float or None
+            the parameter value to display.
+        """
+        text = f"{self._x_label_short}: {x:.2f}, {self._y_label_short}: {y:.2f}"
+        if t is not None:
+            text += f", {self._t_label}: {t:.2f}"
+
+        # Compute an offset for the text depending on the quadrant where the cursor is
+        # to keep the tooltip somewhat inside the axes.
+        xlim, ylim = self.ax_.get_xlim(), self.ax_.get_ylim()
+        x_offset = 20 if x < (xlim[0] + xlim[1]) / 2 else -160
+        y_offset = 20 if y < (ylim[0] + ylim[1]) / 2 else -30
+
+        self.line_tooltip_.xyann = (x_offset, y_offset)
+        self.line_tooltip_.xy = (x, y)
+        self.line_tooltip_.set_text(text)
 
 
 def _validate_score_name(score_name, scoring, negate_score):

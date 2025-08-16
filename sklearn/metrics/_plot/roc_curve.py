@@ -13,12 +13,13 @@ from sklearn.utils._plotting import (
     _deprecate_estimator_name,
     _deprecate_y_pred_parameter,
     _despine,
+    _LineTooltipMixin,
     _validate_style_kwargs,
 )
 from sklearn.utils._response import _get_response_values_binary
 
 
-class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
+class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin, _LineTooltipMixin):
     """ROC Curve visualization.
 
     It is recommended to use
@@ -48,6 +49,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionchanged:: 1.7
             Now accepts a list for plotting multiple curves.
+
+    thresholds : ndarray or list of ndarrays, default=None
+        The thresholds at which the fpr and tpr have been computed. Each ndarray should
+        contain values for a single curve. If plotting multiple curves, list should be
+        of same length as `fpr` and `tpr`.
+        Only used to display the threshold values along the curve as a tooltip. If None,
+        only the fpr and tpr values are displayed.
 
     roc_auc : float or list of floats, default=None
         Area under ROC curve, used for labeling each curve in the legend.
@@ -132,6 +140,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         *,
         fpr,
         tpr,
+        thresholds=None,
         roc_auc=None,
         name=None,
         pos_label=None,
@@ -139,6 +148,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         self.fpr = fpr
         self.tpr = tpr
+        self.thresholds = thresholds
         self.roc_auc = roc_auc
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
@@ -148,6 +158,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         fpr = _convert_to_list_leaving_none(self.fpr)
         tpr = _convert_to_list_leaving_none(self.tpr)
+        thresholds = _convert_to_list_leaving_none(self.thresholds)
         roc_auc = _convert_to_list_leaving_none(self.roc_auc)
         name = _convert_to_list_leaving_none(name)
 
@@ -159,7 +170,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             optional=optional,
             class_name="RocCurveDisplay",
         )
-        return fpr, tpr, roc_auc, name
+        return fpr, tpr, thresholds, roc_auc, name
 
     def plot(
         self,
@@ -233,7 +244,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
+        fpr, tpr, thresholds, roc_auc, name = self._validate_plot_params(
+            ax=ax, name=name
+        )
         n_curves = len(fpr)
         if not isinstance(curve_kwargs, list) and n_curves > 1:
             if roc_auc:
@@ -272,6 +285,10 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         # Return single artist if only one curve is plotted
         if len(self.line_) == 1:
             self.line_ = self.line_[0]
+
+        self._add_line_tooltip(
+            x_label="FPR", y_label="TPR", t_label="threshold", t_vals=thresholds
+        )
 
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -580,7 +597,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
-        fpr, tpr, _ = roc_curve(
+        fpr, tpr, thresholds = roc_curve(
             y_true,
             y_score,
             pos_label=pos_label,
@@ -592,6 +609,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             fpr=fpr,
             tpr=tpr,
+            thresholds=thresholds,
             roc_auc=roc_auc,
             name=name,
             pos_label=pos_label_validated,
@@ -731,7 +749,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
         )
 
-        fpr_folds, tpr_folds, auc_folds = [], [], []
+        fpr_folds, tpr_folds, thresholds_folds, auc_folds = [], [], [], []
         for estimator, test_indices in zip(
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
@@ -747,7 +765,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 if sample_weight is None
                 else _safe_indexing(sample_weight, test_indices)
             )
-            fpr, tpr, _ = roc_curve(
+            fpr, tpr, thresholds = roc_curve(
                 y_true,
                 y_pred,
                 pos_label=pos_label_,
@@ -758,11 +776,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             fpr_folds.append(fpr)
             tpr_folds.append(tpr)
+            thresholds_folds.append(thresholds)
             auc_folds.append(roc_auc)
 
         viz = cls(
             fpr=fpr_folds,
             tpr=tpr_folds,
+            thresholds=thresholds_folds,
             roc_auc=auc_folds,
             name=name,
             pos_label=pos_label_,

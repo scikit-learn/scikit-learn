@@ -745,6 +745,7 @@ sphinx_gallery_conf = {
     "plot_gallery": "True",
     "recommender": {"enable": True, "n_examples": 4, "min_df": 12},
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
+    "first_notebook_cell": "%matplotlib widget",
 }
 if with_jupyterlite:
     sphinx_gallery_conf["jupyterlite"] = {
