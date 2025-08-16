@@ -462,9 +462,11 @@ class LabelPropagation(BaseLabelPropagation):
             # handle spmatrix (make 1D)
             if sparse.isspmatrix(affinity_matrix):
                 normalizer = np.ravel(normalizer)
-            # common case: knn method gives row sum k for all rows
-            # but user-kernel row sums may not be the same so normalize that case
-            if not np.all(normalizer == normalizer[0]):
+            # common case: knn method gives row sum k for all rows but
+            # a user-kernel may have varied row sums so "else" handles that
+            if np.all(normalizer == normalizer[0]):
+                affinity_matrix.data /= normalizer[0]
+            else:
                 if affinity_matrix.format == "csr":
                     repeats = np.diff(affinity_matrix.indptr)
                     rows = np.repeat(np.arange(affinity_matrix.shape[0]), repeats)
