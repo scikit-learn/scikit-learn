@@ -363,15 +363,16 @@ def cross_validate(
                 estimator=estimator,
                 # TODO(SLEP6): also pass metadata to the predict method for
                 # scoring?
-                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
-            )
-            .add(
-                scorer=scorers,
-                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+                method_mapping=MethodMapping().add(caller="fit", callee="fit")
             )
         )
         try:
             routed_params = process_routing(router, "fit", **params)
+            scorer_router = scorers._route_scorer_metadata(estimator, params)
+            routed_params.scorer = Bunch(score={
+                k: v for step in scorer_router.values()
+                for params in step.values() for k, v in params.items()
+            })
         except UnsetMetadataPassedError as e:
             # The default exception would mention `fit` since in the above
             # `process_routing` code, we pass `fit` as the caller. However,
