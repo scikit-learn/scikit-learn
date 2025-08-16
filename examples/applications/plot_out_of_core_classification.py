@@ -209,7 +209,7 @@ partial_fit_classifiers = {
     "Perceptron": Perceptron(),
     "NB Multinomial": MultinomialNB(alpha=0.01),
     "Passive-Aggressive": SGDClassifier(
-        loss="hinge", penalty=None, learning_rate="pa1", PA_C=1.0
+        loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0
     ),
 }
 
