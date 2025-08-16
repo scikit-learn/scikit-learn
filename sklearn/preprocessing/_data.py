@@ -6,46 +6,50 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize, sparse, stats
+from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from sklearn.utils import metadata_routing
-
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     OneToOneFeatureMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array, resample
-from ..utils._array_api import (
+from sklearn.preprocessing._encoders import OneHotEncoder
+from sklearn.utils import _array_api, check_array, metadata_routing, resample
+from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _modify_in_place_if_numpy,
     device,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.extmath import _incremental_mean_and_var, row_norms
-from ..utils.sparsefuncs import (
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.fixes import _yeojohnson_lambda
+from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
     mean_variance_axis,
     min_max_axis,
 )
-from ..utils.sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
     check_is_fitted,
     check_random_state,
     validate_data,
 )
-from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -217,8 +221,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     array([[-1.,  1.,  1.],
            [ 1., -1., -1.]])
     >>> scale(X, axis=1)  # scaling each row independently
-    array([[-1.37...,  0.39...,  0.98...],
-           [-1.22...,  0.     ,  1.22...]])
+    array([[-1.37,  0.39,  0.98],
+           [-1.22,  0.     ,  1.22]])
     """
     X = check_array(
         X,
@@ -228,6 +232,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         estimator="the scale function",
         dtype=FLOAT_DTYPES,
         ensure_all_finite="allow-nan",
+        input_name="X",
     )
     if sparse.issparse(X):
         if with_mean:
@@ -327,7 +332,16 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     clip : bool, default=False
         Set to True to clip transformed values of held-out data to
-        provided `feature range`.
+        provided `feature_range`.
+        Since this parameter will clip values, `inverse_transform` may not
+        be able to restore the original data.
+
+        .. note::
+            Setting `clip=True` does not prevent feature drift (a distribution
+            shift between training and test data). The transformed values are clipped
+            to the `feature_range`, which helps avoid unintended behavior in models
+            sensitive to out-of-range inputs (e.g. linear models). Use with care,
+            as clipping can distort the distribution of test data.
 
         .. versionadded:: 0.24
 
@@ -1170,6 +1184,18 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
+    clip : bool, default=False
+        Set to True to clip transformed values of held-out data to [-1, 1].
+        Since this parameter will clip values, `inverse_transform` may not
+        be able to restore the original data.
+
+        .. note::
+            Setting `clip=True` does not prevent feature drift (a distribution
+            shift between training and test data). The transformed values are clipped
+            to the [-1, 1] range, which helps avoid unintended behavior in models
+            sensitive to out-of-range inputs (e.g. linear models). Use with care,
+            as clipping can distort the distribution of test data.
+
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,)
@@ -1220,10 +1246,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints: dict = {"copy": ["boolean"]}
+    _parameter_constraints: dict = {
+        "copy": ["boolean"],
+        "clip": ["boolean"],
+    }
 
-    def __init__(self, *, copy=True):
+    def __init__(self, *, copy=True, clip=False):
         self.copy = copy
+        self.clip = clip
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -1338,8 +1368,20 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
+            if self.clip:
+                np.clip(X.data, -1.0, 1.0, out=X.data)
         else:
             X /= self.scale_
+            if self.clip:
+                device_ = device(X)
+                X = _modify_in_place_if_numpy(
+                    xp,
+                    xp.clip,
+                    X,
+                    xp.asarray(-1.0, dtype=X.dtype, device=device_),
+                    xp.asarray(1.0, dtype=X.dtype, device=device_),
+                    out=X,
+                )
         return X
 
     def inverse_transform(self, X):
@@ -1965,8 +2007,8 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     array([[-0.4,  0.2,  0.4],
            [-0.5,  0. ,  0.5]])
     >>> normalize(X, norm="l2")  # L2 normalization each row independently
-    array([[-0.66...,  0.33...,  0.66...],
-           [-0.70...,  0.     ,  0.70...]])
+    array([[-0.67, 0.33, 0.67],
+           [-0.71, 0.  , 0.71]])
     """
     if axis == 0:
         sparse_format = "csc"
@@ -3274,11 +3316,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> print(pt.fit(data))
     PowerTransformer()
     >>> print(pt.lambdas_)
-    [ 1.386... -3.100...]
+    [ 1.386 -3.100]
     >>> print(pt.transform(data))
-    [[-1.316... -0.707...]
-     [ 0.209... -0.707...]
-     [ 1.106...  1.414...]]
+    [[-1.316 -0.707]
+     [ 0.209 -0.707]
+     [ 1.106  1.414]]
     """
 
     _parameter_constraints: dict = {
@@ -3542,8 +3584,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        return _yeojohnson_lambda(_neg_log_likelihood, x)
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
@@ -3685,9 +3727,9 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(power_transform(data, method='box-cox'))
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
+    [[-1.332 -0.707]
+     [ 0.256 -0.707]
+     [ 1.076  1.414]]
 
     .. warning:: Risk of data leak.
         Do not use :func:`~sklearn.preprocessing.power_transform` unless you

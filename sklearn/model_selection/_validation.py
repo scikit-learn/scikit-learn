@@ -19,30 +19,30 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import logger
 
-from ..base import clone, is_classifier
-from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
-from ..metrics import check_scoring, get_scorer_names
-from ..metrics._scorer import _MultimetricScorer
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch, _safe_indexing, check_random_state, indexable
-from ..utils._array_api import device, get_namespace
-from ..utils._param_validation import (
+from sklearn.base import clone, is_classifier
+from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics._scorer import _MultimetricScorer
+from sklearn.model_selection._split import check_cv
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
+from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.metadata_routing import (
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import _safe_split
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_method_params, _num_samples
-from ._split import check_cv
+from sklearn.utils.metaestimators import _safe_split
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _check_method_params, _num_samples
 
 __all__ = [
     "cross_val_predict",
@@ -335,7 +335,7 @@ def cross_validate(
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])
-    [-3635.5... -3573.3... -6114.7...]
+    [-3635.5 -3573.3 -6114.7]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
@@ -1162,6 +1162,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
+
+    For a detailed example of using ``cross_val_predict`` to visualize
+    prediction errors, please see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
@@ -1929,6 +1933,11 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See Also
+    --------
+    LearningCurveDisplay.from_estimator : Plot a learning curve using an
+        estimator and data.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -2390,6 +2399,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----

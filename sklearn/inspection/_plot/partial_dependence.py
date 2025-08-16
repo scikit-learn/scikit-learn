@@ -9,35 +9,31 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ...base import is_regressor
-from ...utils import (
-    Bunch,
-    _safe_indexing,
-    check_array,
-    check_random_state,
-)
-from ...utils._encode import _unique
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._plotting import _validate_style_kwargs
-from ...utils.parallel import Parallel, delayed
-from .. import partial_dependence
-from .._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.base import is_regressor
+from sklearn.inspection import partial_dependence
+from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils._encode import _unique
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _validate_style_kwargs
+from sklearn.utils.parallel import Parallel, delayed
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP).
-
-    This can also display individual partial dependencies which are often
-    referred to as: Individual Condition Expectation (ICE).
+    """Partial Dependence Plot (PDP) and Individual Conditional Expectation (ICE).
 
     It is recommended to use
     :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
-    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
-    stored as attributes.
+    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are stored
+    as attributes.
 
-    Read more in
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <partial_dependence>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Inspection Guide <partial_dependence>`.
+
+    For an example on how to use this class, see the following example:
+    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
 
     .. versionadded:: 0.22
 
@@ -276,17 +272,21 @@ class PartialDependenceDisplay:
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
-        Partial dependence plots, individual conditional expectation plots or an
-        overlay of both of them can be plotted by setting the ``kind``
-        parameter. The ``len(features)`` plots are arranged in a grid with
-        ``n_cols`` columns. Two-way partial dependence plots are plotted as
-        contour plots. The deciles of the feature values will be shown with tick
-        marks on the x-axes for one-way plots, and on both axes for two-way
-        plots.
+        Partial dependence plots, individual conditional expectation plots, or an
+        overlay of both can be plotted by setting the `kind` parameter.
+        This method generates one plot for each entry in `features`. The plots
+        are arranged in a grid with `n_cols` columns. For one-way partial
+        dependence plots, the deciles of the feature values are shown on the
+        x-axis. For two-way plots, the deciles are shown on both axes and PDPs
+        are contour plots.
 
-        Read more in
-        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
-        and the :ref:`User Guide <partial_dependence>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Inspection Guide <partial_dependence>`.
+
+        For an example on how to use this class method, see
+        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`.
 
         .. note::
 

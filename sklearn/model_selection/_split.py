@@ -18,22 +18,22 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
-from ..utils import (
+from sklearn.utils import (
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _convert_to_numpy,
     ensure_common_namespace_device,
     get_namespace,
 )
-from ..utils._param_validation import Interval, RealNotInt, validate_params
-from ..utils.extmath import _approximate_mode
-from ..utils.metadata_routing import _MetadataRequester
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
+from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
+from sklearn.utils.extmath import _approximate_mode
+from sklearn.utils.metadata_routing import _MetadataRequester
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -1110,10 +1110,10 @@ class TimeSeriesSplit(_BaseKFold):
     while the train set size accumulates data from previous splits.
 
     This cross-validation object is a variation of :class:`KFold`.
-    In the kth split, it returns first k folds as train set and the
-    (k+1)th fold as test set.
+    In the k-th split, it returns the first k folds as the train set and the
+    (k+1)-th fold as the test set.
 
-    Note that unlike standard cross-validation methods, successive
+    Note that, unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.

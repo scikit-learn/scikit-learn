@@ -989,7 +989,7 @@ Changelog
   when the input is a Series instead of a DataFrame.
   :pr:`28090` by :user:`Stan Furrer <stanFurrer>` and :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
+- |API| :func:`sklearn.utils.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
 

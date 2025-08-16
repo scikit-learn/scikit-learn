@@ -10,10 +10,16 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
-from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array, check_random_state
+from sklearn.utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    _nanmean,
+    device,
+    get_namespace,
+)
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.sparsefuncs_fast import csr_row_norms
+from sklearn.utils.validation import check_array, check_random_state
 
 
 def squared_norm(x):
@@ -269,9 +275,9 @@ def randomized_range_finder(
     >>> from sklearn.utils.extmath import randomized_range_finder
     >>> A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> randomized_range_finder(A, size=2, n_iter=2, random_state=42)
-    array([[-0.21...,  0.88...],
-           [-0.52...,  0.24...],
-           [-0.82..., -0.38...]])
+    array([[-0.214,  0.887],
+           [-0.521,  0.249],
+           [-0.826, -0.388]])
     """
     A = check_array(A, accept_sparse=True)
 

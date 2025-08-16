@@ -9,17 +9,17 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
 
-from ..utils.fixes import _sparse_min_max, _sparse_nan_min_max
-from ..utils.validation import _check_sample_weight
-from .sparsefuncs_fast import (
+from sklearn.utils.fixes import _sparse_min_max, _sparse_nan_min_max
+from sklearn.utils.sparsefuncs_fast import (
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
 )
-from .sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
 )
-from .sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
     incr_mean_variance_axis0 as _incr_mean_var_axis0,
 )
+from sklearn.utils.validation import _check_sample_weight
 
 
 def _raise_typeerror(X):
@@ -251,7 +251,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     >>> sparsefuncs.incr_mean_variance_axis(
     ...     csr, axis=0, last_mean=np.zeros(3), last_var=np.zeros(3), last_n=2
     ... )
-    (array([1.3..., 0.1..., 1.1...]), array([8.8..., 0.1..., 3.4...]),
+    (array([1.33, 0.167, 1.17]), array([8.88, 0.139, 3.47]),
     array([6., 6., 6.]))
     """
     _raise_error_wrong_axis(axis)

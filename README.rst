@@ -11,7 +11,7 @@
 .. |Codecov| image:: https://codecov.io/gh/scikit-learn/scikit-learn/branch/main/graph/badge.svg?token=Pk8G9gg3y9
    :target: https://codecov.io/gh/scikit-learn/scikit-learn
 
-.. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
+.. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/wheels.yml/badge.svg?event=schedule
    :target: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
 .. |Ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg
@@ -176,22 +176,36 @@ Documentation
 Communication
 ~~~~~~~~~~~~~
 
-- Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
-- Blog: https://blog.scikit-learn.org
-- Calendar: https://blog.scikit-learn.org/calendar/
-- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
-- GitHub Discussions: https://github.com/scikit-learn/scikit-learn/discussions
-- Website: https://scikit-learn.org
-- LinkedIn: https://www.linkedin.com/company/scikit-learn
-- Bluesky: https://bsky.app/profile/scikit-learn.org
-- Mastodon: https://mastodon.social/@sklearn@fosstodon.org
-- YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
-- Facebook: https://www.facebook.com/scikitlearnofficial/
-- Instagram: https://www.instagram.com/scikitlearnofficial/
-- TikTok: https://www.tiktok.com/@scikit.learn
-- Discord: https://discord.gg/h9qyrK8Jc8
+Main Channels
+^^^^^^^^^^^^^
 
+- **Website**: https://scikit-learn.org
+- **Blog**: https://blog.scikit-learn.org
+- **Mailing list**: https://mail.python.org/mailman/listinfo/scikit-learn
+
+Developer & Support
+^^^^^^^^^^^^^^^^^^^^^^
+
+- **GitHub Discussions**: https://github.com/scikit-learn/scikit-learn/discussions
+- **Stack Overflow**: https://stackoverflow.com/questions/tagged/scikit-learn
+- **Discord**: https://discord.gg/h9qyrK8Jc8
+
+Social Media Platforms
+^^^^^^^^^^^^^^^^^^^^^^
+
+- **LinkedIn**: https://www.linkedin.com/company/scikit-learn
+- **YouTube**: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
+- **Facebook**: https://www.facebook.com/scikitlearnofficial/
+- **Instagram**: https://www.instagram.com/scikitlearnofficial/
+- **TikTok**: https://www.tiktok.com/@scikit.learn
+- **Bluesky**: https://bsky.app/profile/scikit-learn.org
+- **Mastodon**: https://mastodon.social/@sklearn@fosstodon.org
+
+Resources
+^^^^^^^^^
+
+- **Calendar**: https://blog.scikit-learn.org/calendar/
+- **Logos & Branding**: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 
 Citation
 ~~~~~~~~

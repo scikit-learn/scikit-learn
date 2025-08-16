@@ -750,9 +750,8 @@ def _make_sparse_offset_regression(
     "n_samples,dtype,proportion_nonzero",
     [(20, "float32", 0.1), (40, "float32", 1.0), (20, "float64", 0.2)],
 )
-@pytest.mark.parametrize("seed", np.arange(3))
 def test_solver_consistency(
-    solver, proportion_nonzero, n_samples, dtype, sparse_container, seed
+    solver, proportion_nonzero, n_samples, dtype, sparse_container, global_random_seed
 ):
     alpha = 1.0
     noise = 50.0 if proportion_nonzero > 0.9 else 500.0
@@ -761,10 +760,9 @@ def test_solver_consistency(
         n_features=30,
         proportion_nonzero=proportion_nonzero,
         noise=noise,
-        random_state=seed,
+        random_state=global_random_seed,
         n_samples=n_samples,
     )
-
     # Manually scale the data to avoid pathological cases. We use
     # minmax_scale to deal with the sparse case without breaking
     # the sparsity pattern.
@@ -778,7 +776,21 @@ def test_solver_consistency(
     if solver == "ridgecv":
         ridge = RidgeCV(alphas=[alpha])
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, alpha=alpha)
+        if solver.startswith("sag"):
+            # Avoid ConvergenceWarning for sag and saga solvers.
+            tol = 1e-7
+            max_iter = 100_000
+        else:
+            tol = 1e-10
+            max_iter = None
+
+        ridge = Ridge(
+            alpha=alpha,
+            solver=solver,
+            max_iter=max_iter,
+            tol=tol,
+            random_state=global_random_seed,
+        )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
