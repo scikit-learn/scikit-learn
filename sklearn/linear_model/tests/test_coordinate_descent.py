@@ -510,6 +510,41 @@ def test_uniform_targets():
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
 
+def test_multi_task_lasso_vs_skglm():
+    """Test that MultiTaskLasso gives same results as the one from skglm.
+
+    To reproduce numbers, just use
+    from skglm import MultiTaskLasso
+    """
+    # Numbers are with skglm version 0.5.
+    n_samples, n_features, n_tasks = 5, 4, 3
+    X = np.vander(np.arange(n_samples), n_features)
+    Y = np.arange(n_samples * n_tasks).reshape(n_samples, n_tasks)
+
+    def obj(W, X, y, alpha):
+        intercept = W[:, -1]
+        W = W[:, :-1]
+        l21_norm = np.sqrt(np.sum(W**2, axis=0)).sum()
+        return (
+            np.linalg.norm(Y - X @ W.T - intercept, ord="fro") / (2 * n_samples)
+            + alpha * l21_norm
+        )
+
+    alpha = 0.1
+    m = MultiTaskLasso(alpha=alpha, tol=1e-10, max_iter=10_000).fit(X, Y)
+    assert_allclose(
+        obj(np.c_[m.coef_, m.intercept_], X, Y, alpha=alpha),
+        0.5215583573780589,
+        rtol=1e-7,
+    )
+    assert_allclose(m.intercept_, [0.21994293, 1.21994293, 2.21994293], rtol=1e-6)
+    assert_allclose(
+        m.coef_,
+        np.tile([-0.032075, 0.25430895, 2.44785168, 0.0], (n_tasks, 1)),
+        rtol=1e-6,
+    )
+
+
 def test_multi_task_lasso_and_enet():
     X, y, X_test, y_test = build_dataset()
     Y = np.c_[y, y]
