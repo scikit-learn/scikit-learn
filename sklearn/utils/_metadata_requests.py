@@ -109,6 +109,7 @@ from warnings import warn
 from sklearn import get_config
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.utils._bunch import Bunch
+from sklearn.utils.deprecation import deprecated
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
@@ -1560,10 +1561,20 @@ class _MetadataRequester:
 
     # TODO(1.9): remove deprecated method; the deprecation cycle is a single release
     # here only, because metadata routing is still experimental
+    @deprecated(
+        "`get_metadata_routing` is deprecated for estimators that are "
+        "consumers of metadata and will be removed in 1.9."
+    )
     def get_metadata_routing(self):
         """Get metadata routing of this object.
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
+        .. deprecated:: 1.8
+            `get_metadata_routing` is deprecated for estimators that are
+            :term:`consumers <consumer>` of metadata and will be removed in 1.9. Use
+            :func:`~utils.metadata_routing.get_routing_for_object` instead.
+
         Returns
         -------
         routing : MetadataRequest
