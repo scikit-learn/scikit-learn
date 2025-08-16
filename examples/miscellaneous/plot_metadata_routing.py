@@ -37,7 +37,7 @@ from pprint import pprint
 
 import numpy as np
 
-from sklearn import set_config
+from sklearn import config_context, set_config
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -463,6 +463,59 @@ print_routing(meta_est)
 # The meta-estimator cannot use `aliased_sample_weight`, because it expects
 # it passed as `sample_weight`. This would apply even if
 # `set_fit_request(sample_weight=True)` was set on it.
+
+# %%
+# .. _metadata_routing_auto_request:
+#
+# Auto-Requesting Metadata
+# ------------------------
+# There are two ways a class can modify the default metadata routing requests:
+#
+# 1. Class-level defaults using `__metadata_request__{method}` class attributes,
+#    which set default request values for all instances of a class, and can even
+#    remove a metadata from the metadata routing machinery if necessary.
+# 2. Instance-level defaults via the `add_auto_request` method, which would only
+#    request the metadata if ``set_config(metadata_request_policy="auto")`` is
+#    set.
+#
+# Here's an example demonstrating both approaches:
+
+
+class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
+    # Class-level default request for fit method
+    __metadata_request__fit = {"sample_weight": True}
+
+    def get_metadata_routing(self):
+        # Each instance can configure metadata which should be requested by default if
+        # `set_config(metadata_request_policy="auto")` is set. The `add_auto_request`
+        # method does this.
+        requests = super().get_metadata_routing()
+        requests.predict.add_auto_request("groups")
+        return requests
+
+    def fit(self, X, y, sample_weight=None):
+        check_metadata(self, sample_weight=sample_weight)
+        self.classes_ = np.array([0, 1])
+        return self
+
+    def predict(self, X, groups=None):
+        check_metadata(self, groups=groups)
+        return np.ones(len(X))
+
+
+# Let's see the default routing configuration
+clf = DefaultRoutingClassifier()
+print_routing(clf)
+
+# %%
+# And now with auto routing enabled:
+with config_context(metadata_request_policy="auto"):
+    print_routing(clf)
+
+# %%
+# The routing can still be modified using set_*_request methods
+clf.set_fit_request(sample_weight=False)
+print_routing(clf)
 
 # %%
 # Simple Pipeline
