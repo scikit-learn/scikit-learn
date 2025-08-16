@@ -1169,7 +1169,7 @@ def test_deprecation_get_metadata_routing():
 
     with pytest.warns(
         FutureWarning,
-        match=re.escape("ConsumingRegressor().get_metadata_routing is deprecated"),
+        match="`get_metadata_routing` is deprecated",
     ):
         ConsumingRegressor().get_metadata_routing()
 

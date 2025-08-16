@@ -1562,8 +1562,9 @@ class _MetadataRequester:
     # TODO(1.9): remove deprecated method; the deprecation cycle is a single release
     # here only, because metadata routing is still experimental
     @deprecated(
-        "`get_metadata_routing` is deprecated for estimators that are "
-        "consumers of metadata and will be removed in 1.9."
+        "`get_metadata_routing` is deprecated for estimators that are consumers of "
+        "metadata and will be removed in 1.9. Use `get_routing_for_object` instead to "
+        "get the `MetadataRequest` of this estimator."
     )
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -1573,7 +1574,8 @@ class _MetadataRequester:
         .. deprecated:: 1.8
             `get_metadata_routing` is deprecated for estimators that are
             :term:`consumers <consumer>` of metadata and will be removed in 1.9. Use
-            :func:`~utils.metadata_routing.get_routing_for_object` instead.
+            :func:`~utils.metadata_routing.get_routing_for_object` instead to get the
+            `MetadataRequest` of this estimator.
 
         Returns
         -------
@@ -1581,12 +1583,6 @@ class _MetadataRequester:
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
             routing information.
         """
-        warn_msg = (
-            f"{self}.get_metadata_routing is deprecated and will be removed in "
-            f"version 1.9. Use `get_routing_for_object(estimator)` instead to get a "
-            "`MetadataRequest` for this estimator."
-        )
-        warn(warn_msg, FutureWarning)
         return self._get_metadata_request()
 
 
