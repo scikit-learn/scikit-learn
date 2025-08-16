@@ -751,15 +751,16 @@ def sparse_matmul_to_dense(A, B, out=None):
     Parameters
     ----------
     A : sparse matrix of shape (n1, n2) and format CSC or CSR
-
+        Left-side input matrix.
     B : sparse matrix of shape (n2, n3) and format CSC or CSR
-
+        Right-side input matrix.
     out : ndarray of shape (n1, n3) or None
+        Optional ndarray into which the result is written.
 
     Returns
     -------
     out
-        ndarray, new created if out=None
+        An ndarray, new created if out=None.
     """
     if not (sp.issparse(A) and A.format in ("csc", "csr") and A.ndim == 2):
         raise ValueError("Input 'A' must be a sparse 2-dim CSC or CSR array.")
