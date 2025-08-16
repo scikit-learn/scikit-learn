@@ -18,7 +18,7 @@ meson==1.8.3
     # via meson-python
 meson-python==0.18.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-ninja==1.11.1.4
+ninja==1.13.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 packaging==25.0
     # via
