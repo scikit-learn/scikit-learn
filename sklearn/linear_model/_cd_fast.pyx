@@ -178,9 +178,9 @@ def enet_coordinate_descent(
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    # compute norms of the columns of X
-    # same as norm_cols_X = np.square(X).sum(axis=0)
-    cdef floating[::1] norm_cols_X = np.einsum(
+    # compute squared norms of the columns of X
+    # same as norm2_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm2_cols_X = np.einsum(
         "ij,ij->j", X, X, dtype=dtype, order="C"
     )
 
@@ -229,27 +229,23 @@ def enet_coordinate_descent(
                 else:
                     ii = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if norm2_cols_X[ii] == 0.0:
                     continue
 
                 w_ii = w[ii]  # Store previous value
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
-                    _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
-
-                # tmp = (X[:,ii]*R).sum()
-                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                # tmp = X[:,ii] @ (R + w_ii * X[:,ii])
+                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1) + w_ii * norm2_cols_X[ii]
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
-                             / (norm_cols_X[ii] + beta))
+                             / (norm2_cols_X[ii] + beta))
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
-                    _axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
+                if w[ii] != w_ii:
+                    # R -= (w[ii] - w_ii) * X[:,ii] # Update residual
+                    _axpy(n_samples, w_ii - w[ii], &X[0, ii], 1, &R[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -365,7 +361,7 @@ def sparse_enet_coordinate_descent(
     # We work with:
     #     yw = sample_weight * y
     #     R = sample_weight * residual
-    #     norm_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
+    #     norm2_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
 
     if floating is float:
         dtype = np.float32
@@ -377,7 +373,7 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int n_features = w.shape[0]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[::1] norm2_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
@@ -438,7 +434,7 @@ def sparse_enet_coordinate_descent(
                 for jj in range(startptr, endptr):
                     normalize_sum += (X_data[jj] - X_mean_ii) ** 2
                     R[X_indices[jj]] -= X_data[jj] * w_ii
-                norm_cols_X[ii] = normalize_sum + \
+                norm2_cols_X[ii] = normalize_sum + \
                     (n_samples - endptr + startptr) * X_mean_ii ** 2
                 if center:
                     for jj in range(n_samples):
@@ -457,7 +453,7 @@ def sparse_enet_coordinate_descent(
                         normalize_sum += sample_weight[jj] * X_mean_ii ** 2
                         R[jj] += sample_weight[jj] * X_mean_ii * w_ii
                         R_sum += R[jj]
-                norm_cols_X[ii] = normalize_sum
+                norm2_cols_X[ii] = normalize_sum
             startptr = endptr
 
         # Note: No need to update R_sum from here on because the update terms cancel
@@ -479,7 +475,7 @@ def sparse_enet_coordinate_descent(
                 else:
                     ii = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if norm2_cols_X[ii] == 0.0:
                     continue
 
                 startptr = X_indptr[ii]
@@ -515,7 +511,7 @@ def sparse_enet_coordinate_descent(
                     w[ii] = 0.0
                 else:
                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                            / (norm_cols_X[ii] + beta)
+                            / (norm2_cols_X[ii] + beta)
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
@@ -701,7 +697,7 @@ def enet_coordinate_descent_gram(
                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                         / (Q[ii, ii] + beta)
 
-                if w[ii] != 0.0 or w_ii != 0.0:
+                if w[ii] != w_ii:
                     # Qw +=  (w[ii] - w_ii) * Q[ii]  # Update Qw = Q @ w
                     _axpy(n_features, w[ii] - w_ii, &Q[ii, 0], 1,
                           &Qw[0], 1)
@@ -816,7 +812,7 @@ def enet_coordinate_descent_multi_task(
     # initial value of the residuals
     cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
-    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[::1] norm2_cols_X = np.zeros(n_features, dtype=dtype)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
     cdef floating[::1] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
@@ -847,9 +843,9 @@ def enet_coordinate_descent_multi_task(
         )
 
     with nogil:
-        # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
+        # norm2_cols_X = (np.asarray(X) ** 2).sum(axis=0)
         for ii in range(n_features):
-            norm_cols_X[ii] = _nrm2(n_samples, X_ptr + ii * n_samples, 1) ** 2
+            norm2_cols_X[ii] = _nrm2(n_samples, X_ptr + ii * n_samples, 1) ** 2
 
         # R = Y - np.dot(X, W.T)
         _copy(n_samples * n_tasks, Y_ptr, 1, &R[0, 0], 1)
@@ -871,7 +867,7 @@ def enet_coordinate_descent_multi_task(
                 else:
                     ii = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if norm2_cols_X[ii] == 0.0:
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
@@ -903,9 +899,9 @@ def enet_coordinate_descent_multi_task(
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
-                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
+                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg)
                 _copy(n_tasks, &tmp[0], 1, &W[0, ii], 1)
-                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
+                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg),
                       &W[0, ii], 1)
 
                 # Using numpy:
