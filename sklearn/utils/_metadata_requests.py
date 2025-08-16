@@ -1194,8 +1194,6 @@ def get_routing_for_object(obj=None):
         A ``MetadataRequest`` or a ``MetadataRouter`` taken or created from
         the given object.
     """
-    # using hasattr and getattr instead of a try/except since an AttributeError could be
-    # raised for other reasons.
 
     # TODO(1.9): remove when get_metadata_routing is removed
     def defines_get_metadata_routing(obj):
@@ -1207,6 +1205,8 @@ def get_routing_for_object(obj=None):
                 return base is not _MetadataRequester
         return False
 
+    # using hasattr and getattr instead of a try/except since an AttributeError could be
+    # raised for other reasons.
     # TODO(1.9): remove second part of condition when get_metadata_routing is removed
     if hasattr(obj, "get_metadata_routing") and defines_get_metadata_routing(obj):
         return deepcopy(obj.get_metadata_routing())
@@ -1568,6 +1568,7 @@ class _MetadataRequester:
     )
     def get_metadata_routing(self):
         """Get metadata routing of this object.
+
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
