@@ -1178,8 +1178,8 @@ def get_routing_for_object(obj=None):
     obj : object
         - If the object provides a `get_metadata_routing` method, return a copy
             of its :class:`~sklearn.utils.metadata_routing.MetadataRouter`.
-        - If the object provides a `_get_metadata_request` method, return a
-            :class:`~sklearn.utils.metadata_routing.MetadataRequest` for this object.
+        - If the object provides a `_get_metadata_request` method, return a copy
+            of is :class:`~sklearn.utils.metadata_routing.MetadataRequest`.
         - If the object is already a
             :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
             :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
@@ -1193,13 +1193,25 @@ def get_routing_for_object(obj=None):
         A ``MetadataRequest`` or a ``MetadataRouter`` taken or created from
         the given object.
     """
-    # doing this instead of a try/except since an AttributeError could be raised
-    # for other reasons.
-    if hasattr(obj, "get_metadata_routing"):
+    # using hasattr and getattr instead of a try/except since an AttributeError could be
+    # raised for other reasons.
+
+    # TODO(1.9): remove when get_metadata_routing is removed
+    def defines_get_metadata_routing(obj):
+        # returns whether get_metadata_routing was not inherited from _MetadataRequester
+        cls = obj if isinstance(obj, type) else obj.__class__
+
+        for base in cls.__mro__:
+            if "get_metadata_routing" in base.__dict__:
+                return base is not _MetadataRequester
+        return False
+
+    # TODO(1.9): remove second part of condition when get_metadata_routing is removed
+    if hasattr(obj, "get_metadata_routing") and defines_get_metadata_routing(obj):
         return deepcopy(obj.get_metadata_routing())
 
     if hasattr(obj, "_get_metadata_request"):
-        return obj._get_metadata_request()
+        return deepcopy(obj._get_metadata_request())
 
     elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
         return deepcopy(obj)

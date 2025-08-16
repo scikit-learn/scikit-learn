@@ -373,15 +373,3 @@ if dt_config is not None:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
     # dt_config.rtol = 0.01
-
-
-# TODO(1.9): remove
-@pytest.fixture(autouse=True)
-def ignore_deprecation_warnings():
-    import warnings
-
-    warnings.filterwarnings(
-        "ignore",
-        message=".*get_metadata_routing is deprecated and will be removed.*",
-        category=FutureWarning,
-    )
