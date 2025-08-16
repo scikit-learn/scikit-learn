@@ -1919,7 +1919,14 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
+    metric,
+    array_namespace,
+    device,
+    dtype_name,
+    a_np,
+    b_np,
+    use_allclose=True,
+    **metric_kwargs,
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1952,34 +1959,37 @@ def check_array_api_metric(
         # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
+    assert_func = assert_allclose if use_allclose else assert_array_equal
+    assert_kwargs = {"atol": _atol_for_type(dtype_name)} if use_allclose else {}
+
     if numpy_as_array_works:
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
-        assert_allclose(
+        assert_func(
             metric_xp,
             metric_np,
-            atol=_atol_for_type(dtype_name),
+            **assert_kwargs,
         )
         metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
-        assert_allclose(
+        assert_func(
             metric_xp_mixed_1,
             metric_np,
-            atol=_atol_for_type(dtype_name),
+            **assert_kwargs,
         )
         metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
-        assert_allclose(
+        assert_func(
             metric_xp_mixed_2,
             metric_np,
-            atol=_atol_for_type(dtype_name),
+            **assert_kwargs,
         )
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
         def _check_metric_matches(xp_val, np_val):
-            assert_allclose(
+            assert_func(
                 _convert_to_numpy(xp.asarray(xp_val), xp),
                 np_val,
-                atol=_atol_for_type(dtype_name),
+                **assert_kwargs,
             )
 
         # Handle cases where there are multiple return values, e.g. roc_curve:
