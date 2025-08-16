@@ -8,7 +8,7 @@ Loss functions for linear models with raw_prediction = X @ coef
 import numpy as np
 from scipy import sparse
 
-from sklearn.utils.extmath import squared_norm
+from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
 def sandwich_dot(X, W):
@@ -24,9 +24,11 @@ def sandwich_dot(X, W):
     # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
-        return (
-            X.T @ sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X
-        ).toarray()
+        return safe_sparse_dot(
+            X.T,
+            sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X,
+            dense_output=True,
+        )
     else:
         # np.einsum may use less memory but the following, using BLAS matrix
         # multiplication (gemm), is by far faster.

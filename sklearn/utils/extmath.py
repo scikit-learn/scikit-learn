@@ -18,6 +18,7 @@ from sklearn.utils._array_api import (
     get_namespace,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.sparsefuncs import sparse_matmul_to_dense
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import check_array, check_random_state
 
@@ -205,6 +206,17 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             # if b is >= 2-dim then the second to last axis is taken.
             b_axis = -1 if b.ndim == 1 else -2
             ret = xp.tensordot(a, b, axes=[-1, b_axis])
+    elif (
+        dense_output
+        and a.ndim == 2
+        and b.ndim == 2
+        and a.dtype in (np.float32, np.float64)
+        and b.dtype in (np.float32, np.float64)
+        and (sparse.issparse(a) and a.format in ("csc", "csr"))
+        and (sparse.issparse(b) and b.format in ("csc", "csr"))
+    ):
+        # Use dedicated fast method for dense_C = sparse_A @ sparse_B
+        return sparse_matmul_to_dense(a, b)
     else:
         ret = a @ b
 
