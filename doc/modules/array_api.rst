@@ -190,9 +190,9 @@ Estimators and scoring functions are able to accept input arrays
 from different array libraries and/or devices. When a mixed set of input arrays is
 passed, scikit-learn converts arrays as needed to make them all consistent.
 
-For estimators, the rule is **"everything follows `X`"** - mixed array inputs are
+For estimators, the rule is **"everything follows** `X` **"** - mixed array inputs are
 converted so that they all match the array library and device of `X`.
-For scoring functions the rule is **"everything follows `y_pred`"** - mixed array
+For scoring functions the rule is **"everything follows** `y_pred` **"** - mixed array
 inputs are converted so that they all match the array library and device of `y_pred`.
 
 When a function or method has been called with array API compatible inputs, the
