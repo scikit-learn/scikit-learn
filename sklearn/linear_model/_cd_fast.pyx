@@ -372,7 +372,7 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = w.shape[0]
 
-    # compute norms of the columns of X
+    # compute squared norms of the columns of X
     cdef floating[::1] norm2_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
@@ -483,26 +483,11 @@ def sparse_enet_coordinate_descent(
                 w_ii = w[ii]  # Store previous value
                 X_mean_ii = X_mean[ii]
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
-                    if no_sample_weights:
-                        for jj in range(startptr, endptr):
-                            R[X_indices[jj]] += X_data[jj] * w_ii
-                        if center:
-                            for jj in range(n_samples):
-                                R[jj] -= X_mean_ii * w_ii
-                    else:
-                        for jj in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[jj]]
-                            R[X_indices[jj]] += tmp * X_data[jj] * w_ii
-                        if center:
-                            for jj in range(n_samples):
-                                R[jj] -= sample_weight[jj] * X_mean_ii * w_ii
-
-                # tmp = (X[:,ii] * R).sum()
+                # tmp = X[:,ii] @ (R + w_ii * X[:,ii])
                 tmp = 0.0
                 for jj in range(startptr, endptr):
                     tmp += R[X_indices[jj]] * X_data[jj]
+                tmp += w_ii * norm2_cols_X[ii]
 
                 if center:
                     tmp -= R_sum * X_mean_ii
@@ -513,21 +498,21 @@ def sparse_enet_coordinate_descent(
                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                             / (norm2_cols_X[ii] + beta)
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
+                if w[ii] != w_ii:
+                    # R -=  (w[ii] - w_ii) * X[:,ii] # Update residual
                     if no_sample_weights:
                         for jj in range(startptr, endptr):
-                            R[X_indices[jj]] -= X_data[jj] * w[ii]
+                            R[X_indices[jj]] -= X_data[jj] * (w[ii] - w_ii)
                         if center:
                             for jj in range(n_samples):
-                                R[jj] += X_mean_ii * w[ii]
+                                R[jj] += X_mean_ii * (w[ii] - w_ii)
                     else:
                         for jj in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[jj]]
-                            R[X_indices[jj]] -= tmp * X_data[jj] * w[ii]
+                            kk = X_indices[jj]
+                            R[kk] -= sample_weight[kk] * X_data[jj] * (w[ii] - w_ii)
                         if center:
                             for jj in range(n_samples):
-                                R[jj] += sample_weight[jj] * X_mean_ii * w[ii]
+                                R[jj] += sample_weight[jj] * X_mean_ii * (w[ii] - w_ii)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
