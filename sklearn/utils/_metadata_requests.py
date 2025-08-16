@@ -148,7 +148,21 @@ def _routing_enabled():
         Whether metadata routing is enabled. If the config is not set, it
         defaults to False.
     """
-    return get_config().get("enable_metadata_routing", False)
+    setting = get_config().get("enable_metadata_routing", False)
+    return setting in (True, "default_routing")
+
+
+def _default_routing_enabled():
+    """Return whether default metadata routing is enabled.
+
+    .. versionadded:: 1.7
+
+    Returns
+    -------
+    enabled : bool
+        Whether default metadata routing is enabled.
+    """
+    return get_config().get("enable_metadata_routing", False) == "default_routing"
 
 
 def _raise_for_params(params, owner, method, allow=None):
@@ -1421,7 +1435,7 @@ class _MetadataRequester:
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
         try:
-            requests = cls._get_default_requests()
+            requests = cls._get_class_requests()
         except Exception:
             # if there are any issues in the default values, it will be raised
             # when ``get_metadata_routing`` is called. Here we are going to
@@ -1480,12 +1494,30 @@ class _MetadataRequester:
         return mmr
 
     @classmethod
-    def _get_default_requests(cls):
-        """Collect default request values.
+    def _get_class_requests(cls):
+        """Collect class level request values.
 
-        This method combines the information present in ``__metadata_request__*``
-        class attributes, as well as determining request keys from method
-        signatures.
+        This method serves two purposes:
+
+        1. During class creation via `__init_subclass__`, it determines what metadata
+           routing methods should be created. It does this by:
+           - Collecting metadata request info from `__metadata_request__*` class
+             attributes
+           - Analyzing method signatures for implicit metadata parameters
+             The collected information is used to create `set_{method}_request` methods
+             (e.g. set_fit_request) that allow runtime configuration of metadata
+             routing.
+
+        2. Before the user sets any specific routing, via `_get_default_requests`, it
+           provides the default metadata routing configuration for the instance. This
+           ensures each instance starts with the class-level routing settings before any
+           instance specific configurations are applied.
+
+        For example, if a method's signature includes `sample_weight`, this method will:
+        - During class creation: Create a `set_{method}_request` method to configure
+          how `sample_weight` should be routed
+        - Right after initialization: Provide the default routing configuration for
+          `sample_weight` based on class attributes and method signatures
         """
         requests = MetadataRequest(owner=cls.__name__)
 
@@ -1522,6 +1554,47 @@ class _MetadataRequester:
                     getattr(requests, method).add_request(param=prop, alias=alias)
 
         return requests
+
+    def _get_default_requests(self):
+        """Get default request values for this object.
+
+        This method combines class level default values returned by
+        `_get_class_requests()` with instance specific defaults provided by
+        `__sklearn_default_request__`.
+        """
+        requests = self._get_class_requests()
+        if _default_routing_enabled():
+            defaults = self.__sklearn_default_request__()
+            for method, method_requests in defaults.items():
+                for pname, value in method_requests.items():
+                    getattr(requests, method).add_request(param=pname, alias=value)
+        return requests
+
+    def __sklearn_default_request__(self):
+        """Return default request values for this object.
+
+        This method should be overridden by objects (estimators, scorers, cv splitters)
+        which want to have a default request on a specific metadata.
+
+        The difference between returning default values here as opposed to setting
+        ``__metadata_request__*`` is that the former sets default values on class
+        level and not instance level, and those defaults are ALWAYS active, whereas
+        the default values set on ``__sklearn_default_request__`` are only active
+        if ``set_config(enable_metadata_routing="default_routing")`` is called.
+
+        This is a part of our "developer" API, and to be overridden by estimator
+        developers.
+
+        Returns
+        -------
+        defaults : dict
+            A dictionary of default request values, of the form:
+            ``{"method": {"metadata": value}}``. For instance,
+            ``{"fit": {"sample_weight": True}, "score": {"sample_weight": True}}``
+            to enable default routing or ``sample_weight`` to both ``fit`` and
+            ``score``.
+        """
+        return {method: {} for method in SIMPLE_METHODS}
 
     def _get_metadata_request(self):
         """Get requested metadata for the instance.
