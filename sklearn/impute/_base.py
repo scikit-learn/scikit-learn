@@ -38,6 +38,20 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _safe_min(items):
+    """Compute the minimum of a list of potentially non-comparable values.
+
+    If values cannot be directly compared due to type incompatibility, the object with
+    the lowest string representation is returned.
+    """
+    try:
+        return min(items)
+    except TypeError as e:
+        if "'<' not supported between" in str(e):
+            return min(items, key=lambda x: (str(type(x)), str(x)))
+        raise  # pragma: no cover
+
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -50,10 +64,12 @@ def _most_frequent(array, extra_value, n_repeat):
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
             # tie breaking similarly to scipy.stats.mode
-            most_frequent_value = min(
-                value
-                for value, count in counter.items()
-                if count == most_frequent_count
+            most_frequent_value = _safe_min(
+                [
+                    value
+                    for value, count in counter.items()
+                    if count == most_frequent_count
+                ]
             )
         else:
             mode = _mode(array)
@@ -72,7 +88,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return most_frequent_value
     elif most_frequent_count == n_repeat:
         # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        return _safe_min([most_frequent_value, extra_value])
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
