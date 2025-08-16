@@ -29,6 +29,7 @@ from sklearn.multiclass import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
@@ -80,6 +81,15 @@ def test_check_classification_targets():
     msg = type_of_target(y)
     with pytest.raises(ValueError, match=msg):
         check_classification_targets(y)
+
+
+def test_dir():
+    # Test that __dir__ includes only relevant attributes. #28558
+    svc = svm.SVC()
+    assert "predict_proba" not in dir(svc)
+
+    le = LabelEncoder()
+    assert "set_output" not in dir(le)
 
 
 def test_ovr_ties():
