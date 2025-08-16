@@ -681,6 +681,8 @@ def test_default_request(metaestimator):
     assert isinstance(instance.get_metadata_routing(), MetadataRouter)
 
 
+# TODO(1.9): remove all 5 filterwarnings when `get_metadata_router` is removed
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_error_on_missing_requests_for_sub_estimator(metaestimator):
@@ -742,6 +744,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     method(X, **method_kwargs)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
@@ -854,6 +857,7 @@ def test_non_consuming_estimator_works(metaestimator):
             method(X, **extra_method_args)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
@@ -900,6 +904,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
             )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_splitter(metaestimator):
@@ -935,6 +940,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routed_to_group_splitter(metaestimator):

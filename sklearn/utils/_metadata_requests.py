@@ -1177,7 +1177,9 @@ def get_routing_for_object(obj=None):
     ----------
     obj : object
         - If the object provides a `get_metadata_routing` method, return a copy
-            of the output of that method.
+            of its :class:`~sklearn.utils.metadata_routing.MetadataRouter`.
+        - If the object provides a `_get_metadata_request` method, return a
+            :class:`~sklearn.utils.metadata_routing.MetadataRequest` for this object.
         - If the object is already a
             :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
             :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
@@ -1197,7 +1199,7 @@ def get_routing_for_object(obj=None):
         return deepcopy(obj.get_metadata_routing())
 
     if hasattr(obj, "_get_metadata_request"):
-        return deepcopy(obj._get_metadata_request())
+        return obj._get_metadata_request()
 
     elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
         return deepcopy(obj)
@@ -1543,6 +1545,26 @@ class _MetadataRequester:
             requests = self._get_default_requests()
 
         return requests
+
+    # TODO(1.9): remove deprecated method; the deprecation cycle is a single release
+    # here only, because metadata routing is still experimental
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+        Returns
+        -------
+        routing : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
+            routing information.
+        """
+        warn_msg = (
+            f"{self}.get_metadata_routing is deprecated and will be removed in "
+            f"version 1.9. Use `get_routing_for_object(estimator)` instead to get a "
+            "`MetadataRequest` for this estimator."
+        )
+        warn(warn_msg, FutureWarning)
+        return self._get_metadata_request()
 
 
 # Process Routing in Routers

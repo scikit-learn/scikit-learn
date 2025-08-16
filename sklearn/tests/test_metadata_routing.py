@@ -704,38 +704,32 @@ def test_estimator_warnings():
         )
 
 
+# TODO(1.9): when get_metadata_routing is removed; objects and strings can be
+# parametrised like before #31695 again (removed parametrisation to support the
+# `ignore_deprecation_warnings` pytest fixture)
 @config_context(enable_metadata_routing=True)
-@pytest.mark.parametrize(
-    "obj, string",
-    [
-        (
-            MethodMetadataRequest(owner="test", method="fit").add_request(
-                param="foo", alias="bar"
-            ),
-            "{'foo': 'bar'}",
+def test_string_representations():
+    objects = [
+        MethodMetadataRequest(owner="test", method="fit").add_request(
+            param="foo", alias="bar"
         ),
-        (
-            MetadataRequest(owner="test"),
-            "{}",
+        MetadataRequest(owner="test"),
+        MetadataRouter(owner="test").add(
+            estimator=ConsumingRegressor(),
+            method_mapping=MethodMapping().add(caller="predict", callee="predict"),
         ),
-        (
-            MetadataRouter(owner="test").add(
-                estimator=ConsumingRegressor(),
-                method_mapping=MethodMapping().add(caller="predict", callee="predict"),
-            ),
-            (
-                "{'estimator': {'mapping': [{'caller': 'predict', 'callee':"
-                " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
-                " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
-                " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
-                " {'sample_weight': None, 'metadata': None}}}}"
-            ),
-        ),
-    ],
-)
-@config_context(enable_metadata_routing=True)
-def test_string_representations(obj, string):
-    assert str(obj) == string
+    ]
+
+    strings = [
+        "{'foo': 'bar'}",
+        "{}",
+        "{'estimator': {'mapping': [{'caller': 'predict', 'callee': 'predict'}], "
+        "'router': {'fit': {'sample_weight': None, 'metadata': None}, 'partial_fit': "
+        "{'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight': None, "
+        "'metadata': None}, 'score': {'sample_weight': None, 'metadata': None}}}}",
+    ]
+    for obj, string in zip(objects, strings):
+        assert str(obj) == string
 
 
 @pytest.mark.parametrize(
@@ -1159,3 +1153,22 @@ def test_unbound_set_methods_work():
     # Test positional arguments error after making the descriptor method unbound.
     with pytest.raises(TypeError, match=error_message):
         A().set_fit_request(True)
+
+
+# TODO(1.9): Remove
+@pytest.mark.noautofixt
+@config_context(enable_metadata_routing=True)
+def test_deprecation_get_metadata_routing():
+    """Test that the `FutureWarnings` for the deprecated `get_metadata_routing` methods
+    in consumers and routers are raised."""
+
+    with pytest.warns(
+        FutureWarning,
+        match=re.escape("ConsumingRegressor().get_metadata_routing is deprecated"),
+    ):
+        ConsumingRegressor().get_metadata_routing()
+        MetaRegressor(estimator=ConsumingRegressor()).get_metadata_routing()
+
+    # passes but shouldn't
+    ConsumingRegressor().get_metadata_routing()
+    MetaRegressor(estimator=ConsumingRegressor()).get_metadata_routing()
