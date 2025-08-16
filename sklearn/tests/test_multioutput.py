@@ -195,6 +195,9 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
@@ -676,7 +679,7 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
@@ -709,6 +712,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
     ],
 )
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    estimator = clone(estimator)  # Avoid side effects from shared instances
     X, y = dataset
     some_param = np.zeros_like(X)
     estimator.fit(X, y, some_param=some_param)

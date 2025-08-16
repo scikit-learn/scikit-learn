@@ -69,6 +69,7 @@ def test_frozen_methods(estimator, dataset, request, method):
     """Test that frozen.fit doesn't do anything, and that all other methods are
     exposed by the frozen estimator and return the same values as the estimator.
     """
+    estimator = clone(estimator)
     X, y = request.getfixturevalue(dataset)
     set_random_state(estimator)
     estimator.fit(X, y)

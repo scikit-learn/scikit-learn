@@ -287,7 +287,7 @@ def _check_fitted_model(km):
 )
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers.copy(), lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -302,10 +302,14 @@ def test_all_init(Estimator, input_data, init):
 
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers, lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 def test_minibatch_kmeans_partial_fit_init(init):
+    if hasattr(init, "copy"):
+        # Avoid mutating a shared array in place to avoid side effects in other tests.
+        init = init.copy()
+
     # Check MiniBatchKMeans init with partial_fit
     n_init = 10 if isinstance(init, str) else 1
     km = MiniBatchKMeans(
