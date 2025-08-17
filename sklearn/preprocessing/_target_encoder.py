@@ -206,6 +206,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         cv=5,
         shuffle=True,
         random_state=None,
+        pos_label=1,
     ):
         self.categories = categories
         self.smooth = smooth
@@ -213,6 +214,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
         self.shuffle = shuffle
         self.random_state = random_state
+        self.pos_label = pos_label
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -379,8 +381,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             label_encoder = LabelEncoder()
             y = label_encoder.fit_transform(y)
             self.classes_ = label_encoder.classes_
+            # For binary targets, pos_label affects the encoding
+            if self.pos_label != 1:
+                # If pos_label is not 1, we need to swap the encoding
+                # This ensures that the positive class gets the higher value
+                y = (y == self.pos_label).astype(int)
         elif self.target_type_ == "multiclass":
-            label_binarizer = LabelBinarizer()
+            label_binarizer = LabelBinarizer(pos_label=self.pos_label)
             y = label_binarizer.fit_transform(y)
             self.classes_ = label_binarizer.classes_
         else:  # continuous

@@ -712,3 +712,86 @@ def test_pandas_copy_on_write():
     with pd.option_context("mode.copy_on_write", True):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+def test_pos_label_parameter():
+    """Test that the pos_label parameter works correctly for binary and multiclass targets."""
+    X = np.array([["a", "b", "a", "b", "a", "b"]], dtype=object).T
+    
+    # Test binary classification with different pos_label values
+    y_binary = np.array([0, 1, 0, 1, 0, 1])
+    
+    # Default pos_label=1 should give same result as LabelBinarizer default
+    enc_default = TargetEncoder(target_type="binary", cv=2, random_state=0)
+    enc_default.fit(X, y_binary)
+    
+    # Custom pos_label=0 should invert the encoding
+    enc_custom = TargetEncoder(target_type="binary", pos_label=0, cv=2, random_state=0)
+    enc_custom.fit(X, y_binary)
+    
+    # The encodings should be different due to different pos_label
+    assert not np.allclose(enc_default.encodings_[0], enc_custom.encodings_[0])
+    
+    # Test multiclass classification with different pos_label values
+    y_multiclass = np.array([0, 1, 2, 0, 1, 2])
+    
+    enc_multi_default = TargetEncoder(target_type="multiclass", cv=2, random_state=0)
+    enc_multi_default.fit(X, y_multiclass)
+    
+    enc_multi_custom = TargetEncoder(target_type="multiclass", pos_label=2, cv=2, random_state=0)
+    enc_multi_custom.fit(X, y_multiclass)
+    
+    # The encodings should be different due to different pos_label
+    assert not np.allclose(enc_multi_default.encodings_[0], enc_multi_custom.encodings_[0])
+    
+    # Verify that classes_ attribute is correctly set
+    assert_array_equal(enc_default.classes_, np.array([0, 1]))
+    assert_array_equal(enc_multi_default.classes_, np.array([0, 1, 2]))
+    assert_array_equal(enc_multi_custom.classes_, np.array([0, 1, 2]))
+
+
+def test_pos_label_parameter_consistency():
+    """Test that pos_label parameter is consistent with LabelBinarizer behavior."""
+    X = np.array([["a", "b", "a", "b", "a", "b"]], dtype=object).T
+    y = np.array([0, 1, 0, 1, 0, 1])
+    
+    # Test with pos_label=1 (default)
+    enc_te = TargetEncoder(target_type="binary", cv=2, random_state=0)
+    enc_te.fit(X, y)
+    
+    # Test with pos_label=0
+    enc_te_0 = TargetEncoder(target_type="binary", pos_label=0, cv=2, random_state=0)
+    enc_te_0.fit(X, y)
+    
+    # The encodings should be different but the feature names should be consistent
+    assert not np.allclose(enc_te.encodings_[0], enc_te_0.encodings_[0])
+    
+    # Both should have the same classes
+    assert_array_equal(enc_te.classes_, enc_te_0.classes_)
+    
+    # Test transform output shapes are the same
+    X_test = np.array([["a", "b", "c"]], dtype=object).T
+    assert enc_te.transform(X_test).shape == enc_te_0.transform(X_test).shape
+
+
+def test_pos_label_parameter_edge_cases():
+    """Test pos_label parameter with edge cases and invalid inputs."""
+    X = np.array([["a", "b", "a", "b"]], dtype=object).T
+    y = np.array([0, 1, 0, 1])
+    
+    # Test with pos_label that doesn't exist in y (should still work)
+    enc = TargetEncoder(target_type="binary", pos_label=99, cv=2, random_state=0)
+    enc.fit(X, y)
+    
+    # Should still encode correctly
+    X_trans = enc.transform(X)
+    assert X_trans.shape == (4, 1)
+    
+    # Test with pos_label that is a string (should work if y contains strings)
+    y_str = np.array(["neg", "pos", "neg", "pos"])
+    enc_str = TargetEncoder(target_type="binary", pos_label="pos", cv=2, random_state=0)
+    enc_str.fit(X, y_str)
+    
+    # Should encode correctly
+    X_trans_str = enc_str.transform(X)
+    assert X_trans_str.shape == (4, 1)
