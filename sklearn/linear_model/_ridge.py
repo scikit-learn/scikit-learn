@@ -1524,7 +1524,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     >>> clf.score(X, y)
     0.9595...
 
-    You can find a visual example here: :ref:`example_linear_model_plot_ridge_classifier`
+    You can find a visual example here:
+    :ref:`example_linear_model_plot_ridge_classifier`
 
 
     """
