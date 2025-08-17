@@ -786,6 +786,12 @@ def enet_coordinate_descent_multi_task(
 
         0.5 * norm(Y - X W.T, 2)^2 + l1_reg ||W.T||_21 + 0.5 * l2_reg norm(W.T, 2)^2
 
+    The algorithm follows
+    Noah Simon, Jerome Friedman, Trevor Hastie. 2013.
+    A Blockwise Descent Algorithm for Group-penalized Multiresponse and Multinomial
+    Regression
+    https://doi.org/10.48550/arXiv.1311.6529
+
     Returns
     -------
     W : ndarray of shape (n_tasks, n_features)
