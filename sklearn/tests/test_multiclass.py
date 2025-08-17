@@ -1,3 +1,4 @@
+import inspect
 from re import escape
 
 import numpy as np
@@ -29,10 +30,10 @@ from sklearn.multiclass import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
+    all_estimators,
     check_array,
     shuffle,
 )
@@ -83,13 +84,15 @@ def test_check_classification_targets():
         check_classification_targets(y)
 
 
-def test_dir():
+def test_conditional_attrs_not_in_dir():
     # Test that __dir__ includes only relevant attributes. #28558
-    svc = svm.SVC()
-    assert "predict_proba" not in dir(svc)
-
-    le = LabelEncoder()
-    assert "set_output" not in dir(le)
+    for _, estimator_class in all_estimators():
+        for method_name, method in inspect.getmembers(estimator_class):
+            if hasattr(method, "_sklearn_avalailable_if"):
+                if method.check:
+                    assert method_name in dir(estimator_class)
+                else:
+                    assert method_name not in dir(estimator_class)
 
 
 def test_ovr_ties():
