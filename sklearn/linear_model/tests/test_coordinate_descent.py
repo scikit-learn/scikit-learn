@@ -510,6 +510,7 @@ def test_uniform_targets():
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
 
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_multi_task_lasso_vs_skglm():
     """Test that MultiTaskLasso gives same results as the one from skglm.
 
@@ -526,21 +527,25 @@ def test_multi_task_lasso_vs_skglm():
         W = W[:, :-1]
         l21_norm = np.sqrt(np.sum(W**2, axis=0)).sum()
         return (
-            np.linalg.norm(Y - X @ W.T - intercept, ord="fro") / (2 * n_samples)
+            np.linalg.norm(Y - X @ W.T - intercept, ord="fro") ** 2 / (2 * n_samples)
             + alpha * l21_norm
         )
 
     alpha = 0.1
-    m = MultiTaskLasso(alpha=alpha, tol=1e-10, max_iter=10_000).fit(X, Y)
+    # TODO: The high number of iterations are required for convergence and show room
+    # for improvement of the CD algorithm.
+    m = MultiTaskLasso(alpha=alpha, tol=1e-10, max_iter=5000).fit(X, Y)
     assert_allclose(
         obj(np.c_[m.coef_, m.intercept_], X, Y, alpha=alpha),
-        0.5215583573780589,
-        rtol=1e-7,
+        0.4965993692547902,
+        rtol=1e-10,
     )
-    assert_allclose(m.intercept_, [0.21994293, 1.21994293, 2.21994293], rtol=1e-6)
+    assert_allclose(
+        m.intercept_, [0.219942959407, 1.219942959407, 2.219942959407], rtol=1e-7
+    )
     assert_allclose(
         m.coef_,
-        np.tile([-0.032075, 0.25430895, 2.44785168, 0.0], (n_tasks, 1)),
+        np.tile([-0.032075014794, 0.25430904614, 2.44785152982, 0], (n_tasks, 1)),
         rtol=1e-6,
     )
 
