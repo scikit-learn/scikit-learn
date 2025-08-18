@@ -207,7 +207,7 @@ def enet_coordinate_descent(
 
     The final stopping criterion is based on the duality gap
 
-        tol ||y||_2^2 < G(w, v)
+        tol ||y||_2^2 <= G(w, v)
 
     The tolerance here is multiplied by ||y||_2^2 to have an inequality that scales the
     same on both sides and because one has G(0, 0) = 1/2 ||y||_2^2.
@@ -299,7 +299,7 @@ def enet_coordinate_descent(
         )
         gap = gap_and_dual_norm.val1
         dual_norm_XtA = gap_and_dual_norm.val2
-        if gap < tol:
+        if gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
