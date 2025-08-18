@@ -29,7 +29,6 @@ from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LogisticRegression,
-    PassiveAggressiveClassifier,
     Ridge,
     RidgeClassifier,
     SGDClassifier,
@@ -1351,7 +1350,7 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
         random_state=0,
     )
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None, shuffle=False)
+    estimator = SGDClassifier(max_iter=1, tol=None, shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
         estimator,
@@ -1470,7 +1469,7 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None, shuffle=False)
+    estimator = SGDClassifier(max_iter=5, tol=None, shuffle=False, learning_rate="pa1")
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
