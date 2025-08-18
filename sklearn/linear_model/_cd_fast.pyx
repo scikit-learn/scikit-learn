@@ -177,12 +177,40 @@ def enet_coordinate_descent(
     bint positive=0,
     bint do_screening=1,
 ):
-    """Cython version of the coordinate descent algorithm
-        for Elastic-Net regression
+    """
+    Cython version of the coordinate descent algorithm for Elastic-Net regression.
 
-        We minimize
+    The algorithm mostly follows [Friedman 2010].
+    We minimize the primal
 
-        (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
+        P(w) = 1/2 ||y - X w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    The dual for beta = 0, see e.g. [Fercoq 2015] with v = alpha * theta, is
+
+        D(v) = -1/2 ||v||_2^2 + y v
+
+    with dual feasible condition ||X^T v||_inf <= alpha.
+    For beta > 0, one uses extended versions of X and y by adding n_features rows
+
+        X -> (           X)    y -> (y)
+             (sqrt(beta) I)         (0)
+
+    Note that the residual y - X w is an important ingredient for the estimation of a
+    dual feasible point v.
+    At optimum of primal w* and dual v*, one has
+
+        v = y* - X w*
+
+    The duality gap is
+
+        G(w, v) = P(w) - D(v) <= P(w) - P(w*)
+
+    The final stopping criterion is based on the duality gap
+
+        tol ||y||_2^2 < G(w, v)
+
+    The tolerance here is multiplied by ||y||_2^2 to have an inequality that scales the
+    same on both sides and because one has G(0, 0) = 1/2 ||y||_2^2.
 
     Returns
     -------
@@ -194,6 +222,18 @@ def enet_coordinate_descent(
         Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
     n_iter : int
         Number of coordinate descent iterations.
+
+    References
+    ----------
+    .. [Friedman 2010]
+       Jerome H. Friedman, Trevor Hastie, Rob Tibshirani. (2010)
+       Regularization Paths for Generalized Linear Models via Coordinate Descent
+       https://www.jstatsoft.org/article/view/v033i01
+
+    .. [Fercoq 2015]
+       Olivier Fercoq, Alexandre Gramfort, Joseph Salmon. (2015)
+       Mind the duality gap: safer rules for the Lasso
+       https://arxiv.org/abs/1505.03410
     """
 
     if floating is float:
@@ -326,7 +366,7 @@ def enet_coordinate_descent(
 
             if (
                 w_max == 0.0
-                or d_w_max / w_max < d_w_tol
+                or d_w_max / w_max <= d_w_tol
                 or n_iter == max_iter - 1
             ):
                 # the biggest coordinate update of this iteration was smaller
@@ -338,7 +378,7 @@ def enet_coordinate_descent(
                 gap = gap_and_dual_norm.val1
                 dual_norm_XtA = gap_and_dual_norm.val2
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
 
@@ -436,7 +476,7 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int n_features = w.shape[0]
 
     # compute norms of the columns of X
-    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
@@ -598,7 +638,7 @@ def sparse_enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -645,7 +685,7 @@ def sparse_enet_coordinate_descent(
                         - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
                         + 0.5 * beta * (1 + const_ ** 2) * w_norm2)
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
 
@@ -708,9 +748,10 @@ def enet_coordinate_descent_gram(
     cdef unsigned int n_features = Q.shape[0]
 
     # initial value "Q w" which will be kept of up to date in the iterations
-    cdef floating[:] H = np.dot(Q, w)
+    cdef floating[::1] Qw = np.dot(Q, w)
+    cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
+    cdef floating y_norm2 = np.dot(y, y)
 
-    cdef floating[:] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating tmp
     cdef floating w_ii
     cdef floating d_w_max
@@ -727,14 +768,6 @@ def enet_coordinate_descent_gram(
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
-    cdef floating y_norm2 = np.dot(y, y)
-    cdef floating* w_ptr = &w[0]
-    cdef const floating* Q_ptr = &Q[0, 0]
-    cdef const floating* q_ptr = &q[0]
-    cdef floating* H_ptr = &H[0]
-    cdef floating* XtA_ptr = &XtA[0]
-    tol = tol * y_norm2
-
     if alpha == 0:
         warnings.warn(
             "Coordinate descent without L1 regularization may "
@@ -743,6 +776,7 @@ def enet_coordinate_descent_gram(
         )
 
     with nogil:
+        tol *= y_norm2
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
@@ -757,12 +791,8 @@ def enet_coordinate_descent_gram(
 
                 w_ii = w[ii]  # Store previous value
 
-                if w_ii != 0.0:
-                    # H -= w_ii * Q[ii]
-                    _axpy(n_features, -w_ii, Q_ptr + ii * n_features, 1,
-                          H_ptr, 1)
-
-                tmp = q[ii] - H[ii]
+                # if Q = X.T @ X then tmp = X[:,ii] @ (y - X @ w + X[:, ii] * w_ii)
+                tmp = q[ii] - Qw[ii] + w_ii * Q[ii, ii]
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -770,10 +800,10 @@ def enet_coordinate_descent_gram(
                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                         / (Q[ii, ii] + beta)
 
-                if w[ii] != 0.0:
-                    # H +=  w[ii] * Q[ii] # Update H = X.T X w
-                    _axpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
-                          H_ptr, 1)
+                if w[ii] != 0.0 or w_ii != 0.0:
+                    # Qw +=  (w[ii] - w_ii) * Q[ii]  # Update Qw = Q @ w
+                    _axpy(n_features, w[ii] - w_ii, &Q[ii, 0], 1,
+                          &Qw[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -783,28 +813,26 @@ def enet_coordinate_descent_gram(
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                # q_dot_w = np.dot(w, q)
-                q_dot_w = _dot(n_features, w_ptr, 1, q_ptr, 1)
+                # q_dot_w = w @ q
+                q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
 
                 for ii in range(n_features):
-                    XtA[ii] = q[ii] - H[ii] - beta * w[ii]
+                    XtA[ii] = q[ii] - Qw[ii] - beta * w[ii]
                 if positive:
-                    dual_norm_XtA = max(n_features, XtA_ptr)
+                    dual_norm_XtA = max(n_features, &XtA[0])
                 else:
-                    dual_norm_XtA = abs_max(n_features, XtA_ptr)
+                    dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-                # temp = np.sum(w * H)
-                tmp = 0.0
-                for ii in range(n_features):
-                    tmp += w[ii] * H[ii]
+                # temp = w @ Q @ w
+                tmp = _dot(n_features, &w[0], 1, &Qw[0], 1)
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
-                # w_norm2 = np.dot(w, w)
+                # w_norm2 = w @ w
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
@@ -823,7 +851,7 @@ def enet_coordinate_descent_gram(
                     + 0.5 * beta * (1 + const_ ** 2) * w_norm2
                 )
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
 
@@ -1002,7 +1030,7 @@ def enet_coordinate_descent_multi_task(
                 if W_ii_abs_max > w_max:
                     w_max = W_ii_abs_max
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion

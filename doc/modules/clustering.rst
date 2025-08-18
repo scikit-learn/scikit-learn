@@ -966,7 +966,7 @@ by black points below.
 
   - Use :ref:`OPTICS <optics>` clustering in conjunction with the `extract_dbscan`
     method. OPTICS clustering also calculates the full pairwise matrix, but only
-    keeps one row in memory at a time (memory complexity n).
+    keeps one row in memory at a time (memory complexity :math:`\mathcal{O}(n)`).
 
   - A sparse radius neighborhood graph (where missing entries are presumed to be
     out of eps) can be precomputed in a memory-efficient way and dbscan can be run
@@ -980,15 +980,15 @@ by black points below.
 
 .. dropdown:: References
 
-* `A Density-Based Algorithm for Discovering Clusters in Large Spatial
-  Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
-  Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
-  International Conference on Knowledge Discovery and Data Mining, Portland, OR,
-  AAAI Press, pp. 226-231. 1996
+  * `A Density-Based Algorithm for Discovering Clusters in Large Spatial
+    Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
+    International Conference on Knowledge Discovery and Data Mining, Portland, OR,
+    AAAI Press, pp. 226-231. 1996.
 
-* :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
-  <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
-  X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
+  * :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
+    X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 
 .. _hdbscan:
