@@ -12,15 +12,9 @@ from ..utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
 )
 from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-from ..utils._typedefs cimport float64_t, uint8_t, uint32_t
+from ..utils._typedefs cimport uint8_t, uint32_t
 from ..utils._random cimport our_rand_r
 
-
-# Struct to return 2 float64_t
-# TODO(Cython 3.1): remove and use templated ctuples, i.e. return val1, val2
-ctypedef struct float64_pair:
-    float64_t val1
-    float64_t val2
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -104,7 +98,7 @@ message_ridge = (
 )
 
 
-cdef float64_pair gap_enet(
+cdef (floating, floating) gap_enet(
     int n_samples,
     int n_features,
     const floating[::1] w,
@@ -117,14 +111,13 @@ cdef float64_pair gap_enet(
     bint positive,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent."""
-    cdef float64_t gap = 0.0
-    cdef float64_t dual_norm_XtA
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating w_norm2 = 0.0
     cdef floating l1_norm
     cdef floating A_norm2
     cdef floating const_
-    cdef float64_pair out
 
     # XtA = X.T @ R - beta * w
     _copy(n_features, &w[0], 1, &XtA[0], 1)
@@ -159,9 +152,7 @@ cdef float64_pair gap_enet(
         - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
         + 0.5 * beta * (1 + const_ ** 2) * w_norm2
     )
-    out.val1 = gap
-    out.val2 = dual_norm_XtA
-    return out
+    return gap, dual_norm_XtA
 
 
 def enet_coordinate_descent(
@@ -265,7 +256,6 @@ def enet_coordinate_descent(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
-    cdef float64_pair gap_and_dual_norm
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
     # TODO: use binset insteaf of array of bools
@@ -294,11 +284,9 @@ def enet_coordinate_descent(
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
         # Check convergence before entering the main loop.
-        gap_and_dual_norm = gap_enet(
+        gap, dual_norm_XtA = gap_enet(
             n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
         )
-        gap = gap_and_dual_norm.val1
-        dual_norm_XtA = gap_and_dual_norm.val2
         if gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
@@ -372,11 +360,9 @@ def enet_coordinate_descent(
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
-                gap_and_dual_norm = gap_enet(
+                gap, dual_norm_XtA = gap_enet(
                     n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
                 )
-                gap = gap_and_dual_norm.val1
-                dual_norm_XtA = gap_and_dual_norm.val2
 
                 if gap <= tol:
                     # return if we reached desired tolerance
