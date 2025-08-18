@@ -165,7 +165,8 @@ f1_scores["LabelSpreading"] = eval_and_get_f1(
 # Plot results
 # ------------
 # Visualize the performance of different classification approaches using a bar chart.
-# This helps to compare how each method performs based on the micro-averaged :func:`~sklearn.metrics.f1_score`.
+# This helps to compare how each method performs based on the
+# micro-averaged :func:`~sklearn.metrics.f1_score`.
 # Micro-averaging computes metrics globally across all classes,
 # which gives a single overall measure of performance and allows fair comparison
 # between the different approaches, even in the presence of class imbalance.
