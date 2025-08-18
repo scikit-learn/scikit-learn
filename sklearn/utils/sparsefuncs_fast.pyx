@@ -658,6 +658,8 @@ def csr_matmul_csr_to_dense(
 ):
     """Computes a @ b for sparse csr a and b, returns dense array.
 
+    The shape of `a` is `(n1, n2)` and the shape of `b` is `(n2, n3)`.
+
     See also
     Gamma: Leveraging Gustavson's Algorithm to Accelerate Sparse Matrix Multiplication
     https://dl.acm.org/doi/pdf/10.1145/3445814.3446702

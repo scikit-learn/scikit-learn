@@ -746,7 +746,7 @@ def _implicit_column_offset(X, offset):
 
 
 def sparse_matmul_to_dense(A, B, out=None):
-    """Compute A @ B for sparse and 2-dim A and B, return ndarray.
+    """Compute A @ B for sparse and 2-dim A and B while returning an ndarray.
 
     Parameters
     ----------
@@ -768,7 +768,7 @@ def sparse_matmul_to_dense(A, B, out=None):
         raise ValueError("Input 'B' must be a sparse 2-dim CSC or CSR array.")
     if A.shape[1] != B.shape[0]:
         msg = (
-            "Shapes must fulfil A.shape[1] == B.shape[1], "
+            "Shapes must fulfil A.shape[1] == B.shape[0], "
             f"got {A.shape[1]} == {B.shape[0]}."
         )
         raise ValueError(msg)
@@ -783,12 +783,12 @@ def sparse_matmul_to_dense(A, B, out=None):
         if out.shape[0] != n1 or out.shape[1] != n3:
             raise ValueError("Shape of out must be ({n1}, {n3}), got {out.shape}.")
         if out.dtype != A.data.dtype:
-            raise ValueError("Dtype of out must match the one of input A..")
+            raise ValueError("Dtype of out must match that of input A..")
 
     transpose_out = False
     if A.format == "csc":
         if B.format == "csc":
-            # out.T = (A @ B).T = B.T @ B.T, note that A.T and B.T are csr
+            # out.T = (A @ B).T = B.T @ A.T, note that A.T and B.T are csr
             transpose_out = True
             A, B, out = B.T, A.T, out.T
             n1, n3 = n3, n1
