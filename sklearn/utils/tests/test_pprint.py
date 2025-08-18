@@ -4,16 +4,12 @@ from pprint import PrettyPrinter
 import numpy as np
 import pytest
 
-from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.pipeline import make_pipeline
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn import config_context
-
-
-# Ignore flake8 (lots of line too long issues)
-# ruff: noqa
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.pipeline import make_pipeline
+from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
 
 # Constructors excerpted to test pprinting
@@ -410,7 +406,7 @@ def test_gridsearch_pipeline(print_changed_only_false):
             "classify__C": C_OPTIONS,
         },
     ]
-    gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
+    gspipeline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
     expected = """
 GridSearchCV(cv=3, error_score='raise-deprecating',
              estimator=Pipeline(memory=None,
@@ -448,10 +444,10 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                                      score_func=<function chi2 at some_address>)],
                           'reduce_dim__k': [2, 4, 8]}],
              pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
-             scoring=None, verbose=0)"""
+             scoring=None, verbose=0)"""  # noqa: E501
 
     expected = expected[1:]  # remove first \n
-    repr_ = pp.pformat(gspipline)
+    repr_ = pp.pformat(gspipeline)
     # Remove address of '<function chi2 at 0x.....>' for reproducibility
     repr_ = re.sub("function chi2 at 0x.*>", "function chi2 at some_address>", repr_)
     assert repr_ == expected

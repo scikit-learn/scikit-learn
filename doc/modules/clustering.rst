@@ -966,7 +966,7 @@ by black points below.
 
   - Use :ref:`OPTICS <optics>` clustering in conjunction with the `extract_dbscan`
     method. OPTICS clustering also calculates the full pairwise matrix, but only
-    keeps one row in memory at a time (memory complexity n).
+    keeps one row in memory at a time (memory complexity :math:`\mathcal{O}(n)`).
 
   - A sparse radius neighborhood graph (where missing entries are presumed to be
     out of eps) can be precomputed in a memory-efficient way and dbscan can be run
@@ -980,15 +980,15 @@ by black points below.
 
 .. dropdown:: References
 
-* `A Density-Based Algorithm for Discovering Clusters in Large Spatial
-  Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
-  Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
-  International Conference on Knowledge Discovery and Data Mining, Portland, OR,
-  AAAI Press, pp. 226-231. 1996
+  * `A Density-Based Algorithm for Discovering Clusters in Large Spatial
+    Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
+    International Conference on Knowledge Discovery and Data Mining, Portland, OR,
+    AAAI Press, pp. 226-231. 1996.
 
-* :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
-  <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
-  X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
+  * :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
+    X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 
 .. _hdbscan:
@@ -1310,32 +1310,32 @@ ignoring permutations::
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.66...
+  0.66
 
 The Rand index does not ensure to obtain a value close to 0.0 for a
 random labelling. The adjusted Rand index **corrects for chance** and
 will give such a baseline.
 
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  0.24...
+  0.24
 
 As with all clustering metrics, one can permute 0 and 1 in the predicted
 labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.66...
+  0.66
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  0.24...
+  0.24
 
 Furthermore, both :func:`rand_score` and :func:`adjusted_rand_score` are
 **symmetric**: swapping the argument does not change the scores. They can
 thus be used as **consensus measures**::
 
   >>> metrics.rand_score(labels_pred, labels_true)
-  0.66...
+  0.66
   >>> metrics.adjusted_rand_score(labels_pred, labels_true)
-  0.24...
+  0.24
 
 Perfect labeling is scored 1.0::
 
@@ -1353,9 +1353,9 @@ will not necessarily be close to zero::
   >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
   >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.39...
+  0.39
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  -0.07...
+  -0.072
 
 
 .. topic:: Advantages:
@@ -1466,21 +1466,21 @@ proposed more recently and is **normalized against chance**::
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  0.22504...
+  0.22504
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  0.22504...
+  0.22504
 
 All, :func:`mutual_info_score`, :func:`adjusted_mutual_info_score` and
 :func:`normalized_mutual_info_score` are symmetric: swapping the argument does
 not change the score. Thus they can be used as a **consensus measure**::
 
   >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +SKIP
-  0.22504...
+  0.22504
 
 Perfect labeling is scored 1.0::
 
@@ -1494,14 +1494,14 @@ Perfect labeling is scored 1.0::
 This is not true for ``mutual_info_score``, which is therefore harder to judge::
 
   >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  0.69...
+  0.69
 
 Bad (e.g. independent labelings) have non-positive scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  -0.10526...
+  -0.10526
 
 
 .. topic:: Advantages:
@@ -1649,16 +1649,16 @@ We can turn those concept as scores :func:`homogeneity_score` and
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.homogeneity_score(labels_true, labels_pred)
-  0.66...
+  0.66
 
   >>> metrics.completeness_score(labels_true, labels_pred)
-  0.42...
+  0.42
 
 Their harmonic mean called **V-measure** is computed by
 :func:`v_measure_score`::
 
   >>> metrics.v_measure_score(labels_true, labels_pred)
-  0.51...
+  0.516
 
 This function's formula is as follows:
 
@@ -1667,12 +1667,12 @@ This function's formula is as follows:
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)
-  0.54...
+  0.547
 
 more weight will be attributed to homogeneity, and using a value greater than 1::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)
-  0.48...
+  0.48
 
 more weight will be attributed to completeness.
 
@@ -1683,14 +1683,14 @@ Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  (0.66..., 0.42..., 0.51...)
+  (0.67, 0.42, 0.52)
 
 The following clustering assignment is slightly better, since it is
 homogeneous but not complete::
 
   >>> labels_pred = [0, 0, 0, 1, 2, 2]
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  (1.0, 0.68..., 0.81...)
+  (1.0, 0.68, 0.81)
 
 .. note::
 
@@ -1820,7 +1820,7 @@ between two clusters.
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  0.47140...
+  0.47140
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
@@ -1828,7 +1828,7 @@ the same score::
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
 
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  0.47140...
+  0.47140
 
 Perfect labeling is scored 1.0::
 
@@ -1917,7 +1917,7 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
-  0.55...
+  0.55
 
 .. topic:: Advantages:
 
@@ -1974,7 +1974,7 @@ cluster analysis:
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabasz_score(X, labels)
-  561.59...
+  561.59
 
 
 .. topic:: Advantages:
@@ -2048,7 +2048,7 @@ cluster analysis as follows:
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_score(X, labels)
-  0.666...
+  0.666
 
 
 .. topic:: Advantages:

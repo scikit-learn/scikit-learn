@@ -750,9 +750,8 @@ def _make_sparse_offset_regression(
     "n_samples,dtype,proportion_nonzero",
     [(20, "float32", 0.1), (40, "float32", 1.0), (20, "float64", 0.2)],
 )
-@pytest.mark.parametrize("seed", np.arange(3))
 def test_solver_consistency(
-    solver, proportion_nonzero, n_samples, dtype, sparse_container, seed
+    solver, proportion_nonzero, n_samples, dtype, sparse_container, global_random_seed
 ):
     alpha = 1.0
     noise = 50.0 if proportion_nonzero > 0.9 else 500.0
@@ -761,10 +760,9 @@ def test_solver_consistency(
         n_features=30,
         proportion_nonzero=proportion_nonzero,
         noise=noise,
-        random_state=seed,
+        random_state=global_random_seed,
         n_samples=n_samples,
     )
-
     # Manually scale the data to avoid pathological cases. We use
     # minmax_scale to deal with the sparse case without breaking
     # the sparsity pattern.
@@ -778,7 +776,21 @@ def test_solver_consistency(
     if solver == "ridgecv":
         ridge = RidgeCV(alphas=[alpha])
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, alpha=alpha)
+        if solver.startswith("sag"):
+            # Avoid ConvergenceWarning for sag and saga solvers.
+            tol = 1e-7
+            max_iter = 100_000
+        else:
+            tol = 1e-10
+            max_iter = None
+
+        ridge = Ridge(
+            alpha=alpha,
+            solver=solver,
+            max_iter=max_iter,
+            tol=tol,
+            random_state=global_random_seed,
+        )
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
@@ -860,9 +872,9 @@ def test_ridge_loo_cv_asym_scoring():
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(
-        loo_ridge.alpha_
-    ), f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_), (
+        f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
+    )
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
@@ -1522,9 +1534,9 @@ def test_ridgecv_alphas_conversion(Estimator):
     X = rng.randn(n_samples, n_features)
 
     ridge_est = Estimator(alphas=alphas)
-    assert (
-        ridge_est.alphas is alphas
-    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+    assert ridge_est.alphas is alphas, (
+        f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+    )
 
     ridge_est.fit(X, y)
     assert_array_equal(ridge_est.alphas, np.asarray(alphas))

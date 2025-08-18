@@ -15,9 +15,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils import metadata_routing
-
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
@@ -26,10 +24,26 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..utils import Bunch, check_random_state, compute_sample_weight
-from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import (
+from sklearn.tree import _criterion, _splitter, _tree
+from sklearn.tree._criterion import Criterion
+from sklearn.tree._splitter import Splitter
+from sklearn.tree._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
+from sklearn.tree._utils import _any_isnan_axis0
+from sklearn.utils import (
+    Bunch,
+    check_random_state,
+    compute_sample_weight,
+    metadata_routing,
+)
+from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
     _assert_all_finite_element_wise,
     _check_n_features,
     _check_sample_weight,
@@ -37,17 +51,6 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _criterion, _splitter, _tree
-from ._criterion import Criterion
-from ._splitter import Splitter
-from ._tree import (
-    BestFirstTreeBuilder,
-    DepthFirstTreeBuilder,
-    Tree,
-    _build_pruned_tree_ccp,
-    ccp_pruning_path,
-)
-from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -942,8 +945,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     >>> cross_val_score(clf, iris.data, iris.target, cv=10)
     ...                             # doctest: +SKIP
     ...
-    array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
-            0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
+    array([ 1.     ,  0.93,  0.86,  0.93,  0.93,
+            0.93,  0.93,  1.     ,  0.93,  1.      ])
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1324,8 +1327,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     >>> cross_val_score(regressor, X, y, cv=10)
     ...                    # doctest: +SKIP
     ...
-    array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
-           0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
+    array([-0.39, -0.46,  0.02,  0.06, -0.50,
+           0.16,  0.11, -0.73, -0.30, -0.00])
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1689,7 +1692,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     >>> cls = BaggingClassifier(extra_tree, random_state=0).fit(
     ...    X_train, y_train)
     >>> cls.score(X_test, y_test)
-    0.8947...
+    0.8947
     """
 
     def __init__(
@@ -1950,7 +1953,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
     ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.33...
+    0.33
     """
 
     def __init__(

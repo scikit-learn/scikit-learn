@@ -177,8 +177,8 @@ for n, (name, estimator) in enumerate(estimators):
 
     plt.subplot(2, n_estimators, n_estimators + n + 1)
     plt.plot(X_test, y_error, "r", label="$error(x)$")
-    plt.plot(X_test, y_bias, "b", label="$bias^2(x)$"),
-    plt.plot(X_test, y_var, "g", label="$variance(x)$"),
+    plt.plot(X_test, y_bias, "b", label="$bias^2(x)$")
+    plt.plot(X_test, y_var, "g", label="$variance(x)$")
     plt.plot(X_test, y_noise, "c", label="$noise(x)$")
 
     plt.xlim([-5, 5])

@@ -2,21 +2,15 @@ from __future__ import annotations
 
 from functools import reduce as _reduce, wraps as _wraps
 from builtins import all as _builtin_all, any as _builtin_any
-
-from ..common import _aliases
-from .._internal import get_xp
-
-from ._info import __array_namespace_info__
+from typing import Any, List, Optional, Sequence, Tuple, Union, Literal
 
 import torch
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Tuple, Union
-    from ..common._typing import Device
-    from torch import dtype as Dtype
-
-    array = torch.Tensor
+from .._internal import get_xp
+from ..common import _aliases
+from ..common._typing import NestedSequence, SupportsBufferProtocol
+from ._info import __array_namespace_info__
+from ._typing import Array, Device, DType
 
 _int_dtypes = {
     torch.uint8,
@@ -41,53 +35,32 @@ _array_api_dtypes = {
     torch.complex128,
 }
 
-_promotion_table  = {
-    # bool
-    (torch.bool, torch.bool): torch.bool,
+_promotion_table = {
     # ints
-    (torch.int8, torch.int8): torch.int8,
     (torch.int8, torch.int16): torch.int16,
     (torch.int8, torch.int32): torch.int32,
     (torch.int8, torch.int64): torch.int64,
-    (torch.int16, torch.int8): torch.int16,
-    (torch.int16, torch.int16): torch.int16,
     (torch.int16, torch.int32): torch.int32,
     (torch.int16, torch.int64): torch.int64,
-    (torch.int32, torch.int8): torch.int32,
-    (torch.int32, torch.int16): torch.int32,
-    (torch.int32, torch.int32): torch.int32,
     (torch.int32, torch.int64): torch.int64,
-    (torch.int64, torch.int8): torch.int64,
-    (torch.int64, torch.int16): torch.int64,
-    (torch.int64, torch.int32): torch.int64,
-    (torch.int64, torch.int64): torch.int64,
-    # uints
-    (torch.uint8, torch.uint8): torch.uint8,
     # ints and uints (mixed sign)
-    (torch.int8, torch.uint8): torch.int16,
-    (torch.int16, torch.uint8): torch.int16,
-    (torch.int32, torch.uint8): torch.int32,
-    (torch.int64, torch.uint8): torch.int64,
     (torch.uint8, torch.int8): torch.int16,
     (torch.uint8, torch.int16): torch.int16,
     (torch.uint8, torch.int32): torch.int32,
     (torch.uint8, torch.int64): torch.int64,
     # floats
-    (torch.float32, torch.float32): torch.float32,
     (torch.float32, torch.float64): torch.float64,
-    (torch.float64, torch.float32): torch.float64,
-    (torch.float64, torch.float64): torch.float64,
     # complexes
-    (torch.complex64, torch.complex64): torch.complex64,
     (torch.complex64, torch.complex128): torch.complex128,
-    (torch.complex128, torch.complex64): torch.complex128,
-    (torch.complex128, torch.complex128): torch.complex128,
     # Mixed float and complex
     (torch.float32, torch.complex64): torch.complex64,
     (torch.float32, torch.complex128): torch.complex128,
     (torch.float64, torch.complex64): torch.complex128,
     (torch.float64, torch.complex128): torch.complex128,
 }
+
+_promotion_table.update({(b, a): c for (a, b), c in _promotion_table.items()})
+_promotion_table.update({(a, a): a for a in _array_api_dtypes})
 
 
 def _two_arg(f):
@@ -123,7 +96,9 @@ def _fix_promotion(x1, x2, only_scalar=True):
 _py_scalars = (bool, int, float, complex)
 
 
-def result_type(*arrays_and_dtypes: Union[array, Dtype, bool, int, float, complex]) -> Dtype:
+def result_type(
+    *arrays_and_dtypes: Array | DType | bool | int | float | complex
+) -> DType:
     num = len(arrays_and_dtypes)
 
     if num == 0:
@@ -154,13 +129,18 @@ def result_type(*arrays_and_dtypes: Union[array, Dtype, bool, int, float, comple
         return _reduce(_result_type, others + scalars)
 
 
-def _result_type(x, y):
+def _result_type(
+    x: Array | DType | bool | int | float | complex,
+    y: Array | DType | bool | int | float | complex,
+) -> DType:
     if not (isinstance(x, _py_scalars) or isinstance(y, _py_scalars)):
-        xdt = x.dtype if not isinstance(x, torch.dtype) else x
-        ydt = y.dtype if not isinstance(y, torch.dtype) else y
+        xdt = x if isinstance(x, torch.dtype) else x.dtype
+        ydt = y if isinstance(y, torch.dtype) else y.dtype
 
-        if (xdt, ydt) in _promotion_table:
+        try:
             return _promotion_table[xdt, ydt]
+        except KeyError:
+            pass
 
     # This doesn't result_type(dtype, dtype) for non-array API dtypes
     # because torch.result_type only accepts tensors. This does however, allow
@@ -170,7 +150,7 @@ def _result_type(x, y):
     return torch.result_type(x, y)
 
 
-def can_cast(from_: Union[Dtype, array], to: Dtype, /) -> bool:
+def can_cast(from_: Union[DType, Array], to: DType, /) -> bool:
     if not isinstance(from_, torch.dtype):
         from_ = from_.dtype
     return torch.can_cast(from_, to)
@@ -212,17 +192,39 @@ pow = _two_arg(torch.pow)
 remainder = _two_arg(torch.remainder)
 subtract = _two_arg(torch.subtract)
 
+
+def asarray(
+    obj: (
+    Array 
+        | bool | int | float | complex 
+        | NestedSequence[bool | int | float | complex] 
+        | SupportsBufferProtocol
+    ),
+    /,
+    *,
+    dtype: DType | None = None,
+    device: Device | None = None,
+    copy: bool | None = None,
+    **kwargs: Any,
+) -> Array:
+    # torch.asarray does not respect input->output device propagation
+    # https://github.com/pytorch/pytorch/issues/150199
+    if device is None and isinstance(obj, torch.Tensor):
+        device = obj.device
+    return torch.asarray(obj, dtype=dtype, device=device, copy=copy, **kwargs)
+
+
 # These wrappers are mostly based on the fact that pytorch uses 'dim' instead
 # of 'axis'.
 
 # torch.min and torch.max return a tuple and don't support multiple axes https://github.com/pytorch/pytorch/issues/58745
-def max(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
+def max(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> Array:
     # https://github.com/pytorch/pytorch/issues/29137
     if axis == ():
         return torch.clone(x)
     return torch.amax(x, axis, keepdims=keepdims)
 
-def min(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> array:
+def min(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> Array:
     # https://github.com/pytorch/pytorch/issues/29137
     if axis == ():
         return torch.clone(x)
@@ -232,10 +234,13 @@ clip = get_xp(torch)(_aliases.clip)
 unstack = get_xp(torch)(_aliases.unstack)
 cumulative_sum = get_xp(torch)(_aliases.cumulative_sum)
 cumulative_prod = get_xp(torch)(_aliases.cumulative_prod)
+finfo = get_xp(torch)(_aliases.finfo)
+iinfo = get_xp(torch)(_aliases.iinfo)
+
 
 # torch.sort also returns a tuple
 # https://github.com/pytorch/pytorch/issues/70921
-def sort(x: array, /, *, axis: int = -1, descending: bool = False, stable: bool = True, **kwargs) -> array:
+def sort(x: Array, /, *, axis: int = -1, descending: bool = False, stable: bool = True, **kwargs) -> Array:
     return torch.sort(x, dim=axis, descending=descending, stable=stable, **kwargs).values
 
 def _normalize_axes(axis, ndim):
@@ -280,28 +285,35 @@ def _reduce_multiple_axes(f, x, axis, keepdims=False, **kwargs):
             out = torch.unsqueeze(out, a)
     return out
 
-def prod(x: array,
+
+def _sum_prod_no_axis(x: Array, dtype: DType | None) -> Array:
+    """
+    Implements `sum(..., axis=())` and `prod(..., axis=())`.
+    
+    Works around https://github.com/pytorch/pytorch/issues/29137
+    """
+    if dtype is not None:
+        return x.clone() if dtype == x.dtype else x.to(dtype)
+
+    # We can't upcast uint8 according to the spec because there is no
+    # torch.uint64, so at least upcast to int64 which is what prod does
+    # when axis=None.
+    if x.dtype in (torch.uint8, torch.int8, torch.int16, torch.int32):
+        return x.to(torch.int64)
+
+    return x.clone()
+
+
+def prod(x: Array,
          /,
          *,
          axis: Optional[Union[int, Tuple[int, ...]]] = None,
-         dtype: Optional[Dtype] = None,
+         dtype: Optional[DType] = None,
          keepdims: bool = False,
-         **kwargs) -> array:
-    x = torch.asarray(x)
-    ndim = x.ndim
+         **kwargs) -> Array:
 
-    # https://github.com/pytorch/pytorch/issues/29137. Separate from the logic
-    # below because it still needs to upcast.
     if axis == ():
-        if dtype is None:
-            # We can't upcast uint8 according to the spec because there is no
-            # torch.uint64, so at least upcast to int64 which is what sum does
-            # when axis=None.
-            if x.dtype in [torch.int8, torch.int16, torch.int32, torch.uint8]:
-                return x.to(torch.int64)
-            return x.clone()
-        return x.to(dtype)
-
+        return _sum_prod_no_axis(x, dtype)
     # torch.prod doesn't support multiple axes
     # (https://github.com/pytorch/pytorch/issues/56586).
     if isinstance(axis, tuple):
@@ -310,51 +322,38 @@ def prod(x: array,
         # torch doesn't support keepdims with axis=None
         # (https://github.com/pytorch/pytorch/issues/71209)
         res = torch.prod(x, dtype=dtype, **kwargs)
-        res = _axis_none_keepdims(res, ndim, keepdims)
+        res = _axis_none_keepdims(res, x.ndim, keepdims)
         return res
 
     return torch.prod(x, axis, dtype=dtype, keepdims=keepdims, **kwargs)
 
 
-def sum(x: array,
+def sum(x: Array,
          /,
          *,
          axis: Optional[Union[int, Tuple[int, ...]]] = None,
-         dtype: Optional[Dtype] = None,
+         dtype: Optional[DType] = None,
          keepdims: bool = False,
-         **kwargs) -> array:
-    x = torch.asarray(x)
-    ndim = x.ndim
+         **kwargs) -> Array:
 
-    # https://github.com/pytorch/pytorch/issues/29137.
-    # Make sure it upcasts.
     if axis == ():
-        if dtype is None:
-            # We can't upcast uint8 according to the spec because there is no
-            # torch.uint64, so at least upcast to int64 which is what sum does
-            # when axis=None.
-            if x.dtype in [torch.int8, torch.int16, torch.int32, torch.uint8]:
-                return x.to(torch.int64)
-            return x.clone()
-        return x.to(dtype)
-
+        return _sum_prod_no_axis(x, dtype)
     if axis is None:
         # torch doesn't support keepdims with axis=None
         # (https://github.com/pytorch/pytorch/issues/71209)
         res = torch.sum(x, dtype=dtype, **kwargs)
-        res = _axis_none_keepdims(res, ndim, keepdims)
+        res = _axis_none_keepdims(res, x.ndim, keepdims)
         return res
 
     return torch.sum(x, axis, dtype=dtype, keepdims=keepdims, **kwargs)
 
-def any(x: array,
+def any(x: Array,
         /,
         *,
         axis: Optional[Union[int, Tuple[int, ...]]] = None,
         keepdims: bool = False,
-        **kwargs) -> array:
-    x = torch.asarray(x)
-    ndim = x.ndim
+        **kwargs) -> Array:
+
     if axis == ():
         return x.to(torch.bool)
     # torch.any doesn't support multiple axes
@@ -366,20 +365,19 @@ def any(x: array,
         # torch doesn't support keepdims with axis=None
         # (https://github.com/pytorch/pytorch/issues/71209)
         res = torch.any(x, **kwargs)
-        res = _axis_none_keepdims(res, ndim, keepdims)
+        res = _axis_none_keepdims(res, x.ndim, keepdims)
         return res.to(torch.bool)
 
     # torch.any doesn't return bool for uint8
     return torch.any(x, axis, keepdims=keepdims).to(torch.bool)
 
-def all(x: array,
+def all(x: Array,
         /,
         *,
         axis: Optional[Union[int, Tuple[int, ...]]] = None,
         keepdims: bool = False,
-        **kwargs) -> array:
-    x = torch.asarray(x)
-    ndim = x.ndim
+        **kwargs) -> Array:
+
     if axis == ():
         return x.to(torch.bool)
     # torch.all doesn't support multiple axes
@@ -391,18 +389,18 @@ def all(x: array,
         # torch doesn't support keepdims with axis=None
         # (https://github.com/pytorch/pytorch/issues/71209)
         res = torch.all(x, **kwargs)
-        res = _axis_none_keepdims(res, ndim, keepdims)
+        res = _axis_none_keepdims(res, x.ndim, keepdims)
         return res.to(torch.bool)
 
     # torch.all doesn't return bool for uint8
     return torch.all(x, axis, keepdims=keepdims).to(torch.bool)
 
-def mean(x: array,
+def mean(x: Array,
          /,
          *,
          axis: Optional[Union[int, Tuple[int, ...]]] = None,
          keepdims: bool = False,
-         **kwargs) -> array:
+         **kwargs) -> Array:
     # https://github.com/pytorch/pytorch/issues/29137
     if axis == ():
         return torch.clone(x)
@@ -414,13 +412,13 @@ def mean(x: array,
         return res
     return torch.mean(x, axis, keepdims=keepdims, **kwargs)
 
-def std(x: array,
+def std(x: Array,
         /,
         *,
         axis: Optional[Union[int, Tuple[int, ...]]] = None,
         correction: Union[int, float] = 0.0,
         keepdims: bool = False,
-        **kwargs) -> array:
+        **kwargs) -> Array:
     # Note, float correction is not supported
     # https://github.com/pytorch/pytorch/issues/61492. We don't try to
     # implement it here for now.
@@ -445,13 +443,13 @@ def std(x: array,
         return res
     return torch.std(x, axis, correction=_correction, keepdims=keepdims, **kwargs)
 
-def var(x: array,
+def var(x: Array,
         /,
         *,
         axis: Optional[Union[int, Tuple[int, ...]]] = None,
         correction: Union[int, float] = 0.0,
         keepdims: bool = False,
-        **kwargs) -> array:
+        **kwargs) -> Array:
     # Note, float correction is not supported
     # https://github.com/pytorch/pytorch/issues/61492. We don't try to
     # implement it here for now.
@@ -474,11 +472,11 @@ def var(x: array,
 
 # torch.concat doesn't support dim=None
 # https://github.com/pytorch/pytorch/issues/70925
-def concat(arrays: Union[Tuple[array, ...], List[array]],
+def concat(arrays: Union[Tuple[Array, ...], List[Array]],
            /,
            *,
            axis: Optional[int] = 0,
-           **kwargs) -> array:
+           **kwargs) -> Array:
     if axis is None:
         arrays = tuple(ar.flatten() for ar in arrays)
         axis = 0
@@ -487,7 +485,7 @@ def concat(arrays: Union[Tuple[array, ...], List[array]],
 # torch.squeeze only accepts int dim and doesn't require it
 # https://github.com/pytorch/pytorch/issues/70924. Support for tuple dim was
 # added at https://github.com/pytorch/pytorch/pull/89017.
-def squeeze(x: array, /, axis: Union[int, Tuple[int, ...]]) -> array:
+def squeeze(x: Array, /, axis: Union[int, Tuple[int, ...]]) -> Array:
     if isinstance(axis, int):
         axis = (axis,)
     for a in axis:
@@ -501,27 +499,27 @@ def squeeze(x: array, /, axis: Union[int, Tuple[int, ...]]) -> array:
     return x
 
 # torch.broadcast_to uses size instead of shape
-def broadcast_to(x: array, /, shape: Tuple[int, ...], **kwargs) -> array:
+def broadcast_to(x: Array, /, shape: Tuple[int, ...], **kwargs) -> Array:
     return torch.broadcast_to(x, shape, **kwargs)
 
 # torch.permute uses dims instead of axes
-def permute_dims(x: array, /, axes: Tuple[int, ...]) -> array:
+def permute_dims(x: Array, /, axes: Tuple[int, ...]) -> Array:
     return torch.permute(x, axes)
 
 # The axis parameter doesn't work for flip() and roll()
 # https://github.com/pytorch/pytorch/issues/71210. Also torch.flip() doesn't
 # accept axis=None
-def flip(x: array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, **kwargs) -> array:
+def flip(x: Array, /, *, axis: Optional[Union[int, Tuple[int, ...]]] = None, **kwargs) -> Array:
     if axis is None:
         axis = tuple(range(x.ndim))
     # torch.flip doesn't accept dim as an int but the method does
     # https://github.com/pytorch/pytorch/issues/18095
     return x.flip(axis, **kwargs)
 
-def roll(x: array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Union[int, Tuple[int, ...]]] = None, **kwargs) -> array:
+def roll(x: Array, /, shift: Union[int, Tuple[int, ...]], *, axis: Optional[Union[int, Tuple[int, ...]]] = None, **kwargs) -> Array:
     return torch.roll(x, shift, axis, **kwargs)
 
-def nonzero(x: array, /, **kwargs) -> Tuple[array, ...]:
+def nonzero(x: Array, /, **kwargs) -> Tuple[Array, ...]:
     if x.ndim == 0:
         raise ValueError("nonzero() does not support zero-dimensional arrays")
     return torch.nonzero(x, as_tuple=True, **kwargs)
@@ -529,45 +527,60 @@ def nonzero(x: array, /, **kwargs) -> Tuple[array, ...]:
 
 # torch uses `dim` instead of `axis`
 def diff(
-    x: array,
+    x: Array,
     /,
     *,
     axis: int = -1,
     n: int = 1,
-    prepend: Optional[array] = None,
-    append: Optional[array] = None,
-) -> array:
+    prepend: Optional[Array] = None,
+    append: Optional[Array] = None,
+) -> Array:
     return torch.diff(x, dim=axis, n=n, prepend=prepend, append=append)
 
 
 # torch uses `dim` instead of `axis`, does not have keepdims
 def count_nonzero(
-    x: array,
+    x: Array,
     /,
     *,
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     keepdims: bool = False,
-) -> array:
+) -> Array:
     result = torch.count_nonzero(x, dim=axis)
     if keepdims:
-        if axis is not None:
+        if isinstance(axis, int):
             return result.unsqueeze(axis)
+        elif isinstance(axis, tuple):
+            n_axis = [x.ndim + ax if ax < 0 else ax for ax in axis]
+            sh = [1 if i in n_axis else x.shape[i] for i in range(x.ndim)]
+            return torch.reshape(result, sh)
         return _axis_none_keepdims(result, x.ndim, keepdims)
     else:
         return result
 
 
+# "repeat" is torch.repeat_interleave;  also the dim argument
+def repeat(x: Array, repeats: int | Array, /, *, axis: int | None = None) -> Array:
+    return torch.repeat_interleave(x, repeats, axis)
 
-def where(condition: array, x1: array, x2: array, /) -> array:
+
+def where(
+    condition: Array, 
+    x1: Array | bool | int | float | complex, 
+    x2: Array | bool | int | float | complex,
+    /,
+) -> Array:
     x1, x2 = _fix_promotion(x1, x2)
     return torch.where(condition, x1, x2)
 
+
 # torch.reshape doesn't have the copy keyword
-def reshape(x: array,
+def reshape(x: Array,
             /,
             shape: Tuple[int, ...],
+            *,
             copy: Optional[bool] = None,
-            **kwargs) -> array:
+            **kwargs) -> Array:
     if copy is not None:
         raise NotImplementedError("torch.reshape doesn't yet support the copy keyword")
     return torch.reshape(x, shape, **kwargs)
@@ -581,9 +594,9 @@ def arange(start: Union[int, float],
            stop: Optional[Union[int, float]] = None,
            step: Union[int, float] = 1,
            *,
-           dtype: Optional[Dtype] = None,
+           dtype: Optional[DType] = None,
            device: Optional[Device] = None,
-           **kwargs) -> array:
+           **kwargs) -> Array:
     if stop is None:
         start, stop = 0, start
     if step > 0 and stop <= start or step < 0 and stop >= start:
@@ -602,9 +615,9 @@ def eye(n_rows: int,
         /,
         *,
         k: int = 0,
-        dtype: Optional[Dtype] = None,
+        dtype: Optional[DType] = None,
         device: Optional[Device] = None,
-        **kwargs) -> array:
+        **kwargs) -> Array:
     if n_cols is None:
         n_cols = n_rows
     z = torch.zeros(n_rows, n_cols, dtype=dtype, device=device, **kwargs)
@@ -618,10 +631,10 @@ def linspace(start: Union[int, float],
              /,
              num: int,
              *,
-             dtype: Optional[Dtype] = None,
+             dtype: Optional[DType] = None,
              device: Optional[Device] = None,
              endpoint: bool = True,
-             **kwargs) -> array:
+             **kwargs) -> Array:
     if not endpoint:
         return torch.linspace(start, stop, num+1, dtype=dtype, device=device, **kwargs)[:-1]
     return torch.linspace(start, stop, num, dtype=dtype, device=device, **kwargs)
@@ -629,11 +642,11 @@ def linspace(start: Union[int, float],
 # torch.full does not accept an int size
 # https://github.com/pytorch/pytorch/issues/70906
 def full(shape: Union[int, Tuple[int, ...]],
-         fill_value: Union[bool, int, float, complex],
+         fill_value: bool | int | float | complex,
          *,
-         dtype: Optional[Dtype] = None,
+         dtype: Optional[DType] = None,
          device: Optional[Device] = None,
-         **kwargs) -> array:
+         **kwargs) -> Array:
     if isinstance(shape, int):
         shape = (shape,)
 
@@ -642,52 +655,52 @@ def full(shape: Union[int, Tuple[int, ...]],
 # ones, zeros, and empty do not accept shape as a keyword argument
 def ones(shape: Union[int, Tuple[int, ...]],
          *,
-         dtype: Optional[Dtype] = None,
+         dtype: Optional[DType] = None,
          device: Optional[Device] = None,
-         **kwargs) -> array:
+         **kwargs) -> Array:
     return torch.ones(shape, dtype=dtype, device=device, **kwargs)
 
 def zeros(shape: Union[int, Tuple[int, ...]],
          *,
-         dtype: Optional[Dtype] = None,
+         dtype: Optional[DType] = None,
          device: Optional[Device] = None,
-         **kwargs) -> array:
+         **kwargs) -> Array:
     return torch.zeros(shape, dtype=dtype, device=device, **kwargs)
 
 def empty(shape: Union[int, Tuple[int, ...]],
          *,
-         dtype: Optional[Dtype] = None,
+         dtype: Optional[DType] = None,
          device: Optional[Device] = None,
-         **kwargs) -> array:
+         **kwargs) -> Array:
     return torch.empty(shape, dtype=dtype, device=device, **kwargs)
 
 # tril and triu do not call the keyword argument k
 
-def tril(x: array, /, *, k: int = 0) -> array:
+def tril(x: Array, /, *, k: int = 0) -> Array:
     return torch.tril(x, k)
 
-def triu(x: array, /, *, k: int = 0) -> array:
+def triu(x: Array, /, *, k: int = 0) -> Array:
     return torch.triu(x, k)
 
 # Functions that aren't in torch https://github.com/pytorch/pytorch/issues/58742
-def expand_dims(x: array, /, *, axis: int = 0) -> array:
+def expand_dims(x: Array, /, *, axis: int = 0) -> Array:
     return torch.unsqueeze(x, axis)
 
 
 def astype(
-    x: array,
-    dtype: Dtype,
+    x: Array,
+    dtype: DType,
     /,
     *,
     copy: bool = True,
     device: Optional[Device] = None,
-) -> array:
+) -> Array:
     if device is not None:
         return x.to(device, dtype=dtype, copy=copy)
     return x.to(dtype=dtype, copy=copy)
 
 
-def broadcast_arrays(*arrays: array) -> List[array]:
+def broadcast_arrays(*arrays: Array) -> List[Array]:
     shape = torch.broadcast_shapes(*[a.shape for a in arrays])
     return [torch.broadcast_to(a, shape) for a in arrays]
 
@@ -697,7 +710,7 @@ from ..common._aliases import (UniqueAllResult, UniqueCountsResult,
                                UniqueInverseResult)
 
 # https://github.com/pytorch/pytorch/issues/70920
-def unique_all(x: array) -> UniqueAllResult:
+def unique_all(x: Array) -> UniqueAllResult:
     # torch.unique doesn't support returning indices.
     # https://github.com/pytorch/pytorch/issues/36748. The workaround
     # suggested in that issue doesn't actually function correctly (it relies
@@ -710,7 +723,7 @@ def unique_all(x: array) -> UniqueAllResult:
     # counts[torch.isnan(values)] = 1
     # return UniqueAllResult(values, indices, inverse_indices, counts)
 
-def unique_counts(x: array) -> UniqueCountsResult:
+def unique_counts(x: Array) -> UniqueCountsResult:
     values, counts = torch.unique(x, return_counts=True)
 
     # torch.unique incorrectly gives a 0 count for nan values.
@@ -718,14 +731,14 @@ def unique_counts(x: array) -> UniqueCountsResult:
     counts[torch.isnan(values)] = 1
     return UniqueCountsResult(values, counts)
 
-def unique_inverse(x: array) -> UniqueInverseResult:
+def unique_inverse(x: Array) -> UniqueInverseResult:
     values, inverse = torch.unique(x, return_inverse=True)
     return UniqueInverseResult(values, inverse)
 
-def unique_values(x: array) -> array:
+def unique_values(x: Array) -> Array:
     return torch.unique(x)
 
-def matmul(x1: array, x2: array, /, **kwargs) -> array:
+def matmul(x1: Array, x2: Array, /, **kwargs) -> Array:
     # torch.matmul doesn't type promote (but differently from _fix_promotion)
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
     return torch.matmul(x1, x2, **kwargs)
@@ -733,12 +746,19 @@ def matmul(x1: array, x2: array, /, **kwargs) -> array:
 matrix_transpose = get_xp(torch)(_aliases.matrix_transpose)
 _vecdot = get_xp(torch)(_aliases.vecdot)
 
-def vecdot(x1: array, x2: array, /, *, axis: int = -1) -> array:
+def vecdot(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
     return _vecdot(x1, x2, axis=axis)
 
 # torch.tensordot uses dims instead of axes
-def tensordot(x1: array, x2: array, /, *, axes: Union[int, Tuple[Sequence[int], Sequence[int]]] = 2, **kwargs) -> array:
+def tensordot(
+    x1: Array,
+    x2: Array,
+    /,
+    *, 
+    axes: Union[int, Tuple[Sequence[int], Sequence[int]]] = 2, 
+    **kwargs,
+) -> Array:
     # Note: torch.tensordot fails with integer dtypes when there is only 1
     # element in the axis (https://github.com/pytorch/pytorch/issues/84530).
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
@@ -746,7 +766,7 @@ def tensordot(x1: array, x2: array, /, *, axes: Union[int, Tuple[Sequence[int], 
 
 
 def isdtype(
-    dtype: Dtype, kind: Union[Dtype, str, Tuple[Union[Dtype, str], ...]],
+    dtype: DType, kind: Union[DType, str, Tuple[Union[DType, str], ...]],
     *, _tuple=True, # Disallow nested tuples
 ) -> bool:
     """
@@ -781,7 +801,7 @@ def isdtype(
     else:
         return dtype == kind
 
-def take(x: array, indices: array, /, *, axis: Optional[int] = None, **kwargs) -> array:
+def take(x: Array, indices: Array, /, *, axis: Optional[int] = None, **kwargs) -> Array:
     if axis is None:
         if x.ndim != 1:
             raise ValueError("axis must be specified when ndim > 1")
@@ -789,11 +809,11 @@ def take(x: array, indices: array, /, *, axis: Optional[int] = None, **kwargs) -
     return torch.index_select(x, axis, indices, **kwargs)
 
 
-def take_along_axis(x: array, indices: array, /, *, axis: int = -1) -> array:
+def take_along_axis(x: Array, indices: Array, /, *, axis: int = -1) -> Array:
     return torch.take_along_dim(x, indices, dim=axis)
 
 
-def sign(x: array, /) -> array:
+def sign(x: Array, /) -> Array:
     # torch sign() does not support complex numbers and does not propagate
     # nans. See https://github.com/data-apis/array-api-compat/issues/136
     if x.dtype.is_complex:
@@ -808,7 +828,13 @@ def sign(x: array, /) -> array:
         return out
 
 
-__all__ = ['__array_namespace_info__', 'result_type', 'can_cast',
+def meshgrid(*arrays: Array, indexing: Literal['xy', 'ij'] = 'xy') -> List[Array]:
+    # enforce the default of 'xy'
+    # TODO: is the return type a list or a tuple
+    return list(torch.meshgrid(*arrays, indexing='xy'))
+
+
+__all__ = ['__array_namespace_info__', 'asarray', 'result_type', 'can_cast',
            'permute_dims', 'bitwise_invert', 'newaxis', 'conj', 'add',
            'atan2', 'bitwise_and', 'bitwise_left_shift', 'bitwise_or',
            'bitwise_right_shift', 'bitwise_xor', 'copysign', 'count_nonzero',
@@ -824,6 +850,6 @@ __all__ = ['__array_namespace_info__', 'result_type', 'can_cast',
            'UniqueAllResult', 'UniqueCountsResult', 'UniqueInverseResult',
            'unique_all', 'unique_counts', 'unique_inverse', 'unique_values',
            'matmul', 'matrix_transpose', 'vecdot', 'tensordot', 'isdtype',
-           'take', 'take_along_axis', 'sign']
+           'take', 'take_along_axis', 'sign', 'finfo', 'iinfo', 'repeat', 'meshgrid']
 
 _all_ignore = ['torch', 'get_xp']

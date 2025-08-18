@@ -121,6 +121,9 @@ Reference Steps
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
         * [ ] Set the version number in the release branch
+        {%- if key == "rc" %}
+        * [ ] Set an upper bound on build dependencies in the release branch
+        {%- endif %}
         * [ ] Generate the changelog in the release branch
         * [ ] Check that the wheels for the release can be built successfully
         * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
@@ -161,6 +164,17 @@ Reference Steps
 
     - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
+
+    {% if key == "rc" %}
+    - Still in the release branch, set or update the upper bound on the build
+      dependencies in the `[build-system]` section of `pyproject.toml`. The goal is to
+      prevent future backward incompatible releases of the dependencies to break the
+      build in the maintenance branch.
+
+      The upper bounds should match the latest already-released minor versions of the
+      dependencies and should allow future micro (bug-fix) versions. For instance, if
+      numpy 2.2.5 is the most recent version, its upper bound should be set to <2.3.0.
+    {% endif %}
 
     - In the release branch, generate the changelog for the incoming version, i.e.,
       `doc/whats_new/{{ version_short }}.rst`.
