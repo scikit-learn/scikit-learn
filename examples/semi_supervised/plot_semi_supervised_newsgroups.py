@@ -4,28 +4,32 @@ Semi-supervised Classification on a Text Dataset
 ================================================
 
 This example demonstrates the effectiveness of semi-supervised learning
-in text classification when labeled data is scarce.
-We compare four different approaches:
+for text classification on :class:`TF-IDF
+<sklearn.feature_extraction.text.TfidfTransformer>` features when labeled data
+is scarce. For such purpose we compare four different approaches:
 
-1. Supervised learning using 100% of labeled data (best-case scenario)
+1. Supervised learning using 100% of labels in the training set (best-case
+   scenario)
 
-   - Uses SGDClassifier with TF-IDF features
-   - Represents the best possible performance with full supervision
+   - Uses :class:`~sklearn.linear_model.SGDClassifier` with full supervision
+   - Represents the best possible performance when labeled data is abundant
 
-2. Supervised learning using only 20% of labeled data (baseline)
+2. Supervised learning using 20% of labels in the training set (baseline)
 
-   - Same model as the best-case scenario but with limited training data
-   - Shows the performance degradation due to limited labeled data
+   - Same model as the best-case scenario but trained on a random 20% subset of
+     the labeled training data
+   - Shows the performance degradation of a fully supervised model due to
+     limited labeled data
 
 3. SelfTrainingClassifier (semi-supervised)
 
-   - Uses 20% labeled data + 80% unlabeled data
+   - Uses 20% labeled data + 80% unlabeled data for training
    - Iteratively predicts labels for unlabeled data
    - Demonstrates how self-training can improve performance
 
 4. LabelSpreading (semi-supervised)
 
-   - Uses 20% labeled data + 80% unlabeled data
+   - Uses 20% labeled data + 80% unlabeled data for training
    - Propagates labels through the data manifold
    - Shows how graph-based methods can leverage unlabeled data
 
@@ -38,7 +42,7 @@ effectively utilizing unlabeled samples.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import matplotlib.pyplot as plt
+# %%
 import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups
@@ -79,7 +83,7 @@ st_pipeline = Pipeline(
     [
         ("vect", CountVectorizer(**vectorizer_params)),
         ("tfidf", TfidfTransformer()),
-        ("clf", SelfTrainingClassifier(SGDClassifier(**sdg_params), verbose=False)),
+        ("clf", SelfTrainingClassifier(SGDClassifier(**sdg_params))),
     ]
 )
 # LabelSpreading Pipeline
@@ -112,7 +116,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y)
 f1_scores = {}
 
 # %%
-# 1. Evaluate a supervised SGDClassifier trained on 100% of the labeled data.
+# 1. Evaluate a supervised SGDClassifier using 100% of the (labeled) training set.
 # This represents the best-case performance when the model has full access to all
 # labeled examples.
 
@@ -122,9 +126,9 @@ f1_scores["Supervised (100%)"] = eval_and_get_f1(
 )
 
 # %%
-# 2. Evaluate a supervised SGDClassifier trained on only 20% of the labeled data.
-# This serves as a baseline to illustrate the performance drop caused by limited
-# labeled data.
+# 2. Evaluate a supervised SGDClassifier trained on only 20% of the data.
+# This serves as a baseline to illustrate the performance drop caused by limiting
+# the training samples.
 
 print("2. Supervised SGDClassifier on 20% of the training data:")
 y_mask = np.random.rand(len(y_train)) < 0.2
@@ -163,6 +167,8 @@ f1_scores["LabelSpreading"] = eval_and_get_f1(
 # Visualize the performance of different classification approaches using a bar chart.
 # This helps to compare how each method performs based on the micro-averaged F1 score.
 
+import matplotlib.pyplot as plt
+
 plt.figure(figsize=(10, 6))
 
 models = list(f1_scores.keys())
@@ -172,7 +178,7 @@ colors = ["royalblue", "royalblue", "forestgreen", "royalblue"]
 bars = plt.bar(models, scores, color=colors)
 
 plt.title("Comparison of Classification Approaches")
-plt.ylabel("Micro-averaged F1 Score")
+plt.ylabel("Micro-averaged F1 Score on test set")
 plt.xticks()
 
 for bar in bars:
