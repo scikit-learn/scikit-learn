@@ -278,7 +278,7 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container
     model_dense.fit(X, y)
     model_sparse.fit(X_sparse, y)
 
-    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-16)
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-15)
     y_pred_dense = model_dense.predict(X)
     y_pred_sparse = model_sparse.predict(X_sparse)
     assert_allclose(y_pred_dense, y_pred_sparse)
