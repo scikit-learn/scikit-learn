@@ -43,7 +43,6 @@ effectively utilizing unlabeled samples.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
-import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
@@ -113,13 +112,12 @@ def eval_and_get_f1(clf, X_train, y_train, X_test, y_test):
 X, y = data.data, data.target
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-f1_scores = {}
-
 # %%
 # 1. Evaluate a supervised SGDClassifier using 100% of the (labeled) training set.
 # This represents the best-case performance when the model has full access to all
 # labeled examples.
 
+f1_scores = {}
 print("1. Supervised SGDClassifier on 100% of the data:")
 f1_scores["Supervised (100%)"] = eval_and_get_f1(
     pipeline, X_train, y_train, X_test, y_test
@@ -129,6 +127,8 @@ f1_scores["Supervised (100%)"] = eval_and_get_f1(
 # 2. Evaluate a supervised SGDClassifier trained on only 20% of the data.
 # This serves as a baseline to illustrate the performance drop caused by limiting
 # the training samples.
+
+import numpy as np
 
 print("2. Supervised SGDClassifier on 20% of the training data:")
 y_mask = np.random.rand(len(y_train)) < 0.2
@@ -165,7 +165,11 @@ f1_scores["LabelSpreading"] = eval_and_get_f1(
 # Plot results
 # ------------
 # Visualize the performance of different classification approaches using a bar chart.
-# This helps to compare how each method performs based on the micro-averaged F1 score.
+# This helps to compare how each method performs based on the micro-averaged :func:`~sklearn.metrics.f1_score`.
+# Micro-averaging computes metrics globally across all classes,
+# which gives a single overall measure of performance and allows fair comparison
+# between the different approaches, even in the presence of class imbalance.
+
 
 import matplotlib.pyplot as plt
 
