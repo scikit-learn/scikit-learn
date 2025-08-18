@@ -1020,7 +1020,7 @@ def test_implit_center_rmatvec(global_random_seed, centered_matrices):
         ),
     ],
 )
-def test_csr_matmul_csr_to_dense_raises(A, B, out, msg):
+def test_sparse_matmul_to_dense_raises(A, B, out, msg):
     """Test that sparse_matmul_to_dense raises when it should."""
     with pytest.raises(ValueError, match=msg):
         sparse_matmul_to_dense(A, B, out=out)
@@ -1030,7 +1030,7 @@ def test_csr_matmul_csr_to_dense_raises(A, B, out, msg):
 @pytest.mark.parametrize("a_container", CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("b_container", CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_csr_matmul_csr_to_dense(
+def test_sparse_matmul_to_dense(
     global_random_seed, out_is_None, a_container, b_container, dtype
 ):
     """Test that sparse_matmul_to_dense computes correctly."""
