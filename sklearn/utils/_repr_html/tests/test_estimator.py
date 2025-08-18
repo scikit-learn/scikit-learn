@@ -614,3 +614,19 @@ def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(C=10.0, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)
+
+
+def test_features_number():
+    X, y = load_iris(return_X_y=True)
+    categorical_transf = Pipeline(
+        steps=[
+            ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ]
+    )
+    categorical_transf.fit(X, y)
+    assert "123 Output features" in estimator_html_repr(categorical_transf)
+
+
+def test_features_number_not_included():
+    est = LogisticRegression(C=10.0, fit_intercept=False)
+    assert "Output features" not in estimator_html_repr(est)
