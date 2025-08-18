@@ -19,7 +19,7 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import (
-    _check_feature_names,
+    check_feature_names,
     _estimator_has,
     _num_features,
     check_is_fitted,
@@ -381,7 +381,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            _check_feature_names(self, X, reset=True)
+            check_feature_names(self, X, reset=True)
 
         return self
 
@@ -464,7 +464,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            _check_feature_names(self, X, reset=first_call)
+            check_feature_names(self, X, reset=first_call)
 
         return self
 

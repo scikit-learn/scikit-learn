@@ -20,7 +20,7 @@ from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
-    _check_n_features,
+    check_n_features,
     check_is_fitted,
     validate_data,
 )
@@ -1001,7 +1001,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=True)
         else:
             # only create `n_features_in_` in the precomputed case
-            _check_n_features(self, X, reset=True)
+            check_n_features(self, X, reset=True)
 
         self._n_features = X.shape[1]
 
