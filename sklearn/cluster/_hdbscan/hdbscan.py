@@ -655,7 +655,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean"],
+        "copy": ["boolean", StrOptions({"warn"})],
     }
 
     def __init__(
@@ -673,7 +673,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        copy=False,
+        copy="warn",
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -712,6 +712,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        if self.copy == "warn":
+            warn(
+                "The default value of `copy` will change from False to True in 1.10",
+                FutureWarning
+            )
+            self.copy = False
+
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
