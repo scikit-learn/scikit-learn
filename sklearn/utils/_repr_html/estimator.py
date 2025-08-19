@@ -191,7 +191,6 @@ def _write_label_html(
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
 
-        # Create the name with icons using unbreakable spaces for proper alignment
         icons_html = ""
         if doc_link or is_fitted_icon:
             icons_html = (
