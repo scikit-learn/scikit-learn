@@ -534,6 +534,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Currently, it only applies when `metric="precomputed"`, when passing
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
 
+        .. versionchanged:: 1.10
+            The default value for `copy` will change from `False` to `True`
+            in version 1.10.
+
     Attributes
     ----------
     labels_ : ndarray of shape (n_samples,)
