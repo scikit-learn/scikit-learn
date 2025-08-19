@@ -332,8 +332,8 @@ class _PLS(
             if x_scores_ss < np.finfo(np.float64).eps:
                 # The algorithm can proceed with the components found so far.
                 warnings.warn(
-                    f"x_scores are null at iteration {k}. The algorithm may have stopped"
-                    " before reaching the desired number of components.",
+                    f"x_scores are null at iteration {k}. The algorithm may have "
+                    "stopped before reaching the desired number of components.",
                     ConvergenceWarning,
                 )
                 break
