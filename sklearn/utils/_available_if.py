@@ -21,10 +21,6 @@ class _AvailableIfDescriptor:
         self.check = check
         self.attribute_name = attribute_name
 
-        # track methods wrapped in availabel_if
-        fn._sklearn_available_if = True
-        fn.check = check
-
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
