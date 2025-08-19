@@ -302,17 +302,19 @@ clickable and can be expanded/collapsed.
 .sk-estimator-doc-link,
 a:link.sk-estimator-doc-link,
 a:visited.sk-estimator-doc-link {
-  float: right;
+  display: inline-block;
+  vertical-align: middle;
   font-size: smaller;
-  line-height: 1em;
+  line-height: 1;
   font-family: monospace;
   background-color: var(--sklearn-color-background);
   border-radius: 1em;
   height: 1em;
   width: 1em;
   text-decoration: none !important;
-  margin-left: 0.5em;
+  margin-left: 0.25em;
   text-align: center;
+  white-space: nowrap;
   /* unfitted */
   border: var(--sklearn-color-unfitted-level-1) 1pt solid;
   color: var(--sklearn-color-unfitted-level-1);
@@ -379,15 +381,19 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 /* "?"-specific style due to the `<a>` HTML tag */
 
 #$id a.estimator_doc_link {
-  float: right;
+  display: inline-block;
+  vertical-align: middle;
   font-size: 1rem;
-  line-height: 1em;
+  line-height: 1;
   font-family: monospace;
   background-color: var(--sklearn-color-background);
   border-radius: 1rem;
   height: 1rem;
   width: 1rem;
   text-decoration: none;
+  margin-left: 0.25em;
+  text-align: center;
+  white-space: nowrap;
   /* unfitted */
   color: var(--sklearn-color-unfitted-level-1);
   border: var(--sklearn-color-unfitted-level-1) 1pt solid;
