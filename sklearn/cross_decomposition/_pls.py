@@ -325,7 +325,20 @@ class _PLS(
             y_scores = np.dot(yk, y_weights) / y_ss
 
             # Deflation: subtract rank-one approx to obtain Xk+1 and yk+1
-            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+            x_scores_ss = np.dot(x_scores, x_scores)
+
+            # Safety check to prevent division by zero when x_scores are all zero.
+            # This indicates that the current component is uninformative.
+            if x_scores_ss < np.finfo(np.float64).eps:
+                # The algorithm can proceed with the components found so far.
+                warnings.warn(
+                    f"x_scores are null at iteration {k}. The algorithm may have stopped"
+                    " before reaching the desired number of components.",
+                    ConvergenceWarning,
+                )
+                break
+
+            x_loadings = np.dot(x_scores, Xk) / x_scores_ss
             Xk -= np.outer(x_scores, x_loadings)
 
             if self.deflation_mode == "canonical":
