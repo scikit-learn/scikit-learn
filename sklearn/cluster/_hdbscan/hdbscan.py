@@ -718,9 +718,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         """
         if self.copy == "warn":
             warn(
-                "The default value of `copy` will change from False to True "
-                "in 1.10",
-                FutureWarning
+                "The default value of `copy` will change from False to True in 1.10",
+                FutureWarning,
             )
             self.copy = False
 
