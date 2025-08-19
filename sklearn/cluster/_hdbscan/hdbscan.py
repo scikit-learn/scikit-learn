@@ -721,7 +721,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 "The default value of `copy` will change from False to True in 1.10",
                 FutureWarning,
             )
-            self.copy = False
+            self._copy = False
+        else:
+            self._copy = self.copy
 
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
@@ -831,7 +833,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = self._copy
             elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -844,7 +846,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = self._copy
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
