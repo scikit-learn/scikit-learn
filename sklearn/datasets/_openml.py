@@ -9,6 +9,7 @@ import shutil
 import time
 from contextlib import closing
 from functools import wraps
+from io import BytesIO
 from os.path import join
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -16,7 +17,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from warnings import warn
-from io import BytesIO
 
 import numpy as np
 
@@ -520,8 +520,13 @@ def _load_arff_response(
     """
     gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
     with closing(gzip_file):
-        file_content = gzip_file.read()
-        actual_md5_checksum = hashlib.md5(file_content).hexdigest()
+        # Read file in chunks to manage memory usage while still reading once
+        file_content = b""
+        md5 = hashlib.md5()
+        for chunk in iter(lambda: gzip_file.read(4096), b""):
+            file_content += chunk
+            md5.update(chunk)
+        actual_md5_checksum = md5.hexdigest()
 
         if actual_md5_checksum != md5_checksum:
             raise ValueError(
@@ -530,7 +535,7 @@ def _load_arff_response(
                 "Downloaded file could have been modified / corrupted, clean cache "
                 "and retry..."
             )
-    
+
         content_stream = BytesIO(file_content)
         arff_params: Dict = dict(
             parser=parser,
@@ -548,6 +553,7 @@ def _load_arff_response(
             if parser != "pandas":
                 raise
             from pandas.errors import ParserError
+
             if not isinstance(exc, ParserError):
                 raise
 
@@ -557,6 +563,7 @@ def _load_arff_response(
             arff_params["read_csv_kwargs"].update(quotechar="'")
             content_stream.seek(0)
             return load_arff_from_gzip_file(content_stream, **arff_params)
+
 
 def _download_data_to_bunch(
     url: str,
