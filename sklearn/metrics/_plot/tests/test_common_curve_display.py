@@ -145,9 +145,7 @@ def test_display_curve_error_no_response(
         Display.from_estimator(clf, X, y, response_method=response_method)
 
 
-@pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, CAPCurveDisplay]
-)
+@pytest.mark.parametrize("Display", [DetCurveDisplay, PrecisionRecallDisplay])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
     pyplot,
@@ -206,7 +204,12 @@ def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Disp
     model.fit(X, y)
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
-    assert disp.estimator_name == model.__class__.__name__
+
+    if Display == CAPCurveDisplay:
+        # no estimator_name attribute in new Display(s)
+        assert disp.name == model.__class__.__name__
+    else:
+        assert disp.estimator_name == model.__class__.__name__
 
 
 @pytest.mark.parametrize(
