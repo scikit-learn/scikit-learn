@@ -34,8 +34,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     cumulative_total : ndarray
         Cumulative number or fraction of cases examined, ordered by
         predictions. If `sample_weight` is `None`, each case contributes
-        equally. Otherwise this is the (possibly normalized) cumulative sum
-        of weights.
+        equally. Otherwise this is the cumulative sum of weights,
+        normalized if `normalize_scale=True`.
 
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
@@ -63,10 +63,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
     See Also
     --------
-    CAPCurveDisplay.from_estimator : Plot Cumulative Accuracy Profile
-        (CAP) curve given the estimator and data.
-    CAPCurveDisplay.from_predictions : Plot Cumulative Accuracy Profile
-        (CAP) curve given the observations and predicted values.
+    CAPCurveDisplay.from_estimator : Plot Cumulative Accuracy Profile (CAP)
+        CAP curve given the estimator and data.
+    CAPCurveDisplay.from_predictions : Plot Cumulative Accuracy Profile (CAP)
+        CAP curve given the observations and predicted values.
     RocCurveDisplay : Receiver Operating Characteristic (ROC) curve.
     PrecisionRecallDisplay : Precision-Recall curve.
     DetCurveDisplay : Detection Error Tradeoff (DET) curve.
@@ -123,7 +123,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to normalize values between 0 and 1 for the plot.
 
         name : str, default=None
-            Name of CAP Curve for labeling. If `None`, use `estimator_name`.
+            Name of CAP Curve for labeling. If `None`, use `self.estimator_name`.
 
         plot_chance_level : bool, default=True
             Whether to plot the expected curve of a classifier whose
@@ -269,7 +269,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """Create the Cumulative Accuracy Profile.
 
         This is also known as a (cumulative) gain curve. It can be used with
-        either classifiers or regressors (with positive outcomes only). Other
+        either classifiers or regressors (with positive targets only). Other
         types of estimators will give rise to an error.
 
         Parameters
@@ -280,8 +280,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_pred : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
             class, confidence values, non-thresholded measure of decisions
-            (as returned by "decision_function" on some classifiers) or the
-            "predict" output in the case of a regressor.
+            (as returned by :term:`decision_function` on some classifiers) or the
+            :term:`predict` output in the case of a regressor.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If not `None`, the `y_true_cumulative` array is the
@@ -311,13 +311,13 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         perfect_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the perfect line.
+            a curve representing the perfect estimator.
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
 
         name : str, default=None
-            Name of CAP curve for labeling. If `None`, name will be set to
+            Name of CAP curve for labeling in the legend. If `None`, name will be set to
             `"Classifier"` or `"Regressor"`.
 
         ax : matplotlib axes, default=None
