@@ -520,7 +520,6 @@ def _load_arff_response(
     """
     gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
     with closing(gzip_file):
-        # Read file in chunks to manage memory usage while still reading once
         file_content = b""
         md5 = hashlib.md5()
         for chunk in iter(lambda: gzip_file.read(4096), b""):
