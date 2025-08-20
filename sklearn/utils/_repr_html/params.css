@@ -71,10 +71,9 @@ a.param-doc-link:hover {
 }
 
 a.param-doc-link span {
-    visibility: hidden;
+    display: none;
     position: absolute;
     z-index: 9999;
-    bottom: 100%;
     left: 0;
     padding: .5ex;
     margin-top: .5ex;
@@ -97,7 +96,7 @@ a.param-doc-link span {
 }
 
 a.param-doc-link:hover span {
-    visibility: visible;
+    display: block;
 }
 
 
