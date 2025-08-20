@@ -1,49 +1,47 @@
+# pyright: reportPrivateUsage=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownVariableType=false
+
 from __future__ import annotations
 
-from typing import Callable
+from builtins import bool as py_bool
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
-from ...common import _aliases, array_namespace
+if TYPE_CHECKING:
+    from typing_extensions import TypeIs
 
-from ..._internal import get_xp
-
-from ._info import __array_namespace_info__
-
+import dask.array as da
 import numpy as np
+from numpy import bool_ as bool
 from numpy import (
-    # Dtypes
-    iinfo,
-    finfo,
-    bool_ as bool,
+    can_cast,
+    complex64,
+    complex128,
     float32,
     float64,
     int8,
     int16,
     int32,
     int64,
+    result_type,
     uint8,
     uint16,
     uint32,
     uint64,
-    complex64,
-    complex128,
-    can_cast,
-    result_type,
 )
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Optional, Union
-
-    from ...common._typing import (
-        Device,
-        Dtype,
-        Array,
-        NestedSequence,
-        SupportsBufferProtocol,
-    )
-
-import dask.array as da
+from ..._internal import get_xp
+from ...common import _aliases, _helpers, array_namespace
+from ...common._typing import (
+    Array,
+    Device,
+    DType,
+    NestedSequence,
+    SupportsBufferProtocol,
+)
+from ._info import __array_namespace_info__
 
 isdtype = get_xp(np)(_aliases.isdtype)
 unstack = get_xp(da)(_aliases.unstack)
@@ -52,11 +50,11 @@ unstack = get_xp(da)(_aliases.unstack)
 # da.astype doesn't respect copy=True
 def astype(
     x: Array,
-    dtype: Dtype,
+    dtype: DType,
     /,
     *,
-    copy: bool = True,
-    device: Optional[Device] = None,
+    copy: py_bool = True,
+    device: Device | None = None,
 ) -> Array:
     """
     Array API compatibility wrapper for astype().
@@ -65,6 +63,7 @@ def astype(
     specification for more details.
     """
     # TODO: respect device keyword?
+    _helpers._check_device(da, device)
 
     if not copy and dtype == x.dtype:
         return x
@@ -79,14 +78,14 @@ def astype(
 # not pass stop/step as keyword arguments, which will cause
 # an error with dask
 def arange(
-    start: Union[int, float],
+    start: float,
     /,
-    stop: Optional[Union[int, float]] = None,
-    step: Union[int, float] = 1,
+    stop: float | None = None,
+    step: float = 1,
     *,
-    dtype: Optional[Dtype] = None,
-    device: Optional[Device] = None,
-    **kwargs,
+    dtype: DType | None = None,
+    device: Device | None = None,
+    **kwargs: object,
 ) -> Array:
     """
     Array API compatibility wrapper for arange().
@@ -95,8 +94,9 @@ def arange(
     specification for more details.
     """
     # TODO: respect device keyword?
+    _helpers._check_device(da, device)
 
-    args = [start]
+    args: list[Any] = [start]
     if stop is not None:
         args.append(stop)
     else:
@@ -140,24 +140,19 @@ trunc = get_xp(np)(_aliases.trunc)
 matmul = get_xp(np)(_aliases.matmul)
 tensordot = get_xp(np)(_aliases.tensordot)
 sign = get_xp(np)(_aliases.sign)
+finfo = get_xp(np)(_aliases.finfo)
+iinfo = get_xp(np)(_aliases.iinfo)
 
 
 # asarray also adds the copy keyword, which is not present in numpy 1.0.
 def asarray(
-    obj: Union[
-        Array,
-        bool,
-        int,
-        float,
-        NestedSequence[bool | int | float],
-        SupportsBufferProtocol,
-    ],
+    obj: complex | NestedSequence[complex] | Array | SupportsBufferProtocol,
     /,
     *,
-    dtype: Optional[Dtype] = None,
-    device: Optional[Device] = None,
-    copy: Optional[Union[bool, np._CopyMode]] = None,
-    **kwargs,
+    dtype: DType | None = None,
+    device: Device | None = None,
+    copy: py_bool | None = None,
+    **kwargs: object,
 ) -> Array:
     """
     Array API compatibility wrapper for asarray().
@@ -166,16 +161,17 @@ def asarray(
     specification for more details.
     """
     # TODO: respect device keyword?
+    _helpers._check_device(da, device)
 
     if isinstance(obj, da.Array):
         if dtype is not None and dtype != obj.dtype:
             if copy is False:
                 raise ValueError("Unable to avoid copy when changing dtype")
             obj = obj.astype(dtype)
-        return obj.copy() if copy else obj
+        return obj.copy() if copy else obj  # pyright: ignore[reportAttributeAccessIssue]
 
     if copy is False:
-        raise NotImplementedError(
+        raise ValueError(
             "Unable to avoid copy when converting a non-dask object to dask"
         )
 
@@ -185,22 +181,21 @@ def asarray(
     return da.from_array(obj)
 
 
-from dask.array import (
-    # Element wise aliases
-    arccos as acos,
-    arccosh as acosh,
-    arcsin as asin,
-    arcsinh as asinh,
-    arctan as atan,
-    arctan2 as atan2,
-    arctanh as atanh,
-    left_shift as bitwise_left_shift,
-    right_shift as bitwise_right_shift,
-    invert as bitwise_invert,
-    power as pow,
-    # Other
-    concatenate as concat,
-)
+# Element wise aliases
+from dask.array import arccos as acos
+from dask.array import arccosh as acosh
+from dask.array import arcsin as asin
+from dask.array import arcsinh as asinh
+from dask.array import arctan as atan
+from dask.array import arctan2 as atan2
+from dask.array import arctanh as atanh
+
+# Other
+from dask.array import concatenate as concat
+from dask.array import invert as bitwise_invert
+from dask.array import left_shift as bitwise_left_shift
+from dask.array import power as pow
+from dask.array import right_shift as bitwise_right_shift
 
 
 # dask.array.clip does not work unless all three arguments are provided.
@@ -210,8 +205,8 @@ from dask.array import (
 def clip(
     x: Array,
     /,
-    min: Optional[Union[int, float, Array]] = None,
-    max: Optional[Union[int, float, Array]] = None,
+    min: float | Array | None = None,
+    max: float | Array | None = None,
 ) -> Array:
     """
     Array API compatibility wrapper for clip().
@@ -220,8 +215,8 @@ def clip(
     specification for more details.
     """
 
-    def _isscalar(a):
-        return isinstance(a, (int, float, type(None)))
+    def _isscalar(a: float | Array | None, /) -> TypeIs[float | None]:
+        return a is None or isinstance(a, (int, float))
 
     min_shape = () if _isscalar(min) else min.shape
     max_shape = () if _isscalar(max) else max.shape
@@ -274,7 +269,12 @@ def _ensure_single_chunk(x: Array, axis: int) -> tuple[Array, Callable[[Array], 
 
 
 def sort(
-    x: Array, /, *, axis: int = -1, descending: bool = False, stable: bool = True
+    x: Array,
+    /,
+    *,
+    axis: int = -1,
+    descending: py_bool = False,
+    stable: py_bool = True,
 ) -> Array:
     """
     Array API compatibility layer around the lack of sort() in Dask.
@@ -304,7 +304,12 @@ def sort(
 
 
 def argsort(
-    x: Array, /, *, axis: int = -1, descending: bool = False, stable: bool = True
+    x: Array,
+    /,
+    *,
+    axis: int = -1,
+    descending: py_bool = False,
+    stable: py_bool = True,
 ) -> Array:
     """
     Array API compatibility layer around the lack of argsort() in Dask.
@@ -338,26 +343,34 @@ def argsort(
 # dask.array.count_nonzero does not have keepdims
 def count_nonzero(
     x: Array,
-    axis=None,
-    keepdims=False
+    axis: int | None = None,
+    keepdims: py_bool = False,
 ) -> Array:
-   result = da.count_nonzero(x, axis)
-   if keepdims:
-       if axis is None:
-            return da.reshape(result, [1]*x.ndim)
-       return da.expand_dims(result, axis)
-   return result
+    result = da.count_nonzero(x, axis)
+    if keepdims:
+        if axis is None:
+            return da.reshape(result, [1] * x.ndim)
+        return da.expand_dims(result, axis)
+    return result
 
 
+__all__ = [
+    "__array_namespace_info__",
+    "count_nonzero",
+    "bool",
+    "int8", "int16", "int32", "int64",
+    "uint8", "uint16", "uint32", "uint64",
+    "float32", "float64",
+    "complex64", "complex128",
+    "asarray", "astype", "can_cast", "result_type",
+    "pow",
+    "concat",
+    "acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh",
+    "bitwise_left_shift", "bitwise_right_shift", "bitwise_invert",
+]  # fmt: skip
+__all__ += _aliases.__all__
+_all_ignore = ["array_namespace", "get_xp", "da", "np"]
 
-__all__ = _aliases.__all__ + [
-                    '__array_namespace_info__', 'asarray', 'astype', 'acos',
-                    'acosh', 'asin', 'asinh', 'atan', 'atan2',
-                    'atanh', 'bitwise_left_shift', 'bitwise_invert',
-                    'bitwise_right_shift', 'concat', 'pow', 'iinfo', 'finfo', 'can_cast',
-                    'result_type', 'bool', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64',
-                    'uint8', 'uint16', 'uint32', 'uint64',
-                    'complex64', 'complex128', 'iinfo', 'finfo',
-                    'can_cast', 'count_nonzero', 'result_type']
 
-_all_ignore = ["Callable", "array_namespace", "get_xp", "da", "np"]
+def __dir__() -> list[str]:
+    return __all__

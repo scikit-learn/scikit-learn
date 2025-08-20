@@ -233,6 +233,7 @@ Scoring string name                    Function                                 
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 'd2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
+'d2_brier_score'                       :func:`metrics.d2_brier_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -343,7 +344,7 @@ Creating a custom scorer object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can create your own custom scorer object using
-:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
+:func:`make_scorer`.
 
 .. dropdown:: Custom scorer objects using `make_scorer`
 
@@ -392,32 +393,6 @@ You can create your own custom scorer object using
       0.69
       >>> score(clf, X, y)
       -0.69
-
-.. dropdown:: Custom scorer objects from scratch
-
-  You can generate even more flexible model scorers by constructing your own
-  scoring object from scratch, without using the :func:`make_scorer` factory.
-
-  For a callable to be a scorer, it needs to meet the protocol specified by
-  the following two rules:
-
-  - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-    is the model that should be evaluated, ``X`` is validation data, and ``y`` is
-    the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
-    unsupervised case).
-
-  - It returns a floating point number that quantifies the
-    ``estimator`` prediction quality on ``X``, with reference to ``y``.
-    Again, by convention higher numbers are better, so if your scorer
-    returns loss, that value should be negated.
-
-  - Advanced: If it requires extra metadata to be passed to it, it should expose
-    a ``get_metadata_routing`` method returning the requested metadata. The user
-    should be able to set the requested metadata via a ``set_score_request``
-    method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
-    Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
-    more details.
-
 
 .. dropdown:: Using custom scorers in functions where n_jobs > 1
 
@@ -1880,7 +1855,7 @@ In multilabel classification, the :func:`zero_one_loss` scores a subset as
 one if its labels strictly match the predictions, and as a zero if there
 are any errors.  By default, the function returns the percentage of imperfectly
 predicted subsets.  To get the count of such subsets instead, set
-``normalize`` to ``False``
+``normalize`` to ``False``.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -1891,8 +1866,8 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
    L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
-loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero-one
+loss can also be computed as :math:`\text{zero-one loss} = 1 - \text{accuracy}`.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -1950,7 +1925,7 @@ achieves the best score only when the estimated probabilities equal the
 true ones.
 
 Note that in the binary case, the Brier score is usually divided by two and
-ranges between :math:`[0,1]`. For binary targets :math:`y_i \in {0, 1}` and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in \{0, 1\}` and
 probability estimates :math:`\hat{p}_i  \approx \operatorname{Pr}(y_i = 1)`
 for the positive class, the Brier score is then equal to:
 
@@ -2156,7 +2131,7 @@ D² score for classification
 The D² score computes the fraction of deviance explained.
 It is a generalization of R², where the squared error is generalized and replaced
 by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Log loss). D² is a form of a *skill score*.
+(e.g., Log loss, Brier score,). D² is a form of a *skill score*.
 It is calculated as
 
 .. math::
@@ -2164,7 +2139,7 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+(e.g., the per-class proportion of `y_true` in the case of the Log loss and Brier score).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts
@@ -2209,6 +2184,50 @@ of 0.0.
     >>> d2_log_loss_score(y_true, y_pred)
     -0.552
 
+
+|details-start|
+**D2 Brier score**
+|details-split|
+
+The :func:`d2_brier_score` function implements the special case
+of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+
+This is also referred to as the Brier Skill Score (BSS).
+
+Here are some usage examples of the :func:`d2_brier_score` function::
+
+  >>> from sklearn.metrics import d2_brier_score
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.98, 0.01, 0.01],
+  ...    [0.01, 0.98, 0.01],
+  ...    [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.9991
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  -0.370...
+
+|details-end|
 
 .. _multilabel_ranking_metrics:
 

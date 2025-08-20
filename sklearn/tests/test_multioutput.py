@@ -25,7 +25,6 @@ from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
     OrthogonalMatchingPursuit,
-    PassiveAggressiveClassifier,
     Ridge,
     SGDClassifier,
     SGDRegressor,
@@ -849,7 +848,7 @@ def test_fit_params_no_routing(Cls, method):
     underlying classifier.
     """
     X, y = make_classification(n_samples=50)
-    clf = Cls(PassiveAggressiveClassifier())
+    clf = Cls(SGDClassifier())
 
     with pytest.raises(ValueError, match="is only supported if"):
         getattr(clf, method)(X, y, test=1)

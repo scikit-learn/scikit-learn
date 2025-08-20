@@ -2662,21 +2662,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" not in repr_html
-        assert "<pre>LogisticRegression()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" not in repr_html
+        assert "<div>LogisticRegression</div>" in repr_html
 
 
 # Metadata Routing Tests

@@ -1437,6 +1437,27 @@ def test_check_requires_y_none():
     # no warnings are raised
     assert not [r.message for r in record]
 
+    # Make an estimator that throws the wrong error to make sure we catch it
+    class EstimatorWithWrongError(BaseEstimator):
+        def fit(self, X, y):
+            try:
+                X, y = check_X_y(X, y)
+            except ValueError as ve:
+                # This assertion is just to make sure we are catching the value error
+                # that comes from wrong y (=None) and not some other value error
+                assert str(ve) == (
+                    "estimator requires y to be passed, but the target y is None"
+                )
+                # Override the error message force fail
+                raise ValueError("This is the wrong message that raises error")
+
+    err_msg = (
+        "Your estimator raised a ValueError, but with the incorrect or "
+        "incomplete error message to be considered a graceful fail."
+    )
+    with raises(ValueError, match=err_msg):
+        check_requires_y_none("estimator", EstimatorWithWrongError())
+
 
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True

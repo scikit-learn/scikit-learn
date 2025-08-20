@@ -668,7 +668,7 @@ def notebook_modification_function(notebook_content, notebook_filename):
     if "seaborn" in notebook_content_str:
         code_lines.append("%pip install seaborn")
     if "plotly.express" in notebook_content_str:
-        code_lines.append("%pip install plotly")
+        code_lines.append("%pip install plotly nbformat")
     if "skimage" in notebook_content_str:
         code_lines.append("%pip install scikit-image")
     if "polars" in notebook_content_str:
@@ -866,6 +866,8 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
+# TODO(1.10): remove PassiveAggressive
+warnings.filterwarnings("ignore", category=FutureWarning, message="PassiveAggressive")
 if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
     turn_warnings_into_errors()
 

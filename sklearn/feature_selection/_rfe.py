@@ -10,30 +10,36 @@ from numbers import Integral
 import numpy as np
 from joblib import effective_n_jobs
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import get_scorer
-from ..model_selection import check_cv
-from ..model_selection._validation import _score
-from ..utils import Bunch, metadata_routing
-from ..utils._metadata_requests import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import check_cv
+from sklearn.model_selection._validation import _score
+from sklearn.utils import Bunch, metadata_routing
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import get_tags
-from ..utils.metaestimators import _safe_split, available_if
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metaestimators import _safe_split, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _deprecate_positional_args,
     _estimator_has,
     check_is_fitted,
     validate_data,
 )
-from ._base import SelectorMixin, _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
@@ -564,6 +570,7 @@ class RFECV(RFE):
     different numbers of selected features and aggregated together. Finally, the scores
     are averaged across folds and the number of features selected is set to the number
     of features that maximize the cross-validation score.
+
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <rfe>`.
@@ -755,6 +762,10 @@ class RFECV(RFE):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
+
+    For a detailed example of using RFECV to select features when training a
+    :class:`~sklearn.linear_model.LogisticRegression`, see
+    :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
     """
 
     _parameter_constraints: dict = {

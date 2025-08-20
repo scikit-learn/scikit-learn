@@ -143,7 +143,23 @@ ax_cap.set_title("Cumulative Accuracy Profile (CAP) curves")
 
 ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
-ax_cap.grid(linestyle="--")
+
+for name, clf in classifiers.items():
+    (color, linestyle) = (
+        ("black", "--") if name == "Non-informative baseline" else (None, None)
+    )
+    clf.fit(X_train, y_train)
+    RocCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_roc,
+        name=name,
+        curve_kwargs=dict(color=color, linestyle=linestyle),
+    )
+    DetCurveDisplay.from_estimator(
+        clf, X_test, y_test, ax=ax_det, name=name, color=color, linestyle=linestyle
+    )
 
 plt.legend()
 plt.show()

@@ -24,6 +24,11 @@ if [[ $FREE_THREADED_BUILD == "False" ]]; then
         PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_PART}-rc"
     fi
 
+    # Temporary work-around to avoid a loky issue on Windows >= 3.13.7
+    if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.13" ]]; then
+        PYTHON_DOCKER_IMAGE_PART="3.13.6"
+    fi
+
     # We could have all of the following logic in a Dockerfile but it's a lot
     # easier to do it in bash rather than figure out how to do it in Powershell
     # inside the Dockerfile ...
