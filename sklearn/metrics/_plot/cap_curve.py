@@ -106,8 +106,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         chance_level_kwargs=None,
         plot_perfect=True,
         perfect_level_kwargs=None,
+        curve_kwargs=None,
         despine=False,
-        **kwargs,
     ):
         """Plot visualization.
 
@@ -140,11 +140,12 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
 
+        curve_kwargs : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the main line.
+
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
-
-        **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
 
         Returns
         -------
@@ -167,37 +168,35 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             self.ax_.set_xlim(0, x_max)
             self.ax_.set_ylim(0, y_max)
 
-        line_kwargs = {"label": name} if name is not None else {}
-        line_kwargs.update(**kwargs)
+        default_curve_kwargs = {"label": name}
+        if curve_kwargs is None:
+            curve_kwargs = {}
+        curve_kw = _validate_style_kwargs(default_curve_kwargs, curve_kwargs)
 
-        default_perfect_level_line_kw = {
+        default_perfect_level_line_kwargs = {
             "label": "Perfect predictions",
             "linestyle": ":",
             "color": "black",
         }
-
         if perfect_level_kwargs is None:
             perfect_level_kwargs = {}
-
         perfect_level_line_kw = _validate_style_kwargs(
-            default_perfect_level_line_kw, perfect_level_kwargs
+            default_perfect_level_line_kwargs, perfect_level_kwargs
         )
 
-        default_chance_level_line_kw = {
+        default_chance_level_line_kwargs = {
             "label": "Chance level",
             "color": "k",
             "linestyle": "--",
         }
-
         if chance_level_kwargs is None:
             chance_level_kwargs = {}
-
         chance_level_line_kw = _validate_style_kwargs(
-            default_chance_level_line_kw, chance_level_kwargs
+            default_chance_level_line_kwargs, chance_level_kwargs
         )
 
         (self.line_,) = self.ax_.plot(
-            self.cumulative_total, self.y_true_cumulative, **line_kwargs
+            self.cumulative_total, self.y_true_cumulative, **curve_kw
         )
 
         if plot_chance_level:
@@ -242,7 +241,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         if despine:
             _despine(self.ax_)
 
-        if "label" in line_kwargs:
+        if "label" in curve_kw:
             self.ax_.legend(loc="lower right")
 
         return self
@@ -260,10 +259,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         chance_level_kwargs=None,
         plot_perfect=True,
         perfect_level_kwargs=None,
+        curve_kwargs=None,
         despine=False,
         name=None,
         ax=None,
-        **kwargs,
     ):
         """Create the Cumulative Accuracy Profile.
 
@@ -312,6 +311,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             a curve representing the perfect estimator.
 
+        curve_kwargs : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the main line.
+
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
 
@@ -321,9 +324,6 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
-
-        **kwargs : dict
-            Additional keywords arguments passed to matplotlib `plot` function.
 
         Returns
         -------
@@ -392,8 +392,8 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
             perfect_level_kwargs=perfect_level_kwargs,
+            curve_kwargs=curve_kwargs,
             despine=despine,
-            **kwargs,
         )
 
     @classmethod
@@ -411,10 +411,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         chance_level_kwargs=None,
         plot_perfect=True,
         perfect_level_kwargs=None,
+        curve_kwargs=None,
         despine=False,
         name=None,
         ax=None,
-        **kwargs,
     ):
         """Create the Cumulative Accuracy Profile.
 
@@ -472,6 +472,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Keyword arguments to be passed to matplotlib's `plot` for rendering
             the perfect line.
 
+        curve_kwargs : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the main line.
+
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
 
@@ -480,9 +484,6 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
-
-        **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
 
         Returns
         -------
@@ -513,8 +514,32 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
             perfect_level_kwargs=perfect_level_kwargs,
+            curve_kwargs=curve_kwargs,
             despine=despine,
             ax=ax,
             pos_label=pos_label,
-            **kwargs,
         )
+
+
+if __name__ == "__main__":
+    from sklearn.datasets import make_classification
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.model_selection import train_test_split
+
+    X, y = make_classification(
+        n_samples=100,
+        n_features=2,
+        n_informative=2,
+        n_redundant=0,
+        n_repeated=0,
+        n_classes=2,
+        random_state=42,
+    )
+    X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+    clf = LogisticRegression(max_iter=1000)
+    clf.fit(X_train, y_train)
+
+    y_scores = np.random.rand(len(y)).astype(np.float32)
+
+    cap_display = CAPCurveDisplay.from_predictions(y, y_scores)
+    cap_display = CAPCurveDisplay.from_estimator(clf, X_train, y_train)

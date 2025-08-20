@@ -213,7 +213,7 @@ def test_unfitted_estimator(pyplot, data_binary):
         X, y = data_binary
 
         lr_model_nofit = LogisticRegression(max_iter=1000)
-        _ = CAPCurveDisplay.from_estimator(lr_model_nofit, X, y)
+        CAPCurveDisplay.from_estimator(lr_model_nofit, X, y)
 
 
 def test_estimator_has_too_many_classes(pyplot):
@@ -260,6 +260,13 @@ def test_estimator_has_too_many_classes(pyplot):
     ],
 )
 @pytest.mark.parametrize(
+    "curve_kwargs",
+    [
+        None,
+        {"lw": 1.5, "c": "blue", "ls": "--", "label": "MyEstimator"},
+    ],
+)
+@pytest.mark.parametrize(
     "constructor_name",
     ["from_estimator", "from_predictions"],
 )
@@ -273,6 +280,7 @@ def test_cap_curve_chance_level_line(
     chance_level_kwargs,
     plot_perfect,
     perfect_level_kwargs,
+    curve_kwargs,
     pos_label,
 ):
     X, y = data_binary
@@ -291,27 +299,26 @@ def test_cap_curve_chance_level_line(
             logistic_regression_model,
             X,
             y,
-            alpha=0.8,
             plot_chance_level=plot_chance_level,
             chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
             perfect_level_kwargs=perfect_level_kwargs,
+            curve_kwargs=curve_kwargs,
         )
     else:
         display = CAPCurveDisplay.from_predictions(
             y,
             y_pred,
-            alpha=0.8,
             plot_chance_level=plot_chance_level,
             chance_level_kwargs=chance_level_kwargs,
             plot_perfect=plot_perfect,
             perfect_level_kwargs=perfect_level_kwargs,
+            curve_kwargs=curve_kwargs,
         )
 
     import matplotlib as mpl
 
     assert isinstance(display.line_, mpl.lines.Line2D)
-    assert display.line_.get_alpha() == 0.8
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
 
@@ -383,6 +390,15 @@ def test_cap_curve_chance_level_line(
                 == perfect_level_kwargs["linestyle"]
             )
 
+    if curve_kwargs is not None:
+        display.line_.get_color() == "blue"
+        display.line_.get_linestyle() == "--"
+        display.line_.get_linewidth() == 1.5
+        display.line_.get_label() == "MyEstimator"
+    else:
+        display.line_.get_linestyle() == "-"
+        display.line_.get_linewidth() == 1
+
 
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "decision_function", "auto"]
@@ -449,7 +465,6 @@ def test_cap_curve_valid_position(
             y,
             pos_label=pos_label,
             sample_weight=sample_weight,
-            alpha=0.8,
         )
     else:
         display = CAPCurveDisplay.from_predictions(
@@ -457,7 +472,6 @@ def test_cap_curve_valid_position(
             y_pred,
             pos_label=pos_label,
             sample_weight=sample_weight,
-            alpha=0.8,
         )
 
     assert display.estimator_name == default_name, (
