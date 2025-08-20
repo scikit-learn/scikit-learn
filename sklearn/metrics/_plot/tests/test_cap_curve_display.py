@@ -6,11 +6,10 @@ import pytest
 from sklearn.datasets import make_classification, make_regression
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression, PoissonRegressor
+from sklearn.metrics import CAPCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.utils.multiclass import type_of_target
-
-from ..cap_curve import CAPCurveDisplay
 
 
 def assert_valid_cap_display(cap_display, plot_chance_level=None, plot_perfect=None):

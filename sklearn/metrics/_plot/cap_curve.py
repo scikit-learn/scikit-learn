@@ -4,13 +4,12 @@
 import numpy as np
 
 from sklearn.base import is_classifier
-from sklearn.utils.multiclass import type_of_target
-
-from ...utils._plotting import (
+from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _despine,
     _validate_style_kwargs,
 )
+from sklearn.utils.multiclass import type_of_target
 
 
 class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):

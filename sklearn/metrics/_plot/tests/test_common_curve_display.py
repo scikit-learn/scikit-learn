@@ -144,7 +144,10 @@ def test_display_curve_error_no_response(
     with pytest.raises(AttributeError, match=msg):
         Display.from_estimator(clf, X, y, response_method=response_method)
 
-@pytest.mark.parametrize("Display", [DetCurveDisplay, PrecisionRecallDisplay, CAPCurveDisplay])
+
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, CAPCurveDisplay]
+)
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_display_curve_estimator_name_multiple_calls(
     pyplot,
@@ -188,7 +191,9 @@ def test_display_curve_estimator_name_multiple_calls(
         ),
     ],
 )
-@pytest.mark.parametrize("Display", [DetCurveDisplay, PrecisionRecallDisplay, CAPCurveDisplay])
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, CAPCurveDisplay]
+)
 def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
     fitted."""
@@ -230,7 +235,8 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay]
+    "Display",
+    [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay, CAPCurveDisplay],
 )
 def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
     """Check the error raised when `y_pred` or `sample_weight` have inconsistent
