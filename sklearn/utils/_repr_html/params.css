@@ -83,6 +83,9 @@ a.param-doc-link span {
     max-width: 83ch;
     text-align: left;
     height: max-content;
+    max-height: 150px;
+    overflow-y: auto;
+
     /* unfitted */
     background: var(--sklearn-color-unfitted-level-0);
     border: .5pt solid var(--sklearn-color-unfitted-level-3);
