@@ -82,16 +82,16 @@ def _params_html_repr(params):
                  onclick="copyToClipboard('{param_name}',
                           this.parentElement.nextElementSibling)"
             ></i></td>
-            <td class="param">{param_name}&nbsp;{param_doc_link}</td>
+            <td class="param">{param_display}</td>
             <td class="value">{param_value}</td>
         </tr>
     """
 
     PARAM_AVAILABLE_DOC_LINK_TEMPLATE = """
-        <a class="sk-estimator-doc-link doc-link"
-            rel="noreferrer" target="_blank" href="{link}">?
-            <span>{param_description}<br><br>Click to access the
-            full documentation for {param_name}</span>
+        <a class="param-doc-link"
+            rel="noreferrer" target="_blank" href="{link}">
+            {param_name}
+            <span>{param_description}</span>
         </a>
     """
     estimator_class_docs = inspect.getdoc(params.estimator_class)
@@ -107,7 +107,7 @@ def _params_html_repr(params):
 
     rows = []
     for row in params:
-        param_description = param_doc_link = param_numpydoc = None
+        param_description = param_numpydoc = None
         link = ""
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
@@ -120,13 +120,25 @@ def _params_html_repr(params):
                 f"{' '.join(param_numpydoc.desc)}"
             )
 
-        if params.doc_link:
-            param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
+        # if params.doc_link:
+        #    param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
+        #        link=link,
+        #        param_name=param["param_name"],
+        #        param_description=param_description,
+        #    )
+        # rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))
+        if params.doc_link and link and param_description:
+            # Create clickable parameter name with documentation link
+            param_display = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
                 link=link,
                 param_name=param["param_name"],
                 param_description=param_description,
             )
-        rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))
+        else:
+            # Just show the parameter name without link
+            param_display = param["param_name"]
+
+        rows.append(PARAM_ROW_TEMPLATE.format(**param, param_display=param_display))
 
     return PARAMS_TABLE_TEMPLATE.format(rows="\n".join(rows))
 

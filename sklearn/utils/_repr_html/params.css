@@ -51,17 +51,55 @@
     color: black;
 }
 
-a:link.doc-link,
-a:visited.doc-link {
-    color: white;
-    background: black;
+
+/* Styles for parameter documentation links */
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
+    text-decoration: none;
+    border-bottom: 1px dashed #666;
+    border-bottom-style: dashed;
+    border-bottom-width: 1px;
+    position: relative;
+    color: inherit;
+    display: inline;
 }
-a.doc-link:hover span {
-  width: max-content;
-  max-width: 83ch;
-  text-align: left;
-  height: max-content;
+
+a.param-doc-link:hover {
+    border-bottom-color: #333;
+    color: inherit;
 }
+
+a.param-doc-link span {
+    visibility: hidden;
+    position: absolute;
+    z-index: 9999;
+    bottom: 100%;
+    left: 0;
+    padding: .5ex;
+    margin-top: .5ex;
+    color: var(--sklearn-color-text);
+    box-shadow: 2pt 2pt 4pt #999;
+    width: max-content;
+    max-width: 83ch;
+    text-align: left;
+    height: max-content;
+    /* unfitted */
+    background: var(--sklearn-color-unfitted-level-0);
+    border: .5pt solid var(--sklearn-color-unfitted-level-3);
+}
+
+/* Fitted state for parameter tooltips */
+.fitted a.param-doc-link span {
+    /* fitted */
+    background: var(--sklearn-color-fitted-level-0);
+    border: var(--sklearn-color-fitted-level-3);
+}
+
+a.param-doc-link:hover span {
+    visibility: visible;
+}
+
 
 .copy-paste-icon {
     background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NDggNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNy4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjUgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTIwOCAwTDMzMi4xIDBjMTIuNyAwIDI0LjkgNS4xIDMzLjkgMTQuMWw2Ny45IDY3LjljOSA5IDE0LjEgMjEuMiAxNC4xIDMzLjlMNDQ4IDMzNmMwIDI2LjUtMjEuNSA0OC00OCA0OGwtMTkyIDBjLTI2LjUgMC00OC0yMS41LTQ4LTQ4bDAtMjg4YzAtMjYuNSAyMS41LTQ4IDQ4LTQ4ek00OCAxMjhsODAgMCAwIDY0LTY0IDAgMCAyNTYgMTkyIDAgMC0zMiA2NCAwIDAgNDhjMCAyNi41LTIxLjUgNDgtNDggNDhMNDggNTEyYy0yNi41IDAtNDgtMjEuNS00OC00OEwwIDE3NmMwLTI2LjUgMjEuNS00OCA0OC00OHoiLz48L3N2Zz4=);
