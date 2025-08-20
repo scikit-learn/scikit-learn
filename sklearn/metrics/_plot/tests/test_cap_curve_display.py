@@ -474,9 +474,7 @@ def test_cap_curve_valid_position(
             sample_weight=sample_weight,
         )
 
-    assert display.estimator_name == default_name, (
-        f"{display.estimator_name} != {default_name}"
-    )
+    assert display.name == default_name, f"{display.name} != {default_name}"
 
     cumulative_total = display.cumulative_total
     y_true_cumulative = display.y_true_cumulative
@@ -597,7 +595,7 @@ def test_name_with_predictor_from_estimator(pyplot, name, expected_name):
 
     cap = CAPCurveDisplay.from_estimator(estimator, X_test, y_test, name=name)
 
-    assert expected_name == cap.estimator_name
+    assert expected_name == cap.name
 
 
 @pytest.mark.parametrize("y_true", [np.zeros(3), np.asarray([0.1, 0.3, 1.0])])
