@@ -395,8 +395,8 @@ def _write_estimator_html(
     elif est_block.kind == "single":
         if (
             callable(getattr(estimator, "get_feature_names_out", None))
+            and not hasattr(estimator, "steps")
             and hasattr(estimator, "n_features_in_")
-            and not (hasattr(estimator, "steps"))
         ):
             features = str(len(estimator.get_feature_names_out()))
         else:
