@@ -50,7 +50,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer
 from sklearn.semi_supervised import LabelSpreading, SelfTrainingClassifier
 
 # Loading dataset containing first five categories
@@ -90,8 +89,6 @@ ls_pipeline = Pipeline(
     [
         ("vect", CountVectorizer(**vectorizer_params)),
         ("tfidf", TfidfTransformer()),
-        # LabelSpreading does not support dense matrices
-        ("toarray", FunctionTransformer(lambda x: x.toarray())),
         ("clf", LabelSpreading()),
     ]
 )
