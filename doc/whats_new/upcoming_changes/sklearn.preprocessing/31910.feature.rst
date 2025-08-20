@@ -1,3 +1,3 @@
 - :class:`preprocessing.OrdinalEncoding` can now encode unknown classes as infrequent
-  ones with the parameter `handle_unknown='infrequent_if_exist'``.
+  ones with the parameter ``handle_unknown='infrequent_if_exist'``.
   By :user:`Leandro Braga <leandrobbraga>`.

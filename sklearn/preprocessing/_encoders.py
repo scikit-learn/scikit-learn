@@ -1290,7 +1290,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                      default='error'
         - 'error' : Raise an error if an unknown category is present during transform.
         - 'use_encoded_value' : The encoded value of unknown categories will be
-          set to the value given for the parameter `unknown_value`.
+          set to the value given for the parameter `unknown_value`. In
+          :meth:`inverse_transform`, an unknown category will be denoted as None.
         - 'infrequent_if_exist' : When an unknown category is encountered during
           transform, the resulting encoding for this feature will map to the infrequent
           category if it exists. The infrequent category will be mapped to the last
@@ -1303,6 +1304,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
           <encoder_infrequent_categories>`.
 
         .. versionadded:: 0.24
+
         .. versionchanged:: 1.8
             Added 'infrequent_if_exist' option.
 
