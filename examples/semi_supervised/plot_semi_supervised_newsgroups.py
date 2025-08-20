@@ -21,13 +21,13 @@ is scarce. For such purpose we compare four different approaches:
    - Shows the performance degradation of a fully supervised model due to
      limited labeled data
 
-3. SelfTrainingClassifier (semi-supervised)
+3. :class:`~sklearn.semi_supervised.SelfTrainingClassifier` (semi-supervised)
 
    - Uses 20% labeled data + 80% unlabeled data for training
    - Iteratively predicts labels for unlabeled data
    - Demonstrates how self-training can improve performance
 
-4. LabelSpreading (semi-supervised)
+4. :class:`~sklearn.semi_supervised.LabelSpreading` (semi-supervised)
 
    - Uses 20% labeled data + 80% unlabeled data for training
    - Propagates labels through the data manifold
@@ -131,7 +131,8 @@ f1_scores["Supervised (100%)"] = eval_and_get_f1(
 import numpy as np
 
 print("2. Supervised SGDClassifier on 20% of the training data:")
-y_mask = np.random.rand(len(y_train)) < 0.2
+rng = np.random.default_rng(42)
+y_mask = rng.random(len(y_train)) < 0.2
 # X_20 and y_20 are the subset of the train dataset indicated by the mask
 X_20, y_20 = map(list, zip(*((x, y) for x, y, m in zip(X_train, y_train, y_mask) if m)))
 f1_scores["Supervised (20%)"] = eval_and_get_f1(pipeline, X_20, y_20, X_test, y_test)
