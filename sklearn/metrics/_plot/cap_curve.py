@@ -36,7 +36,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         equally. Otherwise this is the cumulative sum of weights,
         normalized if `normalize_scale=True`.
 
-    estimator_name : str, default=None
+    name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
@@ -88,10 +88,10 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         *,
         y_true_cumulative,
         cumulative_total,
-        estimator_name=None,
+        name=None,
         pos_label=None,
     ):
-        self.estimator_name = estimator_name
+        self.name = name
         self.y_true_cumulative = y_true_cumulative
         self.cumulative_total = cumulative_total
         self.pos_label = pos_label
@@ -100,13 +100,13 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self,
         ax=None,
         *,
-        normalize_scale=True,
         name=None,
         plot_chance_level=True,
         chance_level_kwargs=None,
         plot_perfect=True,
         perfect_level_kwargs=None,
         curve_kwargs=None,
+        normalize_scale=True,
         despine=False,
     ):
         """Plot visualization.
@@ -122,7 +122,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to normalize values between 0 and 1 for the plot.
 
         name : str, default=None
-            Name of CAP Curve for labeling. If `None`, use `self.estimator_name`.
+            Name of CAP Curve for labeling. If `None`, use `self.name`.
 
         plot_chance_level : bool, default=True
             Whether to plot the expected curve of a classifier whose
@@ -223,6 +223,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 x_perfect, y_perfect, **perfect_level_line_kw
             )
 
+            # saved for testing purposes only
             self._perfect_x = np.array(x_perfect)
             self._perfect_y = np.array(y_perfect)
         else:
@@ -253,16 +254,16 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_pred,
         *,
         sample_weight=None,
-        pos_label=None,
         normalize_scale=True,
+        pos_label=None,
+        name=None,
+        ax=None,
         plot_chance_level=True,
         chance_level_kwargs=None,
         plot_perfect=True,
         perfect_level_kwargs=None,
         curve_kwargs=None,
         despine=False,
-        name=None,
-        ax=None,
     ):
         """Create the Cumulative Accuracy Profile.
 
@@ -380,7 +381,7 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             y_true_cumulative=y_true_cumulative,
             cumulative_total=cumulative_total,
-            estimator_name=name,
+            name=name,
             pos_label=pos_label_validated,
         )
 
@@ -407,14 +408,14 @@ class CAPCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         response_method="auto",
         pos_label=None,
         normalize_scale=True,
+        name=None,
+        ax=None,
         plot_chance_level=True,
         chance_level_kwargs=None,
         plot_perfect=True,
         perfect_level_kwargs=None,
         curve_kwargs=None,
         despine=False,
-        name=None,
-        ax=None,
     ):
         """Create the Cumulative Accuracy Profile.
 
