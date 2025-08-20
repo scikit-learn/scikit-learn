@@ -117,16 +117,9 @@ def _params_html_repr(params):
         if param_numpydoc and param_map:
             param_description = (
                 f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-                f"{' '.join(param_numpydoc.desc)}"
+                f"{'<br>'.join(param_numpydoc.desc)}"
             )
 
-        # if params.doc_link:
-        #    param_doc_link = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
-        #        link=link,
-        #        param_name=param["param_name"],
-        #        param_description=param_description,
-        #    )
-        # rows.append(PARAM_ROW_TEMPLATE.format(**param, param_doc_link=param_doc_link))
         if params.doc_link and link and param_description:
             # Create clickable parameter name with documentation link
             param_display = PARAM_AVAILABLE_DOC_LINK_TEMPLATE.format(
