@@ -3,7 +3,7 @@
 Comparing ROC, DET and CAP curves
 =================================
 
-In this example, we compare two binary classification multi-threshold metrics:
+In this example, we compare three binary classification multi-threshold metrics:
 the Receiver Operating Characteristic (ROC), Detection Error Tradeoff (DET)
 and the Cumulative Accuracy Profile (CAP). For such purpose, we evaluate
 two different classifiers for the same classification task.
@@ -163,7 +163,7 @@ plt.show()
 #
 # Notice that it is easier to visually assess that the Random Forest classifier
 # performs better than the Linear SVM classifier using DET curves. As ROC and
-# CAP curves are plot with a linear scale, different classifiers usually appear
+# CAP curves are plotted with a linear scale, different classifiers usually appear
 # similar for a large part of the plot and differ the most in the top left
 # corner of the graph. On the other hand, because DET curves represent straight
 # lines in normal deviate scale, they tend to be distinguishable as a whole and
@@ -214,6 +214,6 @@ plt.show()
 # classifier always predicts the positive class. Both ROC and DET curves
 # linearly interpolate between these two points, hence the diagonal line.
 #
-# For the CAP curve of the non-informative classifier, only approximately lie
+# The CAP curve of the non-informative classifier only approximately lies
 # on the diagonal. The match would be better in the limit of an infinite
 # evaluation set.
