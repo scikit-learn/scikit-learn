@@ -1,3 +1,7 @@
+cimport numpy as cnp
+cnp.import_array()  # very important, segfault without it!
+
+
 cdef extern from "src/numpy_allocator.h":
     void c_set_aligned_allocation()
     void c_set_numpy_default_allocation()
