@@ -313,11 +313,17 @@ a:visited.sk-estimator-doc-link {
   width: 1em;
   text-decoration: none !important;
   margin-left: 0.25em;
+  margin-bottom: 0.15em;
   text-align: center;
   white-space: nowrap;
   /* unfitted */
   border: var(--sklearn-color-unfitted-level-1) 1pt solid;
   color: var(--sklearn-color-unfitted-level-1);
+}
+
+/* Utility class for preventing text wrapping */
+#$id .sk-nowrap {
+  white-space: nowrap;
 }
 
 .sk-estimator-doc-link.fitted,

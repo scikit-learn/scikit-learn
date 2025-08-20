@@ -199,7 +199,7 @@ def _write_label_html(
                 else ""
             )
 
-        name_with_icons = f'<div style="white-space: nowrap;">{name}{icons_html}</div>'
+        name_with_icons = f'<div class="sk-nowrap">{name}{icons_html}</div>'
         name_caption_div = f"<div>{name_with_icons}{name_caption_div}</div>"
 
         label_html = (
