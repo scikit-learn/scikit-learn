@@ -940,9 +940,9 @@ def test_sparse_dense_descent_paths(csr_container):
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = csr_container(X)
     for path in [enet_path, lasso_path]:
-        _, coefs, _ = path(X, y)
-        _, sparse_coefs, _ = path(csr, y)
-        assert_array_almost_equal(coefs, sparse_coefs)
+        _, coefs, _ = path(X, y, tol=1e-10)
+        _, sparse_coefs, _ = path(csr, y, tol=1e-10)
+        assert_allclose(coefs, sparse_coefs)
 
 
 @pytest.mark.parametrize("path_func", [enet_path, lasso_path])

@@ -689,6 +689,68 @@ def sparse_enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+cdef (floating, floating) gram_gap_enet(
+    int n_features,
+    const floating[::1] w,
+    floating alpha,  # L1 penalty
+    floating beta,  # L2 penalty
+    const floating[::1] Qw,
+    const floating[::1] q,
+    const floating y_norm2,
+    floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    bint positive,
+) noexcept nogil:
+    """Compute dual gap for use in enet_coordinate_descent."""
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating w_norm2 = 0.0
+    cdef floating l1_norm
+    cdef floating A_norm2
+    cdef floating const_
+    cdef floating q_dot_w
+    cdef floating wQw
+    cdef unsigned int j
+
+    # q_dot_w = w @ q
+    q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
+
+    # XtA = X.T @ R - beta * w
+    for j in range(n_features):
+        XtA[j] = q[j] - Qw[j] - beta * w[j]
+
+    if positive:
+        dual_norm_XtA = max(n_features, &XtA[0])
+    else:
+        dual_norm_XtA = abs_max(n_features, &XtA[0])
+
+    # wQw = w @ Q @ w
+    wQw = _dot(n_features, &w[0], 1, &Qw[0], 1)
+    # R_norm2 = R @ R
+    R_norm2 = y_norm2 + wQw - 2.0 * q_dot_w
+
+    # w_norm2 = w @ w
+    if beta > 0:
+        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+
+    if (dual_norm_XtA > alpha):
+        const_ = alpha / dual_norm_XtA
+        A_norm2 = R_norm2 * (const_ ** 2)
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    l1_norm = _asum(n_features, &w[0], 1)
+
+    gap += (
+        alpha * l1_norm
+        - const_ * (y_norm2 - q_dot_w)  # -const_ * R @ y
+        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    )
+    return gap, dual_norm_XtA
+
+
 def enet_coordinate_descent_gram(
     floating[::1] w,
     floating alpha,
@@ -743,8 +805,6 @@ def enet_coordinate_descent_gram(
     cdef floating d_w_max
     cdef floating w_max
     cdef floating d_w_j
-    cdef floating q_dot_w
-    cdef floating w_norm2
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
@@ -763,6 +823,15 @@ def enet_coordinate_descent_gram(
 
     with nogil:
         tol *= y_norm2
+
+        # Check convergence before entering the main loop.
+        gap, dual_norm_XtA = gram_gap_enet(
+            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
+        )
+        if gap <= tol:
+            with gil:
+                return np.asarray(w), gap, tol, 0
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
@@ -803,38 +872,8 @@ def enet_coordinate_descent_gram(
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-
-                # q_dot_w = w @ q
-                q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
-
-                for j in range(n_features):
-                    XtA[j] = q[j] - Qw[j] - beta * w[j]
-                if positive:
-                    dual_norm_XtA = max(n_features, &XtA[0])
-                else:
-                    dual_norm_XtA = abs_max(n_features, &XtA[0])
-
-                # temp = w @ Q @ w
-                tmp = _dot(n_features, &w[0], 1, &Qw[0], 1)
-                R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
-
-                # w_norm2 = w @ w
-                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-
-                if (dual_norm_XtA > alpha):
-                    const_ = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const_ ** 2)
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const_ = 1.0
-                    gap = R_norm2
-
-                # The call to asum is equivalent to the L1 norm of w
-                gap += (
-                    alpha * _asum(n_features, &w[0], 1)
-                    - const_ * y_norm2
-                    + const_ * q_dot_w
-                    + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+                gap, dual_norm_XtA = gram_gap_enet(
+                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
                 )
 
                 if gap <= tol:
