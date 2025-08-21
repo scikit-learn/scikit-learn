@@ -3,16 +3,17 @@ from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 from libcpp.vector cimport vector
 
+from numbers import Integral
+
+import numpy as np
+from scipy.sparse import issparse
+
 from ...utils._cython_blas cimport _dot
 from ...utils._openmp_helpers cimport omp_get_thread_num
 from ...utils._typedefs cimport intp_t, float32_t, float64_t, int32_t
 
-import numpy as np
-
-from scipy.sparse import issparse
-from numbers import Integral
-from sklearn import get_config
-from sklearn.utils import check_scalar
+from ... import get_config
+from ...utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 
 #####################

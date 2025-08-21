@@ -1,0 +1,9 @@
+- :func:`metrics.pairwise.pairwise_kernels` now supports Array API
+  compatible inputs, when the underling `metric` does (the only metric NOT currently
+  supported is :func:`sklearn.metrics.pairwise.laplacian_kernel`).
+  By :user:`Emily Chen <EmilyXinyi>` and :user:`Lucy Liu <lucyleeow>`.
+
+- :func:`metrics.pairwise.pairwise_distances` now supports Array API
+  compatible inputs, when the underlying `metric` does (currently
+  "cosine", "euclidean" and "l2").
+  By :user:`Emily Chen <EmilyXinyi>` and :user:`Lucy Liu <lucyleeow>`.

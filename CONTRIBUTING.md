@@ -7,17 +7,14 @@ The latest contributing guide is available in the repository at
 
 https://scikit-learn.org/dev/developers/contributing.html
 
-There are many ways to contribute to scikit-learn, with the most common ones
-being contribution of code or documentation to the project. Improving the
-documentation is no less important than improving the library itself. If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
-Documentation can be found under the
-[doc/](https://github.com/scikit-learn/scikit-learn/tree/main/doc) directory.
+There are many ways to contribute to scikit-learn. Improving the
+documentation is no less important than improving the code of the library
+itself. If you find a typo in the documentation, or have made improvements, do
+not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
 
-But there are many other ways to help. In particular answering queries on the
-[issue tracker](https://github.com/scikit-learn/scikit-learn/issues),
-investigating bugs, and [reviewing other developers' pull
+There are many other ways to help. In particular [improving, triaging, and
+investigating issues](https://github.com/scikit-learn/scikit-learn/issues),
+and [reviewing other developers' pull
 requests](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines)
 are very valuable contributions that decrease the burden on the project
 maintainers.

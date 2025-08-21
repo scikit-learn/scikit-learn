@@ -1,0 +1,22 @@
+
+- Additional `sample_weight` checking has been added to
+  :func:`metrics.accuracy_score`,
+  :func:`metrics.balanced_accuracy_score`,
+  :func:`metrics.brier_score_loss`,
+  :func:`metrics.class_likelihood_ratios`,
+  :func:`metrics.classification_report`,
+  :func:`metrics.cohen_kappa_score`,
+  :func:`metrics.confusion_matrix`,
+  :func:`metrics.f1_score`,
+  :func:`metrics.fbeta_score`,
+  :func:`metrics.hamming_loss`,
+  :func:`metrics.jaccard_score`,
+  :func:`metrics.matthews_corrcoef`,
+  :func:`metrics.multilabel_confusion_matrix`,
+  :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.precision_score`,
+  :func:`metrics.recall_score` and
+  :func:`metrics.zero_one_loss`.
+  `sample_weight` can only be 1D, consistent to `y_true` and `y_pred` in length,and
+  all values must be finite and not complex.
+  By :user:`Lucy Liu <lucyleeow>`.

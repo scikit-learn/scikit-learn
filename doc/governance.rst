@@ -146,20 +146,22 @@ decision making process**".
 Decisions (in addition to adding core contributors and TC membership as above)
 are made according to the following rules:
 
-* **Minor Documentation changes**, such as typo fixes, or addition / correction
+* **Minor code and documentation changes**, such as small maintenance changes without
+  modification of code logic, typo fixes, or addition / correction
   of a sentence, but no change of the ``scikit-learn.org`` landing page or the
-  “about” page: Requires +1 by a maintainer, no -1 by a maintainer (lazy
-  consensus), happens on the issue or pull request page. Maintainers are
-  expected to give “reasonable time” to others to give their opinion on the
+  “about” page: Requires +1 by a core contributor, no -1 by a core contributor
+  (lazy consensus), happens on the issue or pull request page. Core contributors
+  are expected to give “reasonable time” to others to give their opinion on the
   pull request if they're not confident others would agree.
 
 * **Code changes and major documentation changes**
-  require +1 by two maintainers, no -1 by a maintainer (lazy
+  require +1 by two core contributors, no -1 by a core contributor (lazy
   consensus), happens on the issue of pull-request page.
 
 * **Changes to the API principles and changes to dependencies or supported
-  versions** happen via :ref:`slep` and follows the decision-making process
-  outlined above.
+  versions** follow the decision-making process outlined above. In particular
+  changes to API principles are backed via a :ref:`slep`. Smaller decisions
+  like supported versions can happen on a GitHub issue or pull request.
 
 * **Changes to the governance model** follow the process outlined in `SLEP020
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep020/proposal.html>`__.

@@ -12,7 +12,7 @@ from functools import update_wrapper
 import joblib
 from threadpoolctl import ThreadpoolController
 
-from .._config import config_context, get_config
+from sklearn._config import config_context, get_config
 
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.

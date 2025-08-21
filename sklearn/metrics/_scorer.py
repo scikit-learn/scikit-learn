@@ -26,22 +26,8 @@ from traceback import format_exc
 
 import numpy as np
 
-from ..base import is_regressor
-from ..utils import Bunch
-from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
-from ..utils._response import _get_response_values
-from ..utils.metadata_routing import (
-    MetadataRequest,
-    MetadataRouter,
-    MethodMapping,
-    _MetadataRequester,
-    _raise_for_params,
-    _routing_enabled,
-    get_routing_for_object,
-    process_routing,
-)
-from ..utils.validation import _check_response_method
-from . import (
+from sklearn.base import is_regressor
+from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
@@ -69,7 +55,7 @@ from . import (
     root_mean_squared_log_error,
     top_k_accuracy_score,
 )
-from .cluster import (
+from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
@@ -80,6 +66,25 @@ from .cluster import (
     rand_score,
     v_measure_score,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils._response import _get_response_values
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    _MetadataRequester,
+    _raise_for_params,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import _check_response_method
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
@@ -95,6 +100,14 @@ def _cached_call(cache, estimator, response_method, *args, **kwargs):
         cache[response_method] = result
 
     return result
+
+
+def _get_func_repr_or_name(func):
+    """Returns the name of the function or repr of a partial."""
+    if isinstance(func, partial):
+        return repr(func)
+
+    return func.__name__
 
 
 class _MultimetricScorer:
@@ -257,7 +270,7 @@ class _BaseScorer(_MetadataRequester):
         kwargs_string = "".join([f", {k}={v}" for k, v in self._kwargs.items()])
 
         return (
-            f"make_scorer({self._score_func.__name__}{sign_string}"
+            f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
 

@@ -1,0 +1,2 @@
+- :class:`preprocessing.PolynomialFeatures` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`

@@ -1,0 +1,5 @@
+- `y_pred` is deprecated in favour of `y_score` in
+  :func:`metrics.DetCurveDisplay.from_predictions` and
+  :func:`metrics.PrecisionRecallDisplay.from_predictions`. `y_pred` will be removed in
+  v1.10.
+  By :user:`Luis <luiser1401>`

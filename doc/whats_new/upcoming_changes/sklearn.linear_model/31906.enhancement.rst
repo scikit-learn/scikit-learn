@@ -1,0 +1,9 @@
+- :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`MultiTaskElasticNet`, :class:`MultiTaskElasticNetCV`,
+  :class:`MultiTaskLasso`, :class:`MultiTaskLassoCV`, as well as
+  :func:`linear_model.enet_path` and :func:`linear_model.lasso_path`
+  now use `dual gap <= tol` instead of `dual gap < tol` as stopping criterion.
+  The resulting coefficients might differ to previous versions of scikit-learn in
+  rare cases.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

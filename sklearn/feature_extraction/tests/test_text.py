@@ -1626,3 +1626,18 @@ def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
     X = [str(uuid.uuid4()) for i in range(100_000)]
     vectorizer = TfidfVectorizer(dtype=dtype).fit(X)
     assert vectorizer.idf_.dtype == dtype
+
+
+def test_hashing_vectorizer_requires_fit_tag():
+    """Test that HashingVectorizer has requires_fit=False tag."""
+    vectorizer = HashingVectorizer()
+    tags = vectorizer.__sklearn_tags__()
+    assert not tags.requires_fit
+
+
+def test_hashing_vectorizer_transform_without_fit():
+    """Test that HashingVectorizer can transform without fitting."""
+    vectorizer = HashingVectorizer(n_features=10)
+    corpus = ["This is test", "Another test"]
+    result = vectorizer.transform(corpus)
+    assert result.shape == (2, 10)

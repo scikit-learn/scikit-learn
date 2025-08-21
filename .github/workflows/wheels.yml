@@ -170,6 +170,8 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v3
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
+        with:
+          miniforge-version: latest
 
       - name: Build and test wheels
         env:

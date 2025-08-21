@@ -14,17 +14,22 @@ web page of Sam Roweis:
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
 import numpy as np
 from scipy.io import loadmat
 
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import Interval, validate_params
-from . import get_data_home
-from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -140,8 +145,6 @@ def fetch_olivetti_faces(
     (400, 64, 64)
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:

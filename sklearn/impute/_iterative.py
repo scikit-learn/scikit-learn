@@ -9,28 +9,28 @@ from time import time
 import numpy as np
 from scipy import stats
 
-from ..base import _fit_context, clone
-from ..exceptions import ConvergenceWarning
-from ..preprocessing import normalize
-from ..utils import _safe_indexing, check_array, check_random_state
-from ..utils._indexing import _safe_assign
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.base import _fit_context, clone
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
+from sklearn.preprocessing import normalize
+from sklearn.utils import _safe_indexing, check_array, check_random_state
+from sklearn.utils._indexing import _safe_assign
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     process_routing,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]
@@ -788,7 +788,7 @@ class IterativeImputer(_BaseImputer):
         )
 
         if self.estimator is None:
-            from ..linear_model import BayesianRidge
+            from sklearn.linear_model import BayesianRidge
 
             self._estimator = BayesianRidge()
         else:

@@ -99,12 +99,12 @@ def test_get_visual_block_pipeline():
     est_html_info = _get_visual_block(pipe)
     assert est_html_info.kind == "serial"
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
-    assert est_html_info.names == [
+    assert est_html_info.names == (
         "imputer: SimpleImputer",
         "do_nothing: passthrough",
         "do_nothing_more: passthrough",
         "classifier: LogisticRegression",
-    ]
+    )
     assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 

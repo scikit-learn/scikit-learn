@@ -9,15 +9,15 @@ from numbers import Integral
 import numpy as np
 from scipy.sparse import issparse
 
-from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing, check_random_state, check_X_y
-from ...utils._array_api import _atol_for_type
-from ...utils._param_validation import (
-    Interval,
-    StrOptions,
-    validate_params,
+from sklearn.metrics.pairwise import (
+    _VALID_METRICS,
+    pairwise_distances,
+    pairwise_distances_chunked,
 )
-from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import _safe_indexing, check_random_state, check_X_y
+from sklearn.utils._array_api import _atol_for_type
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 
 def check_number_of_labels(n_labels, n_samples):

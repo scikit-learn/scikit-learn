@@ -11,12 +11,12 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..metrics.pairwise import _VALID_METRICS
-from ..neighbors import NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import _check_sample_weight, validate_data
-from ._dbscan_inner import dbscan_inner
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._dbscan_inner import dbscan_inner
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
 @validate_params(
@@ -41,25 +41,38 @@ def dbscan(
 ):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
+    This function is a wrapper around :class:`~cluster.DBSCAN`, suitable for
+    quick, standalone clustering tasks. For estimator-based workflows, where
+    estimator attributes or pipeline integration is required, prefer
+    :class:`~cluster.DBSCAN`.
+
+    DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a
+    density-based clustering algorithm that groups together points that are
+    closely packed while marking points in low-density regions as outliers.
+
     Read more in the :ref:`User Guide <dbscan>`.
 
     Parameters
     ----------
-    X : {array-like, sparse (CSR) matrix} of shape (n_samples, n_features) or \
+    X : {array-like, scipy sparse matrix} of shape (n_samples, n_features) or \
             (n_samples, n_samples)
         A feature array, or array of distances between samples if
-        ``metric='precomputed'``.
+        ``metric='precomputed'``. When using precomputed distances, X must
+        be a square symmetric matrix.
 
     eps : float, default=0.5
         The maximum distance between two samples for one to be considered
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
         important DBSCAN parameter to choose appropriately for your data set
-        and distance function.
+        and distance function. Smaller values result in more clusters,
+        while larger values result in fewer, larger clusters.
 
     min_samples : int, default=5
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
+        Higher values yield fewer, denser clusters, while lower values yield
+        more, sparser clusters.
 
     metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
@@ -79,17 +92,23 @@ def dbscan(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
-        See NearestNeighbors module documentation for details.
+        'auto' will attempt to decide the most appropriate algorithm
+        based on the values passed to :meth:`fit` method.
+        See :class:`~sklearn.neighbors.NearestNeighbors` documentation for
+        details.
 
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
-        on the nature of the problem.
+        on the nature of the problem. Generally, smaller leaf sizes
+        lead to faster queries but slower construction.
 
     p : float, default=2
-        The power of the Minkowski metric to be used to calculate distance
-        between points.
+        Power parameter for the Minkowski metric. When p = 1, this is equivalent
+        to using manhattan_distance (l1), and euclidean_distance (l2) for p = 2.
+        For arbitrary p, minkowski_distance (l_p) is used. This parameter is expected
+        to be positive.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weight of each sample, such that a sample with a weight of at least
@@ -101,7 +120,7 @@ def dbscan(
         The number of parallel jobs to run for neighbors search. ``None`` means
         1 unless in a :obj:`joblib.parallel_backend` context. ``-1`` means
         using all processors. See :term:`Glossary <n_jobs>` for more details.
-        If precomputed distance are used, parallel execution is not available
+        If precomputed distances are used, parallel execution is not available
         and thus n_jobs will have no effect.
 
     Returns
@@ -110,7 +129,8 @@ def dbscan(
         Indices of core samples.
 
     labels : ndarray of shape (n_samples,)
-        Cluster labels for each point.  Noisy samples are given the label -1.
+        Cluster labels for each point. Noisy samples are given the label -1.
+        Non-negative integers indicate cluster membership.
 
     See Also
     --------
@@ -183,7 +203,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
     Finds core samples of high density and expands clusters from them.
-    Good for data which contains clusters of similar density.
+    This algorithm is particularly good for data which contains clusters of
+    similar density and can find clusters of arbitrary shape.
+
+    Unlike K-means, DBSCAN does not require specifying the number of clusters
+    in advance and can identify outliers as noise points.
 
     This implementation has a worst case memory complexity of :math:`O({n}^2)`,
     which can occur when the `eps` param is large and `min_samples` is low,
@@ -199,7 +223,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
         important DBSCAN parameter to choose appropriately for your data set
-        and distance function.
+        and distance function. Smaller values generally lead to more clusters.
 
     min_samples : int, default=5
         The number of samples (or total weight) in a neighborhood for a point to
@@ -228,7 +252,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
-        See NearestNeighbors module documentation for details.
+        'auto' will attempt to decide the most appropriate algorithm
+        based on the values passed to :meth:`fit` method.
+        See :class:`~sklearn.neighbors.NearestNeighbors` documentation for
+        details.
 
     leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
@@ -239,7 +266,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     p : float, default=None
         The power of the Minkowski metric to be used to calculate distance
         between points. If None, then ``p=2`` (equivalent to the Euclidean
-        distance).
+        distance). When p=1, this is equivalent to Manhattan distance.
 
     n_jobs : int, default=None
         The number of parallel jobs to run.
@@ -255,9 +282,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     components_ : ndarray of shape (n_core_samples, n_features)
         Copy of each core sample found by training.
 
-    labels_ : ndarray of shape (n_samples)
+    labels_ : ndarray of shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
-        Noisy samples are given the label -1.
+        Noisy samples are given the label -1. Non-negative integers
+        indicate cluster membership.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -448,6 +476,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     def fit_predict(self, X, y=None, sample_weight=None):
         """Compute clusters from a data or distance matrix and predict labels.
 
+        This method fits the model and returns the cluster labels in a single step.
+        It is equivalent to calling fit(X).labels_.
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
@@ -469,6 +500,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         -------
         labels : ndarray of shape (n_samples,)
             Cluster labels. Noisy samples are given the label -1.
+            Non-negative integers indicate cluster membership.
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_

@@ -34,20 +34,20 @@ pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
-             libatlas3-base libatlas-base-dev python3-virtualenv ccache
+             libatlas3-base libatlas-base-dev python3-venv ccache
 
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libopenblas-dev \
-                python3-virtualenv python3-pandas ccache git
+                python3-venv python3-pandas ccache git
     fi
 }
 
 check_packages_dev_version() {
     for package in $@; do
         package_version=$(python -c "import $package; print($package.__version__)")
-        if [[ $package_version =~ "^[.0-9]+$" ]]; then
+        if [[ $package_version =~ ^[.0-9]+$ ]]; then
             echo "$package is not a development version: $package_version"
             exit 1
         fi
@@ -60,7 +60,7 @@ python_environment_install_and_activate() {
         activate_environment
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
-        python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
+        python3 -m venv --system-site-packages $VIRTUALENV
         activate_environment
         pip install -r "${LOCK_FILE}"
 

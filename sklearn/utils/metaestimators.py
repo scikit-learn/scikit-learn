@@ -9,10 +9,10 @@ from typing import Any, List
 
 import numpy as np
 
-from ..base import BaseEstimator
-from ..utils import _safe_indexing
-from ..utils._tags import get_tags
-from ._available_if import available_if
+from sklearn.base import BaseEstimator
+from sklearn.utils import _safe_indexing
+from sklearn.utils._available_if import available_if
+from sklearn.utils._tags import get_tags
 
 __all__ = ["available_if"]
 

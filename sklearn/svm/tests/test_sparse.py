@@ -125,6 +125,7 @@ def test_unsorted_indices(csr_container):
     X, y = load_digits(return_X_y=True)
     X_test = csr_container(X[50:100])
     X, y = X[:50], y[:50]
+    tols = dict(rtol=1e-12, atol=1e-14)
 
     X_sparse = csr_container(X)
     coef_dense = (
@@ -135,7 +136,7 @@ def test_unsorted_indices(csr_container):
     )
     coef_sorted = sparse_svc.coef_
     # make sure dense and sparse SVM give the same result
-    assert_allclose(coef_dense, coef_sorted.toarray())
+    assert_allclose(coef_dense, coef_sorted.toarray(), **tols)
 
     # reverse each row's indices
     def scramble_indices(X):
@@ -158,9 +159,11 @@ def test_unsorted_indices(csr_container):
     )
     coef_unsorted = unsorted_svc.coef_
     # make sure unsorted indices give same result
-    assert_allclose(coef_unsorted.toarray(), coef_sorted.toarray())
+    assert_allclose(coef_unsorted.toarray(), coef_sorted.toarray(), **tols)
     assert_allclose(
-        sparse_svc.predict_proba(X_test_unsorted), sparse_svc.predict_proba(X_test)
+        sparse_svc.predict_proba(X_test_unsorted),
+        sparse_svc.predict_proba(X_test),
+        **tols,
     )
 
 

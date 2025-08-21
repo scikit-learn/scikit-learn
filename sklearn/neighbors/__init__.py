@@ -3,22 +3,29 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._ball_tree import BallTree
-from ._base import VALID_METRICS, VALID_METRICS_SPARSE, sort_graph_by_row_values
-from ._classification import KNeighborsClassifier, RadiusNeighborsClassifier
-from ._graph import (
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._base import (
+    VALID_METRICS,
+    VALID_METRICS_SPARSE,
+    sort_graph_by_row_values,
+)
+from sklearn.neighbors._classification import (
+    KNeighborsClassifier,
+    RadiusNeighborsClassifier,
+)
+from sklearn.neighbors._graph import (
     KNeighborsTransformer,
     RadiusNeighborsTransformer,
     kneighbors_graph,
     radius_neighbors_graph,
 )
-from ._kd_tree import KDTree
-from ._kde import KernelDensity
-from ._lof import LocalOutlierFactor
-from ._nca import NeighborhoodComponentsAnalysis
-from ._nearest_centroid import NearestCentroid
-from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
-from ._unsupervised import NearestNeighbors
+from sklearn.neighbors._kd_tree import KDTree
+from sklearn.neighbors._kde import KernelDensity
+from sklearn.neighbors._lof import LocalOutlierFactor
+from sklearn.neighbors._nca import NeighborhoodComponentsAnalysis
+from sklearn.neighbors._nearest_centroid import NearestCentroid
+from sklearn.neighbors._regression import KNeighborsRegressor, RadiusNeighborsRegressor
+from sklearn.neighbors._unsupervised import NearestNeighbors
 
 __all__ = [
     "VALID_METRICS",

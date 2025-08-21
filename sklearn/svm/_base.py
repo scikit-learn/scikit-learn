@@ -8,15 +8,29 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, ClassifierMixin, _fit_context
-from ..exceptions import ConvergenceWarning, NotFittedError
-from ..preprocessing import LabelEncoder
-from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import _ovr_decision_function, check_classification_targets
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import _liblinear as liblinear  # type: ignore[attr-defined]
+
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from sklearn.svm import _libsvm as libsvm  # type: ignore[attr-defined]
+from sklearn.svm import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
+from sklearn.utils import (
+    check_array,
+    check_random_state,
+    column_or_1d,
+    compute_class_weight,
+)
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import (
+    _ovr_decision_function,
+    check_classification_targets,
+)
+from sklearn.utils.validation import (
     _check_large_sparse,
     _check_sample_weight,
     _num_samples,
@@ -24,12 +38,6 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _liblinear as liblinear  # type: ignore[attr-defined]
-
-# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
-# (and same for other imports)
-from . import _libsvm as libsvm  # type: ignore[attr-defined]
-from . import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 

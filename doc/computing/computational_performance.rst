@@ -154,10 +154,9 @@ prediction latency too much. We will now review this idea for different
 families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
-SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
-decision function that is applied at prediction time is the same (a dot product)
-, so latency should be equivalent.
+SGDClassifier/Regressor, Ridge & RidgeClassifier, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product), so
+latency should be equivalent.
 
 Here is an example using
 :class:`~linear_model.SGDClassifier` with the

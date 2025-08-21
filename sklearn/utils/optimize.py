@@ -21,7 +21,7 @@ import numpy as np
 import scipy
 from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 
-from ..exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 
 
 class _LineSearchError(RuntimeError):

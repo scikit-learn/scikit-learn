@@ -25,30 +25,30 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
     is_regressor,
 )
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import _safe_indexing, check_random_state
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils.extmath import softmax, stable_cumsum
-from ..utils.metadata_routing import (
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils.extmath import softmax, stable_cumsum
+from sklearn.utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
 )
-from ._base import BaseEnsemble
 
 __all__ = [
     "AdaBoostClassifier",

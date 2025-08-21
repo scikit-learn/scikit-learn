@@ -11,17 +11,21 @@ import scipy.sparse as sp
 from scipy.fft import fft, ifft
 from scipy.linalg import svd
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from .metrics.pairwise import KERNEL_PARAMS, PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
-from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions
-from .utils.extmath import safe_sparse_dot
-from .utils.validation import (
+from sklearn.metrics.pairwise import (
+    KERNEL_PARAMS,
+    PAIRWISE_KERNEL_FUNCTIONS,
+    pairwise_kernels,
+)
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
     validate_data,

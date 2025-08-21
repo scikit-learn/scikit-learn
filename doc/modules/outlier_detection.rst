@@ -411,7 +411,8 @@ Note that ``fit_predict`` is not available in this case to avoid inconsistencies
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
-Novelty detection with Local Outlier Factor is illustrated below.
+Novelty detection with :class:`neighbors.LocalOutlierFactor` is illustrated below
+(see :ref:`sphx_glr_auto_examples_neighbors_plot_lof_novelty_detection.py`).
 
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html

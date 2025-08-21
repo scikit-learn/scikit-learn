@@ -1,0 +1,3 @@
+- Fix tie-breaking behavior in :class:`multiclass.OneVsRestClassifier` to match
+  `np.argmax` tie-breaking behavior.
+  By :user:`Lakshmi Krishnan <lakrish>`.

@@ -1,0 +1,4 @@
+- ﻿Set the tag `requires_fit=False` for the classes
+  :class:`feature_extraction.FeatureHasher` and
+  :class:`feature_extraction.HashingVectorizer`.
+  By :user:`hakan çanakcı <hqkqn32>`.

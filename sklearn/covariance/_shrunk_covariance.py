@@ -15,11 +15,11 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import _fit_context
-from ..utils import check_array
-from ..utils._param_validation import Interval, validate_params
-from ..utils.validation import validate_data
-from . import EmpiricalCovariance, empirical_covariance
+from sklearn.base import _fit_context
+from sklearn.covariance import EmpiricalCovariance, empirical_covariance
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.validation import validate_data
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):

@@ -20,7 +20,6 @@ from sklearn.linear_model import (
     LassoCV,
     LinearRegression,
     LogisticRegression,
-    PassiveAggressiveClassifier,
     SGDClassifier,
 )
 from sklearn.pipeline import make_pipeline
@@ -393,8 +392,8 @@ def test_2d_coef():
 
 
 def test_partial_fit():
-    est = PassiveAggressiveClassifier(
-        random_state=0, shuffle=False, max_iter=5, tol=None
+    est = SGDClassifier(
+        random_state=0, shuffle=False, max_iter=5, tol=None, learning_rate="pa1"
     )
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(data, y, classes=np.unique(y))

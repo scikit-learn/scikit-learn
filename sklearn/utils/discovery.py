@@ -71,14 +71,14 @@ def all_estimators(type_filter=None):
       <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ..base import (
+    from sklearn.base import (
         BaseEstimator,
         ClassifierMixin,
         ClusterMixin,
         RegressorMixin,
         TransformerMixin,
     )
-    from ._testing import ignore_warnings
+    from sklearn.utils._testing import ignore_warnings
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -167,7 +167,7 @@ def all_displays():
     ('CalibrationDisplay', <class 'sklearn.calibration.CalibrationDisplay'>)
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ._testing import ignore_warnings
+    from sklearn.utils._testing import ignore_warnings
 
     all_classes = []
     root = str(Path(__file__).parent.parent)  # sklearn package
@@ -225,7 +225,7 @@ def all_functions():
     'accuracy_score'
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ._testing import ignore_warnings
+    from sklearn.utils._testing import ignore_warnings
 
     all_functions = []
     root = str(Path(__file__).parent.parent)  # sklearn package

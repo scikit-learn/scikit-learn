@@ -25,11 +25,18 @@ def test_pandas_adapter():
     pd = pytest.importorskip("pandas")
     X_np = np.asarray([[1, 0, 3], [0, 0, 1]])
     columns = np.asarray(["f0", "f1", "f2"], dtype=object)
-    index = np.asarray([0, 1])
+    index = np.asarray([1, 2])
     X_df_orig = pd.DataFrame([[1, 2], [1, 3]], index=index)
+    X_ser_orig = pd.Series([2, 3], index=index)
 
     adapter = ADAPTERS_MANAGER.adapters["pandas"]
     X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
+    assert isinstance(X_container, pd.DataFrame)
+    assert_array_equal(X_container.columns, columns)
+    assert_array_equal(X_container.index, index)
+
+    # use original index when the original is a series
+    X_container = adapter.create_container(X_np, X_ser_orig, columns=lambda: columns)
     assert isinstance(X_container, pd.DataFrame)
     assert_array_equal(X_container.columns, columns)
     assert_array_equal(X_container.index, index)

@@ -1357,11 +1357,11 @@ def test_array_api_train_test_split(
         assert get_namespace(y_train_xp)[0] == get_namespace(y_xp)[0]
         assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
-    # Check device and dtype is preserved on output
-    assert array_api_device(X_train_xp) == array_api_device(X_xp)
-    assert array_api_device(y_train_xp) == array_api_device(y_xp)
-    assert array_api_device(X_test_xp) == array_api_device(X_xp)
-    assert array_api_device(y_test_xp) == array_api_device(y_xp)
+        # Check device and dtype is preserved on output
+        assert array_api_device(X_train_xp) == array_api_device(X_xp)
+        assert array_api_device(y_train_xp) == array_api_device(y_xp)
+        assert array_api_device(X_test_xp) == array_api_device(X_xp)
+        assert array_api_device(y_test_xp) == array_api_device(y_xp)
 
     assert X_train_xp.dtype == X_xp.dtype
     assert y_train_xp.dtype == y_xp.dtype

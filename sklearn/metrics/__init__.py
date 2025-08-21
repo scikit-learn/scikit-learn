@@ -3,8 +3,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from . import cluster
-from ._classification import (
+from sklearn.metrics import cluster
+from sklearn.metrics._classification import (
     accuracy_score,
     balanced_accuracy_score,
     brier_score_loss,
@@ -12,6 +12,7 @@ from ._classification import (
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    d2_brier_score,
     d2_log_loss_score,
     f1_score,
     fbeta_score,
@@ -26,13 +27,13 @@ from ._classification import (
     recall_score,
     zero_one_loss,
 )
-from ._dist_metrics import DistanceMetric
-from ._plot.confusion_matrix import ConfusionMatrixDisplay
-from ._plot.det_curve import DetCurveDisplay
-from ._plot.precision_recall_curve import PrecisionRecallDisplay
-from ._plot.regression import PredictionErrorDisplay
-from ._plot.roc_curve import RocCurveDisplay
-from ._ranking import (
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics._plot.confusion_matrix import ConfusionMatrixDisplay
+from sklearn.metrics._plot.det_curve import DetCurveDisplay
+from sklearn.metrics._plot.precision_recall_curve import PrecisionRecallDisplay
+from sklearn.metrics._plot.regression import PredictionErrorDisplay
+from sklearn.metrics._plot.roc_curve import RocCurveDisplay
+from sklearn.metrics._ranking import (
     auc,
     average_precision_score,
     coverage_error,
@@ -46,7 +47,7 @@ from ._ranking import (
     roc_curve,
     top_k_accuracy_score,
 )
-from ._regression import (
+from sklearn.metrics._regression import (
     d2_absolute_error_score,
     d2_pinball_score,
     d2_tweedie_score,
@@ -65,8 +66,13 @@ from ._regression import (
     root_mean_squared_error,
     root_mean_squared_log_error,
 )
-from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
-from .cluster import (
+from sklearn.metrics._scorer import (
+    check_scoring,
+    get_scorer,
+    get_scorer_names,
+    make_scorer,
+)
+from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     calinski_harabasz_score,
@@ -84,7 +90,7 @@ from .cluster import (
     silhouette_score,
     v_measure_score,
 )
-from .pairwise import (
+from sklearn.metrics.pairwise import (
     euclidean_distances,
     nan_euclidean_distances,
     pairwise_distances,
@@ -119,6 +125,7 @@ __all__ = [
     "consensus_score",
     "coverage_error",
     "d2_absolute_error_score",
+    "d2_brier_score",
     "d2_log_loss_score",
     "d2_pinball_score",
     "d2_tweedie_score",

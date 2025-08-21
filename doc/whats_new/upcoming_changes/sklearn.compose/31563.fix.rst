@@ -1,0 +1,3 @@
+- :class:`compose.TransformedTargetRegressor` now passes the transformed target to the
+  regressor with the same number of dimensions as the original target.
+  By :user:`kryggird <kryggird>`.

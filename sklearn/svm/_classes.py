@@ -5,12 +5,21 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
-from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
-from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
+from sklearn.base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    SparseCoefMixin,
+)
+from sklearn.svm._base import (
+    BaseLibSVM,
+    BaseSVC,
+    _fit_liblinear,
+    _get_liblinear_solver_type,
+)
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import _num_samples, validate_data
 
 
 def _validate_dual_parameter(dual, loss, penalty, multi_class, X):

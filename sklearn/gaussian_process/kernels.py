@@ -31,10 +31,10 @@ import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
 from scipy.special import gamma, kv
 
-from ..base import clone
-from ..exceptions import ConvergenceWarning
-from ..metrics.pairwise import pairwise_kernels
-from ..utils.validation import _num_samples
+from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.utils.validation import _num_samples
 
 
 def _check_length_scale(X, length_scale):

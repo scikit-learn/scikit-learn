@@ -62,15 +62,15 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, ClassifierMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import laplacian as csgraph_laplacian
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import laplacian as csgraph_laplacian
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):

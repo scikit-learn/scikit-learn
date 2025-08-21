@@ -267,6 +267,17 @@ def test_input_format(klass):
         clf.fit(X, Y_)
 
 
+@pytest.mark.parametrize("lr", ["pa1", "pa2"])
+@pytest.mark.parametrize(
+    ["est", "loss"], [(SGDClassifier, "squared_hinge"), (SGDRegressor, "squared_error")]
+)
+def test_learning_rate_PA_raises(lr, est, loss):
+    """Test that SGD raises with forbidden loss for passive-aggressive algo."""
+    est = est(loss=loss, learning_rate=lr)
+    with pytest.raises(ValueError):
+        est.fit(X, Y)
+
+
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )

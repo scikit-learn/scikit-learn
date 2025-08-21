@@ -8,14 +8,19 @@ from numbers import Integral
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array
-from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._set_output import _get_output_config
-from ..utils.validation import (
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,

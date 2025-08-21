@@ -15,7 +15,7 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -24,26 +24,22 @@ from .base import (
     clone,
     is_classifier,
 )
-from .model_selection import cross_val_predict
-from .utils import Bunch, check_random_state, get_tags
-from .utils._param_validation import (
-    HasMethods,
-    Hidden,
-    StrOptions,
-)
-from .utils._response import _get_response_values
-from .utils._user_interface import _print_elapsed_time
-from .utils.metadata_routing import (
+from sklearn.model_selection import cross_val_predict
+from sklearn.utils import Bunch, check_random_state, get_tags
+from sklearn.utils._param_validation import HasMethods, Hidden, StrOptions
+from sklearn.utils._response import _get_response_values
+from sklearn.utils._user_interface import _print_elapsed_time
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from .utils.metaestimators import available_if
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_response_method,
     check_is_fitted,

@@ -1,0 +1,7 @@
+- :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` with `precompute=True`
+  (or `precompute="auto"`` and `n_samples > n_features`) are faster to fit by
+  avoiding a BLAS level 1 (axpy) call in the inner most loop.
+  Same for functions :func:`linear_model.enet_path` and
+  :func:`linear_model.lasso_path`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

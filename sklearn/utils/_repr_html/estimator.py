@@ -8,7 +8,7 @@ from io import StringIO
 from pathlib import Path
 from string import Template
 
-from ... import config_context
+from sklearn import config_context
 
 
 class _IDCounter:

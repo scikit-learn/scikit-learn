@@ -136,6 +136,10 @@ def test_check_estimator_generate_only_deprecation():
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
 )
+# TODO(1.8): remove this filter
+@pytest.mark.filterwarnings(
+    "ignore:Importing from sklearn.utils._estimator_html_repr is deprecated."
+)
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined

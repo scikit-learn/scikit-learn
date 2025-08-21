@@ -11,13 +11,13 @@ import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._mask import _get_mask
-from ..utils._missing import is_pandas_na, is_scalar_nan
-from ..utils._param_validation import MissingValues, StrOptions
-from ..utils.fixes import _mode
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
+from sklearn.utils._param_validation import MissingValues, StrOptions
+from sklearn.utils.fixes import _mode
+from sklearn.utils.sparsefuncs import _get_median
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _check_n_features,

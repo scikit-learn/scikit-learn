@@ -82,6 +82,25 @@ def test_check_classification_targets():
         check_classification_targets(y)
 
 
+def test_ovr_ties():
+    """Check that ties-breaking matches np.argmax behavior
+
+    Non-regression test for issue #14124
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def decision_function(self, X):
+            return np.zeros(len(X))
+
+    X = np.array([[0], [0], [0], [0]])
+    y = np.array([0, 1, 2, 3])
+    clf = OneVsRestClassifier(Dummy()).fit(X, y)
+    assert_array_equal(clf.predict(X), np.argmax(clf.decision_function(X), axis=1))
+
+
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))

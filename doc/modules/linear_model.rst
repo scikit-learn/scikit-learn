@@ -383,7 +383,7 @@ scikit-learn.
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
   where :math:`\sigma^2` is an estimate of the noise variance,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
@@ -1335,10 +1335,10 @@ You can refer to the dedicated :ref:`sgd` documentation section for more details
 .. _perceptron:
 
 Perceptron
-==========
+----------
 
 The :class:`Perceptron` is another simple classification algorithm suitable for
-large scale learning. By default:
+large scale learning and derives from SGD. By default:
 
 - It does not require a learning rate.
 
@@ -1358,18 +1358,18 @@ for more details.
 .. _passive_aggressive:
 
 Passive Aggressive Algorithms
-=============================
+-----------------------------
 
-The passive-aggressive algorithms are a family of algorithms for large-scale
-learning. They are similar to the Perceptron in that they do not require a
-learning rate. However, contrary to the Perceptron, they include a
-regularization parameter ``C``.
+The passive-aggressive (PA) algorithms are another family of 2 algorithms (PA-I and
+PA-II) for large-scale online learning that derive from SGD. They are similar to the
+Perceptron in that they do not require a learning rate. However, contrary to the
+Perceptron, they include a regularization parameter ``PA_C``.
 
-For classification, :class:`PassiveAggressiveClassifier` can be used with
-``loss='hinge'`` (PA-I) or ``loss='squared_hinge'`` (PA-II).  For regression,
-:class:`PassiveAggressiveRegressor` can be used with
-``loss='epsilon_insensitive'`` (PA-I) or
-``loss='squared_epsilon_insensitive'`` (PA-II).
+For classification,
+:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", PA_C=1.0)` can
+be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
+:class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
+PA_C=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 

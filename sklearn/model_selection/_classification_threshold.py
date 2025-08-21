@@ -6,42 +6,36 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
     _fit_context,
     clone,
 )
-from ..exceptions import NotFittedError
-from ..metrics import (
-    check_scoring,
-    get_scorer_names,
-)
-from ..metrics._scorer import (
-    _CurveScorer,
-    _threshold_scores_to_class_labels,
-)
-from ..utils import _safe_indexing, get_tags
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._response import _get_response_values_binary
-from ..utils.metadata_routing import (
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics._scorer import _CurveScorer, _threshold_scores_to_class_labels
+from sklearn.model_selection._split import StratifiedShuffleSplit, check_cv
+from sklearn.utils import _safe_indexing, get_tags
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _estimator_has,
     _num_samples,
     check_is_fitted,
     indexable,
 )
-from ._split import StratifiedShuffleSplit, check_cv
 
 
 def _check_is_fitted(estimator):

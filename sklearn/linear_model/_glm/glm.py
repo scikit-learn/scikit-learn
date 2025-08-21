@@ -10,21 +10,26 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.optimize
 
-from ..._loss.loss import (
+from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
 )
-from ...base import BaseEstimator, RegressorMixin, _fit_context
-from ...utils import check_array
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._param_validation import Hidden, Interval, StrOptions
-from ...utils.optimize import _check_optimize_result
-from ...utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from .._linear_loss import LinearModelLoss
-from ._newton_solver import NewtonCholeskySolver, NewtonSolver
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
+from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.utils import check_array
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
@@ -273,12 +278,12 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 options={
                     "maxiter": self.max_iter,
                     "maxls": 50,  # default is 20
-                    "iprint": self.verbose - 1,
                     "gtol": self.tol,
                     # The constant 64 was found empirically to pass the test suite.
                     # The point is that ftol is very small, but a bit larger than
                     # machine precision for float64, which is the dtype used by lbfgs.
                     "ftol": 64 * np.finfo(float).eps,
+                    **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
                 },
                 args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )

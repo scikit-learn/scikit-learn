@@ -4,24 +4,24 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
     _fit_context,
     clone,
 )
-from ..utils import Bunch, get_tags, safe_mask
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.utils import Bunch, get_tags, safe_mask
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.validation import _estimator_has, check_is_fitted, validate_data
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 

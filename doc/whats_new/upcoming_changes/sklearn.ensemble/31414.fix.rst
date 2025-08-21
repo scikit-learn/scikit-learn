@@ -1,4 +1,4 @@
-- :class:`ensemble.BaggingClassfier`, :class:`ensemble.BaggingRegressor`
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`
   and :class:`ensemble.IsolationForest` now use `sample_weight` to draw
   the samples instead of forwarding them multiplied by a uniformly sampled
   mask to the underlying estimators. Furthermore, `max_samples` is now

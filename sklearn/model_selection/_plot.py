@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from ..utils._optional_dependencies import check_matplotlib_support
-from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
-from ._validation import learning_curve, validation_curve
+from sklearn.model_selection._validation import learning_curve, validation_curve
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _interval_max_min_ratio, _validate_score_name
 
 
 class _BaseCurveDisplay:

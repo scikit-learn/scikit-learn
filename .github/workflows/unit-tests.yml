@@ -1,0 +1,82 @@
+name: Unit tests
+permissions:
+  contents: read
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  VIRTUALENV: testvenv
+  TEST_DIR: ${{ github.workspace }}/tmp_folder
+  CCACHE_DIR: ${{ github.workspace }}/ccache
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install linters
+        run: |
+          source build_tools/shared.sh
+          # Include pytest compatibility with mypy
+          pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+      - name: Run linters
+        run: ./build_tools/linting.sh
+      - name: Run Meson OpenMP checks
+        run: |
+          pip install ninja meson scipy
+          python build_tools/check-meson-openmp-dependencies.py
+
+  unit-tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    if: github.repository == 'scikit-learn/scikit-learn'
+    needs: [lint]
+    strategy:
+      # Ensures that all builds run to completion even if one of them fails
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux pymin_conda_forge_arm
+            os: ubuntu-24.04-arm
+            DISTRIB: conda
+            LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+
+    env: ${{ matrix }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create cache for ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-${{ matrix.name }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', matrix.LOCK_FILE)) }}
+          restore-keys: ccache-${{ matrix.name }}
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Build scikit-learn
+        run: bash -l build_tools/azure/install.sh
+
+      - name: Run tests
+        run: bash -l build_tools/azure/test_script.sh

@@ -166,7 +166,6 @@ from libc.string cimport memcpy
 
 import numpy as np
 import warnings
-
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
     DistanceMetric64,
@@ -181,6 +180,7 @@ from ..metrics._dist_metrics cimport (
 
 from ._partition_nodes cimport partition_node_indices
 
+from ..metrics._dist_metrics import get_valid_metric_ids
 from ..utils import check_array
 from ..utils._typedefs cimport float32_t, float64_t, intp_t
 from ..utils._heap cimport heap_push
@@ -788,7 +788,6 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS{{name_suffix}}
-from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS{{name_suffix}} = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
 
 

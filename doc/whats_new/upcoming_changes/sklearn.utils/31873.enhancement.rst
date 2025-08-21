@@ -1,0 +1,4 @@
+``sklearn.utils._check_sample_weight`` now raises a clearer error message when the
+provided weights are neither a scalar nor a 1-D array-like of the same size as the
+input data.
+:issue:`31712` by :user:`Kapil Parekh <kapslock123>`.

@@ -300,6 +300,33 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
+What does the "spam" label for issues or pull requests mean?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "spam" label is an indication for reviewers that the issue or
+pull request may not have received sufficient effort or preparation
+from the author for a productive review. The maintainers are using this label
+as a way to deal with the increase of low value PRs and issues.
+
+If an issue or PR was labeled as spam and simultaneously closed, the decision
+is final. A common reason for this happening is when people open a PR for an
+issue that is still under discussion. Please wait for the discussion to
+converge before opening a PR.
+
+If your issue or PR was labeled as spam and not closed the following steps
+can increase the chances of the label being removed:
+
+- follow the :ref:`contribution guidelines <contributing>` and use the provided
+  issue and pull request templates
+- improve the formatting and grammar of the text of the title and description of the issue/PR
+- improve the diff to remove noise and unrelated changes
+- improve the issue or pull request title to be more descriptive
+- self review your code, especially if :ref:`you used AI tools to generate it <automated_contributions_policy>`
+- refrain from opening PRs that paraphrase existing code or documentation
+  without actually improving the correctness, clarity or educational
+  value of the existing code or documentation.
+
+
 .. _new_algorithms_inclusion_criteria:
 
 What are the inclusion criteria for new algorithms?

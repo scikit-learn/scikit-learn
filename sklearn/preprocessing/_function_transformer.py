@@ -6,19 +6,14 @@ from functools import partial
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._param_validation import StrOptions
-from ..utils._repr_html.estimator import _VisualBlock
-from ..utils._set_output import (
-    _get_adapter_from_container,
-    _get_output_config,
-)
-from ..utils.metaestimators import available_if
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import _get_adapter_from_container, _get_output_config
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import (
     _allclose_dense_sparse,
-    _check_feature_names,
     _check_feature_names_in,
-    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _is_polars_df,
@@ -178,17 +173,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
-    def _check_input(self, X, *, reset):
-        if self.validate:
-            return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
-        elif reset:
-            # Set feature_names_in_ and n_features_in_ even if validate=False
-            # We run this only when reset==True to store the attributes but not
-            # validate them, because validate=False
-            _check_n_features(self, X, reset=reset)
-            _check_feature_names(self, X, reset=reset)
-        return X
-
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
@@ -200,7 +184,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             # Dataframes can have multiple dtypes
             dtypes = X.dtypes
 
-        if not all(np.issubdtype(d, np.number) for d in dtypes):
+        # Not all dtypes are numpy dtypes, they can be pandas dtypes as well
+        if not all(
+            isinstance(d, np.dtype) and np.issubdtype(d, np.number) for d in dtypes
+        ):
             raise ValueError(
                 "'check_inverse' is only supported when all the elements in `X` is"
                 " numerical."
@@ -237,7 +224,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
-        X = self._check_input(X, reset=True)
+        X = validate_data(
+            self,
+            X,
+            reset=True,
+            accept_sparse=self.accept_sparse,
+            skip_check_array=not self.validate,
+        )
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
         return self
@@ -256,7 +249,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        X = self._check_input(X, reset=False)
+        if self.validate:
+            X = validate_data(self, X, reset=False, accept_sparse=self.accept_sparse)
+
         out = self._transform(X, func=self.func, kw_args=self.kw_args)
         output_config = _get_output_config("transform", self)["dense"]
 

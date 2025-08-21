@@ -1,0 +1,73 @@
+name: Bot linter comment
+# We need these permissions to be able to post / update comments
+permissions:
+  pull-requests: write
+  issues: write
+
+on:
+  workflow_run:
+    workflows: ["Linter"]
+    types:
+      - completed
+
+jobs:
+  bot-comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    steps:
+      - name: Define ARTIFACTS_DIR environment variable
+        run: |
+          echo "ARTIFACTS_DIR=${{ runner.temp }}/artifacts" >> "$GITHUB_ENV"
+
+      - name: Create temporary artifacts directory
+        run: mkdir -p "$ARTIFACTS_DIR"
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lint-log
+          path: ${{ runner.temp }}/artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      # Adapted from https://github.com/docker-mailserver/docker-mailserver/pull/4267#issuecomment-2484565209
+      # Unfortunately there is no easier way to do it
+      - name: Get PR number from triggering workflow information
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_TARGET_REPO: ${{ github.repository }}
+          PR_BRANCH: |-
+            ${{
+              (github.event.workflow_run.head_repository.owner.login != github.event.workflow_run.repository.owner.login)
+                && format('{0}:{1}', github.event.workflow_run.head_repository.owner.login, github.event.workflow_run.head_branch)
+                || github.event.workflow_run.head_branch
+            }}
+        run: |
+          gh pr view --repo "${PR_TARGET_REPO}" "${PR_BRANCH}" \
+            --json 'number' \
+            --jq '"PR_NUMBER=\(.number)"' \
+            >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: build_tools/get_comment.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Create/update GitHub comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -e
+          export LOG_FILE="$ARTIFACTS_DIR/linting_output.txt"
+          export VERSIONS_FILE="$ARTIFACTS_DIR/versions.txt"
+
+          python ./build_tools/get_comment.py
