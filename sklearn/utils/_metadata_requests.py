@@ -1429,9 +1429,6 @@ class _MetadataRequester:
             super().__init_subclass__(**kwargs)
             return
 
-        if "ConsumingRegressor" in cls.__name__:
-            print("ConsumingRegressor")
-
         for method in SIMPLE_METHODS:
             # We only override descriptors set by parent classes, and not actual
             # methods implemented by the classes. "set_{method}_request" is explicitly
