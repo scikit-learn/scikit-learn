@@ -1,0 +1,2 @@
+- Fixing the alignment of the "?" and "i" symbols and enhancing the color style.
+  By :user:`Guillaume Lemaitre <glemaitre>`

@@ -329,10 +329,11 @@ a:visited.sk-estimator-doc-link {
   color: var(--sklearn-color-unfitted-level-3);
 }
 
-/* Utility class for preventing text wrapping */
+/* class to prevent placing "?" and "i" on a different line than the labels */
 #$id .sk-nowrap {
   white-space: nowrap;
-  /* Add extra margin to accommodate documentation links */
+  /* Add extra margin to the right to make sure that the "?" symbol is not outside of
+  scikit-learn container */
   margin-right: 0.75em;
 }
 
