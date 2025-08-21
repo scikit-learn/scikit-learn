@@ -244,14 +244,28 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
     sw = rng.randint(0, 5, size=n_samples)
     X_repeated = np.repeat(X, sw, axis=0)
 
-    est_weighted = _BinMapper(n_bins=n_bins, subsample=100).fit(X, sample_weight=sw)
-    est_repeated = _BinMapper(n_bins=n_bins, subsample=100).fit(
-        X_repeated, sample_weight=None
+    bins_weighted = []
+    bins_repeated = []
+    for i in range(100):
+        est_weighted = _BinMapper(n_bins=n_bins, subsample=100, random_state=i).fit(
+            X, sample_weight=sw
+        )
+        est_repeated = _BinMapper(n_bins=n_bins, subsample=100, random_state=i).fit(
+            X_repeated, sample_weight=None
+        )
+        bins_weighted.append(np.hstack(est_weighted.bin_thresholds_))
+        bins_repeated.append(np.hstack(est_repeated.bin_thresholds_))
+
+    bins_weighted = np.stack(bins_weighted).T
+    bins_repeated = np.stack(bins_repeated).T
+
+    kstest_pval = np.asarray(
+        [
+            kstest(bin_weighted, bin_repeated).pvalue
+            for bin_weighted, bin_repeated in zip(bins_weighted, bins_repeated)
+        ]
     )
-    kstest_pval = kstest(
-        est_weighted.bin_thresholds_, est_repeated.bin_thresholds_
-    ).pvalue
-    assert kstest_pval[0] > 0.025
+    assert np.all(kstest_pval > 0.025)
 
 
 @pytest.mark.parametrize(
