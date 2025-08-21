@@ -27,6 +27,11 @@ from sklearn.linear_model import (
     lars_path,
     lasso_path,
 )
+
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from sklearn.linear_model._cd_fast import (
+    enet_coordinate_descent,  # type: ignore[attr-defined]
+)
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.model_selection import (
     BaseCrossValidator,
@@ -1158,6 +1163,53 @@ def test_multi_task_lasso_cv_dtype():
     y = X[:, [0, 0]].copy()
     est = MultiTaskLassoCV(alphas=5, fit_intercept=True).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
+
+
+@pytest.mark.parametrize("with_sw", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_enet_coordinate_descent_with_sample_weight(
+    with_sw, fit_intercept, global_random_seed
+):
+    """Test that enet_coordinate_descent with sample_weights."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = 10, 5
+    X = np.asfortranarray(rng.rand(n_samples, n_features))
+    y = rng.rand(n_samples)
+    sw = 0.5 + rng.rand(n_samples) if with_sw else None
+    reg = ElasticNet(alpha=1e-2, fit_intercept=fit_intercept, random_state=42, tol=1e-6)
+    reg.fit(X, y, sample_weight=sw)
+    # The alpha should be small enough s.t. some coefficients are non-zero.
+    assert np.sum(np.abs(reg.coef_)) > 0
+
+    y_centered = y - np.average(y, weights=sw)
+    X_mean = np.average(X, weights=sw, axis=0)
+    coef_ = np.zeros_like(reg.coef_)
+    l1_reg = reg.alpha * reg.l1_ratio
+    l2_reg = reg.alpha * (1 - reg.l1_ratio)
+    l1_reg *= np.sum(sw) if with_sw else n_samples
+    l2_reg *= np.sum(sw) if with_sw else n_samples
+    rng = np.random.RandomState(42)
+    random = reg.selection == "random"
+    coef_, dual_gap_, eps_, n_iter_ = enet_coordinate_descent(
+        coef_,
+        l1_reg,
+        l2_reg,
+        X,
+        y_centered if fit_intercept else y,
+        sample_weight=sw,
+        X_mean=X_mean if fit_intercept else None,
+        max_iter=reg.max_iter,
+        tol=reg.tol,
+        rng=rng,
+        random=random,
+        positive=reg.positive,
+    )
+    if with_sw:
+        assert dual_gap_ / np.sum(sw) == pytest.approx(reg.dual_gap_)
+    else:
+        assert dual_gap_ / n_samples == pytest.approx(reg.dual_gap_)
+    assert_allclose(coef_, reg.coef_, rtol=1e-4, atol=1e-5)
+    assert n_iter_ == reg.n_iter_
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])

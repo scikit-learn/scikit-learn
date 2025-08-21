@@ -104,9 +104,11 @@ def enet_coordinate_descent(
     floating beta,
     const floating[::1, :] X,
     const floating[::1] y,
-    unsigned int max_iter,
-    floating tol,
-    object rng,
+    const floating[::1] sample_weight=None,
+    const floating[::1] X_mean=None,
+    unsigned int max_iter=1000,
+    floating tol=1e-4,
+    object rng=np.random.RandomState(0),
     bint random=0,
     bint positive=0
 ):
@@ -145,6 +147,11 @@ def enet_coordinate_descent(
     The tolerance here is multiplied by ||y||_2^2 to have an inequality that scales the
     same on both sides and because one has G(0, 0) = 1/2 ||y||_2^2.
 
+        With sample weights, y and X are scaled by sqrt(sample_weight) - but the
+        implementation avoids the square root and extra memory allocations.
+
+    For X_mean, see sparse_enet_coordinate_descent.
+
     Returns
     -------
     w : ndarray of shape (n_features,)
@@ -179,14 +186,13 @@ def enet_coordinate_descent(
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    # same as norm_cols_X = np.square(X).sum(axis=0)
-    cdef floating[::1] norm_cols_X = np.einsum(
-        "ij,ij->j", X, X, dtype=dtype, order="C"
-    )
+    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
+    # residuals with sample_weight
+    cdef floating[::1] R_sw
 
     cdef floating tmp
     cdef floating w_ii
@@ -196,6 +202,7 @@ def enet_coordinate_descent(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
+    cdef floating R_sum = 0.0  # always takes sample_weights into account
     cdef floating R_norm2
     cdef floating w_norm2
     cdef floating l1_norm
@@ -204,21 +211,77 @@ def enet_coordinate_descent(
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
+    cdef unsigned int jj
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
+    cdef bint center = False
+    cdef bint no_sample_weights = sample_weight is None
 
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
                       "unexpected results and is discouraged.")
 
+    if not no_sample_weights:
+        R_sw = np.empty_like(R)
+
     with nogil:
+        # center = (X_mean != 0).any()
+        if X_mean is not None:
+            for ii in range(n_features):
+                if X_mean[ii]:
+                    center = True
+                    break
+
+        # norm_cols_X = np.square(X).sum(axis=0)
+        if no_sample_weights:
+            if not center:
+                for ii in range(n_features):
+                    norm_cols_X[ii] = _dot(n_samples, &X[0, ii], 1, &X[0, ii], 1)
+            else:
+                for ii in range(n_features):
+                    for jj in range(n_samples):
+                        norm_cols_X[ii] += (X[jj, ii] - X_mean[ii]) ** 2
+        else:
+            if not center:
+                for ii in range(n_features):
+                    for jj in range(n_samples):
+                        norm_cols_X[ii] += (
+                            sample_weight[jj] * X[jj, ii] ** 2
+                        )
+            else:
+                for ii in range(n_features):
+                    for jj in range(n_samples):
+                        norm_cols_X[ii] += (
+                            sample_weight[jj] * (X[jj, ii] - X_mean[ii]) ** 2
+                        )
+
         # R = y - np.dot(X, w)
         _copy(n_samples, &y[0], 1, &R[0], 1)
         _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
               n_samples, &w[0], 1, 1.0, &R[0], 1)
+        if center:
+            # R += np.dot(X_mean, w)
+            # R_sum = np.sum(R) or np.sum(sample_weight * R)
+            tmp = _dot(n_features, &X_mean[0], 1, &w[0], 1)
+            R_sum = 0.0
+            if no_sample_weights:
+                for jj in range(n_samples):
+                    R[jj] += tmp
+                    R_sum += R[jj]
+            else:
+                for jj in range(n_samples):
+                    R[jj] += tmp
+                    R_sum += sample_weight[jj] * R[jj]
+            # Note: It turns out that R_sum does not need any update from here on.
 
         # tol *= np.dot(y, y)
-        tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
+        if no_sample_weights:
+            tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
+        else:
+            tmp = 0
+            for jj in range(n_samples):
+                tmp += sample_weight[jj] * y[jj]**2
+            tol *= tmp
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -237,9 +300,27 @@ def enet_coordinate_descent(
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
                     _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
+                    if center and X_mean[ii] != 0.0:
+                        # R -= w_ii * X_mean[ii]
+                        # Note: No need to update R_sum because the update terms cancel
+                        # each other: -w_ii np.sum(X[:,ii] - X_mean[ii]) = 0.
+                        tmp = w_ii * X_mean[ii]
+                        if no_sample_weights:
+                            for jj in range(n_samples):
+                                R[jj] -= tmp
+                        else:
+                            for jj in range(n_samples):
+                                R[jj] -= tmp
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                if no_sample_weights:
+                    tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                else:
+                    tmp = 0.0
+                    for jj in range(n_samples):
+                        tmp += X[jj, ii] * sample_weight[jj] * R[jj]
+                if center and X_mean[ii] != 0.0:
+                    tmp -= R_sum * X_mean[ii]
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -250,6 +331,16 @@ def enet_coordinate_descent(
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
                     _axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
+                    if center and X_mean[ii] != 0.0:
+                        # R += w[ii] * X_mean[ii]
+                        # Note: No need to update R_sum, see note above.
+                        tmp = X_mean[ii] * w[ii]
+                        if no_sample_weights:
+                            for jj in range(n_samples):
+                                R[jj] += tmp
+                        else:
+                            for jj in range(n_samples):
+                                R[jj] += tmp
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -268,10 +359,21 @@ def enet_coordinate_descent(
 
                 # XtA = np.dot(X.T, R) - beta * w
                 _copy(n_features, &w[0], 1, &XtA[0], 1)
-                _gemv(ColMajor, Trans,
-                      n_samples, n_features, 1.0, &X[0, 0], n_samples,
-                      &R[0], 1,
-                      -beta, &XtA[0], 1)
+                if no_sample_weights:
+                    _gemv(
+                        ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+                        n_samples, &R[0], 1, -beta, &XtA[0], 1
+                    )
+                else:
+                    for jj in range(n_samples):
+                        R_sw[jj] = sample_weight[jj] * R[jj]
+                    _gemv(
+                        ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+                        n_samples, &R_sw[0], 1, -beta, &XtA[0], 1
+                    )
+                if center:
+                    # XtA -= X_mean * R_sum
+                    _axpy(n_features, -R_sum, &X_mean[0], 1, &XtA[0], 1)
 
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
@@ -279,7 +381,10 @@ def enet_coordinate_descent(
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+                if no_sample_weights:
+                    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+                else:
+                    R_norm2 = _dot(n_samples, &R_sw[0], 1, &R[0], 1)
 
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
@@ -294,9 +399,12 @@ def enet_coordinate_descent(
 
                 l1_norm = _asum(n_features, &w[0], 1)
 
-                gap += (alpha * l1_norm
-                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
-                        + 0.5 * beta * (1 + const_ ** 2) * (w_norm2))
+                gap += alpha * l1_norm + 0.5 * beta * (1 + const_ ** 2) * (w_norm2)
+                # gap -= const_ * np.dot(R.T, y)
+                if no_sample_weights:
+                    gap -= const_ * _dot(n_samples, &R[0], 1, &y[0], 1)
+                else:
+                    gap -= const_ * _dot(n_samples, &R_sw[0], 1, &y[0], 1)
 
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -344,7 +452,9 @@ def sparse_enet_coordinate_descent(
         1/2 * sum(sw * (y - Z w)^2, axis=0) + alpha * norm(w, 1)
         + (beta/2) * norm(w, 2)^2
 
-    and X_mean is the weighted average of X (per column).
+    and X_mean is the weighted average of X (per column). If y_mean is not just zero,
+    the passed y must already be centered, i.e.,
+    `y - np.average(y, weights=sample_weight)`.
 
     Returns
     -------
@@ -413,6 +523,7 @@ def sparse_enet_coordinate_descent(
     cdef bint no_sample_weights = sample_weight is None
     cdef int kk
 
+    # R = y
     if no_sample_weights:
         yw = y
         R = y.copy()
@@ -427,7 +538,8 @@ def sparse_enet_coordinate_descent(
                 center = True
                 break
 
-        # R = y - np.dot(X, w)
+        # R -= np.dot(X, w)
+        # norm_cols_X = np.square(X).sum(axis=0)
         for ii in range(n_features):
             X_mean_ii = X_mean[ii]
             endptr = X_indptr[ii + 1]
