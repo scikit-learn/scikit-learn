@@ -628,9 +628,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20, copy=True)
+    >>> hdb = HDBSCAN(copy=True, min_cluster_size=20)
     >>> hdb.fit(X)
-    HDBSCAN(min_cluster_size=20, copy=True)
+    HDBSCAN(copy=True, min_cluster_size=20)
     >>> hdb.labels_.shape == (X.shape[0],)
     True
     >>> np.unique(hdb.labels_).tolist()
