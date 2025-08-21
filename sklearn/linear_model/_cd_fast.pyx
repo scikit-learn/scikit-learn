@@ -762,7 +762,8 @@ def enet_coordinate_descent_gram(
     floating tol,
     object rng,
     bint random=0,
-    bint positive=0
+    bint positive=0,
+    bint do_screening=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -800,6 +801,8 @@ def enet_coordinate_descent_gram(
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
+    cdef floating d_j
+    cdef floating Xj_theta
     cdef floating tmp
     cdef floating w_j
     cdef floating d_w_max
@@ -808,6 +811,10 @@ def enet_coordinate_descent_gram(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
+    cdef unsigned int n_active = n_features
+    cdef uint32_t[::1] active_set
+    # TODO: use binset insteaf of array of bools
+    cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
@@ -821,6 +828,10 @@ def enet_coordinate_descent_gram(
             "Set l1_ratio > 0 to add L1 regularization."
         )
 
+    if do_screening:
+        active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
+        excluded_set = np.empty(n_features, dtype=np.uint8)
+
     with nogil:
         tol *= y_norm2
 
@@ -831,6 +842,27 @@ def enet_coordinate_descent_gram(
         if gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
+
+        # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+        if do_screening:
+            n_active = 0
+            for j in range(n_features):
+                if Q[j, j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                    continue
+                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+                if d_j <= sqrt(2 * gap) / alpha:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                    _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                    w[j] = 0
+                    excluded_set[j] = 1
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -856,9 +888,8 @@ def enet_coordinate_descent_gram(
                         / (Q[j, j] + beta)
 
                 if w[j] != 0.0 or w_j != 0.0:
-                    # Qw +=  (w[j] - w_j) * Q[j]  # Update Qw = Q @ w
-                    _axpy(n_features, w[j] - w_j, &Q[j, 0], 1,
-                          &Qw[0], 1)
+                    # Qw += (w[j] - w_j) * Q[j]  # Update Qw = Q @ w
+                    _axpy(n_features, w[j] - w_j, &Q[j, 0], 1, &Qw[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_j = fabs(w[j] - w_j)
@@ -879,6 +910,25 @@ def enet_coordinate_descent_gram(
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
+
+                # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+                if do_screening:
+                    n_active = 0
+                    for j in range(n_features):
+                        if excluded_set[j]:
+                            continue
+                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
+                        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+                        if d_j <= sqrt(2 * gap) / alpha:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                            w[j] = 0
+                            excluded_set[j] = 1
 
         else:
             # for/else, runs if for doesn't end with a `break`

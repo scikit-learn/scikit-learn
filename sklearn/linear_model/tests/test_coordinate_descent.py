@@ -103,10 +103,12 @@ def test_cython_solver_equivalence():
         "positive": False,
     }
 
-    coef_1 = np.zeros(X.shape[1])
-    coef_2, coef_3, coef_4 = coef_1.copy(), coef_1.copy(), coef_1.copy()
+    def zc():
+        """Create a new zero coefficient array (zc)."""
+        return np.zeros(X.shape[1])
 
     # For alpha_max, coefficients must all be zero.
+    coef_1 = zc()
     cd_fast.enet_coordinate_descent(
         w=coef_1, alpha=alpha_max, X=X_centered, y=y, **params
     )
@@ -120,12 +122,14 @@ def test_cython_solver_equivalence():
     assert 2 <= np.sum(np.abs(coef_1) > 1e-8) < X.shape[1]
 
     # With gap safe screening rules
+    coef_2 = zc()
     cd_fast.enet_coordinate_descent(
         w=coef_2, alpha=alpha, X=X_centered, y=y, **params, do_screening=True
     )
     assert_allclose(coef_2, coef_1)
 
     # Sparse
+    coef_3 = zc()
     Xs = sparse.csc_matrix(X)
     cd_fast.sparse_enet_coordinate_descent(
         w=coef_3,
@@ -141,14 +145,17 @@ def test_cython_solver_equivalence():
     assert_allclose(coef_3, coef_1)
 
     # Gram
-    cd_fast.enet_coordinate_descent_gram(
-        w=coef_4,
-        alpha=alpha,
-        Q=X_centered.T @ X_centered,
-        q=X_centered.T @ y,
-        y=y,
-        **params,
-    )
+    for do_screening in [True, False]:
+        coef_4 = zc()
+        cd_fast.enet_coordinate_descent_gram(
+            w=coef_4,
+            alpha=alpha,
+            Q=X_centered.T @ X_centered,
+            q=X_centered.T @ y,
+            y=y,
+            **params,
+            do_screening=do_screening,
+        )
     assert_allclose(coef_4, coef_1)
 
 

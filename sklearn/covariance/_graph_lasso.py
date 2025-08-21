@@ -147,7 +147,8 @@ def _graphical_lasso(
                             max_iter,
                             enet_tol,
                             check_random_state(None),
-                            False,
+                            positive=False,
+                            do_screening=True,
                         )
                     else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(
