@@ -55,7 +55,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
-from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._param_validation import Interval, StrOptions, Hidden
 from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _assert_all_finite,
@@ -659,7 +659,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean", StrOptions({"warn"})],
+        "copy": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 
     def __init__(
@@ -723,9 +723,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 " Explicitly set a value for `copy` to silence this warning.",
                 FutureWarning,
             )
-            self._copy = False
+            _copy = False
         else:
-            self._copy = self.copy
+            _copy = self.copy
 
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
@@ -835,7 +835,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self._copy
+                kwargs["copy"] = _copy
             elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -848,7 +848,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self._copy
+                kwargs["copy"] = _copy
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
