@@ -583,6 +583,8 @@ def sparse_enet_coordinate_descent(
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
     cdef const floating[::1] yw
 
+    cdef floating d_j
+    cdef floating Xj_theta
     cdef floating tmp
     cdef floating w_j
     cdef floating d_w_max
