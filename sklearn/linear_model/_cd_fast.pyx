@@ -434,6 +434,83 @@ cdef inline void R_plus_wj_Xj(
                 R[i] -= sample_weight[i] * X_mean_j * w_j
 
 
+cdef (floating, floating) sparse_gap_enet(
+    int n_samples,
+    int n_features,
+    const floating[::1] w,
+    floating alpha,  # L1 penalty
+    floating beta,  # L2 penalty
+    const floating[::1] X_data,
+    const int[::1] X_indices,
+    const int[::1] X_indptr,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    bint no_sample_weights,
+    const floating[::1] X_mean,
+    bint center,
+    const floating[::1] R,  # current residuals = y - X @ w
+    floating R_sum,
+    floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    bint positive,
+) noexcept nogil:
+    """Compute dual gap for use in sparse_enet_coordinate_descent."""
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating w_norm2 = 0.0
+    cdef floating l1_norm
+    cdef floating A_norm2
+    cdef floating const_
+    cdef unsigned int i, j
+
+    # XtA = X.T @ R - beta * w
+    # sparse X.T @ dense R
+    for j in range(n_features):
+        XtA[j] = 0.0
+        for i in range(X_indptr[j], X_indptr[j + 1]):
+            XtA[j] += X_data[i] * R[X_indices[i]]
+
+        if center:
+            XtA[j] -= X_mean[j] * R_sum
+        XtA[j] -= beta * w[j]
+
+    if positive:
+        dual_norm_XtA = max(n_features, &XtA[0])
+    else:
+        dual_norm_XtA = abs_max(n_features, &XtA[0])
+
+    # R_norm2 = R @ R
+    if no_sample_weights:
+        R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+    else:
+        R_norm2 = 0.0
+        for i in range(n_samples):
+            # R is already multiplied by sample_weight
+            if sample_weight[i] != 0:
+                R_norm2 += (R[i] ** 2) / sample_weight[i]
+
+    # w_norm2 = w @ w
+    if beta > 0:
+        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+
+    if (dual_norm_XtA > alpha):
+        const_ = alpha / dual_norm_XtA
+        A_norm2 = R_norm2 * const_**2
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    l1_norm = _asum(n_features, &w[0], 1)
+
+    gap += (
+        alpha * l1_norm
+        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
+        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    )
+    return gap, dual_norm_XtA
+
+
 def sparse_enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
@@ -449,6 +526,7 @@ def sparse_enet_coordinate_descent(
     object rng,
     bint random=0,
     bint positive=0,
+    bint do_screening=1,
 ):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -463,6 +541,8 @@ def sparse_enet_coordinate_descent(
         + (beta/2) * norm(w, 2)^2
 
     and X_mean is the weighted average of X (per column).
+
+    The rest is the same as enet_coordinate_descent, but for sparse X.
 
     Returns
     -------
@@ -513,12 +593,11 @@ def sparse_enet_coordinate_descent(
     cdef floating dual_norm_XtA
     cdef floating X_mean_j
     cdef floating R_sum = 0.0
-    cdef floating R_norm2
-    cdef floating w_norm2
-    cdef floating l1_norm
-    cdef floating const_
-    cdef floating A_norm2
     cdef floating normalize_sum
+    cdef unsigned int n_active = n_features
+    cdef uint32_t[::1] active_set
+    # TODO: use binset insteaf of array of bools
+    cdef uint8_t[::1] excluded_set
     cdef unsigned int i
     cdef unsigned int j
     cdef unsigned int n_iter = 0
@@ -529,7 +608,10 @@ def sparse_enet_coordinate_descent(
     cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
-    cdef int kk
+
+    if do_screening:
+        active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
+        excluded_set = np.empty(n_features, dtype=np.uint8)
 
     if no_sample_weights:
         yw = y
@@ -586,16 +668,74 @@ def sparse_enet_coordinate_descent(
         # with sample weights: tol *= y @ (sw * y)
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
-        for n_iter in range(max_iter):
+        # Check convergence before entering the main loop.
+        gap, dual_norm_XtA = sparse_gap_enet(
+            n_samples,
+            n_features,
+            w,
+            alpha,
+            beta,
+            X_data,
+            X_indices,
+            X_indptr,
+            y,
+            sample_weight,
+            no_sample_weights,
+            X_mean,
+            center,
+            R,
+            R_sum,
+            XtA,
+            positive,
+        )
+        if gap <= tol:
+            with gil:
+                return np.asarray(w), gap, tol, 0
 
+        # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+        if do_screening:
+            n_active = 0
+            for j in range(n_features):
+                if norm2_cols_X[j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                    continue
+                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
+                if d_j <= sqrt(2 * gap) / alpha:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # R += w[j] * X[:,j]
+                    R_plus_wj_Xj(
+                        n_samples,
+                        R,
+                        X_data,
+                        X_indices,
+                        X_indptr,
+                        X_mean,
+                        center,
+                        sample_weight,
+                        no_sample_weights,
+                        w[j],
+                        j,
+                    )
+                    w[j] = 0
+                    excluded_set[j] = 1
+
+        for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    j = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_active, rand_r_state)
                 else:
                     j = f_iter
+
+                if do_screening:
+                    j = active_set[j]
 
                 if norm2_cols_X[j] == 0.0:
                     continue
@@ -661,52 +801,60 @@ def sparse_enet_coordinate_descent(
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-
-                # XtA = X.T @ R - beta * w
-                # sparse X.T / dense R dot product
-                for j in range(n_features):
-                    XtA[j] = 0.0
-                    for kk in range(X_indptr[j], X_indptr[j + 1]):
-                        XtA[j] += X_data[kk] * R[X_indices[kk]]
-
-                    if center:
-                        XtA[j] -= X_mean[j] * R_sum
-                    XtA[j] -= beta * w[j]
-
-                if positive:
-                    dual_norm_XtA = max(n_features, &XtA[0])
-                else:
-                    dual_norm_XtA = abs_max(n_features, &XtA[0])
-
-                # R_norm2 = np.dot(R, R)
-                if no_sample_weights:
-                    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
-                else:
-                    R_norm2 = 0.0
-                    for i in range(n_samples):
-                        # R is already multiplied by sample_weight
-                        if sample_weight[i] != 0:
-                            R_norm2 += (R[i] ** 2) / sample_weight[i]
-
-                # w_norm2 = np.dot(w, w)
-                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-                if (dual_norm_XtA > alpha):
-                    const_ = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * const_**2
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const_ = 1.0
-                    gap = R_norm2
-
-                l1_norm = _asum(n_features, &w[0], 1)
-
-                gap += (alpha * l1_norm
-                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
-                        + 0.5 * beta * (1 + const_ ** 2) * w_norm2)
+                gap, dual_norm_XtA = sparse_gap_enet(
+                    n_samples,
+                    n_features,
+                    w,
+                    alpha,
+                    beta,
+                    X_data,
+                    X_indices,
+                    X_indptr,
+                    y,
+                    sample_weight,
+                    no_sample_weights,
+                    X_mean,
+                    center,
+                    R,
+                    R_sum,
+                    XtA,
+                    positive,
+                )
 
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
+
+                # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+                if do_screening:
+                    n_active = 0
+                    for j in range(n_features):
+                        if excluded_set[j]:
+                            continue
+                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
+                        d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
+                        if d_j <= sqrt(2 * gap) / alpha:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # R += w[j] * X[:,j]
+                            R_plus_wj_Xj(
+                                n_samples,
+                                R,
+                                X_data,
+                                X_indices,
+                                X_indptr,
+                                X_mean,
+                                center,
+                                sample_weight,
+                                no_sample_weights,
+                                w[j],
+                                j,
+                            )
+                            w[j] = 0
+                            excluded_set[j] = 1
 
         else:
             # for/else, runs if for doesn't end with a `break`
