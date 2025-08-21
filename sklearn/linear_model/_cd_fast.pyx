@@ -401,6 +401,39 @@ def enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+cdef inline void R_plus_wj_Xj(
+    unsigned int n_samples,
+    floating[::1] R,  # out
+    const floating[::1] X_data,
+    const int[::1] X_indices,
+    const int[::1] X_indptr,
+    const floating[::1] X_mean,
+    bint center,
+    const floating[::1] sample_weight,
+    bint no_sample_weights,
+    floating w_j,
+    unsigned int j,
+) noexcept nogil:
+    """R += w_j * X[:,j]"""
+    cdef unsigned int startptr = X_indptr[j]
+    cdef unsigned int endptr = X_indptr[j + 1]
+    cdef floating sw
+    cdef floating X_mean_j = X_mean[j]
+    if no_sample_weights:
+        for i in range(startptr, endptr):
+            R[X_indices[i]] += X_data[i] * w_j
+        if center:
+            for i in range(n_samples):
+                R[i] -= X_mean_j * w_j
+    else:
+        for i in range(startptr, endptr):
+            sw = sample_weight[X_indices[i]]
+            R[X_indices[i]] += sw * X_data[i] * w_j
+        if center:
+            for i in range(n_samples):
+                R[i] -= sample_weight[i] * X_mean_j * w_j
+
+
 def sparse_enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
@@ -574,19 +607,19 @@ def sparse_enet_coordinate_descent(
 
                 if w_j != 0.0:
                     # R += w_j * X[:,j]
-                    if no_sample_weights:
-                        for i in range(startptr, endptr):
-                            R[X_indices[i]] += X_data[i] * w_j
-                        if center:
-                            for i in range(n_samples):
-                                R[i] -= X_mean_j * w_j
-                    else:
-                        for i in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[i]]
-                            R[X_indices[i]] += tmp * X_data[i] * w_j
-                        if center:
-                            for i in range(n_samples):
-                                R[i] -= sample_weight[i] * X_mean_j * w_j
+                    R_plus_wj_Xj(
+                        n_samples,
+                        R,
+                        X_data,
+                        X_indices,
+                        X_indptr,
+                        X_mean,
+                        center,
+                        sample_weight,
+                        no_sample_weights,
+                        w_j,
+                        j,
+                    )
 
                 # tmp = (X[:,j] * R).sum()
                 tmp = 0.0
@@ -604,19 +637,19 @@ def sparse_enet_coordinate_descent(
 
                 if w[j] != 0.0:
                     # R -=  w[j] * X[:,j] # Update residual
-                    if no_sample_weights:
-                        for i in range(startptr, endptr):
-                            R[X_indices[i]] -= X_data[i] * w[j]
-                        if center:
-                            for i in range(n_samples):
-                                R[i] += X_mean_j * w[j]
-                    else:
-                        for i in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[i]]
-                            R[X_indices[i]] -= tmp * X_data[i] * w[j]
-                        if center:
-                            for i in range(n_samples):
-                                R[i] += sample_weight[i] * X_mean_j * w[j]
+                    R_plus_wj_Xj(
+                        n_samples,
+                        R,
+                        X_data,
+                        X_indices,
+                        X_indptr,
+                        X_mean,
+                        center,
+                        sample_weight,
+                        no_sample_weights,
+                        -w[j],
+                        j,
+                    )
 
                 # update the maximum absolute coefficient update
                 d_w_j = fabs(w[j] - w_j)
