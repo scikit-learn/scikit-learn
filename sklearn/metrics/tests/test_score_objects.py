@@ -576,7 +576,8 @@ def test_raises_on_score_list():
         grid_search.fit(X, y)
 
 
-def test_classification_scorer_sample_weight():
+@pytest.mark.parametrize("name", set(get_scorer_names()) - set(REGRESSION_SCORERS))
+def test_classification_scorer_sample_weight(name):
     # Test that classification scorers support sample_weight or raise sensible
     # errors
 
@@ -594,45 +595,39 @@ def test_classification_scorer_sample_weight():
     # get sensible estimators for each metric
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
-    for name in get_scorer_names():
-        scorer = get_scorer(name)
-        if name in REGRESSION_SCORERS:
-            # skip the regression scores
-            continue
-        if name == "top_k_accuracy":
-            # in the binary case k > 1 will always lead to a perfect score
-            scorer._kwargs = {"k": 1}
-        if name in MULTILABEL_ONLY_SCORERS:
-            target = y_ml_test
-        else:
-            target = y_test
-        try:
-            weighted = scorer(
-                estimator[name], X_test, target, sample_weight=sample_weight
-            )
-            ignored = scorer(estimator[name], X_test[10:], target[10:])
-            unweighted = scorer(estimator[name], X_test, target)
-            # this should not raise. sample_weight should be ignored if None.
-            _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
-            assert weighted != unweighted, (
-                f"scorer {name} behaves identically when called with "
-                f"sample weights: {weighted} vs {unweighted}"
-            )
-            assert_almost_equal(
-                weighted,
-                ignored,
-                err_msg=(
-                    f"scorer {name} behaves differently "
-                    "when ignoring samples and setting "
-                    f"sample_weight to 0: {weighted} vs {ignored}"
-                ),
-            )
+    scorer = get_scorer(name)
+    if name == "top_k_accuracy":
+        # in the binary case k > 1 will always lead to a perfect score
+        scorer.kwargs = {"k": 1}
+    if name in MULTILABEL_ONLY_SCORERS:
+        target = y_ml_test
+    else:
+        target = y_test
+    try:
+        weighted = scorer(estimator[name], X_test, target, sample_weight=sample_weight)
+        ignored = scorer(estimator[name], X_test[10:], target[10:])
+        unweighted = scorer(estimator[name], X_test, target)
+        # this should not raise. sample_weight should be ignored if None.
+        _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
+        assert weighted != unweighted, (
+            f"scorer {name} behaves identically when called with "
+            f"sample weights: {weighted} vs {unweighted}"
+        )
+        assert_almost_equal(
+            weighted,
+            ignored,
+            err_msg=(
+                f"scorer {name} behaves differently "
+                "when ignoring samples and setting "
+                f"sample_weight to 0: {weighted} vs {ignored}"
+            ),
+        )
 
-        except TypeError as e:
-            assert "sample_weight" in str(e), (
-                f"scorer {name} raises unhelpful exception when called "
-                f"with sample weights: {e}"
-            )
+    except TypeError as e:
+        assert "sample_weight" in str(e), (
+            f"scorer {name} raises unhelpful exception when called "
+            f"with sample weights: {e}"
+        )
 
 
 def test_regression_scorer_sample_weight():
