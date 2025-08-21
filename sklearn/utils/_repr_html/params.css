@@ -65,11 +65,6 @@ a.param-doc-link:visited {
     display: inline;
 }
 
-a.param-doc-link:hover {
-    border-bottom-color: #333;
-    color: inherit;
-}
-
 a.param-doc-link span {
     display: none;
     position: absolute;
