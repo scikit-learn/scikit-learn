@@ -31,6 +31,10 @@
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
+.estimator-table table td.param {
+    text-align: left;
+}
+
 .user-set td {
     color:rgb(255, 94, 0);
     text-align: left;
