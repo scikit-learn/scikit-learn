@@ -1470,6 +1470,15 @@ class RandomForestClassifier(ForestClassifier):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
+    At each decision node in the tree, candidate split points are evaluated
+    for each feature. For numerical features, the candidate thresholds are
+    determined by sorting the unique values observed in the training data and
+    using the midpoints between consecutive unique values as potential split
+    thresholds. If a feature has `n` unique values, then `n - 1` possible
+    splits are considered. This behavior affects the computational cost per
+    node, which can grow linearly with the number of unique values per
+    feature.
+
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
     ``max_features=n_features`` and ``bootstrap=False``, if the improvement
@@ -1842,6 +1851,15 @@ class RandomForestRegressor(ForestRegressor):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    At each decision node in the tree, candidate split points are evaluated
+    for each feature. For numerical features, the candidate thresholds are
+    determined by sorting the unique values observed in the training data and
+    using the midpoints between consecutive unique values as potential split
+    thresholds. If a feature has `n` unique values, then `n - 1` possible
+    splits are considered. This behavior affects the computational cost per
+    node, which can grow linearly with the number of unique values per
+    feature.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
