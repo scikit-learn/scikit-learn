@@ -584,3 +584,13 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
     hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo, copy=True)
     with pytest.raises(ValueError, match="cosine is not a valid metric"):
         hdbscan.fit_predict(X)
+
+
+# TODO(1.10): remove this test
+def test_hdbscan_default_copy_warning():
+    """Test that HDBSCAN raises a FutureWarning when the `copy` parameter is not set."""
+    X = np.random.RandomState(0).random((100, 2))
+    msg=r"The default value of `copy` will change from False to True in 1.10."
+    with pytest.warns(FutureWarning, match=msg):
+        hdb = HDBSCAN(min_cluster_size=20)
+        hdb.fit(X)
