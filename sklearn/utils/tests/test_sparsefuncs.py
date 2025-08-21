@@ -1048,6 +1048,7 @@ def test_sparse_matmul_to_dense(
         out = np.empty((n1, n3), dtype=dtype)
 
     result = sparse_matmul_to_dense(a, b, out=out)
-    assert_allclose(result, a_dense @ b_dense)
+    # Use atol to account for the wide range of values in the computed matrix.
+    assert_allclose(result, a_dense @ b_dense, atol=1e-7)
     if not out_is_None:
-        assert_allclose(out, result)
+        assert_allclose(out, result, atol=1e-7)
