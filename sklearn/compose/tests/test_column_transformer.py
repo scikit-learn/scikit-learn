@@ -1579,6 +1579,9 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     assert_array_equal(visual_block_result, ohe_result)
     assert visual_block.estimators[1] == remainder
 
+    remainder = ct._remainder[2]
+    assert remainder == ["col3", "col4"]
+
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
 def test_sk_visual_block_remainder_fitted_numpy(remainder):
