@@ -1305,7 +1305,10 @@ def test_PassthroughScorer_set_score_request():
     est = LogisticRegression().set_score_request(sample_weight="estimator_weights")
     # make a `_PassthroughScorer` with `check_scoring`:
     scorer = check_scoring(est, None)
-    with pytest.raises(AttributeError, match="This method is not available"):
+    with pytest.raises(
+        AttributeError,
+        match="'_PassthroughScorer' object has no attribute 'set_score_request'",
+    ):
         scorer.set_score_request(sample_weight=True)
 
 
@@ -1315,7 +1318,10 @@ def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
     scorer = check_scoring(LogisticRegression(), None)
     msg = "This method is only available when metadata routing is enabled."
 
-    with pytest.raises(AttributeError, match="This method is not available"):
+    with pytest.raises(
+        AttributeError,
+        match="'_PassthroughScorer' object has no attribute 'set_score_request'",
+    ):
         scorer.set_score_request(sample_weight=True)
 
 

@@ -516,27 +516,6 @@ class _PassthroughScorer(_MetadataRequester):
         """
         return get_routing_for_object(self._estimator)
 
-    def set_score_request(self, **kwargs):
-        """Set requested parameters by the scorer.
-
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        .. versionadded:: 1.5
-        .. versionchanged:: 1.8
-            This now raises.
-
-        Parameters
-        ----------
-        kwargs : dict
-            Arguments should be of the form ``param_name=alias``, and `alias`
-            can be one of ``{True, False, None, str}``.
-        """
-        raise AttributeError(
-            "This method is not available on _PassthroughScorer. "
-            "Use the estimator's set_score_request method instead."
-        )
-
 
 def _check_multimetric_scoring(estimator, scoring):
     """Check the scoring parameter in cases when multiple metrics are allowed.
