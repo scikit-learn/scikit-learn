@@ -1316,7 +1316,6 @@ def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
     """Test that _PassthroughScorer.set_score_request raises if metadata routing is
     disabled."""
     scorer = check_scoring(LogisticRegression(), None)
-    msg = "This method is only available when metadata routing is enabled."
 
     with pytest.raises(
         AttributeError,

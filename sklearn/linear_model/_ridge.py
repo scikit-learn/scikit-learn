@@ -2516,7 +2516,7 @@ class _BaseRidgeCV(LinearModel):
         return router
 
     def _get_scorer(self):
-        """Make sure the sorer is weighted if necessary.
+        """Make sure the scorer is weighted if necessary.
 
         This uses `self._get_scorer_instance()` implemented in child objects to get the
         raw scorer instance of the estimator, which will be ignored if `self.scoring` is
