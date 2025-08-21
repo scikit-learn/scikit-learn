@@ -1430,6 +1430,9 @@ class _MetadataRequester:
             return
 
         for method in SIMPLE_METHODS:
+            if hasattr(cls, f"set_{method}_request"):
+                # we don't want to override existing methods (e.g. in scorers)
+                continue
             mmr = getattr(requests, method)
             # set ``set_{method}_request`` methods
             if not len(mmr.requests):

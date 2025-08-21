@@ -161,9 +161,12 @@ class _MultimetricScorer:
 
         for name, scorer in self._scorers.items():
             try:
-                if isinstance(scorer, _BaseScorer):
-                    score = scorer._score(
-                        cached_call, estimator, *args, **routed_params.get(name).score
+                if isinstance(scorer, BaseScorer):
+                    y_pred = scorer._get_response_values(
+                        cached_call, estimator, args[0], **routed_params.get(name).score
+                    )
+                    score = scorer.score(
+                        estimator, *args, y_pred=y_pred, **routed_params.get(name).score
                     )
                 else:
                     score = scorer(estimator, *args, **routed_params.get(name).score)
@@ -192,9 +195,9 @@ class _MultimetricScorer:
 
         counter = Counter(
             [
-                _check_response_method(estimator, scorer._response_method).__name__
+                _check_response_method(estimator, scorer.response_method).__name__
                 for scorer in self._scorers.values()
-                if isinstance(scorer, _BaseScorer)
+                if isinstance(scorer, BaseScorer)
             ]
         )
         if any(val > 1 for val in counter.values()):
@@ -224,7 +227,7 @@ class _MultimetricScorer:
         )
 
 
-class _BaseScorer(_MetadataRequester):
+class BaseScorer(_MetadataRequester):
     """Base scorer that is used as `scorer(estimator, X, y_true)`.
 
     Parameters
@@ -245,32 +248,32 @@ class _BaseScorer(_MetadataRequester):
     """
 
     def __init__(self, score_func, sign, kwargs, response_method="predict"):
-        self._score_func = score_func
-        self._sign = sign
-        self._kwargs = kwargs
-        self._response_method = response_method
+        self.score_func = score_func
+        self.sign = sign
+        self.kwargs = kwargs
+        self.response_method = response_method
         # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
         self._deprecation_msg = None
 
     def _get_pos_label(self):
-        if "pos_label" in self._kwargs:
-            return self._kwargs["pos_label"]
-        score_func_params = signature(self._score_func).parameters
+        if "pos_label" in self.kwargs:
+            return self.kwargs["pos_label"]
+        score_func_params = signature(self.score_func).parameters
         if "pos_label" in score_func_params:
             return score_func_params["pos_label"].default
         return None
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
-        return "sample_weight" in signature(self._score_func).parameters
+        return "sample_weight" in signature(self.score_func).parameters
 
     def __repr__(self):
-        sign_string = "" if self._sign > 0 else ", greater_is_better=False"
-        response_method_string = f", response_method={self._response_method!r}"
-        kwargs_string = "".join([f", {k}={v}" for k, v in self._kwargs.items()])
+        sign_string = "" if self.sign > 0 else ", greater_is_better=False"
+        response_method_string = f", response_method={self.response_method!r}"
+        kwargs_string = "".join([f", {k}={v}" for k, v in self.kwargs.items()])
 
         return (
-            f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
+            f"make_scorer({_get_func_repr_or_name(self.score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
 
@@ -318,7 +321,41 @@ class _BaseScorer(_MetadataRequester):
         if sample_weight is not None:
             _kwargs["sample_weight"] = sample_weight
 
-        return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
+
+        y_pred = self._get_response_values(
+            partial(_cached_call, None), estimator, X, **_kwargs
+        )
+
+        # TODO (1.9): remove in 1.9
+        if hasattr(self, "_score") and not hasattr(self, "score"):
+            warnings.warn(
+                "Using _score is deprecated, implement `score` in your scorer instead!"
+                " This will result in an error in 1.9.",
+                FutureWarning,
+            )
+            return self._score(
+                partial(_cached_call, None), estimator, X, y_true, **_kwargs
+            )
+
+        return self.score(estimator, X, y_true, y_pred, **_kwargs)
+
+    def _get_response_values(self, method_caller, estimator, X, **kwargs):
+        pos_label = None if is_regressor(estimator) else self._get_pos_label()
+        response_method = _check_response_method(estimator, self.response_method)
+        return method_caller(
+            estimator,
+            _get_response_method_name(response_method),
+            X,
+            pos_label=pos_label,
+        )
 
     def _warn_overlap(self, message, kwargs):
         """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
@@ -326,7 +363,7 @@ class _BaseScorer(_MetadataRequester):
         This method is intended to be used to check for overlap between
         ``self._kwargs`` and ``kwargs`` passed as metadata.
         """
-        _kwargs = set() if self._kwargs is None else set(self._kwargs.keys())
+        _kwargs = set() if self.kwargs is None else set(self.kwargs.keys())
         overlap = _kwargs.intersection(kwargs.keys())
         if overlap:
             warnings.warn(
@@ -363,22 +400,49 @@ class _BaseScorer(_MetadataRequester):
             ),
             kwargs=kwargs,
         )
-        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        if not hasattr(self, "_metadata_request"):
+            self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
 
 
-class _Scorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, **kwargs):
+# TODO (1.9): remove in 1.9
+class _BaseScorer(BaseScorer):
+    def __init__(self, score_func, sign, kwargs, response_method="predict"):
+        warnings.warn(
+            "_BaseScorer is deprecated in 1.8 and will be removed in 1.9. "
+            "Use BaseScorer instead.",
+            FutureWarning,
+        )
+        super().__init__(score_func, sign, kwargs, response_method)
+
+    @property
+    def _kwargs(self):
+        return self.kwargs
+
+    @property
+    def _response_method(self):
+        return self.response_method
+
+    @property
+    def _score_func(self):
+        return self.score_func
+
+    @property
+    def _sign(self):
+        return self.sign
+
+
+class _Scorer(BaseScorer):
+    def score(self, estimator, X, y_true, y_pred, **kwargs):
         """Evaluate the response method of `estimator` on `X` and `y_true`.
+
+        This method is called with `y_pred` already calculated. In almost all cases,
+        you can calculate your scores using `y_true` and `y_pred` alone.
 
         Parameters
         ----------
-        method_caller : callable
-            Returns predictions given an estimator, method name, and other
-            arguments, potentially caching results.
-
         estimator : object
             Trained estimator to use for scoring.
 
@@ -390,6 +454,9 @@ class _Scorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
+        y_pred : array-like
+            The predicted target values for X using `response_method`.
+
         **kwargs : dict
             Other parameters passed to the scorer. Refer to
             :func:`set_score_request` for more details.
@@ -399,26 +466,8 @@ class _Scorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        self._warn_overlap(
-            message=(
-                "There is an overlap between set kwargs of this scorer instance and"
-                " passed metadata. Please pass them either as kwargs to `make_scorer`"
-                " or metadata, but not both."
-            ),
-            kwargs=kwargs,
-        )
-
-        pos_label = None if is_regressor(estimator) else self._get_pos_label()
-        response_method = _check_response_method(estimator, self._response_method)
-        y_pred = method_caller(
-            estimator,
-            _get_response_method_name(response_method),
-            X,
-            pos_label=pos_label,
-        )
-
-        scoring_kwargs = {**self._kwargs, **kwargs}
-        return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
+        scoring_kwargs = {**self.kwargs, **kwargs}
+        return self.sign * self.score_func(y_true, y_pred, **scoring_kwargs)
 
 
 @validate_params(
@@ -1074,7 +1123,7 @@ def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
     return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
 
 
-class _CurveScorer(_BaseScorer):
+class _CurveScorer(BaseScorer):
     """Scorer taking a continuous response and output a score for each threshold.
 
     Parameters
@@ -1113,33 +1162,34 @@ class _CurveScorer(_BaseScorer):
     def from_scorer(cls, scorer, response_method, thresholds):
         """Create a continuous scorer from a normal scorer."""
         instance = cls(
-            score_func=scorer._score_func,
-            sign=scorer._sign,
+            score_func=scorer.score_func,
+            sign=scorer.sign,
             response_method=response_method,
             thresholds=thresholds,
-            kwargs=scorer._kwargs,
+            kwargs=scorer.kwargs,
         )
         # transfer the metadata request
         instance._metadata_request = scorer._get_metadata_request()
         return instance
 
-    def _score(self, method_caller, estimator, X, y_true, **kwargs):
+    def score(self, estimator, X, y_true, y_pred, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
         ----------
-        method_caller : callable
-            Returns predictions given an estimator, method name, and other
-            arguments, potentially caching results.
-
         estimator : object
             Trained estimator to use for scoring.
 
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Test data that will be fed to estimator.predict.
+        X : {array-like, sparse matrix}
+            Test data that will be fed to clf.decision_function or
+            clf.predict_proba.
 
-        y_true : array-like of shape (n_samples,)
-            Gold standard target values for X.
+        y_true : array-like
+            Gold standard target values for X. These must be class labels,
+            not decision function values.
+
+        y_pred : array-like
+            The predicted target values for X using `response_method`.
 
         **kwargs : dict
             Other parameters passed to the scorer. Refer to
@@ -1153,24 +1203,19 @@ class _CurveScorer(_BaseScorer):
         potential_thresholds : ndarray of shape (thresholds,)
             The potential thresholds used to compute the scores.
         """
-        pos_label = self._get_pos_label()
-        y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
-        )
-
-        scoring_kwargs = {**self._kwargs, **kwargs}
+        scoring_kwargs = {**self.kwargs, **kwargs}
         if isinstance(self._thresholds, Integral):
             potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self._thresholds
+                np.min(y_pred), np.max(y_pred), self._thresholds
             )
         else:
             potential_thresholds = np.asarray(self._thresholds)
         score_thresholds = [
-            self._sign
-            * self._score_func(
+            self.sign
+            * self.score_func(
                 y_true,
                 _threshold_scores_to_class_labels(
-                    y_score, th, estimator.classes_, pos_label
+                    y_pred, th, estimator.classes_, self._get_pos_label()
                 ),
                 **scoring_kwargs,
             )
