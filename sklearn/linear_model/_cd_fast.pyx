@@ -450,7 +450,7 @@ def sparse_enet_coordinate_descent(
     # We work with:
     #     yw = sample_weight * y
     #     R = sample_weight * residual
-    #     norm_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
+    #     norm2_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
 
     if floating is float:
         dtype = np.float32
@@ -462,7 +462,7 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int n_features = w.shape[0]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[::1] norm2_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
@@ -471,14 +471,14 @@ def sparse_enet_coordinate_descent(
     cdef const floating[::1] yw
 
     cdef floating tmp
-    cdef floating w_ii
+    cdef floating w_j
     cdef floating d_w_max
     cdef floating w_max
-    cdef floating d_w_ii
+    cdef floating d_w_j
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
-    cdef floating X_mean_ii
+    cdef floating X_mean_j
     cdef floating R_sum = 0.0
     cdef floating R_norm2
     cdef floating w_norm2
@@ -486,8 +486,8 @@ def sparse_enet_coordinate_descent(
     cdef floating const_
     cdef floating A_norm2
     cdef floating normalize_sum
-    cdef unsigned int ii
-    cdef unsigned int jj
+    cdef unsigned int i
+    cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef unsigned int startptr = X_indptr[0]
@@ -507,46 +507,46 @@ def sparse_enet_coordinate_descent(
 
     with nogil:
         # center = (X_mean != 0).any()
-        for ii in range(n_features):
-            if X_mean[ii]:
+        for j in range(n_features):
+            if X_mean[j]:
                 center = True
                 break
 
         # R = y - np.dot(X, w)
-        for ii in range(n_features):
-            X_mean_ii = X_mean[ii]
-            endptr = X_indptr[ii + 1]
+        for j in range(n_features):
+            X_mean_j = X_mean[j]
+            endptr = X_indptr[j + 1]
             normalize_sum = 0.0
-            w_ii = w[ii]
+            w_j = w[j]
 
             if no_sample_weights:
-                for jj in range(startptr, endptr):
-                    normalize_sum += (X_data[jj] - X_mean_ii) ** 2
-                    R[X_indices[jj]] -= X_data[jj] * w_ii
-                norm_cols_X[ii] = normalize_sum + \
-                    (n_samples - endptr + startptr) * X_mean_ii ** 2
+                for i in range(startptr, endptr):
+                    normalize_sum += (X_data[i] - X_mean_j) ** 2
+                    R[X_indices[i]] -= X_data[i] * w_j
+                norm2_cols_X[j] = normalize_sum + \
+                    (n_samples - endptr + startptr) * X_mean_j ** 2
                 if center:
-                    for jj in range(n_samples):
-                        R[jj] += X_mean_ii * w_ii
-                        R_sum += R[jj]
+                    for i in range(n_samples):
+                        R[i] += X_mean_j * w_j
+                        R_sum += R[i]
             else:
                 # R = sw * (y - np.dot(X, w))
-                for jj in range(startptr, endptr):
-                    tmp = sample_weight[X_indices[jj]]
+                for i in range(startptr, endptr):
+                    tmp = sample_weight[X_indices[i]]
                     # second term will be subtracted by loop over range(n_samples)
-                    normalize_sum += (tmp * (X_data[jj] - X_mean_ii) ** 2
-                                      - tmp * X_mean_ii ** 2)
-                    R[X_indices[jj]] -= tmp * X_data[jj] * w_ii
+                    normalize_sum += (tmp * (X_data[i] - X_mean_j) ** 2
+                                      - tmp * X_mean_j ** 2)
+                    R[X_indices[i]] -= tmp * X_data[i] * w_j
                 if center:
-                    for jj in range(n_samples):
-                        normalize_sum += sample_weight[jj] * X_mean_ii ** 2
-                        R[jj] += sample_weight[jj] * X_mean_ii * w_ii
-                        R_sum += R[jj]
-                norm_cols_X[ii] = normalize_sum
+                    for i in range(n_samples):
+                        normalize_sum += sample_weight[i] * X_mean_j ** 2
+                        R[i] += sample_weight[i] * X_mean_j * w_j
+                        R_sum += R[i]
+                norm2_cols_X[j] = normalize_sum
             startptr = endptr
 
         # Note: No need to update R_sum from here on because the update terms cancel
-        # each other: w_ii * np.sum(X[:,ii] - X_mean[ii]) = 0. R_sum is only ever
+        # each other: w_j * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever
         # needed and calculated if X_mean is provided.
 
         # tol *= np.dot(y, y)
@@ -560,69 +560,69 @@ def sparse_enet_coordinate_descent(
 
             for f_iter in range(n_features):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_features, rand_r_state)
                 else:
-                    ii = f_iter
+                    j = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if norm2_cols_X[j] == 0.0:
                     continue
 
-                startptr = X_indptr[ii]
-                endptr = X_indptr[ii + 1]
-                w_ii = w[ii]  # Store previous value
-                X_mean_ii = X_mean[ii]
+                startptr = X_indptr[j]
+                endptr = X_indptr[j + 1]
+                w_j = w[j]  # Store previous value
+                X_mean_j = X_mean[j]
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
+                if w_j != 0.0:
+                    # R += w_j * X[:,j]
                     if no_sample_weights:
-                        for jj in range(startptr, endptr):
-                            R[X_indices[jj]] += X_data[jj] * w_ii
+                        for i in range(startptr, endptr):
+                            R[X_indices[i]] += X_data[i] * w_j
                         if center:
-                            for jj in range(n_samples):
-                                R[jj] -= X_mean_ii * w_ii
+                            for i in range(n_samples):
+                                R[i] -= X_mean_j * w_j
                     else:
-                        for jj in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[jj]]
-                            R[X_indices[jj]] += tmp * X_data[jj] * w_ii
+                        for i in range(startptr, endptr):
+                            tmp = sample_weight[X_indices[i]]
+                            R[X_indices[i]] += tmp * X_data[i] * w_j
                         if center:
-                            for jj in range(n_samples):
-                                R[jj] -= sample_weight[jj] * X_mean_ii * w_ii
+                            for i in range(n_samples):
+                                R[i] -= sample_weight[i] * X_mean_j * w_j
 
-                # tmp = (X[:,ii] * R).sum()
+                # tmp = (X[:,j] * R).sum()
                 tmp = 0.0
-                for jj in range(startptr, endptr):
-                    tmp += R[X_indices[jj]] * X_data[jj]
+                for i in range(startptr, endptr):
+                    tmp += R[X_indices[i]] * X_data[i]
 
                 if center:
-                    tmp -= R_sum * X_mean_ii
+                    tmp -= R_sum * X_mean_j
 
                 if positive and tmp < 0.0:
-                    w[ii] = 0.0
+                    w[j] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                            / (norm_cols_X[ii] + beta)
+                    w[j] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                            / (norm2_cols_X[j] + beta)
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
+                if w[j] != 0.0:
+                    # R -=  w[j] * X[:,j] # Update residual
                     if no_sample_weights:
-                        for jj in range(startptr, endptr):
-                            R[X_indices[jj]] -= X_data[jj] * w[ii]
+                        for i in range(startptr, endptr):
+                            R[X_indices[i]] -= X_data[i] * w[j]
                         if center:
-                            for jj in range(n_samples):
-                                R[jj] += X_mean_ii * w[ii]
+                            for i in range(n_samples):
+                                R[i] += X_mean_j * w[j]
                     else:
-                        for jj in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[jj]]
-                            R[X_indices[jj]] -= tmp * X_data[jj] * w[ii]
+                        for i in range(startptr, endptr):
+                            tmp = sample_weight[X_indices[i]]
+                            R[X_indices[i]] -= tmp * X_data[i] * w[j]
                         if center:
-                            for jj in range(n_samples):
-                                R[jj] += sample_weight[jj] * X_mean_ii * w[ii]
+                            for i in range(n_samples):
+                                R[i] += sample_weight[i] * X_mean_j * w[j]
 
                 # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                d_w_max = fmax(d_w_max, d_w_ii)
+                d_w_j = fabs(w[j] - w_j)
+                d_w_max = fmax(d_w_max, d_w_j)
 
-                w_max = fmax(w_max, fabs(w[ii]))
+                w_max = fmax(w_max, fabs(w[j]))
 
             if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
@@ -631,14 +631,14 @@ def sparse_enet_coordinate_descent(
 
                 # XtA = X.T @ R - beta * w
                 # sparse X.T / dense R dot product
-                for ii in range(n_features):
-                    XtA[ii] = 0.0
-                    for kk in range(X_indptr[ii], X_indptr[ii + 1]):
-                        XtA[ii] += X_data[kk] * R[X_indices[kk]]
+                for j in range(n_features):
+                    XtA[j] = 0.0
+                    for kk in range(X_indptr[j], X_indptr[j + 1]):
+                        XtA[j] += X_data[kk] * R[X_indices[kk]]
 
                     if center:
-                        XtA[ii] -= X_mean[ii] * R_sum
-                    XtA[ii] -= beta * w[ii]
+                        XtA[j] -= X_mean[j] * R_sum
+                    XtA[j] -= beta * w[j]
 
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
@@ -650,10 +650,10 @@ def sparse_enet_coordinate_descent(
                     R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
                 else:
                     R_norm2 = 0.0
-                    for jj in range(n_samples):
+                    for i in range(n_samples):
                         # R is already multiplied by sample_weight
-                        if sample_weight[jj] != 0:
-                            R_norm2 += (R[jj] ** 2) / sample_weight[jj]
+                        if sample_weight[i] != 0:
+                            R_norm2 += (R[i] ** 2) / sample_weight[i]
 
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
