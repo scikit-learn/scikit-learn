@@ -739,16 +739,16 @@ def enet_coordinate_descent_gram(
     cdef floating y_norm2 = np.dot(y, y)
 
     cdef floating tmp
-    cdef floating w_ii
+    cdef floating w_j
     cdef floating d_w_max
     cdef floating w_max
-    cdef floating d_w_ii
+    cdef floating d_w_j
     cdef floating q_dot_w
     cdef floating w_norm2
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
-    cdef unsigned int ii
+    cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -768,36 +768,36 @@ def enet_coordinate_descent_gram(
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_features, rand_r_state)
                 else:
-                    ii = f_iter
+                    j = f_iter
 
-                if Q[ii, ii] == 0.0:
+                if Q[j, j] == 0.0:
                     continue
 
-                w_ii = w[ii]  # Store previous value
+                w_j = w[j]  # Store previous value
 
-                # if Q = X.T @ X then tmp = X[:,ii] @ (y - X @ w + X[:, ii] * w_ii)
-                tmp = q[ii] - Qw[ii] + w_ii * Q[ii, ii]
+                # if Q = X.T @ X then tmp = X[:,j] @ (y - X @ w + X[:, j] * w_j)
+                tmp = q[j] - Qw[j] + w_j * Q[j, j]
 
                 if positive and tmp < 0:
-                    w[ii] = 0.0
+                    w[j] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                        / (Q[ii, ii] + beta)
+                    w[j] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                        / (Q[j, j] + beta)
 
-                if w[ii] != 0.0 or w_ii != 0.0:
-                    # Qw +=  (w[ii] - w_ii) * Q[ii]  # Update Qw = Q @ w
-                    _axpy(n_features, w[ii] - w_ii, &Q[ii, 0], 1,
+                if w[j] != 0.0 or w_j != 0.0:
+                    # Qw +=  (w[j] - w_j) * Q[j]  # Update Qw = Q @ w
+                    _axpy(n_features, w[j] - w_j, &Q[j, 0], 1,
                           &Qw[0], 1)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
+                d_w_j = fabs(w[j] - w_j)
+                if d_w_j > d_w_max:
+                    d_w_max = d_w_j
 
-                if fabs(w[ii]) > w_max:
-                    w_max = fabs(w[ii])
+                if fabs(w[j]) > w_max:
+                    w_max = fabs(w[j])
 
             if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
@@ -807,8 +807,8 @@ def enet_coordinate_descent_gram(
                 # q_dot_w = w @ q
                 q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
 
-                for ii in range(n_features):
-                    XtA[ii] = q[ii] - Qw[ii] - beta * w[ii]
+                for j in range(n_features):
+                    XtA[j] = q[j] - Qw[j] - beta * w[j]
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
                 else:
