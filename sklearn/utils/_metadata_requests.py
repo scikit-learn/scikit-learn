@@ -1429,9 +1429,17 @@ class _MetadataRequester:
             super().__init_subclass__(**kwargs)
             return
 
+        if "ConsumingRegressor" in cls.__name__:
+            print("ConsumingRegressor")
+
         for method in SIMPLE_METHODS:
-            if hasattr(cls, f"set_{method}_request"):
-                # we don't want to override existing methods (e.g. in scorers)
+            # We only override descriptors set by parent classes, and not actual
+            # methods implemented by the classes. "set_{method}_request" is explicitly
+            # implemented in scorers and some splitters for instance.
+            existing_method = getattr(cls, f"set_{method}_request", None)
+            if existing_method is not None and "RequestMethod" not in getattr(
+                existing_method, "__qualname__", ""
+            ):
                 continue
             mmr = getattr(requests, method)
             # set ``set_{method}_request`` methods

@@ -576,7 +576,9 @@ def test_raises_on_score_list():
         grid_search.fit(X, y)
 
 
-@pytest.mark.parametrize("name", set(get_scorer_names()) - set(REGRESSION_SCORERS))
+@pytest.mark.parametrize(
+    "name", sorted(set(get_scorer_names()) - set(REGRESSION_SCORERS))
+)
 def test_classification_scorer_sample_weight(name):
     # Test that classification scorers support sample_weight or raise sensible
     # errors
