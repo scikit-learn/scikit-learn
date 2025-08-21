@@ -628,9 +628,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20)
+    >>> hdb = HDBSCAN(min_cluster_size=20, copy=True)
     >>> hdb.fit(X)
-    HDBSCAN(min_cluster_size=20)
+    HDBSCAN(min_cluster_size=20, copy=True)
     >>> hdb.labels_.shape == (X.shape[0],)
     True
     >>> np.unique(hdb.labels_).tolist()
@@ -716,9 +716,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        # TODO(1.10): remove "warn" option
         if self.copy == "warn":
             warn(
-                "The default value of `copy` will change from False to True in 1.10",
+                "The default value of `copy` will change from False to True in 1.10."
+                " Explicitly set a value for `copy` to silence this warning.",
                 FutureWarning,
             )
             self._copy = False
