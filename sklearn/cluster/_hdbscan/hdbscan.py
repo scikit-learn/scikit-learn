@@ -55,7 +55,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
-from sklearn.utils._param_validation import Interval, StrOptions, Hidden
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _assert_all_finite,

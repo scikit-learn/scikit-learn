@@ -316,7 +316,10 @@ def test_hdbscan_centers(algorithm):
 
     # Ensure that nothing is done for noise
     hdb = HDBSCAN(
-        algorithm=algorithm, store_centers="both", min_cluster_size=X.shape[0], copy=True
+        algorithm=algorithm,
+        store_centers="both",
+        min_cluster_size=X.shape[0],
+        copy=True,
     ).fit(X)
     assert hdb.centroids_.shape[0] == 0
     assert hdb.medoids_.shape[0] == 0
@@ -563,7 +566,11 @@ def test_hdbscan_error_precomputed_and_store_centers(store_centers):
     X_dist = euclidean_distances(X)
     err_msg = "Cannot store centers when using a precomputed distance matrix."
     with pytest.raises(ValueError, match=err_msg):
-        HDBSCAN(metric="precomputed", store_centers=store_centers, copy=True).fit(X_dist)
+        HDBSCAN(
+            metric="precomputed",
+            store_centers=store_centers,
+            copy=True,
+        ).fit(X_dist)
 
 
 @pytest.mark.parametrize("valid_algo", ["auto", "brute"])
