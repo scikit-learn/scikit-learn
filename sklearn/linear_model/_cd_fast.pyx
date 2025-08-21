@@ -307,7 +307,7 @@ def enet_coordinate_descent(
                     excluded_set[j] = 0
                     n_active += 1
                 else:
-                    # R += w_j * X[:,j]
+                    # R += w[j] * X[:,j]
                     _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
                     w[j] = 0
                     excluded_set[j] = 1
@@ -382,7 +382,7 @@ def enet_coordinate_descent(
                             excluded_set[j] = 0
                             n_active += 1
                         else:
-                            # R += w_j * X[:,j]
+                            # R += w[j] * X[:,j]
                             _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
                             w[j] = 0
                             excluded_set[j] = 1
