@@ -892,7 +892,7 @@ def enet_coordinate_descent_multi_task(
                 #        &R[0, 0], n_tasks)
                 # Using BLAS Level 1 (faster for small vectors like here):
                 for jj in range(n_tasks):
-                    if W[jj, ii] != 0 or w_ii[jj] != 0.0:
+                    if W[jj, ii] != w_ii[jj]:
                         _axpy(n_samples, w_ii[jj] - W[jj, ii], &X[0, ii], 1,
                               &R[0, jj], 1)
 
