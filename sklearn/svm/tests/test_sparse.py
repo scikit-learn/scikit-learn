@@ -80,17 +80,21 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
     if isinstance(dense_svm, svm.OneClassSVM):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
-        assert_array_almost_equal(
-            dense_svm.predict_proba(X_test_dense),
-            sparse_svm.predict_proba(X_test),
-            decimal=4,
-        )
+        if hasattr(dense_svm, "predict_proba"):
+            assert_array_almost_equal(
+                dense_svm.predict_proba(X_test_dense),
+                sparse_svm.predict_proba(X_test),
+                decimal=4,
+            )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.issparse(X_test):
         with pytest.raises(ValueError, match=msg):
             dense_svm.predict(X_test)
 
 
+# XXX: probability=True is not thread-safe:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 @skip_if_32bit
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",

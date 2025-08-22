@@ -53,5 +53,7 @@ fi
 # in the pyproject.toml file, while the tests are run
 # against the most recent version of the dependencies
 
-python -m pip install cibuildwheel
+# We install cibuildwheel 3.1.3 as a temporary work-around to avoid a loky
+# issue on Windows >= 3.13.7, see https://github.com/joblib/loky/issues/459.
+python -m pip install cibuildwheel==3.1.3
 python -m cibuildwheel --output-dir wheelhouse

@@ -27,6 +27,7 @@ from sklearn.linear_model import (
     lars_path,
     lasso_path,
 )
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.model_selection import (
     BaseCrossValidator,
@@ -83,6 +84,72 @@ def test_set_order_sparse(order, input_order, coo_container):
     format = "csc" if order == "F" else "csr"
     assert sparse.issparse(X2) and X2.format == format
     assert sparse.issparse(y2) and y2.format == format
+
+
+def test_cython_solver_equivalence():
+    """Test that all 3 Cython solvers for 1-d targets give same results."""
+    X, y = make_regression()
+    X_mean = X.mean(axis=0)
+    X_centered = np.asfortranarray(X - X_mean)
+    y -= y.mean()
+    alpha_max = np.linalg.norm(X.T @ y, ord=np.inf)
+    alpha = alpha_max / 10
+    params = {
+        "beta": 0,
+        "max_iter": 100,
+        "tol": 1e-10,
+        "rng": np.random.RandomState(0),  # not used, but needed as argument
+        "random": False,
+        "positive": False,
+    }
+
+    coef_1 = np.zeros(X.shape[1])
+    coef_2, coef_3, coef_4 = coef_1.copy(), coef_1.copy(), coef_1.copy()
+
+    # For alpha_max, coefficients must all be zero.
+    cd_fast.enet_coordinate_descent(
+        w=coef_1, alpha=alpha_max, X=X_centered, y=y, **params
+    )
+    assert_allclose(coef_1, 0)
+
+    # Without gap safe screening rules
+    cd_fast.enet_coordinate_descent(
+        w=coef_1, alpha=alpha, X=X_centered, y=y, **params, do_screening=False
+    )
+    # At least 2 coefficients are non-zero
+    assert 2 <= np.sum(np.abs(coef_1) > 1e-8) < X.shape[1]
+
+    # With gap safe screening rules
+    cd_fast.enet_coordinate_descent(
+        w=coef_2, alpha=alpha, X=X_centered, y=y, **params, do_screening=True
+    )
+    assert_allclose(coef_2, coef_1)
+
+    # Sparse
+    Xs = sparse.csc_matrix(X)
+    cd_fast.sparse_enet_coordinate_descent(
+        w=coef_3,
+        alpha=alpha,
+        X_data=Xs.data,
+        X_indices=Xs.indices,
+        X_indptr=Xs.indptr,
+        y=y,
+        sample_weight=None,
+        X_mean=X_mean,
+        **params,
+    )
+    assert_allclose(coef_3, coef_1)
+
+    # Gram
+    cd_fast.enet_coordinate_descent_gram(
+        w=coef_4,
+        alpha=alpha,
+        Q=X_centered.T @ X_centered,
+        q=X_centered.T @ y,
+        y=y,
+        **params,
+    )
+    assert_allclose(coef_4, coef_1)
 
 
 def test_lasso_zero():
@@ -755,8 +822,11 @@ def test_elasticnet_precompute_gram():
     assert_allclose(clf1.coef_, clf2.coef_)
 
 
-def test_warm_start_convergence():
+@pytest.mark.parametrize("sparse_X", [True, False])
+def test_warm_start_convergence(sparse_X):
     X, y, _, _ = build_dataset()
+    if sparse_X:
+        X = sparse.csr_matrix(X)
     model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
     n_iter_reference = model.n_iter_
 
@@ -769,12 +839,17 @@ def test_warm_start_convergence():
     n_iter_cold_start = model.n_iter_
     assert n_iter_cold_start == n_iter_reference
 
-    # Fit the same model again, using a warm start: the optimizer just performs
-    # a single pass before checking that it has already converged
     model.set_params(warm_start=True)
     model.fit(X, y)
     n_iter_warm_start = model.n_iter_
-    assert n_iter_warm_start == 1
+    if sparse_X:
+        # TODO: sparse_enet_coordinate_descent is not yet updated.
+        # Fit the same model again, using a warm start: the optimizer just performs
+        # a single pass before checking that it has already converged
+        assert n_iter_warm_start == 1
+    else:
+        # enet_coordinate_descent checks dual gap before entering the main loop
+        assert n_iter_warm_start == 0
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
@@ -1429,7 +1504,7 @@ def test_enet_alpha_max(X_is_sparse, fit_intercept, sample_weight):
     assert_allclose(reg.coef_, 0, atol=1e-5)
     alpha_max = reg.alpha_
     # Test smaller alpha makes coefs nonzero.
-    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
+    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept, tol=1e-8)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 
