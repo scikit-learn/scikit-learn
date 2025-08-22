@@ -1518,46 +1518,6 @@ class _MetadataRequester:
 
         return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
-    def _build_request_for_signature(self, method):
-        """Build the `MethodMetadataRequest` for a method using its signature.
-
-        This method takes all arguments from the method signature and uses
-        ``None`` as their default request value, except ``X``, ``y``, ``Y``,
-        ``Xt``, ``yt``, ``*args``, and ``**kwargs``.
-
-        Parameters
-        ----------
-        method : str
-            The name of the method.
-
-        Returns
-        -------
-        method_request : MethodMetadataRequest
-            The prepared request using the method's signature.
-        """
-        mmr = MethodMetadataRequest(owner=self, method=method)
-        method_metadata_args = self._get_class_level_metadata_request_values(method)
-        for param, alias in method_metadata_args.items():
-            mmr.add_request(param=param, alias=alias)
-        return mmr
-
-    def _get_default_requests(self):
-        """Collect default request values.
-
-        This method combines the information present in ``__metadata_request__*``
-        class attributes, as well as determining request keys from method
-        signatures.
-        """
-        requests = MetadataRequest(owner=self)
-
-        for method in SIMPLE_METHODS:
-            setattr(
-                requests,
-                method,
-                self._build_request_for_signature(method=method),
-            )
-        return requests
-
     def _get_metadata_request(self):
         """Get requested metadata for the instance.
 
@@ -1572,8 +1532,17 @@ class _MetadataRequester:
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
         else:
-            requests = self._get_default_requests()
-
+            requests = MetadataRequest(owner=self)
+            for method in SIMPLE_METHODS:
+                setattr(
+                    requests,
+                    method,
+                    MethodMetadataRequest(
+                        owner=self,
+                        method=method,
+                        requests=self._get_class_level_metadata_request_values(method),
+                    ),
+                )
         return requests
 
     def get_metadata_routing(self):
