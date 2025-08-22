@@ -26,14 +26,14 @@ void set_seed(unsigned custom_seed) {
 }
 
 // - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
-inline uint32_t bounded_rand_int(uint32_t range) {
+inline uint32_t bounded_rand_int_local(uint32_t range, std::mt19937& mt_rand_local) {
     // "LibSVM / LibLinear Original way" - make a 31bit positive
     // random number and use modulo to make it fit in the range
     // return abs( (int)mt_rand()) % range;
 
     // "Better way": tweaked Lemire post-processor
     // from http://www.pcg-random.org/posts/bounded-rands.html
-    uint32_t x = mt_rand();
+    uint32_t x = mt_rand_local();
     uint64_t m = uint64_t(x) * uint64_t(range);
     uint32_t l = uint32_t(m);
     if (l < range) {
@@ -44,12 +44,17 @@ inline uint32_t bounded_rand_int(uint32_t range) {
                 t %= range;
         }
         while (l < t) {
-            x = mt_rand();
+            x = mt_rand_local();
             m = uint64_t(x) * uint64_t(range);
             l = uint32_t(m);
         }
     }
     return m >> 32;
+}
+
+// - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
+inline uint32_t bounded_rand_int(uint32_t range) {
+    return bounded_rand_int_local(range, mt_rand);
 }
 
 #ifdef __cplusplus
