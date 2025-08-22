@@ -839,7 +839,8 @@ def enet_coordinate_descent_gram(
         gap, dual_norm_XtA = gram_gap_enet(
             n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
         )
-        if gap <= tol:
+        if 0 <= gap <= tol:
+            # Only if gap >=0 as singular Q may cause dubious values of gap.
             with gil:
                 return np.asarray(w), gap, tol, 0
 
