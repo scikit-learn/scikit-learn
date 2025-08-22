@@ -6,7 +6,7 @@ import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn import datasets, svm
-from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -29,6 +29,7 @@ from sklearn.multiclass import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
@@ -85,62 +86,17 @@ def test_check_classification_targets():
 def test_conditional_attrs_not_in_dir():
     # Test that __dir__ includes only relevant attributes. #28558
 
-    class Estimator1(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
-        def __init__(self, *, param=1):
-            self.param = param
+    encoder = LabelEncoder()
+    assert "set_output" not in dir(encoder)
 
-        def fit(self, X, y=None):
-            return self
+    scalar = StandardScaler()
+    assert "set_output" in dir(scalar)
 
-        def predict(self, X):
-            return np.full(shape=len(X), fill_value=self.param)
+    svc = SVC(probability=False)
+    assert "predict_proba" not in dir(svc)
 
-        def transform(self, X):
-            return np.full(shape=len(X), fill_value=self.param)
-
-    val1 = Estimator1()
-    assert "set_output" not in dir(val1)
-
-    class Estimator2(
-        TransformerMixin, BaseEstimator, auto_wrap_output_keys=("transform",)
-    ):
-        def __init__(self, *, param=1):
-            self.param = param
-
-        def fit(self, X, y=None):
-            return self
-
-        def predict(self, X):
-            return np.full(shape=len(X), fill_value=self.param)
-
-        def transform(self, X):
-            return np.full(shape=len(X), fill_value=self.param)
-
-        def get_feature_names_out(self, input_features=None):
-            return np.full(shape=len(input_features), fill_value=self.param)
-
-    val2 = Estimator2()
-    assert "set_output" in dir(val2)
-
-    class Estimator3(SVC):
-        def __init__(self, *, param=1):
-            self.param = param
-            self.probability = False
-
-        def fit(self, X, y=None):
-            self.is_fitted_ = True
-            return self
-
-        def predict(self, X):
-            return np.full(shape=X.shape[0], fill_value=self.param)
-
-    val3 = Estimator3()
-
-    assert "predict_proba" not in dir(val3)
-
-    val3.probability = True
-
-    assert "predict_proba" in dir(val3)
+    svc.probability = True
+    assert "predict_proba" in dir(svc)
 
 
 def test_ovr_ties():
