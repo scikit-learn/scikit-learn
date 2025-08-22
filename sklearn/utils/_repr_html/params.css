@@ -4,6 +4,10 @@
     cursor: pointer;
 }
 
+.estimator-table summary::marker {
+    font-size: 0.7rem;
+}
+
 .estimator-table details[open] {
     padding-left: 0.1rem;
     padding-right: 0.1rem;
