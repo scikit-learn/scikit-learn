@@ -12,11 +12,9 @@ def _weighted_percentile(
 ):
     """Compute the weighted percentile.
 
-    Uses 'inverted_cdf' method when `average=False` (default) and
-    'averaged_inverted_cdf' when `average=True`.
-
-    When the percentile lies between two data points of `array`, the function returns
-    the lower value.
+    Implement an array API compatible (weighted version) of NumPy's 'inverted_cdf'
+    method when `average=False` (default) and 'averaged_inverted_cdf' when
+    `average=True`.
 
     If `array` is a 2D array, the `values` are selected along axis 0.
 
@@ -29,6 +27,10 @@ def _weighted_percentile(
 
         .. versionchanged:: 1.7
             Supports handling of `NaN` values.
+
+        .. versionchanged:: 1.8
+            Supports `average`, which calculates percentile using
+            "averaged_inverted_cdf" method.
 
     Parameters
     ----------
@@ -127,9 +129,6 @@ def _weighted_percentile(
         fraction_above = (
             weight_cdf[col_indices, percentile_indices] - adjusted_percentile_rank
         )
-        # Alternatively, could use
-        # `is_exact_percentile = fraction_above <= xp.finfo(floating_dtype).eps`
-        # but that seems harder to read
         is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
         percentile_plus_one_indices = xp.clip(percentile_indices + 1, 0, max_idx)
         percentile_plus_one_in_sorted = sorted_idx[

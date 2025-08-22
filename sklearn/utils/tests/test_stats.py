@@ -78,13 +78,16 @@ def test_weighted_percentile_plus_one_clip_max(percentile_rank):
 
     `percentile_plus_one_indices` can exceed max index when `percentile_indices`
     is already at max index.
-    Note that when `g` (Hyndman and Fan) / `fraction_above` greater than 0,
+    Note that when `g` (Hyndman and Fan) / `fraction_above` is greater than 0,
     `j+1` (Hyndman and Fan) / `percentile_plus_one_indices` is calculated but
-    never used (so it does not matter what this value is).
-    When `g=0` and `percentile_indices` is at max index, quantile is perfectly at 100
-    and take the average of 2x the max index.
+    never used, so it does not matter what this value is.
+    When percentile of percentile rank 100 falls exactly on the last value in the
+    `weighted_cdf`, `g=0` and `percentile_indices` is at max index. In this case
+    we set `percentile_plus_one_indices` to be max index as well, so the result is
+    the average of 2x the max index (i.e. last value of `weighted_cdf`).
     """
-    # Note for both spercentile_rank`s`,`percentile_indices` is already at max index
+    # Note for both `percentile_rank`s 50 and 100,`percentile_indices` is already at
+    # max index
     y = np.array([[0, 0], [1, 1]])
     sw = np.array([[0.1, 0.1], [2, 2]])
     score = _weighted_percentile(y, sw, percentile_rank)
