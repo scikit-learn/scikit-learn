@@ -43,7 +43,7 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.22.0", "scipy>=1.8.0", "cython>=3.0.10", "meson-python>=0.17.1"]
+build = ["numpy>=1.22.0", "scipy>=1.8.0", "cython>=3.1.2", "meson-python>=0.17.1"]
 install = ["numpy>=1.22.0", "scipy>=1.8.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
 benchmark = ["matplotlib>=3.5.0", "pandas>=1.4.0", "memory_profiler>=0.57.0"]
 docs = [
@@ -98,7 +98,7 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.16.0",
-    "Cython>=3.0.10",
+    "Cython>=3.1.2",
     "numpy>=2",
     "scipy>=1.8.0",
 ]
