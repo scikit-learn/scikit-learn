@@ -597,6 +597,9 @@ def test_paired_distances_callable(global_dtype):
         paired_distances(X, Y)
 
 
+# XXX: thread-safety bug tracked at:
+# https://github.com/scikit-learn/scikit-learn/issues/31884
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("dok_container", DOK_CONTAINERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_pairwise_distances_argmin_min(dok_container, csr_container, global_dtype):
