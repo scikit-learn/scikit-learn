@@ -37,17 +37,17 @@
 
 .user-set td {
     color:rgb(255, 94, 0);
-    text-align: left;
+
 }
 
 .user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
+    color:rgb(255, 94, 0);
+    background-color: transparent;
 }
 
 .default td {
     color: black;
-    text-align: left;
+
 }
 
 .user-set td i,
@@ -57,11 +57,9 @@
 
 
 /* Styles for parameter documentation links */
-a.param-doc-link,
-a.param-doc-link:link,
-a.param-doc-link:visited {
+a.param-doc-link {
     text-decoration: none;
-    border-bottom: 1px dashed #666;
+    border-bottom: .01em dashed #666;
     position: relative;
     color: inherit;
     display: inline;
@@ -73,37 +71,28 @@ a.param-doc-link:visited {
     z-index: 9999;
     left: 0;
     padding: .5ex;
-    margin-top: .5ex;
     color: var(--sklearn-color-text);
-    box-shadow: 2pt 2pt 4pt #999;
+    box-shadow: .3em .3em .4em #999;
     width: max-content;
-    max-width: 83ch;
     text-align: left;
-    height: max-content;
-    max-height: 150px;
+    max-height: 150em;
     overflow-y: auto;
 
     /* unfitted */
     background: var(--sklearn-color-unfitted-level-0);
-    border: .5pt solid var(--sklearn-color-unfitted-level-3);
-
+    border: thin solid var(--sklearn-color-unfitted-level-3);
 }
 
 /* Fitted state for parameter tooltips */
 .fitted .param-doc-description {
     /* fitted */
     background: var(--sklearn-color-fitted-level-0);
-    border: .5pt solid var(--sklearn-color-fitted-level-3);
+    border: thin solid var(--sklearn-color-fitted-level-3);
 }
 
 .param-doc-link:hover .param-doc-description {
     display: block;
 }
-
-.param-doc-link:not(:hover) .param-doc-description {
-    transition-delay: 0.1s;
-}
-
 
 .copy-paste-icon {
     background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NDggNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNy4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjUgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTIwOCAwTDMzMi4xIDBjMTIuNyAwIDI0LjkgNS4xIDMzLjkgMTQuMWw2Ny45IDY3LjljOSA5IDE0LjEgMjEuMiAxNC4xIDMzLjlMNDQ4IDMzNmMwIDI2LjUtMjEuNSA0OC00OCA0OGwtMTkyIDBjLTI2LjUgMC00OC0yMS41LTQ4LTQ4bDAtMjg4YzAtMjYuNSAyMS41LTQ4IDQ4LTQ4ek00OCAxMjhsODAgMCAwIDY0LTY0IDAgMCAyNTYgMTkyIDAgMC0zMiA2NCAwIDAgNDhjMCAyNi41LTIxLjUgNDgtNDggNDhMNDggNTEyYy0yNi41IDAtNDgtMjEuNS00OC00OEwwIDE3NmMwLTI2LjUgMjEuNS00OCA0OC00OHoiLz48L3N2Zz4=);
