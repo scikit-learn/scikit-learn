@@ -1,0 +1,81 @@
+Metadata-Version: 2.4
+Name: numpydoc
+Version: 1.9.0
+Summary: Sphinx extension to support docstrings in Numpy format
+Author-email: Pauli Virtanen and others <pav@iki.fi>
+License: Copyright (C) 2008-2023 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are
+        met:
+        
+         1. Redistributions of source code must retain the above copyright
+            notice, this list of conditions and the following disclaimer.
+         2. Redistributions in binary form must reproduce the above copyright
+            notice, this list of conditions and the following disclaimer in
+            the documentation and/or other materials provided with the
+            distribution.
+        
+        THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+        IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+        WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+        INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+        (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+        HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+        STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+        IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+        POSSIBILITY OF SUCH DAMAGE.
+        
+Project-URL: Homepage, https://numpydoc.readthedocs.io
+Project-URL: Source, https://github.com/numpy/numpydoc/
+Keywords: sphinx,numpy
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Plugins
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Documentation
+Requires-Python: >=3.9
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+Requires-Dist: sphinx>=6
+Requires-Dist: tomli>=1.1.0; python_version < "3.11"
+Dynamic: license-file
+
+=====================================
+numpydoc -- Numpy's Sphinx extensions
+=====================================
+
+.. image:: https://readthedocs.org/projects/numpydoc/badge/?version=latest
+   :alt: Documentation Status
+   :target: https://numpydoc.readthedocs.io/en/latest/
+
+.. image:: https://codecov.io/gh/numpy/numpydoc/branch/main/graph/badge.svg
+   :target: https://app.codecov.io/gh/numpy/numpydoc/branch/main
+
+.. image:: https://github.com/numpy/numpydoc/actions/workflows/test.yml/badge.svg?branch=main
+   :target: https://github.com/numpy/numpydoc/actions/workflows/test.yml
+
+This package provides the ``numpydoc`` Sphinx extension for handling
+docstrings formatted according to the NumPy documentation format.
+The extension also adds the code description directives
+``np:function``, ``np-c:function``, etc.
+
+numpydoc requires Python 3.9+ and sphinx 6+.
+
+For usage information, please refer to the `documentation
+<https://numpydoc.readthedocs.io/>`_.
+
+The `numpydoc docstring guide
+<https://numpydoc.readthedocs.io/en/latest/format.html>`_ explains how
+to write docs formatted for this extension, and the `user guide
+<https://numpydoc.readthedocs.io>`_ explains how to use it with Sphinx.

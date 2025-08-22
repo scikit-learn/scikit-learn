@@ -1,0 +1,23 @@
+[theme]
+inherit = "none"
+stylesheets = [
+    "basic.css",
+]
+sidebars = [
+    "localtoc.html",
+    "relations.html",
+    "sourcelink.html",
+    "searchbox.html",
+]
+pygments_style = { default = "none" }
+
+[options]
+nosidebar = "false"
+sidebarwidth = "230"
+body_min_width = "360"
+body_max_width = "800"
+navigation_with_keys = "False"
+enable_search_shortcuts = "True"
+globaltoc_collapse = "true"
+globaltoc_includehidden = "false"
+globaltoc_maxdepth = ""
