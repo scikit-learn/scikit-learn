@@ -75,7 +75,7 @@ a.param-doc-link {
     box-shadow: .3em .3em .4em #999;
     width: max-content;
     text-align: left;
-    max-height: 150em;
+    max-height: 10em;
     overflow-y: auto;
 
     /* unfitted */
