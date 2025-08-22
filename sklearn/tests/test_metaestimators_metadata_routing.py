@@ -306,7 +306,7 @@ METAESTIMATORS: list = [
         "metaestimator": RANSACRegressor,
         "estimator_name": "estimator",
         "estimator": "regressor",
-        "init_args": {"min_samples": 0.5},
+        "init_args": {"min_samples": 0.5, "max_trials": 10},
         "X": X,
         "y": y,
         "preserves_metadata": "subset",

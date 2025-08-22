@@ -1,0 +1,4 @@
+- :class:`pipeline.FeatureUnion` now validates that all transformers return 2D outputs
+  and raises an informative error when transformers return 1D outputs, preventing
+  silent failures that previously produced meaningless concatenated results.
+  By :user:`gguiomar <gguiomar>`.

@@ -161,10 +161,7 @@ from sklearn.preprocessing import (
     StandardScaler,
     TargetEncoder,
 )
-from sklearn.random_projection import (
-    GaussianRandomProjection,
-    SparseRandomProjection,
-)
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
 from sklearn.semi_supervised import (
     LabelPropagation,
     LabelSpreading,

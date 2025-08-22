@@ -3,6 +3,7 @@
 # This script fails if there are not comments to be posted.
 
 import os
+import re
 
 import requests
 
@@ -20,7 +21,7 @@ def get_versions(versions_file):
     versions : dict
         A dictionary with the versions of the packages.
     """
-    with open("versions.txt", "r") as f:
+    with open(versions_file, "r") as f:
         return dict(line.strip().split("=") for line in f)
 
 
@@ -304,6 +305,9 @@ if __name__ == "__main__":
             "One of the following environment variables is not set: "
             "GITHUB_REPOSITORY, GITHUB_TOKEN, PR_NUMBER, LOG_FILE, RUN_ID"
         )
+
+    if not re.match(r"\d+$", pr_number):
+        raise ValueError(f"PR_NUMBER should be a number, got {pr_number!r} instead")
 
     try:
         comment = find_lint_bot_comments(repo, token, pr_number)

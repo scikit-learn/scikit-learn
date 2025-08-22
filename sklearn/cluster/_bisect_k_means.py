@@ -8,22 +8,22 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import _fit_context
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Integral, Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import (
-    _check_sample_weight,
-    check_is_fitted,
-    check_random_state,
-    validate_data,
-)
-from ._k_means_common import _inertia_dense, _inertia_sparse
-from ._kmeans import (
+from sklearn.base import _fit_context
+from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
+from sklearn.cluster._kmeans import (
     _BaseKMeans,
     _kmeans_single_elkan,
     _kmeans_single_lloyd,
     _labels_inertia_threadpool_limit,
+)
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Integral, Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    check_random_state,
+    validate_data,
 )
 
 

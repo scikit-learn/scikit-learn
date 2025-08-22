@@ -10,10 +10,10 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import get_namespace
-from ..utils.fixes import VisibleDeprecationWarning
-from ._unique import attach_unique, cached_unique
-from .validation import _assert_all_finite, check_array
+from sklearn.utils._array_api import get_namespace
+from sklearn.utils._unique import attach_unique, cached_unique
+from sklearn.utils.fixes import VisibleDeprecationWarning
+from sklearn.utils.validation import _assert_all_finite, check_array
 
 
 def _unique_multiclass(y, xp=None):
@@ -418,7 +418,8 @@ def type_of_target(y, input_name="", raise_unknown=False):
         # Only raise the warning when we have at least 20 samples.
         warnings.warn(
             "The number of unique classes is greater than 50% of the number "
-            "of samples.",
+            "of samples. `y` could represent a regression problem, not a "
+            "classification problem.",
             UserWarning,
             stacklevel=2,
         )
