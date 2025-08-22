@@ -62,15 +62,13 @@ a.param-doc-link:link,
 a.param-doc-link:visited {
     text-decoration: none;
     border-bottom: 1px dashed #666;
-    border-bottom-style: dashed;
-    border-bottom-width: 1px;
     position: relative;
     color: inherit;
     display: inline;
 }
 
 .param-doc-description {
-    display: block;
+    display: none;
     position: absolute;
     z-index: 9999;
     left: 0;
@@ -89,40 +87,23 @@ a.param-doc-link:visited {
     background: var(--sklearn-color-unfitted-level-0);
     border: .5pt solid var(--sklearn-color-unfitted-level-3);
 
-    /* Hide by default */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-
-    /* Transition for smooth show/hide */
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    transition-delay: 0s;
 }
 
 /* Fitted state for parameter tooltips */
 .fitted .param-doc-description {
     /* fitted */
     background: var(--sklearn-color-fitted-level-0);
-    border: var(--sklearn-color-fitted-level-3);
+    border: .5pt solid var(--sklearn-color-fitted-level-3);
 }
 
 .param-doc-link:hover .param-doc-description {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transition-delay: 0s;
+    display: block;
 }
 
 .param-doc-link:not(:hover) .param-doc-description {
     transition-delay: 0.1s;
 }
 
-.param-doc-description:hover {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transition-delay: 0s;
-}
 
 .copy-paste-icon {
     background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NDggNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNy4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjUgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTIwOCAwTDMzMi4xIDBjMTIuNyAwIDI0LjkgNS4xIDMzLjkgMTQuMWw2Ny45IDY3LjljOSA5IDE0LjEgMjEuMiAxNC4xIDMzLjlMNDQ4IDMzNmMwIDI2LjUtMjEuNSA0OC00OCA0OGwtMTkyIDBjLTI2LjUgMC00OC0yMS41LTQ4LTQ4bDAtMjg4YzAtMjYuNSAyMS41LTQ4IDQ4LTQ4ek00OCAxMjhsODAgMCAwIDY0LTY0IDAgMCAyNTYgMTkyIDAgMC0zMiA2NCAwIDAgNDhjMCAyNi41LTIxLjUgNDgtNDggNDhMNDggNTEyYy0yNi41IDAtNDgtMjEuNS00OC00OEwwIDE3NmMwLTI2LjUgMjEuNS00OCA0OC00OHoiLz48L3N2Zz4=);
