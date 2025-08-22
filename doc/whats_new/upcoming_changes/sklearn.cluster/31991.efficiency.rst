@@ -1,0 +1,2 @@
+- :func:`cluster.kmeans_plusplus` now uses `np.cumsum` instead of the undocumented `utils.extmath.stable_cumsum`.
+  By :user:`Tiziano Zito <otizonaizit>`.
