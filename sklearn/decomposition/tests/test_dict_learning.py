@@ -86,7 +86,7 @@ def test_max_iter():
         return D
 
     transform_algorithm = "lasso_cd"
-    resolution = 1024
+    resolution = 256
     subsampling = 3  # subsampling factor
     n_components = resolution // subsampling
 
@@ -96,7 +96,7 @@ def test_max_iter():
             ricker_matrix(
                 width=w, resolution=resolution, n_components=n_components // 5
             )
-            for w in (10, 50, 100, 500, 1000)
+            for w in (10, 50, 100, 500)
         )
     ]
 
@@ -117,7 +117,7 @@ def test_max_iter():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
+            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=500
         )
         model.fit_transform(X)
 

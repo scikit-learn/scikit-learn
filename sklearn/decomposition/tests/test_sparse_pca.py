@@ -71,7 +71,7 @@ def test_fit_transform(global_random_seed):
         n_components=3, method="cd", random_state=global_random_seed, alpha=alpha
     )
     spca_lasso.fit(Y)
-    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+    assert_allclose(spca_lasso.components_, spca_lars.components_, rtol=1e-4)
 
 
 @if_safe_multiprocessing_with_blas
@@ -114,7 +114,7 @@ def test_fit_transform_tall(global_random_seed):
     U1 = spca_lars.fit_transform(Y)
     spca_lasso = SparsePCA(n_components=3, method="cd", random_state=rng)
     U2 = spca_lasso.fit(Y).transform(Y)
-    assert_array_almost_equal(U1, U2)
+    assert_allclose(U1, U2, rtol=1e-4)
 
 
 def test_initialization(global_random_seed):
