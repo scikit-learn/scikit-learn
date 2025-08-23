@@ -25,7 +25,7 @@ void set_seed(unsigned custom_seed) {
     mt_rand.seed(custom_seed);
 }
 
-// - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
+// - (3) New internal `bounded_rand_int_local` function, used instead of rand() everywhere.
 inline uint32_t bounded_rand_int_local(uint32_t range, std::mt19937& mt_rand_local) {
     // "LibSVM / LibLinear Original way" - make a 31bit positive
     // random number and use modulo to make it fit in the range
@@ -52,7 +52,8 @@ inline uint32_t bounded_rand_int_local(uint32_t range, std::mt19937& mt_rand_loc
     return m >> 32;
 }
 
-// - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
+// - (4) New internal `bounded_rand_int` function, used instead of rand() everywhere.
+// Use the shared random number generator instead of a local one
 inline uint32_t bounded_rand_int(uint32_t range) {
     return bounded_rand_int_local(range, mt_rand);
 }
