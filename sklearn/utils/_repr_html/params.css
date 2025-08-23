@@ -59,7 +59,7 @@
 /* Styles for parameter documentation links */
 a.param-doc-link {
     text-decoration: none;
-    border-bottom: .01em dashed #666;
+    border-bottom: .06em dashed #666;
     position: relative;
     color: inherit;
     display: inline;
