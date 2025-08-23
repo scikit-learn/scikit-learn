@@ -888,7 +888,7 @@ def enet_coordinate_descent_gram(
                     w[j] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
                         / (Q[j, j] + beta)
 
-                if w[j] != 0.0 or w_j != 0.0:
+                if w[j] != w_j:
                     # Qw += (w[j] - w_j) * Q[j]  # Update Qw = Q @ w
                     _axpy(n_features, w[j] - w_j, &Q[j, 0], 1, &Qw[0], 1)
 
