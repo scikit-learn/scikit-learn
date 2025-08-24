@@ -717,16 +717,6 @@ def test_scoring_is_not_metric():
         check_scoring(KMeans(), scoring=cluster_module.rand_score)
 
 
-def test_deprecated_scorer():
-    X, y = make_regression(n_samples=10, n_features=1, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    reg = DecisionTreeRegressor()
-    reg.fit(X_train, y_train)
-    deprecated_scorer = get_scorer("max_error")
-    with pytest.warns(DeprecationWarning):
-        deprecated_scorer(reg, X_test, y_test)
-
-
 @pytest.mark.parametrize(
     (
         "scorers,expected_predict_count,"
