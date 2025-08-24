@@ -1,215 +1,462 @@
-import numpy as np
-import time
-import pandas as pd
-from sklearn.linear_model import QuantileRegressor
-from sklearn.metrics import mean_pinball_loss
-from tqdm import tqdm
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
-import math
-import matplotlib
-import matplotlib.pyplot as plt
-import seaborn as sns
+from numbers import Real
 
-sns.set_theme(style="whitegrid")
+import numpy as np
+from scipy import sparse
+from scipy.optimize import linprog
+
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils import _safe_indexing
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
-class QuantileRegressorBenchmark(QuantileRegressor):
-    def __init__(self, N, k, rng, solver, solver_options=None, n_iter=5):
-        super().__init__(solver=solver, solver_options=solver_options, alpha=0)
+class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
+    """Linear regression model that predicts conditional quantiles.
 
-        self.N = N
-        self.k = k
-        self.n_iter = n_iter
+    The linear :class:`QuantileRegressor` optimizes the pinball loss for a
+    desired `quantile` and is robust to outliers.
+
+    This model uses an L1 regularization like
+    :class:`~sklearn.linear_model.Lasso`.
+
+    Read more in the :ref:`User Guide <quantile_regression>`.
+
+    .. versionadded:: 1.0
+
+    Parameters
+    ----------
+    quantile : float, default=0.5
+        The quantile that the model tries to predict. It must be strictly
+        between 0 and 1. If 0.5 (default), the model predicts the 50%
+        quantile, i.e. the median.
+
+    alpha : float, default=1.0
+        Regularization constant that multiplies the L1 penalty term.
+
+    fit_intercept : bool, default=True
+        Whether or not to fit the intercept.
+
+    solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
+            'revised simplex'}, default='highs'
+        Method used by :func:`scipy.optimize.linprog` to solve the linear
+        programming formulation. 'frisch-newton' is a custom implementation
+        of the Frisch-Newton Interior Point solver following Koenker and Ng
+        (2005). The "frisch-newton" solver only supports vanilla quantile
+        regression without penalization (`alpha = 0`) and can be considerably
+        faster.
+
+        It is recommended to use the highs methods because
+        they are the fastest ones. Solvers "highs-ds", "highs-ipm" and "highs"
+        support sparse input data and, in fact, always convert to sparse csc.
+
+        From `scipy>=1.11.0`, "interior-point" is not available anymore.
+
+        .. versionchanged:: 1.4
+           The default of `solver` changed to `"highs"` in version 1.4.
+
+    solver_options : dict, default=None
+        Additional parameters passed to :func:`scipy.optimize.linprog` as
+        options. If `None` and if `solver='interior-point'`, then
+        `{"lstsq": True}` is passed to :func:`scipy.optimize.linprog` for the
+        sake of stability.
+
+    Attributes
+    ----------
+    coef_ : array of shape (n_features,)
+        Estimated coefficients for the features.
+
+    intercept_ : float
+        The intercept of the model, aka bias term.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : int
+        The actual number of iterations performed by the solver.
+
+    See Also
+    --------
+    Lasso : The Lasso is a linear model that estimates sparse coefficients
+        with l1 regularization.
+    HuberRegressor : Linear regression model that is robust to outliers.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import QuantileRegressor
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 2
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> # the two following lines are optional in practice
+    >>> from sklearn.utils.fixes import sp_version, parse_version
+    >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
+    >>> np.mean(y <= reg.predict(X))
+    np.float64(0.8)
+    """
+
+    _parameter_constraints: dict = {
+        "quantile": [Interval(Real, 0, 1, closed="neither")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "solver": [
+            StrOptions(
+                {
+                    "highs-ds",
+                    "highs-ipm",
+                    "highs",
+                    "interior-point",
+                    "revised simplex",
+                    "frisch-newton",
+                }
+            ),
+        ],
+        "solver_options": [dict, None],
+    }
+
+    def __init__(
+        self,
+        *,
+        quantile=0.5,
+        alpha=1.0,
+        fit_intercept=True,
+        solver="highs",
+        solver_options=None,
+    ):
+        self.quantile = quantile
+        self.alpha = alpha
+        self.fit_intercept = fit_intercept
         self.solver = solver
+        self.solver_options = solver_options
 
-        self.tol = min(solver_options.values())
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, sample_weight=None):
+        """Fit the model according to the given training data.
 
-        if solver_options is not None:
-            solver_options["maxiter"] = solver_options.get("max_iter", None)
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
 
-        self.rng = rng
-        self.y, self.X = self.get_data(N=self.N, k=self.k)
+        y : array-like of shape (n_samples,)
+            Target values.
 
-        self.start_time = time.time()
-        for i in range(self.n_iter):
-            self.fit(X=self.X, y=self.y)
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
 
-        self.end_time = time.time()
-        self.get_pinball_loss()
-        self.collect()
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=["csc", "csr", "coo"],
+            y_numeric=True,
+            multi_output=False,
+        )
+        sample_weight = _check_sample_weight(sample_weight, X)
 
-    def get_data(self, N, k):
-        X = self.rng.normal(size=(N, k))
-        y = 1 + 2 * X[:, 0] + 3 * X[:, 1] + self.rng.normal(0, 1, N)
-        return y, X
+        n_features = X.shape[1]
+        n_params = n_features
 
-    def get_pinball_loss(self):
-        y = self.y
-        yhat = self.predict(X=self.X)
-        return mean_pinball_loss(y, yhat, alpha=self.quantile)
+        if self.fit_intercept:
+            n_params += 1
+            # Note that centering y and X with _preprocess_data does not work
+            # for quantile regression.
 
-    def collect(self):
-        return {
-            "solver": self.solver,
-            "N": self.N,
-            "k": self.k,
-            "coef": self.coef_[0],
-            "nit": self.n_iter_,
-            "pinball_loss": self.get_pinball_loss(),
-            "time": (self.end_time - self.start_time) / self.n_iter,
-            "estimation_n_iter": self.n_iter,
-            "tol": self.tol,
-        }
+        # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
+        # So we rescale the penalty term, which is equivalent.
+        alpha = np.sum(sample_weight) * self.alpha
+
+        if self.solver == "interior-point" and sp_version >= parse_version("1.11.0"):
+            raise ValueError(
+                f"Solver {self.solver} is not anymore available in SciPy >= 1.11.0."
+            )
+
+        if self.solver == "frisch-newton" and alpha != 0:
+            raise ValueError("Frisch-Newton solver does not support alpha != 0.")
+
+        if sparse.issparse(X) and self.solver not in ["highs", "highs-ds", "highs-ipm"]:
+            raise ValueError(
+                f"Solver {self.solver} does not support sparse X. "
+                "Use solver 'highs' for example."
+            )
+        # make default solver more stable
+        if self.solver_options is None and self.solver == "interior-point":
+            solver_options = {"lstsq": True}
+        else:
+            solver_options = self.solver_options
+
+        # After rescaling alpha, the minimization problem is
+        #     min sum(pinball loss) + alpha * L1
+        # Use linear programming formulation of quantile regression
+        #     min_x c x
+        #           A_eq x = b_eq
+        #                0 <= x
+        # x = (s0, s, t0, t, u, v) = slack variables >= 0
+        # intercept = s0 - t0
+        # coef = s - t
+        # c = (0, alpha * 1_p, 0, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
+        # residual = y - X@coef - intercept = u - v
+        # A_eq = (1_n, X, -1_n, -X, diag(1_n), -diag(1_n))
+        # b_eq = y
+        # p = n_features
+        # n = n_samples
+        # 1_n = vector of length n with entries equal one
+        # see https://stats.stackexchange.com/questions/384909/
+        #
+        # Filtering out zero sample weights from the beginning makes life
+        # easier for the linprog solver.
+        indices = np.nonzero(sample_weight)[0]
+        n_indices = len(indices)  # use n_mask instead of n_samples
+        if n_indices < len(sample_weight):
+            sample_weight = sample_weight[indices]
+            X = _safe_indexing(X, indices)
+            y = _safe_indexing(y, indices)
+        c = np.concatenate(
+            [
+                np.full(2 * n_params, fill_value=alpha),
+                sample_weight * self.quantile,
+                sample_weight * (1 - self.quantile),
+            ]
+        )
+        if self.fit_intercept:
+            # do not penalize the intercept
+            c[0] = 0
+            c[n_params] = 0
+
+        if self.solver == "frisch-newton":
+            if self.fit_intercept:
+                ones = np.ones((n_indices, 1))
+                X = np.concatenate([ones, X], axis=1)
+
+            params, _it = frisch_newton_solver(
+                A=X.T,
+                b=(1 - self.quantile) * X.T @ np.ones(n_indices),
+                c=-y,
+                u=np.ones(n_indices),
+                q=self.quantile,
+                solver_options=solver_options,
+            )
+
+        else:
+            if self.solver in ["highs", "highs-ds", "highs-ipm"]:
+                # Note that highs methods always use a sparse CSC memory layout internally,
+                # even for optimization problems parametrized using dense numpy arrays.
+                # Therefore, we work with CSC matrices as early as possible to limit
+                # unnecessary repeated memory copies.
+                eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
+                if self.fit_intercept:
+                    ones = sparse.csc_matrix(
+                        np.ones(shape=(n_indices, 1), dtype=X.dtype)
+                    )
+                    A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
+                else:
+                    A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
+
+            else:
+                eye = np.eye(n_indices)
+                if self.fit_intercept:
+                    ones = np.ones((n_indices, 1))
+                    A_eq = np.concatenate([ones, X, -ones, -X, eye, -eye], axis=1)
+                else:
+                    A_eq = np.concatenate([X, -X, eye, -eye], axis=1)
+
+            b_eq = y
+            result = linprog(
+                c=c,
+                A_eq=A_eq,
+                b_eq=b_eq,
+                method=self.solver,
+                options=solver_options,
+            )
+
+            solution = result.x
+            if not result.success:
+                failure = {
+                    1: "Iteration limit reached.",
+                    2: "Problem appears to be infeasible.",
+                    3: "Problem appears to be unbounded.",
+                    4: "Numerical difficulties encountered.",
+                }
+                warnings.warn(
+                    "Linear programming for QuantileRegressor did not succeed.\n"
+                    f"Status is {result.status}: "
+                    + failure.setdefault(result.status, "unknown reason")
+                    + "\n"
+                    + "Result message of linprog:\n"
+                    + result.message,
+                    ConvergenceWarning,
+                )
+
+            # positive slack - negative slack
+            # solution is an array with (params_pos, params_neg, u, v)
+            params = solution[:n_params] - solution[n_params : 2 * n_params]
+
+        self.n_iter_ = _it if self.solver == "frisch-newton" else result.nit
+
+        if self.fit_intercept:
+            self.coef_ = params[1:]
+            self.intercept_ = params[0]
+        else:
+            self.coef_ = params
+            self.intercept_ = 0.0
+
+        return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
-def _run_qr(solver, N, k, iter_cap, seed=1):
-    rng = np.random.default_rng(seed)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        return QuantileRegressorBenchmark(
-            solver=solver,
-            N=N,
-            k=k,
-            rng=rng,
-            n_iter=1,
-            # SciPy's linprog expects 'maxiter' (ensure it's an int)
-            solver_options={"maxiter": int(iter_cap)},
-        ).collect()
+######################################################################
+# -----------------------------------------------------------------------------
+# Method 3: Frisch-Newton Interior Point Method (as implemented in pyfixest)
+# -----------------------------------------------------------------------------
+######################################################################
+def _duality_gap(x, z, s, w):
+    return x @ z + s @ w
 
 
-def _run_benchmark(N_list, k_list):
-    # first staircase part
-
-    head = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-
-    # geometric tail: keep halving until 1e-10
-    tail = []
-    val = 0.5
-    while val >= 1e-10:
-        tail.append(val)
-        val *= 0.5
-    tail = np.array(tail)
-
-    head = [10, 9, 8, 7, 6]
-
-    tols = np.concatenate([head, tail])
-
-    all_list = []
-
-    for N in N_list:
-        for k in k_list:
-            simplex_converged = False
-            fn_converged = False
-
-            for tol in tqdm(tols):
-                with warnings.catch_warnings():
-                    warnings.simplefilter(
-                        "ignore"
-                    )  # ignore *all* warnings inside the block
-                    qr_highs = QuantileRegressorBenchmark(
-                        solver="highs",
-                        N=N,
-                        k=k,
-                        rng=np.random.default_rng(1),
-                        n_iter=5,
-                        solver_options={
-                            "ipm_optimality_tolerance": tol,
-                            "primal_feasibility_tolerance": tol,
-                            "dual_feasibility_tolerance": tol,
-                        },
-                    ).collect()
-                    all_list.append(qr_highs)
-
-            for iterations in range(1, 50):
-                with warnings.catch_warnings():
-                    warnings.simplefilter(
-                        "ignore"
-                    )  # ignore *all* warnings inside the block
-
-                    qr_fn = QuantileRegressorBenchmark(
-                        solver="frisch-newton",
-                        N=N,
-                        k=k,
-                        rng=np.random.default_rng(1),
-                        n_iter=5,
-                        solver_options={"max_iter": iterations},
-                    ).collect()
-
-                all_list.append(qr_fn)
-
-    res = pd.DataFrame(all_list)
-    res.to_csv("fn_vs_highs_benchmark.csv")
-
-    return res
+def _bound(v: np.ndarray, dv: np.ndarray, backoff: float):
+    mask = dv < 0
+    if not mask.any():
+        return 1.0
+    alpha_max = (-v[mask] / dv[mask]).min()
+    return min(backoff * alpha_max, 1.0)
 
 
-def plot_convergence(df, xcol, xlabel, title, fname, logx=True):
-    df = df.copy()
-    df["is_highs"] = df["solver"].str.contains("highs")
-
-    g = sns.FacetGrid(
-        df,
-        col="N",
-        row="k",
-        sharex=True,
-        sharey=True,
-        margin_titles=True,
-        height=3.2,
-        aspect=1.2,
-    )
-
-    # Plot line traces
-    g.map_dataframe(
-        sns.lineplot,
-        x=xcol,
-        y="pinball_loss",
-        hue="solver",
-        style="solver",
-        markers=True,
-        dashes=False,
-        estimator=None,
-        legend="full",   # let seaborn create legend handles
-    )
-
-    # Log-scale for x-axis if requested
-    if logx:
-        for ax in g.axes.flat:
-            ax.set_xscale("log")
-
-    g.set_axis_labels(xlabel, "Mean pinball loss")
-    g.set_titles(col_template="N={col_name}", row_template="k={row_name}")
-    g.fig.suptitle(title, y=1.03, fontsize=14)
-
-    # Place single legend to the right of the plots
-    g.add_legend(title="Solver")  # uses hue="solver"
-    g._legend.set_bbox_to_anchor((1.02, 0.5))  # shift outside right
-    g._legend.set_frame_on(False)
-
-    g.savefig(fname, dpi=300, bbox_inches="tight")
-    plt.close(g.fig)
-    print(f"Saved {fname}")
+def _step_length(a: tuple, b: tuple, backoff: float) -> float:
+    x, dx = a
+    s, ds = b
+    return min(_bound(x, dx, backoff), _bound(s, ds, backoff))
 
 
-if True:
-    N_list = [1000, 5000]
-    k_list = [10, 20]
-    df = _run_benchmark(N_list=N_list, k_list=k_list)
-    # --- Usage ---
-    plot_convergence(
-        df,
-        xcol="nit",
-        xlabel="Iterations (log scale)",
-        title="Convergence: Pinball loss vs iterations",
-        fname=f"pinball_vs_iterations_{N_list[0]}.png",
-        logx=True,
-    )
+def _cold_start(A: np.ndarray, c: np.ndarray, q: float):
 
-    plot_convergence(
-        df,
-        xcol="time",
-        xlabel="Wall-clock time [s] (log scale)",
-        title="Convergence: Pinball loss vs time",
-        fname=f"pinball_vs_time_{N_list[0]}.png",
-        logx=True,
-    )
+    "Set starting values for the Frisch-Newton algorithm."
+    n = A.shape[1]
+    x = np.full(n, 1.0 - q)
+    s = np.full_like(x, q)
+    d_plus = np.maximum(c, 0.0)
+    d_minus = np.maximum(-c, 0.0)
+    U = x @ d_plus + s @ d_minus
+    mu0 = max(1, U / n)
+    alpha = (n * mu0 - U) / (np.sum(1 / x) + np.sum(1 / s))
+    eps = 1e-8
+    z = np.maximum(d_plus, eps) + alpha / x
+    w = np.maximum(d_minus, eps) + alpha / s
+    y = np.linalg.solve(A @ A.T, A @ (c - z + w))
+    return x, s, z, w, y
 
+
+def frisch_newton_solver(
+    A: np.ndarray,
+    b: np.ndarray,
+    c: np.ndarray,
+    u: np.ndarray,
+    q: float,
+    backoff: float = 0.9995,
+    solver_options: dict = None,
+):
+
+    """
+    Implements the Frisch-Newton Interior Point Solver for Quantile Regression
+    following Koenker and Ng (2005, https://link.springer.com/article/10.1007/s10255-005-0231-1).
+    """
+    if solver_options is None:
+        solver_options = {}
+    tol = solver_options.get("tol", 1e-7)
+    max_iter = solver_options.get("max_iter", 100)
+
+    success = False
+
+    m, n = A.shape
+    c, b, u = c.ravel(), b.ravel(), u.ravel()
+
+    x, s, z, w, y = _cold_start(A=A, c=c, q=q)
+
+    mu_curr = _duality_gap(x=x, z=z, s=s, w=w)
+
+    for _it in range(max_iter):
+        if mu_curr < tol:
+            success = True
+            break
+
+        r1_tilde = c - A.T @ y
+        r2_tilde = b - A @ x
+
+        Qinv = 1.0 / (z / x + w / s)
+        M = A @ (Qinv[:, None] * A.T)
+        work_m = r2_tilde + A @ (Qinv * r1_tilde)
+        dy_aff = np.linalg.solve(M, work_m)
+
+        dx_aff = Qinv * (A.T @ dy_aff - r1_tilde)
+        ds_aff = -dx_aff
+        dz_aff = -z - (z / x) * dx_aff
+        dw_aff = -w - (w / s) * ds_aff
+
+        alpha_p_aff = _step_length(a=(x, dx_aff), b=(s, ds_aff), backoff=backoff)
+        alpha_d_aff = _step_length(a=(z, dz_aff), b=(w, dw_aff), backoff=backoff)
+
+        x_pred = x + alpha_p_aff * dx_aff
+        s_pred = s + alpha_p_aff * ds_aff
+        y_pred = y + alpha_d_aff * dy_aff
+        z_pred = z + alpha_d_aff * dz_aff
+        w_pred = w + alpha_d_aff * dw_aff
+
+        mu_aff = _duality_gap(x=x_pred, z=z_pred, s=s_pred, w=w_pred)
+
+        sigma = (mu_aff / mu_curr) ** 2
+        mu_targ = sigma * mu_curr / n
+
+        r1_hat = (
+            mu_targ * (1 / s - 1 / x) + (dx_aff * dz_aff) / x - (ds_aff * dw_aff) / s
+        )
+        work_m = A @ (Qinv * r1_hat)
+        dy_cor = np.linalg.solve(M, work_m)
+        dx_cor = Qinv * (A.T @ dy_cor - r1_hat)
+        ds_cor = -dx_cor
+        dz_cor = -(z / x) * dx_cor + (mu_targ - dx_aff * dz_aff) / x
+        dw_cor = -(w / s) * ds_cor + (mu_targ - ds_aff * dw_aff) / s
+
+        alpha_p_cor = _step_length(
+            a=(x_pred, dx_cor), b=(s_pred, ds_cor), backoff=backoff
+        )
+        alpha_d_cor = _step_length(
+            a=(z_pred, dz_cor), b=(w_pred, dw_cor), backoff=backoff
+        )
+
+        x = x_pred + alpha_p_cor * dx_cor
+        s = s_pred + alpha_p_cor * ds_cor
+        y = y_pred + alpha_d_cor * dy_cor
+        z = z_pred + alpha_d_cor * dz_cor
+        w = w_pred + alpha_d_cor * dw_cor
+
+        mu_curr = _duality_gap(x=x, z=z, s=s, w=w)
+
+    if not success:
+        warnings.warn(
+            f"The 'frisch-newton' solver did not converge after {max_iter} iterations."
+        )
+
+    return -y, _it
