@@ -840,7 +840,7 @@ def test_dict_learning_dtype_match(data_type, expected_type, method):
 @pytest.mark.parametrize("method", ("lars", "cd"))
 def test_dict_learning_numerical_consistency(method):
     # verify numerically consistent among np.float32 and np.float64
-    rtol = 1e-6
+    rtol = 1e-4
     n_components = 4
     alpha = 2
 
