@@ -674,15 +674,16 @@ scores:
 
 .. math::
 
+
    \texttt{balanced-accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right )
 
 If the classifier performs equally well on either class, this term reduces to
 the conventional accuracy (i.e., the number of correct predictions divided by
 the total number of predictions).
 
-In contrast, if the conventional accuracy is above chance only because the
-classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
+In contrast,  If the conventional accuracy is inflated due to class imbalance (e.g., a trivial 
+classifier that always predicts the majority class), then the balanced accuracy will instead 
+drop to :math:`\frac{1}{n\_classes}`.
 
 The score ranges from 0 to 1, or when ``adjusted=True`` is used, it is rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
@@ -2033,9 +2034,9 @@ classified:
 
    LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
 
-For classifiers above chance :math:`LR_+` above 1 **higher is better**, while
+For classifiers better than a non-informative baseline :math:`LR_+` above 1 **higher is better**, while
 :math:`LR_-` ranges from 0 to 1 and **lower is better**.
-Values of :math:`LR_\pm\approx 1` correspond to chance level.
+Values of :math:`LR_\pm\approx 1` correspond to a non-informative baseline.
 
 Notice that probabilities differ from counts, for instance
 :math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
