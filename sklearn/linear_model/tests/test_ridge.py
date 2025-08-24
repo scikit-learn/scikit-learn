@@ -632,6 +632,36 @@ def test_ridge_individual_penalties():
     with pytest.raises(ValueError, match=err_msg):
         ridge.fit(X, y)
 
+def test_ridgecv_regression_refit():
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    for n_samples, n_features in ((6, 5), (5, 10)):
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        
+        refit_true = RidgeCV(alphas=alphas, refit=True)
+        refit_true.fit(X, y)
+
+        refit_false = RidgeCV(alphas=alphas, refit=False)
+        refit_false.fit(X, y)
+        
+        assert_array_almost_equal(refit_true.best_score_, refit_false.best_score_)
+
+def test_ridgecv_regression_refit():
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    for n_samples, n_features in ((6, 5), (5, 10)):
+        X, y = make_classification(n_samples, n_features)
+
+        refit_true = RidgeClassifierCV(alphas=alphas, refit=True)
+        refit_true.fit(X, y)
+
+        refit_false = RidgeClassifierCV(alphas=alphas, refit=False)
+        refit_false.fit(X, y)
+        
+        assert_array_almost_equal(refit_true.best_score_, refit_false.best_score_)
 
 @pytest.mark.parametrize("n_col", [(), (1,), (3,)])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
