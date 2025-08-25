@@ -31,6 +31,10 @@
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
+/*
+    `table td`is set in notebook with right text-align.
+    We need to overwrite it.
+*/
 .estimator-table table td.param {
     text-align: left;
 }
@@ -54,7 +58,10 @@
     color: black;
 }
 
-/* Styles for parameter documentation links */
+/*
+    Styles for parameter documentation links
+    We need styling for visited so jupyter doesn't overwrite it
+*/
 a.param-doc-link,
 a.param-doc-link:link,
 a.param-doc-link:visited {
