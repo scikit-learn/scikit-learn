@@ -960,16 +960,16 @@ def enet_coordinate_descent_multi_task(
     cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
-    cdef floating[::1] w_ii = np.zeros(n_tasks, dtype=dtype)
+    cdef floating[::1] w_j = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
     cdef floating w_max
-    cdef floating d_w_ii
+    cdef floating d_w_j
     cdef floating nn
-    cdef floating W_ii_abs_max
+    cdef floating W_j_abs_max
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
-    cdef unsigned int ii
-    cdef unsigned int jj
+    cdef unsigned int j
+    cdef unsigned int t
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -982,13 +982,13 @@ def enet_coordinate_descent_multi_task(
         )
 
     with nogil:
-        # R = Y - np.dot(X, W.T)
+        # R = Y - X @ W.T
         _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
-        for ii in range(n_features):
-            for jj in range(n_tasks):
-                if W[jj, ii] != 0:
-                    _axpy(n_samples, -W[jj, ii], &X[0, ii], 1,
-                          &R[0, jj], 1)
+        for j in range(n_features):
+            for t in range(n_tasks):
+                if W[t, j] != 0:
+                    _axpy(n_samples, -W[t, j], &X[0, j], 1,
+                          &R[0, t], 1)
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * _nrm2(n_samples * n_tasks, &Y[0, 0], 1) ** 2
@@ -1006,62 +1006,62 @@ def enet_coordinate_descent_multi_task(
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_features, rand_r_state)
                 else:
-                    ii = f_iter
+                    j = f_iter
 
-                if norm2_cols_X[ii] == 0.0:
+                if norm2_cols_X[j] == 0.0:
                     continue
 
-                # w_ii = W[:, ii] # Store previous value
-                _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
+                # w_j = W[:, j] # Store previous value
+                _copy(n_tasks, &W[0, j], 1, &w_j[0], 1)
 
-                # tmp = X[:, ii] @ (R + w_ii * X[:,ii][:, None])
-                # first part: X[:, ii] @ R
+                # tmp = X[:, j] @ (R + w_j * X[:,j][:, None])
+                # first part: X[:, j] @ R
                 #   Using BLAS Level 2:
                 #   _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
-                #         n_tasks, &X[0, ii], 1, 0.0, &tmp[0], 1)
-                # second part: (X[:, ii] @ X[:,ii]) * w_ii = norm2_cols * w_ii
+                #         n_tasks, &X[0, j], 1, 0.0, &tmp[0], 1)
+                # second part: (X[:, j] @ X[:,j]) * w_j = norm2_cols * w_j
                 #   Using BLAS Level 1:
-                #   _axpy(n_tasks, norm2_cols[ii], &w_ii[0], 1, &tmp[0], 1)
+                #   _axpy(n_tasks, norm2_cols[j], &w_j[0], 1, &tmp[0], 1)
                 # Using BLAS Level 1 (faster for small vectors like here):
-                for jj in range(n_tasks):
-                    tmp[jj] = _dot(n_samples, &X[0, ii], 1, &R[0, jj], 1)
+                for t in range(n_tasks):
+                    tmp[t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
                     # As we have the loop already, we use it to replace the second BLAS
                     # Level 1, i.e., _axpy, too.
-                    tmp[jj] += w_ii[jj] * norm2_cols_X[ii]
+                    tmp[t] += w_j[t] * norm2_cols_X[j]
 
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
-                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg)
-                _copy(n_tasks, &tmp[0], 1, &W[0, ii], 1)
-                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg),
-                      &W[0, ii], 1)
+                # W[:, j] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[j] + l2_reg)
+                _copy(n_tasks, &tmp[0], 1, &W[0, j], 1)
+                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[j] + l2_reg),
+                      &W[0, j], 1)
 
                 # Update residual
                 # Using numpy:
-                #   R -= (W[:, ii] - w_ii) * X[:, ii][:, None]
+                #   R -= (W[:, j] - w_j) * X[:, j][:, None]
                 # Using BLAS Level 1 and 2:
-                #   _axpy(n_tasks, -1.0, &W[0, ii], 1, &w_ii[0], 1)
+                #   _axpy(n_tasks, -1.0, &W[0, j], 1, &w_j[0], 1)
                 #   _ger(RowMajor, n_samples, n_tasks, 1.0,
-                #        &X[0, ii], 1, &w_ii, 1,
+                #        &X[0, j], 1, &w_j, 1,
                 #        &R[0, 0], n_tasks)
                 # Using BLAS Level 1 (faster for small vectors like here):
-                for jj in range(n_tasks):
-                    if W[jj, ii] != w_ii[jj]:
-                        _axpy(n_samples, w_ii[jj] - W[jj, ii], &X[0, ii], 1,
-                              &R[0, jj], 1)
+                for t in range(n_tasks):
+                    if W[t, j] != w_j[t]:
+                        _axpy(n_samples, w_j[t] - W[t, j], &X[0, j], 1,
+                              &R[0, t], 1)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = diff_abs_max(n_tasks, &W[0, ii], &w_ii[0])
+                d_w_j = diff_abs_max(n_tasks, &W[0, j], &w_j[0])
 
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
+                if d_w_j > d_w_max:
+                    d_w_max = d_w_j
 
-                W_ii_abs_max = abs_max(n_tasks, &W[0, ii])
-                if W_ii_abs_max > w_max:
-                    w_max = W_ii_abs_max
+                W_j_abs_max = abs_max(n_tasks, &W[0, j])
+                if W_j_abs_max > w_max:
+                    w_max = W_j_abs_max
 
             if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
