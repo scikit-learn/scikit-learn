@@ -84,7 +84,7 @@ from sklearn.utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from sklearn.utils.validation import _check_response_method
+from sklearn.utils.validation import _check_response_method, _deprecate_positional_args
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
@@ -274,7 +274,9 @@ class _BaseScorer(_MetadataRequester):
             f"{response_method_string}{kwargs_string})"
         )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
+    # TODO (1.10): remove in 1.10
+    @_deprecate_positional_args(version="1.10")
+    def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -315,6 +317,8 @@ class _BaseScorer(_MetadataRequester):
         _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
+        # TODO(1.10): remove this when sample_weight is removed from the `__call__`
+        # signature
         if sample_weight is not None:
             _kwargs["sample_weight"] = sample_weight
 
@@ -367,6 +371,35 @@ class _BaseScorer(_MetadataRequester):
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
+
+    def _get_metadata_request(self):
+        """Get requested data properties.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        request : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+        """
+        if hasattr(self, "_metadata_request"):
+            requests = get_routing_for_object(self._metadata_request)
+        else:
+            requests = self._get_default_requests(
+                score_method=self._score_func,
+                ignore_params={
+                    "y_true",
+                    "y_pred",
+                    "y_prob",
+                    "y_proba",
+                    "y_score",
+                    "labels_true",
+                    "labels_pred",
+                },
+            )
+
+        return requests
 
 
 class _Scorer(_BaseScorer):
@@ -489,17 +522,6 @@ class _PassthroughScorer(_MetadataRequester):
     def __init__(self, estimator):
         self._estimator = estimator
 
-        requests = MetadataRequest(owner=self.__class__.__name__)
-        try:
-            requests.score = copy.deepcopy(estimator._metadata_request.score)
-        except AttributeError:
-            try:
-                requests.score = copy.deepcopy(estimator._get_default_requests().score)
-            except AttributeError:
-                pass
-
-        self._metadata_request = requests
-
     def __call__(self, estimator, *args, **kwargs):
         """Method that wraps estimator.score"""
         return estimator.score(*args, **kwargs)
@@ -525,7 +547,7 @@ class _PassthroughScorer(_MetadataRequester):
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return get_routing_for_object(self._metadata_request)
+        return get_routing_for_object(self._estimator)
 
     def set_score_request(self, **kwargs):
         """Set requested parameters by the scorer.
@@ -534,6 +556,8 @@ class _PassthroughScorer(_MetadataRequester):
         mechanism works.
 
         .. versionadded:: 1.5
+        .. versionchanged:: 1.8
+            This now raises.
 
         Parameters
         ----------
@@ -541,16 +565,10 @@ class _PassthroughScorer(_MetadataRequester):
             Arguments should be of the form ``param_name=alias``, and `alias`
             can be one of ``{True, False, None, str}``.
         """
-        if not _routing_enabled():
-            raise RuntimeError(
-                "This method is only available when metadata routing is enabled."
-                " You can enable it using"
-                " sklearn.set_config(enable_metadata_routing=True)."
-            )
-
-        for param, alias in kwargs.items():
-            self._metadata_request.score.add_request(param=param, alias=alias)
-        return self
+        raise AttributeError(
+            "This method is not available on _PassthroughScorer. "
+            "Use the estimator's set_score_request method instead."
+        )
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -1120,7 +1138,7 @@ class _CurveScorer(_BaseScorer):
             kwargs=scorer._kwargs,
         )
         # transfer the metadata request
-        instance._metadata_request = scorer._get_metadata_request()
+        instance._metadata_request = scorer.get_metadata_routing()
         return instance
 
     def _score(self, method_caller, estimator, X, y_true, **kwargs):

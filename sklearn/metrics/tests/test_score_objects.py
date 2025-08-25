@@ -4,6 +4,7 @@ import re
 import warnings
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import joblib
 import numpy as np
@@ -20,6 +21,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
 from sklearn.metrics import (
     accuracy_score,
@@ -52,7 +54,7 @@ from sklearn.metrics._scorer import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
@@ -1253,18 +1255,37 @@ def test_scorer_metadata_request(name):
         weighted_scorer.get_metadata_routing().score.requests["sample_weight"] is True
     )
 
-    # make sure putting the scorer in a router doesn't request anything by
-    # default
+    # Some scoring functions accept sample_weight, some don't. We need to cover both
+    # cases.
+    scorer = get_scorer(name)
+    accepts_sample_weight = "sample_weight" in signature(scorer._score_func).parameters
+
     router = MetadataRouter(owner="test").add(
-        scorer=get_scorer(name),
+        scorer=scorer,
         method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
-    # make sure `sample_weight` is refused if passed.
-    with pytest.raises(TypeError, match="got unexpected argument"):
+
+    if accepts_sample_weight:
+        # When sample_weight is accepted, `validate_data` passes and `route_params`
+        # raises
         router.validate_metadata(params={"sample_weight": 1}, method="score")
-    # make sure `sample_weight` is not routed even if passed.
-    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
-    assert not routed_params.scorer.score
+        err_msg = re.escape(
+            "[sample_weight] are passed but are not explicitly set as requested or not"
+            " requested for _Scorer.score, which is used within test.score. Call"
+            " `_Scorer.set_score_request({metadata}=True/False)` for each"
+            " metadata you want to request/ignore."
+        )
+        with pytest.raises(UnsetMetadataPassedError, match=err_msg):
+            router.route_params(params={"sample_weight": 1}, caller="score")
+    else:
+        # When sample_weight is not accepted, `validate_data` raises and `route_params`
+        # is never called
+        err_msg = re.escape(
+            "test.score got unexpected argument(s) {'sample_weight'}, which are not"
+            " routed to any object."
+        )
+        with pytest.raises(TypeError, match=err_msg):
+            router.validate_metadata(params={"sample_weight": 1}, method="score")
 
     # make sure putting weighted_scorer in a router requests sample_weight
     router = MetadataRouter(owner="test").add(
@@ -1301,27 +1322,12 @@ def test_metadata_kwarg_conflict():
 
 @config_context(enable_metadata_routing=True)
 def test_PassthroughScorer_set_score_request():
-    """Test that _PassthroughScorer.set_score_request adds the correct metadata request
-    on itself and doesn't change its estimator's routing."""
+    """Test that _PassthroughScorer.set_score_request raises when routing enabled."""
     est = LogisticRegression().set_score_request(sample_weight="estimator_weights")
     # make a `_PassthroughScorer` with `check_scoring`:
     scorer = check_scoring(est, None)
-    assert (
-        scorer.get_metadata_routing().score.requests["sample_weight"]
-        == "estimator_weights"
-    )
-
-    scorer.set_score_request(sample_weight="scorer_weights")
-    assert (
-        scorer.get_metadata_routing().score.requests["sample_weight"]
-        == "scorer_weights"
-    )
-
-    # making sure changing the passthrough object doesn't affect the estimator.
-    assert (
-        est.get_metadata_routing().score.requests["sample_weight"]
-        == "estimator_weights"
-    )
+    with pytest.raises(AttributeError, match="This method is not available"):
+        scorer.set_score_request(sample_weight=True)
 
 
 def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
@@ -1330,8 +1336,8 @@ def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
     scorer = check_scoring(LogisticRegression(), None)
     msg = "This method is only available when metadata routing is enabled."
 
-    with pytest.raises(RuntimeError, match=msg):
-        scorer.set_score_request(sample_weight="my_weights")
+    with pytest.raises(AttributeError, match="This method is not available"):
+        scorer.set_score_request(sample_weight=True)
 
 
 @config_context(enable_metadata_routing=True)
@@ -1673,3 +1679,26 @@ def test_make_scorer_reponse_method_default_warning():
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
         make_scorer(accuracy_score)
+
+
+@config_context(enable_metadata_routing=True)
+def test_Pipeline_in_PassthroughScorer():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/30937
+
+    Make sure pipeline inside a gridsearchcv works with sample_weight passed!
+    """
+    X, y = make_classification(10, 4)
+    sample_weight = np.ones_like(y)
+    pipe = Pipeline(
+        [
+            (
+                "logistic",
+                LogisticRegression()
+                .set_fit_request(sample_weight=True)
+                .set_score_request(sample_weight=True),
+            )
+        ]
+    )
+    search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
+    search.fit(X, y, sample_weight=sample_weight)
