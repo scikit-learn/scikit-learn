@@ -65,11 +65,11 @@
 a.param-doc-link,
 a.param-doc-link:link,
 a.param-doc-link:visited {
-    text-decoration: none;
-    border-bottom: 1px dashed #666;
+    text-decoration: underline dashed;
+    text-underline-offset: .3em;
     position: relative;
     color: inherit;
-    display: inline;
+    display: block;
 }
 
 .param-doc-description {
