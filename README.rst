@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPi| |DOI| |Benchmark|
+|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
    :target: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -70,11 +70,11 @@ scikit-learn requires:
 - joblib (>= |JoblibMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
-=======
+
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
-For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
+For running the examples, Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
 |SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
@@ -134,7 +134,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the source
-directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
+directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 
     pytest sklearn
 
