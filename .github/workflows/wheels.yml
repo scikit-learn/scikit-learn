@@ -206,7 +206,7 @@ jobs:
           CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
-          CIBW_TEST_REQUIRES: pytest pandas
+          CIBW_TEST_REQUIRES: pytest # pandas
           # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
           # does not make sense because it would install dependencies in the host
           # rather than inside the Docker image

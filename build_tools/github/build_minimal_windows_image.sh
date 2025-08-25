@@ -24,6 +24,11 @@ if [[ $FREE_THREADED_BUILD == "False" ]]; then
         PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_PART}-rc"
     fi
 
+    # TODO Temporary work-around not sure CIBW_PRERELEASE_PYTHONS is still a thing
+    if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.14" ]]; then
+        PYTHON_DOCKER_IMAGE_PART="3.14-rc"
+    fi
+
     # Temporary work-around to avoid a loky issue on Windows >= 3.13.7, see
     # https://github.com/joblib/loky/issues/459
     if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.13" ]]; then
