@@ -1660,7 +1660,15 @@ def test_estimator_with_set_output():
             raise SkipTest(f"Library {lib} is not installed")
 
         estimator = StandardScaler().set_output(transform=lib)
-        check_estimator(estimator)
+        check_estimator(
+            estimator=estimator,
+            expected_failed_checks={
+                "check_array_api_input": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                )
+            },
+        )
 
 
 def test_estimator_checks_generator():
