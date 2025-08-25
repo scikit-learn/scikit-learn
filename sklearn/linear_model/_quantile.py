@@ -328,11 +328,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         return tags
 
 
-######################################################################
-# -----------------------------------------------------------------------------
-# Method 3: Frisch-Newton Interior Point Method (as implemented in pyfixest)
-# -----------------------------------------------------------------------------
-######################################################################
+# Frisch-Newton Interior Point Method (as implemented in pyfixest)
 def _duality_gap(x, z, s, w):
     return x @ z + s @ w
 
