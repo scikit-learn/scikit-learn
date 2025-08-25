@@ -184,6 +184,9 @@ def sag_sparse(
             idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
+            S_seen = len(seen)
+            if sample_weight is not None:
+                S_seen = sample_weight[list(seen)].sum()
 
             if counter >= 1:
                 for j in range(n_features):
@@ -207,30 +210,27 @@ def sag_sparse(
             if saga:
                 for j in range(n_features):
                     weights[j] -= (
-                        gradient_correction[j]
-                        * step_size
-                        * (1 - 1.0 / len(seen))
-                        / wscale
+                        gradient_correction[j] * step_size * (1 - 1.0 / S_seen) / wscale
                     )
 
             if fit_intercept:
                 gradient_correction = gradient - gradient_memory[idx]
                 intercept_sum_gradient += gradient_correction
-                gradient_correction *= step_size * (1.0 - 1.0 / len(seen))
+                gradient_correction *= step_size * (1.0 - 1.0 / S_seen)
                 if saga:
                     intercept -= (
-                        step_size * intercept_sum_gradient / len(seen) * decay
+                        step_size * intercept_sum_gradient / S_seen * decay
                     ) + gradient_correction
                 else:
-                    intercept -= step_size * intercept_sum_gradient / len(seen) * decay
+                    intercept -= step_size * intercept_sum_gradient / S_seen * decay
 
             gradient_memory[idx] = gradient
 
             wscale *= 1.0 - alpha * step_size
             if counter == 0:
-                c_sum[0] = step_size / (wscale * len(seen))
+                c_sum[0] = step_size / (wscale * S_seen)
             else:
-                c_sum[counter] = c_sum[counter - 1] + step_size / (wscale * len(seen))
+                c_sum[counter] = c_sum[counter - 1] + step_size / (wscale * S_seen)
 
             if counter >= 1 and wscale < 1e-9:
                 for j in range(n_features):
