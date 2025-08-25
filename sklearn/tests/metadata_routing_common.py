@@ -443,14 +443,14 @@ class ConsumingScorer(_Scorer):
         )
         self.registry = registry
 
-    def _score(self, method_caller, clf, X, y, **kwargs):
+    def score(self, clf, X, y, y_pred, **kwargs):
         if self.registry is not None:
             self.registry.append(self)
 
         record_metadata_not_default(self, **kwargs)
 
         sample_weight = kwargs.get("sample_weight", None)
-        return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
+        return super().score(clf, X, y, y_pred, sample_weight=sample_weight)
 
 
 class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
