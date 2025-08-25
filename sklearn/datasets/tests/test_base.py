@@ -3,6 +3,7 @@ import io
 import os
 import re
 import shutil
+import sys
 import tempfile
 import warnings
 from functools import partial
@@ -91,22 +92,122 @@ def test_category_dir_2(load_files_root):
 @pytest.mark.thread_unsafe
 @pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
 def test_data_home(path_container, data_home):
-    # get_data_home will point to a pre-existing folder
     if path_container is not None:
         data_home = path_container(data_home)
     data_home = get_data_home(data_home=data_home)
     assert data_home == data_home
     assert os.path.exists(data_home)
 
-    # clear_data_home will delete both the content and the folder it-self
     if path_container is not None:
         data_home = path_container(data_home)
     clear_data_home(data_home=data_home)
     assert not os.path.exists(data_home)
 
-    # if the folder is missing it will be created again
     data_home = get_data_home(data_home=data_home)
     assert os.path.exists(data_home)
+
+
+@pytest.mark.parametrize(
+    "platform, env_vars, expected_path",
+    [
+        (
+            "win32",
+            {"LOCALAPPDATA": "PLACEHOLDER_LOCALAPPDATA"},
+            "PLACEHOLDER_LOCALAPPDATA/scikit-learn",
+        ),
+        (
+            "win32",
+            {},
+            os.path.join(os.path.expanduser("~"), "AppData", "Local", "scikit-learn"),
+        ),
+        (
+            "darwin",
+            {},
+            os.path.join(os.path.expanduser("~"), "Library", "Caches", "scikit-learn"),
+        ),
+        (
+            "linux",
+            {"XDG_CACHE_HOME": "PLACEHOLDER_XDG_CACHE_HOME"},
+            "PLACEHOLDER_XDG_CACHE_HOME/scikit-learn",
+        ),
+        (
+            "linux",
+            {},
+            os.path.join(os.path.expanduser("~"), ".cache", "scikit-learn"),
+        ),
+        (
+            "win32",
+            {"SCIKIT_LEARN_DATA": "PLACEHOLDER_CUSTOM_PATH"},
+            "PLACEHOLDER_CUSTOM_PATH",
+        ),
+        (
+            "darwin",
+            {"SCIKIT_LEARN_DATA": "PLACEHOLDER_CUSTOM_PATH"},
+            "PLACEHOLDER_CUSTOM_PATH",
+        ),
+        (
+            "linux",
+            {"SCIKIT_LEARN_DATA": "PLACEHOLDER_CUSTOM_PATH"},
+            "PLACEHOLDER_CUSTOM_PATH",
+        ),
+    ],
+)
+def test_data_home_os_paths(monkeypatch, platform, env_vars, expected_path, tmpdir):
+    """Check the data_home path across OSes."""
+    for key in ["LOCALAPPDATA", "XDG_CACHE_HOME", "SCIKIT_LEARN_DATA"]:
+        monkeypatch.delenv(key, raising=False)
+
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
+
+    monkeypatch.setattr(sys, "platform", platform)
+
+    expected_path = expected_path.replace("/", os.path.sep)
+    data_home = get_data_home()
+    assert data_home == expected_path
+
+
+def test_data_home_custom_path(tmpdir):
+    """Test that get_data_home respects custom paths."""
+    custom_path = str(tmpdir / "custom_scikit_learn_data")
+    data_home = get_data_home(custom_path)
+
+    assert data_home == custom_path
+    assert os.path.exists(custom_path)
+
+
+def test_data_home_deprecated_path(tmpdir):
+    """Test that using the old default path raises a deprecation warning."""
+    old_path = os.path.join(os.path.expanduser("~"), "scikit_learn_data")
+    os.makedirs(old_path, exist_ok=True)
+    try:
+        with pytest.warns(
+            FutureWarning,
+            match="The default data directory '~/scikit_learn_data' is deprecated",
+        ) as w:
+            data_home = get_data_home()
+            assert data_home == old_path
+            warning_msg = str(w[0].message)
+            assert "~/.cache/scikit-learn" in warning_msg
+            assert "~/Library/Caches/scikit-learn" in warning_msg
+            assert "~/AppData/Local/scikit-learn" in warning_msg
+    finally:
+        if os.path.exists(old_path):
+            shutil.rmtree(old_path)
+
+
+def test_data_home_with_deprecated_param(tmpdir):
+    """Test that using use_default_location=True uses old path and warns."""
+    with pytest.warns(
+        FutureWarning,
+        match="The default data directory '~/scikit_learn_data' is deprecated",
+    ) as w:
+        data_home = get_data_home(use_default_location=True)
+        assert data_home == os.path.join(os.path.expanduser("~"), "scikit_learn_data")
+        warning_msg = str(w[0].message)
+        assert "~/.cache/scikit-learn" in warning_msg
+        assert "~/Library/Caches/scikit-learn" in warning_msg
+        assert "~/AppData/Local/scikit-learn" in warning_msg
 
 
 def test_default_empty_load_files(load_files_root):
