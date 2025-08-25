@@ -258,7 +258,7 @@ def enet_coordinate_descent(
     cdef floating dual_norm_XtA
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
-    # TODO: use binset insteaf of array of bools
+    # TODO: use binset instead of array of bools
     cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int n_iter = 0
@@ -840,18 +840,31 @@ cdef (floating, floating) gap_enet_multi_task(
     int n_samples,
     int n_features,
     int n_tasks,
-    const floating[::1, :] W,  # n_tasks, n_features
-    floating l1_reg,  # L1 penalty
-    floating l2_reg,  # L2 penalty
-    const floating[::1, :] X,  # n_samples, n_features
-    const floating[::1, :] Y,  # n_samples, n_tasks
-    const floating[::1, :] R,  # current residuals = y - X @ W.T
-    floating[:, ::1] XtA,  # XtA = X.T @ R - l2_reg * W.T is calculated inplace
+    const floating[::1, :] W,  # in
+    floating l1_reg,
+    floating l2_reg,
+    const floating[::1, :] X,  # in
+    const floating[::1, :] Y,  # in
+    const floating[::1, :] R,  # in
+    floating[:, ::1] XtA,  # out
+    floating[::1] XtA_row_norms,  # out
 ) noexcept nogil:
-    """Compute dual gap for use in enet_coordinate_descent."""
+    """Compute dual gap for use in enet_coordinate_descent_multi_task.
+
+    Parameters
+    ----------
+    W : memoryview of shape (n_tasks, n_features)
+    X : memoryview of shape (n_samples, n_features)
+    Y : memoryview of shape (n_samples, n_tasks)
+    R : memoryview of shape (n_samples, n_tasks)
+        Current residuals = Y - X @ W.T
+    XtA : memoryview of shape (n_features, n_tasks)
+        Inplace calculated as XtA = X.T @ R - l2_reg * W.T
+    XtA_row_norms : memoryview of shape n_features
+        Inplace calculated as np.sqrt(np.sum(XtA ** 2, axis=1))
+    """
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
-    cdef floating XtA_axis1norm
     cdef floating R_norm2
     cdef floating w_norm2 = 0.0
     cdef floating l21_norm
@@ -868,9 +881,9 @@ cdef (floating, floating) gap_enet_multi_task(
     dual_norm_XtA = 0.0
     for j in range(n_features):
         # np.sqrt(np.sum(XtA ** 2, axis=1))
-        XtA_axis1norm = _nrm2(n_tasks, &XtA[j, 0], 1)
-        if XtA_axis1norm > dual_norm_XtA:
-            dual_norm_XtA = XtA_axis1norm
+        XtA_row_norms[j] = _nrm2(n_tasks, &XtA[j, 0], 1)
+        if XtA_row_norms[j] > dual_norm_XtA:
+            dual_norm_XtA = XtA_row_norms[j]
 
     # R_norm2 = linalg.norm(R, ord="fro") ** 2
     R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
@@ -901,7 +914,7 @@ cdef (floating, floating) gap_enet_multi_task(
 
 
 def enet_coordinate_descent_multi_task(
-    const floating[::1, :] W,
+    floating[::1, :] W,
     floating l1_reg,
     floating l2_reg,
     const floating[::1, :] X,
@@ -909,7 +922,8 @@ def enet_coordinate_descent_multi_task(
     unsigned int max_iter,
     floating tol,
     object rng,
-    bint random=0
+    bint random=0,
+    bint do_screening=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net multi-task regression
@@ -952,15 +966,15 @@ def enet_coordinate_descent_multi_task(
         "ij,ij->j", X, X, dtype=dtype, order="C"
     )
 
-    # to store XtA
-    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
-    cdef floating dual_norm_XtA
-
     # initial value of the residuals
-    cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
+    cdef floating[::1, :] R = np.empty((n_samples, n_tasks), dtype=dtype, order='F')
+    cdef floating[:, ::1] XtA = np.empty((n_features, n_tasks), dtype=dtype)
+    cdef floating[::1] XtA_row_norms = np.empty(n_features, dtype=dtype)
 
-    cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
-    cdef floating[::1] w_j = np.zeros(n_tasks, dtype=dtype)
+    cdef floating d_j
+    cdef floating Xj_theta
+    cdef floating[::1] tmp = np.empty(n_tasks, dtype=dtype)
+    cdef floating[::1] w_j = np.empty(n_tasks, dtype=dtype)
     cdef floating d_w_max
     cdef floating w_max
     cdef floating d_w_j
@@ -968,6 +982,11 @@ def enet_coordinate_descent_multi_task(
     cdef floating W_j_abs_max
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
+    cdef floating dual_norm_XtA
+    cdef unsigned int n_active = n_features
+    cdef uint32_t[::1] active_set
+    # TODO: use binset instead of array of bools
+    cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int t
     cdef unsigned int n_iter = 0
@@ -981,34 +1000,65 @@ def enet_coordinate_descent_multi_task(
             " results and is discouraged."
         )
 
+    if do_screening:
+        active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
+        excluded_set = np.empty(n_features, dtype=np.uint8)
+
     with nogil:
         # R = Y - X @ W.T
         _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
         for j in range(n_features):
             for t in range(n_tasks):
                 if W[t, j] != 0:
-                    _axpy(n_samples, -W[t, j], &X[0, j], 1,
-                          &R[0, t], 1)
+                    _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * _nrm2(n_samples * n_tasks, &Y[0, 0], 1) ** 2
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet_multi_task(
-            n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA
+            n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA, XtA_row_norms
         )
         if gap <= tol:
             with gil:
                 return np.asarray(W), gap, tol, 0
 
+        # Gap Safe Screening Rules for multi-task Lasso, see
+        # https://arxiv.org/abs/1703.07285 Eq 2.2. (also arxiv:1506.03736)
+        if do_screening:
+            n_active = 0
+            for j in range(n_features):
+                if norm2_cols_X[j] == 0:
+                    for t in range(n_tasks):
+                        W[t, j] = 0
+                    excluded_set[j] = 1
+                    continue
+                # Xj_theta = ||X[:,j] @ dual_theta||_2
+                Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)
+                d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + l2_reg)
+                if d_j <= sqrt(2 * gap) / l1_reg:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # R += W[:, 1] * X[:, 1][:, None]
+                    for t in range(n_tasks):
+                        _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                        W[t, j] = 0
+                    excluded_set[j] = 1
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    j = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_active, rand_r_state)
                 else:
                     j = f_iter
+
+                if do_screening:
+                    j = active_set[j]
 
                 if norm2_cols_X[j] == 0.0:
                     continue
@@ -1050,8 +1100,7 @@ def enet_coordinate_descent_multi_task(
                 # Using BLAS Level 1 (faster for small vectors like here):
                 for t in range(n_tasks):
                     if W[t, j] != w_j[t]:
-                        _axpy(n_samples, w_j[t] - W[t, j], &X[0, j], 1,
-                              &R[0, t], 1)
+                        _axpy(n_samples, w_j[t] - W[t, j], &X[0, j], 1, &R[0, t], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_j = diff_abs_max(n_tasks, &W[0, j], &w_j[0])
@@ -1068,11 +1117,34 @@ def enet_coordinate_descent_multi_task(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
                 gap, dual_norm_XtA = gap_enet_multi_task(
-                    n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA
+                    n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA, XtA_row_norms
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
+
+                # Gap Safe Screening Rules for multi-task Lasso, see
+                # https://arxiv.org/abs/1703.07285 Eq 2.2. (also arxiv:1506.03736)
+                if do_screening:
+                    n_active = 0
+                    for j in range(n_features):
+                        if norm2_cols_X[j] == 0:
+                            continue
+                        # Xj_theta = ||X[:,j] @ dual_theta||_2
+                        Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)
+                        d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + l2_reg)
+                        if d_j <= sqrt(2 * gap) / l1_reg:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # R += W[:, 1] * X[:, 1][:, None]
+                            for t in range(n_tasks):
+                                _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                                W[t, j] = 0
+                            excluded_set[j] = 1
+
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
