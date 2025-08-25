@@ -144,10 +144,16 @@ def _graphical_lasso(
                             sub_covariance,
                             row,
                             row,
-                            max_iter,
+                            # TODO: It is not ideal that the max_iter of the outer
+                            # solver (graphical lasso) is coupled with the max_iter of
+                            # the inner solver (CD). Ideally, CD has its own parameter
+                            # enet_max_iter (like enet_tol). A minimum of 20 is rather
+                            # arbitrary, but not unreasonable.
+                            max(20, max_iter),
                             enet_tol,
                             check_random_state(None),
-                            False,
+                            positive=False,
+                            do_screening=True,
                         )
                     else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(

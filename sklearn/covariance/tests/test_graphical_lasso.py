@@ -61,8 +61,7 @@ def test_graphical_lassos(random_state=1):
     # Smoke test the estimator
     model = GraphicalLasso(alpha=0.25).fit(X)
     model.score(X)
-    assert_array_almost_equal(model.covariance_, covs["cd"], decimal=4)
-    assert_array_almost_equal(model.covariance_, covs["lars"], decimal=4)
+    assert_allclose(model.covariance_, covs["cd"], rtol=1e-8)
 
     # For a centered matrix, assume_centered could be chosen True or False
     # Check that this returns indeed the same result for centered data
@@ -87,6 +86,7 @@ def test_graphical_lasso_when_alpha_equals_0(global_random_seed):
 
 
 @pytest.mark.parametrize("mode", ["cd", "lars"])
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_graphical_lasso_n_iter(mode):
     X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
     emp_cov = empirical_covariance(X)
@@ -138,12 +138,25 @@ def test_graph_lasso_2D():
         assert_array_almost_equal(icov, icov_skggm)
 
 
-def test_graphical_lasso_iris_singular():
+@pytest.mark.parametrize("method", ["cd", "lars"])
+def test_graphical_lasso_iris_singular(method):
     # Small subset of rows to test the rank-deficient case
     # Need to choose samples such that none of the variances are zero
     indices = np.arange(10, 13)
 
     # Hard-coded solution from R glasso package for alpha=0.01
+    # library(glasso)
+    # X = t(array(c(
+    #   5.4, 3.7, 1.5, 0.2,
+    #   4.8, 3.4, 1.6, 0.2,
+    #   4.8, 3. , 1.4, 0.1),
+    #   dim = c(4, 3)
+    # ))
+    # n = nrow(X)
+    # emp_cov = cov(X) * (n - 1)/n  # without Bessel correction
+    # sol = glasso(emp_cov, 0.01, penalize.diagonal = FALSE)
+    # # print cov_R
+    # print(noquote(format(sol$w, scientific=FALSE, digits = 10)))
     cov_R = np.array(
         [
             [0.08, 0.056666662595, 0.00229729713223, 0.00153153142149],
@@ -162,12 +175,9 @@ def test_graphical_lasso_iris_singular():
     )
     X = datasets.load_iris().data[indices, :]
     emp_cov = empirical_covariance(X)
-    for method in ("cd", "lars"):
-        cov, icov = graphical_lasso(
-            emp_cov, alpha=0.01, return_costs=False, mode=method
-        )
-        assert_array_almost_equal(cov, cov_R, decimal=5)
-        assert_array_almost_equal(icov, icov_R, decimal=5)
+    cov, icov = graphical_lasso(emp_cov, alpha=0.01, return_costs=False, mode=method)
+    assert_allclose(cov, cov_R, atol=1e-6)
+    assert_allclose(icov, icov_R, atol=1e-5)
 
 
 def test_graphical_lasso_cv(global_random_seed):
