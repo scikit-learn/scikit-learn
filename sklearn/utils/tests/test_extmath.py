@@ -680,13 +680,9 @@ def test_cartesian_mix_types(arrays, output_dtype):
     assert output.dtype == output_dtype
 
 
-@pytest.fixture()
-def rng():
-    return np.random.RandomState(42)
-
-
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
+def test_incremental_weighted_mean_and_variance_simple(dtype):
+    rng = np.random.RandomState(42)
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
@@ -703,9 +699,9 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 @pytest.mark.parametrize(
     "weight_loc, weight_scale", [(0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)]
 )
-def test_incremental_weighted_mean_and_variance(
-    mean, var, weight_loc, weight_scale, rng
-):
+def test_incremental_weighted_mean_and_variance(mean, var, weight_loc, weight_scale):
+    rng = np.random.RandomState(42)
+
     # Testing of correctness and numerical stability
     def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]
