@@ -359,7 +359,6 @@ def enet_coordinate_descent(
                 gap, dual_norm_XtA = gap_enet(
                     n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
                 )
-
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
@@ -837,6 +836,70 @@ def enet_coordinate_descent_gram(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+cdef (floating, floating) gap_enet_multi_task(
+    int n_samples,
+    int n_features,
+    int n_tasks,
+    const floating[::1, :] W,  # n_tasks, n_features
+    floating l1_reg,  # L1 penalty
+    floating l2_reg,  # L2 penalty
+    const floating[::1, :] X,  # n_samples, n_features
+    const floating[::1, :] Y,  # n_samples, n_tasks
+    const floating[::1, :] R,  # current residuals = y - X @ W.T
+    floating[:, ::1] XtA,  # XtA = X.T @ R - l2_reg * W.T is calculated inplace
+) noexcept nogil:
+    """Compute dual gap for use in enet_coordinate_descent."""
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
+    cdef floating XtA_axis1norm
+    cdef floating R_norm2
+    cdef floating w_norm2 = 0.0
+    cdef floating l21_norm
+    cdef floating A_norm2
+    cdef floating const_
+    cdef unsigned int t, j
+
+    # XtA = X.T @ R - l2_reg * W.T
+    for j in range(n_features):
+        for t in range(n_tasks):
+            XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1) - l2_reg * W[t, j]
+
+    # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
+    dual_norm_XtA = 0.0
+    for j in range(n_features):
+        # np.sqrt(np.sum(XtA ** 2, axis=1))
+        XtA_axis1norm = _nrm2(n_tasks, &XtA[j, 0], 1)
+        if XtA_axis1norm > dual_norm_XtA:
+            dual_norm_XtA = XtA_axis1norm
+
+    # R_norm2 = linalg.norm(R, ord="fro") ** 2
+    R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
+
+    # w_norm2 = linalg.norm(W, ord="fro") ** 2
+    if l2_reg > 0:
+        w_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
+
+    if (dual_norm_XtA > l1_reg):
+        const_ = l1_reg / dual_norm_XtA
+        A_norm2 = R_norm2 * (const_ ** 2)
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
+    l21_norm = 0.0
+    for ii in range(n_features):
+        l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
+
+    gap += (
+        l1_reg * l21_norm
+        - const_ * _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)  # np.sum(R * Y)
+        + 0.5 * l2_reg * (1 + const_ ** 2) * w_norm2
+    )
+    return gap, dual_norm_XtA
+
+
 def enet_coordinate_descent_multi_task(
     const floating[::1, :] W,
     floating l1_reg,
@@ -891,7 +954,6 @@ def enet_coordinate_descent_multi_task(
 
     # to store XtA
     cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
-    cdef floating XtA_axis1norm
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
@@ -906,10 +968,6 @@ def enet_coordinate_descent_multi_task(
     cdef floating W_ii_abs_max
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
-    cdef floating R_norm2
-    cdef floating w_norm2
-    cdef floating ry_sum
-    cdef floating l21_norm
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
@@ -934,6 +992,14 @@ def enet_coordinate_descent_multi_task(
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * _nrm2(n_samples * n_tasks, &Y[0, 0], 1) ** 2
+
+        # Check convergence before entering the main loop.
+        gap, dual_norm_XtA = gap_enet_multi_task(
+            n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA
+        )
+        if gap <= tol:
+            with gil:
+                return np.asarray(W), gap, tol, 0
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -1001,48 +1067,9 @@ def enet_coordinate_descent_multi_task(
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-
-                # XtA = np.dot(X.T, R) - l2_reg * W.T
-                for ii in range(n_features):
-                    for jj in range(n_tasks):
-                        XtA[ii, jj] = _dot(
-                            n_samples, &X[0, ii], 1, &R[0, jj], 1
-                            ) - l2_reg * W[jj, ii]
-
-                # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
-                dual_norm_XtA = 0.0
-                for ii in range(n_features):
-                    # np.sqrt(np.sum(XtA ** 2, axis=1))
-                    XtA_axis1norm = _nrm2(n_tasks, &XtA[ii, 0], 1)
-                    if XtA_axis1norm > dual_norm_XtA:
-                        dual_norm_XtA = XtA_axis1norm
-
-                # R_norm2 = linalg.norm(R, ord='fro') ** 2
-                # w_norm2 = linalg.norm(W, ord='fro') ** 2
-                R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
-                w_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
-                if (dual_norm_XtA > l1_reg):
-                    const_ = l1_reg / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const_ ** 2)
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const_ = 1.0
-                    gap = R_norm2
-
-                # ry_sum = np.sum(R * y)
-                ry_sum = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
-
-                # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
-                l21_norm = 0.0
-                for ii in range(n_features):
-                    l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
-
-                gap += (
-                    l1_reg * l21_norm
-                    - const_ * ry_sum
-                    + 0.5 * l2_reg * (1 + const_ ** 2) * w_norm2
+                gap, dual_norm_XtA = gap_enet_multi_task(
+                    n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA
                 )
-
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
