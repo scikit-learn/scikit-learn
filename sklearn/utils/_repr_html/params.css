@@ -47,14 +47,12 @@
 
 .default td {
     color: black;
-
 }
 
 .user-set td i,
 .default td i {
     color: black;
 }
-
 
 /* Styles for parameter documentation links */
 a.param-doc-link {
