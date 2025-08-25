@@ -55,7 +55,9 @@
 }
 
 /* Styles for parameter documentation links */
-a.param-doc-link {
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
     text-decoration: none;
     border-bottom: 1px dashed #666;
     position: relative;
