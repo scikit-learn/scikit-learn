@@ -272,6 +272,7 @@ build_metadata_list = [
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
+            "pytest-run-parallel",
             "ninja",
             "meson-python",
             "ccache",
