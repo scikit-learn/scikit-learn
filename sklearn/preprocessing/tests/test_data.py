@@ -310,6 +310,7 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
 def test_standard_scaler_constant_features(
     scaler, add_sample_weight, sparse_container, dtype, constant
 ):
+    scaler = clone(scaler)  # Avoid side effects from previous tests.
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support sample_weight")
 
