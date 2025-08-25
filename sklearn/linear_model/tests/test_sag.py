@@ -159,6 +159,7 @@ def sag_sparse(
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(n_features)
+    actual_weights = np.zeros(n_features)
     sum_gradient = np.zeros(n_features)
     last_updated = np.zeros(n_features, dtype=int)
     gradient_memory = np.zeros(n_samples)
@@ -177,7 +178,7 @@ def sag_sparse(
 
     counter = 0
     for epoch in range(max_iter):
-        previous_weights = weights * wscale
+        previous_weights = actual_weights
         for k in range(n_samples):
             # idx = k
             idx = int(rng.rand() * n_samples)
@@ -245,18 +246,27 @@ def sag_sparse(
                 wscale = 1.0
 
             counter += 1
+        # Actual weights is wscale times the just-in-time updates for all features
+        actual_weights = weights.copy()
+        for j in range(n_features):
+            if last_updated[j] == 0:
+                actual_weights[j] -= c_sum[counter - 1] * sum_gradient[j]
+            else:
+                actual_weights[j] -= (
+                    c_sum[counter - 1] - c_sum[last_updated[j] - 1]
+                ) * sum_gradient[j]
+        actual_weights *= wscale
         # callback on epoch end
-        scaled_weights = weights * wscale
         if callable(callback):
-            callback(dict(weights=scaled_weights, intercept=intercept, epoch=epoch))
+            callback(dict(weights=actual_weights, intercept=intercept, epoch=epoch))
         # stopping criteria
-        max_weight = np.abs(scaled_weights).max()
-        max_change = np.abs(scaled_weights - previous_weights).max()
+        max_weight = np.abs(actual_weights).max()
+        max_change = np.abs(actual_weights - previous_weights).max()
         if (max_weight != 0 and max_change / max_weight <= tol) or (
             max_weight == 0 and max_change == 0
         ):
             break
-
+    # Actual weights is wscale times the just-in-time updates for all features
     for j in range(n_features):
         if last_updated[j] == 0:
             weights[j] -= c_sum[counter - 1] * sum_gradient[j]
