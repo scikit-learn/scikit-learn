@@ -554,6 +554,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
+            .add(caller="fit_transform", callee="fit_transform")
             .add(caller="fit", callee="fit")
             .add(caller="predict", callee="predict")
             .add(caller="score", callee="score"),
@@ -1005,7 +1006,9 @@ class RFECV(RFE):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="fit_transform", callee="fit_transform"),
         )
         router.add(
             splitter=check_cv(self.cv),
