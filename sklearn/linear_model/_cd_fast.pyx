@@ -715,7 +715,7 @@ cdef (floating, floating) gap_enet_gram(
     # q_dot_w = w @ q
     q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
 
-    # XtA = X.T @ R - beta * w
+    # XtA = X.T @ R - beta * w = X.T @ y - X.T @ X @ w - beta * w
     for j in range(n_features):
         XtA[j] = q[j] - Qw[j] - beta * w[j]
 
@@ -771,6 +771,7 @@ def enet_coordinate_descent_gram(
         We minimize
 
         (1/2) * w^T Q w - q^T w + alpha norm(w, 1) + (beta/2) * norm(w, 2)^2
+        +1/2 * y^T y
 
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
@@ -802,6 +803,7 @@ def enet_coordinate_descent_gram(
     cdef floating y_norm2 = np.dot(y, y)
 
     cdef floating d_j
+    cdef floating radius
     cdef floating Xj_theta
     cdef floating tmp
     cdef floating w_j
@@ -846,6 +848,8 @@ def enet_coordinate_descent_gram(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
+            # Due to floating point issues, gap might be negative.
+            radius = sqrt(2 * fabs(gap)) / alpha
             n_active = 0
             for j in range(n_features):
                 if Q[j, j] == 0:
@@ -854,7 +858,7 @@ def enet_coordinate_descent_gram(
                     continue
                 Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
                 d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
-                if d_j <= sqrt(2 * gap) / alpha:
+                if d_j <= radius:
                     # include feature j
                     active_set[n_active] = j
                     excluded_set[j] = 0
@@ -868,11 +872,14 @@ def enet_coordinate_descent_gram(
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    j = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_active, rand_r_state)
                 else:
                     j = f_iter
+
+                if do_screening:
+                    j = active_set[j]
 
                 if Q[j, j] == 0.0:
                     continue
@@ -914,13 +921,15 @@ def enet_coordinate_descent_gram(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
+                    # Due to floating point issues, gap might be negative.
+                    radius = sqrt(2 * fabs(gap)) / alpha
                     n_active = 0
                     for j in range(n_features):
                         if excluded_set[j]:
                             continue
                         Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
                         d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
-                        if d_j <= sqrt(2 * gap) / alpha:
+                        if d_j <= radius:
                             # include feature j
                             active_set[n_active] = j
                             excluded_set[j] = 0
