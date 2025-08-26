@@ -104,9 +104,9 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
-from .. import get_config
-from ..exceptions import UnsetMetadataPassedError
-from ._bunch import Bunch
+from sklearn import get_config
+from sklearn.exceptions import UnsetMetadataPassedError
+from sklearn.utils._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
@@ -1209,8 +1209,8 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
-REQUESTER_DOC = """
-Configure whether metadata should be requested to be passed to the ``{method}`` method.
+REQUESTER_DOC = """        Configure whether metadata should be requested to be \
+passed to the ``{method}`` method.
 
         Note that this method is only relevant when this estimator is used as a
         sub-estimator within a :term:`meta-estimator` and metadata routing is enabled
