@@ -1543,7 +1543,7 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
         with pytest.raises(HTTPError, match="Simulated network error") as exc_info:
             _open_openml_url(invalid_openml_url, None, delay=0)
         assert len(record) == 3
-        # Avoids a ResourceWarning on Python 3.14
+        # Avoid a ResourceWarning on Python 3.14
         exc_info.value.close()
 
 

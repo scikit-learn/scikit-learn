@@ -112,7 +112,7 @@ def _retry_on_network_error(
                     retry_counter -= 1
                     time.sleep(delay)
 
-                    # This is needed to avoid a ResourceWarning on Python 3.14
+                    # Avoid a ResourceWarning on Python 3.14
                     if isinstance(e, HTTPError):
                         e.close()
 
