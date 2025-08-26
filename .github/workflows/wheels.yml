@@ -207,7 +207,7 @@ jobs:
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
           # TODO Put back pandas when they have released wheels on Python 3.14
-          CIBW_TEST_REQUIRES: ${{ contains(matrix.python, 'py314') && 'pytest' || 'pytest pandas' }}
+          CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }}
           # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
           # does not make sense because it would install dependencies in the host
           # rather than inside the Docker image
