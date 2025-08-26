@@ -13,6 +13,7 @@ strategies for categorical features. In particular, we evaluate:
 - "One Hot": using a :class:`~preprocessing.OneHotEncoder`;
 - "Ordinal": using an :class:`~preprocessing.OrdinalEncoder` and treat
   categories as ordered, equidistant quantities;
+- "Target": using a :class:`~preprocessing.TargetEncoder`;
 - "Native": relying on the :ref:`native category support
   <categorical_support_gbdt>` of the
   :class:`~ensemble.HistGradientBoostingRegressor` estimator.
@@ -143,6 +144,37 @@ hist_ordinal = make_pipeline(
 hist_ordinal
 
 # %%
+# Gradient boosting estimator with target encoding
+# ------------------------------------------------
+# Another possibility is to use the :class:`~preprocessing.TargetEncoder`, which
+# encodes the categories computed from the mean of the (training) target
+# variable, as computed using `np.mean(y, axis=0)` i.e.:
+# - in regression it uses the mean of `y`;
+# - in binary classification, the positive-class rate;
+# - in multiclass, a vector of class rates (one per class).
+#
+# For each category, it computes these target averages using :term:`cross
+# fitting`, meaning that the training data are split into folds: in each fold
+# the averages are calculated only on a subset of data and then applied to the
+# held-out part. This way, each sample is encoded using statistics from data it
+# was not part of, preventing information leakage from the target.
+
+from sklearn.preprocessing import TargetEncoder
+
+target_encoder = make_column_transformer(
+    (
+        TargetEncoder(target_type="continuous", random_state=42),
+        make_column_selector(dtype_include="category"),
+    ),
+    remainder="passthrough",
+)
+
+hist_target = make_pipeline(
+    target_encoder, HistGradientBoostingRegressor(random_state=42)
+)
+hist_target
+
+# %%
 # Gradient boosting estimator with native categorical support
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
@@ -184,11 +216,13 @@ common_params = {"cv": 5, "scoring": "neg_mean_absolute_percentage_error", "n_jo
 dropped_result = cross_validate(hist_dropped, X, y, **common_params)
 one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
 ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
+target_result = cross_validate(hist_target, X, y, **common_params)
 native_result = cross_validate(hist_native, X, y, **common_params)
 results = [
     ("Dropped", dropped_result),
     ("One Hot", one_hot_result),
     ("Ordinal", ordinal_result),
+    ("Target", target_result),
     ("Native", native_result),
 ]
 
@@ -199,7 +233,7 @@ import matplotlib.ticker as ticker
 
 def plot_performance_tradeoff(results, title):
     fig, ax = plt.subplots()
-    markers = ["s", "o", "^", "x"]
+    markers = ["s", "o", "^", "x", "D"]
 
     for idx, (name, result) in enumerate(results):
         test_error = -result["test_score"]
@@ -246,9 +280,9 @@ def plot_performance_tradeoff(results, title):
 
     ax.annotate(
         "  best\nmodels",
-        xy=(0.05, 0.05),
+        xy=(0.04, 0.04),
         xycoords="axes fraction",
-        xytext=(0.1, 0.15),
+        xytext=(0.09, 0.14),
         textcoords="axes fraction",
         arrowprops=dict(arrowstyle="->", lw=1.5),
     )
@@ -276,9 +310,13 @@ plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
 # number of categories is small, and this may not always be reflected in
 # practice.
 #
+# The time to fit when using the `TargetEncoder` depends on the parameter of the
+# cross fitting parameter `cv`, as adding splits come at a computational cost.
+#
 # In terms of prediction performance, dropping the categorical features leads to
-# the worst performance. The three models that use categorical features have
-# comparable error rates, with a slight edge for the native handling.
+# the worst performance. The four models that make use of the categorical
+# features have comparable error rates, with a slight edge for the native
+# handling.
 
 # %%
 # Limiting the number of splits
@@ -291,18 +329,18 @@ plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
 #
 # This is also true when categories are treated as ordinal quantities: if
 # categories are `A..F` and the best split is `ACF - BDE` the one-hot-encoder
-# model will need 3 split points (one per category in the left node), and the
-# ordinal non-native model will need 4 splits: 1 split to isolate `A`, 1 split
+# model would need 3 split points (one per category in the left node), and the
+# ordinal non-native model would need 4 splits: 1 split to isolate `A`, 1 split
 # to isolate `F`, and 2 splits to isolate `C` from `BCDE`.
 #
-# How strongly the models' performances differ in practice will depend on the
+# How strongly the models' performances differ in practice depends on the
 # dataset and on the flexibility of the trees.
 #
 # To see this, let us re-run the same analysis with under-fitting models where
 # we artificially limit the total number of splits by both limiting the number
 # of trees and the depth of each tree.
 
-for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
+for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_target, hist_native):
     if pipe is hist_native:
         # The native model does not use a pipeline so, we can set the parameters
         # directly.
@@ -316,11 +354,13 @@ for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
 dropped_result = cross_validate(hist_dropped, X, y, **common_params)
 one_hot_result = cross_validate(hist_one_hot, X, y, **common_params)
 ordinal_result = cross_validate(hist_ordinal, X, y, **common_params)
+target_result = cross_validate(hist_target, X, y, **common_params)
 native_result = cross_validate(hist_native, X, y, **common_params)
 results_underfit = [
     ("Dropped", dropped_result),
     ("One Hot", one_hot_result),
     ("Ordinal", ordinal_result),
+    ("Target", target_result),
     ("Native", native_result),
 ]
 
@@ -332,7 +372,7 @@ plot_performance_tradeoff(
 # %%
 # The results for these underfitting models confirm our previous intuition: the
 # native category handling strategy performs the best when the splitting budget
-# is constrained. The two explicit encoding strategies (one-hot and ordinal
-# encoding) lead to slightly larger errors than the estimator's native handling,
-# but still perform better than the baseline model that just dropped the
-# categorical features altogether.
+# is constrained. The three explicit encoding strategies (one-hot, ordinal and
+# target encoding) lead to slightly larger errors than the estimator's native
+# handling, but still perform better than the baseline model that just dropped
+# the categorical features altogether.
