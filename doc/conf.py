@@ -261,9 +261,9 @@ html_theme_options = {
     "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
-        "image_relative": "logos/scikit-learn-logo-small.png",
-        "image_light": "logos/scikit-learn-logo-small.png",
-        "image_dark": "logos/scikit-learn-logo-small.png",
+        "image_relative": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_light": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_dark": "logos/scikit-learn-logo-without-subtitle.svg",
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------

@@ -262,3 +262,10 @@ div.sk-text-image-grid-large {
     grid-template-columns: 1fr;
   }
 }
+
+.navbar-brand {
+  .logo__image {
+    padding: 0px;
+    height: 130%;
+  }
+}
