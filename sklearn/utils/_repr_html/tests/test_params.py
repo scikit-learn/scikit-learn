@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from sklearn import config_context
@@ -11,19 +13,19 @@ from sklearn.utils._repr_html.params import (
 
 def test_params_dict_content():
     """Check the behavior of the ParamsDict class."""
-    params = ParamsDict({"a": 1, "b": 2})
+    params = ParamsDict(params={"a": 1, "b": 2})
     assert params["a"] == 1
     assert params["b"] == 2
     assert params.non_default == ()
 
-    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",))
+    params = ParamsDict(params={"a": 1, "b": 2}, non_default=("a",))
     assert params["a"] == 1
     assert params["b"] == 2
     assert params.non_default == ("a",)
 
 
 def test_params_dict_repr_html_():
-    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",), estimator_class="")
+    params = ParamsDict(params={"a": 1, "b": 2}, non_default=("a",), estimator_class="")
     out = params._repr_html_()
     assert "<summary>Parameters</summary>" in out
 
@@ -34,7 +36,7 @@ def test_params_dict_repr_html_():
 
 
 def test_params_dict_repr_mimebundle():
-    params = ParamsDict({"a": 1, "b": 2}, non_default=("a",), estimator_class="")
+    params = ParamsDict(params={"a": 1, "b": 2}, non_default=("a",), estimator_class="")
     out = params._repr_mimebundle_()
 
     assert "text/plain" in out
@@ -74,7 +76,7 @@ def test_read_params():
 
 def test_params_html_repr():
     """Check returned HTML template"""
-    params = ParamsDict({"a": 1, "b": 2}, estimator_class="")
+    params = ParamsDict(params={"a": 1, "b": 2}, estimator_class="")
     assert "parameters-table" in _params_html_repr(params)
     assert "estimator-table" in _params_html_repr(params)
 
@@ -96,22 +98,33 @@ def test_params_html_repr_with_doc_links():
         __qualname__ = "MockEstimator"
 
     params = ParamsDict(
-        {"a": 1, "b": "value"},
+        params={"a": 1, "b": "value"},
         non_default=("a",),
         estimator_class=MockEstimator,
         doc_link="mock_module.MockEstimator.html",
     )
     html_output = _params_html_repr(params)
 
-    # Check that the doc links are correctly generated
-    # FIXME
-
-    assert "Description of a" in html_output
-    assert "Description of b" not in html_output
-    assert "param-doc-link" in html_output
-    # Check that the doc links contain the correct URL fragments
-    assert "mock_module.MockEstimator.html#:~:text=a,-int" in html_output
-    assert "mock_module.MockEstimator.html#:~:text=b,-str" in html_output
+    html_param_a = (
+        r'<td class="param">'
+        r'.*<a class="param-doc-link"'
+        r'.*target="_blank" href="mock_module\.MockEstimator\.html#:~:text=a,-int">'
+        r".*a"
+        r'.*<span class="param-doc-description">a: int<br><br>Description of a\.</span>'
+        r".*</a>"
+        r".*</td>"
+    )
+    assert re.search(html_param_a, html_output, flags=re.DOTALL)
+    html_param_b = (
+        r'<td class="param">'
+        r'.*<a class="param-doc-link"'
+        r'.*target="_blank" href="mock_module\.MockEstimator\.html#:~:text=b,-str">'
+        r".*b"
+        r'.*<span class="param-doc-description">b: str<br><br></span>'
+        r".*</a>"
+        r".*</td>"
+    )
+    assert re.search(html_param_b, html_output, flags=re.DOTALL)
 
 
 def test_params_html_repr_without_doc_links():
@@ -123,7 +136,7 @@ def test_params_html_repr_without_doc_links():
         # No docstring defined on this test class.
 
     params = ParamsDict(
-        {"a": 1, "b": "value"},
+        params={"a": 1, "b": "value"},
         non_default=("a",),
         estimator_class=MockEstimatorWithoutDoc,
     )

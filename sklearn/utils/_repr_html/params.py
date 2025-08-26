@@ -95,30 +95,26 @@ def _params_html_repr(params):
         </a>
     """
     estimator_class_docs = inspect.getdoc(params.estimator_class)
-    docstring = None
-    param_map = {}
-    if estimator_class_docs:
-        docstring = _scrape_estimator_docstring(estimator_class_docs)
-        if docstring:
-            param_map = {
-                param_docstring.name: param_docstring
-                for param_docstring in docstring["Parameters"]
-            }
-
+    if estimator_class_docs and (
+        structured_docstring := _scrape_estimator_docstring(estimator_class_docs)
+    ):
+        param_map = {
+            param_docstring.name: param_docstring
+            for param_docstring in structured_docstring["Parameters"]
+        }
+    else:
+        param_map = {}
     rows = []
     for row in params:
-        param_description = param_numpydoc = None
-        link = ""
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
-
-        param_numpydoc = param_map.get(row) if docstring else None
-
-        if param_numpydoc and param_map:
+        if param_numpydoc := param_map.get(row, None):
             param_description = (
                 f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
                 f"{'<br>'.join(param_numpydoc.desc)}"
             )
+        else:
+            param_description = None
 
         if params.doc_link and link and param_description:
             # Create clickable parameter name with documentation link
@@ -147,14 +143,14 @@ class ParamsDict(ReprHTMLMixin, UserDict):
     params : dict, default=None
         The original dictionary of parameters and their values.
 
-    non_default : tuple
+    non_default : tuple, default=(,)
         The list of non-default parameters.
 
-    estimator_class : type
+    estimator_class : type, default=None
         The class of the estimator. It allows to find the online documentation
         link for each parameter.
 
-    doc_link : str
+    doc_link : str, default=""
         The base URL to the online documentation for the estimator class.
         Used to generate parameter-specific documentation links in the HTML
         representation. If empty, documentation links will not be generated.
@@ -163,7 +159,7 @@ class ParamsDict(ReprHTMLMixin, UserDict):
     _html_repr = _params_html_repr
 
     def __init__(
-        self, params=None, non_default=tuple(), estimator_class=None, doc_link=""
+        self, *, params=None, non_default=tuple(), estimator_class=None, doc_link=""
     ):
         super().__init__(params or {})
         self.non_default = non_default
