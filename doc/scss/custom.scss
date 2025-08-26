@@ -264,7 +264,11 @@ div.sk-text-image-grid-large {
 }
 
 .navbar-brand {
-  .logo__image {
+  .logo__image.only-light {
+    padding: 0px;
+    height: 130%;
+  }
+  .logo__image.only-dark {
     padding: 0px;
     height: 130%;
   }
