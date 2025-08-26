@@ -52,8 +52,8 @@ def _read_params(name, value, non_default_params):
 
 
 @lru_cache
-def _get_estimator_docstring(estimator_class_docs):
-    return docscrape.NumpyDocString(estimator_class_docs)
+def _scrape_estimator_docstring(docstring):
+    return docscrape.NumpyDocString(docstring)
 
 
 def _params_html_repr(params):
@@ -98,7 +98,7 @@ def _params_html_repr(params):
     docstring = None
     param_map = {}
     if estimator_class_docs:
-        docstring = _get_estimator_docstring(estimator_class_docs)
+        docstring = _scrape_estimator_docstring(estimator_class_docs)
         if docstring:
             param_map = {
                 param_docstring.name: param_docstring
