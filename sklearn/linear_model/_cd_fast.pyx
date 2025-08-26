@@ -689,7 +689,7 @@ def sparse_enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-cdef (floating, floating) gram_gap_enet(
+cdef (floating, floating) gap_enet_gram(
     int n_features,
     const floating[::1] w,
     floating alpha,  # L1 penalty
@@ -836,7 +836,7 @@ def enet_coordinate_descent_gram(
         tol *= y_norm2
 
         # Check convergence before entering the main loop.
-        gap, dual_norm_XtA = gram_gap_enet(
+        gap, dual_norm_XtA = gap_enet_gram(
             n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
         )
         if 0 <= gap <= tol:
@@ -904,7 +904,7 @@ def enet_coordinate_descent_gram(
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-                gap, dual_norm_XtA = gram_gap_enet(
+                gap, dual_norm_XtA = gap_enet_gram(
                     n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
                 )
 
