@@ -434,7 +434,7 @@ cdef inline void R_plus_wj_Xj(
                 R[i] -= sample_weight[i] * X_mean_j * w_j
 
 
-cdef (floating, floating) sparse_gap_enet(
+cdef (floating, floating) gap_enet_sparse(
     int n_samples,
     int n_features,
     const floating[::1] w,
@@ -671,7 +671,7 @@ def sparse_enet_coordinate_descent(
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
         # Check convergence before entering the main loop.
-        gap, dual_norm_XtA = sparse_gap_enet(
+        gap, dual_norm_XtA = gap_enet_sparse(
             n_samples,
             n_features,
             w,
@@ -803,7 +803,7 @@ def sparse_enet_coordinate_descent(
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-                gap, dual_norm_XtA = sparse_gap_enet(
+                gap, dual_norm_XtA = gap_enet_sparse(
                     n_samples,
                     n_features,
                     w,
