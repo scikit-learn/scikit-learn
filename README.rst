@@ -74,7 +74,7 @@ scikit-learn requires:
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
-For running the examples, Matplotlib >= |MatplotlibMinVersion| is required.
+For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
 |SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
