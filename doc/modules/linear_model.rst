@@ -763,7 +763,7 @@ previously chosen dictionary elements.
 
   * `Matching pursuits with time-frequency dictionaries
     <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+    S. G. Mallat, Z. Zhang, 1993.
 
 .. _bayesian_regression:
 
@@ -804,11 +804,14 @@ The disadvantages of Bayesian regression include:
 
 .. dropdown:: References
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+  * A good introduction to Bayesian methods is given in `C. Bishop: Pattern
+    Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/>`__.
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+  * Original Algorithm is detailed in the book `Bayesian learning for neural
+    networks
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=db869fa192a3222ae4f2d766674a378e47013b1b>`__
+    by Radford M. Neal.
 
 .. _bayesian_ridge_regression:
 
