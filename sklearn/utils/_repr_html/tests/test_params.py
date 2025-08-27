@@ -161,7 +161,10 @@ def test_params_html_repr_without_doc_links():
 
 def test_generate_link_to_param_doc_basic():
     class MockEstimator:
-        __doc__ = """
+        """Mock class.
+
+        Parameters
+        ----------
         alpha : float
             Regularization strength.
         beta : int
@@ -169,17 +172,19 @@ def test_generate_link_to_param_doc_basic():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    # Test for 'alpha'
     url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float"
-    # Test for 'beta'
+
     url = _generate_link_to_param_doc(MockEstimator, "beta", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=beta,-int"
 
 
 def test_generate_link_to_param_doc_param_not_found():
     class MockEstimator:
-        __doc__ = """
+        """Mock class
+
+        Parameters
+        ----------
         alpha : float
             Regularization strength.
         """
@@ -192,7 +197,7 @@ def test_generate_link_to_param_doc_param_not_found():
 
 def test_generate_link_to_param_doc_special_characters():
     class MockEstimator:
-        __doc__ = """
+        """Mock class
         param with space : {'stay', 'leave'} default='don't know'
             Parameter with space in name.
         """
@@ -206,7 +211,7 @@ def test_generate_link_to_param_doc_special_characters():
 
 def test_generate_link_to_param_doc_empty_docstring():
     class MockEstimator:
-        __doc__ = ""
+        pass
 
     doc_link = "mock_module.MockEstimator.html"
     url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
