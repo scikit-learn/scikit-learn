@@ -109,6 +109,10 @@ def _retry_on_network_error(
                     warn(
                         f"A network error occurred while downloading {url}. Retrying..."
                     )
+                    # Avoid a ResourceWarning on Python 3.14 and later.
+                    if isinstance(e, HTTPError):
+                        e.close()
+
                     retry_counter -= 1
                     time.sleep(delay)
 
