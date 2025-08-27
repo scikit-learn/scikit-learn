@@ -3038,7 +3038,10 @@ def _build_repr(self):
                 # if the parameter is deprecated, don't show it
                 continue
         finally:
-            warnings.filters.pop(0)
+            try:
+                warnings.filters.pop(0)
+            except IndexError:
+                pass
         params[key] = value
 
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
