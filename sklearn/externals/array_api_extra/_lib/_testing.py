@@ -110,7 +110,7 @@ def _is_materializable(x: Array) -> bool:
     return not is_torch_array(x) or x.device.type != "meta"  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
 
-def as_numpy_array(array: Array, *, xp: ModuleType) -> np.typing.NDArray[Any]:  # type: ignore[explicit-any]
+def as_numpy_array(array: Array, *, xp: ModuleType) -> np.typing.NDArray[Any]:
     """
     Convert array to NumPy, bypassing GPU-CPU transfer guards and densification guards.
     """
