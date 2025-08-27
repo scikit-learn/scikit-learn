@@ -107,22 +107,25 @@ def test_params_html_repr_with_doc_links():
 
     html_param_a = (
         r'<td class="param">'
-        r'.*<a class="param-doc-link"'
-        r'.*target="_blank" href="mock_module\.MockEstimator\.html#:~:text=a,-int">'
-        r".*a"
-        r'.*<span class="param-doc-description">a: int<br><br>Description of a\.</span>'
-        r".*</a>"
-        r".*</td>"
+        r'\s*<a class="param-doc-link"'
+        r'\s*rel="noreferrer" target="_blank"'
+        r'\shref="mock_module\.MockEstimator\.html#:~:text=a,-int">'
+        r"\s*a"
+        r'\s*<span class="param-doc-description">a: int<br><br>'
+        r"Description of a\.</span>"
+        r"\s*</a>"
+        r"\s*</td>"
     )
     assert re.search(html_param_a, html_output, flags=re.DOTALL)
     html_param_b = (
         r'<td class="param">'
         r'.*<a class="param-doc-link"'
-        r'.*target="_blank" href="mock_module\.MockEstimator\.html#:~:text=b,-str">'
-        r".*b"
-        r'.*<span class="param-doc-description">b: str<br><br></span>'
-        r".*</a>"
-        r".*</td>"
+        r'\s*rel="noreferrer" target="_blank"'
+        r'\shref="mock_module\.MockEstimator\.html#:~:text=b,-str">'
+        r"\s*b"
+        r'\s*<span class="param-doc-description">b: str<br><br></span>'
+        r"\s*</a>"
+        r"\s*</td>"
     )
     assert re.search(html_param_b, html_output, flags=re.DOTALL)
 
@@ -144,6 +147,16 @@ def test_params_html_repr_without_doc_links():
     # Check that no doc links are generated
     assert "?" not in html_output
     assert "Click to access" not in html_output
+    html_param_a = (
+        r'<td class="param">a</td>'
+        r'\s*<td class="value">1</td>'
+    )
+    assert re.search(html_param_a, html_output, flags=re.DOTALL)
+    html_param_b = (
+        r'<td class="param">b</td>'
+        r'\s*<td class="value">&#x27;value&#x27;</td>'
+    )
+    assert re.search(html_param_b, html_output, flags=re.DOTALL)
 
 
 def test_generate_link_to_param_doc_basic():
