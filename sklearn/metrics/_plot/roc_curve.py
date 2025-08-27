@@ -92,7 +92,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             are plotted.
 
     chance_level_ : matplotlib Artist or None
-        The non-informative baseline line (random classifier). It is `None` 
+        The non-informative baseline line (random classifier). It is `None`
         if the baseline is not plotted.
 
         .. versionadded:: 1.3
