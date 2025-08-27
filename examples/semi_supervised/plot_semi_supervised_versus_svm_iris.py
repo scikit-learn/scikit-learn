@@ -3,86 +3,83 @@
 Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 ===============================================================================
 
-A comparison for the decision boundaries generated on the iris dataset
-by Label Spreading, Self-training and SVM.
+This example compares decision boundaries learned by two semi-supervised
+methods, namely class:`~semi_supervised.LabelSpreading` and
+class:`~semi_supervised.SelfTrainingClassifier`, when varying the proportion of
+labeled training data from small fractions up to the full dataset.
 
-This example demonstrates that Label Spreading and Self-training can learn
-good boundaries even when small amounts of labeled data are available.
-
-Note that Self-training with 100% of the data is omitted as it is functionally
-identical to training the SVC on 100% of the data.
-
+Both methods rely on RBF kernels: Label Spreading uses it by default, and
+Self-training is paired here with class:`~svm.SVC` as base estimator (also
+RBF-based by default) to allow a fair comparison. Self-training with 100%
+labeled data is omitted since it is identical to training a fully supervised SVC
+directly.
 """
 
+# %%
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn import datasets
+from sklearn.datasets import load_iris
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.semi_supervised import LabelSpreading, SelfTrainingClassifier
 from sklearn.svm import SVC
 
-iris = datasets.load_iris()
-
+iris = load_iris()
 X = iris.data[:, :2]
 y = iris.target
 
-# step size in the mesh
-h = 0.02
-
-rng = np.random.RandomState(0)
+rng = np.random.RandomState(42)
 y_rand = rng.rand(y.shape[0])
+y_10 = np.copy(y)
+y_10[y_rand > 0.1] = -1  # set random samples to be unlabeled
 y_30 = np.copy(y)
-y_30[y_rand < 0.3] = -1  # set random samples to be unlabeled
-y_50 = np.copy(y)
-y_50[y_rand < 0.5] = -1
-# we create an instance of SVM and fit out data. We do not scale our
-# data since we want to plot the support vectors
-ls30 = (LabelSpreading().fit(X, y_30), y_30, "Label Spreading 30% data")
-ls50 = (LabelSpreading().fit(X, y_50), y_50, "Label Spreading 50% data")
-ls100 = (LabelSpreading().fit(X, y), y, "Label Spreading 100% data")
+y_30[y_rand > 0.3] = -1
 
-# the base classifier for self-training is identical to the SVC
-base_classifier = SVC(kernel="rbf", gamma=0.5, probability=True)
+ls30 = (LabelSpreading().fit(X, y_10), y_10, "LabelSpreading with 10% labeled data")
+ls50 = (LabelSpreading().fit(X, y_30), y_30, "LabelSpreading with 30% labeled data")
+ls100 = (LabelSpreading().fit(X, y), y, "LabelSpreading with 100% labeled data")
+
+base_classifier = SVC(gamma=0.5, probability=True, random_state=0)
 st30 = (
-    SelfTrainingClassifier(base_classifier).fit(X, y_30),
-    y_30,
-    "Self-training 30% data",
+    SelfTrainingClassifier(base_classifier).fit(X, y_10),
+    y_10,
+    "Self-training with 10% labeled data",
 )
 st50 = (
-    SelfTrainingClassifier(base_classifier).fit(X, y_50),
-    y_50,
-    "Self-training 50% data",
+    SelfTrainingClassifier(base_classifier).fit(X, y_30),
+    y_30,
+    "Self-training with 30% labeled data",
 )
+rbf_svc = (base_classifier.fit(X, y), y, "SVC with rbf kernel (100% labeled data)")
 
-rbf_svc = (SVC(kernel="rbf", gamma=0.5).fit(X, y), y, "SVC with rbf kernel")
-
-# create a mesh to plot in
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-
-color_map = {-1: (1, 1, 1), 0: (0, 0, 0.9), 1: (1, 0, 0), 2: (0.8, 0.6, 0)}
-
+tab10 = plt.get_cmap("tab10")
+color_map = {cls: tab10(cls) for cls in np.unique(y)}
+color_map[-1] = (1, 1, 1)
 classifiers = (ls30, st30, ls50, st50, ls100, rbf_svc)
-for i, (clf, y_train, title) in enumerate(classifiers):
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    plt.subplot(3, 2, i + 1)
-    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
-    plt.axis("off")
+fig, axes = plt.subplots(nrows=3, ncols=2, sharex="col", sharey="row", figsize=(10, 12))
+axes = axes.ravel()
 
-    # Plot also the training points
-    colors = [color_map[y] for y in y_train]
-    plt.scatter(X[:, 0], X[:, 1], c=colors, edgecolors="black")
+for ax, (clf, y_train, title) in zip(axes, classifiers):
+    DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method="predict_proba",
+        plot_method="contourf",
+        ax=ax,
+    )
+    colors = [color_map[label] for label in y_train]
+    ax.scatter(X[:, 0], X[:, 1], c=colors, edgecolor="black")
+    ax.set_title(title)
 
-    plt.title(title)
-
-plt.suptitle("Unlabeled points are colored white", y=0.1)
+fig.suptitle("Unlabeled points are colored white", y=1.01)
+plt.tight_layout()
 plt.show()
+
+# %%
+# We observe that the decision boundaries are already quite similar to those
+# using the full labeled data available for training, even when using a very
+# small subset of the labels.
