@@ -115,6 +115,7 @@ def _retry_on_network_error(
 
                     retry_counter -= 1
                     time.sleep(delay)
+
         return wrapper
 
     return decorator
