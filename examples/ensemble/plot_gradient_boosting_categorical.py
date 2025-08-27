@@ -311,7 +311,7 @@ plot_performance_tradeoff(results, "Gradient Boosting on Ames Housing")
 # number of categories is small, and this may not always be reflected in
 # practice.
 #
-# The time to fit when using the `TargetEncoder` depends on the parameter of the
+# The time required to fit when using the `TargetEncoder` depends on the
 # cross fitting parameter `cv`, as adding splits come at a computational cost.
 #
 # In terms of prediction performance, dropping the categorical features leads to
