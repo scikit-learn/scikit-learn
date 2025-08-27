@@ -53,6 +53,7 @@ def test_imputers_add_indicator(marker, imputer):
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
+    imputer = clone(imputer)
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -200,6 +201,7 @@ def test_imputation_adds_missing_indicator_if_add_indicator_is_true(
     # Test data where missing_value_test variable can be set to np.nan or 1.
     X_test = np.array([[0, missing_value_test], [1, 2]])
 
+    imputer = clone(imputer)
     imputer.set_params(add_indicator=True)
     imputer.fit(X_train)
 

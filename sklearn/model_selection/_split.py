@@ -3024,24 +3024,19 @@ def _build_repr(self):
     class_name = self.__class__.__name__
     params = dict()
     for key in args:
-        # We need deprecation warnings to always be on in order to
-        # catch deprecated param values.
-        # This is set in utils/__init__.py but it gets overwritten
-        # when running under python3 somehow.
-        warnings.simplefilter("always", FutureWarning)
-        try:
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-                if value is None and hasattr(self, "cvargs"):
-                    value = self.cvargs.get(key, None)
-            if len(w) and w[0].category is FutureWarning:
-                # if the parameter is deprecated, don't show it
-                continue
-        finally:
-            try:
-                warnings.filters.pop(0)
-            except IndexError:
-                pass
+        with warnings.catch_warnings(record=True) as w:
+            # We need deprecation warnings to always be on in order to
+            # catch deprecated param values.
+            # This is set in utils/__init__.py but it gets overwritten
+            # when running under python3 somehow.
+            warnings.simplefilter("always", FutureWarning)
+            value = getattr(self, key, None)
+            if value is None and hasattr(self, "cvargs"):
+                value = self.cvargs.get(key, None)
+        if len(w) and w[0].category is FutureWarning:
+            # if the parameter is deprecated, don't show it
+            continue
+
         params[key] = value
 
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
