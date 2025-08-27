@@ -81,6 +81,8 @@ if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
     # scipy and scikit-learn extensions all have declared free-threaded
     # compatibility.
     export PYTHON_GIL=0
+    # Use pytest-run-parallel
+    TEST_CMD="$TEST_CMD --parallel-threads 2 --iterations 1"
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"
