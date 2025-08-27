@@ -466,9 +466,8 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
-def _convert_to_reference(*, reference, arrays):
-    """Convert `arrays` to `reference` array's namespace and device."""
-    xp_ref, _, device_ref = get_namespace_and_device(reference)
+def move_to(*arrays, xp_ref, device_ref):
+    """Convert `arrays` to `namespace` and `device`."""
     arrays_converted_list = []
     for array in arrays:
         xp_array, _, device_array = get_namespace_and_device(array)
@@ -476,17 +475,25 @@ def _convert_to_reference(*, reference, arrays):
             arrays_converted_list.append(array)
         else:
             try:
-                # Note will copy if required
+                # The dlpack protocol is the future proof and library agnostic method
+                # to transfer arrays across namespace and device boundaries hence
+                # this method is attempted first and going through NumPy is only
+                # used as fallback in case of failure.
+                # Note: copy=None is the default since 2023.12. Namespace libraries
+                # should only trigger a copy automatically if needed.
                 array_converted = xp_ref.from_dlpack(array, device=device_ref)
             except AttributeError:
-                # Convert to numpy
+                # Converting to numpy is tricky, handle this via a dedicated function
                 if _is_numpy_namespace(xp_ref):
                     array_converted = _convert_to_numpy(array, xp_array)
-                # Convert from numpy
+                # Convert from numpy, all array libraries know how to use a Numpy array
                 elif _is_numpy_namespace(xp_array):
                     array_converted = xp_ref.asarray(array, device=device_ref)
                 else:
-                    # Convert to numpy then to reference
+                    # There is no generic way to convert from namespace A to B
+                    # So we first convert from A to numpy and then from numpy to B
+                    # The way to avoid this round trip is to lobby for DLpack support
+                    # in libraries A and B
                     array_np = _convert_to_numpy(array, xp_array)
                     array_converted = xp_ref.asarray(array_np, device=device_ref)
             arrays_converted_list.append(array_converted)
