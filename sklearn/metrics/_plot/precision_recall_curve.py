@@ -235,11 +235,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 )
 
             default_chance_level_line_kw = {
-                "label": f"non-informative baseline (random classifier) (AP = {self.prevalence_pos_label:0.2f})",
+                "label": (
+                    f"non-informative baseline (random classifier) "
+                    f"(AP = {self.prevalence_pos_label:0.2f})"
+                ),
                 "color": "k",
                 "linestyle": "--",
             }
-
             if chance_level_kw is None:
                 chance_level_kw = {}
 
