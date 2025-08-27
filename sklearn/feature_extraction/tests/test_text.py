@@ -1316,6 +1316,7 @@ def _check_stop_words_consistency(estimator):
     return estimator._check_stop_words_consistency(stop_words, preprocess, tokenize)
 
 
+@pytest.mark.thread_unsafe
 def test_vectorizer_stop_words_inconsistent():
     lstr = r"\['and', 'll', 've'\]"
     message = (
