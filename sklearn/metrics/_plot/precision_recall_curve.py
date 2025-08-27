@@ -48,7 +48,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     prevalence_pos_label : float, default=None
         The prevalence of the positive label. It is used for plotting the
-        non-informative baseline (random classifier) line. If None, the 
+        non-informative baseline (random classifier) line. If None, the
         non-informative baseline (random classifier) line will not be plotted
         even if `plot_chance_level` is set to True when plotting.
 
@@ -60,7 +60,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Precision recall curve.
 
     chance_level_ : matplotlib Artist or None
-        The non-informative baseline (random classifier) line. It is `None` if the 
+        The non-informative baseline (random classifier) line. It is `None` if the
         non-informative baseline (random classifier) is not plotted.
 
         .. versionadded:: 1.3
@@ -156,7 +156,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             `estimator_name` if not `None`, otherwise no labeling is shown.
 
         plot_chance_level : bool, default=False
-            Whether to plot the non-informative baseline (random classifier). 
+            Whether to plot the non-informative baseline (random classifier).
             The non-informative baseline (random classifier) is the prevalence
             of the positive label computed from the data passed during
             :meth:`from_estimator` or :meth:`from_predictions` call.
@@ -331,7 +331,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the non-informative baseline (random classifier). 
+            Whether to plot the non-informative baseline (random classifier).
             The non-informative baseline (random classifier) is the prevalence
             of the positive label computed from the data passed during
             :meth:`from_estimator` or :meth:`from_predictions` call.
@@ -472,8 +472,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the non-informative baseline (random classifier). 
-            The chance level is the prevalenceof the positive label computed 
+            Whether to plot the non-informative baseline (random classifier).
+            The chance level is the prevalenceof the positive label computed
             from the data passed during
             :meth:`from_estimator` or :meth:`from_predictions` call.
 
