@@ -94,7 +94,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libglib-2.84.3-h75d4a95_0.c
 https://conda.anaconda.org/conda-forge/linux-aarch64/libglx-1.7.0-hd24410f_2.conda#1d4269e233636148696a67e2d30dad2a
 https://conda.anaconda.org/conda-forge/linux-aarch64/libhiredis-1.0.2-h05efe27_0.tar.bz2#a87f068744fd20334cd41489eb163bee
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxml2-2.13.8-he58860d_1.conda#20d0cae4f8f49a79892d7e397310d81f
-https://conda.anaconda.org/conda-forge/noarch/meson-1.8.3-pyhe01879c_0.conda#ed40b34242ec6d216605db54d19c6df5
+https://conda.anaconda.org/conda-forge/noarch/meson-1.9.0-pyhcf101f3_0.conda#288989b6c775fa4181eb433114472274
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#37293a85a0f4f77bbd9cf7aaefc62609
 https://conda.anaconda.org/conda-forge/linux-aarch64/openblas-0.3.30-pthreads_h3a8cbd8_2.conda#739f278f0e3557d2c49d6d96017afb59
 https://conda.anaconda.org/conda-forge/linux-aarch64/openjpeg-2.5.3-h5da879a_1.conda#af94f7f26d2aa7881299bf6430863f55
@@ -154,7 +154,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/contourpy-1.3.2-py310hf54e6
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
 https://conda.anaconda.org/conda-forge/linux-aarch64/scipy-1.15.2-py310hf37559f_0.conda#5c9b72f10d2118d943a5eaaf2f396891
 https://conda.anaconda.org/conda-forge/linux-aarch64/blas-2.134-openblas.conda#20a3b428eeca10be2baee7b1a27a80ee
-https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-11.4.1-he4899c9_0.conda#40eb0d8a106efd06c000a52f0fc0f928
+https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-11.4.3-he4899c9_0.conda#ce01dc73290fe85018eafc52b36d7859
 https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.10.5-py310hc06f52e_0.conda#6b7cfe985a25928b86a127453ffec2e2
 https://conda.anaconda.org/conda-forge/linux-aarch64/qt6-main-6.9.1-haa40e84_2.conda#b388e58798370884d5226b2ae9209edc
 https://conda.anaconda.org/conda-forge/linux-aarch64/pyside6-6.9.1-py310hd3bda28_0.conda#1a105dc54d3cd250526c9d52379133c9
