@@ -1253,8 +1253,7 @@ if sp_base_version < parse_version("1.11"):
     }
 
 linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
-# TODO maybe cleaner way to figure out whether we are running with pytest-run-parallel?
-if hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled():
+if "pytest_run_parallel" in sys.modules:
     PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
         "check_.*": linear_svr_not_thread_safe,
         "check_supervised_y_2d": linear_svr_not_thread_safe,
