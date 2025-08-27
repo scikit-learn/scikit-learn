@@ -28,6 +28,7 @@ def test_imputation_missing_value_in_test_array(imputer):
     # not throw an error and return a finite dataset
     train = [[1], [2]]
     test = [[3], [np.nan]]
+    imputer = clone(imputer)
     imputer.set_params(add_indicator=True)
     imputer.fit(train).transform(test)
 
@@ -175,6 +176,7 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
 def test_keep_empty_features(imputer, keep_empty_features):
     """Check that the imputer keeps features with only missing values."""
     X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
+    imputer = clone(imputer)
     imputer = imputer.set_params(
         add_indicator=False, keep_empty_features=keep_empty_features
     )
