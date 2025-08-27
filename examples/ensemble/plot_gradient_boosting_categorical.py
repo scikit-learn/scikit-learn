@@ -149,6 +149,7 @@ hist_ordinal
 # Another possibility is to use the :class:`~preprocessing.TargetEncoder`, which
 # encodes the categories computed from the mean of the (training) target
 # variable, as computed using a smoothed `np.mean(y, axis=0)` i.e.:
+#
 # - in regression it uses the mean of `y`;
 # - in binary classification, the positive-class rate;
 # - in multiclass, a vector of class rates (one per class).
