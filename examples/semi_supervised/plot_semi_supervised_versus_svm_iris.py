@@ -13,6 +13,14 @@ Self-training is paired here with class:`~svm.SVC` as base estimator (also
 RBF-based by default) to allow a fair comparison. Self-training with 100%
 labeled data is omitted since it is identical to training a fully supervised SVC
 directly.
+
+In a second section, we explain how `predict_proba` is computed in Label
+Spreading and Self-training.
+
+See
+:ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_newsgroups.py`
+for a comparison of `LabelSpreading` and `SelfTrainingClassifier` in terms of
+performance.
 """
 
 # %%
@@ -83,3 +91,66 @@ plt.show()
 # We observe that the decision boundaries are already quite similar to those
 # using the full labeled data available for training, even when using a very
 # small subset of the labels.
+#
+# # Interpretation of `predict_proba`
+#
+# ## `predict_proba` in `LabelSpreading`
+#
+# `LabelSpreading` constructs a similarity graph from the data, by default using
+# an RBF kernel. This means each sample is connected to every other with a
+# weight that decays with their squared Euclidean distance, scaled by a
+# parameter `gamma`.
+#
+# Once you have that weighted graph, labels are propagated along the graph
+# edges. Each sample gradually takes on a soft label distribution that reflects
+# a weighted average of the labels of its neighbors until the process converges.
+# These per-sample distributions are stored in `label_distributions_`.
+#
+# `predict_proba` computes the class probabilities for a new point by taking a
+# weighted average of the rows in `label_distributions_`, where the weights come
+# from the RBF kernel similarities between the new point and the training
+# samples. The averaged values are then renormalized so that they sum to one.
+#
+# Just keep into account that these "probabilities" are graph-based scores, not
+# calibrated posteriors. Don't over-interpret their absolute values.
+
+from sklearn.metrics.pairwise import rbf_kernel
+
+ls = ls100[0]  # fitted LabelSpreading instance
+x_query = np.array([3.5, 1.5]).reshape(1, -1)  # point in the soft blue region
+
+# Step 1: similarities between query and all training samples
+W = rbf_kernel(x_query, X, gamma=ls.gamma)  # `gamma=20` by default
+
+# Step 2: weighted average of label distributions
+probs = np.dot(W, ls.label_distributions_)
+
+# Step 3: normalize to sum to 1
+probs /= probs.sum(axis=1, keepdims=True)
+
+print("Manual:", probs)
+print("API   :", ls.predict_proba(x_query))
+
+# %%
+# ## `predict_proba` in `SelfTrainingClassifier`
+#
+# `SelfTrainingClassifier` works by repeatedly fitting its base estimator on the
+# currently labeled data, then adding pseudo-labels for unlabeled points whose
+# predicted probabilities exceed a confidence threshold. This process continues
+# until no new points can be labeled, at which point the classifier has a final
+# fitted base estimator stored in the attribute `estimator_`.
+#
+# When you call `predict_proba` on the `SelfTrainingClassifier`, it simply
+# delegates to this final estimator.
+
+st = st10[0]
+print("Manual:", st.estimator_.predict_proba(x_query))
+print("API   :", st.predict_proba(x_query))
+
+# %%
+# In both methods, semi-supervised learning can be understood as constructing a
+# categorical distribution over classes for each sample. Label Spreading keeps
+# these distributions soft and updates them through graph-based propagation.
+# Self-training instead uses these distributions internally to decide which
+# unlabeled points to assign pseudo-labels during training, but at prediction
+# time the returned probabilities come directly from the final fitted estimator.
