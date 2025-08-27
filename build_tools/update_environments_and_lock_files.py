@@ -262,9 +262,13 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["conda-forge", "conda-forge/label/python_rc"],
         "conda_dependencies": [
             "python-freethreading",
+            "ccache",
+            "pip",
+        ],
+        "pip_dependencies": [
             "numpy",
             "scipy",
             "cython",
@@ -275,8 +279,6 @@ build_metadata_list = [
             "pytest-run-parallel",
             "ninja",
             "meson-python",
-            "ccache",
-            "pip",
         ],
     },
     {
