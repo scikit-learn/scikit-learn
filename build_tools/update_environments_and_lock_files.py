@@ -265,20 +265,19 @@ build_metadata_list = [
         "channels": ["conda-forge", "conda-forge/label/python_rc"],
         "conda_dependencies": [
             "python-freethreading",
-            "ccache",
-            "pip",
-        ],
-        "pip_dependencies": [
-            "numpy",
-            "scipy",
+            "meson-python",
             "cython",
+            "numpy",
             "joblib",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
             "pytest-run-parallel",
-            "ninja",
-            "meson-python",
+            "ccache",
+            "pip",
+        ],
+        "pip_dependencies": [
+            "scipy",
         ],
     },
     {

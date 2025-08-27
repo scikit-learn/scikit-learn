@@ -6,17 +6,16 @@ channels:
   - conda-forge/label/python_rc
 dependencies:
   - python-freethreading
+  - meson-python
+  - cython
+  - numpy
+  - joblib
+  - threadpoolctl
+  - pytest
+  - pytest-xdist
+  - pytest-run-parallel
   - ccache
   - pip
   - pip
   - pip:
-    - numpy
     - scipy
-    - cython
-    - joblib
-    - threadpoolctl
-    - pytest
-    - pytest-xdist
-    - pytest-run-parallel
-    - ninja
-    - meson-python
