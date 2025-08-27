@@ -144,7 +144,12 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
 
     Dask
         This allows applying eager functions to Dask arrays.
-        The Dask graph won't be computed.
+        The Dask graph won't be computed until the user calls ``compute()`` or
+        ``persist()`` down the line.
+
+        The function name will be prominently visible on the user-facing Dask
+        dashboard and on Prometheus metrics, so it is recommended for it to be
+        meaningful.
 
         `lazy_apply` doesn't know if `func` reduces along any axes; also, shape
         changes are non-trivial in chunked Dask arrays. For these reasons, all inputs
