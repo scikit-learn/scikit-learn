@@ -1627,6 +1627,9 @@ def test_regression_sample_weight_invariance(name):
     check_sample_weight_invariance(name, metric, y_true, y_pred, sample_weight)
 
 
+# XXX: ValueError("Complex data not supported") propagates via the warnings
+# machinery which is not thread-safe (at the time of CPython 3.13 at least).
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "name",
     sorted(
@@ -2224,6 +2227,10 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
+    ],
+    confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
     ],
     f1_score: [
         check_array_api_binary_classification_metric,
