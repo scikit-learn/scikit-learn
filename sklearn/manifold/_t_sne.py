@@ -30,7 +30,12 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.validation import _num_samples, check_non_negative, validate_data
+from sklearn.utils.validation import (
+    _num_samples,
+    check_array,
+    check_non_negative,
+    validate_data,
+)
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -1005,7 +1010,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             P = _joint_probabilities_nn(distances_nn, self.perplexity, self.verbose)
 
         if isinstance(self.init, np.ndarray):
-            X_embedded = self.init
+            X_embedded = self.init.astype(np.float32, copy=False)
+            # Check for non-finite values (NaNs and Infs) in the initialization array
+            X_embedded = check_array(X_embedded, force_all_finite=True)
         elif self.init == "pca":
             pca = PCA(
                 n_components=self.n_components,
@@ -1017,7 +1024,11 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
-            X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
+            pc1_std = np.std(X_embedded[:, 0])
+            # Avoid division by zero if the first principal component
+            # has zero standard deviation.
+            if pc1_std > 0:
+                X_embedded = X_embedded / pc1_std * 1e-4
         elif self.init == "random":
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.
