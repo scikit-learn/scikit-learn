@@ -7,6 +7,7 @@ from io import StringIO
 import numpy as np
 import pytest
 from scipy import sparse as sp
+from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
@@ -794,6 +795,13 @@ def test_k_means_function(global_random_seed):
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.skipif(
+    not [i for i in threadpool_info() if i["user_api"] == "blas"],
+    reason=(
+        "Fails for some global_random_seed on Atlas which cannot be detected by "
+        "threadpoolctl."
+    ),
+)
 def test_float_precision(Estimator, input_data, global_random_seed):
     # Check that the results are the same for single and double precision.
     km = Estimator(n_init=1, random_state=global_random_seed)
