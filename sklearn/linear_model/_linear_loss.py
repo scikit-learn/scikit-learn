@@ -85,7 +85,7 @@ class LinearModelLoss:
         else:
             hessian.shape = (n_dof, n_dof)
 
-    Note: If coef has shape (n_classes * n_dof,), the classes are expected to be
+    Note: if coef has shape (n_classes * n_dof,), the classes are expected to be
     contiguous, i.e. the 2d-array can be reconstructed as
 
         coef.reshape((n_classes, -1), order="F")
