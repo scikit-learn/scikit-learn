@@ -4,13 +4,13 @@ Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 ===============================================================================
 
 This example compares decision boundaries learned by two semi-supervised
-methods, namely class:`~semi_supervised.LabelSpreading` and
-class:`~semi_supervised.SelfTrainingClassifier`, when varying the proportion of
-labeled training data from small fractions up to the full dataset.
+methods, namely class:`~sklearn.semi_supervised.LabelSpreading` and
+class:`~sklearn.semi_supervised.SelfTrainingClassifier`, when varying the
+proportion of labeled training data from small fractions up to the full dataset.
 
 Both methods rely on RBF kernels: Label Spreading uses it by default, and
-Self-training is paired here with class:`~svm.SVC` as base estimator (also
-RBF-based by default) to allow a fair comparison. Self-training with 100%
+Self-training is paired here with class:`~sklearn.svm.SVC` as base estimator
+(also RBF-based by default) to allow a fair comparison. Self-training with 100%
 labeled data is omitted since it is identical to training a fully supervised SVC
 directly.
 
@@ -23,10 +23,10 @@ for a comparison of `LabelSpreading` and `SelfTrainingClassifier` in terms of
 performance.
 """
 
-# %%
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -83,7 +83,7 @@ for ax, (clf, y_train, title) in zip(axes, classifiers):
     ax.scatter(X[:, 0], X[:, 1], c=colors, edgecolor="black")
     ax.set_title(title)
 
-fig.suptitle("Unlabeled points are colored white", y=1.01)
+fig.suptitle("Unlabeled points are colored white", y=1)
 plt.tight_layout()
 plt.show()
 
