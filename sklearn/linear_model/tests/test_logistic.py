@@ -72,8 +72,8 @@ def check_predictions(clf, X, y):
 def test_predict_2_classes(csr_container):
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
-    check_predictions(LogisticRegression(alpha=1 / len(Y1)), X, Y1)
-    check_predictions(LogisticRegression(alpha=1 / len(Y1)), csr_container(X), Y1)
+    check_predictions(LogisticRegression(alpha=0.5 / len(Y1)), X, Y1)
+    check_predictions(LogisticRegression(alpha=0.5 / len(Y1)), csr_container(X), Y1)
 
     check_predictions(LogisticRegression(C=100), X, Y1)
     check_predictions(LogisticRegression(C=100), csr_container(X), Y1)
@@ -1147,7 +1147,7 @@ def test_logistic_regression_multinomial(global_random_seed):
             random_state=global_random_seed,
             max_iter=2000,
             tol=1e-10,
-            Cs=[1.0 / n_samples],
+            Cs=[0.5 / n_samples],
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)

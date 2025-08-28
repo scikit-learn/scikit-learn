@@ -891,8 +891,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. deprecated:: 1.8
            ``C`` was deprecated in version 1.8 and will be removed in 1.10.
-           Use ``alpha=1/(C * n_samples)`` or ``alpha=1/(C * np.sum(sample_weight))``
-           instead.
+           Use ``alpha=1/(2 * C * n_samples)`` or
+           ``alpha=1/(2 * C * np.sum(sample_weight))`` instead.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. For
@@ -1282,9 +1282,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.C == "deprecated":
             # FIXME: This should take class_weight into account.
             if sample_weight is None:
-                anti_penalty_C = 1 / (self.alpha * X.shape[0])
+                anti_penalty_C = 1 / (2 * self.alpha * X.shape[0])
             else:
-                anti_penalty_C = 1 / (self.alpha * np.sum(sample_weight))
+                anti_penalty_C = 1 / (2 * self.alpha * np.sum(sample_weight))
         else:
             anti_penalty_C = self.C
             warnings.warn(
