@@ -271,7 +271,6 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
-            "pytest-xdist",
             "pytest-run-parallel",
             "ccache",
             "pip",

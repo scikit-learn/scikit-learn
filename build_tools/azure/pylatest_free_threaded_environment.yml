@@ -12,7 +12,6 @@ dependencies:
   - joblib
   - threadpoolctl
   - pytest
-  - pytest-xdist
   - pytest-run-parallel
   - ccache
   - pip
