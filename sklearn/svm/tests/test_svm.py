@@ -64,6 +64,9 @@ def test_libsvm_parameters():
     assert_array_equal(clf.predict(X), Y)
 
 
+# XXX: this test is thread-unsafe because it uses _libsvm.cross_validation:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 def test_libsvm_iris(global_random_seed):
     # Check consistency on dataset iris.
     iris = get_iris_dataset(global_random_seed)
@@ -373,6 +376,9 @@ def test_tweak_params():
     assert_array_equal(clf.predict([[-0.1, -0.1]]), [2])
 
 
+# XXX: this test is thread-unsafe because it uses probability=True:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 def test_probability(global_random_seed):
     # Predict probabilities using SVC
     # This uses cross validation, so we use a slightly bigger testing set.
@@ -521,6 +527,7 @@ def test_weight():
 
 @pytest.mark.parametrize("estimator", [svm.SVC(C=1e-2), svm.NuSVC()])
 def test_svm_classifier_sided_sample_weight(estimator):
+    estimator = base.clone(estimator)  # Avoid side effects from previous tests.
     # fit a linear SVM and check that giving more weight to opposed samples
     # in the space will flip the decision toward these samples.
     X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
@@ -547,6 +554,7 @@ def test_svm_classifier_sided_sample_weight(estimator):
 
 @pytest.mark.parametrize("estimator", [svm.SVR(C=1e-2), svm.NuSVR(C=1e-2)])
 def test_svm_regressor_sided_sample_weight(estimator):
+    estimator = base.clone(estimator)  # Avoid side effects from previous tests.
     # similar test to test_svm_classifier_sided_sample_weight but for
     # SVM regressors
     X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
@@ -1028,6 +1036,7 @@ def test_immutable_coef_property(global_random_seed):
             clf.coef_.__setitem__((0, 0), 0)
 
 
+@pytest.mark.thread_unsafe
 def test_linearsvc_verbose():
     # stdout: redirect
     import os
@@ -1043,6 +1052,9 @@ def test_linearsvc_verbose():
     os.dup2(stdout, 1)  # restore original stdout
 
 
+# XXX: this test is thread-unsafe because it uses probability=True:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
@@ -1087,6 +1099,9 @@ def test_svc_bad_kernel():
         svc.fit(X, Y)
 
 
+# XXX: this test is thread-unsafe because it uses probability=True:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 def test_libsvm_convergence_warnings(global_random_seed):
     a = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
@@ -1116,6 +1131,9 @@ def test_unfitted():
 
 
 # ignore convergence warnings from max_iter=1
+# XXX: this test is thread-unsafe because it uses probability=True:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_consistent_proba(global_random_seed):
     a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
@@ -1316,6 +1334,8 @@ def test_gamma_scale():
     assert_almost_equal(clf._gamma, 4)
 
 
+# XXX: https://github.com/scikit-learn/scikit-learn/issues/31883
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "SVM, params",
     [

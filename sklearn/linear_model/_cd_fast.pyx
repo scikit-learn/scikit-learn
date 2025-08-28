@@ -329,12 +329,8 @@ def enet_coordinate_descent(
 
                 w_j = w[j]  # Store previous value
 
-                if w_j != 0.0:
-                    # R += w_j * X[:,j]
-                    _axpy(n_samples, w_j, &X[0, j], 1, &R[0], 1)
-
-                # tmp = (X[:,j]*R).sum()
-                tmp = _dot(n_samples, &X[0, j], 1, &R[0], 1)
+                # tmp = X[:,j] @ (R + w_j * X[:,j])
+                tmp = _dot(n_samples, &X[0, j], 1, &R[0], 1) + w_j * norm2_cols_X[j]
 
                 if positive and tmp < 0:
                     w[j] = 0.0
@@ -342,9 +338,9 @@ def enet_coordinate_descent(
                     w[j] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
                             / (norm2_cols_X[j] + beta))
 
-                if w[j] != 0.0:
-                    # R -=  w[j] * X[:,j] # Update residual
-                    _axpy(n_samples, -w[j], &X[0, j], 1, &R[0], 1)
+                if w[j] != w_j:
+                    # R -= (w[j] - w_j) * X[:,j] # Update residual
+                    _axpy(n_samples, w_j - w[j], &X[0, j], 1, &R[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_j = fabs(w[j] - w_j)
@@ -450,7 +446,7 @@ def sparse_enet_coordinate_descent(
     # We work with:
     #     yw = sample_weight * y
     #     R = sample_weight * residual
-    #     norm_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
+    #     norm2_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
 
     if floating is float:
         dtype = np.float32
@@ -461,8 +457,8 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = w.shape[0]
 
-    # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    # compute squared norms of the columns of X
+    cdef floating[::1] norm2_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
@@ -523,7 +519,7 @@ def sparse_enet_coordinate_descent(
                 for jj in range(startptr, endptr):
                     normalize_sum += (X_data[jj] - X_mean_ii) ** 2
                     R[X_indices[jj]] -= X_data[jj] * w_ii
-                norm_cols_X[ii] = normalize_sum + \
+                norm2_cols_X[ii] = normalize_sum + \
                     (n_samples - endptr + startptr) * X_mean_ii ** 2
                 if center:
                     for jj in range(n_samples):
@@ -542,7 +538,7 @@ def sparse_enet_coordinate_descent(
                         normalize_sum += sample_weight[jj] * X_mean_ii ** 2
                         R[jj] += sample_weight[jj] * X_mean_ii * w_ii
                         R_sum += R[jj]
-                norm_cols_X[ii] = normalize_sum
+                norm2_cols_X[ii] = normalize_sum
             startptr = endptr
 
         # Note: No need to update R_sum from here on because the update terms cancel
@@ -564,7 +560,7 @@ def sparse_enet_coordinate_descent(
                 else:
                     ii = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if norm2_cols_X[ii] == 0.0:
                     continue
 
                 startptr = X_indptr[ii]
@@ -572,26 +568,11 @@ def sparse_enet_coordinate_descent(
                 w_ii = w[ii]  # Store previous value
                 X_mean_ii = X_mean[ii]
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
-                    if no_sample_weights:
-                        for jj in range(startptr, endptr):
-                            R[X_indices[jj]] += X_data[jj] * w_ii
-                        if center:
-                            for jj in range(n_samples):
-                                R[jj] -= X_mean_ii * w_ii
-                    else:
-                        for jj in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[jj]]
-                            R[X_indices[jj]] += tmp * X_data[jj] * w_ii
-                        if center:
-                            for jj in range(n_samples):
-                                R[jj] -= sample_weight[jj] * X_mean_ii * w_ii
-
-                # tmp = (X[:,ii] * R).sum()
+                # tmp = X[:,ii] @ (R + w_ii * X[:,ii])
                 tmp = 0.0
                 for jj in range(startptr, endptr):
                     tmp += R[X_indices[jj]] * X_data[jj]
+                tmp += w_ii * norm2_cols_X[ii]
 
                 if center:
                     tmp -= R_sum * X_mean_ii
@@ -600,23 +581,23 @@ def sparse_enet_coordinate_descent(
                     w[ii] = 0.0
                 else:
                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                            / (norm_cols_X[ii] + beta)
+                            / (norm2_cols_X[ii] + beta)
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
+                if w[ii] != w_ii:
+                    # R -=  (w[ii] - w_ii) * X[:,ii] # Update residual
                     if no_sample_weights:
                         for jj in range(startptr, endptr):
-                            R[X_indices[jj]] -= X_data[jj] * w[ii]
+                            R[X_indices[jj]] -= X_data[jj] * (w[ii] - w_ii)
                         if center:
                             for jj in range(n_samples):
-                                R[jj] += X_mean_ii * w[ii]
+                                R[jj] += X_mean_ii * (w[ii] - w_ii)
                     else:
                         for jj in range(startptr, endptr):
-                            tmp = sample_weight[X_indices[jj]]
-                            R[X_indices[jj]] -= tmp * X_data[jj] * w[ii]
+                            kk = X_indices[jj]
+                            R[kk] -= sample_weight[kk] * X_data[jj] * (w[ii] - w_ii)
                         if center:
                             for jj in range(n_samples):
-                                R[jj] += sample_weight[jj] * X_mean_ii * w[ii]
+                                R[jj] += sample_weight[jj] * X_mean_ii * (w[ii] - w_ii)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -998,6 +979,12 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int n_features = X.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
+    # compute squared norms of the columns of X
+    # same as norm2_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm2_cols_X = np.einsum(
+        "ij,ij->j", X, X, dtype=dtype, order="C"
+    )
+
     # to store XtA
     cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
     cdef floating XtA_axis1norm
@@ -1006,7 +993,6 @@ def enet_coordinate_descent_multi_task(
     # initial value of the residuals
     cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
-    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
     cdef floating[::1] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
@@ -1016,8 +1002,8 @@ def enet_coordinate_descent_multi_task(
     cdef floating W_ii_abs_max
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
-    cdef floating R_norm
-    cdef floating w_norm
+    cdef floating R_norm2
+    cdef floating w_norm2
     cdef floating ry_sum
     cdef floating l21_norm
     cdef unsigned int ii
@@ -1027,9 +1013,6 @@ def enet_coordinate_descent_multi_task(
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
-    cdef const floating* X_ptr = &X[0, 0]
-    cdef const floating* Y_ptr = &Y[0, 0]
-
     if l1_reg == 0:
         warnings.warn(
             "Coordinate descent with l1_reg=0 may lead to unexpected"
@@ -1037,20 +1020,16 @@ def enet_coordinate_descent_multi_task(
         )
 
     with nogil:
-        # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
-        for ii in range(n_features):
-            norm_cols_X[ii] = _nrm2(n_samples, X_ptr + ii * n_samples, 1) ** 2
-
         # R = Y - np.dot(X, W.T)
-        _copy(n_samples * n_tasks, Y_ptr, 1, &R[0, 0], 1)
+        _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
         for ii in range(n_features):
             for jj in range(n_tasks):
                 if W[jj, ii] != 0:
-                    _axpy(n_samples, -W[jj, ii], X_ptr + ii * n_samples, 1,
+                    _axpy(n_samples, -W[jj, ii], &X[0, ii], 1,
                           &R[0, jj], 1)
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
-        tol = tol * _nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
+        tol = tol * _nrm2(n_samples * n_tasks, &Y[0, 0], 1) ** 2
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -1061,54 +1040,47 @@ def enet_coordinate_descent_multi_task(
                 else:
                     ii = f_iter
 
-                if norm_cols_X[ii] == 0.0:
+                if norm2_cols_X[ii] == 0.0:
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
                 _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
 
-                # Using Numpy:
-                # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
-                # Using Blas Level2:
-                # _ger(RowMajor, n_samples, n_tasks, 1.0,
-                #      &X[0, ii], 1,
-                #      &w_ii[0], 1, &R[0, 0], n_tasks)
-                # Using Blas Level1 and for loop to avoid slower threads
-                # for such small vectors
-                for jj in range(n_tasks):
-                    if w_ii[jj] != 0:
-                        _axpy(n_samples, w_ii[jj], X_ptr + ii * n_samples, 1,
-                              &R[0, jj], 1)
-
-                # Using numpy:
-                # tmp = np.dot(X[:, ii][None, :], R).ravel()
-                # Using BLAS Level 2:
-                # _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
-                #       n_tasks, &X[0, ii], 1, 0.0, &tmp[0], 1)
+                # tmp = X[:, ii] @ (R + w_ii * X[:,ii][:, None])
+                # first part: X[:, ii] @ R
+                #   Using BLAS Level 2:
+                #   _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
+                #         n_tasks, &X[0, ii], 1, 0.0, &tmp[0], 1)
+                # second part: (X[:, ii] @ X[:,ii]) * w_ii = norm2_cols * w_ii
+                #   Using BLAS Level 1:
+                #   _axpy(n_tasks, norm2_cols[ii], &w_ii[0], 1, &tmp[0], 1)
                 # Using BLAS Level 1 (faster for small vectors like here):
                 for jj in range(n_tasks):
-                    tmp[jj] = _dot(n_samples, X_ptr + ii * n_samples, 1,
-                                   &R[0, jj], 1)
+                    tmp[jj] = _dot(n_samples, &X[0, ii], 1, &R[0, jj], 1)
+                    # As we have the loop already, we use it to replace the second BLAS
+                    # Level 1, i.e., _axpy, too.
+                    tmp[jj] += w_ii[jj] * norm2_cols_X[ii]
 
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
-                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
+                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg)
                 _copy(n_tasks, &tmp[0], 1, &W[0, ii], 1)
-                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
+                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg),
                       &W[0, ii], 1)
 
+                # Update residual
                 # Using numpy:
-                # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
-                # Using BLAS Level 2:
-                # Update residual : rank 1 update
-                # _ger(RowMajor, n_samples, n_tasks, -1.0,
-                #      &X[0, ii], 1, &W[0, ii], 1,
-                #      &R[0, 0], n_tasks)
+                #   R -= (W[:, ii] - w_ii) * X[:, ii][:, None]
+                # Using BLAS Level 1 and 2:
+                #   _axpy(n_tasks, -1.0, &W[0, ii], 1, &w_ii[0], 1)
+                #   _ger(RowMajor, n_samples, n_tasks, 1.0,
+                #        &X[0, ii], 1, &w_ii, 1,
+                #        &R[0, 0], n_tasks)
                 # Using BLAS Level 1 (faster for small vectors like here):
                 for jj in range(n_tasks):
-                    if W[jj, ii] != 0:
-                        _axpy(n_samples, -W[jj, ii], X_ptr + ii * n_samples, 1,
+                    if W[jj, ii] != w_ii[jj]:
+                        _axpy(n_samples, w_ii[jj] - W[jj, ii], &X[0, ii], 1,
                               &R[0, jj], 1)
 
                 # update the maximum absolute coefficient update
@@ -1130,7 +1102,7 @@ def enet_coordinate_descent_multi_task(
                 for ii in range(n_features):
                     for jj in range(n_tasks):
                         XtA[ii, jj] = _dot(
-                            n_samples, X_ptr + ii * n_samples, 1, &R[0, jj], 1
+                            n_samples, &X[0, ii], 1, &R[0, jj], 1
                             ) - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
@@ -1141,18 +1113,17 @@ def enet_coordinate_descent_multi_task(
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
-                # TODO: use squared L2 norm directly
-                # R_norm = linalg.norm(R, ord='fro')
-                # w_norm = linalg.norm(W, ord='fro')
-                R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
-                w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
+                # R_norm2 = linalg.norm(R, ord='fro') ** 2
+                # w_norm2 = linalg.norm(W, ord='fro') ** 2
+                R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
+                w_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
                     const_ = l1_reg / dual_norm_XtA
-                    A_norm = R_norm * const_
-                    gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+                    A_norm2 = R_norm2 * (const_ ** 2)
+                    gap = 0.5 * (R_norm2 + A_norm2)
                 else:
                     const_ = 1.0
-                    gap = R_norm ** 2
+                    gap = R_norm2
 
                 # ry_sum = np.sum(R * y)
                 ry_sum = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
@@ -1165,7 +1136,7 @@ def enet_coordinate_descent_multi_task(
                 gap += (
                     l1_reg * l21_norm
                     - const_ * ry_sum
-                    + 0.5 * l2_reg * (1 + const_ ** 2) * (w_norm ** 2)
+                    + 0.5 * l2_reg * (1 + const_ ** 2) * w_norm2
                 )
 
                 if gap <= tol:

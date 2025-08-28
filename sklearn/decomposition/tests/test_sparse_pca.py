@@ -74,6 +74,9 @@ def test_fit_transform(global_random_seed):
     assert_allclose(spca_lasso.components_, spca_lars.components_, rtol=5e-4)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel(global_random_seed):
     alpha = 1

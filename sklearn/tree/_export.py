@@ -1113,7 +1113,7 @@ def export_text(
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
-    export_text.report = ""
+    report = StringIO()
 
     def _add_leaf(value, weighted_n_node_samples, class_name, indent):
         val = ""
@@ -1129,9 +1129,9 @@ def export_text(
         else:
             val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
             val = "[" + "".join(val)[:-2] + "]"
-        export_text.report += value_fmt.format(indent, "", val)
+        report.write(value_fmt.format(indent, "", val))
 
-    def print_tree_recurse(node, depth):
+    def print_tree_recurse(report, node, depth):
         indent = ("|" + (" " * spacing)) * depth
         indent = indent[:-spacing] + "-" * spacing
 
@@ -1156,13 +1156,13 @@ def export_text(
                 name = feature_names_[node]
                 threshold = tree_.threshold[node]
                 threshold = "{1:.{0}f}".format(decimals, threshold)
-                export_text.report += right_child_fmt.format(indent, name, threshold)
-                export_text.report += info_fmt_left
-                print_tree_recurse(tree_.children_left[node], depth + 1)
+                report.write(right_child_fmt.format(indent, name, threshold))
+                report.write(info_fmt_left)
+                print_tree_recurse(report, tree_.children_left[node], depth + 1)
 
-                export_text.report += left_child_fmt.format(indent, name, threshold)
-                export_text.report += info_fmt_right
-                print_tree_recurse(tree_.children_right[node], depth + 1)
+                report.write(left_child_fmt.format(indent, name, threshold))
+                report.write(info_fmt_right)
+                print_tree_recurse(report, tree_.children_right[node], depth + 1)
             else:  # leaf
                 _add_leaf(value, weighted_n_node_samples, class_name, indent)
         else:
@@ -1171,7 +1171,7 @@ def export_text(
                 _add_leaf(value, weighted_n_node_samples, class_name, indent)
             else:
                 trunc_report = "truncated branch of depth %d" % subtree_depth
-                export_text.report += truncation_fmt.format(indent, trunc_report)
+                report.write(truncation_fmt.format(indent, trunc_report))
 
-    print_tree_recurse(0, 1)
-    return export_text.report
+    print_tree_recurse(report, 0, 1)
+    return report.getvalue()
