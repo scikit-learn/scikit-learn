@@ -34,7 +34,7 @@ __all__ = [
 
 
 @overload
-def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=GL08
+def apply_where(  # numpydoc ignore=GL08
     cond: Array,
     args: Array | tuple[Array, ...],
     f1: Callable[..., Array],
@@ -46,7 +46,7 @@ def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=G
 
 
 @overload
-def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=GL08
+def apply_where(  # numpydoc ignore=GL08
     cond: Array,
     args: Array | tuple[Array, ...],
     f1: Callable[..., Array],
@@ -57,7 +57,7 @@ def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=G
 ) -> Array: ...
 
 
-def apply_where(  # type: ignore[explicit-any] # numpydoc ignore=PR01,PR02
+def apply_where(  # numpydoc ignore=PR01,PR02
     cond: Array,
     args: Array | tuple[Array, ...],
     f1: Callable[..., Array],
@@ -143,7 +143,7 @@ def apply_where(  # type: ignore[explicit-any] # numpydoc ignore=PR01,PR02
     return _apply_where(cond, f1, f2, fill_value, *args_, xp=xp)
 
 
-def _apply_where(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,RT01
+def _apply_where(  # numpydoc ignore=PR01,RT01
     cond: Array,
     f1: Callable[..., Array],
     f2: Callable[..., Array] | None,
@@ -268,7 +268,7 @@ def broadcast_shapes(*shapes: tuple[float | None, ...]) -> tuple[int | None, ...
     for axis in range(-ndim, 0):
         sizes = {shape[axis] for shape in shapes if axis >= -len(shape)}
         # Dask uses NaN for unknown shape, which predates the Array API spec for None
-        none_size = None in sizes or math.nan in sizes
+        none_size = None in sizes or math.nan in sizes  # noqa: PLW0177
         sizes -= {1, None, math.nan}
         if len(sizes) > 1:
             msg = (
@@ -738,6 +738,47 @@ def kron(
     return xp.reshape(result, res_shape)
 
 
+def nan_to_num(  # numpydoc ignore=PR01,RT01
+    x: Array,
+    /,
+    fill_value: int | float = 0.0,
+    *,
+    xp: ModuleType,
+) -> Array:
+    """See docstring in `array_api_extra._delegation.py`."""
+
+    def perform_replacements(  # numpydoc ignore=PR01,RT01
+        x: Array,
+        fill_value: int | float,
+        xp: ModuleType,
+    ) -> Array:
+        """Internal function to perform the replacements."""
+        x = xp.where(xp.isnan(x), fill_value, x)
+
+        # convert infinities to finite values
+        finfo = xp.finfo(x.dtype)
+        idx_posinf = xp.isinf(x) & ~xp.signbit(x)
+        idx_neginf = xp.isinf(x) & xp.signbit(x)
+        x = xp.where(idx_posinf, finfo.max, x)
+        return xp.where(idx_neginf, finfo.min, x)
+
+    if xp.isdtype(x.dtype, "complex floating"):
+        return perform_replacements(
+            xp.real(x),
+            fill_value,
+            xp,
+        ) + 1j * perform_replacements(
+            xp.imag(x),
+            fill_value,
+            xp,
+        )
+
+    if xp.isdtype(x.dtype, "numeric"):
+        return perform_replacements(x, fill_value, xp)
+
+    return x
+
+
 def nunique(x: Array, /, *, xp: ModuleType | None = None) -> Array:
     """
     Count the number of unique elements in an array.
@@ -813,8 +854,7 @@ def pad(
     else:
         pad_width_seq = cast(list[tuple[int, int]], list(pad_width))
 
-    # https://github.com/python/typeshed/issues/13376
-    slices: list[slice] = []  # type: ignore[explicit-any]
+    slices: list[slice] = []
     newshape: list[int] = []
     for ax, w_tpl in enumerate(pad_width_seq):
         if len(w_tpl) != 2:
@@ -826,6 +866,7 @@ def pad(
         if w_tpl[0] == 0 and w_tpl[1] == 0:
             sl = slice(None, None, None)
         else:
+            stop: int | None
             start, stop = w_tpl
             stop = None if stop == 0 else -stop
 
