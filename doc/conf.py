@@ -261,9 +261,9 @@ html_theme_options = {
     "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
-        "image_relative": "logos/scikit-learn-logo-without-subtitle.svg",
-        "image_light": "logos/scikit-learn-logo-without-subtitle.svg",
-        "image_dark": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_relative": "logos/scikit-learn-logo-small.png",
+        "image_light": "logos/scikit-learn-logo-small.png",
+        "image_dark": "logos/scikit-learn-logo-small.png",
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
@@ -886,7 +886,6 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
-
 
 # Config for linkcheck that checks the documentation for broken links
 
