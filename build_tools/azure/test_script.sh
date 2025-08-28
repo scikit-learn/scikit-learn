@@ -59,7 +59,9 @@ fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count())")
-    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+    if [[ "$XDIST_WORKERS" != 1 ]]; then
+        TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+    fi
 fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
