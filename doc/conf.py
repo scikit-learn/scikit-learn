@@ -886,9 +886,7 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
-ogp_social_cards = {
-    "image": "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
-}
+
 
 # Config for linkcheck that checks the documentation for broken links
 
