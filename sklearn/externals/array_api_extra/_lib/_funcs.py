@@ -4,18 +4,19 @@ import math
 import warnings
 from collections.abc import Callable, Sequence
 from types import ModuleType, NoneType
-from typing import cast, overload
+from typing import Literal, cast, overload
 
 from ._at import at
 from ._utils import _compat, _helpers
-from ._utils._compat import (
-    array_namespace,
-    is_dask_namespace,
-    is_jax_array,
-    is_jax_namespace,
+from ._utils._compat import array_namespace, is_dask_namespace, is_jax_array
+from ._utils._helpers import (
+    asarrays,
+    capabilities,
+    eager_shape,
+    meta_namespace,
+    ndindex,
 )
-from ._utils._helpers import asarrays, eager_shape, meta_namespace, ndindex
-from ._utils._typing import Array
+from ._utils._typing import Array, Device, DType
 
 __all__ = [
     "apply_where",
@@ -33,7 +34,7 @@ __all__ = [
 
 
 @overload
-def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=GL08
+def apply_where(  # numpydoc ignore=GL08
     cond: Array,
     args: Array | tuple[Array, ...],
     f1: Callable[..., Array],
@@ -45,7 +46,7 @@ def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=G
 
 
 @overload
-def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=GL08
+def apply_where(  # numpydoc ignore=GL08
     cond: Array,
     args: Array | tuple[Array, ...],
     f1: Callable[..., Array],
@@ -56,7 +57,7 @@ def apply_where(  # type: ignore[explicit-any,decorated-any] # numpydoc ignore=G
 ) -> Array: ...
 
 
-def apply_where(  # type: ignore[explicit-any] # numpydoc ignore=PR01,PR02
+def apply_where(  # numpydoc ignore=PR01,PR02
     cond: Array,
     args: Array | tuple[Array, ...],
     f1: Callable[..., Array],
@@ -142,7 +143,7 @@ def apply_where(  # type: ignore[explicit-any] # numpydoc ignore=PR01,PR02
     return _apply_where(cond, f1, f2, fill_value, *args_, xp=xp)
 
 
-def _apply_where(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,RT01
+def _apply_where(  # numpydoc ignore=PR01,RT01
     cond: Array,
     f1: Callable[..., Array],
     f2: Callable[..., Array] | None,
@@ -152,7 +153,7 @@ def _apply_where(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,RT01
 ) -> Array:
     """Helper of `apply_where`. On Dask, this runs on a single chunk."""
 
-    if is_jax_namespace(xp):
+    if not capabilities(xp, device=_compat.device(cond))["boolean indexing"]:
         # jax.jit does not support assignment by boolean mask
         return xp.where(cond, f1(*args), f2(*args) if f2 is not None else fill_value)
 
@@ -267,7 +268,7 @@ def broadcast_shapes(*shapes: tuple[float | None, ...]) -> tuple[int | None, ...
     for axis in range(-ndim, 0):
         sizes = {shape[axis] for shape in shapes if axis >= -len(shape)}
         # Dask uses NaN for unknown shape, which predates the Array API spec for None
-        none_size = None in sizes or math.nan in sizes
+        none_size = None in sizes or math.nan in sizes  # noqa: PLW0177
         sizes -= {1, None, math.nan}
         if len(sizes) > 1:
             msg = (
@@ -374,6 +375,23 @@ def cov(m: Array, /, *, xp: ModuleType | None = None) -> Array:
     return xp.squeeze(c, axis=axes)
 
 
+def one_hot(
+    x: Array,
+    /,
+    num_classes: int,
+    *,
+    xp: ModuleType,
+) -> Array:  # numpydoc ignore=PR01,RT01
+    """See docstring in `array_api_extra._delegation.py`."""
+    # TODO: Benchmark whether this is faster on the NumPy backend:
+    # if is_numpy_array(x):
+    #     out = xp.zeros((x.size, num_classes), dtype=dtype)
+    #     out[xp.arange(x.size), xp.reshape(x, (-1,))] = 1
+    #     return xp.reshape(out, (*x.shape, num_classes))
+    range_num_classes = xp.arange(num_classes, dtype=x.dtype, device=_compat.device(x))
+    return x[..., xp.newaxis] == range_num_classes
+
+
 def create_diagonal(
     x: Array, /, *, offset: int = 0, xp: ModuleType | None = None
 ) -> Array:
@@ -435,6 +453,44 @@ def create_diagonal(
     for index in ndindex(*batch_dims):
         diag = at(diag)[(*index, target_slice)].set(x[(*index, slice(None))])
     return xp.reshape(diag, (*batch_dims, n, n))
+
+
+def default_dtype(
+    xp: ModuleType,
+    kind: Literal[
+        "real floating", "complex floating", "integral", "indexing"
+    ] = "real floating",
+    *,
+    device: Device | None = None,
+) -> DType:
+    """
+    Return the default dtype for the given namespace and device.
+
+    This is a convenience shorthand for
+    ``xp.__array_namespace_info__().default_dtypes(device=device)[kind]``.
+
+    Parameters
+    ----------
+    xp : array_namespace
+        The standard-compatible namespace for which to get the default dtype.
+    kind : {'real floating', 'complex floating', 'integral', 'indexing'}, optional
+        The kind of dtype to return. Default is 'real floating'.
+    device : Device, optional
+        The device for which to get the default dtype. Default: current device.
+
+    Returns
+    -------
+    dtype
+        The default dtype for the given namespace, kind, and device.
+    """
+    dtypes = xp.__array_namespace_info__().default_dtypes(device=device)
+    try:
+        return dtypes[kind]
+    except KeyError as e:
+        domain = ("real floating", "complex floating", "integral", "indexing")
+        assert set(dtypes) == set(domain), f"Non-compliant namespace: {dtypes}"
+        msg = f"Unknown kind '{kind}'. Expected one of {domain}."
+        raise ValueError(msg) from e
 
 
 def expand_dims(
@@ -682,6 +738,47 @@ def kron(
     return xp.reshape(result, res_shape)
 
 
+def nan_to_num(  # numpydoc ignore=PR01,RT01
+    x: Array,
+    /,
+    fill_value: int | float = 0.0,
+    *,
+    xp: ModuleType,
+) -> Array:
+    """See docstring in `array_api_extra._delegation.py`."""
+
+    def perform_replacements(  # numpydoc ignore=PR01,RT01
+        x: Array,
+        fill_value: int | float,
+        xp: ModuleType,
+    ) -> Array:
+        """Internal function to perform the replacements."""
+        x = xp.where(xp.isnan(x), fill_value, x)
+
+        # convert infinities to finite values
+        finfo = xp.finfo(x.dtype)
+        idx_posinf = xp.isinf(x) & ~xp.signbit(x)
+        idx_neginf = xp.isinf(x) & xp.signbit(x)
+        x = xp.where(idx_posinf, finfo.max, x)
+        return xp.where(idx_neginf, finfo.min, x)
+
+    if xp.isdtype(x.dtype, "complex floating"):
+        return perform_replacements(
+            xp.real(x),
+            fill_value,
+            xp,
+        ) + 1j * perform_replacements(
+            xp.imag(x),
+            fill_value,
+            xp,
+        )
+
+    if xp.isdtype(x.dtype, "numeric"):
+        return perform_replacements(x, fill_value, xp)
+
+    return x
+
+
 def nunique(x: Array, /, *, xp: ModuleType | None = None) -> Array:
     """
     Count the number of unique elements in an array.
@@ -708,14 +805,33 @@ def nunique(x: Array, /, *, xp: ModuleType | None = None) -> Array:
         # size= is JAX-specific
         # https://github.com/data-apis/array-api/issues/883
         _, counts = xp.unique_counts(x, size=_compat.size(x))
-        return xp.astype(counts, xp.bool).sum()
+        return (counts > 0).sum()
 
-    _, counts = xp.unique_counts(x)
-    n = _compat.size(counts)
-    # FIXME https://github.com/data-apis/array-api-compat/pull/231
-    if n is None:  # e.g. Dask, ndonnx
-        return xp.astype(counts, xp.bool).sum()
-    return xp.asarray(n, device=_compat.device(x))
+    # There are 3 general use cases:
+    # 1. backend has unique_counts and it returns an array with known shape
+    # 2. backend has unique_counts and it returns a None-sized array;
+    #    e.g. Dask, ndonnx
+    # 3. backend does not have unique_counts; e.g. wrapped JAX
+    if capabilities(xp, device=_compat.device(x))["data-dependent shapes"]:
+        # xp has unique_counts; O(n) complexity
+        _, counts = xp.unique_counts(x)
+        n = _compat.size(counts)
+        if n is None:
+            return xp.sum(xp.ones_like(counts))
+        return xp.asarray(n, device=_compat.device(x))
+
+    # xp does not have unique_counts; O(n*logn) complexity
+    x = xp.reshape(x, (-1,))
+    x = xp.sort(x)
+    mask = x != xp.roll(x, -1)
+    default_int = default_dtype(xp, "integral", device=_compat.device(x))
+    return xp.maximum(
+        # Special cases:
+        # - array is size 0
+        # - array has all elements equal to each other
+        xp.astype(xp.any(~mask), default_int),
+        xp.sum(xp.astype(mask, default_int)),
+    )
 
 
 def pad(
@@ -738,8 +854,7 @@ def pad(
     else:
         pad_width_seq = cast(list[tuple[int, int]], list(pad_width))
 
-    # https://github.com/python/typeshed/issues/13376
-    slices: list[slice] = []  # type: ignore[explicit-any]
+    slices: list[slice] = []
     newshape: list[int] = []
     for ax, w_tpl in enumerate(pad_width_seq):
         if len(w_tpl) != 2:
@@ -751,6 +866,7 @@ def pad(
         if w_tpl[0] == 0 and w_tpl[1] == 0:
             sl = slice(None, None, None)
         else:
+            stop: int | None
             start, stop = w_tpl
             stop = None if stop == 0 else -stop
 

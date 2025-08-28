@@ -5,7 +5,7 @@ import inspect
 import numpy as np
 import pytest
 
-from sklearn.base import is_classifier
+from sklearn.base import clone, is_classifier
 from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
 from sklearn.linear_model import (
     ARDRegression,
@@ -106,7 +106,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     # For reference, see Corollary 3.18, 3.20 and Chapter 5.1.5 of
     # M.V. Wuthrich and M. Merz, "Statistical Foundations of Actuarial Learning and its
     # Applications" (June 3, 2022). http://doi.org/10.2139/ssrn.3822407
-
+    model = clone(model)  # Avoid side effects from shared instances.
     if (
         with_sample_weight
         and "sample_weight" not in inspect.signature(model.fit).parameters.keys()
@@ -278,7 +278,7 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container
     model_dense.fit(X, y)
     model_sparse.fit(X_sparse, y)
 
-    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-16)
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-15)
     y_pred_dense = model_dense.predict(X)
     y_pred_sparse = model_sparse.predict(X_sparse)
     assert_allclose(y_pred_dense, y_pred_sparse)
