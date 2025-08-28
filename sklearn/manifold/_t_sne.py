@@ -30,7 +30,12 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.validation import _num_samples, check_non_negative, validate_data
+from sklearn.utils.validation import (
+    _num_samples,
+    check_array,
+    check_non_negative,
+    validate_data,
+)
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -1024,6 +1029,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             X_embedded = 1e-4 * random_state.standard_normal(
                 size=(n_samples, self.n_components)
             ).astype(np.float32)
+
+        # Check for non-finite values (NaNs and Infs) in the initialization array
+        X_embedded = check_array(X_embedded, ensure_all_finite=True)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
