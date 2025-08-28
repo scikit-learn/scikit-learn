@@ -21,8 +21,6 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
     """Handles parameter management for estimators that are composed of named
     sub-estimators."""
 
-    steps: List[Any]
-
     @abstractmethod
     def __init__(self):
         pass
