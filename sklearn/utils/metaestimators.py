@@ -18,8 +18,16 @@ __all__ = ["available_if"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for estimators that are composed of named
-    sub-estimators."""
+    """Base class for estimators that are composed of named sub-estimators.
+    
+    This abstract class provides parameter management functionality for
+    meta-estimators that contain collections of named estimators. It handles
+    the complex logic for getting and setting parameters on nested estimators
+    using the "estimator_name__parameter" syntax.
+    
+    The class is designed to work with any attribute containing a list of
+    (name, estimator) tuples.
+    """
 
     @abstractmethod
     def __init__(self):
