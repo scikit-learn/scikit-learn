@@ -806,7 +806,7 @@ The disadvantages of Bayesian regression include:
 
   * A good introduction to Bayesian methods is given in `C. Bishop: Pattern
     Recognition and Machine Learning
-    <https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/>`__.
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`__.
 
   * Original Algorithm is detailed in the book `Bayesian learning for neural
     networks
