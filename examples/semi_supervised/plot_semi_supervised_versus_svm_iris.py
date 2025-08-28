@@ -4,12 +4,12 @@ Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 ===============================================================================
 
 This example compares decision boundaries learned by two semi-supervised
-methods, namely class:`~sklearn.semi_supervised.LabelSpreading` and
-class:`~sklearn.semi_supervised.SelfTrainingClassifier`, when varying the
+methods, namely :class:`~sklearn.semi_supervised.LabelSpreading` and
+:class:`~sklearn.semi_supervised.SelfTrainingClassifier`, when varying the
 proportion of labeled training data from small fractions up to the full dataset.
 
 Both methods rely on RBF kernels: Label Spreading uses it by default, and
-Self-training is paired here with class:`~sklearn.svm.SVC` as base estimator
+Self-training is paired here with :class:`~sklearn.svm.SVC` as base estimator
 (also RBF-based by default) to allow a fair comparison. Self-training with 100%
 labeled data is omitted since it is identical to training a fully supervised SVC
 directly.
@@ -92,14 +92,16 @@ plt.show()
 # using the full labeled data available for training, even when using a very
 # small subset of the labels.
 #
-# # Interpretation of `predict_proba`
+# Interpretation of `predict_proba`
+# =================================
 #
-# ## `predict_proba` in `LabelSpreading`
+# `predict_proba` in `LabelSpreading`
+# -----------------------------------
 #
-# `LabelSpreading` constructs a similarity graph from the data, by default using
-# an RBF kernel. This means each sample is connected to every other with a
-# weight that decays with their squared Euclidean distance, scaled by a
-# parameter `gamma`.
+# :class:`~sklearn.semi_supervised.LabelSpreading` constructs a similarity graph
+# from the data, by default using an RBF kernel. This means each sample is
+# connected to every other with a weight that decays with their squared
+# Euclidean distance, scaled by a parameter `gamma`.
 #
 # Once you have that weighted graph, labels are propagated along the graph
 # edges. Each sample gradually takes on a soft label distribution that reflects
@@ -133,12 +135,14 @@ print("API   :", ls.predict_proba(x_query))
 
 # %%
 # ## `predict_proba` in `SelfTrainingClassifier`
+# ----------------------------------------------
 #
-# `SelfTrainingClassifier` works by repeatedly fitting its base estimator on the
-# currently labeled data, then adding pseudo-labels for unlabeled points whose
-# predicted probabilities exceed a confidence threshold. This process continues
-# until no new points can be labeled, at which point the classifier has a final
-# fitted base estimator stored in the attribute `estimator_`.
+# :class:`~sklearn.semi_supervised.SelfTrainingClassifier` works by repeatedly
+# fitting its base estimator on the currently labeled data, then adding
+# pseudo-labels for unlabeled points whose predicted probabilities exceed a
+# confidence threshold. This process continues until no new points can be
+# labeled, at which point the classifier has a final fitted base estimator
+# stored in the attribute `estimator_`.
 #
 # When you call `predict_proba` on the `SelfTrainingClassifier`, it simply
 # delegates to this final estimator.
