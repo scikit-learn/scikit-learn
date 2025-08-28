@@ -411,6 +411,7 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
+            "pytest-xdist",
             "pytest-cov",
             "ninja",
             "meson-python",
