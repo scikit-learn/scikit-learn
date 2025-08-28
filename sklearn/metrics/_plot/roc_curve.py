@@ -254,7 +254,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         default_chance_level_line_kw = {
-            "label": "Chance level (AUC = 0.5)",
+            "label": "Non-informative baseline (AUC = 0.5)",
             "color": "k",
             "linestyle": "--",
         }
