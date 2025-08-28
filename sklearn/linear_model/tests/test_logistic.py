@@ -72,8 +72,8 @@ def check_predictions(clf, X, y):
 def test_predict_2_classes(csr_container):
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
-    check_predictions(LogisticRegression(), X, Y1)
-    check_predictions(LogisticRegression(), csr_container(X), Y1)
+    check_predictions(LogisticRegression(alpha=1 / len(Y1)), X, Y1)
+    check_predictions(LogisticRegression(alpha=1 / len(Y1)), csr_container(X), Y1)
 
     check_predictions(LogisticRegression(C=100), X, Y1)
     check_predictions(LogisticRegression(C=100), csr_container(X), Y1)
@@ -230,11 +230,14 @@ def test_check_solver_option(LR):
             lr.fit(X, y)
 
 
-@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
-def test_elasticnet_l1_ratio_err_helpful(LR):
+@pytest.mark.parametrize(
+    ["LR", "arg"],
+    [(LogisticRegression, "l1_ratio"), (LogisticRegressionCV, "l1_ratios")],
+)
+def test_elasticnet_l1_ratio_err_helpful(LR, arg):
     # Check that an informative error message is raised when penalty="elasticnet"
     # but l1_ratio is not specified.
-    model = LR(penalty="elasticnet", solver="saga")
+    model = LR(penalty="elasticnet", **{arg: None}, solver="saga")
     with pytest.raises(ValueError, match=r".*l1_ratio.*"):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
@@ -529,11 +532,11 @@ def test_logistic_cv_multinomial_score(
         n_samples=100, random_state=global_random_seed, n_classes=3, n_informative=6
     )
     train, test = np.arange(80), np.arange(80, 100)
-    lr = LogisticRegression(C=1.0)
+    lr = LogisticRegression(C=1.0, penalty="l2")
     # we use lbfgs to support multinomial
     params = lr.get_params()
     # we store the params to set them further in _log_reg_scoring_path
-    for key in ["C", "n_jobs", "warm_start"]:
+    for key in ["C", "alpha", "n_jobs", "warm_start"]:
         del params[key]
     lr.fit(X[train], y[train])
     for averaging in multiclass_agg_list:
@@ -944,16 +947,19 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     # Test that passing class_weight as [1, 2] is the same as
     # passing class weight = [1,1] but adjusting sample weights
     # to be 2 for all instances of class 1.
-
+    n_samples = 300
     X, y = make_classification(
-        n_samples=300,
+        n_samples=n_samples,
         n_features=5,
         n_informative=3,
         n_classes=2,
         random_state=global_random_seed,
     )
 
-    sample_weight = y + 1
+    sample_weight = y + 1.0
+    # FIXME: See computation of anti_penalty_C in LogisticRegression.fit
+    # Until this is fixed, we work - equvalently - with different values of alpha.
+    # sample_weight *= 300/np.sum(sample_weight)
 
     kw_weighted = {
         "random_state": global_random_seed,
@@ -962,10 +968,12 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
         "tol": 1e-8,
     }
     clf_cw_12 = LogisticRegression(
-        solver=solver, class_weight={0: 1, 1: 2}, **kw_weighted
+        alpha=1.0, solver=solver, class_weight={0: 1, 1: 2}, **kw_weighted
     )
     clf_cw_12.fit(X, y)
-    clf_sw_12 = LogisticRegression(solver=solver, **kw_weighted)
+    clf_sw_12 = LogisticRegression(
+        alpha=n_samples / np.sum(sample_weight), solver=solver, **kw_weighted
+    )
     clf_sw_12.fit(X, y, sample_weight=sample_weight)
     assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, atol=1e-6)
 
@@ -973,9 +981,9 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
 def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
-
+    n_samples = 300
     X, y = make_classification(
-        n_samples=300,
+        n_samples=n_samples,
         n_features=5,
         n_informative=3,
         n_classes=2,
@@ -983,8 +991,12 @@ def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     )
 
     sample_weight = y + 1
+    # FIXME: See computation of anti_penalty_C in LogisticRegression.fit
+    # Until this is fixed, we work - equvalently - with different values of alpha.
+    # sample_weight *= 300/np.sum(sample_weight)
 
     clf_cw = LogisticRegression(
+        alpha=1.0 / n_samples,
         solver="liblinear",
         fit_intercept=False,
         class_weight={0: 1, 1: 2},
@@ -995,6 +1007,7 @@ def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     )
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
+        alpha=1.0 / np.sum(sample_weight),
         solver="liblinear",
         fit_intercept=False,
         penalty="l1",
@@ -1006,6 +1019,7 @@ def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     assert_allclose(clf_cw.coef_, clf_sw.coef_, atol=1e-10)
 
     clf_cw = LogisticRegression(
+        alpha=1.0 / n_samples,
         solver="liblinear",
         fit_intercept=False,
         class_weight={0: 1, 1: 2},
@@ -1017,6 +1031,7 @@ def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     )
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
+        alpha=1.0 / np.sum(sample_weight),
         solver="liblinear",
         fit_intercept=False,
         penalty="l2",
@@ -1132,7 +1147,7 @@ def test_logistic_regression_multinomial(global_random_seed):
             random_state=global_random_seed,
             max_iter=2000,
             tol=1e-10,
-            Cs=[1.0],
+            Cs=[1.0 / n_samples],
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
@@ -1443,7 +1458,9 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
     # Warm starting does not work with liblinear solver.
     X, y = iris.data, iris.target
 
+    n_samples = X.shape[0]
     clf = LogisticRegression(
+        alpha=1 / n_samples,
         tol=1e-4,
         warm_start=warm_start,
         solver=solver,
@@ -2482,10 +2499,10 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     X, y = make_classification(
         n_samples=10, n_features=20, random_state=global_random_seed
     )
-    C = 1e30  # very high C to nearly disable regularization
+    alpha = 1e-30  # very tiny alpha to nearly disable regularization
 
     # Check that LBFGS can converge without any warning on this problem.
-    lr_lbfgs = LogisticRegression(solver="lbfgs", C=C)
+    lr_lbfgs = LogisticRegression(alpha=alpha, solver="lbfgs")
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         lr_lbfgs.fit(X, y)
@@ -2497,7 +2514,7 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     # LBFGS. This should converge with the same number of iterations as the
     # above call of lbfgs since the Newton-Cholesky triggers the fallback
     # before completing the first iteration, for the problem setting at hand.
-    lr_nc = LogisticRegression(solver="newton-cholesky", C=C)
+    lr_nc = LogisticRegression(alpha=alpha, solver="newton-cholesky")
     with ignore_warnings(category=LinAlgWarning):
         lr_nc.fit(X, y)
         n_iter_nc = lr_nc.n_iter_[0]
@@ -2507,7 +2524,7 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     # Trying to fit the same model again with a small iteration budget should
     # therefore raise a ConvergenceWarning:
     lr_nc_limited = LogisticRegression(
-        solver="newton-cholesky", C=C, max_iter=n_iter_lbfgs - 1
+        alpha=alpha, solver="newton-cholesky", max_iter=n_iter_lbfgs - 1
     )
     with ignore_warnings(category=LinAlgWarning):
         with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
