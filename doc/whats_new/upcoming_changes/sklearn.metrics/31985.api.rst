@@ -1,0 +1,3 @@
+- :class:`sklearn.metrics.BaseScorer` is now a part of the public API. Custom scorers
+  can be implemented by inheriting from this class.
+  By `Adrin Jalali`_
