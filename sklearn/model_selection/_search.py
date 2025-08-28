@@ -247,7 +247,7 @@ class ParameterSampler:
         Pass an int for reproducible output across multiple
         function calls.
         See :term:`Glossary <random_state>`.
-        
+
     distribution_weights : array-like of shape (n_distributions,), default=None
         Weights for sampling from param_distributions when it is a list of dicts.
         Must be non-negative and sum to a positive value. If None, uniform
@@ -278,7 +278,14 @@ class ParameterSampler:
     True
     """
 
-    def __init__(self, param_distributions, n_iter, *, random_state=None, distribution_weights=None):
+    def __init__(
+        self,
+        param_distributions,
+        n_iter,
+        *,
+        random_state=None,
+        distribution_weights=None,
+    ):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
                 "Parameter distribution is not a dict or a list,"
@@ -304,14 +311,15 @@ class ParameterSampler:
                         f"Parameter grid for parameter {key!r} is not iterable "
                         f"or a distribution (value={dist[key]})"
                     )
-        
+
         # Validate distribution_weights if provided
         if distribution_weights is not None:
             distribution_weights = np.asarray(distribution_weights)
             if len(distribution_weights) != len(param_distributions):
                 raise ValueError(
-                    "distribution_weights must have the same length as param_distributions, "
-                    f"got {len(distribution_weights)} and {len(param_distributions)} respectively."
+                    "distribution_weights must have the same length as "
+                    f"param_distributions, got {len(distribution_weights)} and "
+                    f"{len(param_distributions)} respectively."
                 )
             if np.any(distribution_weights < 0):
                 raise ValueError(
@@ -323,7 +331,7 @@ class ParameterSampler:
                 )
             # Normalize weights to sum to 1
             distribution_weights = distribution_weights / np.sum(distribution_weights)
-        
+
         self.n_iter = n_iter
         self.random_state = random_state
         self.param_distributions = param_distributions
@@ -354,9 +362,10 @@ class ParameterSampler:
                     UserWarning,
                 )
                 n_iter = grid_size
-            
+
             # If distribution_weights is provided, we sample with weights
-            # This is consistent with the behavior when there are continuous distributions
+            # This is consistent with the behavior when there are continuous
+            # distributions
             if self.distribution_weights is not None:
                 # Pre-calculate distribution start indices and sizes
                 dist_start_indices = [0]
@@ -366,10 +375,12 @@ class ParameterSampler:
                     dist_sizes.append(dist_size)
                     dist_start_indices.append(dist_start_indices[-1] + dist_size)
                 dist_start_indices = dist_start_indices[:-1]  # Remove the last one
-                
+
                 for _ in range(n_iter):
                     # Choose a distribution based on weights
-                    dist_idx = rng.choice(len(self.param_distributions), p=self.distribution_weights)
+                    dist_idx = rng.choice(
+                        len(self.param_distributions), p=self.distribution_weights
+                    )
                     # Choose a parameter setting from that distribution
                     dist_start = dist_start_indices[dist_idx]
                     dist_size = dist_sizes[dist_idx]
@@ -377,13 +388,17 @@ class ParameterSampler:
                     yield param_grid[param_idx]
             else:
                 # Uniform sampling without replacement
-                for i in sample_without_replacement(grid_size, n_iter, random_state=rng):
+                for i in sample_without_replacement(
+                    grid_size, n_iter, random_state=rng
+                ):
                     yield param_grid[i]
 
         else:
             for _ in range(self.n_iter):
                 if self.distribution_weights is not None:
-                    dist = rng.choice(self.param_distributions, p=self.distribution_weights)
+                    dist = rng.choice(
+                        self.param_distributions, p=self.distribution_weights
+                    )
                 else:
                     dist = rng.choice(self.param_distributions)
                 # Always sort the keys of a dictionary, for reproducibility
@@ -2059,9 +2074,9 @@ class RandomizedSearchCV(BaseSearchCV):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(
             ParameterSampler(
-                self.param_distributions, 
-                self.n_iter, 
+                self.param_distributions,
+                self.n_iter,
                 random_state=self.random_state,
-                distribution_weights=self.distribution_weights
+                distribution_weights=self.distribution_weights,
             )
         )
