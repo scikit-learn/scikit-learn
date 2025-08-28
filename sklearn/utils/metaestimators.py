@@ -5,7 +5,6 @@
 
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
-from typing import Any, List
 
 import numpy as np
 
@@ -19,12 +18,12 @@ __all__ = ["available_if"]
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
     """Base class for estimators that are composed of named sub-estimators.
-    
+
     This abstract class provides parameter management functionality for
     meta-estimators that contain collections of named estimators. It handles
     the complex logic for getting and setting parameters on nested estimators
     using the "estimator_name__parameter" syntax.
-    
+
     The class is designed to work with any attribute containing a list of
     (name, estimator) tuples.
     """
