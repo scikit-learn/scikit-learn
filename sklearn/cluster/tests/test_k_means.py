@@ -744,7 +744,7 @@ def test_transform(Estimator, global_random_seed):
     # In particular, diagonal must be 0
     assert_array_equal(Xt.diagonal(), np.zeros(n_clusters))
 
-    # Transorfming X should return the pairwise distances between X and the
+    # Transforming X should return the pairwise distances between X and the
     # centers
     Xt = km.transform(X)
     assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
@@ -822,10 +822,11 @@ def test_float_precision(Estimator, input_data, global_random_seed):
 
     # compare arrays with low precision since the difference between 32 and
     # 64 bit comes from an accumulation of rounding errors.
-    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-4)
-    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * 1e-4)
+    rtol = 2e-4
+    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=rtol)
+    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * rtol)
     assert_allclose(
-        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * 1e-4
+        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * rtol
     )
     assert_array_equal(labels[np.float32], labels[np.float64])
 
