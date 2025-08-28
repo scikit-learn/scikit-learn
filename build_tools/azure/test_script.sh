@@ -58,7 +58,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
+    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count())")
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
