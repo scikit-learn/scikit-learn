@@ -319,12 +319,14 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
   The duality gap :math:`G(w, v)` is an upper bound of the difference between the
   current primal objective function of the Lasso, :math:`P(w)`, and its minimum
-  :math:`P(w^\star)`, i.e. :math:`G(w, v) \leq P(w) - P(w^\star)`. It is given by
+  :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
   .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
+  called strong duality).
   With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
   dual scaling
 
