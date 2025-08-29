@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 import pytest
+import scipy
 from scipy.differentiate import derivative
 
 from sklearn.base import clone
@@ -142,6 +143,10 @@ def test_solution_inside_bounds(kernel):
     assert_array_less(gpr.kernel_.theta, bounds[:, 1] + tiny)
 
 
+@pytest.mark.skipif(
+    scipy.__version__ < "1.15.0",
+    reason="scipy.derivative requires version 1.15.0 or more",
+)
 @pytest.mark.xfail(raises=AssertionError)
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_gradient(kernel):
