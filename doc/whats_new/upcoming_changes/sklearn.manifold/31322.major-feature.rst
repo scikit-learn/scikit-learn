@@ -1,0 +1,3 @@
+- :class:`manifold.ClassicalMDS` was implemented to perform classical MDS
+  (eigendecomposition of the double-centered distance matrix).
+  By :user:`Dmitry Kobak <dkobak>` and :user:`Meekail Zain <Micky774>`
