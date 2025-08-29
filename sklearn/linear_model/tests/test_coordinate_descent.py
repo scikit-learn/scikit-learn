@@ -694,7 +694,7 @@ def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV(cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
-    clf = MultiTaskLassoCV(cv=3).fit(X, y)
+    clf = MultiTaskLassoCV(cv=3, tol=1e-6).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
     X, y, _, _ = build_dataset(n_targets=3)
@@ -1231,7 +1231,7 @@ def test_multi_task_lasso_cv_dtype():
     X = rng.binomial(1, 0.5, size=(n_samples, n_features))
     X = X.astype(int)  # make it explicit that X is int
     y = X[:, [0, 0]].copy()
-    est = MultiTaskLassoCV(alphas=5, fit_intercept=True).fit(X, y)
+    est = MultiTaskLassoCV(alphas=5, fit_intercept=True, tol=1e-6).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
 
 
