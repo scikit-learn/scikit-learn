@@ -1,6 +1,8 @@
 <!--
-🙌 Thanks for contributing a pull request! Please ensure you have taken a look at
-the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md
+🙌 Thanks for contributing a pull request!
+
+👀 Please ensure you have taken a look at the contribution guidelines:
+https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md
 
 ✅ In particular following the pull request checklist will increase the likelihood
 of having maintainers review your PR:
