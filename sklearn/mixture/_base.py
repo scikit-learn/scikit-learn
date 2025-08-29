@@ -11,12 +11,12 @@ from time import time
 
 import numpy as np
 
-from .. import cluster
-from ..base import BaseEstimator, DensityMixin, _fit_context
-from ..cluster import kmeans_plusplus
-from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
-from ..utils._array_api import (
+from sklearn import cluster
+from sklearn.base import BaseEstimator, DensityMixin, _fit_context
+from sklearn.cluster import kmeans_plusplus
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_random_state
+from sklearn.utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
     _logsumexp,
@@ -24,8 +24,8 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _check_shape(param, param_shape, name):

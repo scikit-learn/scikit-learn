@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPi| |DOI| |Benchmark|
+|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
    :target: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -20,7 +20,7 @@
 .. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
    :target: https://pypi.org/project/scikit-learn/
 
-.. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
+.. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
@@ -77,7 +77,7 @@ classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
+|SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -134,7 +134,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the source
-directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
+directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 
     pytest sklearn
 

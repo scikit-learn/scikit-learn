@@ -8,7 +8,7 @@ Loss functions for linear models with raw_prediction = X @ coef
 import numpy as np
 from scipy import sparse
 
-from ..utils.extmath import squared_norm
+from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
 def sandwich_dot(X, W):
@@ -24,12 +24,14 @@ def sandwich_dot(X, W):
     # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
-        return (
-            X.T @ sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X
-        ).toarray()
+        return safe_sparse_dot(
+            X.T,
+            sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X,
+            dense_output=True,
+        )
     else:
         # np.einsum may use less memory but the following, using BLAS matrix
-        # multiplication (gemm), is by far faster.
+        # multiplication (GEMM), is by far faster.
         WX = W[:, None] * X
         return X.T @ WX
 
@@ -69,7 +71,7 @@ class LinearModelLoss:
             if coef.shape (n_classes, n_dof):
                 intercept = coef[:, -1]
             if coef.shape (n_classes * n_dof,)
-                intercept = coef[n_features::n_dof] = coef[(n_dof-1)::n_dof]
+                intercept = coef[n_classes * n_features:] = coef[(n_dof-1):]
             intercept.shape = (n_classes,)
         else:
             intercept = coef[-1]
@@ -83,7 +85,8 @@ class LinearModelLoss:
         else:
             hessian.shape = (n_dof, n_dof)
 
-    Note: If coef has shape (n_classes * n_dof,), the 2d-array can be reconstructed as
+    Note: if coef has shape (n_classes * n_dof,), the classes are expected to be
+    contiguous, i.e. the 2d-array can be reconstructed as
 
         coef.reshape((n_classes, -1), order="F")
 

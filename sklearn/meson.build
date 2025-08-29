@@ -100,7 +100,7 @@ inc_np = include_directories(incdir_numpy)
 # Don't use the deprecated NumPy C API. Define this to a fixed version instead of
 # NPY_API_VERSION in order not to break compilation for released SciPy versions
 # when NumPy introduces a new deprecation.
-numpy_no_deprecated_api = ['-DNPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION']
+numpy_no_deprecated_api = ['-DNPY_NO_DEPRECATED_API=NPY_1_22_API_VERSION']
 np_dep = declare_dependency(include_directories: inc_np, compile_args: numpy_no_deprecated_api)
 
 openmp_dep = dependency('OpenMP', language: 'c', required: false)
@@ -220,18 +220,6 @@ cython_gen = generator(cython_program,
 cython_gen_cpp = generator(cython_program,
   arguments : cython_args + ['--cplus', '@INPUT@', '--output-file', '@OUTPUT@'],
   output : '@BASENAME@.cpp',
-)
-
-# Write file in Meson build dir to be able to figure out from Python code
-# whether scikit-learn was built with Meson. Adapted from pandas
-# _version_meson.py.
-custom_target('write_built_with_meson_file',
-    output: '_built_with_meson.py',
-    command: [
-        py, '-c', 'with open("sklearn/_built_with_meson.py", "w") as f: f.write("")'
-    ],
-    install: true,
-    install_dir: py.get_install_dir() / 'sklearn'
 )
 
 extensions = ['_isotonic']
