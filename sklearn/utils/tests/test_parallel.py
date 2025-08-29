@@ -1,3 +1,4 @@
+import sys
 import time
 import warnings
 
@@ -124,6 +125,13 @@ def get_warnings():
     return warnings.filters
 
 
+# In free-threading Python >= 3.14, warnings filters are managed through a
+# ContextVar and warnings.filters is not modified. For more details, see
+# https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
+@pytest.mark.skipif(
+    getattr(sys.flags, "context_aware_warnings"),
+    reason="context_aware_warnings is set, warnings.filters is not modified",
+)
 def test_check_warnings_threading():
     """Check that warnings filters are set correctly in the threading backend."""
     with warnings.catch_warnings():
