@@ -1,11 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import copy
 import pickle
 import re
-import sys
-import types
 import warnings
 
 import numpy as np
@@ -564,21 +561,22 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
+# The test modifies global state by changing the the TreeNoVersion class
+@pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
-    # Avoid side-effect on TreeNoVersion class
-    tree_class = copy.copy(TreeNoVersion)
-    tree_class.__module__ = "notsklearn"
-    # Need this for the class to be picklable
-    sys.modules["notsklearn"] = types.ModuleType("notsklearn")
-    sys.modules["notsklearn"].TreeNoVersion = tree_class
-
     iris = datasets.load_iris()
-    tree = tree_class().fit(iris.data, iris.target)
+    tree = TreeNoVersion().fit(iris.data, iris.target)
     tree_pickle_noversion = pickle.dumps(tree)
+    try:
+        module_backup = TreeNoVersion.__module__
+        TreeNoVersion.__module__ = "notsklearn"
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        pickle.loads(tree_pickle_noversion)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+
+            pickle.loads(tree_pickle_noversion)
+    finally:
+        TreeNoVersion.__module__ = module_backup
 
 
 class DontPickleAttributeMixin:
