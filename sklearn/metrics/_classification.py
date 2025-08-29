@@ -133,7 +133,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             if "Sparse data was passed" in str(e):
                 raise TypeError(
                     "Sparse input is only supported when targets are of multilabel type"
-                )
+                ) from e
             else:
                 raise
 
