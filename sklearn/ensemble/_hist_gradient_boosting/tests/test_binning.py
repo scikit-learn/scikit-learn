@@ -238,7 +238,7 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
 def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
     rng = np.random.RandomState(global_random_seed)
 
-    n_samples = 300
+    n_samples = 500
     X = rng.randn(n_samples, 3)
 
     sw = rng.randint(0, 5, size=n_samples)
@@ -247,10 +247,10 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
     bins_weighted = []
     bins_repeated = []
     for i in range(100):
-        est_weighted = _BinMapper(n_bins=n_bins, subsample=100, random_state=i).fit(
+        est_weighted = _BinMapper(n_bins=n_bins, subsample=200, random_state=i).fit(
             X, sample_weight=sw
         )
-        est_repeated = _BinMapper(n_bins=n_bins, subsample=100, random_state=i).fit(
+        est_repeated = _BinMapper(n_bins=n_bins, subsample=200, random_state=i).fit(
             X_repeated, sample_weight=None
         )
         bins_weighted.append(np.hstack(est_weighted.bin_thresholds_))
