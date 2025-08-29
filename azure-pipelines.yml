@@ -213,8 +213,6 @@ jobs:
         DISTRIB: 'debian-32'
         COVERAGE: "true"
         LOCK_FILE: './build_tools/azure/debian_32bit_lock.txt'
-        # disable pytest xdist due to unknown bug with 32-bit container
-        PYTEST_XDIST_VERSION: 'none'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
 
 - template: build_tools/azure/posix.yml
