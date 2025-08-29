@@ -1335,10 +1335,10 @@ def test_estimator_checks_generator_strict_none():
         expected_failed_checks=expected_to_fail,
         mark="xfail",
     )
-    # making sure we use a class that has expected failures
+    # make sure we use a class that has expected failures
     assert len(expected_to_fail) > 0
     marked_checks = [c for c in checks if hasattr(c, "marks")]
-    # making sure we have some checks with marks
+    # make sure we have some checks with marks
     assert len(marked_checks) > 0
 
     for parameter_set in marked_checks:
@@ -1356,15 +1356,15 @@ def test_estimator_checks_generator_strict_xfail_tests():
         legacy=True,
         expected_failed_checks=expected_to_fail,
         mark="xfail",
-        strict=True,
+        xfail_strict=True,
     )
-    # making sure we use a class that has expected failures
+    # make sure we use a class that has expected failures
     assert len(expected_to_fail) > 0
     strict_xfailed_checks = []
 
     # xfail'ed checks are wrapped in a ParameterSet, so below we extract
     # the things we need via a bit of a crutch: len()
-    marked_checks = [c for c in checks if len(c) == 3]
+    marked_checks = [c for c in checks if hasattr(c, "marks")]
 
     for parameter_set in marked_checks:
         (_, check), marks, _ = parameter_set
