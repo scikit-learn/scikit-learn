@@ -20,6 +20,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
 from sklearn.metrics import (
     accuracy_score,
@@ -1400,6 +1401,31 @@ def test_multimetric_scoring_kwargs():
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     multi_scorer(clf, X, y, common_arg=1, sample_weight=1)
+
+
+@config_context(enable_metadata_routing=True)
+def test_scorer_metadata_routing():
+    class MyClf(DummyClassifier):
+        def fit(self, X, y, metadata=None):
+            return super().fit(X, y)
+
+        def predict(self, X, metadata=None):
+            return super().predict(X)
+
+    X, y = make_classification(
+        n_samples=50, n_features=2, n_redundant=0, random_state=0
+    )
+    metadata = np.ones(X.shape[0])
+
+    clf = (
+        MyClf()
+        .set_fit_request(metadata=True)
+        .set_predict_request(metadata=True)
+        .fit(X, y, metadata=metadata)
+    )
+
+    score = make_scorer(accuracy_score)
+    score(clf, X, y, metadata=metadata)
 
 
 def test_kwargs_without_metadata_routing_error():

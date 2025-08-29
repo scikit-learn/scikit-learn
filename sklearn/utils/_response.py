@@ -119,6 +119,7 @@ def _get_response_values(
     response_method,
     pos_label=None,
     return_response_method_used=False,
+    **metadata,
 ):
     """Compute the response values of a classifier, an outlier detector, or a regressor.
 
@@ -169,6 +170,10 @@ def _get_response_values(
 
         .. versionadded:: 1.4
 
+    **metadata : dict, default=None
+        Metadata dictionary that can be used to pass additional information
+        to the estimator.
+
     Returns
     -------
     y_pred : ndarray of shape (n_samples,), (n_samples, n_classes) or \
@@ -211,7 +216,7 @@ def _get_response_values(
             elif pos_label is None and target_type == "binary":
                 pos_label = classes[-1]
 
-        y_pred = prediction_method(X)
+        y_pred = prediction_method(X, **metadata)
 
         if prediction_method.__name__ in ("predict_proba", "predict_log_proba"):
             y_pred = _process_predict_proba(
@@ -229,7 +234,7 @@ def _get_response_values(
             )
     elif is_outlier_detector(estimator):
         prediction_method = _check_response_method(estimator, response_method)
-        y_pred, pos_label = prediction_method(X), None
+        y_pred, pos_label = prediction_method(X, **metadata), None
     else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(
@@ -239,7 +244,7 @@ def _get_response_values(
                 f"{response_method} instead."
             )
         prediction_method = estimator.predict
-        y_pred, pos_label = prediction_method(X), None
+        y_pred, pos_label = prediction_method(X, **metadata), None
 
     if return_response_method_used:
         return y_pred, pos_label, prediction_method.__name__
