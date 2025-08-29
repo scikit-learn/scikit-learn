@@ -125,6 +125,7 @@ def get_warnings():
     return warnings.filters
 
 
+# TODO Remove skipif maybe this is a Pytest bug actually?
 # In free-threading Python >= 3.14, warnings filters are managed through a
 # ContextVar and warnings.filters is not modified. For more details, see
 # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
