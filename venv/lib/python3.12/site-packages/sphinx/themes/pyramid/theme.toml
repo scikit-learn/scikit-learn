@@ -1,0 +1,6 @@
+[theme]
+inherit = "basic"
+stylesheets = [
+    "pyramid.css",
+]
+pygments_style = { default = "sphinx.pygments_styles.PyramidStyle" }
