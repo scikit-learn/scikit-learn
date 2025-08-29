@@ -81,7 +81,7 @@ if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
     # scipy and scikit-learn extensions all have declared free-threaded
     # compatibility.
     export PYTHON_GIL=0
-    # Use pytest-run-parallel
+    # Use pytest-run-parallel TODO do not hardcode number of cores and reuse joblib.cpu_count()
     TEST_CMD="$TEST_CMD --parallel-threads 2 --iterations 1"
 fi
 

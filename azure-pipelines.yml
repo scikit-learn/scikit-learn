@@ -68,7 +68,7 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
 
 - template: build_tools/azure/posix.yml
-  # CPython 3.13 free-threaded build
+  # CPython free-threaded build
   parameters:
     name: Linux_free_threaded
     vmImage: ubuntu-22.04
@@ -87,6 +87,7 @@ jobs:
         DISTRIB: 'conda-free-threaded'
         LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
         PYTEST_XDIST_VERSION: 'none'
         SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
