@@ -379,6 +379,7 @@ def test_tweak_params():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_probability(global_random_seed):
     # Predict probabilities using SVC
     # This uses cross validation, so we use a slightly bigger testing set.
@@ -764,6 +765,7 @@ def test_svc_nonfinite_params(global_random_seed):
         clf.fit(X, y)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_unicode_kernel(global_random_seed):
     # Test that a unicode kernel name does not cause a TypeError
     iris = get_iris_dataset(global_random_seed)
@@ -1055,6 +1057,7 @@ def test_linearsvc_verbose():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
@@ -1102,6 +1105,7 @@ def test_svc_bad_kernel():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_libsvm_convergence_warnings(global_random_seed):
     a = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
@@ -1135,6 +1139,7 @@ def test_unfitted():
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_consistent_proba(global_random_seed):
     a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
     proba_1 = a.fit(X, Y).predict_proba(X)
@@ -1190,6 +1195,7 @@ def test_lsvc_intercept_scaling_zero():
     assert lsvc.intercept_ == 0.0
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hasattr_predict_proba(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
 
@@ -1534,3 +1540,13 @@ def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed)
     estimator_C_large = Estimator(C=1e10).fit(X, y)
 
     assert_allclose(estimator_C_large.predict(X), estimator_C_inf.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator, name",
+    [(svm.SVC, "SVC"), (svm.NuSVC, "NuSVC")],
+)
+def test_probability_raises_futurewarning(Estimator, name):
+    X, y = make_classification()
+    with pytest.warns(FutureWarning):
+        Estimator(probability=True).fit(X, y)
