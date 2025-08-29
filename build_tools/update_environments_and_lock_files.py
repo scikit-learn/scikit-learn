@@ -394,9 +394,7 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "pyamg"]
-        )
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.10",
@@ -412,6 +410,7 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
+            "pytest-xdist",
             "pytest-cov",
             "ninja",
             "meson-python",

@@ -5,6 +5,7 @@ cython
 joblib
 threadpoolctl
 pytest
+pytest-xdist
 pytest-cov
 ninja
 meson-python
