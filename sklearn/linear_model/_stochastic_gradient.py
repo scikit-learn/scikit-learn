@@ -11,8 +11,8 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
-from ..base import (
+from sklearn._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
+from sklearn.base import (
     BaseEstimator,
     OutlierMixin,
     RegressorMixin,
@@ -20,17 +20,13 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..model_selection import ShuffleSplit, StratifiedShuffleSplit
-from ..utils import check_random_state, compute_class_weight
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, SparseCoefMixin, make_dataset
-from ._sgd_fast import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    SparseCoefMixin,
+    make_dataset,
+)
+from sklearn.linear_model._sgd_fast import (
     EpsilonInsensitive,
     Hinge,
     ModifiedHuber,
@@ -38,6 +34,18 @@ from ._sgd_fast import (
     SquaredHinge,
     _plain_sgd32,
     _plain_sgd64,
+)
+from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
+from sklearn.utils import check_random_state, compute_class_weight
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
 )
 
 LEARNING_RATE_TYPES = {
@@ -96,7 +104,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         *,
         penalty="l2",
         alpha=0.0001,
-        C=1.0,
+        PA_C=1.0,
         l1_ratio=0.15,
         fit_intercept=True,
         max_iter=1000,
@@ -119,7 +127,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.alpha = alpha
-        self.C = C
+        self.PA_C = PA_C
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.shuffle = shuffle
@@ -154,6 +162,21 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 "learning_rate is 'optimal'. alpha is used "
                 "to compute the optimal learning rate."
             )
+        # TODO: Consider whether pa1 and pa2 could also work for other losses.
+        if self.learning_rate in ("pa1", "pa2"):
+            if is_classifier(self):
+                if self.loss != "hinge":
+                    msg = (
+                        f"Learning rate '{self.learning_rate}' only works with loss "
+                        "'hinge'."
+                    )
+                    raise ValueError(msg)
+            elif self.loss != "epsilon_insensitive":
+                msg = (
+                    f"Learning rate '{self.learning_rate}' only works with loss "
+                    "'epsilon_insensitive'."
+                )
+                raise ValueError(msg)
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be set when penalty is 'elasticnet'")
 
@@ -373,7 +396,7 @@ def fit_binary(
     X,
     y,
     alpha,
-    C,
+    PA_C,
     learning_rate,
     max_iter,
     pos_weight,
@@ -403,7 +426,7 @@ def fit_binary(
     alpha : float
         The regularization parameter
 
-    C : float
+    PA_C : float
         Maximum step size for passive aggressive
 
     learning_rate : str
@@ -470,7 +493,7 @@ def fit_binary(
         est._loss_function_,
         penalty_type,
         alpha,
-        C,
+        PA_C,
         est._get_l1_ratio(),
         dataset,
         validation_mask,
@@ -549,6 +572,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         learning_rate="optimal",
         eta0=0.0,
         power_t=0.5,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -560,6 +584,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            PA_C=PA_C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -585,7 +610,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         X,
         y,
         alpha,
-        C,
         loss,
         learning_rate,
         max_iter,
@@ -642,7 +666,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha=alpha,
-                C=C,
                 learning_rate=learning_rate,
                 sample_weight=sample_weight,
                 max_iter=max_iter,
@@ -652,7 +675,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha=alpha,
-                C=C,
                 learning_rate=learning_rate,
                 sample_weight=sample_weight,
                 max_iter=max_iter,
@@ -670,7 +692,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         X,
         y,
         alpha,
-        C,
         loss,
         learning_rate,
         coef_init=None,
@@ -708,7 +729,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha,
-            C,
             loss,
             learning_rate,
             self.max_iter,
@@ -731,9 +751,18 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 ),
                 ConvergenceWarning,
             )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
+            )
+
         return self
 
-    def _fit_binary(self, X, y, alpha, C, sample_weight, learning_rate, max_iter):
+    def _fit_binary(self, X, y, alpha, sample_weight, learning_rate, max_iter):
         """Fit a binary classifier on X and y."""
         coef, intercept, n_iter_ = fit_binary(
             self,
@@ -741,7 +770,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha,
-            C,
+            self.PA_C,
             learning_rate,
             max_iter,
             self._expanded_class_weight[1],
@@ -767,7 +796,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             # intercept is a float, need to convert it to an array of length 1
             self.intercept_ = np.atleast_1d(intercept)
 
-    def _fit_multiclass(self, X, y, alpha, C, learning_rate, sample_weight, max_iter):
+    def _fit_multiclass(self, X, y, alpha, learning_rate, sample_weight, max_iter):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -792,7 +821,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha,
-                C,
+                self.PA_C,
                 learning_rate,
                 max_iter,
                 self._expanded_class_weight[i],
@@ -876,7 +905,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha=self.alpha,
-            C=1.0,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -921,7 +949,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha=self.alpha,
-            C=1.0,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,
@@ -1070,9 +1097,17 @@ class SGDClassifier(BaseSGDClassifier):
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
           `early_stopping` is `True`, the current learning rate is divided by 5.
+        - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with `loss='hinge'`.
+          Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
+        - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
+          `loss='hinge'`.
+          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
 
         .. versionadded:: 0.20
             Added 'adaptive' option.
+
+        .. versionadded:: 1.8
+           Added options 'pa1' and 'pa2'
 
     eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1082,7 +1117,20 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
+
+    PA_C : float, default=1
+        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        For PA-I (`'pa1'`) it is the maximum step size. For PA-II (`'pa2'`) it
+        regularizes the step size (the smaller `PA_C` the more it regularizes).
+        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
+        Only used if `learning_rate=pa1` or `pa2`.
+
+        .. versionadded:: 1.8
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1185,6 +1233,12 @@ class SGDClassifier(BaseSGDClassifier):
         ``SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant",
         penalty=None)``.
 
+    References
+    ----------
+    .. [1] Online Passive-Aggressive Algorithms
+       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+
     Examples
     --------
     >>> import numpy as np
@@ -1211,10 +1265,10 @@ class SGDClassifier(BaseSGDClassifier):
         "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
-            Hidden(StrOptions({"pa1", "pa2"})),
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
+        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
@@ -1235,6 +1289,7 @@ class SGDClassifier(BaseSGDClassifier):
         learning_rate="optimal",
         eta0=0.0,
         power_t=0.5,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -1258,6 +1313,7 @@ class SGDClassifier(BaseSGDClassifier):
             learning_rate=learning_rate,
             eta0=eta0,
             power_t=power_t,
+            PA_C=PA_C,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
@@ -1414,6 +1470,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         learning_rate="invscaling",
         eta0=0.01,
         power_t=0.25,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -1424,6 +1481,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            PA_C=PA_C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -1447,7 +1505,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         X,
         y,
         alpha,
-        C,
         loss,
         learning_rate,
         max_iter,
@@ -1486,9 +1543,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
 
-        self._fit_regressor(
-            X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
-        )
+        self._fit_regressor(X, y, alpha, loss, learning_rate, sample_weight, max_iter)
 
         return self
 
@@ -1525,7 +1580,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             self.alpha,
-            C=1.0,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -1539,7 +1593,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         X,
         y,
         alpha,
-        C,
         loss,
         learning_rate,
         coef_init=None,
@@ -1562,7 +1615,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             alpha,
-            C,
             loss,
             learning_rate,
             self.max_iter,
@@ -1583,6 +1635,14 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+            )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
             )
 
         return self
@@ -1619,7 +1679,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             alpha=self.alpha,
-            C=1.0,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,
@@ -1661,9 +1720,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         """
         return self._decision_function(X)
 
-    def _fit_regressor(
-        self, X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
-    ):
+    def _fit_regressor(self, X, y, alpha, loss, learning_rate, sample_weight, max_iter):
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
@@ -1707,7 +1764,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss_function,
             penalty_type,
             alpha,
-            C,
+            self.PA_C,
             self._get_l1_ratio(),
             dataset,
             validation_mask,
@@ -1869,9 +1926,18 @@ class SGDRegressor(BaseSGDRegressor):
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
+        - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with
+          `loss='epsilon_insensitive'`.
+          Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
+        - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
+          `loss='epsilon_insensitive'`.
+          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
 
         .. versionadded:: 0.20
             Added 'adaptive' option.
+
+        .. versionadded:: 1.8
+           Added options 'pa1' and 'pa2'
 
     eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1880,7 +1946,20 @@ class SGDRegressor(BaseSGDRegressor):
 
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
+
+    PA_C : float, default=1
+        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        For PA-I (`'pa1'`) it is the maximum step size. For PA-II (`'pa2'`) it
+        regularizes the step size (the smaller `PA_C` the more it regularizes).
+        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
+        Only used if `learning_rate=pa1` or `pa2`.
+
+        .. versionadded:: 1.8
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1971,6 +2050,12 @@ class SGDRegressor(BaseSGDRegressor):
     sklearn.svm.SVR : Epsilon-Support Vector Regression.
     TheilSenRegressor : Theil-Sen Estimator robust multivariate regression model.
 
+     References
+    ----------
+    .. [1] Online Passive-Aggressive Algorithms
+       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+
     Examples
     --------
     >>> import numpy as np
@@ -1996,11 +2081,11 @@ class SGDRegressor(BaseSGDRegressor):
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
-            StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
-            Hidden(StrOptions({"pa1", "pa2"})),
+            StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
+        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
@@ -2020,6 +2105,7 @@ class SGDRegressor(BaseSGDRegressor):
         learning_rate="invscaling",
         eta0=0.01,
         power_t=0.25,
+        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -2041,6 +2127,7 @@ class SGDRegressor(BaseSGDRegressor):
             learning_rate=learning_rate,
             eta0=eta0,
             power_t=power_t,
+            PA_C=PA_C,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
@@ -2118,7 +2205,11 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
-        Values must be in the range `(-inf, inf)`.
+        Values must be in the range `[0.0, inf)`.
+
+        .. deprecated:: 1.8
+            Negative values for `power_t` are deprecated in version 1.8 and will raise
+            an error in 1.10. Use values in the range [0.0, inf) instead.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2223,7 +2314,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         super().__init__(
             loss="hinge",
             penalty="l2",
-            C=1.0,
+            PA_C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -2242,7 +2333,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             average=average,
         )
 
-    def _fit_one_class(self, X, alpha, C, sample_weight, learning_rate, max_iter):
+    def _fit_one_class(self, X, alpha, sample_weight, learning_rate, max_iter):
         """Uses SGD implementation with X and y=np.ones(n_samples)."""
 
         # The One-Class SVM uses the SGD implementation with
@@ -2297,7 +2388,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             self._loss_function_,
             penalty_type,
             alpha,
-            C,
+            self.PA_C,
             self.l1_ratio,
             dataset,
             validation_mask,
@@ -2342,7 +2433,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self,
         X,
         alpha,
-        C,
         loss,
         learning_rate,
         max_iter,
@@ -2397,7 +2487,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._fit_one_class(
             X,
             alpha=alpha,
-            C=C,
             learning_rate=learning_rate,
             sample_weight=sample_weight,
             max_iter=max_iter,
@@ -2432,7 +2521,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         return self._partial_fit(
             X,
             alpha,
-            C=1.0,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -2445,7 +2533,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self,
         X,
         alpha,
-        C,
         loss,
         learning_rate,
         coef_init=None,
@@ -2467,7 +2554,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._partial_fit(
             X,
             alpha,
-            C,
             loss,
             learning_rate,
             self.max_iter,
@@ -2488,6 +2574,14 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+            )
+
+        if self.power_t < 0:
+            warnings.warn(
+                "Negative values for `power_t` are deprecated in version 1.8 "
+                "and will raise an error in 1.10. "
+                "Use values in the range [0.0, inf) instead.",
+                FutureWarning,
             )
 
         return self
@@ -2531,7 +2625,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._fit(
             X,
             alpha=alpha,
-            C=1.0,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,

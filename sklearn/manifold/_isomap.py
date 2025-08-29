@@ -10,19 +10,19 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import connected_components, shortest_path
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..decomposition import KernelPCA
-from ..metrics.pairwise import _VALID_METRICS
-from ..neighbors import NearestNeighbors, kneighbors_graph, radius_neighbors_graph
-from ..preprocessing import KernelCenterer
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_is_fitted
+from sklearn.decomposition import KernelPCA
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph, radius_neighbors_graph
+from sklearn.preprocessing import KernelCenterer
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.graph import _fix_connected_components
+from sklearn.utils.validation import check_is_fitted
 
 
 class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):

@@ -49,16 +49,11 @@ if [[ $(uname) == "Darwin" ]]; then
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
 fi
 
-if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then
-    # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
-    # TODO: remove this after CPython 3.13 is released (scheduled October 2024)
-    # and our dependencies have free-threaded wheels on PyPI
-    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" --only-binary :all:'
-fi
-
 # The version of the built dependencies are specified
 # in the pyproject.toml file, while the tests are run
 # against the most recent version of the dependencies
 
-python -m pip install cibuildwheel
+# We install cibuildwheel 3.1.3 as a temporary work-around to avoid a loky
+# issue on Windows >= 3.13.7, see https://github.com/joblib/loky/issues/459.
+python -m pip install cibuildwheel==3.1.3
 python -m cibuildwheel --output-dir wheelhouse

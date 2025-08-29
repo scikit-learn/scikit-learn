@@ -15,14 +15,25 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from sklearn.base import BaseEstimator
-
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
-from ..exceptions import ConvergenceWarning
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection import GridSearchCV
-from ..preprocessing import LabelBinarizer
-from ..utils import (
+from sklearn.base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    _preprocess_data,
+    _rescale_data,
+)
+from sklearn.linear_model._sag import sag_solver
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import (
     Bunch,
     check_array,
     check_consistent_length,
@@ -30,27 +41,29 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import _sparse_linalg_cg
-from ..utils.metadata_routing import (
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.fixes import _sparse_linalg_cg
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
-from ._sag import sag_solver
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
@@ -952,12 +965,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=False,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -2139,12 +2153,13 @@ class _RidgeGCV(LinearModel):
         self.alphas = np.asarray(self.alphas)
 
         unscaled_y = y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, sqrt_sw = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=True,
         )
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
@@ -2162,9 +2177,7 @@ class _RidgeGCV(LinearModel):
 
         n_samples = X.shape[0]
 
-        if sample_weight is not None:
-            X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
-        else:
+        if sqrt_sw is None:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
