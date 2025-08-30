@@ -155,10 +155,6 @@ class _FuncWrapper:
             # TODO is there a simpler way that resetwarnings+ filterwarnings?
             warnings.resetwarnings()
             warning_filter_keys = ["action", "message", "category", "module", "lineno"]
-            # Some small discrepancy between warnings filters and what
-            # filterwarnings expect. You can not pass *filter_args directly to
-            # filterwarnings because of None Values (for example message=None
-            # is an error you need message=''). It's cleaner to use a dict anyway.
             for filter_args in warning_filters:
                 this_warning_filter_dict = {
                     k: v
@@ -166,25 +162,23 @@ class _FuncWrapper:
                     if v is not None
                 }
 
-                # 'message' and 'module' are most of the time regex.Pattern but
-                # can be str as well and filterwarnings wants a str
-                for special_key in ["message", "module"]:
-                    this_value = this_warning_filter_dict.get(special_key)
-                    if this_value is not None and not isinstance(this_value, str):
-                        this_warning_filter_dict[special_key] = this_value.pattern
-
-                category = this_warning_filter_dict.get("category", None)
-                # For some reason sometimes category is a tuple (maybe from
-                # warnings.simplefilter or pytest.warns) but filterwarnings
-                # does not support it
-                if isinstance(category, tuple):
-                    for this_category in category:
-                        this_warning_filter_dict_copy = this_warning_filter_dict.copy()
-                        this_warning_filter_dict_copy["category"] = this_category
-                        warnings.filterwarnings(
-                            **this_warning_filter_dict_copy, append=True
-                        )
+                # Some small discrepancy between warnings filters and what
+                # filterwarnings expect. simplefilter is more lenient, e.g.
+                # accepts a tuple as category. We try simplefilter first and
+                # use filterwarnings in more complicated cases
+                if (
+                    "message" not in this_warning_filter_dict
+                    and "module" not in this_warning_filter_dict
+                ):
+                    warnings.simplefilter(**this_warning_filter_dict)
                 else:
+                    # 'message' and 'module' are most of the time regex.Pattern but
+                    # can be str as well and filterwarnings wants a str
+                    for special_key in ["message", "module"]:
+                        this_value = this_warning_filter_dict.get(special_key)
+                        if this_value is not None and not isinstance(this_value, str):
+                            this_warning_filter_dict[special_key] = this_value.pattern
+
                     warnings.filterwarnings(**this_warning_filter_dict, append=True)
 
             return self.function(*args, **kwargs)
