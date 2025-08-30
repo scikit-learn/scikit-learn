@@ -758,18 +758,24 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Minimizes the objective function::
 
-            1 / (2 * n_samples) * ||y - Xw||^2_2
-            + alpha * l1_ratio * ||w||_1
-            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+    .. math::
+
+            \frac{1}{2 n_{\rm samples}} \|y - X w\|_2^2
+            + \alpha \cdot {\rm l1\_ratio} \cdot \|w\|_1
+            + 0.5 \cdot \alpha \cdot (1 - {\rm l1\_ratio}) \cdot \|w\|_2^2
 
     If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
+    separately, keep in mind that this is equivalent to:
 
-            a * ||w||_1 + 0.5 * b * ||w||_2^2
+    .. math::
+
+            a \|w\|_1 + 0.5 b \|w\|_2^2
 
     where::
 
-            alpha = a + b and l1_ratio = a / (a + b)
+    .. math::
+
+            \alpha = a + b, \quad {\rm l1\_ratio} = \frac{a}{a + b}
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
