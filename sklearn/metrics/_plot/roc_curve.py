@@ -92,7 +92,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             are plotted.
 
     chance_level_ : matplotlib Artist or None
-        The chance level line. It is `None` if the chance level is not plotted.
+        The prevalence baseline line.
+        It is `None` if the prevalence baseline is not plotted.
 
         .. versionadded:: 1.3
 
@@ -206,13 +207,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             .. versionadded:: 1.7
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the prevalence baseline.
 
             .. versionadded:: 1.3
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
             .. versionadded:: 1.3
 
@@ -374,13 +375,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             .. versionadded:: 1.7
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the prevalence baseline line.
 
             .. versionadded:: 1.3
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
             .. versionadded:: 1.3
 
@@ -516,13 +517,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             .. versionadded:: 1.7
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the prevalence baseline.
 
             .. versionadded:: 1.3
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
             .. versionadded:: 1.3
 
@@ -685,11 +686,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             labeled with the mean ROC AUC score.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level.
+            Whether to plot the prevalence baseline line.
 
         chance_level_kwargs : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.

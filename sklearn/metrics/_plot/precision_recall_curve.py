@@ -48,8 +48,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     prevalence_pos_label : float, default=None
         The prevalence of the positive label. It is used for plotting the
-        chance level line. If None, the chance level line will not be plotted
-        even if `plot_chance_level` is set to True when plotting.
+        prevalence baseline line. If None, the prevalence baselin line will not be
+        plotted even if `plot_chance_level` is set to True when plotting.
+
 
         .. versionadded:: 1.3
 
@@ -59,7 +60,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Precision recall curve.
 
     chance_level_ : matplotlib Artist or None
-        The chance level line. It is `None` if the chance level is not plotted.
+        The prevalence baseline line. It is `None` if the prevalence baseline
+        is not plotted.
 
         .. versionadded:: 1.3
 
@@ -154,15 +156,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             `estimator_name` if not `None`, otherwise no labeling is shown.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level. The chance level is the prevalence
-            of the positive label computed from the data passed during
+            Whether to plot the prevalence baseline. The prevalence baseline is the
+            prevalence of the positive label computed from the data passed during
             :meth:`from_estimator` or :meth:`from_predictions` call.
+
 
             .. versionadded:: 1.3
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
             .. versionadded:: 1.3
 
@@ -326,15 +329,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level. The chance level is the prevalence
-            of the positive label computed from the data passed during
+            Whether to plot the prevalence baseline. The prevalence baseline is the
+            prevalence of the positive label computed from the data passed during
             :meth:`from_estimator` or :meth:`from_predictions` call.
+
 
             .. versionadded:: 1.3
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
             .. versionadded:: 1.3
 
@@ -466,15 +470,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level. The chance level is the prevalence
-            of the positive label computed from the data passed during
+            Whether to plot the prevalence baseline. The prevalence baseline is the
+            prevalence of the positive label computed from the data passed during
             :meth:`from_estimator` or :meth:`from_predictions` call.
+
 
             .. versionadded:: 1.3
 
         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the prevalence baseline line.
 
             .. versionadded:: 1.3
 
