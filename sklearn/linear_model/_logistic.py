@@ -832,22 +832,21 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
-    This class implements regularized logistic regression using the
-    'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. **Note
-    that regularization is applied by default**. It can handle both dense
-    and sparse input. Use C-ordered arrays or CSR matrices containing 64-bit
-    floats for optimal performance; any other input format will be converted
-    (and copied).
+    This class implements regularized logistic regression using a set of available
+    solvers. **Note that regularization is applied by default**. It can handle both
+    dense and sparse input `X`. Use C-ordered arrays or CSR matrices containing 64-bit
+    floats for optimal performance; any other input format will be converted (and
+    copied).
 
-    The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
-    with primal formulation, or no regularization. The 'liblinear' solver
-    supports both L1 and L2 regularization, with a dual formulation only for
-    the L2 penalty. The Elastic-Net regularization is only supported by the
-    'saga' solver.
+    The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
+    regularization with primal formulation, or no regularization. The 'liblinear'
+    solver supports both L1 and L2 regularization (but not both, i.e. elastic-net),
+    with a dual formulation only for the L2 penalty. The Elastic-Net (combination of L1
+    and L2) regularization is only supported by the 'saga' solver.
 
-    For :term:`multiclass` problems, all solvers but 'liblinear' optimize the
-    (penalized) multinomial loss. 'liblinear' only handle binary classification but can
-    be extended to handle multiclass by using
+    For :term:`multiclass` problems, all solvers except for 'liblinear' optimize the
+    (penalized) multinomial loss. 'liblinear' only handles binary classification but
+    can be extended to handle multiclass by using
     :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
@@ -1504,17 +1503,22 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    This class implements logistic regression using liblinear, newton-cg, sag
-    or lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
-    regularization with primal formulation. The liblinear solver supports both
-    L1 and L2 regularization, with a dual formulation only for the L2 penalty.
-    Elastic-Net penalty is only supported by the saga solver.
+    This class implements regularized logistic regression with implicit cross
+    validation for the penalty parameters `C` and `l1_ratio`, see
+    :class:`LogisticRegression`, using a set of available solvers.
+
+
+    The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
+    regularization with primal formulation. The 'liblinear'
+    solver supports both L1 and L2 regularization (but not both, i.e. elastic-net),
+    with a dual formulation only for the L2 penalty. The Elastic-Net (combination of L1
+    and L2) regularization is only supported by the 'saga' solver.
 
     For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
     is selected by the cross-validator
     :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
-    using the :term:`cv` parameter. The 'newton-cg', 'sag', 'saga' and 'lbfgs'
-    solvers can warm-start the coefficients (see :term:`Glossary<warm_start>`).
+    using the :term:`cv` parameter. All solvers except 'liblinear can warm-start the
+    coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1533,7 +1537,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     cv : int or cross-validation generator, default=None
         The default cross-validation generator used is Stratified K-Folds.
-        If an integer is provided, then it is the number of folds used.
+        If an integer is provided, then it is the number of folds, `n_cs`, used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
@@ -1724,18 +1728,16 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Array of l1_ratios used for cross-validation. If no l1_ratio is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
-    coefs_paths_ : ndarray of shape (n_folds, n_cs, n_features) or \
-                   (n_folds, n_cs, n_features + 1)
-        dict with classes as the keys, and the path of coefficients obtained
-        during cross-validating across each fold and then across each Cs
-        after doing an OvR for the corresponding class as values.
-        If the 'multi_class' option is set to 'multinomial', then
-        the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, n_cs, n_features)`` or
-        ``(n_folds, n_cs, n_features + 1)`` depending on whether the
-        intercept is fit or not. If ``penalty='elasticnet'``, the shape is
-        ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
-        ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
+    coefs_paths_ : dict of ndarray of shape (n_folds, n_cs, n_dof) or \
+                   (n_folds, n_cs, n_l1_ratios, n_dof)
+        A dict with classes as the keys, and the path of coefficients obtained
+        during cross-validating across each fold (`n_folds`) and then across each Cs
+        (`n_cs`) after doing an OvR for the corresponding class as values.
+        The size of the coefficients is `n_dof`, i.e. number of degrees of freedom.
+        Without intercept `n_dof=n_features` and with intercept `n_dof=n_features+1`.
+        If ``penalty='elasticnet'``, there is an additional dimension for the number of
+        l1_ratio values (`n_l1_ratios`), which gives a shape of
+        ``(n_folds, n_cs, n_l1_ratios_, n_dof)``.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1747,7 +1749,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         ``penalty='elasticnet'``.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
-        Array of C that maps to the best scores across every class. If refit is
+        Array of C that maps to the best scores across every class. For all solvers
+        except 'liblinear', `C_` repeats the best regularization for all classes. As
+        'liblinear' uses OvR, the values in `C_` are the individually best
+        regularization per class. If `refit` is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
         `C_` is of shape(n_classes,) when the problem is binary.
