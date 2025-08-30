@@ -2222,7 +2222,11 @@ def _check_sample_weight(
             input_name="sample_weight",
         )
         if sample_weight.ndim != 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+            raise ValueError(
+                f"Sample weights must be 1D array or scalar, got "
+                f"{sample_weight.ndim}D array. Expected either a scalar value "
+                f"or a 1D array of length {n_samples}."
+            )
 
         if sample_weight.shape != (n_samples,):
             raise ValueError(
