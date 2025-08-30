@@ -311,6 +311,7 @@ def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
     It should return the predictions untouched.
     """
+    estimator = clone(estimator)
     estimator.fit(X, y)
     predictions, pos_label = _get_response_values(
         estimator, X, response_method=response_method

@@ -1,3 +1,4 @@
+import re
 import time
 import warnings
 
@@ -120,8 +121,14 @@ def test_filter_warning_propagates(n_jobs, backend):
             )
 
 
-def get_warnings():
-    return warnings.filters
+def get_warning_filters():
+    # In free-threading Python >= 3.14, warnings filters are managed through a
+    # ContextVar and warnings.filters is not modified inside a
+    # warnings.catch_warnings context. You need to use warnings._get_filters().
+    # For more details, see
+    # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
+    filters_func = getattr(warnings, "_get_filters", None)
+    return filters_func() if filters_func is not None else warnings.filters
 
 
 def test_check_warnings_threading():
@@ -129,14 +136,34 @@ def test_check_warnings_threading():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
 
-        filters = warnings.filters
-        assert ("error", None, ConvergenceWarning, None, 0) in filters
+        main_warning_filters = get_warning_filters()
 
-        all_warnings = Parallel(n_jobs=2, backend="threading")(
-            delayed(get_warnings)() for _ in range(2)
+        assert ("error", None, ConvergenceWarning, None, 0) in main_warning_filters
+
+        all_worker_warning_filters = Parallel(n_jobs=2, backend="threading")(
+            delayed(get_warning_filters)() for _ in range(2)
         )
 
-        assert all(w == filters for w in all_warnings)
+        def normalize_main_module(filters):
+            # In Python 3.14 free-threaded, there is a small discrepancy main
+            # warning filters have an entry with module = "__main__" whereas it
+            # is a regex in the workers
+            return [
+                (
+                    action,
+                    message,
+                    type_,
+                    module
+                    if "__main__" not in str(module)
+                    or not isinstance(module, re.Pattern)
+                    else module.pattern,
+                    lineno,
+                )
+                for action, message, type_, module, lineno in main_warning_filters
+            ]
+
+        for worker_warning_filter in all_worker_warning_filters:
+            assert normalize_main_module(worker_warning_filter) == main_warning_filters
 
 
 @pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")

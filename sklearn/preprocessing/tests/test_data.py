@@ -2550,7 +2550,7 @@ def test_power_transformer_copy_True(method, standardize):
 def test_power_transformer_copy_False(method, standardize):
     # check that when copy=False fit doesn't change X inplace but transform,
     # fit_transform and inverse_transform do.
-    X = X_1col
+    X = X_1col.copy()
     if method == "box-cox":
         X = np.abs(X)
 
