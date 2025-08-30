@@ -165,11 +165,14 @@ class _FuncWrapper:
                     for k, v in zip(warning_filter_keys, filter_args)
                     if v is not None
                 }
-                if "message" in this_warning_filter_dict:
-                    # message is a regex and filterwarnings wants a str
-                    this_warning_filter_dict["message"] = this_warning_filter_dict[
-                        "message"
-                    ].pattern
+
+                # 'message' and 'module' are most of the time regex.Pattern but
+                # can be str as well and filterwarnings wants a str
+                for special_key in ["message", "module"]:
+                    this_value = this_warning_filter_dict.get(special_key)
+                    if this_value is not None and not isinstance(this_value, str):
+                        this_warning_filter_dict[special_key] = this_value.pattern
+
                 warnings.filterwarnings(**this_warning_filter_dict, append=True)
 
             return self.function(*args, **kwargs)
