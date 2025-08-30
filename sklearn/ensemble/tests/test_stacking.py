@@ -847,7 +847,7 @@ def test_get_feature_names_out(
     stacker, feature_names, X, y, expected_names, passthrough
 ):
     """Check get_feature_names_out works for stacking."""
-
+    stacker = clone(stacker)
     stacker.set_params(passthrough=passthrough)
     stacker.fit(scale(X), y)
 
