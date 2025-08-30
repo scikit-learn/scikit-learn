@@ -871,9 +871,25 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
         .. deprecated:: 1.8
-           ``penalty`` was deprecated in version 1.8 and will be removed in 1.10.
-           Use ``l1_ratio`` instead. `l1_ratio=0` for `penalty='l2'` and
+           `penalty` was deprecated in version 1.8 and will be removed in 1.10.
+           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'` and
            `l1_ratio=1` for `penalty='l1'`.
+
+    alpha : float, default=1.0
+        Constant that multiplies the penalty term (both L1 and L2) and determines the
+        regularization strength. `alpha = 0` is equivalent to unpenalized logistic
+        regression. In this case, the design matrix `X` must have full column rank (no
+        collinearities). Values of `alpha` must be in the range `[0.0, inf)`.
+
+    l1_ratio : float, default=0.0
+        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. For
+        ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
+        is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
+        combination of L1 and L2.
+
+        .. versionadded:: 1.8
+           Default value changed from None to 0.0 and now only non-negative numbers are
+           allowed, e.g. None is forbidden.
 
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also
@@ -890,19 +906,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         regularization.
 
         .. deprecated:: 1.8
-           ``C`` was deprecated in version 1.8 and will be removed in 1.10.
-           Use ``alpha=1/(2 * C * n_samples)`` or
-           ``alpha=1/(2 * C * np.sum(sample_weight))`` instead.
-
-    l1_ratio : float, default=0.0
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. For
-        ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
-        is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
-        combination of L1 and L2.
-
-        .. versionadded:: 1.8
-           Default value changed from None to 0.0 and now only non-negative numbers are
-           allowed, e.g. None is forbidden.
+           `C` was deprecated in version 1.8 and will be removed in 1.10.
+           Use `alpha=1/(2 * C * n_samples)` or
+           `alpha=1/(2 * C * np.sum(sample_weight))` instead.
+           The new default will be `alpha=1`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1147,12 +1154,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Hidden(StrOptions({"deprecated"})),
         ],
         "alpha": [Interval(Real, 0.0, None, closed="left")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [
             Interval(Real, 0, None, closed="right"),
-            Hidden(StrOptions({"deprecated"})),
+            Hidden(StrOptions({"deprecated", "warn"})),
         ],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
@@ -1181,7 +1188,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         l1_ratio=0.0,
         dual=False,
         tol=1e-4,
-        C="deprecated",
+        C="warn",
         fit_intercept=True,
         intercept_scaling=1,
         class_weight=None,
@@ -1241,7 +1248,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         The SAGA solver supports both float64 and float32 bit arrays.
         """
         if self.penalty == "deprecated":
-            if self.l1_ratio == 0:
+            if self.l1_ratio == 0 or self.l1_ratio is None:
                 penalty = "l2"
             elif self.l1_ratio == 1:
                 penalty = "l1"
@@ -1279,7 +1286,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        if self.C == "deprecated":
+        depr_msg = (
+            "'C' was deprecated in version 1.8 and will be removed in 1.10. "
+            "Use alpha=1/(C * n_samples) instead. "
+            "The new default will be alpha=1. "
+            "Set C='deprecated' to avoid this warning."
+        )
+        if self.C == "warn":
+            warnings.warn(depr_msg, FutureWarning)
+            anti_penalty_C = 1.0
+        elif self.C == "deprecated":
             # FIXME: This should take class_weight into account.
             if sample_weight is None:
                 anti_penalty_C = 1 / (2 * self.alpha * X.shape[0])
@@ -1287,14 +1303,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 anti_penalty_C = 1 / (2 * self.alpha * np.sum(sample_weight))
         else:
             anti_penalty_C = self.C
-            warnings.warn(
-                (
-                    "'C' was deprecated in version 1.8 and will be removed in 1.10. "
-                    "Use alpha=1/(C * n_samples) instead. "
-                    "Leave it to its default value to avoid this warning."
-                ),
-                FutureWarning,
-            )
+            warnings.warn(depr_msg, FutureWarning)
 
         if penalty != "elasticnet" and (
             self.l1_ratio is not None and 0 < self.l1_ratio < 1
@@ -1858,7 +1867,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
-    for param in ["C", "warm_start", "l1_ratio"]:
+    for param in ["C", "alpha", "warm_start", "l1_ratio"]:
         _parameter_constraints.pop(param)
 
     _parameter_constraints.update(
