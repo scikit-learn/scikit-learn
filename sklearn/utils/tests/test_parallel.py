@@ -1,3 +1,4 @@
+import re
 import time
 import warnings
 
@@ -135,15 +136,34 @@ def test_check_warnings_threading():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
 
-        filters = get_warning_filters()
+        main_warning_filters = get_warning_filters()
 
-        assert ("error", None, ConvergenceWarning, None, 0) in filters
+        assert ("error", None, ConvergenceWarning, None, 0) in main_warning_filters
 
-        all_warnings = Parallel(n_jobs=2, backend="threading")(
+        all_worker_warning_filters = Parallel(n_jobs=2, backend="threading")(
             delayed(get_warning_filters)() for _ in range(2)
         )
 
-        assert all(w == filters for w in all_warnings)
+        def normalize_main_module(filters):
+            # In Python 3.14 free-threaded, there is a small discrepancy main
+            # warning filters have an entry with module = "__main__" whereas it
+            # is a regex in the workers
+            return [
+                (
+                    action,
+                    message,
+                    type_,
+                    module
+                    if "__main__" not in str(module)
+                    or not isinstance(module, re.Pattern)
+                    else module.pattern,
+                    lineno,
+                )
+                for action, message, type_, module, lineno in main_warning_filters
+            ]
+
+        for worker_warning_filter in all_worker_warning_filters:
+            assert normalize_main_module(worker_warning_filter) == main_warning_filters
 
 
 @pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")

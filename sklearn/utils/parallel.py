@@ -170,7 +170,7 @@ class _FuncWrapper:
                     "message" not in this_warning_filter_dict
                     and "module" not in this_warning_filter_dict
                 ):
-                    warnings.simplefilter(**this_warning_filter_dict)
+                    warnings.simplefilter(**this_warning_filter_dict, append=True)
                 else:
                     # 'message' and 'module' are most of the time regex.Pattern but
                     # can be str as well and filterwarnings wants a str
