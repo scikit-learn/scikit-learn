@@ -1507,7 +1507,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     validation for the penalty parameters `C` and `l1_ratio`, see
     :class:`LogisticRegression`, using a set of available solvers.
 
-
     The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
     regularization with primal formulation. The 'liblinear'
     solver supports both L1 and L2 regularization (but not both, i.e. elastic-net),
@@ -1729,7 +1728,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
     coefs_paths_ : dict of ndarray of shape (n_folds, n_cs, n_dof) or \
-                   (n_folds, n_cs, n_l1_ratios, n_dof)
+            (n_folds, n_cs, n_l1_ratios, n_dof)
         A dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold (`n_folds`) and then across each Cs
         (`n_cs`) after doing an OvR for the corresponding class as values.
