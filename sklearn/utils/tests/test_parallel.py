@@ -126,8 +126,8 @@ def get_warning_filters():
     # warnings.catch_warnings context. You need to use warnings._get_filters().
     # For more details, see
     # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
-    get_filters = getattr(warnings, "_get_filters")
-    return get_filters() if get_filters is not None else warnings.filters
+    filters_func = getattr(warnings, "_get_filters", None)
+    return filters_func() if filters_func is not None else warnings.filters
 
 
 def test_check_warnings_threading():
