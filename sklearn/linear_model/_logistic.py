@@ -1315,7 +1315,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             if sample_weight is None:
                 anti_penalty_C = 1 / (2 * self.alpha * X.shape[0])
             else:
-                anti_penalty_C = 1 / (2 * self.alpha * np.sum(sample_weight))
+                sw = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
+                anti_penalty_C = 1 / (2 * self.alpha * np.sum(sw))
         else:
             anti_penalty_C = self.C
             warnings.warn(depr_msg, FutureWarning)
@@ -1620,7 +1621,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            `alpha=1/(2 * C * np.sum(sample_weight))`.
            The new default will be `alphas=100`.
 
-    alphas : float, default=100
+    alphas : int or array-like of shape (n_alphas,), default=100
         Each of the values in `alphas` describe the constant that multiplies the penalty
         term (both L1 and L2) and determines the regularization strength. In this case,
         values must be in the range `[0.0, inf)`.
@@ -1854,13 +1855,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         The last dimension of the dict values has shape is either `n_features)` or
         `n_features + 1` depending on whether the intercept is fit or not.
 
-    scores_ : dict of ndarray of shape `(n_folds, n_cs, n_l1_ratios)`
+    scores_ : dict of ndarray of shape `(n_folds, n_alphas, n_l1_ratios)`
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
-        has shape ``(n_folds, n_cs, n_l1_ratios)`.
+        has shape ``(n_folds, n_alphas, n_l1_ratios)`.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1884,8 +1885,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         average of the l1_ratio's that correspond to the best scores for each
         fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
 
-    n_iter_ : ndarray of shape (n_classes, n_folds, n_cs, n_l1_ratios) or \
-            (1, n_folds, n_cs, n_l1_ratios)
+    n_iter_ : ndarray of shape (n_classes, n_folds, n_alphas, n_l1_ratios) or \
+            (1, n_folds, n_alphas, n_l1_ratios)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
 
@@ -1948,7 +1949,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         *,
         Cs="warn",
         alphas=100,
-        l1_ratios=[0.0],
+        l1_ratios=(0.0,),
         fit_intercept=True,
         cv=None,
         dual=False,
@@ -2078,6 +2079,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             "For integers, just use alphas=Cs. The new default will be alphas=100. "
             "Set Cs='deprecated' to avoid this warning."
         )
+        if sample_weight is None:
+            sw_sum = np.sum(
+                _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
+            )
+        else:
+            sw_sum = X.shape[0]
+
         if isinstance(self.Cs, str) and self.Cs == "warn":
             warnings.warn(depr_msg, FutureWarning)
             anti_penalty_Cs = 10
@@ -2085,12 +2093,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             # FIXME: This should take class_weight into account.
             if isinstance(self.alphas, numbers.Integral):
                 anti_penalty_Cs = self.alphas
-            elif sample_weight is None:
-                anti_penalty_Cs = 1 / (2 * np.asarray(self.alphas) * X.shape[0])
             else:
-                anti_penalty_Cs = 1 / (
-                    2 * np.asarray(self.alpha) * np.sum(sample_weight)
-                )
+                anti_penalty_Cs = 1 / (2 * np.asarray(self.alphas) * sw_sum)
         else:
             anti_penalty_Cs = self.Cs
             warnings.warn(depr_msg, FutureWarning)
@@ -2298,7 +2302,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
             if self.refit:
                 # best_index is between 0 and (n_Cs . n_l1_ratios - 1)
-                # for example, with n_cs=2 and n_l1_ratios=3
+                # for example, with n_alphas=2 and n_l1_ratios=3
                 # the layout of scores is
                 # [c1, c2, c1, c2, c1, c2]
                 #   l1_1 ,  l1_2 ,  l1_3
@@ -2385,7 +2389,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # if elasticnet was used, add the l1_ratios dimension to some
         # attributes
         if self.l1_ratios is not None:
-            # with n_cs=2 and n_l1_ratios=3
+            # with n_alphas=2 and n_l1_ratios=3
             # the layout of scores is
             # [c1, c2, c1, c2, c1, c2]
             #   l1_1 ,  l1_2 ,  l1_3
@@ -2413,12 +2417,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
 
-        if sample_weight is None:
-            self.alphas_ = 0.5 / (self.Cs_ * X.shape[0])
-            self.alpha_ = 0.5 / (self.C_ * X.shape[0])
-        else:
-            self.alphas_ = 0.5 / (self.Cs_ * np.sum(sample_weight))
-            self.alpha_ = 0.5 / (self.C_ * np.sum(sample_weight))
+        self.alphas_ = 0.5 / (self.Cs_ * sw_sum)
+        self.alpha_ = 0.5 / (self.C_[0] * sw_sum)  # same value, no class difference
 
         return self
 
