@@ -1,4 +1,3 @@
-import sys
 import time
 import warnings
 
@@ -121,28 +120,27 @@ def test_filter_warning_propagates(n_jobs, backend):
             )
 
 
-def get_warnings():
-    return warnings.filters
+def get_warning_filters():
+    # In free-threading Python >= 3.14, warnings filters are managed through a
+    # ContextVar and warnings.filters is not modified inside a
+    # warnings.catch_warnings context. You need to use warnings._get_filters().
+    # For more details, see
+    # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
+    get_filters = getattr(warnings, "_get_filters")
+    return get_filters() if get_filters is not None else warnings.filters
 
 
-# TODO Remove skipif maybe this is a Pytest bug actually?
-# In free-threading Python >= 3.14, warnings filters are managed through a
-# ContextVar and warnings.filters is not modified. For more details, see
-# https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
-@pytest.mark.skipif(
-    getattr(sys.flags, "context_aware_warnings"),
-    reason="context_aware_warnings is set, warnings.filters is not modified",
-)
 def test_check_warnings_threading():
     """Check that warnings filters are set correctly in the threading backend."""
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
 
-        filters = warnings.filters
+        filters = get_warning_filters()
+
         assert ("error", None, ConvergenceWarning, None, 0) in filters
 
         all_warnings = Parallel(n_jobs=2, backend="threading")(
-            delayed(get_warnings)() for _ in range(2)
+            delayed(get_warning_filters)() for _ in range(2)
         )
 
         assert all(w == filters for w in all_warnings)
