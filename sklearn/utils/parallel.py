@@ -173,7 +173,19 @@ class _FuncWrapper:
                     if this_value is not None and not isinstance(this_value, str):
                         this_warning_filter_dict[special_key] = this_value.pattern
 
-                warnings.filterwarnings(**this_warning_filter_dict, append=True)
+                category = this_warning_filter_dict.get("category", None)
+                # For some reason sometimes category is a tuple (maybe from
+                # warnings.simplefilter or pytest.warns) but filterwarnings
+                # does not support it
+                if isinstance(category, tuple):
+                    for this_category in category:
+                        this_warning_filter_dict_copy = this_warning_filter_dict.copy()
+                        this_warning_filter_dict_copy["category"] = this_category
+                        warnings.filterwarnings(
+                            **this_warning_filter_dict_copy, append=True
+                        )
+                else:
+                    warnings.filterwarnings(**this_warning_filter_dict, append=True)
 
             return self.function(*args, **kwargs)
 
