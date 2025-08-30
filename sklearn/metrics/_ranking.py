@@ -1687,6 +1687,23 @@ def dcg_score(
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
+    Notes
++    -----
++    The Discounted Cumulative Gain at cutoff :math:`k` is defined as
++
++    .. math::
++
++       \\mathrm{DCG}@k \\,=\\, \\sum_{i=1}^{k} \\frac{\\mathrm{rel}_i}{\\log_b(i+1)}
++
++    where :math:`\\mathrm{rel}_i` is the true relevance of the item ranked at
++    position :math:`i` by ``y_score`` (higher scores correspond to higher
++    rank). The base :math:`b` of the logarithm is controlled by the
++    ``log_base`` parameter (default :math:`b=2`).
++
++    This implementation uses **linear gains** (:math:`\\mathrm{rel}_i`) rather
++    than the exponential variant (:math:`2^{\\mathrm{rel}_i}-1`) that also
++    appears in the literature.
+
     Returns
     -------
     discounted_cumulative_gain : float
