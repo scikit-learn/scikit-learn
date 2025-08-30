@@ -839,6 +839,21 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     floats for optimal performance; any other input format will be converted
     (and copied).
 
+    It minimizes the objective function::
+
+            1 / (2 * n_samples) * sum_i logloss(y_i, x_i w)
+            + alpha * l1_ratio * ||w||_1
+            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+            a * ||w||_1 + 0.5 * b * ||w||_2^2
+
+    where::
+
+            alpha = a + b and l1_ratio = a / (a + b)
+
     The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
     with primal formulation, or no regularization. The 'liblinear' solver
     supports both L1 and L2 regularization, with a dual formulation only for
@@ -1581,7 +1596,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.
 
-    For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
+    For the grid of `alphas` and `l1_ratios` values, the best hyperparameter
     is selected by the cross-validator
     :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
     using the :term:`cv` parameter. The 'newton-cg', 'sag', 'saga' and 'lbfgs'
@@ -1597,6 +1612,34 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         in a logarithmic scale between 1e-4 and 1e4.
         Like in support vector machines, smaller values specify stronger
         regularization.
+
+        .. deprecated:: 1.8
+           `Cs` was deprecated in version 1.8 and will be removed in 1.10.
+           Use `alphas` instead. If you pass integers, the behavior is mostly
+           unchanged. If you pass in floats, note that `alpha=1/(2 * C * n_samples)` or
+           `alpha=1/(2 * C * np.sum(sample_weight))`.
+           The new default will be `alphas=100`.
+
+    alphas : float, default=100
+        Each of the values in `alphas` describe the constant that multiplies the penalty
+        term (both L1 and L2) and determines the regularization strength. In this case,
+        values must be in the range `[0.0, inf)`.
+        If `alphas` is as an int, then a grid of `alpha` values are chosen on a
+        logarithmic scale, with between 1e-4 and 1e4.
+        Like in support vector machines, smaller values specify stronger
+        regularization.
+
+    l1_ratios : float or list of float, default=0.0
+        Float between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
+        L1 and L2 penalties). For `l1_ratio = 0` the penalty is an L2 penalty. For
+        `l1_ratio = 1` it is an L1 penalty. For `0 < l1_ratio < 1`, the penalty is a
+        combination of L1 and L2.
+        This parameter can be a list, in which case the different values are tested by
+        cross-validation and the one giving the best prediction score is used.
+
+        .. versionadded:: 1.8
+           Default value changed from None to 0.0 and now only non-negative numbers are
+           allowed, e.g. None is forbidden.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1628,6 +1671,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            Some penalties may not work with some solvers. See the parameter
            `solver` below, to know the compatibility between the penalty and
            solver.
+
+        .. deprecated:: 1.8
+           `penalty` was deprecated in version 1.8 and will be removed in 1.10.
+           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'` and
+           `l1_ratio=1` for `penalty='l1'`.
 
     scoring : str or callable, default=None
         The scoring method to use for cross-validation. Options:
@@ -1763,13 +1811,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
-    l1_ratios : list of float, default=None
-        The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
-        Only used if ``penalty='elasticnet'``. A value of 0 is equivalent to
-        using ``penalty='l2'``, while 1 is equivalent to using
-        ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
-        of L1 and L2.
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes, )
@@ -1787,35 +1828,39 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         If `fit_intercept` is set to False, the intercept is set to zero.
         `intercept_` is of shape(1,) when the problem is binary.
 
-    Cs_ : ndarray of shape (n_cs)
+    Cs_ : ndarray of shape (n_alphas)
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
+
+        .. deprecated:: 1.8
+           `Cs_` was deprecated in version 1.8 and will be removed in 1.10.
+           Use the new attribute `alphas_` instead.
+
+    alphas_ : ndarray of shape (n_alphas)
+        Array of penalty values `alpha` values used for cross-validation.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
         Array of l1_ratios used for cross-validation. If no l1_ratio is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
-    coefs_paths_ : ndarray of shape (n_folds, n_cs, n_features) or \
-                   (n_folds, n_cs, n_features + 1)
+    coefs_paths_ : ndarray of shape (n_folds, n_alphas, n_l1_ratios, n_features) or \
+                   (n_folds, n_alphas, n_l1_ratios, n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
-        during cross-validating across each fold and then across each Cs
+        during cross-validating across each fold and then across each value alpha
+        and then across each value l1_ratio
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, n_cs, n_features)`` or
-        ``(n_folds, n_cs, n_features + 1)`` depending on whether the
-        intercept is fit or not. If ``penalty='elasticnet'``, the shape is
-        ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
-        ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
+        The last dimension of the dict values has shape is either `n_features)` or
+        `n_features + 1` depending on whether the intercept is fit or not.
 
-    scores_ : dict
+    scores_ : dict of ndarray of shape `(n_folds, n_cs, n_l1_ratios)`
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
-        has shape ``(n_folds, n_cs)`` or ``(n_folds, n_cs, n_l1_ratios)`` if
-        ``penalty='elasticnet'``.
+        has shape ``(n_folds, n_cs, n_l1_ratios)`.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1823,17 +1868,26 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         C's that correspond to the best scores for each fold.
         `C_` is of shape(n_classes,) when the problem is binary.
 
+        .. deprecated:: 1.8
+           `C_` was deprecated in version 1.8 and will be removed in 1.10.
+           Use the new attribute `alpha_` instead.
+
+    alpha_ : ndarray of shape (n_classes,) or (n_classes - 1,)
+        Array of alpha that maps to the best scores across every class. If refit is
+        set to False, then for each class, the best alpha is the average of the
+        alphas that correspond to the best scores for each fold.
+        `alpha_` is of shape(n_classes,) when the problem is binary.
+
     l1_ratio_ : ndarray of shape (n_classes,) or (n_classes - 1,)
         Array of l1_ratio that maps to the best scores across every class. If
         refit is set to False, then for each class, the best l1_ratio is the
         average of the l1_ratio's that correspond to the best scores for each
         fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
 
-    n_iter_ : ndarray of shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
+    n_iter_ : ndarray of shape (n_classes, n_folds, n_cs, n_l1_ratios) or \
+            (1, n_folds, n_cs, n_l1_ratios)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
-        If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
-        n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1872,23 +1926,33 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     _parameter_constraints.update(
         {
-            "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "Cs": [
+                Interval(Integral, 1, None, closed="left"),
+                "array-like",
+                Hidden(StrOptions({"deprecated", "warn"})),
+            ],
+            "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
             "cv": ["cv_object"],
             "scoring": [StrOptions(set(get_scorer_names())), callable, None],
             "l1_ratios": ["array-like", None],
             "refit": ["boolean"],
-            "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
+            "penalty": [
+                StrOptions({"l1", "l2", "elasticnet"}),
+                Hidden(StrOptions({"deprecated"})),
+            ],
         }
     )
 
     def __init__(
         self,
         *,
-        Cs=10,
+        Cs="warn",
+        alphas=100,
+        l1_ratios=[0.0],
         fit_intercept=True,
         cv=None,
         dual=False,
-        penalty="l2",
+        penalty="deprecated",
         scoring=None,
         solver="lbfgs",
         tol=1e-4,
@@ -1900,9 +1964,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         intercept_scaling=1.0,
         multi_class="deprecated",
         random_state=None,
-        l1_ratios=None,
     ):
         self.Cs = Cs
+        self.alphas = alphas
+        self.l1_ratios = l1_ratios
         self.fit_intercept = fit_intercept
         self.cv = cv
         self.dual = dual
@@ -1918,7 +1983,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.random_state = random_state
-        self.l1_ratios = l1_ratios
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, **params):
@@ -1949,9 +2013,28 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         _raise_for_params(params, self, "fit")
 
-        solver = _check_solver(self.solver, self.penalty, self.dual)
+        if self.penalty == "deprecated":
+            if np.all(np.asarray(self.l1_ratios) == 0) or self.l1_ratios is None:
+                penalty = "l2"
+            elif np.all(np.asarray(self.l1_ratios) == 1):
+                penalty = "l1"
+            else:
+                penalty = "elasticnet"
+        else:
+            penalty = self.penalty
+            warnings.warn(
+                (
+                    "'penalty' was deprecated in version 1.8 and will be removed in "
+                    "1.10. Use l1_ratios instead, i.e. l1_ratios=0 for penalty='l2' "
+                    "and l1_ratios=1 for penalty='l1'."
+                    " Leave it to its default value to avoid this warning."
+                ),
+                FutureWarning,
+            )
 
-        if self.penalty == "elasticnet":
+        solver = _check_solver(self.solver, penalty, self.dual)
+
+        if penalty == "elasticnet":
             if (
                 self.l1_ratios is None
                 or len(self.l1_ratios) == 0
@@ -1973,7 +2056,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             if self.l1_ratios is not None:
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
-                    "is 'elasticnet'. Got (penalty={})".format(self.penalty)
+                    "is 'elasticnet'. Got (penalty={})".format(penalty)
                 )
 
             l1_ratios_ = [None]
@@ -1988,6 +2071,29 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
+
+        depr_msg = (
+            "'Cs' was deprecated in version 1.8 and will be removed in 1.10. "
+            "When Cs is a list of floats, use alphas=1/(Cs * n_samples) instead. "
+            "For integers, just use alphas=Cs. The new default will be alphas=100. "
+            "Set Cs='deprecated' to avoid this warning."
+        )
+        if isinstance(self.Cs, str) and self.Cs == "warn":
+            warnings.warn(depr_msg, FutureWarning)
+            anti_penalty_Cs = 10
+        elif isinstance(self.Cs, str) and self.Cs == "deprecated":
+            # FIXME: This should take class_weight into account.
+            if isinstance(self.alphas, numbers.Integral):
+                anti_penalty_Cs = self.alphas
+            elif sample_weight is None:
+                anti_penalty_Cs = 1 / (2 * np.asarray(self.alphas) * X.shape[0])
+            else:
+                anti_penalty_Cs = 1 / (
+                    2 * np.asarray(self.alpha) * np.sum(sample_weight)
+                )
+        else:
+            anti_penalty_Cs = self.Cs
+            warnings.warn(depr_msg, FutureWarning)
 
         class_weight = self.class_weight
 
@@ -2112,9 +2218,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 train,
                 test,
                 pos_class=label,
-                Cs=self.Cs,
+                Cs=anti_penalty_Cs,
                 fit_intercept=self.fit_intercept,
-                penalty=self.penalty,
+                penalty=penalty,
                 dual=self.dual,
                 solver=solver,
                 tol=self.tol,
@@ -2223,7 +2329,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                     coef=coef_init,
                     max_iter=self.max_iter,
                     tol=self.tol,
-                    penalty=self.penalty,
+                    penalty=penalty,
                     class_weight=class_weight,
                     multi_class=multi_class,
                     verbose=max(0, self.verbose - 1),
@@ -2256,7 +2362,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 best_indices_C = best_indices % len(self.Cs_)
                 self.C_.append(np.mean(self.Cs_[best_indices_C]))
 
-                if self.penalty == "elasticnet":
+                if penalty == "elasticnet":
                     best_indices_l1 = best_indices // len(self.Cs_)
                     self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
                 else:
@@ -2306,6 +2412,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (-1, len(folds), self.l1_ratios_.size, self.Cs_.size)
             )
             self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
+
+        if sample_weight is None:
+            self.alphas_ = 0.5 / (self.Cs_ * X.shape[0])
+            self.alpha_ = 0.5 / (self.C_ * X.shape[0])
+        else:
+            self.alphas_ = 0.5 / (self.Cs_ * np.sum(sample_weight))
+            self.alpha_ = 0.5 / (self.C_ * np.sum(sample_weight))
 
         return self
 

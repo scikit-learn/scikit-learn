@@ -476,7 +476,7 @@ def test_liblinear_dual_random_state(global_random_seed):
 
 def test_logistic_cv(global_random_seed):
     # test for LogisticRegressionCV object
-    n_samples, n_features = 50, 5
+    n_samples, n_features, n_cv = 50, 5, 3
     rng = np.random.RandomState(global_random_seed)
     X_ref = rng.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
@@ -487,7 +487,7 @@ def test_logistic_cv(global_random_seed):
         fit_intercept=False,
         random_state=global_random_seed,
         solver="liblinear",
-        cv=3,
+        cv=n_cv,
     )
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(
@@ -496,15 +496,19 @@ def test_logistic_cv(global_random_seed):
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
-    assert_array_equal(lr_cv.coef_.shape, (1, n_features))
+    assert lr_cv.coef_.shape == (1, n_features)
     assert_array_equal(lr_cv.classes_, [-1, 1])
     assert len(lr_cv.classes_) == 2
 
+    n_alphas = lr_cv.alphas_.shape[0]
+    assert n_alphas == 1
+    n_l1_ratios = lr_cv.l1_ratios_.shape[0]
+    assert n_l1_ratios == 1
     coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (1, 3, 1, n_features))
-    assert_array_equal(lr_cv.Cs_.shape, (1,))
+    assert coefs_paths.shape == (1, n_cv, n_alphas, n_l1_ratios, n_features)
+    assert lr_cv.Cs_.shape == (1,)
     scores = np.asarray(list(lr_cv.scores_.values()))
-    assert_array_equal(scores.shape, (1, 3, 1))
+    assert scores.shape == (1, n_cv, n_alphas, n_l1_ratios)
 
 
 @pytest.mark.parametrize(
@@ -653,10 +657,10 @@ def test_ovr_multinomial_iris():
     assert clf.coef_.shape == (3, n_features)
     assert_array_equal(clf.classes_, [0, 1, 2])
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+    assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
     assert clf.Cs_.shape == (10,)
     scores = np.asarray(list(clf.scores_.values()))
-    assert scores.shape == (3, n_cv, 10)
+    assert scores.shape == (3, n_cv, 10, 1)
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
@@ -681,10 +685,10 @@ def test_ovr_multinomial_iris():
         assert clf.coef_.shape == clf_multi.coef_.shape
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
         coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-        assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+        assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
         assert clf_multi.Cs_.shape == (10,)
         scores = np.asarray(list(clf_multi.scores_.values()))
-        assert scores.shape == (3, n_cv, 10)
+        assert scores.shape == (3, n_cv, 10, 1)
 
 
 def test_logistic_regression_solvers(global_random_seed):
@@ -1108,20 +1112,24 @@ def test_logistic_regression_multinomial(global_random_seed):
     X = StandardScaler(with_mean=False).fit_transform(X)
 
     # 'lbfgs' solver is used as a reference - it's the default
-    ref_i = LogisticRegression(tol=1e-10)
-    ref_w = LogisticRegression(fit_intercept=False, tol=1e-10)
+    ref_i = LogisticRegression(alpha=1, C="deprecated", tol=1e-10)
+    ref_w = LogisticRegression(alpha=1, C="deprecated", fit_intercept=False, tol=1e-10)
     ref_i.fit(X, y)
     ref_w.fit(X, y)
     assert ref_i.coef_.shape == (n_classes, n_features)
     assert ref_w.coef_.shape == (n_classes, n_features)
     for solver in ["sag", "saga", "newton-cg"]:
         clf_i = LogisticRegression(
+            alpha=1,
+            C="deprecated",
             solver=solver,
             random_state=global_random_seed,
             max_iter=2000,
             tol=1e-10,
         )
         clf_w = LogisticRegression(
+            alpha=1,
+            C="deprecated",
             solver=solver,
             random_state=global_random_seed,
             max_iter=2000,
@@ -1147,7 +1155,8 @@ def test_logistic_regression_multinomial(global_random_seed):
             random_state=global_random_seed,
             max_iter=2000,
             tol=1e-10,
-            Cs=[0.5 / n_samples],
+            alphas=[1],
+            Cs="deprecated",
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
@@ -1416,6 +1425,7 @@ def test_n_iter(solver):
 
     n_Cs = 4
     n_cv_fold = 2
+    n_l1_ratios = 1
 
     # Binary classification case
     clf = LogisticRegression(tol=1e-2, C=1.0, solver=solver, random_state=42)
@@ -1426,14 +1436,14 @@ def test_n_iter(solver):
         tol=1e-2, solver=solver, Cs=n_Cs, cv=n_cv_fold, random_state=42
     )
     clf_cv.fit(X, y_bin)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs, n_l1_ratios)
 
     # OvR case
     clf.set_params(multi_class="ovr").fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
     clf_cv.set_params(multi_class="ovr").fit(X, y)
-    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
+    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs, n_l1_ratios)
 
     # multinomial case
     if solver in ("liblinear",):
@@ -1446,7 +1456,7 @@ def test_n_iter(solver):
     assert clf.n_iter_.shape == (1,)
 
     clf_cv.set_params(multi_class="multinomial").fit(X, y)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs, n_l1_ratios)
 
 
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
@@ -1672,7 +1682,7 @@ def test_elastic_net_coeffs(global_random_seed):
     C = 2.0
     l1_ratio = 0.5
     coeffs = list()
-    for penalty, ratio in (("elasticnet", l1_ratio), ("l1", None), ("l2", None)):
+    for penalty, ratio in (("elasticnet", l1_ratio), ("l1", 0), ("l2", 0)):
         lr = LogisticRegression(
             penalty=penalty,
             C=C,
@@ -2502,7 +2512,7 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     alpha = 1e-30  # very tiny alpha to nearly disable regularization
 
     # Check that LBFGS can converge without any warning on this problem.
-    lr_lbfgs = LogisticRegression(alpha=alpha, solver="lbfgs")
+    lr_lbfgs = LogisticRegression(alpha=alpha, C="deprecated", solver="lbfgs")
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         lr_lbfgs.fit(X, y)
@@ -2514,7 +2524,7 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     # LBFGS. This should converge with the same number of iterations as the
     # above call of lbfgs since the Newton-Cholesky triggers the fallback
     # before completing the first iteration, for the problem setting at hand.
-    lr_nc = LogisticRegression(alpha=alpha, solver="newton-cholesky")
+    lr_nc = LogisticRegression(alpha=alpha, C="deprecated", solver="newton-cholesky")
     with ignore_warnings(category=LinAlgWarning):
         lr_nc.fit(X, y)
         n_iter_nc = lr_nc.n_iter_[0]
@@ -2524,7 +2534,7 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     # Trying to fit the same model again with a small iteration budget should
     # therefore raise a ConvergenceWarning:
     lr_nc_limited = LogisticRegression(
-        alpha=alpha, solver="newton-cholesky", max_iter=n_iter_lbfgs - 1
+        alpha=alpha, C="deprecated", solver="newton-cholesky", max_iter=n_iter_lbfgs - 1
     )
     with ignore_warnings(category=LinAlgWarning):
         with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
