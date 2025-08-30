@@ -1,0 +1,3 @@
+- Fix for SGD models(primarily affects `SGDOneClassSVM`) convergence criteria,
+  to avoid premature convergence when `tol != None`.
+  Now uses full objective with regularization, instead of just loss.
