@@ -9,12 +9,10 @@ dependencies:
   - meson-python
   - cython
   - numpy
+  - scipy
   - joblib
   - threadpoolctl
   - pytest
   - pytest-run-parallel
   - ccache
   - pip
-  - pip
-  - pip:
-    - scipy

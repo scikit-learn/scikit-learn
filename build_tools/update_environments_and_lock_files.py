@@ -268,15 +268,13 @@ build_metadata_list = [
             "meson-python",
             "cython",
             "numpy",
+            "scipy",
             "joblib",
             "threadpoolctl",
             "pytest",
             "pytest-run-parallel",
             "ccache",
             "pip",
-        ],
-        "pip_dependencies": [
-            "scipy",
         ],
     },
     {
