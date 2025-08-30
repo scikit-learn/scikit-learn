@@ -61,7 +61,7 @@ fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     if [[ "$NUM_LOGICAL_CORES" != 1 ]]; then
-        TEST_CMD="$TEST_CMD -n$NUM_CORES
+        TEST_CMD="$TEST_CMD -n$NUM_CORES"
     fi
 fi
 
