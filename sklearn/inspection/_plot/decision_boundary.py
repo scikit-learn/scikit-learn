@@ -308,6 +308,9 @@ class DecisionBoundaryDisplay:
         xlabel=None,
         ylabel=None,
         ax=None,
+        cmap="viridis",
+        alpha=0.6,
+        include_legend=True,
         **kwargs,
     ):
         """Plot decision boundary given an estimator.
@@ -515,6 +518,7 @@ class DecisionBoundaryDisplay:
                 pos_label=class_of_interest,
                 return_response_method_used=True,
             )
+
         except ValueError as exc:
             if "is not a valid label" in str(exc):
                 # re-raise a more informative error message since `pos_label` is unknown
@@ -526,26 +530,21 @@ class DecisionBoundaryDisplay:
                 ) from exc
             raise
 
+        # Multiclass support: if response is 2D and no class_of_interest, use argmax
+        if response.ndim > 1 and class_of_interest is None:
+            response = np.argmax(response, axis=1)
+
         # convert classes predictions into integers
         if response_method_used == "predict" and hasattr(estimator, "classes_"):
             encoder = LabelEncoder()
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
 
+        # Reshape for plotting
         if response.ndim == 1:
             response = response.reshape(*xx0.shape)
         else:
-            if is_regressor(estimator):
-                raise ValueError("Multi-output regressors are not supported")
-
-            if class_of_interest is not None:
-                # For the multiclass case, `_get_response_values` returns the response
-                # as-is. Thus, we have a column per class and we need to select the
-                # column corresponding to the positive class.
-                col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
-                response = response[:, col_idx].reshape(*xx0.shape)
-            else:
-                response = response.reshape(*xx0.shape, response.shape[-1])
+            response = response.reshape(*xx0.shape, response.shape[-1])
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
@@ -553,6 +552,12 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
+        if isinstance(multiclass_colors, str):
+            if multiclass_colors not in mpl.colormaps:
+                raise ValueError(
+                    "When 'multiclass_colors' is a string, it must be a valid "
+                    f"Matplotlib colormap. Got: {multiclass_colors}"
+                )
         display = cls(
             xx0=xx0,
             xx1=xx1,
