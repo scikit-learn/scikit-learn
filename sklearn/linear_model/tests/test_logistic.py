@@ -484,6 +484,7 @@ def test_logistic_cv(global_random_seed):
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
         Cs=[1.0],
+        l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
         fit_intercept=False,
         random_state=global_random_seed,
         solver="liblinear",
@@ -657,10 +658,10 @@ def test_ovr_multinomial_iris():
     assert clf.coef_.shape == (3, n_features)
     assert_array_equal(clf.classes_, [0, 1, 2])
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
+    assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
     assert clf.Cs_.shape == (10,)
     scores = np.asarray(list(clf.scores_.values()))
-    assert scores.shape == (3, n_cv, 10, 1)
+    assert scores.shape == (3, n_cv, 10)
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
@@ -685,10 +686,10 @@ def test_ovr_multinomial_iris():
         assert clf.coef_.shape == clf_multi.coef_.shape
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
         coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-        assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
+        assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
         assert clf_multi.Cs_.shape == (10,)
         scores = np.asarray(list(clf_multi.scores_.values()))
-        assert scores.shape == (3, n_cv, 10, 1)
+        assert scores.shape == (3, n_cv, 10)
 
 
 def test_logistic_regression_solvers(global_random_seed):
@@ -1432,8 +1433,14 @@ def test_n_iter(solver):
     clf.fit(X, y_bin)
     assert clf.n_iter_.shape == (1,)
 
+    # TODO(1.10): remove l1_ratios because it is default now.
     clf_cv = LogisticRegressionCV(
-        tol=1e-2, solver=solver, Cs=n_Cs, cv=n_cv_fold, random_state=42
+        tol=1e-2,
+        solver=solver,
+        Cs=n_Cs,
+        l1_ratios=(0.0,),
+        cv=n_cv_fold,
+        random_state=42,
     )
     clf_cv.fit(X, y_bin)
     assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs, n_l1_ratios)
