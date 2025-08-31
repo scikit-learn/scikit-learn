@@ -2381,42 +2381,34 @@ Normalized Discounted Cumulative Gain
 
 Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
 (NDCG) are ranking metrics implemented in :func:`~sklearn.metrics.dcg_score`
-and :func:`~sklearn.metrics.ndcg_score` ; they compare a predicted order to
+and :func:`~sklearn.metrics.ndcg_score`; they compare a predicted order to
 ground-truth scores, such as the relevance of answers to a query.
 
-From the Wikipedia page for Discounted Cumulative Gain:
+DCG orders the true targets (e.g., relevance of query answers) according to the
+predicted ranking, applies a logarithmic discount, and sums the result. The sum
+can be truncated after the first :math:`K` results (DCG@K).
 
-"Discounted cumulative gain (DCG) is a measure of ranking quality. In
-information retrieval, it is often used to measure effectiveness of web search
-engine algorithms or related applications. Using a graded relevance scale of
-documents in a search-engine result set, DCG measures the usefulness, or gain,
-of a document based on its position in the result list. The gain is accumulated
-from the top of the result list to the bottom, with the gain of each result
-discounted at lower ranks."
-
-DCG orders the true targets (e.g. relevance of query answers) in the predicted
-order, then multiplies them by a logarithmic decay and sums the result. The sum
-can be truncated after the first :math:`K` results, in which case we call it
-DCG@K.
-NDCG, or NDCG@K is DCG divided by the DCG obtained by a perfect prediction, so
-that it is always between 0 and 1. Usually, NDCG is preferred to DCG.
-
-Compared with the ranking loss, NDCG can take into account relevance scores,
-rather than a ground-truth ranking. So if the ground-truth consists only of an
-ordering, the ranking loss should be preferred; if the ground-truth consists of
-actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
-relevant), NDCG can be used.
-
-For one sample, given the vector of continuous ground-truth values for each
-target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
-DCG score is
+The DCG used in scikit-learn is defined as:
 
 .. math::
-   \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
+   \text{DCG}_k = \sum_{i=1}^{k} \frac{rel_i}{\log_2(i + 1)}
 
-and the NDCG score is the DCG score divided by the DCG score obtained for
-:math:`y`.
+where :math:`rel_i` is the true score of the item ranked at position :math:`i`
+according to the predicted scores.
+
+NDCG@K is the DCG@K divided by the DCG@K of a perfect ranking (items sorted
+by true scores in descending order), so that it is always between 0 and 1:
+
+.. math::
+   \text{NDCG}_k = \frac{\text{DCG}_k}{\text{IDCG}_k}
+
+Notes
+-----
+- scikit-learn uses the **linear gain formula** (rel_i / log2(i + 1)), not the
+  exponential gain formula (2^rel_i - 1 / log2(i + 1)) sometimes seen in
+  literature.
+- DCG and NDCG are useful when ground-truth labels are graded relevance scores
+  rather than just a ranking.
 
 .. dropdown:: References
 
