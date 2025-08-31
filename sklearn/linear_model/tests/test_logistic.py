@@ -2564,3 +2564,42 @@ def test_liblinear_multiclass_warning(Estimator):
     )
     with pytest.warns(FutureWarning, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
+
+
+# TODO(1.10): remove after deprecation cycle.
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+def test_penalty_deprecated(est):
+    """Check that penalty in LogisticRegression and *CV is deprecated."""
+    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
+    lr = est(penalty="l2")
+    msg = "'penalty' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+
+# TODO(1.10): remove after deprecation cycle.
+def test_C_deprecated():
+    """Check that C in LogisticRegression is deprecated."""
+    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
+    lr = LogisticRegression()
+    msg = "'C' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+    lr = LogisticRegression(C=1)
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+
+# TODO(1.10): remove after deprecation cycle.
+def test_Cs_deprecated():
+    """Check that Cs in LogisticRegressionCV is deprecated."""
+    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
+    lr = LogisticRegressionCV()
+    msg = "'Cs' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+    lr = LogisticRegressionCV(Cs=(1.0,))
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
