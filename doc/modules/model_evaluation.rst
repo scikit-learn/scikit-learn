@@ -2410,6 +2410,7 @@ Notes
 - DCG and NDCG are useful when ground-truth labels are graded relevance scores
   rather than just a ranking.
 
+
 .. dropdown:: References
 
   * `Wikipedia entry for Discounted Cumulative Gain
