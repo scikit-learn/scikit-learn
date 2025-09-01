@@ -445,7 +445,7 @@ def _maybe_mark(
         installed. This is used in combination with `parametrize_with_checks` only.
     xfail_strict : bool, default=None
         Whether to run checks in xfail strict mode. This option is ignored unless
-        mark="xfail". If True, checks that are expected to fail but actually
+        `mark="xfail"`. If True, checks that are expected to fail but actually
         pass will lead to a test failure. If False, unexpectedly passing tests
         will be marked as xpass. If None, the default pytest behavior is used.
 
@@ -546,7 +546,7 @@ def estimator_checks_generator(
         :class:`~sklearn.exceptions.SkipTest` exception.
     xfail_strict : bool, default=None
         Whether to run checks in xfail strict mode. This option is ignored unless
-        mark="xfail". If True, checks that are expected to fail but actually
+        `mark="xfail"`. If True, checks that are expected to fail but actually
         pass will lead to a test failure. If False, unexpectedly passing tests
         will be marked as xpass. If None, the default pytest behavior is used.
 
