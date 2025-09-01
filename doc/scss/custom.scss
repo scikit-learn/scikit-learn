@@ -262,3 +262,12 @@ div.sk-text-image-grid-large {
     grid-template-columns: 1fr;
   }
 }
+
+.navbar-brand {
+  .logo__image.only-light {
+    height: 130%;
+  }
+  .logo__image.only-dark {
+    height: 130%;
+  }
+}

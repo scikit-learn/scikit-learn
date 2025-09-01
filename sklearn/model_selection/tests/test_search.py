@@ -1446,6 +1446,7 @@ def test_search_cv_sample_weight_equivalence(estimator):
     ],
 )
 def test_search_cv_score_samples_method(search_cv):
+    search_cv = clone(search_cv)  # Avoid side effects from previous tests.
     # Set parameters
     rng = np.random.RandomState(42)
     n_samples = 300
@@ -2622,6 +2623,9 @@ def test_search_estimator_param(SearchCV, param_search):
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_search_with_2d_array():
     parameter_grid = {
         "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
