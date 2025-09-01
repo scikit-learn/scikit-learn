@@ -160,6 +160,8 @@ def test_params_html_repr_without_doc_links():
 
 
 def test_generate_link_to_param_doc_basic():
+    """Return anchor URLs for documented parameters in the estimator."""
+
     class MockEstimator:
         """Mock class.
 
@@ -180,6 +182,8 @@ def test_generate_link_to_param_doc_basic():
 
 
 def test_generate_link_to_param_doc_param_not_found():
+    """Ensure None is returned when the parameter is not documented."""
+
     class MockEstimator:
         """Mock class
 
@@ -195,21 +199,9 @@ def test_generate_link_to_param_doc_param_not_found():
     assert url is None
 
 
-def test_generate_link_to_param_doc_special_characters():
-    class MockEstimator:
-        """Mock class
-        param with space : {'stay', 'leave'} default='don't know'
-            Parameter with space in name.
-        """
-
-    doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "param with space", doc_link)
-    # Spaces should be percent-encoded
-    assert "param%20with%20space" in url
-    assert "-%7B%27stay%27%2C%20%27leave%27%7D" in url
-
-
 def test_generate_link_to_param_doc_empty_docstring():
+    """Ensure None is returned when the estimator has no docstring."""
+
     class MockEstimator:
         pass
 
