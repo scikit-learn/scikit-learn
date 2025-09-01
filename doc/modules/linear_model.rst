@@ -1140,21 +1140,21 @@ zero, is likely to be an underfit, bad model and you are advised to set
   * The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
     on the excellent C++ `LIBLINEAR library
     <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
-    scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
-    a true multinomial (multiclass) model; instead, the optimization problem is
-    decomposed in a "one-vs-rest" fashion so separate binary classifiers are
-    trained for all classes. This happens under the hood, so
-    :class:`LogisticRegression` instances using this solver behave as multiclass
-    classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
+    scikit-learn. However, the CD algorithm implemented in liblinear cannot learn a
+    true multinomial (multiclass) model. If you still want to use "liblinear" on
+    multiclass problems, you can use a "one-vs-rest" scheeme
+    `OneVsRestClassifier(LogisticRegression(solver="liblinear"))`, see
+    `:class:`~sklearn.multiclass.OneVsRestClassifier`. Note that minimizing the
+    multinomial loss is expected to give better calibrated results as compared to
+    a "one-vs-rest" scheeme.
+    For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
     calculate the lower bound for C in order to get a non "null" (all feature
     weights to zero) model.
 
-  * The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
-    regularization or no regularization, and are found to converge faster for some
-    high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
-    learns a true multinomial logistic regression model [5]_, which means that its
-    probability estimates should be better calibrated than the default "one-vs-rest"
-    setting.
+  * The "lbfgs", "newton-cg", "newton-cholesky" and "sag" solvers only support
+    :math:`\ell_2` regularization or no regularization, and are found to converge
+    faster for some high-dimensional data. Setting These solvers
+    learn a true multinomial logistic regression model [5]_.
 
   * The "sag" solver uses Stochastic Average Gradient descent [6]_. It is faster
     than other solvers for large datasets, when both the number of samples and the
