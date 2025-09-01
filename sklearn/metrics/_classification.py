@@ -572,7 +572,7 @@ def confusion_matrix(
             cm = cm / cm.sum(axis=0, keepdims=True)
         elif normalize == "all":
             cm = cm / cm.sum()
-        cm = np.nan_to_num(cm)
+        cm = xpx.nan_to_num(cm)
 
     if cm.shape == (1, 1):
         warnings.warn(

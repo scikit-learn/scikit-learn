@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
-__all__ = ["Backend"]
+import numpy as np
+import pytest
+
+__all__ = ["NUMPY_VERSION", "Backend"]
+
+NUMPY_VERSION = tuple(int(v) for v in np.__version__.split(".")[:3])  # pyright: ignore[reportUnknownArgumentType]
 
 
 class Backend(Enum):  # numpydoc ignore=PR02
@@ -30,12 +36,6 @@ class Backend(Enum):  # numpydoc ignore=PR02
     JAX = "jax.numpy"
     JAX_GPU = "jax.numpy:gpu"
 
-    def __str__(self) -> str:  # type: ignore[explicit-override]  # pyright: ignore[reportImplicitOverride]  # numpydoc ignore=RT01
-        """Pretty-print parameterized test names."""
-        return (
-            self.name.lower().replace("_gpu", ":gpu").replace("_readonly", ":readonly")
-        )
-
     @property
     def modname(self) -> str:  # numpydoc ignore=RT01
         """Module name to be imported."""
@@ -44,3 +44,29 @@ class Backend(Enum):  # numpydoc ignore=PR02
     def like(self, *others: Backend) -> bool:  # numpydoc ignore=PR01,RT01
         """Check if this backend uses the same module as others."""
         return any(self.modname == other.modname for other in others)
+
+    def pytest_param(self) -> Any:
+        """
+        Backend as a pytest parameter
+
+        Returns
+        -------
+        pytest.mark.ParameterSet
+        """
+        id_ = (
+            self.name.lower().replace("_gpu", ":gpu").replace("_readonly", ":readonly")
+        )
+
+        marks = []
+        if self.like(Backend.ARRAY_API_STRICT):
+            marks.append(
+                pytest.mark.skipif(
+                    NUMPY_VERSION < (1, 26),
+                    reason="array_api_strict is untested on NumPy <1.26",
+                )
+            )
+        if self.like(Backend.DASK, Backend.JAX):
+            # Monkey-patched by lazy_xp_function
+            marks.append(pytest.mark.thread_unsafe)
+
+        return pytest.param(self, id=id_, marks=marks)  # pyright: ignore[reportUnknownArgumentType]

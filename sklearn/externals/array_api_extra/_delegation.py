@@ -18,7 +18,7 @@ from ._lib._utils._compat import device as get_device
 from ._lib._utils._helpers import asarrays
 from ._lib._utils._typing import Array, DType
 
-__all__ = ["isclose", "one_hot", "pad"]
+__all__ = ["isclose", "nan_to_num", "one_hot", "pad"]
 
 
 def isclose(
@@ -111,6 +111,85 @@ def isclose(
         return xp.isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan)
 
     return _funcs.isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan, xp=xp)
+
+
+def nan_to_num(
+    x: Array | float | complex,
+    /,
+    *,
+    fill_value: int | float = 0.0,
+    xp: ModuleType | None = None,
+) -> Array:
+    """
+    Replace NaN with zero and infinity with large finite numbers (default behaviour).
+
+    If `x` is inexact, NaN is replaced by zero or by the user defined value in the
+    `fill_value` keyword, infinity is replaced by the largest finite floating
+    point value representable by ``x.dtype``, and -infinity is replaced by the
+    most negative finite floating point value representable by ``x.dtype``.
+
+    For complex dtypes, the above is applied to each of the real and
+    imaginary components of `x` separately.
+
+    Parameters
+    ----------
+    x : array | float | complex
+        Input data.
+    fill_value : int | float, optional
+        Value to be used to fill NaN values. If no value is passed
+        then NaN values will be replaced with 0.0.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `x`. Default: infer.
+
+    Returns
+    -------
+    array
+        `x`, with the non-finite values replaced.
+
+    See Also
+    --------
+    array_api.isnan : Shows which elements are Not a Number (NaN).
+
+    Examples
+    --------
+    >>> import array_api_extra as xpx
+    >>> import array_api_strict as xp
+    >>> xpx.nan_to_num(xp.inf)
+    1.7976931348623157e+308
+    >>> xpx.nan_to_num(-xp.inf)
+    -1.7976931348623157e+308
+    >>> xpx.nan_to_num(xp.nan)
+    0.0
+    >>> x = xp.asarray([xp.inf, -xp.inf, xp.nan, -128, 128])
+    >>> xpx.nan_to_num(x)
+    array([ 1.79769313e+308, -1.79769313e+308,  0.00000000e+000, # may vary
+           -1.28000000e+002,  1.28000000e+002])
+    >>> y = xp.asarray([complex(xp.inf, xp.nan), xp.nan, complex(xp.nan, xp.inf)])
+    array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
+         -1.28000000e+002,   1.28000000e+002])
+    >>> xpx.nan_to_num(y)
+    array([  1.79769313e+308 +0.00000000e+000j, # may vary
+             0.00000000e+000 +0.00000000e+000j,
+             0.00000000e+000 +1.79769313e+308j])
+    """
+    if isinstance(fill_value, complex):
+        msg = "Complex fill values are not supported."
+        raise TypeError(msg)
+
+    xp = array_namespace(x) if xp is None else xp
+
+    # for scalars we want to output an array
+    y = xp.asarray(x)
+
+    if (
+        is_cupy_namespace(xp)
+        or is_jax_namespace(xp)
+        or is_numpy_namespace(xp)
+        or is_torch_namespace(xp)
+    ):
+        return xp.nan_to_num(y, nan=fill_value)
+
+    return _funcs.nan_to_num(y, fill_value=fill_value, xp=xp)
 
 
 def one_hot(

@@ -1,6 +1,6 @@
 """Extra array functions built on top of the array API standard."""
 
-from ._delegation import isclose, one_hot, pad
+from ._delegation import isclose, nan_to_num, one_hot, pad
 from ._lib._at import at
 from ._lib._funcs import (
     apply_where,
@@ -17,7 +17,7 @@ from ._lib._funcs import (
 )
 from ._lib._lazy import lazy_apply
 
-__version__ = "0.8.0"
+__version__ = "0.8.2"
 
 # pylint: disable=duplicate-code
 __all__ = [
@@ -33,6 +33,7 @@ __all__ = [
     "isclose",
     "kron",
     "lazy_apply",
+    "nan_to_num",
     "nunique",
     "one_hot",
     "pad",

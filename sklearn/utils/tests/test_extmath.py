@@ -16,8 +16,12 @@ from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
     get_namespace,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -682,17 +686,56 @@ def test_cartesian_mix_types(arrays, output_dtype):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_incremental_weighted_mean_and_variance_simple(dtype):
+@pytest.mark.parametrize("as_list", (True, False))
+def test_incremental_weighted_mean_and_variance_simple(dtype, as_list):
     rng = np.random.RandomState(42)
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    X1 = X.tolist() if as_list else X
+    mean, var, _ = _incremental_mean_and_var(X1, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_incremental_weighted_mean_and_variance_array_api(
+    array_namespace, device, dtype
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    rng = np.random.RandomState(42)
+    mult = 10
+    X = rng.rand(1000, 20).astype(dtype) * mult
+    sample_weight = rng.rand(X.shape[0]).astype(dtype) * mult
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+
+    X_xp = xp.asarray(X, device=device)
+    sample_weight_xp = xp.asarray(sample_weight, device=device)
+
+    with config_context(array_api_dispatch=True):
+        mean_xp, var_xp, _ = _incremental_mean_and_var(
+            X_xp, 0, 0, 0, sample_weight=sample_weight_xp
+        )
+
+    # The attributes like mean and var are computed and set with respect to the
+    # maximum supported float dtype
+    assert array_device(mean_xp) == array_device(X_xp)
+    assert mean_xp.dtype == _max_precision_float_dtype(xp, device=device)
+    assert array_device(var_xp) == array_device(X_xp)
+    assert var_xp.dtype == _max_precision_float_dtype(xp, device=device)
+
+    mean_xp = _convert_to_numpy(mean_xp, xp=xp)
+    var_xp = _convert_to_numpy(var_xp, xp=xp)
+
+    assert_allclose(mean, mean_xp)
+    assert_allclose(var, var_xp)
 
 
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])

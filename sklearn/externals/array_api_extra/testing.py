@@ -9,7 +9,7 @@ from __future__ import annotations
 import contextlib
 import enum
 import warnings
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Generator, Iterator, Sequence
 from functools import wraps
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
@@ -36,7 +36,7 @@ else:
 P = ParamSpec("P")
 T = TypeVar("T")
 
-_ufuncs_tags: dict[object, dict[str, Any]] = {}  # type: ignore[explicit-any]
+_ufuncs_tags: dict[object, dict[str, Any]] = {}
 
 
 class Deprecated(enum.Enum):
@@ -48,7 +48,7 @@ class Deprecated(enum.Enum):
 DEPRECATED = Deprecated.DEPRECATED
 
 
-def lazy_xp_function(  # type: ignore[explicit-any]
+def lazy_xp_function(
     func: Callable[..., Any],
     *,
     allow_dask_compute: bool | int = False,
@@ -216,8 +216,11 @@ def lazy_xp_function(  # type: ignore[explicit-any]
 
 
 def patch_lazy_xp_functions(
-    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch, *, xp: ModuleType
-) -> None:
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch | None = None,
+    *,
+    xp: ModuleType,
+) -> contextlib.AbstractContextManager[None]:
     """
     Test lazy execution of functions tagged with :func:`lazy_xp_function`.
 
@@ -233,10 +236,15 @@ def patch_lazy_xp_functions(
     This function should be typically called by your library's `xp` fixture that runs
     tests on multiple backends::
 
-        @pytest.fixture(params=[numpy, array_api_strict, jax.numpy, dask.array])
-        def xp(request, monkeypatch):
-            patch_lazy_xp_functions(request, monkeypatch, xp=request.param)
-            return request.param
+        @pytest.fixture(params=[
+            numpy,
+            array_api_strict,
+            pytest.param(jax.numpy, marks=pytest.mark.thread_unsafe),
+            pytest.param(dask.array, marks=pytest.mark.thread_unsafe),
+        ])
+        def xp(request):
+            with patch_lazy_xp_functions(request, xp=request.param):
+                yield request.param
 
     but it can be otherwise be called by the test itself too.
 
@@ -245,7 +253,7 @@ def patch_lazy_xp_functions(
     request : pytest.FixtureRequest
         Pytest fixture, as acquired by the test itself or by one of its fixtures.
     monkeypatch : pytest.MonkeyPatch
-        Pytest fixture, as acquired by the test itself or by one of its fixtures.
+        Deprecated
     xp : array_namespace
         Array namespace to be tested.
 
@@ -253,16 +261,48 @@ def patch_lazy_xp_functions(
     --------
     lazy_xp_function : Tag a function to be tested on lazy backends.
     pytest.FixtureRequest : `request` test function parameter.
+
+    Notes
+    -----
+    This context manager monkey-patches modules and as such is thread unsafe
+    on Dask and JAX. If you run your test suite with
+    `pytest-run-parallel <https://github.com/Quansight-Labs/pytest-run-parallel/>`_,
+    you should mark these backends with ``@pytest.mark.thread_unsafe``, as shown in
+    the example above.
     """
     mod = cast(ModuleType, request.module)
     mods = [mod, *cast(list[ModuleType], getattr(mod, "lazy_xp_modules", []))]
 
-    def iter_tagged() -> (  # type: ignore[explicit-any]
-        Iterator[tuple[ModuleType, str, Callable[..., Any], dict[str, Any]]]
-    ):
+    to_revert: list[tuple[ModuleType, str, object]] = []
+
+    def temp_setattr(mod: ModuleType, name: str, func: object) -> None:
+        """
+        Variant of monkeypatch.setattr, which allows monkey-patching only selected
+        parameters of a test so that pytest-run-parallel can run on the remainder.
+        """
+        assert hasattr(mod, name)
+        to_revert.append((mod, name, getattr(mod, name)))
+        setattr(mod, name, func)
+
+    if monkeypatch is not None:
+        warnings.warn(
+            (
+                "The `monkeypatch` parameter is deprecated and will be removed in a "
+                "future version. "
+                "Use `patch_lazy_xp_function` as a context manager instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        # Enable using patch_lazy_xp_function not as a context manager
+        temp_setattr = monkeypatch.setattr  # type: ignore[assignment]  # pyright: ignore[reportAssignmentType]
+
+    def iter_tagged() -> Iterator[
+        tuple[ModuleType, str, Callable[..., Any], dict[str, Any]]
+    ]:
         for mod in mods:
             for name, func in mod.__dict__.items():
-                tags: dict[str, Any] | None = None  # type: ignore[explicit-any]
+                tags: dict[str, Any] | None = None
                 with contextlib.suppress(AttributeError):
                     tags = func._lazy_xp_function  # pylint: disable=protected-access
                 if tags is None:
@@ -279,13 +319,26 @@ def patch_lazy_xp_functions(
             elif n is False:
                 n = 0
             wrapped = _dask_wrap(func, n)
-            monkeypatch.setattr(mod, name, wrapped)
+            temp_setattr(mod, name, wrapped)
 
     elif is_jax_namespace(xp):
         for mod, name, func, tags in iter_tagged():
             if tags["jax_jit"]:
                 wrapped = jax_autojit(func)
-                monkeypatch.setattr(mod, name, wrapped)
+                temp_setattr(mod, name, wrapped)
+
+    # We can't just decorate patch_lazy_xp_functions with
+    # @contextlib.contextmanager because it would not work with the
+    # deprecated monkeypatch when not used as a context manager.
+    @contextlib.contextmanager
+    def revert_on_exit() -> Generator[None]:
+        try:
+            yield
+        finally:
+            for mod, name, orig_func in to_revert:
+                setattr(mod, name, orig_func)
+
+    return revert_on_exit()
 
 
 class CountingDaskScheduler(SchedulerGetCallable):
@@ -313,7 +366,9 @@ class CountingDaskScheduler(SchedulerGetCallable):
         self.msg = msg
 
     @override
-    def __call__(self, dsk: Graph, keys: Sequence[Key] | Key, **kwargs: Any) -> Any:  # type: ignore[decorated-any,explicit-any] # numpydoc ignore=GL08
+    def __call__(
+        self, dsk: Graph, keys: Sequence[Key] | Key, **kwargs: Any
+    ) -> Any:  # numpydoc ignore=GL08
         import dask
 
         self.count += 1
@@ -321,7 +376,7 @@ class CountingDaskScheduler(SchedulerGetCallable):
         # offending line in the user's code
         assert self.count <= self.max_count, self.msg
 
-        return dask.get(dsk, keys, **kwargs)  # type: ignore[attr-defined,no-untyped-call] # pyright: ignore[reportPrivateImportUsage]
+        return dask.get(dsk, keys, **kwargs)  # type: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
 
 
 def _dask_wrap(
@@ -354,7 +409,7 @@ def _dask_wrap(
         # `pytest.raises` and `pytest.warns` to work as expected. Note that this would
         # not work on scheduler='distributed', as it would not block.
         arrays, rest = pickle_flatten(out, da.Array)
-        arrays = dask.persist(arrays, scheduler="threads")[0]  # type: ignore[attr-defined,no-untyped-call,func-returns-value,index]  # pyright: ignore[reportPrivateImportUsage]
+        arrays = dask.persist(arrays, scheduler="threads")[0]  # type: ignore[attr-defined,no-untyped-call]  # pyright: ignore[reportPrivateImportUsage]
         return pickle_unflatten(arrays, rest)  # pyright: ignore[reportUnknownArgumentType]
 
     return wrapper
