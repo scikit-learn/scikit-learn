@@ -20,11 +20,13 @@ if [[ $FREE_THREADED_BUILD == "False" ]]; then
     # Dot the Python version for identifying the base Docker image
     PYTHON_DOCKER_IMAGE_PART=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
-    if [[ "$CIBW_PRERELEASE_PYTHONS" =~ [tT]rue ]]; then
-        PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_PART}-rc"
+    # TODO Remove this when Python 3.14 is released and there is a Docker image
+    if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.14" ]]; then
+        PYTHON_DOCKER_IMAGE_PART="3.14-rc"
     fi
 
-    # Temporary work-around to avoid a loky issue on Windows >= 3.13.7
+    # Temporary work-around to avoid a loky issue on Windows >= 3.13.7, see
+    # https://github.com/joblib/loky/issues/459
     if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.13" ]]; then
         PYTHON_DOCKER_IMAGE_PART="3.13.6"
     fi

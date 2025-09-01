@@ -2,11 +2,9 @@
 
 import os
 import re
-import sys
 import tempfile
 import warnings
 from functools import partial
-from io import StringIO
 from time import sleep
 
 import numpy as np
@@ -1208,7 +1206,7 @@ def test_learning_curve():
         assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
         # Cannot use assert_array_almost_equal for fit and score times because
-        # the values are hardware-dependant
+        # the values are hardware-dependent
         assert fit_times.dtype == "float64"
         assert score_times.dtype == "float64"
 
@@ -1247,7 +1245,7 @@ def test_learning_curve_unsupervised():
     assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
 
-def test_learning_curve_verbose():
+def test_learning_curve_verbose(capsys):
     X, y = make_classification(
         n_samples=30,
         n_features=1,
@@ -1258,19 +1256,8 @@ def test_learning_curve_verbose():
         random_state=0,
     )
     estimator = MockImprovingEstimator(20)
-
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        train_sizes, train_scores, test_scores = learning_curve(
-            estimator, X, y, cv=3, verbose=1
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
-    assert "[learning_curve]" in out
+    learning_curve(estimator, X, y, cv=3, verbose=1)
+    assert "[learning_curve]" in capsys.readouterr().out
 
 
 def test_learning_curve_incremental_learning_not_possible():
@@ -1469,7 +1456,9 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = SGDClassifier(max_iter=5, tol=None, shuffle=False, learning_rate="pa1")
+    estimator = SGDClassifier(
+        max_iter=5, tol=None, shuffle=False, learning_rate="pa1", eta0=1
+    )
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
