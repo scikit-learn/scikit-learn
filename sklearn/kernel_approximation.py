@@ -24,8 +24,8 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
-    get_namespace,
     _is_numpy_namespace,
+    get_namespace,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
@@ -35,7 +35,8 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-# Utility Functions 
+
+# Utility Functions
 def _return_float_dtype(X, Y):
     """
     1. If dtype of X and Y is float32, then dtype float32 is returned.
@@ -56,6 +57,7 @@ def _return_float_dtype(X, Y):
         dtype = float
     return X, Y, dtype
 
+
 def _find_floating_dtype_allow_sparse(X, Y, xp=None):
     """Find matching floating type, allowing for sparse input."""
     if any([sp.issparse(X), sp.issparse(Y)]) or _is_numpy_namespace(xp):
@@ -63,6 +65,7 @@ def _find_floating_dtype_allow_sparse(X, Y, xp=None):
     else:
         dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
     return X, Y, dtype_float
+
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
@@ -1066,7 +1069,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         inds = rnd.permutation(n_samples)
         basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64)
         if sp.issparse(X):
-            basis = X[basis_inds] 
+            basis = X[basis_inds]
         else:
             basis = xp.take(X, basis_inds, axis=0)
 
