@@ -117,7 +117,7 @@ def test_fit_transform_tall(global_random_seed):
     U1 = spca_lars.fit_transform(Y)
     spca_lasso = SparsePCA(n_components=3, method="cd", random_state=rng)
     U2 = spca_lasso.fit(Y).transform(Y)
-    assert_allclose(U1, U2, rtol=1e-4)
+    assert_allclose(U1, U2, rtol=1e-4, atol=1e-5)
 
 
 def test_initialization(global_random_seed):

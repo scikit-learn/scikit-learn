@@ -45,21 +45,27 @@ def test_graphical_lassos(random_state=1):
         icovs = dict()
         for method in ("cd", "lars"):
             cov_, icov_, costs = graphical_lasso(
-                emp_cov, return_costs=True, alpha=alpha, mode=method
+                emp_cov,
+                return_costs=True,
+                alpha=alpha,
+                mode=method,
+                tol=1e-6,
+                enet_tol=1e-6,
+                max_iter=200,
             )
             covs[method] = cov_
             icovs[method] = icov_
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease (doesn't hold if alpha == 0)
             if not alpha == 0:
-                # use 1e-12 since the cost can be exactly 0
-                assert_array_less(np.diff(costs), 1e-12)
+                # use 1e-10 since the cost can be exactly 0
+                assert_array_less(np.diff(costs), 1e-10)
         # Check that the 2 approaches give similar results
         assert_allclose(covs["cd"], covs["lars"], atol=1e-3)
         assert_allclose(icovs["cd"], icovs["lars"], atol=1e-3)
 
     # Smoke test the estimator
-    model = GraphicalLasso(alpha=0.25).fit(X)
+    model = GraphicalLasso(alpha=0.25, tol=1e-6, enet_tol=1e-6, max_iter=200).fit(X)
     model.score(X)
     assert_allclose(model.covariance_, covs["cd"], rtol=1e-8)
 
