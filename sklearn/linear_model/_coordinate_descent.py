@@ -754,7 +754,7 @@ def enet_path(
 
 
 class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Linear regression with combined L1 and L2 priors as regularizer.
+    r"""Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function:
 
