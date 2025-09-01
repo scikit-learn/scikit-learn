@@ -1830,6 +1830,39 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
     assert lrcv.n_iter_.shape == (1, n_folds, Cs.size, l1_ratios.size)
 
 
+def test_LogisticRegressionCV_on_folds():
+    """Test that LogisticRegressionCV produces the correct result on a fold.
+
+    See https://github.com/scikit-learn/scikit-learn/issues/32072.
+    """
+    X, y = iris.data, iris.target
+    lrcv = LogisticRegressionCV(solver="newton-cholesky").fit(X, y)
+
+    # Reproduce the exact same split as default LogisticRegressionCV.
+    cv = StratifiedKFold(5)
+    folds = list(cv.split(X, y))
+
+    # First fold (index 0) and 2nd value of C (index 1).
+    idx_fold, idx_C = 0, 1  # random, just not 0, 0
+    train_fold_0 = folds[idx_fold][0]  # 0 is training fold
+    lr = LogisticRegression(solver="newton-cholesky", C=lrcv.Cs_[idx_C]).fit(
+        X[train_fold_0], y[train_fold_0]
+    )
+
+    # Coefficients of class 0 without intecept
+    idx_class = 0
+    assert_allclose(
+        lrcv.coefs_paths_[idx_class][idx_fold, idx_C, :-1],
+        lr.coef_[idx_class],
+        rtol=1e-5,
+    )
+
+    # Intercept of class 0
+    assert_allclose(
+        lrcv.coefs_paths_[idx_class][idx_fold, idx_C, -1], lr.intercept_[0], rtol=1e-5
+    )
+
+
 def test_l1_ratio_non_elasticnet():
     msg = (
         r"l1_ratio parameter is only used when penalty is"
