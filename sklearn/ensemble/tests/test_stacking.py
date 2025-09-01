@@ -28,7 +28,7 @@ from sklearn.ensemble import (
     StackingClassifier,
     StackingRegressor,
 )
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -50,7 +50,6 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -62,6 +61,8 @@ X_multilabel, y_multilabel = make_multilabel_classification(
     n_classes=3, random_state=42
 )
 X_binary, y_binary = make_classification(n_classes=2, random_state=42)
+X_breast_cancer, y_breast_cancer = load_breast_cancer(return_X_y=True)
+X_breast_cancer = scale(X_breast_cancer)
 
 
 @pytest.mark.parametrize(
@@ -443,7 +444,8 @@ def test_stacking_classifier_stratify_default():
                 final_estimator=LogisticRegression(),
                 cv=KFold(shuffle=True, random_state=42),
             ),
-            *load_breast_cancer(return_X_y=True),
+            X_breast_cancer,
+            y_breast_cancer,
         ),
         (
             StackingRegressor(
@@ -472,18 +474,15 @@ def test_stacking_with_sample_weight(stacker, X, y):
         X, y, total_sample_weight, random_state=42
     )
 
-    with ignore_warnings(category=ConvergenceWarning):
-        stacker.fit(X_train, y_train)
+    stacker.fit(X_train, y_train)
     y_pred_no_weight = stacker.predict(X_test)
 
-    with ignore_warnings(category=ConvergenceWarning):
-        stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
+    stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
     y_pred_unit_weight = stacker.predict(X_test)
 
     assert_allclose(y_pred_no_weight, y_pred_unit_weight)
 
-    with ignore_warnings(category=ConvergenceWarning):
-        stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
+    stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
     y_pred_biased = stacker.predict(X_test)
 
     assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
@@ -498,7 +497,6 @@ def test_stacking_classifier_sample_weight_fit_param():
     stacker.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
 
 
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "stacker, X, y",
     [
@@ -510,7 +508,8 @@ def test_stacking_classifier_sample_weight_fit_param():
                 ],
                 final_estimator=LogisticRegression(),
             ),
-            *load_breast_cancer(return_X_y=True),
+            X_breast_cancer,
+            y_breast_cancer,
         ),
         (
             StackingRegressor(
