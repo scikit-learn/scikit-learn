@@ -754,28 +754,28 @@ def enet_path(
 
 
 class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
-    r"""Linear regression with combined L1 and L2 priors as regularizer.
+    """Linear regression with combined L1 and L2 priors as regularizer.
 
-    Minimizes the objective function::
+    Minimizes the objective function:
 
-        .. math::
+    .. math::
 
-            \frac{1}{2 n_{\rm samples}} \|y - X w\|_2^2
-            + \alpha \cdot {\rm l1\_ratio} \cdot \|w\|_1
-            + 0.5 \cdot \alpha \cdot (1 - {\rm l1\_ratio}) \cdot \|w\|_2^2
+        \frac{1}{2 n_{\rm samples}} \|y - X w\|_2^2
+        + \alpha \cdot {\rm l1\_ratio} \cdot \|w\|_1
+        + 0.5 \cdot \alpha \cdot (1 - {\rm l1\_ratio}) \cdot \|w\|_2^2
 
     If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
+    separately, keep in mind that this is equivalent to:
 
-        .. math::
+    .. math::
 
-            a \|w\|_1 + 0.5 b \|w\|_2^2
+        a \|w\|_1 + 0.5 b \|w\|_2^2
 
-    where::
+    where:
 
-        .. math::
+    .. math::
 
-            \alpha = a + b, \quad {\rm l1\_ratio} = \frac{a}{a + b}
+        \alpha = a + b, \quad {\rm l1\_ratio} = \frac{a}{a + b}
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
