@@ -25,6 +25,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace,
+    _is_numpy_namespace,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
@@ -34,6 +35,34 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
+# Utility Functiosn 
+def _return_float_dtype(X, Y):
+    """
+    1. If dtype of X and Y is float32, then dtype float32 is returned.
+    2. Else dtype float is returned.
+    """
+    if not sp.issparse(X) and not isinstance(X, np.ndarray):
+        X = np.asarray(X)
+    if Y is None:
+        Y_dtype = X.dtype
+    elif not sp.issparse(Y) and not isinstance(Y, np.ndarray):
+        Y = np.asarray(Y)
+        Y_dtype = Y.dtype
+    else:
+        Y_dtype = Y.dtype
+    if X.dtype == Y_dtype == np.float32:
+        dtype = np.float32
+    else:
+        dtype = float
+    return X, Y, dtype
+
+def _find_floating_dtype_allow_sparse(X, Y, xp=None):
+    """Find matching floating type, allowing for sparse input."""
+    if any([sp.issparse(X), sp.issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    return X, Y, dtype_float
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
@@ -1036,7 +1065,10 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
         basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64)
-        basis = xp.take(X, basis_inds, axis=0)
+        if sp.issparse(X):
+            basis = X[basis_inds] 
+        else:
+            basis = xp.take(X, basis_inds, axis=0)
 
         basis_kernel = pairwise_kernels(
             basis,
@@ -1047,7 +1079,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         )
 
         # sqrt of kernel matrix on basis vectors
-        dtype = _find_matching_floating_dtype(basis_kernel, xp=xp)
+        _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
         basis_kernel = xp.asarray(basis_kernel, dtype=dtype)
         U, S, V = xp.linalg.svd(basis_kernel)
         S = xp.asarray(S, dtype=dtype)
