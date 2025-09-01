@@ -423,7 +423,7 @@ ax.plot(
     linestyle=":",
     linewidth=4,
 )
-ax.plot([0, 1], [0, 1], "k--", label="Chance level (AUC = 0.5)")
+ax.plot([0, 1], [0, 1], "k--", label="baseline (AUC = 0.5)")
 _ = ax.set(
     xlabel="False Positive Rate",
     ylabel="True Positive Rate",

@@ -712,8 +712,7 @@ Changelog
 
 - |Enhancement| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
   :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept two new
-  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline
-  chance level. This line is exposed in the `chance_level_` attribute.
+  keywords, `plot_chance_level` and `chance_level_kw` to plot the baseline. This line is exposed in the `chance_level_` attribute.
   :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |Fix| :func:`metrics.pairwise.manhattan_distances` now supports readonly sparse datasets.

@@ -598,7 +598,7 @@ def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwarg
 
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):
-    """Check chance level line and line styles correct."""
+    """Check baseline line and line styles correct."""
     import matplotlib as mpl
 
     if plot_chance_level:
@@ -608,11 +608,11 @@ def _check_chance_level(plot_chance_level, chance_level_kw, display):
     else:
         assert display.chance_level_ is None
 
-    # Checking for chance level line styles
+    # Checking for baseline line styles
     if plot_chance_level and chance_level_kw is None:
         assert display.chance_level_.get_color() == "k"
         assert display.chance_level_.get_linestyle() == "--"
-        assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
+        assert display.chance_level_.get_label() == "baseline (AUC = 0.5)"
     elif plot_chance_level:
         if "c" in chance_level_kw:
             assert display.chance_level_.get_color() == chance_level_kw["c"]
@@ -648,7 +648,7 @@ def test_roc_curve_chance_level_line(
     label,
     constructor_name,
 ):
-    """Check chance level plotting behavior of `from_predictions`, `from_estimator`."""
+    """Check baseline plotting behavior of `from_predictions`, `from_estimator`."""
     X, y = data_binary
 
     lr = LogisticRegression()
@@ -716,7 +716,7 @@ def test_roc_curve_chance_level_line_from_cv_results(
     chance_level_kw,
     curve_kwargs,
 ):
-    """Check chance level plotting behavior with `from_cv_results`."""
+    """Check baseline plotting behavior with `from_cv_results`."""
     X, y = data_binary
     n_cv = 3
     cv_results = cross_validate(

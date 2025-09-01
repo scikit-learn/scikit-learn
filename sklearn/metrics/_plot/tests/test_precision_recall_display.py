@@ -78,7 +78,7 @@ def test_precision_recall_display_plotting(
     assert display.line_.get_label() == expected_label
     assert display.line_.get_alpha() == pytest.approx(0.8)
 
-    # Check that the chance level line is not plotted by default
+    # Check that the baseline line is not plotted by default
     assert display.chance_level_ is None
 
 
@@ -89,7 +89,7 @@ def test_precision_recall_chance_level_line(
     chance_level_kw,
     constructor_name,
 ):
-    """Check the chance level line plotting behavior."""
+    """Check the baseline line plotting behavior."""
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_prevalence = Counter(y)[1] / len(y)
 
@@ -118,7 +118,7 @@ def test_precision_recall_chance_level_line(
     assert tuple(display.chance_level_.get_xdata()) == (0, 1)
     assert tuple(display.chance_level_.get_ydata()) == (pos_prevalence, pos_prevalence)
 
-    # Checking for chance level line styles
+    # Checking for baseline line styles
     if chance_level_kw is None:
         assert display.chance_level_.get_color() == "k"
     else:
@@ -310,7 +310,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
 def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name):
     # Check that even if one passes plot_chance_level=False the first time
     # one can still call disp.plot with plot_chance_level=True and get the
-    # chance level line
+    # baseline line
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     lr = LogisticRegression()
@@ -330,13 +330,13 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
 
     # When calling from_estimator or from_predictions,
     # prevalence_pos_label should have been set, so that directly
-    # calling plot_chance_level=True should plot the chance level line
+    # calling plot_chance_level=True should plot the baseline line
     display.plot(plot_chance_level=True)
     assert isinstance(display.chance_level_, mpl.lines.Line2D)
 
 
 def test_precision_recall_raise_no_prevalence(pyplot):
-    # Check that raises correctly when plotting chance level with
+    # Check that raises correctly when plotting baseline with
     # no prvelance_pos_label is provided
     precision = np.array([1, 0.5, 0])
     recall = np.array([0, 0.5, 1])

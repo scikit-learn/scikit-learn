@@ -76,7 +76,7 @@ Let's consider the following trained regression model::
   0.356...
 
 Its validation performance, measured via the :math:`R^2` score, is
-significantly larger than the chance level. This makes it possible to use the
+significantly larger than the baseline. This makes it possible to use the
 :func:`permutation_importance` function to probe which features are most
 predictive::
 

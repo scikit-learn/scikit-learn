@@ -134,7 +134,7 @@ _ = fig.suptitle("Effect of scaling C with L1 penalty")
 # %%
 # In the region of small `C` (strong regularization) all the coefficients
 # learned by the models are zero, leading to severe underfitting. Indeed, the
-# accuracy in this region is at the chance level.
+# accuracy in this region is at the baseline.
 #
 # Using the default scale results in a somewhat stable optimal value of `C`,
 # whereas the transition out of the underfitting region depends on the number of
@@ -201,7 +201,7 @@ plt.show()
 # For the L2 penalty case, the reparametrization seems to have a smaller impact
 # on the stability of the optimal value for the regularization. The transition
 # out of the overfitting region occurs in a more spread range and the accuracy
-# does not seem to be degraded up to chance level.
+# does not seem to be degraded up to baseline.
 #
 # Try increasing the value to `n_splits=1_000` for better results in the L2
 # case, which is not shown here due to the limitations on the documentation

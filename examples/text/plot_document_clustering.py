@@ -254,7 +254,7 @@ fit_and_evaluate(kmeans, X_tfidf, name="KMeans\non tf-idf vectors")
 # All those clustering evaluation metrics have a maximum value of 1.0 (for a
 # perfect clustering result). Higher values are better. Values of the Adjusted
 # Rand-Index close to 0.0 correspond to a random labeling. Notice from the
-# scores above that the cluster assignment is indeed well above chance level,
+# scores above that the cluster assignment is indeed well above baseline,
 # but the overall quality can certainly improve.
 #
 # Keep in mind that the class labels may not reflect accurately the document

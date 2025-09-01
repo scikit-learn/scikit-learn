@@ -662,7 +662,7 @@ def test_perfect_imperfect_chance_multiclass_roc_auc(multi_class, average):
         < 1.0
     )
 
-    # Chance level classifier has roc_auc_score = 5.0
+    # baseline classifier has roc_auc_score = 5.0
     y_chance = 0.25 * np.ones((4, 4))
     assert roc_auc_score(
         y_true, y_chance, multi_class=multi_class, average=average

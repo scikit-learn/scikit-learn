@@ -2035,7 +2035,7 @@ classified:
 
 For classifiers above chance :math:`LR_+` above 1 **higher is better**, while
 :math:`LR_-` ranges from 0 to 1 and **lower is better**.
-Values of :math:`LR_\pm\approx 1` correspond to chance level.
+Values of :math:`LR_\pm\approx 1` correspond to baseline.
 
 Notice that probabilities differ from counts, for instance
 :math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
