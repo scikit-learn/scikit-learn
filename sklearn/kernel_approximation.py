@@ -35,7 +35,7 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-# Utility Functiosn 
+# Utility Functions 
 def _return_float_dtype(X, Y):
     """
     1. If dtype of X and Y is float32, then dtype float32 is returned.
