@@ -1366,11 +1366,13 @@ def test_estimator_checks_generator_strict_xfail_tests():
     # xfail'ed checks are wrapped in a ParameterSet, so below we extract
     # the things we need via a bit of a crutch: len()
     marked_checks = [c for c in checks if hasattr(c, "marks")]
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
 
     for parameter_set in marked_checks:
-        (_, check), marks, _ = parameter_set
-        mark = marks[0]
-        if mark.kwargs["strict"]:
+        _, check = parameter_set.values
+        first_mark = parameter_set.marks[0]
+        if first_mark.kwargs["strict"]:
             strict_xfailed_checks.append(_check_name(check))
 
     # all checks expected to fail are marked as strict xfail
