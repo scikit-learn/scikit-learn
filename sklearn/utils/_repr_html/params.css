@@ -41,16 +41,17 @@
 
 .user-set td {
     color:rgb(255, 94, 0);
-
+    text-align: left !important;
 }
 
-.user-set td.value pre {
+.user-set td.value {
     color:rgb(255, 94, 0);
     background-color: transparent;
 }
 
 .default td {
     color: black;
+    text-align: left !important;
 }
 
 .user-set td i,
