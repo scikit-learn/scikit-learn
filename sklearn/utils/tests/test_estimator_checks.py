@@ -1325,6 +1325,7 @@ if __name__ == "__main__":
 
 
 def test_estimator_checks_generator_strict_none():
+    # Check that no "strict" mark is included in the generated checks
     est = next(_construct_instances(NuSVC))
     expected_to_fail = _get_expected_failed_checks(est)
     # If we don't pass strict, it should not appear in the xfail mark either
