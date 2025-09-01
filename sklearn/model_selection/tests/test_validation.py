@@ -1456,7 +1456,9 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = SGDClassifier(max_iter=5, tol=None, shuffle=False, learning_rate="pa1")
+    estimator = SGDClassifier(
+        max_iter=5, tol=None, shuffle=False, learning_rate="pa1", eta0=1
+    )
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
