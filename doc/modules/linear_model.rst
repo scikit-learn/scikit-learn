@@ -763,7 +763,7 @@ previously chosen dictionary elements.
 
   * `Matching pursuits with time-frequency dictionaries
     <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+    S. G. Mallat, Z. Zhang, 1993.
 
 .. _bayesian_regression:
 
@@ -804,11 +804,14 @@ The disadvantages of Bayesian regression include:
 
 .. dropdown:: References
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+  * A good introduction to Bayesian methods is given in `C. Bishop: Pattern
+    Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`__.
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+  * Original Algorithm is detailed in the book `Bayesian learning for neural
+    networks
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=db869fa192a3222ae4f2d766674a378e47013b1b>`__
+    by Radford M. Neal.
 
 .. _bayesian_ridge_regression:
 
@@ -1430,13 +1433,14 @@ Passive Aggressive Algorithms
 The passive-aggressive (PA) algorithms are another family of 2 algorithms (PA-I and
 PA-II) for large-scale online learning that derive from SGD. They are similar to the
 Perceptron in that they do not require a learning rate. However, contrary to the
-Perceptron, they include a regularization parameter ``PA_C``.
+Perceptron, they include a regularization parameter ``eta0`` (:math:`C` in the
+reference paper).
 
 For classification,
-:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", PA_C=1.0)` can
+:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0)` can
 be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
 :class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
-PA_C=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
+eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 

@@ -8,9 +8,11 @@ coverage[toml]==7.10.5
     # via pytest-cov
 cython==3.1.3
     # via -r build_tools/azure/debian_32bit_requirements.txt
+execnet==2.1.1
+    # via pytest-xdist
 iniconfig==2.1.0
     # via pytest
-joblib==1.5.1
+joblib==1.5.2
     # via -r build_tools/azure/debian_32bit_requirements.txt
 meson==1.9.0
     # via meson-python
@@ -35,7 +37,10 @@ pytest==8.4.1
     # via
     #   -r build_tools/azure/debian_32bit_requirements.txt
     #   pytest-cov
+    #   pytest-xdist
 pytest-cov==6.2.1
+    # via -r build_tools/azure/debian_32bit_requirements.txt
+pytest-xdist==3.8.0
     # via -r build_tools/azure/debian_32bit_requirements.txt
 threadpoolctl==3.6.0
     # via -r build_tools/azure/debian_32bit_requirements.txt

@@ -274,7 +274,7 @@ def test_pairwise_boolean_distance(metric):
     with ignore_warnings(category=DataConversionWarning):
         for Z in [Y, None]:
             res = pairwise_distances(X, Z, metric=metric)
-            np.nan_to_num(res, nan=0, posinf=0, neginf=0, copy=False)
+            xpx.nan_to_num(res, fill_value=0)
             assert np.sum(res != 0) == 0
 
     # non-boolean arrays are converted to boolean for boolean
