@@ -37,6 +37,7 @@
 */
 .estimator-table table td.param {
     text-align: left;
+    padding: 0;
 }
 
 .user-set td {
@@ -71,6 +72,7 @@ a.param-doc-link:visited {
     position: relative;
     color: inherit;
     display: block;
+    margin: 0 .5em;
 }
 
 .param-doc-description {
