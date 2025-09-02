@@ -986,9 +986,9 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} \frac{1}{S}\sum_{i=1}^n s_i
+    \min_{w} \frac{1}{2S}\sum_{i=1}^n s_i
     \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right)
-    + \frac{r(w)}{S C}\,,
+    + \alpha r(w)\,,
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
@@ -1050,8 +1050,8 @@ logistic regression, see also `log-linear model
   The objective for the optimization becomes
 
   .. math::
-    \min_W -\frac{1}{S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
-    + \frac{r(W)}{S C}\,,
+    \min_W -\frac{1}{2S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
+    + \alpha r(W)\,,
 
   where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
   if :math:`P` is false, otherwise it evaluates to :math:`1`.
