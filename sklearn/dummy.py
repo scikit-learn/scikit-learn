@@ -220,8 +220,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
                 if constant.shape[0] != self.n_outputs_:
                     raise ValueError(
-                        "Constant target value should have shape (%d, 1)."
-                        % self.n_outputs_
+                        f"Constant target value should have shape ({self.n_outputs_}, 1)."
                     )
 
         (self.classes_, self.n_classes_, self.class_prior_) = class_distribution(
@@ -377,7 +376,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
             elif self._strategy == "prior":
-                out = np.ones((n_samples, 1)) * class_prior_[k]
+                out = np.tile(class_prior_[k], (n_samples, 1))
 
             elif self._strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
