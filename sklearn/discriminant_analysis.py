@@ -10,21 +10,21 @@ import numpy as np
 import scipy.linalg
 from scipy import linalg
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
-from .linear_model._base import LinearClassifierMixin
-from .preprocessing import StandardScaler
-from .utils._array_api import _expit, device, get_namespace, size
-from .utils._param_validation import HasMethods, Interval, StrOptions
-from .utils.extmath import softmax
-from .utils.multiclass import check_classification_targets, unique_labels
-from .utils.validation import check_is_fitted, validate_data
+from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils._array_api import _expit, device, get_namespace, size
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.extmath import softmax
+from sklearn.utils.multiclass import check_classification_targets, unique_labels
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -596,7 +596,7 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype)
+        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
 
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)

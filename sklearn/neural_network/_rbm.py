@@ -10,16 +10,16 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.special import expit  # logistic function
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_random_state, gen_even_slices
-from ..utils._param_validation import Interval
-from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.utils import check_random_state, gen_even_slices
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -440,5 +440,6 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

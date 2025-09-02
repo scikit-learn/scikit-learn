@@ -1,3 +1,0 @@
-- :func:`sklearn.metrics.f1_score` now supports Array API compatible
-  inputs.
-  By :user:`Omar Salman <OmarManzoor>`

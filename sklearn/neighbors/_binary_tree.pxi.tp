@@ -14,14 +14,11 @@ implementation_specific_values = [
 # KD Tree and Ball Tree
 # =====================
 #
-#    Author: Jake Vanderplas <jakevdp@cs.washington.edu>, 2012-2013
-#            Omar Salman <omar.salman@arbisoft.com>
-#
-#    License: BSD
-#
 # _binary_tree.pxi is generated and is then literally Cython included in
 # ball_tree.pyx and kd_tree.pyx. See ball_tree.pyx.tp and kd_tree.pyx.tp.
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 }}
 
 
@@ -169,7 +166,6 @@ from libc.string cimport memcpy
 
 import numpy as np
 import warnings
-
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
     DistanceMetric64,
@@ -184,6 +180,7 @@ from ..metrics._dist_metrics cimport (
 
 from ._partition_nodes cimport partition_node_indices
 
+from ..metrics._dist_metrics import get_valid_metric_ids
 from ..utils import check_array
 from ..utils._typedefs cimport float32_t, float64_t, intp_t
 from ..utils._heap cimport heap_push
@@ -791,7 +788,6 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS{{name_suffix}}
-from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS{{name_suffix}} = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
 
 

@@ -14,7 +14,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import ConvergenceWarning
 
 # make IterativeImputer available
-from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer, KNNImputer, MissingIndicator, SimpleImputer
 from sklearn.impute._base import _most_frequent
 from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
@@ -1355,7 +1355,7 @@ def test_missing_indicator_sparse_no_explicit_zeros(csr_container):
     mi = MissingIndicator(features="all", missing_values=1)
     Xt = mi.fit_transform(X)
 
-    assert Xt.getnnz() == Xt.sum()
+    assert Xt.nnz == Xt.sum()
 
 
 @pytest.mark.parametrize("imputer_constructor", [SimpleImputer, IterativeImputer])
@@ -1527,6 +1527,26 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+@pytest.mark.parametrize(
+    "expected,array",
+    [
+        ("a", ["a", "b"]),
+        (1, [1, 2]),
+        (None, [None, "a"]),
+        (None, [None, 1]),
+        (None, [None, "a", 1]),
+        (1, [1, "1"]),
+        (1, ["1", 1]),
+    ],
+)
+def test_most_frequent_tie_object(expected, array):
+    """Check the tie breaking behavior of the most frequent strategy.
+
+    Non-regression test for issue #31717.
+    """
+    assert expected == _most_frequent(np.array(array, dtype=object), None, 0)
 
 
 @pytest.mark.parametrize(

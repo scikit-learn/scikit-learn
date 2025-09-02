@@ -5,22 +5,28 @@
 
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
-from typing import Any, List
 
 import numpy as np
 
-from ..base import BaseEstimator
-from ..utils import _safe_indexing
-from ..utils._tags import get_tags
-from ._available_if import available_if
+from sklearn.base import BaseEstimator
+from sklearn.utils import _safe_indexing
+from sklearn.utils._available_if import available_if
+from sklearn.utils._tags import get_tags
 
 __all__ = ["available_if"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for classifiers composed of named estimators."""
+    """Base class for estimators that are composed of named sub-estimators.
 
-    steps: List[Any]
+    This abstract class provides parameter management functionality for
+    meta-estimators that contain collections of named estimators. It handles
+    the complex logic for getting and setting parameters on nested estimators
+    using the "estimator_name__parameter" syntax.
+
+    The class is designed to work with any attribute containing a list of
+    (name, estimator) tuples.
+    """
 
     @abstractmethod
     def __init__(self):
@@ -50,10 +56,10 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 
     def _set_params(self, attr, **params):
         # Ensure strict ordering of parameter setting:
-        # 1. All steps
+        # 1. Replace the entire estimators collection
         if attr in params:
             setattr(self, attr, params.pop(attr))
-        # 2. Replace items with estimators in params
+        # 2. Replace individual estimators by name
         items = getattr(self, attr)
         if isinstance(items, list) and items:
             # Get item names used to identify valid names in params
@@ -65,7 +71,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
                     if "__" not in name and name in item_names:
                         self._replace_estimator(attr, name, params.pop(name))
 
-        # 3. Step parameters and other initialisation arguments
+        # 3. Individual estimator parameters and other initialisation arguments
         super().set_params(**params)
         return self
 

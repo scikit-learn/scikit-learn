@@ -9,20 +9,20 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import OutlierMixin, _fit_context
-from ..tree import ExtraTreeRegressor
-from ..tree._tree import DTYPE as tree_dtype
-from ..utils import (
-    check_array,
-    check_random_state,
-    gen_batches,
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.ensemble._bagging import BaseBagging
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree._tree import DTYPE as tree_dtype
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
+    validate_data,
 )
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_is_fitted, validate_data
-from ._bagging import BaseBagging
-from ._base import _partition_estimators
 
 __all__ = ["IsolationForest"]
 
@@ -120,10 +120,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is performed.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for both :meth:`fit` and
-        :meth:`predict`. ``None`` means 1 unless in a
-        :obj:`joblib.parallel_backend` context. ``-1`` means using all
-        processors. See :term:`Glossary <n_jobs>` for more details.
+        The number of jobs to run in parallel for :meth:`fit`. ``None`` means 1
+        unless in a :obj:`joblib.parallel_backend` context. ``-1`` means using
+        all processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls the pseudo-randomness of the selection of the feature
@@ -319,6 +318,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         X = validate_data(
             self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -352,7 +355,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         super()._fit(
             X,
             y,
-            max_samples,
+            max_samples=max_samples,
             max_depth=max_depth,
             sample_weight=sample_weight,
             check_input=False,
@@ -596,14 +599,16 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         average_path_length_max_samples = _average_path_length([self._max_samples])
 
-        # Note: using joblib.parallel_backend allows for setting the number of jobs
-        # separately from the n_jobs parameter specified during fit. This is useful for
-        # parallelizing  the computation of the scores, which will not require a high
-        # n_jobs value for e.g. < 1k samples.
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, None)
+        # Note: we use default n_jobs value, i.e. sequential computation, which
+        # we expect to be more performant that parallelizing for small number
+        # of samples, e.g. < 1k samples. Default n_jobs value can be overridden
+        # by using joblib.parallel_backend context manager around
+        # ._compute_score_samples. Using a higher n_jobs may speed up the
+        # computation of the scores, e.g. for > 1k samples. See
+        # https://github.com/scikit-learn/scikit-learn/pull/28622 for more
+        # details.
         lock = threading.Lock()
         Parallel(
-            n_jobs=n_jobs,
             verbose=self.verbose,
             require="sharedmem",
         )(

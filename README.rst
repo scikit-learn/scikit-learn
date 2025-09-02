@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure| |CirrusCI| |Codecov| |CircleCI| |Nightly wheels| |Black| |PythonVersion| |PyPi| |DOI| |Benchmark|
+|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
    :target: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -8,23 +8,20 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
    :target: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |CirrusCI| image:: https://img.shields.io/cirrus/github/scikit-learn/scikit-learn/main?label=Cirrus%20CI
-   :target: https://cirrus-ci.com/github/scikit-learn/scikit-learn/main
-
 .. |Codecov| image:: https://codecov.io/gh/scikit-learn/scikit-learn/branch/main/graph/badge.svg?token=Pk8G9gg3y9
    :target: https://codecov.io/gh/scikit-learn/scikit-learn
 
-.. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
+.. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/wheels.yml/badge.svg?event=schedule
    :target: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
+
+.. |Ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg
+   :target: https://github.com/astral-sh/ruff
 
 .. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
    :target: https://pypi.org/project/scikit-learn/
 
-.. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
+.. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
-
-.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/psf/black
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
    :target: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
@@ -32,14 +29,14 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
-.. |PythonMinVersion| replace:: 3.9
-.. |NumPyMinVersion| replace:: 1.19.5
-.. |SciPyMinVersion| replace:: 1.6.0
+.. |PythonMinVersion| replace:: 3.10
+.. |NumPyMinVersion| replace:: 1.22.0
+.. |SciPyMinVersion| replace:: 1.8.0
 .. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 3.1.0
-.. |MatplotlibMinVersion| replace:: 3.3.4
-.. |Scikit-ImageMinVersion| replace:: 0.17.2
-.. |PandasMinVersion| replace:: 1.1.5
+.. |MatplotlibMinVersion| replace:: 3.5.0
+.. |Scikit-ImageMinVersion| replace:: 0.19.0
+.. |PandasMinVersion| replace:: 1.4.0
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
@@ -75,16 +72,12 @@ scikit-learn requires:
 
 =======
 
-**Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 1.0 and later require Python 3.7 or newer.
-scikit-learn 1.1 and later require Python 3.8 or newer.
-
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
+|SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -141,7 +134,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the source
-directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
+directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 
     pytest sklearn
 
@@ -183,23 +176,36 @@ Documentation
 Communication
 ~~~~~~~~~~~~~
 
-- Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
-- Blog: https://blog.scikit-learn.org
-- Calendar: https://blog.scikit-learn.org/calendar/
-- Twitter: https://twitter.com/scikit_learn
-- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
-- GitHub Discussions: https://github.com/scikit-learn/scikit-learn/discussions
-- Website: https://scikit-learn.org
-- LinkedIn: https://www.linkedin.com/company/scikit-learn
-- Bluesky: https://bsky.app/profile/scikit-learn.org
-- YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
-- Facebook: https://www.facebook.com/scikitlearnofficial/
-- Instagram: https://www.instagram.com/scikitlearnofficial/
-- TikTok: https://www.tiktok.com/@scikit.learn
-- Mastodon: https://mastodon.social/@sklearn@fosstodon.org
-- Discord: https://discord.gg/h9qyrK8Jc8
+Main Channels
+^^^^^^^^^^^^^
 
+- **Website**: https://scikit-learn.org
+- **Blog**: https://blog.scikit-learn.org
+- **Mailing list**: https://mail.python.org/mailman/listinfo/scikit-learn
+
+Developer & Support
+^^^^^^^^^^^^^^^^^^^^^^
+
+- **GitHub Discussions**: https://github.com/scikit-learn/scikit-learn/discussions
+- **Stack Overflow**: https://stackoverflow.com/questions/tagged/scikit-learn
+- **Discord**: https://discord.gg/h9qyrK8Jc8
+
+Social Media Platforms
+^^^^^^^^^^^^^^^^^^^^^^
+
+- **LinkedIn**: https://www.linkedin.com/company/scikit-learn
+- **YouTube**: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
+- **Facebook**: https://www.facebook.com/scikitlearnofficial/
+- **Instagram**: https://www.instagram.com/scikitlearnofficial/
+- **TikTok**: https://www.tiktok.com/@scikit.learn
+- **Bluesky**: https://bsky.app/profile/scikit-learn.org
+- **Mastodon**: https://mastodon.social/@sklearn@fosstodon.org
+
+Resources
+^^^^^^^^^
+
+- **Calendar**: https://blog.scikit-learn.org/calendar/
+- **Logos & Branding**: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 
 Citation
 ~~~~~~~~

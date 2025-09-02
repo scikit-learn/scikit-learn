@@ -1,2 +1,0 @@
-- :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
-  By :user:`Omar Salman <OmarManzoor>`

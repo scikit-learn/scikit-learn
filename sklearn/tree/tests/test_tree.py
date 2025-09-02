@@ -8,7 +8,7 @@ import io
 import pickle
 import re
 import struct
-from itertools import chain, product
+from itertools import chain, pairwise, product
 
 import joblib
 import numpy as np
@@ -36,6 +36,7 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
+from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -47,6 +48,7 @@ from sklearn.tree._tree import (
 )
 from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
+from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -197,10 +199,10 @@ DATASETS = {
 
 
 def assert_tree_equal(d, s, message):
-    assert (
-        s.node_count == d.node_count
-    ), "{0}: inequal number of node ({1} != {2})".format(
-        message, s.node_count, d.node_count
+    assert s.node_count == d.node_count, (
+        "{0}: inequal number of node ({1} != {2})".format(
+            message, s.node_count, d.node_count
+        )
     )
 
     assert_array_equal(
@@ -329,9 +331,9 @@ def test_diabetes_overfit(name, Tree, criterion):
     reg = Tree(criterion=criterion, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert score == pytest.approx(
-        0
-    ), f"Failed with {name}, criterion = {criterion} and score = {score}"
+    assert score == pytest.approx(0), (
+        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    )
 
 
 @skip_if_32bit
@@ -696,10 +698,10 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert (
-            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
-        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
-            name, est.min_weight_fraction_leaf
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
+            "Failed with {0} min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf
+            )
         )
 
     # test case with no weights passed in
@@ -719,10 +721,10 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
         node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert (
-            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
-        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
-            name, est.min_weight_fraction_leaf
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
+            "Failed with {0} min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf
+            )
         )
 
 
@@ -844,10 +846,10 @@ def test_min_impurity_decrease(global_random_seed):
             (est3, 0.0001),
             (est4, 0.1),
         ):
-            assert (
-                est.min_impurity_decrease <= expected_decrease
-            ), "Failed, min_impurity_decrease = {0} > {1}".format(
-                est.min_impurity_decrease, expected_decrease
+            assert est.min_impurity_decrease <= expected_decrease, (
+                "Failed, min_impurity_decrease = {0} > {1}".format(
+                    est.min_impurity_decrease, expected_decrease
+                )
             )
             est.fit(X, y)
             for node in range(est.tree_.node_count):
@@ -878,10 +880,10 @@ def test_min_impurity_decrease(global_random_seed):
                         imp_parent - wtd_avg_left_right_imp
                     )
 
-                    assert (
-                        actual_decrease >= expected_decrease
-                    ), "Failed with {0} expected min_impurity_decrease={1}".format(
-                        actual_decrease, expected_decrease
+                    assert actual_decrease >= expected_decrease, (
+                        "Failed with {0} expected min_impurity_decrease={1}".format(
+                            actual_decrease, expected_decrease
+                        )
                     )
 
 
@@ -922,9 +924,9 @@ def test_pickle():
         assert type(est2) == est.__class__
 
         score2 = est2.score(X, y)
-        assert (
-            score == score2
-        ), "Failed to generate same score  after pickling with {0}".format(name)
+        assert score == score2, (
+            "Failed to generate same score  after pickling with {0}".format(name)
+        )
         for attribute in fitted_attribute:
             assert_array_equal(
                 getattr(est2.tree_, attribute),
@@ -1791,7 +1793,7 @@ def test_criterion_copy():
 def test_empty_leaf_infinite_threshold(sparse_container):
     # try to make empty leaf by using near infinite value.
     data = np.random.RandomState(0).randn(100, 11) * 2e38
-    data = np.nan_to_num(data.astype("float32"))
+    data = xpx.nan_to_num(data.astype("float32"))
     X = data[:, :-1]
     if sparse_container is not None:
         X = sparse_container(X)
@@ -1864,7 +1866,7 @@ def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
 
     # A pruned tree must be a subtree of the previous tree (which had a
     # smaller ccp_alpha)
-    for prev_est, next_est in zip(estimators, estimators[1:]):
+    for prev_est, next_est in pairwise(estimators):
         assert_is_subtree(prev_est.tree_, next_est.tree_)
 
 
@@ -2613,9 +2615,9 @@ def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     # Check that the tree can learn the predictive feature
     # over an average of cross-validation fits.
     tree_cv_score = cross_val_score(tree, X, y, cv=5).mean()
-    assert (
-        tree_cv_score >= expected_score
-    ), f"Expected CV score: {expected_score} but got {tree_cv_score}"
+    assert tree_cv_score >= expected_score, (
+        f"Expected CV score: {expected_score} but got {tree_cv_score}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -2721,7 +2723,7 @@ def test_regression_extra_tree_missing_values_toy(global_random_seed):
 
 
 def test_classification_tree_missing_values_toy():
-    """Check that we properly handle missing values in clasification trees using a toy
+    """Check that we properly handle missing values in classification trees using a toy
     dataset.
 
     The test is more involved because we use a case where we detected a regression
@@ -2814,3 +2816,25 @@ def test_build_pruned_tree_infinite_loop():
         ValueError, match="Node has reached a leaf in the original tree"
     ):
         _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+
+
+def test_sort_log2_build():
+    """Non-regression test for gh-30554.
+
+    Using log2 and log in sort correctly sorts feature_values, but the tie breaking is
+    different which can results in placing samples in a different order.
+    """
+    rng = np.random.default_rng(75)
+    some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
+    feature_values = np.concatenate([some] * 5)
+    samples = np.arange(50, dtype=np.intp)
+    _py_sort(feature_values, samples, 50)
+    # fmt: off
+    # no black reformatting for this specific array
+    expected_samples = [
+        0, 40, 30, 20, 10, 29, 39, 19, 49,  9, 45, 15, 35,  5, 25, 11, 31,
+        41,  1, 21, 22, 12,  2, 42, 32, 23, 13, 43,  3, 33,  6, 36, 46, 16,
+        26,  4, 14, 24, 34, 44, 27, 47,  7, 37, 17,  8, 38, 48, 28, 18
+    ]
+    # fmt: on
+    assert_array_equal(samples, expected_samples)

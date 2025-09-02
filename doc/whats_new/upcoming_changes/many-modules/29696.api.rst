@@ -1,5 +1,0 @@
-- :func:`utils.validation.validate_data` is introduced and replaces previously
-  private `base.BaseEstimator._validate_data` method. This is intended for third party
-  estimator developers, who should use this function in most cases instead of
-  :func:`utils.check_array` and :func:`utils.check_X_y`.
-  By :user:`Adrin Jalali <adrinjalali>`
