@@ -564,19 +564,20 @@ def test_nystroem_precomputed_kernel_array_api(array_namespace, device, dtype_na
     X_np = rnd.uniform(size=(10, 4))
     X_xp = xp.asarray(X_np)
 
-    K = polynomial_kernel(X_xp, degree=2, coef0=0.1)
-    nystroem = Nystroem(kernel="precomputed", n_components=X_xp.shape[0])
-    X_xp_transformed = nystroem.fit_transform(K)
-    X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-    assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), K)
+    with config_context(array_api_dispatch=True):
+        K = polynomial_kernel(X_xp, degree=2, coef0=0.1)
+        nystroem = Nystroem(kernel="precomputed", n_components=X_xp.shape[0])
+        X_xp_transformed = nystroem.fit_transform(K)
+        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
+        assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), K)
 
-    # if degree, gamma or coef0 is passed, we raise a ValueError
-    msg = "Don't pass gamma, coef0 or degree to Nystroem"
-    params = ({"gamma": 1}, {"coef0": 1}, {"degree": 2})
-    for param in params:
-        ny = Nystroem(kernel="precomputed", n_components=X_xp.shape[0], **param)
-        with pytest.raises(ValueError, match=msg):
-            ny.fit(K)
+        # if degree, gamma or coef0 is passed, we raise a ValueError
+        msg = "Don't pass gamma, coef0 or degree to Nystroem"
+        params = ({"gamma": 1}, {"coef0": 1}, {"degree": 2})
+        for param in params:
+            ny = Nystroem(kernel="precomputed", n_components=X_xp.shape[0], **param)
+            with pytest.raises(ValueError, match=msg):
+                ny.fit(K)
 
 
 def test_nystroem_component_indices():
