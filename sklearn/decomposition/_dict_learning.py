@@ -1310,7 +1310,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
         "split_sign": ["boolean"],
         "n_jobs": [Integral, None],
-        "positive_code": [bool],
+        "positive_code": ["boolean"],
         "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 
