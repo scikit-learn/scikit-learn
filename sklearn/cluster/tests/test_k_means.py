@@ -830,7 +830,7 @@ def test_float_precision(Estimator, input_data, global_random_seed):
 
     # compare arrays with low precision since the difference between 32 and
     # 64 bit comes from an accumulation of rounding errors.
-    rtol = 2e-4
+    rtol = 1e-4
     assert_allclose(inertia[np.float32], inertia[np.float64], rtol=rtol)
     assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * rtol)
     assert_allclose(
