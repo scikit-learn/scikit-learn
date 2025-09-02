@@ -2633,11 +2633,7 @@ def test_yeo_johnson_inverse_transform_warning():
     # any value `psi` for which lambda * psi + 1 <= 0 will result in nan due
     # to lacking support
     psi = np.array([10]).reshape(-1, 1)
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match="Some values in column"):
         x_inv = trans.inverse_transform(psi).item()
-        assert np.isnan(x_inv)
 
-        # Check if warning was raised
-        assert len(w) > 0
-        assert issubclass(w[-1].category, UserWarning)
+    assert np.isnan(x_inv)
