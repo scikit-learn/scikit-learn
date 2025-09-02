@@ -638,6 +638,7 @@ def test_mutable_default_params():
         check_parameters_default_constructible("Mutable", HasMutableParameters())
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_set_params():
     """Check set_params doesn't fail and sets the right values."""
     # check that values returned by get_params match set_params
@@ -1307,6 +1308,7 @@ def test_check_class_weight_balanced_linear_classifier():
         )
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_all_estimators_all_public():
     # all_estimator should not fail when pytest is not installed and return
     # only public estimators
@@ -1400,6 +1402,7 @@ def test_estimator_checks_generator_skipping_tests():
     assert set(expected_to_fail.keys()) <= set(skipped_checks)
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_xfail_count_with_no_fast_fail():
     """Test that the right number of xfail warnings are raised when on_fail is "warn".
 
