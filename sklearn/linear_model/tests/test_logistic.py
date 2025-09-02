@@ -1839,36 +1839,35 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
 
 
 def test_LogisticRegressionCV_on_folds():
-    """Test that LogisticRegressionCV produces the correct result on a fold.
-
-    See https://github.com/scikit-learn/scikit-learn/issues/32072.
-    """
+    """Test that LogisticRegressionCV produces the correct result on a fold."""
     X, y = iris.data, iris.target
-    lrcv = LogisticRegressionCV(solver="newton-cholesky").fit(X, y)
+    lrcv = LogisticRegressionCV(solver="newton-cholesky", tol=1e-8).fit(X, y)
 
     # Reproduce the exact same split as default LogisticRegressionCV.
     cv = StratifiedKFold(5)
     folds = list(cv.split(X, y))
 
-    # First fold (index 0) and 2nd value of C (index 1).
-    idx_fold, idx_C = 0, 1  # random, just not 0, 0
-    train_fold_0 = folds[idx_fold][0]  # 0 is training fold
-    lr = LogisticRegression(solver="newton-cholesky", C=lrcv.Cs_[idx_C]).fit(
-        X[train_fold_0], y[train_fold_0]
-    )
+    # Some combinations of fold and value of C.
+    for idx_fold, idx_C in [[0, 0], [0, 1], [3, 6]]:
+        train_fold_0 = folds[idx_fold][0]  # 0 is training fold
+        lr = LogisticRegression(
+            C=lrcv.Cs_[idx_C],
+            solver="newton-cholesky",
+            tol=1e-8,
+        ).fit(X[train_fold_0], y[train_fold_0])
 
-    # Coefficients of class 0 without intecept
-    idx_class = 0
-    assert_allclose(
-        lrcv.coefs_paths_[idx_class][idx_fold, idx_C, :-1],
-        lr.coef_[idx_class],
-        rtol=1e-5,
-    )
+        for cl in np.unique(y):
+            # Coefficients without intecept
+            assert_allclose(
+                lrcv.coefs_paths_[cl][idx_fold, idx_C, :-1],
+                lr.coef_[cl],
+                rtol=1e-5,
+            )
 
-    # Intercept of class 0
-    assert_allclose(
-        lrcv.coefs_paths_[idx_class][idx_fold, idx_C, -1], lr.intercept_[0], rtol=1e-5
-    )
+            # Intercepts
+            assert_allclose(
+                lrcv.coefs_paths_[cl][idx_fold, idx_C, -1], lr.intercept_[cl], rtol=1e-5
+            )
 
 
 def test_l1_ratio_non_elasticnet():
