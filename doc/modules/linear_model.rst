@@ -1142,18 +1142,18 @@ zero, is likely to be an underfit, bad model and you are advised to set
     <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
     scikit-learn. However, the CD algorithm implemented in liblinear cannot learn a
     true multinomial (multiclass) model. If you still want to use "liblinear" on
-    multiclass problems, you can use a "one-vs-rest" scheeme
+    multiclass problems, you can use a "one-vs-rest" scheme
     `OneVsRestClassifier(LogisticRegression(solver="liblinear"))`, see
     `:class:`~sklearn.multiclass.OneVsRestClassifier`. Note that minimizing the
     multinomial loss is expected to give better calibrated results as compared to
-    a "one-vs-rest" scheeme.
+    a "one-vs-rest" scheme.
     For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
     calculate the lower bound for C in order to get a non "null" (all feature
     weights to zero) model.
 
   * The "lbfgs", "newton-cg", "newton-cholesky" and "sag" solvers only support
     :math:`\ell_2` regularization or no regularization, and are found to converge
-    faster for some high-dimensional data. Setting These solvers
+    faster for some high-dimensional data. These solvers (and "saga")
     learn a true multinomial logistic regression model [5]_.
 
   * The "sag" solver uses Stochastic Average Gradient descent [6]_. It is faster
