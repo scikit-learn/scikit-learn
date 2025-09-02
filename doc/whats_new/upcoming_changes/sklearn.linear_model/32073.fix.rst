@@ -1,0 +1,5 @@
+- Fixed a sever bug in :class:`linear_model.LogisticRegressionCV` with
+  `fit_intercept=True` (the default) that caused a wrong intercept terms. Not
+  surprisingly, `LogisticRegressionCV` can now reach better results, i.e. better scores,
+  than before.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
