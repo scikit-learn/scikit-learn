@@ -103,7 +103,12 @@ for name, clf in classifiers.items():
     )
     clf.fit(X_train, y_train)
     RocCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_roc, name=name, color=color, linestyle=linestyle
+        clf,
+        X_test,
+        y_test,
+        ax=ax_roc,
+        name=name,
+        curve_kwargs=dict(color=color, linestyle=linestyle),
     )
     DetCurveDisplay.from_estimator(
         clf, X_test, y_test, ax=ax_det, name=name, color=color, linestyle=linestyle

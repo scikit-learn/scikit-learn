@@ -22,37 +22,44 @@ import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..exceptions import NotFittedError
-from ..metrics import check_scoring
-from ..metrics._scorer import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (
     _check_multimetric_scoring,
     _MultimetricScorer,
     get_scorer_names,
 )
-from ..utils import Bunch, check_random_state
-from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
-    MetadataRouter,
-    MethodMapping,
-    _raise_for_params,
-    _routing_enabled,
-    process_routing,
-)
-from ..utils.metaestimators import available_if
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_method_params, check_is_fitted, indexable
-from ._split import check_cv
-from ._validation import (
+from sklearn.model_selection._split import check_cv
+from sklearn.model_selection._validation import (
     _aggregate_score_dicts,
     _fit_and_score,
     _insert_error_scores,
     _normalize_score_results,
     _warn_or_raise_about_fit_failures,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._array_api import xpx
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import _check_method_params, check_is_fitted, indexable
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
@@ -1157,7 +1164,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     rank_result = np.ones_like(array_means, dtype=np.int32)
                 else:
                     min_array_means = np.nanmin(array_means) - 1
-                    array_means = np.nan_to_num(array_means, nan=min_array_means)
+                    array_means = xpx.nan_to_num(
+                        array_means, fill_value=min_array_means
+                    )
                     rank_result = rankdata(-array_means, method="min").astype(
                         np.int32, copy=False
                     )
@@ -1327,6 +1336,11 @@ class GridSearchCV(BaseSearchCV):
         See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
         to see how to design a custom selection strategy using a callable
         via `refit`.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
         .. versionchanged:: 0.20
             Support for callable added.
@@ -1704,6 +1718,11 @@ class RandomizedSearchCV(BaseSearchCV):
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
 
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
+
         .. versionchanged:: 0.20
             Support for callable added.
 
@@ -1936,7 +1955,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2.2), 'penalty': 'l1'}
+    {'C': np.float64(2.195...), 'penalty': 'l1'}
     """
 
     _parameter_constraints: dict = {
