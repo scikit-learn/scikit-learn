@@ -362,8 +362,8 @@ def sparse_encode(
             )
             X = check_array(X, order="C", dtype=[np.float64, np.float32])
         else:
-            dictionary = check_array(dictionary)
-            X = check_array(X)
+            dictionary = check_array(dictionary, dtype=[np.float64, np.float32])
+            X = check_array(X, dtype=[np.float64, np.float32])
 
     if dictionary.shape[1] != X.shape[1]:
         raise ValueError(
@@ -421,7 +421,7 @@ def _sparse_encode(
             regularization = 1.0
 
     if gram is None and algorithm != "threshold":
-        gram = np.dot(dictionary, dictionary.T)
+        gram = np.dot(dictionary, dictionary.T).astype(X.dtype, copy=False)
 
     if cov is None and algorithm != "lasso_cd":
         copy_cov = False
@@ -1301,6 +1301,19 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            [ 0.,  1.,  1.,  0.,  0.]])
     """
 
+    _parameter_constraints: dict = {
+        "dictionary": ["array-like"],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "split_sign": [bool],
+        "n_jobs": [Integral, None],
+        "positive_code": [bool],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         dictionary,
@@ -1324,6 +1337,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         )
         self.dictionary = dictionary
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged.
 
@@ -1343,6 +1357,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        validate_data(self, X)
+        self.n_components_ = self.dictionary.shape[0]
         return self
 
     def transform(self, X, y=None):
@@ -1365,6 +1381,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
+        X = validate_data(self, X, reset=False)
         return super()._transform(X, self.dictionary)
 
     def inverse_transform(self, X):
@@ -1388,16 +1405,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         tags.requires_fit = False
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
-
-    @property
-    def n_components_(self):
-        """Number of atoms."""
-        return self.dictionary.shape[0]
-
-    @property
-    def n_features_in_(self):
-        """Number of features seen during `fit`."""
-        return self.dictionary.shape[1]
 
     @property
     def _n_features_out(self):

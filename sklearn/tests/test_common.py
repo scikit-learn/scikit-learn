@@ -39,6 +39,7 @@ from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
     _tested_estimators,
+    _yield_instances_for_check,
 )
 from sklearn.utils._testing import (
     SkipTest,
@@ -356,6 +357,7 @@ def test_set_output_transform(estimator):
             f"Skipping check_set_output_transform for {name}: Does not support"
             " set_output API"
         )
+    estimator = next(_yield_instances_for_check(check_set_output_transform, estimator))
     with ignore_warnings(category=(FutureWarning)):
         check_set_output_transform(estimator.__class__.__name__, estimator)
 

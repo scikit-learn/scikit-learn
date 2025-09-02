@@ -622,7 +622,7 @@ def test_sparse_coder_estimator():
 def test_sparse_coder_estimator_clone():
     n_components = 12
     rng = np.random.RandomState(0)
-    V = rng.randn(n_components, n_features)  # random init
+    V = rng.normal(size=(n_components, n_features))  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
@@ -631,8 +631,6 @@ def test_sparse_coder_estimator_clone():
     assert id(cloned) != id(coder)
     np.testing.assert_allclose(cloned.dictionary, coder.dictionary)
     assert id(cloned.dictionary) != id(coder.dictionary)
-    assert cloned.n_components_ == coder.n_components_
-    assert cloned.n_features_in_ == coder.n_features_in_
     data = np.random.rand(n_samples, n_features).astype(np.float32)
     np.testing.assert_allclose(cloned.transform(data), coder.transform(data))
 
@@ -677,7 +675,9 @@ def test_sparse_coder_common_transformer():
 
 def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
+    X = np.array([[1, 2, 3]])
     sc = SparseCoder(d)
+    sc.fit(X)
     assert sc.n_features_in_ == d.shape[1]
 
 
