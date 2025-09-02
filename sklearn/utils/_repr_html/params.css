@@ -72,7 +72,8 @@ a.param-doc-link:visited {
     position: relative;
     color: inherit;
     display: block;
-    margin: 0 .5em;
+    padding: .5em;
+    box-sizing: border-box;
 }
 
 .param-doc-description {
