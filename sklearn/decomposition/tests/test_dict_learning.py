@@ -681,6 +681,18 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
+def test_sparse_encoder_feature_number_error():
+    n_components = 10
+    rng = np.random.RandomState(0)
+    D = rng.uniform(size=(n_components, n_features))
+    X = rng.uniform(size=(n_samples, n_features + 1))
+    coder = SparseCoder(D)
+    with pytest.raises(
+        ValueError, match="Dictionary and X have different numbers of features"
+    ):
+        coder.fit(X)
+
+
 def test_update_dict():
     # Check the dict update in batch mode vs online mode
     # Non-regression test for #4866
@@ -958,7 +970,7 @@ def test_dict_learning_online_numerical_consistency(method):
 @pytest.mark.parametrize(
     "estimator",
     [
-        SparseCoder(X.T),
+        SparseCoder(rng_global.uniform(size=(n_features, n_features))),
         DictionaryLearning(),
         MiniBatchDictionaryLearning(batch_size=4, max_iter=10),
     ],

@@ -356,14 +356,11 @@ def sparse_encode(
            [ 0.,  1.,  1.,  0.,  0.]])
     """
     if check_input:
-        if algorithm == "lasso_cd":
-            dictionary = check_array(
-                dictionary, order="C", dtype=[np.float64, np.float32]
-            )
-            X = check_array(X, order="C", dtype=[np.float64, np.float32])
-        else:
-            dictionary = check_array(dictionary, dtype=[np.float64, np.float32])
-            X = check_array(X, dtype=[np.float64, np.float32])
+        order = "C" if algorithm == "lasso_cd" else None
+        dictionary = check_array(
+            dictionary, order=order, dtype=[np.float64, np.float32]
+        )
+        X = check_array(X, order=order, dtype=[np.float64, np.float32])
 
     if dictionary.shape[1] != X.shape[1]:
         raise ValueError(
@@ -1339,15 +1336,12 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
-
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        """Validate the input data.
 
         Parameters
         ----------
-        X : Ignored
-            Not used, present for API consistency by convention.
+        X : array-like of shape (n_samples, n_features)
+            Only used for data validation.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -1357,8 +1351,13 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        validate_data(self, X)
+        X = validate_data(self, X)
         self.n_components_ = self.dictionary.shape[0]
+        if X.shape[1] != self.dictionary.shape[1]:
+            raise ValueError(
+                "Dictionary and X have different numbers of features:"
+                f"dictionary.shape: {self.dictionary.shape} X.shape{X.shape}"
+            )
         return self
 
     def transform(self, X, y=None):
@@ -1369,7 +1368,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 

@@ -738,6 +738,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_dataframe_column_names_consistency": dict(
             dictionary=rng.normal(size=(5, 8))
         ),
+        "check_estimators_overwrite_params": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimators_fit_returns_self": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_fit2d_1feature": dict(dictionary=rng.normal(size=(5, 1))),
     },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
