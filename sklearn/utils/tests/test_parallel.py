@@ -176,7 +176,9 @@ def test_check_warnings_threading():
             ]
 
         for worker_warning_filter in all_worker_warning_filters:
-            assert normalize_main_module(worker_warning_filter) == main_warning_filters
+            assert normalize_main_module(
+                worker_warning_filter
+            ) == normalize_main_module(main_warning_filters)
 
 
 @pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")
