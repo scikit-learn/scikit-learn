@@ -197,7 +197,7 @@ if cython.version().version_compare('>=3.1.0')
     install: false,
     output: '_cyutility.c',
     command: [
-      cython_program, '-3', '--fast-fail',
+      cython_program, '-3', '--fast-fail', '-Xfreethreading_compatible=True',
       '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
     ],
   )
