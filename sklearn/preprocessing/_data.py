@@ -3437,7 +3437,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             ):
                 warnings.warn(
                     f"Some values in column {i} of the inverse-transformed data "
-                    f"are NaN. This may be due to numerical issues in the "
+                    f"are NaN. This may be caused by numerical issues in the "
                     f"transformation process. Consider inspecting the input data "
                     f"or preprocessing it before applying the transformation.",
                     UserWarning,
