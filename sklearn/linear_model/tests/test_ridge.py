@@ -1058,6 +1058,7 @@ def _test_ridge_cv(sparse_container):
 def test_ridge_gcv_cv_results_not_stored(ridge, make_dataset):
     # Check that `cv_results_` is not stored when store_cv_results is False
     X, y = make_dataset(n_samples=6, random_state=42)
+    ridge = clone(ridge)
     ridge.fit(X, y)
     assert not hasattr(ridge, "cv_results_")
 
