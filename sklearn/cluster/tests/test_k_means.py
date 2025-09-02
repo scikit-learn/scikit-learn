@@ -796,7 +796,7 @@ def test_k_means_function(global_random_seed):
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 @pytest.mark.skipif(
-    not [i for i in threadpool_info() if i["user_api"] == "blas"],
+    not any(i for i in threadpool_info() if i["user_api"] == "blas"),
     reason=(
         "Fails for some global_random_seed on Atlas which cannot be detected by "
         "threadpoolctl."
