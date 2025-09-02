@@ -329,7 +329,7 @@ class _PLS(
 
             # Safety check to prevent division by zero when x_scores are all zero.
             # This indicates that the current component is uninformative.
-            if x_scores_ss < np.finfo(np.float64).eps:
+            if x_scores_ss < np.finfo(x_scores_ss.dtype).eps:
                 # The algorithm can proceed with the components found so far.
                 warnings.warn(
                     f"x_scores are null at iteration {k}. The algorithm may have "
