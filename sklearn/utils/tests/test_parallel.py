@@ -114,7 +114,8 @@ def _yield_n_jobs_backend_combinations():
     backend_values = ["loky", "threading", "multiprocessing"]
     for n_jobs, backend in itertools.product(n_jobs_values, backend_values):
         if n_jobs == 2 and backend == "loky":
-            # XXX Avoid RuntimeError: The executor underlying Parallel has been shutdown
+            # XXX Mark thread-unsafe to avoid:
+            # RuntimeError: The executor underlying Parallel has been shutdown.
             # See https://github.com/joblib/joblib/issues/1743 for more details.
             yield pytest.param(n_jobs, backend, marks=pytest.mark.thread_unsafe)
         else:
