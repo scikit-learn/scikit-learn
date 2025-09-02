@@ -220,7 +220,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
                 if constant.shape[0] != self.n_outputs_:
                     raise ValueError(
-                        f"Constant target value should have shape ({self.n_outputs_}, 1)."
+                        f"Constant target value should have shape 
+                        ({self.n_outputs_}, 1)."
                     )
 
         (self.classes_, self.n_classes_, self.class_prior_) = class_distribution(
