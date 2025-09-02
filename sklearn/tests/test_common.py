@@ -268,6 +268,9 @@ def test_pandas_column_name_consistency(estimator):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
+    estimator = next(
+        _yield_instances_for_check(check_dataframe_column_names_consistency, estimator)
+    )
     with ignore_warnings(category=(FutureWarning)):
         with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
@@ -381,6 +384,7 @@ def test_set_output_transform_configured(estimator, check_func):
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
+    estimator = next(_yield_instances_for_check(check_func, estimator))
     with ignore_warnings(category=(FutureWarning)):
         check_func(estimator.__class__.__name__, estimator)
 

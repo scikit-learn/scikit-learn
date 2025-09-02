@@ -727,6 +727,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dictionary=rng.normal(size=(5, 3)).astype(np.float32)
         ),
         "check_set_output_transform": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_output_transform_pandas": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_set_output_transform_pandas": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_set_output_transform_polars": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_set_output_transform_polars": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_dataframe_column_names_consistency": dict(
+            dictionary=rng.normal(size=(5, 8))
+        ),
     },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},

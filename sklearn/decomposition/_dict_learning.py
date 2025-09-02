@@ -1381,7 +1381,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = validate_data(self, X, reset=False)
         return super()._transform(X, self.dictionary)
 
     def inverse_transform(self, X):
