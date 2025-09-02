@@ -1,3 +1,4 @@
+import itertools
 import re
 import time
 import warnings
@@ -108,8 +109,19 @@ def raise_warning():
     warnings.warn("Convergence warning", ConvergenceWarning)
 
 
-@pytest.mark.parametrize("n_jobs", [1, 2])
-@pytest.mark.parametrize("backend", ["loky", "threading", "multiprocessing"])
+def _yield_n_jobs_backend_combinations():
+    n_jobs_values = [1, 2]
+    backend_values = ["loky", "threading", "multiprocessing"]
+    for n_jobs, backend in itertools.product(n_jobs_values, backend_values):
+        if n_jobs == 2 and backend == "loky":
+            # XXX Avoid RuntimeError: The executor underlying Parallel has been shutdown
+            # See https://github.com/joblib/joblib/issues/1743 for more details.
+            yield pytest.param(n_jobs, backend, marks=pytest.mark.thread_unsafe)
+        else:
+            yield n_jobs, backend
+
+
+@pytest.mark.parametrize("n_jobs, backend", _yield_n_jobs_backend_combinations())
 def test_filter_warning_propagates(n_jobs, backend):
     """Check warning propagates to the job."""
     with warnings.catch_warnings():

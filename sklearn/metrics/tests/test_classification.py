@@ -215,8 +215,9 @@ def test_classification_report_output_dict_empty_input():
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
-        # You need "always" for free-threaded with pytest-run-parallel to
-        # capture all the warnings in the zero_division="warn" case
+        # We need "always" instead of "once" for free-threaded with
+        # pytest-run-parallel to capture all the warnings in the
+        # zero_division="warn" case.
         warnings.filterwarnings("always", message=".+Use `zero_division`")
         classification_report(
             y_true, y_pred, zero_division=zero_division, output_dict=True
