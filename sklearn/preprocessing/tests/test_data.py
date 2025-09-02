@@ -2777,7 +2777,7 @@ def test_yeo_johnson_inverse_transform_warning():
 
     assert np.isnan(x_inv)
 
-    
+
 @pytest.mark.skipif(
     sp_version < parse_version("1.12"),
     reason="scipy version 1.12 required for stable yeo-johnson",
