@@ -2550,7 +2550,7 @@ def test_power_transformer_copy_True(method, standardize):
 def test_power_transformer_copy_False(method, standardize):
     # check that when copy=False fit doesn't change X inplace but transform,
     # fit_transform and inverse_transform do.
-    X = X_1col
+    X = X_1col.copy()
     if method == "box-cox":
         X = np.abs(X)
 
@@ -2758,6 +2758,24 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, np.zeros_like(X))
         else:
             assert_allclose(Xt_, X)
+
+
+def test_yeo_johnson_inverse_transform_warning():
+    """Check if a warning is triggered when the inverse transformations of the
+    Box-Cox and Yeo-Johnson transformers return NaN values."""
+    trans = PowerTransformer(method="yeo-johnson")
+    x = np.array([1, 1, 1e10]).reshape(-1, 1)  # extreme skew
+    trans.fit(x)
+    lmbda = trans.lambdas_[0]
+    assert lmbda < 0  # Should be negative
+
+    # any value `psi` for which lambda * psi + 1 <= 0 will result in nan due
+    # to lacking support
+    psi = np.array([10]).reshape(-1, 1)
+    with pytest.warns(UserWarning, match="Some values in column"):
+        x_inv = trans.inverse_transform(psi).item()
+
+    assert np.isnan(x_inv)
 
 
 @pytest.mark.skipif(
