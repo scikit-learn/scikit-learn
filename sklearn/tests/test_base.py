@@ -394,6 +394,7 @@ def test_set_params_updates_valid_params():
     ],
 )
 def test_score_sample_weight(tree, dataset):
+    tree = clone(tree)  # avoid side effects from previous tests.
     rng = np.random.RandomState(0)
     # check that the score with and without sample weights are different
     X, y = dataset
@@ -560,6 +561,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
+# The test modifies global state by changing the the TreeNoVersion class
+@pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
     tree = TreeNoVersion().fit(iris.data, iris.target)

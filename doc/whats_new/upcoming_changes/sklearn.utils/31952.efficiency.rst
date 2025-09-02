@@ -1,0 +1,5 @@
+- The function :func:`linear_model.utils.safe_sparse_dot` was improved by a dedicated
+  Cython routine for the case of `a @ b` with sparse 2-dimensional `a` and `b` and when
+  a dense output is required, i.e., `dense_output=True`. This improves several
+  algorithms in scikit-learn when dealing with sparse arrays (or matrices).
+  By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -684,7 +684,7 @@ def test_metaestimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         WeightedMetaRegressorWarn(
             estimator=LinearRegression().set_fit_request(sample_weight=False)
@@ -697,7 +697,7 @@ def test_estimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         MetaRegressor(estimator=ConsumingRegressorWarn()).fit(
             X, y, sample_weight=my_weights
