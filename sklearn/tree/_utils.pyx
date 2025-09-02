@@ -66,379 +66,178 @@ cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
 
 # =============================================================================
-# WeightedPQueue data structure
+# WeightedHeap data structure
 # =============================================================================
 
-cdef class WeightedPQueue:
-    """A priority queue class, always sorted in increasing order.
+cdef class WeightedHeap:
+    """Binary heap with per-item weights, supporting min-heap and max-heap modes.
+
+    Values are stored sign-adjusted internally so that the ordering logic
+    is always "min-heap" on the stored buffer:
+      - if min_heap: store v
+      - else (max-heap): store -v
 
     Attributes
     ----------
     capacity : intp_t
-        The capacity of the priority queue.
+        Allocated capacity for the heap arrays.
 
-    array_ptr : intp_t
-        The water mark of the priority queue; the priority queue grows from
-        left to right in the array ``array_``. ``array_ptr`` is always
-        less than ``capacity``.
+    size_ : intp_t
+        Current number of elements in the heap.
 
-    array_ : WeightedPQueueRecord*
-        The array of priority queue records. The minimum element is on the
-        left at index 0, and the maximum element is on the right at index
-        ``array_ptr-1``.
+    heap_ : float64_t*
+        Array of (possibly sign-adjusted) values that determines ordering.
+
+    weights_ : float64_t*
+        Parallel array of weights.
+
+    total_weight : float64_t
+        Sum of all weights currently in the heap.
+
+    weighted_sum : float64_t
+        Sum over items of (original_value * weight), i.e. without sign-adjustment.
+
+    min_heap : bint
+        If True, behaves as a min-heap; if False, behaves as a max-heap.
     """
 
-    def __cinit__(self, intp_t capacity):
+    def __cinit__(self, intp_t capacity, bint min_heap=True):
+        if capacity <= 0:
+            capacity = 1
         self.capacity = capacity
-        self.array_ptr = 0
-        safe_realloc(&self.array_, capacity)
+        self.size_ = 0
+        self.min_heap = min_heap
+        self.total_weight = 0.0
+        self.weighted_sum = 0.0
+        self.heap_ = NULL
+        self.weights_ = NULL
+        # safe_realloc can raise MemoryError -> __cinit__ may propagate
+        safe_realloc(&self.heap_, capacity)
+        safe_realloc(&self.weights_, capacity)
 
     def __dealloc__(self):
-        free(self.array_)
+        if self.heap_ != NULL:
+            free(self.heap_)
+        if self.weights_ != NULL:
+            free(self.weights_)
 
     cdef int reset(self) except -1 nogil:
-        """Reset the WeightedPQueue to its state at construction
-
-        Return -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        self.array_ptr = 0
-        # Since safe_realloc can raise MemoryError, use `except -1`
-        safe_realloc(&self.array_, self.capacity)
+        """Reset to construction state (keeps capacity)."""
+        self.size_ = 0
+        self.total_weight = 0.0
+        self.weighted_sum = 0.0
+        # Ensure buffers still allocated (realloc may raise MemoryError)
+        safe_realloc(&self.heap_, self.capacity)
+        safe_realloc(&self.weights_, self.capacity)
         return 0
 
     cdef bint is_empty(self) noexcept nogil:
-        return self.array_ptr <= 0
+        return self.size_ == 0
 
     cdef intp_t size(self) noexcept nogil:
-        return self.array_ptr
+        return self.size_
 
-    cdef int push(self, float64_t data, float64_t weight) except -1 nogil:
-        """Push record on the array.
+    cdef int push(self, float64_t value, float64_t weight) except -1 nogil:
+        """Insert a (value, weight). Returns 0 or raises MemoryError on alloc fail."""
+        cdef intp_t n = self.size_
+        cdef float64_t stored = value if self.min_heap else -value
 
-        Return -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        cdef intp_t array_ptr = self.array_ptr
-        cdef WeightedPQueueRecord* array = NULL
-        cdef intp_t i
-
-        # Resize if capacity not sufficient
-        if array_ptr >= self.capacity:
+        if n >= self.capacity:
             self.capacity *= 2
-            # Since safe_realloc can raise MemoryError, use `except -1`
-            safe_realloc(&self.array_, self.capacity)
+            safe_realloc(&self.heap_, self.capacity)
+            safe_realloc(&self.weights_, self.capacity)
 
-        # Put element as last element of array
-        array = self.array_
-        array[array_ptr].data = data
-        array[array_ptr].weight = weight
+        self.heap_[n] = stored
+        self.weights_[n] = weight
+        self.size_ = n + 1
 
-        # bubble last element up according until it is sorted
-        # in ascending order
-        i = array_ptr
-        while(i != 0 and array[i].data < array[i-1].data):
-            array[i], array[i-1] = array[i-1], array[i]
-            i -= 1
+        self.total_weight += weight
+        self.weighted_sum += value * weight
 
-        # Increase element count
-        self.array_ptr = array_ptr + 1
+        self._perc_up(n)
         return 0
 
-    cdef int remove(self, float64_t data, float64_t weight) noexcept nogil:
-        """Remove a specific value/weight record from the array.
-        Returns 0 if successful, -1 if record not found."""
-        cdef intp_t array_ptr = self.array_ptr
-        cdef WeightedPQueueRecord* array = self.array_
-        cdef intp_t idx_to_remove = -1
-        cdef intp_t i
-
-        if array_ptr <= 0:
+    cdef int pop(self, float64_t* value, float64_t* weight) noexcept nogil:
+        """Pop top element into pointers. Returns 0 on success, -1 if empty."""
+        cdef intp_t n = self.size_
+        if n == 0:
             return -1
 
-        # find element to remove
-        for i in range(array_ptr):
-            if array[i].data == data and array[i].weight == weight:
-                idx_to_remove = i
+        self._peek_raw(value, weight)
+
+        # Update aggregates with *original* value (undo sign for max-heap)
+        cdef float64_t orig_v = value[0]
+        cdef float64_t w = weight[0]
+        self.total_weight -= w
+        self.weighted_sum -= orig_v * w
+
+        # Move last to root and sift down
+        n -= 1
+        self.size_ = n
+        if n > 0:
+            self.heap_[0] = self.heap_[n]
+            self.weights_[0] = self.weights_[n]
+            self._perc_down(0)
+        return 0
+
+    cdef int peek(self, float64_t* value, float64_t* weight) noexcept nogil:
+        """Write top element into pointers without removing it. Returns 0, or -1 if empty."""
+        if self.size_ == 0:
+            return -1
+        self._peek_raw(value, weight)
+        return 0
+
+    cdef float64_t get_total_weight(self) noexcept nogil:
+        return self.total_weight
+
+    cdef float64_t get_weighted_sum(self) noexcept nogil:
+        return self.weighted_sum
+
+    # ----------------------------
+    # Internal helpers (nogil)
+    # ----------------------------
+
+    cdef void _peek_raw(self, float64_t* value, float64_t* weight) noexcept nogil:
+        """Internal: read top with proper sign restoration."""
+        cdef float64_t stored = self.heap_[0]
+        value[0] = stored if self.min_heap else -stored
+        weight[0] = self.weights_[0]
+
+    cdef inline void _swap(self, intp_t i, intp_t j) noexcept nogil:
+        cdef float64_t tv = self.heap_[i]
+        cdef float64_t tw = self.weights_[i]
+        self.heap_[i] = self.heap_[j]
+        self.weights_[i] = self.weights_[j]
+        self.heap_[j] = tv
+        self.weights_[j] = tw
+
+    cdef void _perc_up(self, intp_t i) noexcept nogil:
+        cdef intp_t p
+        while i > 0:
+            p = (i - 1) >> 1
+            if self.heap_[i] < self.heap_[p]:
+                self._swap(i, p)
+                i = p
+            else:
                 break
 
-        if idx_to_remove == -1:
-            return -1
+    cdef void _perc_down(self, intp_t i) noexcept nogil:
+        cdef intp_t n = self.size_
+        cdef intp_t left, right, mc
+        while True:
+            left = (i << 1) + 1
+            right = left + 1
+            if left >= n:
+                return
+            mc = left
+            if right < n and self.heap_[right] < self.heap_[left]:
+                mc = right
+            if self.heap_[i] > self.heap_[mc]:
+                self._swap(i, mc)
+                i = mc
+            else:
+                return
 
-        # shift the elements after the removed element
-        # to the left.
-        for i in range(idx_to_remove, array_ptr-1):
-            array[i] = array[i+1]
-
-        self.array_ptr = array_ptr - 1
-        return 0
-
-    cdef int pop(self, float64_t* data, float64_t* weight) noexcept nogil:
-        """Remove the top (minimum) element from array.
-        Returns 0 if successful, -1 if nothing to remove."""
-        cdef intp_t array_ptr = self.array_ptr
-        cdef WeightedPQueueRecord* array = self.array_
-        cdef intp_t i
-
-        if array_ptr <= 0:
-            return -1
-
-        data[0] = array[0].data
-        weight[0] = array[0].weight
-
-        # shift the elements after the removed element
-        # to the left.
-        for i in range(0, array_ptr-1):
-            array[i] = array[i+1]
-
-        self.array_ptr = array_ptr - 1
-        return 0
-
-    cdef int peek(self, float64_t* data, float64_t* weight) noexcept nogil:
-        """Write the top element from array to a pointer.
-        Returns 0 if successful, -1 if nothing to write."""
-        cdef WeightedPQueueRecord* array = self.array_
-        if self.array_ptr <= 0:
-            return -1
-        # Take first value
-        data[0] = array[0].data
-        weight[0] = array[0].weight
-        return 0
-
-    cdef float64_t get_weight_from_index(self, intp_t index) noexcept nogil:
-        """Given an index between [0,self.current_capacity], access
-        the appropriate heap and return the requested weight"""
-        cdef WeightedPQueueRecord* array = self.array_
-
-        # get weight at index
-        return array[index].weight
-
-    cdef float64_t get_value_from_index(self, intp_t index) noexcept nogil:
-        """Given an index between [0,self.current_capacity], access
-        the appropriate heap and return the requested value"""
-        cdef WeightedPQueueRecord* array = self.array_
-
-        # get value at index
-        return array[index].data
-
-# =============================================================================
-# WeightedMedianCalculator data structure
-# =============================================================================
-
-cdef class WeightedMedianCalculator:
-    """A class to handle calculation of the weighted median from streams of
-    data. To do so, it maintains a parameter ``k`` such that the sum of the
-    weights in the range [0,k) is greater than or equal to half of the total
-    weight. By minimizing the value of ``k`` that fulfills this constraint,
-    calculating the median is done by either taking the value of the sample
-    at index ``k-1`` of ``samples`` (samples[k-1].data) or the average of
-    the samples at index ``k-1`` and ``k`` of ``samples``
-    ((samples[k-1] + samples[k]) / 2).
-
-    Attributes
-    ----------
-    initial_capacity : intp_t
-        The initial capacity of the WeightedMedianCalculator.
-
-    samples : WeightedPQueue
-        Holds the samples (consisting of values and their weights) used in the
-        weighted median calculation.
-
-    total_weight : float64_t
-        The sum of the weights of items in ``samples``. Represents the total
-        weight of all samples used in the median calculation.
-
-    k : intp_t
-        Index used to calculate the median.
-
-    sum_w_0_k : float64_t
-        The sum of the weights from samples[0:k]. Used in the weighted
-        median calculation; minimizing the value of ``k`` such that
-        ``sum_w_0_k`` >= ``total_weight / 2`` provides a mechanism for
-        calculating the median in constant time.
-
-    """
-
-    def __cinit__(self, intp_t initial_capacity):
-        self.initial_capacity = initial_capacity
-        self.samples = WeightedPQueue(initial_capacity)
-        self.total_weight = 0
-        self.k = 0
-        self.sum_w_0_k = 0
-
-    cdef intp_t size(self) noexcept nogil:
-        """Return the number of samples in the
-        WeightedMedianCalculator"""
-        return self.samples.size()
-
-    cdef int reset(self) except -1 nogil:
-        """Reset the WeightedMedianCalculator to its state at construction
-
-        Return -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        # samples.reset (WeightedPQueue.reset) uses safe_realloc, hence
-        # except -1
-        self.samples.reset()
-        self.total_weight = 0
-        self.k = 0
-        self.sum_w_0_k = 0
-        return 0
-
-    cdef int push(self, float64_t data, float64_t weight) except -1 nogil:
-        """Push a value and its associated weight to the WeightedMedianCalculator
-
-        Return -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        cdef int return_value
-        cdef float64_t original_median = 0.0
-
-        if self.size() != 0:
-            original_median = self.get_median()
-        # samples.push (WeightedPQueue.push) uses safe_realloc, hence except -1
-        return_value = self.samples.push(data, weight)
-        self.update_median_parameters_post_push(data, weight,
-                                                original_median)
-        return return_value
-
-    cdef int update_median_parameters_post_push(
-            self, float64_t data, float64_t weight,
-            float64_t original_median) noexcept nogil:
-        """Update the parameters used in the median calculation,
-        namely `k` and `sum_w_0_k` after an insertion"""
-
-        # trivial case of one element.
-        if self.size() == 1:
-            self.k = 1
-            self.total_weight = weight
-            self.sum_w_0_k = self.total_weight
-            return 0
-
-        # get the original weighted median
-        self.total_weight += weight
-
-        if data < original_median:
-            # inserting below the median, so increment k and
-            # then update self.sum_w_0_k accordingly by adding
-            # the weight that was added.
-            self.k += 1
-            # update sum_w_0_k by adding the weight added
-            self.sum_w_0_k += weight
-
-            # minimize k such that sum(W[0:k]) >= total_weight / 2
-            # minimum value of k is 1
-            while(self.k > 1 and ((self.sum_w_0_k -
-                                   self.samples.get_weight_from_index(self.k-1))
-                                  >= self.total_weight / 2.0)):
-                self.k -= 1
-                self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
-            return 0
-
-        if data >= original_median:
-            # inserting above or at the median
-            # minimize k such that sum(W[0:k]) >= total_weight / 2
-            while(self.k < self.samples.size() and
-                  (self.sum_w_0_k < self.total_weight / 2.0)):
-                self.k += 1
-                self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
-            return 0
-
-    cdef int remove(self, float64_t data, float64_t weight) noexcept nogil:
-        """Remove a value from the MedianHeap, removing it
-        from consideration in the median calculation
-        """
-        cdef int return_value
-        cdef float64_t original_median = 0.0
-
-        if self.size() != 0:
-            original_median = self.get_median()
-
-        return_value = self.samples.remove(data, weight)
-        self.update_median_parameters_post_remove(data, weight,
-                                                  original_median)
-        return return_value
-
-    cdef int pop(self, float64_t* data, float64_t* weight) noexcept nogil:
-        """Pop a value from the MedianHeap, starting from the
-        left and moving to the right.
-        """
-        cdef int return_value
-        cdef float64_t original_median = 0.0
-
-        if self.size() != 0:
-            original_median = self.get_median()
-
-        # no elements to pop
-        if self.samples.size() == 0:
-            return -1
-
-        return_value = self.samples.pop(data, weight)
-        self.update_median_parameters_post_remove(data[0],
-                                                  weight[0],
-                                                  original_median)
-        return return_value
-
-    cdef int update_median_parameters_post_remove(
-            self, float64_t data, float64_t weight,
-            float64_t original_median) noexcept nogil:
-        """Update the parameters used in the median calculation,
-        namely `k` and `sum_w_0_k` after a removal"""
-        # reset parameters because it there are no elements
-        if self.samples.size() == 0:
-            self.k = 0
-            self.total_weight = 0
-            self.sum_w_0_k = 0
-            return 0
-
-        # trivial case of one element.
-        if self.samples.size() == 1:
-            self.k = 1
-            self.total_weight -= weight
-            self.sum_w_0_k = self.total_weight
-            return 0
-
-        # get the current weighted median
-        self.total_weight -= weight
-
-        if data < original_median:
-            # removing below the median, so decrement k and
-            # then update self.sum_w_0_k accordingly by subtracting
-            # the removed weight
-
-            self.k -= 1
-            # update sum_w_0_k by removing the weight at index k
-            self.sum_w_0_k -= weight
-
-            # minimize k such that sum(W[0:k]) >= total_weight / 2
-            # by incrementing k and updating sum_w_0_k accordingly
-            # until the condition is met.
-            while(self.k < self.samples.size() and
-                  (self.sum_w_0_k < self.total_weight / 2.0)):
-                self.k += 1
-                self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
-            return 0
-
-        if data >= original_median:
-            # removing above the median
-            # minimize k such that sum(W[0:k]) >= total_weight / 2
-            while(self.k > 1 and ((self.sum_w_0_k -
-                                   self.samples.get_weight_from_index(self.k-1))
-                                  >= self.total_weight / 2.0)):
-                self.k -= 1
-                self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
-            return 0
-
-    cdef float64_t get_median(self) noexcept nogil:
-        """Write the median to a pointer, taking into account
-        sample weights."""
-        if self.sum_w_0_k == (self.total_weight / 2.0):
-            # split median
-            return (self.samples.get_value_from_index(self.k) +
-                    self.samples.get_value_from_index(self.k-1)) / 2.0
-        if self.sum_w_0_k > (self.total_weight / 2.0):
-            # whole median
-            return self.samples.get_value_from_index(self.k-1)
 
 
 def _any_isnan_axis0(const float32_t[:, :] X):
