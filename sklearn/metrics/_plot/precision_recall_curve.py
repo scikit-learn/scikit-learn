@@ -362,11 +362,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 default_chance_level_kwargs, chance_level_kw
             )
             self.chance_level_ = []
-            for prevalence_pos_label_val in prevalence_pos_label:
+            for prevalence in prevalence_pos_label:
                 self.chance_level_.extend(
                     self.ax_.plot(
                         (0, 1),
-                        (prevalence_pos_label_val, prevalence_pos_label_val),
+                        (prevalence, prevalence),
                         **chance_level_line_kw,
                     )
                 )
@@ -860,12 +860,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             cv_results, X, y, sample_weight=sample_weight
         )
 
-        precision_folds, recall_folds, ap_folds, prevalence_pos_label_folds = (
-            [],
-            [],
-            [],
-            [],
-        )
+        precision_folds, recall_folds = [], []
+        ap_folds, prevalence_pos_label_folds = [], []
+
         for estimator, test_indices in zip(
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
@@ -893,9 +890,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             average_precision = average_precision_score(
                 y_true, y_pred, pos_label=pos_label_, sample_weight=sample_weight_fold
             )
-            class_count = Counter(y_true)
-            # would `y_true.shape[0]` be faster?
-            prevalence_pos_label = class_count[pos_label_] / sum(class_count.values())
+            prevalence_pos_label = (
+                np.count_nonzero(y_true == pos_label_) / y_true.shape[0]
+            )
 
             precision_folds.append(precision)
             recall_folds.append(recall)
