@@ -1506,7 +1506,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
         ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
 
-    # FIXME: should be ndarray instead of dict, no difference in classes.
     scores_ : dict
         A dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold.
@@ -1514,21 +1513,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         has shape ``(n_folds, n_cs)`` or ``(n_folds, n_cs, n_l1_ratios)`` if
         ``penalty='elasticnet'``.
 
-    # FIXME: should be float, no difference in classes.
-    C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
-        Array of C that maps to the best scores across every class. If refit is
-        set to False, then for each class, the best C is the average of the
-        C's that correspond to the best scores for each fold.
-        `C_` is of shape(n_classes,) when the problem is binary.
+    C_ : ndarray of shape (n_classes,) or (1,)
+        The value of C that maps to the best score, repeated n_classes times.
+        If refit is set to False, the best C is the average of the
+        C's that correspond to the best score for each fold.
+        `C_` is of shape (1,) when the problem is binary.
 
-    # FIXME: should be float, no difference in classes.
     l1_ratio_ : ndarray of shape (n_classes,) or (n_classes - 1,)
-        Array of l1_ratio that maps to the best scores across every class. If
-        refit is set to False, then for each class, the best l1_ratio is the
-        average of the l1_ratio's that correspond to the best scores for each
-        fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
+        The value of l1_ratio that maps to the best score, repeated n_classes times.
+        If refit is set to False, the best l1_ratio is the average of the
+        l1_ratio's that correspond to the best score for each fold.
+        `l1_ratio_` is of shape (1,) when the problem is binary.
 
-    # FIXME: should be shape (n_folds, n_cs), no difference in classes.
     n_iter_ : ndarray of shape (1, n_folds, n_cs) or (1, n_folds, n_cs, n_l1_ratios)
         Actual number of iterations for all classes, folds and Cs.
         If `penalty='elasticnet'`, the shape is `(1, n_folds, n_cs, n_l1_ratios)`.

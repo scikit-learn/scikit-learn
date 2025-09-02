@@ -1784,6 +1784,10 @@ def test_LogisticRegressionCV_no_refit(penalty, n_classes):
     assert lrcv.C_.shape == (n_classes,)
     assert lrcv.l1_ratio_.shape == (n_classes,)
     assert lrcv.coef_.shape == (n_classes, n_features)
+    # Always the same value:
+    assert_allclose(lrcv.C_, lrcv.C_[0])
+    if l1_ratios is not None:
+        assert_allclose(lrcv.l1_ratio_, lrcv.l1_ratio_[0])
 
 
 @pytest.mark.parametrize("n_classes", (2, 3))
@@ -1828,6 +1832,10 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
     assert scores.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
 
     assert lrcv.n_iter_.shape == (1, n_folds, Cs.size, l1_ratios.size)
+
+    # Always the same value:
+    assert_allclose(lrcv.C_, lrcv.C_[0])
+    assert_allclose(lrcv.l1_ratio_, lrcv.l1_ratio_[0])
 
 
 def test_LogisticRegressionCV_on_folds():
