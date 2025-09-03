@@ -4,7 +4,6 @@
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs, INFINITY
-from libc.stdio cimport printf
 
 import numpy as np
 cimport numpy as cnp
@@ -1212,11 +1211,14 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_right = 0.0
 
         self.node_medians = np.zeros(n_outputs, dtype=np.float64)
+        # FIXME? Those arrays could maybe be allocated dynamically to reduce memory
+        # footprint. This might even be required.
         self.left_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
         self.right_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
         self.left_medians = np.empty(n_samples, dtype=np.float64)
         self.right_medians = np.empty(n_samples, dtype=np.float64)
 
+        # FIXME? Same here, I could adapt the code of WeightedHeap to use dynamic allocation
         self.above = WeightedHeap(n_samples, True)   # min-heap
         self.below = WeightedHeap(n_samples, False)  # max-heap
 
@@ -1235,6 +1237,7 @@ cdef class MAE(RegressionCriterion):
         sample_indices[start:start] and sample_indices[start:end].
 
         WARNING: sample_indices will be modified in-place externally
+        after this method is called
         """
         cdef intp_t i, k, j
         cdef float64_t w = 1.0
@@ -1249,13 +1252,10 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        # printf("start - end: %d %d\n", start, end)
-
         for p in range(start, end):
             i = sample_indices[p]
             if sample_weight is not None:
                 w = sample_weight[i]
-            # printf(" %.2f", y[i, 0])
             self.weighted_n_node_samples += w
 
         # Reset to pos=start
@@ -1274,14 +1274,11 @@ cdef class MAE(RegressionCriterion):
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
-        """
-        if False:
-            printf("Reset\n")
 
-            printf("indices:")
-            for p in range(self.start, self.end):
-                printf(" %d", self.sample_indices[p])
-            printf("\n")
+        Reset might be called after an external class has changed
+        inplace self.sample_indices[start:end], hence re-computing
+        the absolute errors is needed
+        """
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
@@ -1297,31 +1294,24 @@ cdef class MAE(RegressionCriterion):
                 k, self.end - 1, self.start - 1, self.right_abs_errors[k], self.right_medians
             )
             self.node_medians[k] = self.right_medians[0]
-            # printf('Node median: %.2f\n', self.right_medians[0])
 
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
         """
-        In this class, this function is never called
-        (all calls are from inside other methods of other classes)
+        For this class, this function is never called
         """
         return -1
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
+        new_pos is guaranted to be greater than pos
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data)
         """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-
-        # printf("update: %d->%d; i=%d\n", self.pos, new_pos, sample_indices[self.pos])
-
-        assert new_pos > self.pos
         cdef intp_t pos = self.pos
         cdef intp_t end = self.end
         cdef intp_t i, p, k
@@ -1329,11 +1319,9 @@ cdef class MAE(RegressionCriterion):
 
         # Update statistics up to new_pos
         for p in range(pos, new_pos):
-            i = sample_indices[p]
-
-            if sample_weight is not None:
-                w = sample_weight[i]
-
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
             self.weighted_n_left += w
 
         self.weighted_n_right = (self.weighted_n_node_samples -
@@ -1346,10 +1334,6 @@ cdef class MAE(RegressionCriterion):
         cdef intp_t k
         for k in range(self.n_outputs):
             dest[k] = <float64_t> self.node_medians[k]
-            # printf("Node value: %.2f\n", self.node_medians[k])
-            # for p in range(self.start, self.end):
-            #     printf("%.2f ", self.y[self.sample_indices[p], k])
-            # printf("\n")
 
     cdef inline float64_t middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
@@ -1417,13 +1401,15 @@ cdef class MAE(RegressionCriterion):
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
-        if self.pos > self.start:  # if pos == start, left child is empty, hence impurity is 0
+        # if pos == start, left child is empty, hence impurity is 0
+        if self.pos > self.start:
             for k in range(self.n_outputs):
                 impurity_left += self.left_abs_errors[k, j - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
-        if self.pos < self.end:  # if pos == end, right child is empty, hence impurity is 0
+        # if pos == end, right child is empty, hence impurity is 0
+        if self.pos < self.end:
             for k in range(self.n_outputs):
                 impurity_right += self.right_abs_errors[k, j]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *

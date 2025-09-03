@@ -6,7 +6,6 @@ from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 from libc.math cimport isnan
 from libc.math cimport fabs
-from libc.stdio cimport printf
 
 import numpy as np
 cimport numpy as cnp
@@ -259,7 +258,8 @@ cdef void precompute_absolute_errors(
     float64_t[::1] abs_errors,
     float64_t[::1] medians
 ) noexcept nogil:
-    """Fill `abs_errors` with prefix minimum AEs for (y[:i], w[:i]), i in [1, n-1].
+    """Fill `abs_errors` with the optimal AEs for (y[:i], w[:i])
+    i in [1, n].
 
     Parameters
     ----------
@@ -338,7 +338,7 @@ def _py_precompute_absolute_errors(
     const intp_t[:] sample_indices,
     bint suffix=False
 ):
-    """ For testing """
+    """Used for testing precompute_absolute_errors"""
     cdef:
         intp_t n = sample_weight.size
         WeightedHeap above = WeightedHeap(n, True)

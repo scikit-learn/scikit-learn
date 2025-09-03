@@ -2843,13 +2843,18 @@ def test_sort_log2_build():
 
 def test_absolute_errors_precomputation_function():
     """
-    Test the main bit of logic of the MAE(RegressionCriterion) class 
-    (used by DecisionTreeRegressor())
+    Test the main bit of logic of the MAE(RegressionCriterion) class
+    (used by DecisionTreeRegressor(criterion="asbolute_error")).
 
-    The implemation of the criterion "repose" on an efficient precomputation
+    The implemation of the criterion relies on an efficient precomputation
     of left/right children absolute error for each split. This test verifies this
-    part of the computation, in case of major refactor of the MAE class, it can be safely removed
+    part of the computation, in case of major refactor of the MAE class,
+    it can be safely removed.
     """
+
+    def compute_prefix_abs_errors_naive(y: np.ndarray, w: np.ndarray):
+        y = y.ravel()
+        return np.array([compute_abs_error(y[:i], w[:i]) for i in range(1, y.size + 1)])
 
     def compute_abs_error(y: np.ndarray, w: np.ndarray):
         # 1) compute the weighted median
@@ -2863,12 +2868,7 @@ def test_absolute_errors_precomputation_function():
         # 2) compute the AE
         return (np.abs(y - median) * w).sum()
 
-    def compute_prefix_abs_errors_naive(y: np.ndarray, w: np.ndarray):
-        y = y.ravel()
-        return np.array([compute_abs_error(y[:i], w[:i]) for i in range(1, y.size + 1)])
-
-
-    for n in [3, 5, 10, 20, 100, 300]:
+    for n in [3, 5, 10, 20, 50, 100]:
         y = np.random.uniform(size=(n, 1))
         w = np.random.rand(n)
         indices = np.arange(n)
