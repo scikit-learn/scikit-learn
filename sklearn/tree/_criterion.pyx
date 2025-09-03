@@ -1254,8 +1254,8 @@ cdef class MAE(RegressionCriterion):
         for k in range(self.n_outputs - 1, -1, -1):
             # TODO: think about indices alignment here and in update/children_impurity etc.
             # it's likely wrong for now
-            self._precompute_absolute_errors(k, start, end, self.left_abs_errors[k], self.left_medians)
-            self._precompute_absolute_errors(k, end - 1, start - 1, self.right_abs_errors[k], self.right_medians)
+            self._precompute_absolute_errors(k, start, 1, self.left_abs_errors[k], self.left_medians)
+            self._precompute_absolute_errors(k, end - 1, -1, self.right_abs_errors[k], self.right_medians)
             self.node_medians[k] = self.right_medians[0]
 
         # Reset to pos=start
@@ -1266,7 +1266,7 @@ cdef class MAE(RegressionCriterion):
         self,
         intp_t k,
         intp_t start,
-        intp_t end,
+        intp_t step,
         float64_t[::1] abs_errors,
         float64_t[::1] medians
     ) noexcept nogil:
@@ -1285,11 +1285,9 @@ cdef class MAE(RegressionCriterion):
         cdef const intp_t[:] sample_indices = self.sample_indices
         cdef const float64_t[:, ::1] ys = self.y
         cdef intp_t step, j, p, i
-        if start < end:
-            step = 1
+        if step > 0:
             j = 0
         else:
-            step = -1
             j = self.n_node_samples - 1
 
         self.above.reset()
@@ -1472,13 +1470,15 @@ cdef class MAE(RegressionCriterion):
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
-        for k in range(self.n_outputs):
-            impurity_left += self.left_abs_errors[k, j]
+        if j > 0:
+            for k in range(self.n_outputs):
+                impurity_left += self.left_abs_errors[k, j - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
-        for k in range(self.n_outputs):
-            impurity_right += self.right_abs_errors[k, j]
+        if self.pos < self.end:
+            for k in range(self.n_outputs):
+                impurity_right += self.right_abs_errors[k, j]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
 
