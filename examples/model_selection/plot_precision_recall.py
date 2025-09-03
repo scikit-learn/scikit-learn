@@ -277,7 +277,9 @@ display = PrecisionRecallDisplay(
     precision=precision["micro"],
     average_precision=average_precision["micro"],
 )
-display.plot(ax=ax, name="Micro-average precision-recall", color="gold")
+display.plot(
+    ax=ax, name="Micro-average precision-recall", curve_kwargs={"color": "gold"}
+)
 
 for i, color in zip(range(n_classes), colors):
     display = PrecisionRecallDisplay(
@@ -286,7 +288,10 @@ for i, color in zip(range(n_classes), colors):
         average_precision=average_precision[i],
     )
     display.plot(
-        ax=ax, name=f"Precision-recall for class {i}", color=color, despine=True
+        ax=ax,
+        name=f"Precision-recall for class {i}",
+        curve_kwargs={"color": color},
+        despine=True,
     )
 
 # add the legend for the iso-f1 curves
