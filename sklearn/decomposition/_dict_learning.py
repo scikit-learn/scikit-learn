@@ -1336,7 +1336,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        """Validate the input data.
+        """Only validate the parameters of the estimator.
+
+        This method allows to: (i) validate the parameters of the estimator and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
