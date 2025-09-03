@@ -266,35 +266,6 @@ def supported_float_dtypes(xp, device=None):
     return tuple(valid_float_dtypes)
 
 
-def ensure_common_namespace_device(reference, *arrays):
-    """Ensure that all arrays use the same namespace and device as reference.
-
-    If necessary the arrays are moved to the same namespace and device as
-    the reference array.
-
-    Parameters
-    ----------
-    reference : array
-        Reference array.
-
-    *arrays : array
-        Arrays to check.
-
-    Returns
-    -------
-    arrays : list
-        Arrays with the same namespace and device as reference.
-    """
-    xp, is_array_api = get_namespace(reference)
-
-    if is_array_api:
-        device_ = device(reference)
-        # Move arrays to the same namespace and device as the reference array.
-        return [xp.asarray(a, device=device_) for a in arrays]
-    else:
-        return arrays
-
-
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     """Filter arrays to exclude None and/or specific types.
 
