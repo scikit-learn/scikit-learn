@@ -127,6 +127,7 @@ cdef class WeightedHeap:
         self.total_weight = 0.0
         self.weighted_sum = 0.0
         # Ensure buffers still allocated (realloc may raise MemoryError)
+        # TODO: is this really needed?
         safe_realloc(&self.heap_, self.capacity)
         safe_realloc(&self.weights_, self.capacity)
         return 0
@@ -180,24 +181,29 @@ cdef class WeightedHeap:
             self._perc_down(0)
         return 0
 
-    cdef int peek(self, float64_t* value, float64_t* weight) noexcept nogil:
-        """Write top element into pointers without removing it. Returns 0, or -1 if empty."""
-        if self.size_ == 0:
-            return -1
-        self._peek_raw(value, weight)
-        return 0
-
     cdef float64_t get_total_weight(self) noexcept nogil:
         return self.total_weight
 
     cdef float64_t get_weighted_sum(self) noexcept nogil:
         return self.weighted_sum
 
+    cdef float64_t top_weight(self) noexcept nogil:
+        if self.size_ == 0:
+            return 0.0
+        return self.weights_[0]
+
+    cdef float64_t top(self) noexcept nogil:
+        if self.size_ == 0:
+            return 0.0
+        cdef float64_t s = self.heap_[0]
+        return s if self.min_heap else -s
+
+
     # ----------------------------
     # Internal helpers (nogil)
     # ----------------------------
 
-    cdef void _peek_raw(self, float64_t* value, float64_t* weight) noexcept nogil:
+    cdef inline void _peek_raw(self, float64_t* value, float64_t* weight) noexcept nogil:
         """Internal: read top with proper sign restoration."""
         cdef float64_t stored = self.heap_[0]
         value[0] = stored if self.min_heap else -stored
@@ -211,7 +217,7 @@ cdef class WeightedHeap:
         self.heap_[j] = tv
         self.weights_[j] = tw
 
-    cdef void _perc_up(self, intp_t i) noexcept nogil:
+    cdef inline void _perc_up(self, intp_t i) noexcept nogil:
         cdef intp_t p
         while i > 0:
             p = (i - 1) >> 1
@@ -221,7 +227,7 @@ cdef class WeightedHeap:
             else:
                 break
 
-    cdef void _perc_down(self, intp_t i) noexcept nogil:
+    cdef inline void _perc_down(self, intp_t i) noexcept nogil:
         cdef intp_t n = self.size_
         cdef intp_t left, right, mc
         while True:

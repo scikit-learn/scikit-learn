@@ -1186,12 +1186,6 @@ cdef class MAE(RegressionCriterion):
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""
 
-    cdef float64_t[::1] node_medians
-    cdef float64_t[:, ::1] left_abs_errors
-    cdef float64_t[:, ::1] right_abs_errors
-    cdef float64_t[::1] left_medians
-    cdef float64_t[::1] right_medians
-
     def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
 
@@ -1220,6 +1214,9 @@ cdef class MAE(RegressionCriterion):
         self.right_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
         self.left_medians = np.empty(n_samples, dtype=np.float64)
         self.right_medians = np.empty(n_samples, dtype=np.float64)
+
+        self.above = WeightedHeap(n_samples, True)   # min-heap
+        self.below = WeightedHeap(n_samples, False)  # max-heap
 
     cdef int init(
         self,
@@ -1250,15 +1247,15 @@ cdef class MAE(RegressionCriterion):
 
         for p in range(start, end):
             i = sample_indices[p]
-            if self.sample_weight is not None:
-                w = self.sample_weight[i]
+            if sample_weight is not None:
+                w = sample_weight[i]
             self.weighted_n_node_samples += w
 
         for k in range(self.n_outputs - 1, -1, -1):
             # TODO: think about indices alignment here and in update/children_impurity etc.
             # it's likely wrong for now
-            self._precompute_absolute_errors(k, start, end, self.left_abs_errors, self.left_medians)
-            self._precompute_absolute_errors(k, end - 1, start - 1, self.right_abs_errors, self.right_medians)
+            self._precompute_absolute_errors(k, start, end, self.left_abs_errors[k], self.left_medians)
+            self._precompute_absolute_errors(k, end - 1, start - 1, self.right_abs_errors[k], self.right_medians)
             self.node_medians[k] = self.right_medians[0]
 
         # Reset to pos=start
@@ -1266,11 +1263,13 @@ cdef class MAE(RegressionCriterion):
         return 0
 
     cdef void _precompute_absolute_errors(
-            intp_t k,
-            intp_t start,
-            intp_t end,
-            float64_t[:, ::1] abs_errors,
-            float64_t[::1] medians) noexcept nogil:
+        self,
+        intp_t k,
+        intp_t start,
+        intp_t end,
+        float64_t[::1] abs_errors,
+        float64_t[::1] medians
+    ) noexcept nogil:
         """Fill `abs_errors` with prefix minimum AEs for (y[:i], w[:i]), i in [1, n-1].
 
         Parameters
@@ -1282,7 +1281,10 @@ cdef class MAE(RegressionCriterion):
         abs_errors : 1D float64_t[::1]
             Output buffer, must have shape (n,).
         """
-        cdef intp_t n, step, j, p, i
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef const float64_t[:, ::1] ys = self.y
+        cdef intp_t step, j, p, i
         if start < end:
             step = 1
             j = 0
@@ -1290,8 +1292,8 @@ cdef class MAE(RegressionCriterion):
             step = -1
             j = self.n_node_samples - 1
 
-        cdef WeightedHeap above = WeightedHeap(self.n_node_samples, True)   # min-heap
-        cdef WeightedHeap below = WeightedHeap(self.n_node_samples, False)  # max-heap
+        self.above.reset()
+        self.below.reset()
         cdef float64_t y
         cdef float64_t w = 1.0
         cdef float64_t val = 0.0
@@ -1302,39 +1304,40 @@ cdef class MAE(RegressionCriterion):
         cdef float64_t half_weight
 
         p = start
-        for _ in range(n):
-            i = self.sample_indices[p]
+        for _ in range(self.n_node_samples):
+            i = sample_indices[p]
             if sample_weight is not None:
-                w = self.sample_weight[i]
-            y = self.y[i, k]
+                w = sample_weight[i]
+            y = ys[i, k]
 
             # Insert into the appropriate heap
-            if below.is_empty():
-                above.push(y, w)
+            if self.below.is_empty():
+                self.above.push(y, w)
             else:
-                below.peek(&below_top, &below_wt)
-                if y > below_top:
-                    above.push(y, w)
+                if y > self.below.top():
+                    self.above.push(y, w)
                 else:
-                    below.push(y, w)
+                    self.below.push(y, w)
 
-            half_weight = (above.get_total_weight() + below.get_total_weight()) / 2.0
+            half_weight = (self.above.get_total_weight() + self.below.get_total_weight()) / 2.0
 
             # Rebalance heaps
-            while above.get_total_weight() < half_weight and not below.is_empty():
-                if below.pop(&val, &wt) == 0:
-                    above.push(val, wt)
-            while (not above.is_empty()
-                and (above.get_total_weight() - above.top_weight()) > half_weight):
-                if above.pop(&val, &wt) == 0:
-                    below.push(val, wt)
+            while self.above.get_total_weight() < half_weight and not self.below.is_empty():
+                if self.below.pop(&val, &wt) == 0:
+                    self.above.push(val, wt)
+            while (not self.above.is_empty()
+                and (self.above.get_total_weight() - self.above.top_weight()) > half_weight):
+                if self.above.pop(&val, &wt) == 0:
+                    self.below.push(val, wt)
 
             # Current median
-            above.peek(&median, &wt)
+            median = self.above.top()
             medians[j] = median
-            abs_errors[k, j] = ((below.get_total_weight() - above.get_total_weight()) * median
-                    - below.get_weighted_sum()
-                    + above.get_weighted_sum())
+            abs_errors[j] = (
+                (self.below.get_total_weight() - self.above.get_total_weight()) * median
+                - self.below.get_weighted_sum()
+                + self.above.get_weighted_sum()
+            )
             p += step
             j += step
 
