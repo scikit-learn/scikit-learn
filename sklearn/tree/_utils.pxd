@@ -70,5 +70,17 @@ cdef class WeightedHeap:
     cdef void _perc_up(self, intp_t) noexcept nogil
     cdef void _perc_down(self, intp_t) noexcept nogil
 
+cdef void precompute_absolute_errors(
+    const float64_t[:, ::1] ys,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    WeightedHeap above,
+    WeightedHeap below,
+    intp_t k,
+    intp_t start,
+    intp_t end,
+    float64_t[::1] abs_errors,
+    float64_t[::1] medians
+) noexcept nogil
 
 cdef float64_t log(float64_t x) noexcept nogil

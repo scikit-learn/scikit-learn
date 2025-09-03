@@ -4,6 +4,7 @@
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs, INFINITY
+from libc.stdio cimport printf
 
 import numpy as np
 cimport numpy as cnp
@@ -13,6 +14,7 @@ from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
 from ._utils cimport WeightedHeap
+from ._utils cimport precompute_absolute_errors
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
@@ -1231,6 +1233,8 @@ cdef class MAE(RegressionCriterion):
 
         This initializes the criterion at node sample_indices[start:end] and children
         sample_indices[start:start] and sample_indices[start:end].
+
+        WARNING: sample_indices will be modified in-place externally
         """
         cdef intp_t i, k, j
         cdef float64_t w = 1.0
@@ -1245,99 +1249,18 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
+        # printf("start - end: %d %d\n", start, end)
+
         for p in range(start, end):
             i = sample_indices[p]
             if sample_weight is not None:
                 w = sample_weight[i]
+            # printf(" %.2f", y[i, 0])
             self.weighted_n_node_samples += w
-
-        for k in range(self.n_outputs - 1, -1, -1):
-            # TODO: think about indices alignment here and in update/children_impurity etc.
-            # it's likely wrong for now
-            self._precompute_absolute_errors(k, start, 1, self.left_abs_errors[k], self.left_medians)
-            self._precompute_absolute_errors(k, end - 1, -1, self.right_abs_errors[k], self.right_medians)
-            self.node_medians[k] = self.right_medians[0]
 
         # Reset to pos=start
         self.reset()
         return 0
-
-    cdef void _precompute_absolute_errors(
-        self,
-        intp_t k,
-        intp_t start,
-        intp_t step,
-        float64_t[::1] abs_errors,
-        float64_t[::1] medians
-    ) noexcept nogil:
-        """Fill `abs_errors` with prefix minimum AEs for (y[:i], w[:i]), i in [1, n-1].
-
-        Parameters
-        ----------
-        y : 1D float64_t[::1]
-            Values.
-        w : 1D float64_t[::1]
-            Sample weights.
-        abs_errors : 1D float64_t[::1]
-            Output buffer, must have shape (n,).
-        """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef const float64_t[:, ::1] ys = self.y
-        cdef intp_t step, j, p, i
-        if step > 0:
-            j = 0
-        else:
-            j = self.n_node_samples - 1
-
-        self.above.reset()
-        self.below.reset()
-        cdef float64_t y
-        cdef float64_t w = 1.0
-        cdef float64_t val = 0.0
-        cdef float64_t wt = 0.0
-        cdef float64_t below_top = 0.0
-        cdef float64_t below_wt = 0.0
-        cdef float64_t median = 0.0
-        cdef float64_t half_weight
-
-        p = start
-        for _ in range(self.n_node_samples):
-            i = sample_indices[p]
-            if sample_weight is not None:
-                w = sample_weight[i]
-            y = ys[i, k]
-
-            # Insert into the appropriate heap
-            if self.below.is_empty():
-                self.above.push(y, w)
-            else:
-                if y > self.below.top():
-                    self.above.push(y, w)
-                else:
-                    self.below.push(y, w)
-
-            half_weight = (self.above.get_total_weight() + self.below.get_total_weight()) / 2.0
-
-            # Rebalance heaps
-            while self.above.get_total_weight() < half_weight and not self.below.is_empty():
-                if self.below.pop(&val, &wt) == 0:
-                    self.above.push(val, wt)
-            while (not self.above.is_empty()
-                and (self.above.get_total_weight() - self.above.top_weight()) > half_weight):
-                if self.above.pop(&val, &wt) == 0:
-                    self.below.push(val, wt)
-
-            # Current median
-            median = self.above.top()
-            medians[j] = median
-            abs_errors[j] = (
-                (self.below.get_total_weight() - self.above.get_total_weight()) * median
-                - self.below.get_weighted_sum()
-                + self.above.get_weighted_sum()
-            )
-            p += step
-            j += step
 
     cdef void init_missing(self, intp_t n_missing) noexcept nogil:
         """Raise error if n_missing != 0."""
@@ -1352,23 +1275,38 @@ cdef class MAE(RegressionCriterion):
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
+        if False:
+            printf("Reset\n")
+
+            printf("indices:")
+            for p in range(self.start, self.end):
+                printf(" %d", self.sample_indices[p])
+            printf("\n")
+
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
+        for k in range(self.n_outputs - 1, -1, -1):
+            precompute_absolute_errors(
+                self.y, self.sample_weight, self.sample_indices, self.above, self.below,
+                k, self.start, self.end, self.left_abs_errors[k], self.left_medians
+            )
+            precompute_absolute_errors(
+                self.y, self.sample_weight, self.sample_indices, self.above, self.below,
+                k, self.end - 1, self.start - 1, self.right_abs_errors[k], self.right_medians
+            )
+            self.node_medians[k] = self.right_medians[0]
+            # printf('Node median: %.2f\n', self.right_medians[0])
+
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
-        """Reset the criterion at pos=end.
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
         """
-        self.weighted_n_right = 0.0
-        self.weighted_n_left = self.weighted_n_node_samples
-        self.pos = self.end
-
-        return 0
+        In this class, this function is never called
+        (all calls are from inside other methods of other classes)
+        """
+        return -1
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
@@ -1381,6 +1319,9 @@ cdef class MAE(RegressionCriterion):
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
 
+        # printf("update: %d->%d; i=%d\n", self.pos, new_pos, sample_indices[self.pos])
+
+        assert new_pos > self.pos
         cdef intp_t pos = self.pos
         cdef intp_t end = self.end
         cdef intp_t i, p, k
@@ -1405,6 +1346,10 @@ cdef class MAE(RegressionCriterion):
         cdef intp_t k
         for k in range(self.n_outputs):
             dest[k] = <float64_t> self.node_medians[k]
+            # printf("Node value: %.2f\n", self.node_medians[k])
+            # for p in range(self.start, self.end):
+            #     printf("%.2f ", self.y[self.sample_indices[p], k])
+            # printf("\n")
 
     cdef inline float64_t middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
@@ -1470,13 +1415,13 @@ cdef class MAE(RegressionCriterion):
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
-        if j > 0:
+        if self.pos > self.start:  # if pos == start, left child is empty, hence impurity is 0
             for k in range(self.n_outputs):
                 impurity_left += self.left_abs_errors[k, j - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
-        if self.pos < self.end:
+        if self.pos < self.end:  # if pos == end, right child is empty, hence impurity is 0
             for k in range(self.n_outputs):
                 impurity_right += self.right_abs_errors[k, j]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *

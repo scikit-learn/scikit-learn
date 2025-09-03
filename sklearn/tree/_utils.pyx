@@ -5,6 +5,8 @@ from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 from libc.math cimport isnan
+from libc.math cimport fabs
+from libc.stdio cimport printf
 
 import numpy as np
 cimport numpy as cnp
@@ -244,6 +246,118 @@ cdef class WeightedHeap:
             else:
                 return
 
+
+cdef void precompute_absolute_errors(
+    const float64_t[:, ::1] ys,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    WeightedHeap above,
+    WeightedHeap below,
+    intp_t k,
+    intp_t start,
+    intp_t end,
+    float64_t[::1] abs_errors,
+    float64_t[::1] medians
+) noexcept nogil:
+    """Fill `abs_errors` with prefix minimum AEs for (y[:i], w[:i]), i in [1, n-1].
+
+    Parameters
+    ----------
+    y : 1D float64_t[::1]
+        Values.
+    w : 1D float64_t[::1]
+        Sample weights.
+    abs_errors : 1D float64_t[::1]
+        Output buffer, must have shape (n,).
+    """
+    cdef intp_t j, p, i, step, n
+    if start < end:
+        j = 0
+        step = 1
+        n = end - start
+    else:
+        n = start - end
+        step = -1
+        j = n - 1
+
+    above.reset()
+    below.reset()
+    cdef float64_t y
+    cdef float64_t w = 1.0
+    cdef float64_t val = 0.0
+    cdef float64_t wt = 0.0
+    cdef float64_t below_top = 0.0
+    cdef float64_t below_wt = 0.0
+    cdef float64_t median = 0.0
+    cdef float64_t half_weight
+
+    p = start
+    for _ in range(n):
+        i = sample_indices[p]
+        if sample_weight is not None:
+            w = sample_weight[i]
+        y = ys[i, k]
+
+        # Insert into the appropriate heap
+        if below.is_empty():
+            above.push(y, w)
+        else:
+            if y > below.top():
+                above.push(y, w)
+            else:
+                below.push(y, w)
+
+        half_weight = (above.get_total_weight() + below.get_total_weight()) / 2.0
+
+        # Rebalance heaps
+        while above.get_total_weight() < half_weight and not below.is_empty():
+            if below.pop(&val, &wt) == 0:
+                above.push(val, wt)
+        while (not above.is_empty()
+            and (above.get_total_weight() - above.top_weight()) >= half_weight):
+            if above.pop(&val, &wt) == 0:
+                below.push(val, wt)
+
+        # Current median
+        if above.get_total_weight() > half_weight + 1e-5 * fabs(half_weight):
+            median = above.top()
+        else:  # above and below weight are almost exaclty equals
+            median = (above.top() + below.top()) / 2.
+        medians[j] = median
+        abs_errors[j] = (
+            (below.get_total_weight() - above.get_total_weight()) * median
+            - below.get_weighted_sum()
+            + above.get_weighted_sum()
+        )
+        p += step
+        j += step
+
+def _py_precompute_absolute_errors(
+    const float64_t[:, ::1] ys,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    bint suffix=False
+):
+    """ For testing """
+    cdef:
+        intp_t n = sample_weight.size
+        WeightedHeap above = WeightedHeap(n, True)
+        WeightedHeap below = WeightedHeap(n, False)
+        intp_t k = 0
+        intp_t start = 0
+        intp_t end = n
+        float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
+        float64_t[::1] medians = np.zeros(n, dtype=np.float64)
+
+    if suffix:
+        start = n - 1
+        end = -1
+
+    precompute_absolute_errors(
+        ys, sample_weight, sample_indices, above, below,
+        k, start, end, abs_errors, medians
+    )
+    return np.asarray(abs_errors)
 
 
 def _any_isnan_axis0(const float32_t[:, :] X):

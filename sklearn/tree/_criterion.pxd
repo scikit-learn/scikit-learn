@@ -119,12 +119,3 @@ cdef class MAE(RegressionCriterion):
     cdef float64_t[::1] right_medians
     cdef WeightedHeap above
     cdef WeightedHeap below
-
-    cdef inline void _precompute_absolute_errors(
-        self,
-        intp_t k,
-        intp_t start,
-        intp_t end,
-        float64_t[::1] abs_errors,
-        float64_t[::1] medians
-    ) noexcept nogil
