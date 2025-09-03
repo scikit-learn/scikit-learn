@@ -199,7 +199,6 @@ cdef class WeightedHeap:
         cdef float64_t s = self.heap_[0]
         return s if self.min_heap else -s
 
-
     # ----------------------------
     # Internal helpers (nogil)
     # ----------------------------
@@ -286,8 +285,6 @@ cdef void precompute_absolute_errors(
     cdef float64_t w = 1.0
     cdef float64_t val = 0.0
     cdef float64_t wt = 0.0
-    cdef float64_t below_top = 0.0
-    cdef float64_t below_wt = 0.0
     cdef float64_t median = 0.0
     cdef float64_t half_weight
 
@@ -313,15 +310,17 @@ cdef void precompute_absolute_errors(
         while above.get_total_weight() < half_weight and not below.is_empty():
             if below.pop(&val, &wt) == 0:
                 above.push(val, wt)
-        while (not above.is_empty()
-            and (above.get_total_weight() - above.top_weight()) >= half_weight):
+        while (
+            not above.is_empty()
+            and (above.get_total_weight() - above.top_weight()) >= half_weight
+        ):
             if above.pop(&val, &wt) == 0:
                 below.push(val, wt)
 
         # Current median
         if above.get_total_weight() > half_weight + 1e-5 * fabs(half_weight):
             median = above.top()
-        else:  # above and below weight are almost exaclty equals
+        else:  # above and below weight are almost exactly equals
             median = (above.top() + below.top()) / 2.
         medians[j] = median
         abs_errors[j] = (
@@ -331,6 +330,7 @@ cdef void precompute_absolute_errors(
         )
         p += step
         j += step
+
 
 def _py_precompute_absolute_errors(
     const float64_t[:, ::1] ys,
