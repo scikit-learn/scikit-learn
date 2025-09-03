@@ -2846,7 +2846,7 @@ def test_absolute_errors_precomputation_function():
     Test the main bit of logic of the MAE(RegressionCriterion) class
     (used by DecisionTreeRegressor(criterion="asbolute_error")).
 
-    The implemation of the criterion relies on an efficient precomputation
+    The implementation of the criterion relies on an efficient precomputation
     of left/right children absolute error for each split. This test verifies this
     part of the computation, in case of major refactor of the MAE class,
     it can be safely removed.

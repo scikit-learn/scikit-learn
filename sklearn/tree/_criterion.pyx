@@ -1305,7 +1305,7 @@ cdef class MAE(RegressionCriterion):
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
-        new_pos is guaranted to be greater than pos
+        new_pos is guaranteed to be greater than pos
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
