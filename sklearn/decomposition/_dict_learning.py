@@ -1341,7 +1341,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Only used for data validation.
+            Training data. Only used for input validation.
 
         y : Ignored
             Not used, present for API consistency by convention.
