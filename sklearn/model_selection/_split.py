@@ -51,6 +51,7 @@ __all__ = [
     "StratifiedGroupKFold",
     "StratifiedKFold",
     "StratifiedShuffleSplit",
+    "TemporalSplit",
     "check_cv",
     "train_test_split",
 ]
@@ -1311,6 +1312,237 @@ class TimeSeriesSplit(_BaseKFold):
                     indices[:train_end],
                     indices[test_start : test_start + test_size],
                 )
+
+
+class TemporalSplit(_BaseKFold):
+    """Temporal cross-validator with rolling window for time-series data.
+    
+    This cross-validator implements a rolling window approach for time-series
+    cross-validation, where both training and test sets have fixed sizes and
+    the window slides forward through time. Unlike TimeSeriesSplit, which uses
+    expanding windows, TemporalSplit maintains constant window sizes.
+    
+    This approach is particularly useful for:
+    - Financial time series where older data may be less relevant
+    - Data with structural breaks or concept drift
+    - Scenarios requiring consistent evaluation periods
+    
+    Read more in the :ref:`User Guide <time_series_split>`.
+    
+    .. versionadded:: 1.7
+    
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of splits. Must be at least 2.
+        
+    train_size : int, default=None
+        Size of the training window. If None, uses expanding windows
+        like TimeSeriesSplit.
+        
+    test_size : int, default=1
+        Size of the test window.
+        
+    gap : int, default=0
+        Number of samples to exclude from the end of each train set before
+        the test set.
+        
+    step_size : int, default=None
+        Step size for sliding the window. If None, defaults to test_size
+        (non-overlapping windows).
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import TemporalSplit
+    >>> X = np.arange(10).reshape(-1, 1)
+    >>> ts = TemporalSplit(n_splits=3, train_size=3, test_size=1)
+    >>> for train_idx, test_idx in ts.split(X):
+    ...     print(f"Train: {train_idx}, Test: {test_idx}")
+    Train: [0 1 2], Test: [3]
+    Train: [1 2 3], Test: [4]
+    Train: [2 3 4], Test: [5]
+    
+    >>> # With gap
+    >>> ts = TemporalSplit(n_splits=2, train_size=3, test_size=1, gap=1)
+    >>> for train_idx, test_idx in ts.split(X):
+    ...     print(f"Train: {train_idx}, Test: {test_idx}")
+    Train: [0 1 2], Test: [4]
+    Train: [1 2 3], Test: [5]
+    
+    Notes
+    -----
+    This cross-validator generates a fixed number of splits with sliding
+    windows. The total number of samples required is at least:
+    train_size + gap + (n_splits - 1) * step_size + test_size
+    """
+    
+    def __init__(self, n_splits=5, *, train_size=None, test_size=1, gap=0, step_size=None):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+        self.train_size = train_size
+        self.test_size = test_size
+        self.gap = gap
+        self.step_size = step_size if step_size is not None else test_size
+        
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+            
+        y : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+            
+        groups : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+            
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+            
+        test : ndarray
+            The testing set indices for that split.
+        """
+        if groups is not None:
+            warnings.warn(
+                f"The groups parameter is ignored by {self.__class__.__name__}",
+                UserWarning,
+            )
+        return self._split(X)
+    
+    def _split(self, X):
+        """Generate indices to split data into training and test set.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+            
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+            
+        test : ndarray
+            The testing set indices for that split.
+        """
+        (X,) = indexable(X)
+        n_samples = _num_samples(X)
+        
+        # If train_size is None, fall back to expanding window behavior
+        if self.train_size is None:
+            warnings.warn(
+                "train_size is None, falling back to expanding window behavior. "
+                "Consider using TimeSeriesSplit for expanding windows.",
+                UserWarning
+            )
+            # Delegate to TimeSeriesSplit-like behavior
+            n_folds = self.n_splits + 1
+            test_size = self.test_size
+            
+            if n_folds > n_samples:
+                raise ValueError(
+                    f"Cannot have number of folds={n_folds} greater"
+                    f" than the number of samples={n_samples}."
+                )
+            if n_samples - self.gap - (test_size * self.n_splits) <= 0:
+                raise ValueError(
+                    f"Too many splits={self.n_splits} for number of samples"
+                    f"={n_samples} with test_size={test_size} and gap={self.gap}."
+                )
+                
+            indices = np.arange(n_samples)
+            test_starts = range(n_samples - self.n_splits * test_size, n_samples, test_size)
+            
+            for test_start in test_starts:
+                train_end = test_start - self.gap
+                yield (
+                    indices[:train_end],
+                    indices[test_start : test_start + test_size],
+                )
+            return
+        
+        # Rolling window behavior
+        min_samples_needed = (
+            self.train_size + self.gap + 
+            (self.n_splits - 1) * self.step_size + self.test_size
+        )
+        
+        if n_samples < min_samples_needed:
+            raise ValueError(
+                f"Not enough samples ({n_samples}) for the requested "
+                f"configuration. Need at least {min_samples_needed} samples "
+                f"for train_size={self.train_size}, gap={self.gap}, "
+                f"n_splits={self.n_splits}, step_size={self.step_size}, "
+                f"test_size={self.test_size}."
+            )
+        
+        indices = np.arange(n_samples)
+        
+        for i in range(self.n_splits):
+            # Calculate window positions
+            train_start = i * self.step_size
+            train_end = train_start + self.train_size
+            test_start = train_end + self.gap
+            test_end = test_start + self.test_size
+            
+            # Ensure we don't go beyond the data
+            if test_end > n_samples:
+                break
+                
+            yield (
+                indices[train_start:train_end],
+                indices[test_start:test_end],
+            )
+    
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator.
+        
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), default=None
+            Training data. Required for calculating the actual number of splits
+            when using rolling windows.
+            
+        y : object
+            Always ignored, exists for compatibility.
+            
+        groups : object
+            Always ignored, exists for compatibility.
+            
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        if self.train_size is None:
+            # For expanding windows, return the configured n_splits
+            return self.n_splits
+        
+        if X is None:
+            # Return the requested n_splits (may be less if not enough data)
+            return self.n_splits
+        
+        # For rolling windows, calculate the actual possible splits
+        n_samples = _num_samples(X)
+        min_samples_needed = (
+            self.train_size + self.gap + self.test_size
+        )
+        
+        if n_samples < min_samples_needed:
+            return 0
+        
+        # Calculate maximum possible splits
+        max_possible_splits = (
+            (n_samples - self.train_size - self.gap - self.test_size) // self.step_size + 1
+        )
+        
+        return min(self.n_splits, max_possible_splits)
 
 
 class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):

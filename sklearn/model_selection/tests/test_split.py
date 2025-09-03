@@ -29,6 +29,7 @@ from sklearn.model_selection import (
     StratifiedGroupKFold,
     StratifiedKFold,
     StratifiedShuffleSplit,
+    TemporalSplit,
     TimeSeriesSplit,
     check_cv,
     cross_val_score,
@@ -66,6 +67,7 @@ from sklearn.utils.validation import _num_samples
 NO_GROUP_SPLITTERS = [
     KFold(),
     StratifiedKFold(),
+    TemporalSplit(),
     TimeSeriesSplit(),
     LeaveOneOut(),
     LeavePOut(p=2),
@@ -2032,6 +2034,7 @@ def test_random_state_shuffle_false(Klass):
         (StratifiedShuffleSplit(random_state=123), True),
         (GroupKFold(), True),
         (GroupKFold(shuffle=True, random_state=123), True),
+        (TemporalSplit(), True),
         (TimeSeriesSplit(), True),
         (LeaveOneOut(), True),
         (LeaveOneGroupOut(), True),
@@ -2100,3 +2103,212 @@ def test_stratified_splitter_without_y(cv):
     msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
+
+
+def test_temporal_split_basic():
+    """Test basic functionality of TemporalSplit."""
+    X = np.arange(10).reshape(-1, 1)
+    
+    # Test basic rolling window
+    ts = TemporalSplit(n_splits=3, train_size=3, test_size=1)
+    splits = list(ts.split(X))
+    
+    assert len(splits) == 3
+    
+    train, test = splits[0]
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3])
+    
+    train, test = splits[1]
+    assert_array_equal(train, [1, 2, 3])
+    assert_array_equal(test, [4])
+    
+    train, test = splits[2]
+    assert_array_equal(train, [2, 3, 4])
+    assert_array_equal(test, [5])
+
+
+def test_temporal_split_with_gap():
+    """Test TemporalSplit with gap parameter."""
+    X = np.arange(10).reshape(-1, 1)
+    
+    # Test with gap=1
+    ts = TemporalSplit(n_splits=2, train_size=3, test_size=1, gap=1)
+    splits = list(ts.split(X))
+    
+    assert len(splits) == 2
+    
+    train, test = splits[0]
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [4])  # Gap of 1 means skip index 3
+    
+    train, test = splits[1]
+    assert_array_equal(train, [1, 2, 3])
+    assert_array_equal(test, [5])  # Gap of 1 means skip index 4
+
+
+def test_temporal_split_larger_test_size():
+    """Test TemporalSplit with larger test sizes."""
+    X = np.arange(12).reshape(-1, 1)
+    
+    # Test with test_size=2
+    ts = TemporalSplit(n_splits=2, train_size=3, test_size=2)
+    splits = list(ts.split(X))
+    
+    assert len(splits) == 2
+    
+    train, test = splits[0]
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3, 4])
+    
+    train, test = splits[1]
+    assert_array_equal(train, [2, 3, 4])
+    assert_array_equal(test, [5, 6])
+
+
+def test_temporal_split_custom_step_size():
+    """Test TemporalSplit with custom step_size."""
+    X = np.arange(15).reshape(-1, 1)
+    
+    # Test with step_size=3
+    ts = TemporalSplit(n_splits=3, train_size=3, test_size=1, step_size=3)
+    splits = list(ts.split(X))
+    
+    assert len(splits) == 3
+    
+    train, test = splits[0]
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3])
+    
+    train, test = splits[1]
+    assert_array_equal(train, [3, 4, 5])
+    assert_array_equal(test, [6])
+    
+    train, test = splits[2]
+    assert_array_equal(train, [6, 7, 8])
+    assert_array_equal(test, [9])
+
+
+def test_temporal_split_expanding_window():
+    """Test TemporalSplit with expanding windows (train_size=None)."""
+    X = np.arange(8).reshape(-1, 1)
+    
+    # Test expanding window behavior
+    with pytest.warns(UserWarning, match="train_size is None"):
+        ts = TemporalSplit(n_splits=3, train_size=None, test_size=1)
+        splits = list(ts.split(X))
+    
+    assert len(splits) == 3
+    
+    train, test = splits[0]
+    assert_array_equal(test, [5])
+    
+    train, test = splits[1]
+    assert_array_equal(test, [6])
+    
+    train, test = splits[2]
+    assert_array_equal(test, [7])
+
+
+def test_temporal_split_get_n_splits():
+    """Test get_n_splits method of TemporalSplit."""
+    X = np.arange(10).reshape(-1, 1)
+    
+    # Test with sufficient data
+    ts = TemporalSplit(n_splits=3, train_size=3, test_size=1)
+    assert ts.get_n_splits(X) == 3
+    
+    # Test without X (should return requested splits)
+    assert ts.get_n_splits() == 3
+    
+    # Test with insufficient data
+    X_small = np.arange(5).reshape(-1, 1)
+    ts_large = TemporalSplit(n_splits=10, train_size=3, test_size=1)
+    # Should return less than requested due to insufficient data
+    assert ts_large.get_n_splits(X_small) < 10
+    
+    # Test expanding window case
+    ts_expand = TemporalSplit(n_splits=3, train_size=None, test_size=1)
+    assert ts_expand.get_n_splits(X) == 3
+
+
+def test_temporal_split_error_conditions():
+    """Test error conditions in TemporalSplit."""
+    X = np.arange(5).reshape(-1, 1)
+    
+    # Test insufficient data
+    ts = TemporalSplit(n_splits=3, train_size=10, test_size=1)
+    with pytest.raises(ValueError, match="Not enough samples"):
+        list(ts.split(X))
+    
+    # Test invalid n_splits (should fail in parent class)
+    with pytest.raises(ValueError, match="k-fold cross-validation requires at least"):
+        TemporalSplit(n_splits=1, train_size=3, test_size=1)
+
+
+def test_temporal_split_groups_warning():
+    """Test that TemporalSplit warns when groups parameter is provided."""
+    X = np.arange(10).reshape(-1, 1)
+    groups = np.ones(10)
+    
+    ts = TemporalSplit(n_splits=3, train_size=3, test_size=1)
+    with pytest.warns(UserWarning, match="groups parameter is ignored"):
+        list(ts.split(X, groups=groups))
+
+
+def test_temporal_split_repr():
+    """Test string representation of TemporalSplit."""
+    ts = TemporalSplit(n_splits=5, train_size=10, test_size=2, gap=1, step_size=3)
+    expected = ("TemporalSplit(gap=1, n_splits=5, random_state=None, shuffle=False, "
+                "step_size=3, test_size=2, train_size=10)")
+    assert repr(ts) == expected
+
+
+def test_temporal_split_overlapping_vs_non_overlapping():
+    """Test difference between overlapping and non-overlapping windows."""
+    X = np.arange(12).reshape(-1, 1)
+    
+    # Non-overlapping (step_size = train_size)
+    ts_non_overlap = TemporalSplit(n_splits=3, train_size=3, test_size=1, step_size=3)
+    splits_non_overlap = list(ts_non_overlap.split(X))
+    
+    # Overlapping (step_size < train_size)
+    ts_overlap = TemporalSplit(n_splits=3, train_size=3, test_size=1, step_size=1)
+    splits_overlap = list(ts_overlap.split(X))
+    
+    # Check that overlapping produces more similar consecutive training sets
+    assert len(splits_non_overlap) == 3
+    assert len(splits_overlap) == 3
+    
+    # Non-overlapping training sets should be completely different
+    train_0, _ = splits_non_overlap[0]
+    train_1, _ = splits_non_overlap[1]
+    assert len(set(train_0) & set(train_1)) == 0  # No overlap
+    
+    # Overlapping training sets should share samples
+    train_0, _ = splits_overlap[0]
+    train_1, _ = splits_overlap[1]
+    assert len(set(train_0) & set(train_1)) > 0  # Some overlap
+
+
+def test_temporal_split_edge_cases():
+    """Test edge cases for TemporalSplit."""
+    # Test with minimal data
+    X = np.arange(6).reshape(-1, 1)
+    ts = TemporalSplit(n_splits=2, train_size=2, test_size=1, gap=0)
+    splits = list(ts.split(X))
+    
+    assert len(splits) == 2
+    
+    # Test that we don't go beyond data boundaries
+    X_small = np.arange(4).reshape(-1, 1)
+    ts_large_step = TemporalSplit(n_splits=5, train_size=2, test_size=1, step_size=1)
+    splits_small = list(ts_large_step.split(X_small))
+    
+    # Should be fewer than requested splits due to data size
+    assert len(splits_small) < 5
+    
+    # All test indices should be valid
+    for train, test in splits_small:
+        assert max(test) < len(X_small)
+        assert max(train) < len(X_small)
