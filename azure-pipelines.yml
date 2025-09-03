@@ -83,7 +83,140 @@ jobs:
     #     )
     #   )
     matrix:
-      pylatest_free_threaded:
+      pylatest_free_threaded_1:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_2:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_3:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_4:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_5:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_6:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_7:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_8:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_9:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_10:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_11:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_12:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_13:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_14:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_15:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_16:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_17:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_18:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_19:
+        DISTRIB: 'conda-free-threaded'
+        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
+        COVERAGE: 'false'
+        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+        PYTEST_XDIST_VERSION: 'none'
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
+      pylatest_free_threaded_20:
         DISTRIB: 'conda-free-threaded'
         LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
