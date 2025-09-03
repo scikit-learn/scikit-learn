@@ -740,10 +740,26 @@ class KNeighborsMixin:
             The neighbors indices.
         """
         sample_range = np.arange(dist.shape[0])[:, None]
-        neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
-        neigh_ind = neigh_ind[:, :n_neighbors]
-        # argpartition doesn't guarantee sorted order, so we sort again
-        neigh_ind = neigh_ind[sample_range, np.argsort(dist[sample_range, neigh_ind])]
+        n_samples_chunk, n_samples_fit = dist.shape
+        
+        # Optimization: for small k relative to n, use more efficient selection
+        if n_neighbors < 20 and n_neighbors < n_samples_fit / 10:
+            # For small k, optimize the selection and sorting process
+            neigh_ind = np.empty((n_samples_chunk, n_neighbors), dtype=np.intp)
+            
+            for i in range(n_samples_chunk):
+                # Get indices of k smallest without full sort
+                k_smallest = np.argpartition(dist[i], n_neighbors - 1)[:n_neighbors]
+                # Sort only the k values - much faster than sorting all n
+                k_smallest_sorted = k_smallest[np.argsort(dist[i, k_smallest])]
+                neigh_ind[i] = k_smallest_sorted
+        else:
+            # Standard approach for larger k or when k is close to n
+            # This is more efficient when we need many neighbors
+            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+            neigh_ind = neigh_ind[:, :n_neighbors]
+            # argpartition doesn't guarantee sorted order, so we sort again
+            neigh_ind = neigh_ind[sample_range, np.argsort(dist[sample_range, neigh_ind])]
         if return_distance:
             if self.effective_metric_ == "euclidean":
                 result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
