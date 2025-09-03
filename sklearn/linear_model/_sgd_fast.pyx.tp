@@ -423,7 +423,6 @@ def _plain_sgd{{name_suffix}}(
     cdef double sumloss = 0.0
     cdef double cur_loss_val = 0.0
     cdef double score = 0.0
-    cdef double objective = 0.0
     cdef double objective_sum = 0.0
     cdef double best_objective = INFINITY
     cdef double best_score = -INFINITY
@@ -582,9 +581,10 @@ def _plain_sgd{{name_suffix}}(
                     score = validation_score_cb(weights.base, intercept)
                     if verbose > 0:  # report epoch information
                         print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
-                            "Avg. loss: %f, Validation score: %f"
+                            "Avg. loss: %f, Objective: %f, Validation score: %f"
                             % (w.norm(), np.nonzero(weights)[0].shape[0],
-                                intercept, count, sumloss / train_count, score))
+                                intercept, count, sumloss / train_count,
+                                objective_sum / train_count, score))
                         print("Total training time: %.2f seconds."
                             % (time() - t_start))
                 if tol > -INFINITY and score < best_score + tol:
@@ -595,21 +595,23 @@ def _plain_sgd{{name_suffix}}(
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                objective = objective_sum / train_count
                 if verbose > 0:  # report epoch information
                     with gil:
                         print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                             "Avg. loss: %f, Objective: %f"
                             % (w.norm(), np.nonzero(weights)[0].shape[0],
-                                intercept, count, sumloss / train_count, objective))
+                                intercept, count, sumloss / train_count,
+                                objective_sum / train_count))
                         print("Total training time: %.2f seconds."
                             % (time() - t_start))
-                if tol > -INFINITY and objective > best_objective - tol:
+                # use mean of objective, reasonable scale, independent of data size
+                if (tol > -INFINITY
+                        and objective_sum / train_count > best_objective - tol):
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
-                if objective < best_objective:
-                    best_objective = objective
+                if objective_sum / train_count < best_objective:
+                    best_objective = objective_sum / train_count
 
             # if there is no improvement several times in a row
             if no_improvement_count >= n_iter_no_change:
