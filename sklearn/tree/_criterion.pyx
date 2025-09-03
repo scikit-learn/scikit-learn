@@ -1314,7 +1314,7 @@ cdef class MAE(RegressionCriterion):
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
-        Time complexity: O(new_pos - pos) (which usually is O(1))
+        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data)
         """
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
@@ -1360,7 +1360,7 @@ cdef class MAE(RegressionCriterion):
         """
         cdef intp_t j = self.pos - self.start
         return (
-            self.left_medians[j]
+            self.left_medians[j - 1]
             + self.right_medians[j]
         ) / 2
 
@@ -1375,7 +1375,7 @@ cdef class MAE(RegressionCriterion):
 
         return self._check_monotonicity(
             monotonic_cst, lower_bound, upper_bound,
-            self.left_medians[j], self.right_medians[j])
+            self.left_medians[j - 1], self.right_medians[j])
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
@@ -1383,6 +1383,8 @@ cdef class MAE(RegressionCriterion):
         Evaluate the MAE criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
+
+        Time complexity: O(n := end - start) 
         """
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
