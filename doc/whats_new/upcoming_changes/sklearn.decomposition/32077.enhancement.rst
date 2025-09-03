@@ -1,0 +1,1 @@
+- :class:`SparseCoder` now follows the transformer API of scikit-learn : parameter and input validation are now executed in the :func:`fit` method.
