@@ -1516,7 +1516,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
     is selected by the cross-validator
     :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
-    using the :term:`cv` parameter. All solvers except 'liblinear can warm-start the
+    using the :term:`cv` parameter. All solvers except 'liblinear' can warm-start the
     coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
@@ -1536,7 +1536,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     cv : int or cross-validation generator, default=None
         The default cross-validation generator used is Stratified K-Folds.
-        If an integer is provided, then it is the number of folds, `n_folds`, used.
+        If an integer is provided, it specifies the number of folds, `n_folds`, used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
