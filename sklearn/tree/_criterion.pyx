@@ -1239,7 +1239,7 @@ cdef class MAE(RegressionCriterion):
         WARNING: sample_indices will be modified in-place externally
         after this method is called
         """
-        cdef intp_t i, k, j
+        cdef intp_t i
         cdef float64_t w = 1.0
         cdef intp_t n = end - start
         # Initialize fields
@@ -1313,8 +1313,7 @@ cdef class MAE(RegressionCriterion):
         Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data)
         """
         cdef intp_t pos = self.pos
-        cdef intp_t end = self.end
-        cdef intp_t i, p, k
+        cdef intp_t i, p
         cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
@@ -1368,7 +1367,7 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
 
-        Time complexity: O(n := end - start) 
+        Time complexity: O(n := end - start)
         """
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices
