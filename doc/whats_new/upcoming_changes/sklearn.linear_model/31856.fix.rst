@@ -1,3 +1,7 @@
-- Fix for SGD models(primarily affects `SGDOneClassSVM`) convergence criteria,
+- Fix the convergence criteria for SGD models,
   to avoid premature convergence when `tol != None`.
-  Now uses full objective with regularization, instead of just loss.
+  Primarily affects :class:`SGDOneClassSVM`, also affects :class:`SGDClassifier`, :class:`SGDRegressor`.
+  Before this fix, only the loss function without penalty was used as convergence check.
+  Now, the full objective with regularization is used.
+  For instance, this bug caused `SGDOneClassSVM` to often converge too early.
+  By :user:`Guillaume Lemaitre <glemaitre>` and :user:`<kostayScr>`
