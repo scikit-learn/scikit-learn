@@ -761,8 +761,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     .. math::
 
         \\frac{1}{2 n_{\\rm samples}} \\|y - X w\\|_2^2
-        + \\alpha \\cdot l1_{ratio} \\|w\\|_1
-        + 0.5 \\cdot \\alpha \\cdot (1 - l1_{ratio}) \\|w\\|_2^2
+        + \\alpha \\cdot {\\rm l1_{ratio}} \\|w\\|_1
+        + 0.5 \\cdot \\alpha \\cdot (1 - {\\rm l1_{ratio}}) \\|w\\|_2^2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to:
@@ -775,11 +775,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     .. math::
 
-        \\alpha = a + b, \\quad l1_{ratio} = \\frac{a}{a + b}
+        \\alpha = a + b, \\quad {\\rm l1_{ratio}} = \\frac{a}{a + b}
 
-    The parameter l1_{ratio} corresponds to alpha in the glmnet R package while
-    alpha corresponds to the lambda parameter in glmnet. Specifically, l1_{ratio}
-    = 1 is the lasso penalty. Currently, l1_{ratio} <= 0.01 is not reliable,
+    The parameter l1_ratio corresponds to alpha in the glmnet R package while
+    alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
+    = 1 is the lasso penalty. Currently, l1_ratio <= 0.01 is not reliable,
     unless you supply your own sequence of alpha.
 
     Read more in the :ref:`User Guide <elastic_net>`.
