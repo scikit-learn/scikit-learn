@@ -47,6 +47,7 @@ from sklearn.tree._tree import (
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
+from sklearn.tree._utils import _py_precompute_absolute_errors
 from sklearn.utils import compute_sample_weight
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
@@ -2838,3 +2839,57 @@ def test_sort_log2_build():
     ]
     # fmt: on
     assert_array_equal(samples, expected_samples)
+
+
+def test_absolute_errors_precomputation_function():
+    """
+    Test the main bit of logic of the MAE(RegressionCriterion) class 
+    (used by DecisionTreeRegressor())
+
+    The implemation of the criterion "repose" on an efficient precomputation
+    of left/right children absolute error for each split. This test verifies this
+    part of the computation, in case of major refactor of the MAE class, it can be safely removed
+    """
+
+    def compute_abs_error(y: np.ndarray, w: np.ndarray):
+        # 1) compute the weighted median
+        # i.e. once ordered by y, search for i such that:
+        # sum(w[:i]) <= 1/2  and sum(w[i+1:]) <= 1/2
+        sorter = np.argsort(y)
+        wc = np.cumsum(w[sorter])
+        idx = np.searchsorted(wc, wc[-1] / 2)
+        median = y[sorter[idx]]
+        print(y, median)
+        # 2) compute the AE
+        return (np.abs(y - median) * w).sum()
+
+    def compute_prefix_abs_errors_naive(y: np.ndarray, w: np.ndarray):
+        y = y.ravel()
+        return np.array([compute_abs_error(y[:i], w[:i]) for i in range(1, y.size + 1)])
+
+
+    for n in [3, 5, 10, 20, 100, 300]:
+        y = np.random.uniform(size=(n, 1))
+        w = np.random.rand(n)
+        indices = np.arange(n)
+        abs_errors = _py_precompute_absolute_errors(y, w, indices)
+        expected = compute_prefix_abs_errors_naive(y, w)
+        assert np.allclose(abs_errors, expected)
+
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, suffix=True)
+        expected = compute_prefix_abs_errors_naive(y[::-1], w[::-1])[::-1]
+        assert np.allclose(abs_errors, expected)
+
+        x = np.random.rand(n)
+        indices = np.argsort(x)
+        w[:] = 1
+        y_sorted = y[indices]
+        w_sorted = w[indices]
+
+        abs_errors = _py_precompute_absolute_errors(y, w, indices)
+        expected = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
+        assert np.allclose(abs_errors, expected)
+
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, suffix=True)
+        expected = compute_prefix_abs_errors_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
+        assert np.allclose(abs_errors, expected)
