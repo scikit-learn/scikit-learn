@@ -136,9 +136,16 @@ classifier.fit(X_train, y_train)
 # ...............................
 #
 # To plot the precision-recall curve, you should use
-# :class:`~sklearn.metrics.PrecisionRecallDisplay`. Indeed, there is two
-# methods available depending if you already computed the predictions of the
-# classifier or not.
+# :class:`~sklearn.metrics.PrecisionRecallDisplay`. There are three
+# methods available:
+#
+# * for plotting a single curve:
+#   * :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` for when you
+#     have not computed the predictions
+#   * :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` for when
+#     you already have the predictions
+# * for plotting multiple curves using cross-validation results;
+#   :func:`~sklearn.metrics.PrecisionRecallDisplay.from_cv_results`
 #
 # Let's first plot the precision-recall curve without the classifier
 # predictions. We use
@@ -161,6 +168,20 @@ display = PrecisionRecallDisplay.from_predictions(
     y_test, y_score, name="LinearSVC", plot_chance_level=True, despine=True
 )
 _ = display.ax_.set_title("2-class Precision-Recall curve")
+
+# %%
+# The :func:`~sklearn.metrics.PrecisionRecallDisplay.from_cv_results` takes the
+# cross-validation results from :func:`~sklearn.model_selection.cross_validate`
+# and plots a precision-recall curve for each fold.
+
+from sklearn.model_selection import cross_validate
+
+classifier = make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
+cv_results = cross_validate(
+    classifier, X_train, y_train, return_estimator=True, return_indices=True
+)
+display = PrecisionRecallDisplay.from_cv_results(cv_results, X_train, y_train)
+_ = display.ax_.set_title("Cross-validation Precision-Recall curves")
 
 # %%
 # In multi-label settings
