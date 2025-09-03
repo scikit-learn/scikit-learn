@@ -1307,6 +1307,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
 )
 def test_search_cv_score_samples_error(search_cv):
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
+    search_cv = clone(search_cv)
     search_cv.fit(X, y)
 
     # Make sure to error out when underlying estimator does not implement
