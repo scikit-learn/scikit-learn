@@ -34,7 +34,7 @@ Version 1.7.2
 
 - |Fix| Set the tag `requires_fit=False` for the classes
   :class:`feature_extraction.FeatureHasher` and
-  :class:`feature_extraction.HashingVectorizer`.
+  :class:`feature_extraction.text.HashingVectorizer`.
   By :user:`hakan çanakcı <hqkqn32>`. :pr:`31851`
 
 :mod:`sklearn.impute`
@@ -48,8 +48,8 @@ Version 1.7.2
 ---------------------------
 
 - Fixed a bug with `solver="newton-cholesky"` on multi-class problems in
-  :class:`linear_model:LogisticRegressionCV` and in
-  :class:`linear_model:LogisticRegression` when used with `warm_start=True`. The bug
+  :class:`linear_model.LogisticRegressionCV` and in
+  :class:`linear_model.LogisticRegression` when used with `warm_start=True`. The bug
   appeared either with `fit_intercept=True` or with `penalty=None` (both resulting in
   unpenalized parameters for the solver). The coefficients and intercepts of the last
   class as provided by warm start were partially wrongly overwritten by zero.
