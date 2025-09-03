@@ -83,7 +83,7 @@ if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
     TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi
 
-TEST_CMD="$TEST_CMD --pyargs sklearn"
+TEST_CMD="$TEST_CMD sklearn"
 
 set -x
 eval "$TEST_CMD"
