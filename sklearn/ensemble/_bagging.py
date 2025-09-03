@@ -145,7 +145,7 @@ def _parallel_build_estimators(
             estimator_fit = estimator.fit
 
         # Draw random feature, sample indices (using normalized sample_weight
-        # as probabilites if provided).
+        # as probabilities if provided).
         features, indices = _generate_bagging_indices(
             random_state,
             bootstrap_features,
