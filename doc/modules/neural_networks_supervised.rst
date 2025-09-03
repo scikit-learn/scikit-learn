@@ -22,7 +22,7 @@ Multi-layer Perceptron
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
 a function :math:`f: R^m \rightarrow R^o` by training on a dataset,
 where :math:`m` is the number of dimensions for input and :math:`o` is the
-number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
+number of dimensions for output. Given a set of features :math:`X = \{x_1, x_2, ..., x_m\}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
 classification or regression. It is different from logistic regression, in that
 between the input and the output layer, there can be one or more non-linear
@@ -61,8 +61,8 @@ at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
   The disadvantages of Multi-layer Perceptron (MLP) include:
 
-  + MLP with hidden layers have a non-convex loss function where there exists
-    more than one local minimum. Therefore different random weight
+  + MLP with hidden layers has a non-convex loss function where there exists
+    more than one local minimum. Therefore, different random weight
     initializations can lead to different validation accuracy.
 
   + MLP requires tuning a number of hyperparameters such as the number of
@@ -78,7 +78,7 @@ Classification
 ==============
 
 Class :class:`MLPClassifier` implements a multi-layer perceptron (MLP) algorithm
-that trains using `Backpropagation <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_.
+that trains using `Backpropagation <http://ufldl.stanford.edu/tutorial/supervised/MultiLayerNeuralNetworks/#backpropagation_algorithm>`_.
 
 MLP trains on two arrays: array X of size (n_samples, n_features), which holds
 the training samples represented as floating point feature vectors; and array
@@ -116,8 +116,8 @@ classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])
-    array([[1.967...e-04, 9.998...-01],
-           [1.967...e-04, 9.998...-01]])
+    array([[1.967e-04, 9.998e-01],
+           [1.967e-04, 9.998e-01]])
 
 :class:`MLPClassifier` supports multi-class classification by
 applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_
@@ -127,7 +127,7 @@ Further, the model supports :ref:`multi-label classification <multiclass>`
 in which a sample can belong to more than one class. For each class, the raw
 output passes through the logistic function. Values larger or equal to `0.5`
 are rounded to `1`, otherwise to `0`. For a predicted output of a sample, the
-indices where the value is `1` represents the assigned classes of that sample::
+indices where the value is `1` represent the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]
@@ -233,7 +233,7 @@ training.
 
 .. dropdown:: Mathematical formulation
 
-  Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
+  Given a set of training examples :math:`\{(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)\}`
   where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
   layer one hidden neuron MLP learns the function :math:`f(x) = W_2 g(W_1^T x + b_1) + b_2`
   where :math:`W_1 \in \mathbf{R}^m` and :math:`W_2, b_1, b_2 \in \mathbf{R}` are
@@ -261,7 +261,7 @@ training.
   where :math:`z_i` represents the :math:`i` th element of the input to softmax,
   which corresponds to class :math:`i`, and :math:`K` is the number of classes.
   The result is a vector containing the probabilities that sample :math:`x`
-  belong to each class. The output is the class with the highest probability.
+  belongs to each class. The output is the class with the highest probability.
 
   In regression, the output remains as :math:`f(x)`; therefore, output activation
   function is just the identity function.

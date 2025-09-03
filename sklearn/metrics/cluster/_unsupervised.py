@@ -3,22 +3,21 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import functools
 from numbers import Integral
 
 import numpy as np
 from scipy.sparse import issparse
 
-from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing, check_random_state, check_X_y
-from ...utils._array_api import _atol_for_type
-from ...utils._param_validation import (
-    Interval,
-    StrOptions,
-    validate_params,
+from sklearn.metrics.pairwise import (
+    _VALID_METRICS,
+    pairwise_distances,
+    pairwise_distances_chunked,
 )
-from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import _safe_indexing, check_random_state, check_X_y
+from sklearn.utils._array_api import _atol_for_type, xpx
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -136,7 +135,7 @@ def silhouette_score(
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+    return float(np.mean(silhouette_samples(X, labels, metric=metric, **kwds)))
 
 
 def _silhouette_reduce(D_chunk, start, labels, label_freqs):
@@ -313,7 +312,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     with np.errstate(divide="ignore", invalid="ignore"):
         sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
     # nan values are for clusters of size 1, and should be 0
-    return np.nan_to_num(sil_samples)
+    return xpx.nan_to_num(sil_samples)
 
 
 @validate_params(
@@ -380,7 +379,7 @@ def calinski_harabasz_score(X, labels):
         extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
         intra_disp += np.sum((cluster_k - mean_k) ** 2)
 
-    return (
+    return float(
         1.0
         if intra_disp == 0.0
         else extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0))
@@ -461,4 +460,4 @@ def davies_bouldin_score(X, labels):
     centroid_distances[centroid_distances == 0] = np.inf
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
-    return np.mean(scores)
+    return float(np.mean(scores))

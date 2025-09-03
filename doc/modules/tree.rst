@@ -284,11 +284,11 @@ of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
   ``predict_proba``.
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
-   :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_002.png
+   :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
 
@@ -304,7 +304,6 @@ the lower half of those faces.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. rubric:: References
@@ -383,7 +382,7 @@ Tips on practical use
 
 * If the samples are weighted, it will be easier to optimize the tree
   structure using weight-based pre-pruning criterion such as
-  ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+  ``min_weight_fraction_leaf``, which ensures that leaf nodes contain at least
   a fraction of the overall sum of the sample weights.
 
 * All decision trees use ``np.float32`` arrays internally.
@@ -552,17 +551,18 @@ Mean Squared Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
-Half Poisson deviance:
+Mean Poisson deviance:
 
 .. math::
 
-    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    H(Q_m) = \frac{2}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
 necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion.
+the MSE criterion. For performance reasons the actual implementation minimizes
+the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
 
 Mean Absolute Error:
 
@@ -587,8 +587,8 @@ support for missing values for `splitter='random'`, where the splits
 are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
 
-The criterion supported when there are missing-values are
-`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+The criterion supported when there are missing values are
+`'gini'`, `'entropy'`, or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`

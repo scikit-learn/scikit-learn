@@ -2,6 +2,9 @@
 compile scikit-learn properly.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 
 INPLACE_MSG = """
@@ -46,6 +49,6 @@ https://scikit-learn.org/dev/developers/advanced_installation.html#building-from
 
 
 try:
-    from ._check_build import check_build  # noqa
+    from sklearn.__check_build._check_build import check_build  # noqa: F401
 except ImportError as e:
     raise_build_error(e)

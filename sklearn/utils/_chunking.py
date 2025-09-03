@@ -1,11 +1,14 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from itertools import islice
 from numbers import Integral
 
 import numpy as np
 
-from .._config import get_config
-from ._param_validation import Interval, validate_params
+from sklearn._config import get_config
+from sklearn.utils._param_validation import Interval, validate_params
 
 
 def chunk_generator(gen, chunksize):

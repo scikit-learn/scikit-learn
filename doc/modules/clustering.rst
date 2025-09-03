@@ -140,6 +140,11 @@ model with equal covariance per component.
 :term:`inductive` clustering methods) are not designed to be applied to new,
 unseen data.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: An example
+  of an inductive clustering model for handling new data.
+
 .. _k_means:
 
 K-means
@@ -222,9 +227,10 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
-random initialization, as shown in the reference. For a detailed example of
-comaparing different initialization schemes, refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+random initialization, as shown in the reference. For detailed examples of
+comparing different initialization schemes, refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py` and
+:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
 K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
@@ -236,18 +242,13 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-K-means can be used for vector quantization. This is achieved using the
-``transform`` method of a trained model of :class:`KMeans`. For an example of
-performing vector quantization on an image refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
-
 .. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
-  :class:`KMeans` using the iris dataset
 
 * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
+  to select seeds for other clustering algorithms.
 
 Low-level parallelism
 ---------------------
@@ -965,7 +966,7 @@ by black points below.
 
   - Use :ref:`OPTICS <optics>` clustering in conjunction with the `extract_dbscan`
     method. OPTICS clustering also calculates the full pairwise matrix, but only
-    keeps one row in memory at a time (memory complexity n).
+    keeps one row in memory at a time (memory complexity :math:`\mathcal{O}(n)`).
 
   - A sparse radius neighborhood graph (where missing entries are presumed to be
     out of eps) can be precomputed in a memory-efficient way and dbscan can be run
@@ -979,15 +980,15 @@ by black points below.
 
 .. dropdown:: References
 
-* `A Density-Based Algorithm for Discovering Clusters in Large Spatial
-  Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
-  Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
-  International Conference on Knowledge Discovery and Data Mining, Portland, OR,
-  AAAI Press, pp. 226-231. 1996
+  * `A Density-Based Algorithm for Discovering Clusters in Large Spatial
+    Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
+    International Conference on Knowledge Discovery and Data Mining, Portland, OR,
+    AAAI Press, pp. 226-231. 1996.
 
-* :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
-  <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
-  X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
+  * :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
+    X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 
 .. _hdbscan:
@@ -1309,32 +1310,32 @@ ignoring permutations::
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.66...
+  0.66
 
 The Rand index does not ensure to obtain a value close to 0.0 for a
 random labelling. The adjusted Rand index **corrects for chance** and
 will give such a baseline.
 
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  0.24...
+  0.24
 
 As with all clustering metrics, one can permute 0 and 1 in the predicted
 labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.66...
+  0.66
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  0.24...
+  0.24
 
-Furthermore, both :func:`rand_score` :func:`adjusted_rand_score` are
+Furthermore, both :func:`rand_score` and :func:`adjusted_rand_score` are
 **symmetric**: swapping the argument does not change the scores. They can
 thus be used as **consensus measures**::
 
   >>> metrics.rand_score(labels_pred, labels_true)
-  0.66...
+  0.66
   >>> metrics.adjusted_rand_score(labels_pred, labels_true)
-  0.24...
+  0.24
 
 Perfect labeling is scored 1.0::
 
@@ -1347,14 +1348,14 @@ Perfect labeling is scored 1.0::
 Poorly agreeing labels (e.g. independent labelings) have lower scores,
 and for the adjusted Rand index the score will be negative or close to
 zero. However, for the unadjusted Rand index the score, while lower,
-will not necessarily be close to zero.::
+will not necessarily be close to zero::
 
   >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
   >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
   >>> metrics.rand_score(labels_true, labels_pred)
-  0.39...
+  0.39
   >>> metrics.adjusted_rand_score(labels_true, labels_pred)
-  -0.07...
+  -0.072
 
 
 .. topic:: Advantages:
@@ -1465,21 +1466,21 @@ proposed more recently and is **normalized against chance**::
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  0.22504...
+  0.22504
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  0.22504...
+  0.22504
 
 All, :func:`mutual_info_score`, :func:`adjusted_mutual_info_score` and
 :func:`normalized_mutual_info_score` are symmetric: swapping the argument does
 not change the score. Thus they can be used as a **consensus measure**::
 
   >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +SKIP
-  0.22504...
+  0.22504
 
 Perfect labeling is scored 1.0::
 
@@ -1493,14 +1494,14 @@ Perfect labeling is scored 1.0::
 This is not true for ``mutual_info_score``, which is therefore harder to judge::
 
   >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  0.69...
+  0.69
 
 Bad (e.g. independent labelings) have non-positive scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
-  -0.10526...
+  -0.10526
 
 
 .. topic:: Advantages:
@@ -1648,16 +1649,16 @@ We can turn those concept as scores :func:`homogeneity_score` and
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.homogeneity_score(labels_true, labels_pred)
-  0.66...
+  0.66
 
   >>> metrics.completeness_score(labels_true, labels_pred)
-  0.42...
+  0.42
 
 Their harmonic mean called **V-measure** is computed by
 :func:`v_measure_score`::
 
   >>> metrics.v_measure_score(labels_true, labels_pred)
-  0.51...
+  0.516
 
 This function's formula is as follows:
 
@@ -1666,12 +1667,12 @@ This function's formula is as follows:
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)
-  0.54...
+  0.547
 
 more weight will be attributed to homogeneity, and using a value greater than 1::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)
-  0.48...
+  0.48
 
 more weight will be attributed to completeness.
 
@@ -1682,14 +1683,14 @@ Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  (0.66..., 0.42..., 0.51...)
+  (0.67, 0.42, 0.52)
 
 The following clustering assignment is slightly better, since it is
 homogeneous but not complete::
 
   >>> labels_pred = [0, 0, 0, 1, 2, 2]
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  (1.0, 0.68..., 0.81...)
+  (1.0, 0.68, 0.81)
 
 .. note::
 
@@ -1791,20 +1792,25 @@ homogeneous but not complete::
 Fowlkes-Mallows scores
 ----------------------
 
-The Fowlkes-Mallows index (:func:`sklearn.metrics.fowlkes_mallows_score`) can be
-used when the ground truth class assignments of the samples is known. The
-Fowlkes-Mallows score FMI is defined as the geometric mean of the
-pairwise precision and recall:
+The original Fowlkes-Mallows index (FMI) was intended to measure the similarity
+between two clustering results, which is inherently an unsupervised comparison.
+The supervised adaptation of the Fowlkes-Mallows index
+(as implemented in :func:`sklearn.metrics.fowlkes_mallows_score`) can be used
+when the ground truth class assignments of the samples are known.
+The FMI is defined as the geometric mean of the pairwise precision and recall:
 
 .. math:: \text{FMI} = \frac{\text{TP}}{\sqrt{(\text{TP} + \text{FP}) (\text{TP} + \text{FN})}}
 
-Where ``TP`` is the number of **True Positive** (i.e. the number of pair
-of points that belong to the same clusters in both the true labels and the
-predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
-of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
-number of pair of points that belongs in the same clusters in the predicted
-labels and not in the true labels).
+In the above formula:
+
+* ``TP`` (**True Positive**): The number of pairs of points that are clustered together
+  both in the true labels and in the predicted labels.
+
+* ``FP`` (**False Positive**): The number of pairs of points that are clustered together
+  in the predicted labels but not in the true labels.
+
+* ``FN`` (**False Negative**): The number of pairs of points that are clustered together
+  in the true labels but not in the predicted labels.
 
 The score ranges from 0 to 1. A high value indicates a good similarity
 between two clusters.
@@ -1814,7 +1820,7 @@ between two clusters.
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  0.47140...
+  0.47140
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
@@ -1822,7 +1828,7 @@ the same score::
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
 
   >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
-  0.47140...
+  0.47140
 
 Perfect labeling is scored 1.0::
 
@@ -1911,7 +1917,7 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
-  0.55...
+  0.55
 
 .. topic:: Advantages:
 
@@ -1968,7 +1974,7 @@ cluster analysis:
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabasz_score(X, labels)
-  561.59...
+  561.59
 
 
 .. topic:: Advantages:
@@ -2042,7 +2048,7 @@ cluster analysis as follows:
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_score(X, labels)
-  0.666...
+  0.666
 
 
 .. topic:: Advantages:
@@ -2053,9 +2059,9 @@ cluster analysis as follows:
 
 .. topic:: Drawbacks:
 
-  - The Davies-Boulding index is generally higher for convex clusters than other
-    concepts of clusters, such as density based clusters like those obtained
-    from DBSCAN.
+  - The Davies-Bouldin index is generally higher for convex clusters than other
+    concepts of clusters, such as density-based clusters like those
+    obtained from DBSCAN.
   - The usage of centroid distance limits the distance metric to Euclidean
     space.
 
@@ -2066,7 +2072,7 @@ cluster analysis as follows:
   this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
 
   - :math:`s_i`, the average distance between each point of cluster :math:`i` and
-    the centroid of that cluster -- also know as cluster diameter.
+    the centroid of that cluster -- also known as cluster diameter.
   - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and
     :math:`j`.
 
@@ -2115,7 +2121,7 @@ Here is an example::
    array([[2, 1, 0],
           [0, 1, 2]])
 
-The first row of output array indicates that there are three samples whose
+The first row of the output array indicates that there are three samples whose
 true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
 and none is in 2. And the second row indicates that there are three samples
 whose true cluster is "b". Of them, none is in predicted cluster 0, one is in

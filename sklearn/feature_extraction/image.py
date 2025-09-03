@@ -10,9 +10,14 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    RealNotInt,
+    validate_params,
+)
 
 __all__ = [
     "PatchExtractor",
@@ -21,6 +26,8 @@ __all__ = [
     "img_to_graph",
     "reconstruct_from_patches_2d",
 ]
+
+from sklearn.utils.validation import validate_data
 
 ###############################################################################
 # From an image to a graph
@@ -202,6 +209,8 @@ def grid_to_graph(
     """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
+
+    Read more in the :ref:`User Guide <connectivity_graph_image>`.
 
     Parameters
     ----------
@@ -630,7 +639,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             `n_patches` is either `n_samples * max_patches` or the total
             number of patches that can be extracted.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X=X,
             ensure_2d=False,
             allow_nd=True,
@@ -674,5 +684,9 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             )
         return patches
 
-    def _more_tags(self):
-        return {"X_types": ["3darray"], "stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.input_tags.three_d_array = True
+        tags.requires_fit = False
+        return tags

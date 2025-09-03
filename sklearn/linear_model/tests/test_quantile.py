@@ -10,7 +10,7 @@ from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
-from sklearn.utils._testing import assert_allclose, skip_if_32bit
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
@@ -233,26 +233,40 @@ def test_linprog_failure():
         reg.fit(X, y)
 
 
-@skip_if_32bit
 @pytest.mark.parametrize(
     "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS
 )
 @pytest.mark.parametrize("solver", ["highs", "highs-ds", "highs-ipm"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sparse_input(sparse_container, solver, fit_intercept):
+def test_sparse_input(sparse_container, solver, fit_intercept, global_random_seed):
     """Test that sparse and dense X give same results."""
-    X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
+    n_informative = 10
+    quantile_level = 0.6
+    X, y = make_regression(
+        n_samples=300,
+        n_features=20,
+        n_informative=10,
+        random_state=global_random_seed,
+        noise=1.0,
+    )
     X_sparse = sparse_container(X)
-    alpha = 1e-4
-    quant_dense = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
+    alpha = 0.1
+    quant_dense = QuantileRegressor(
+        quantile=quantile_level, alpha=alpha, fit_intercept=fit_intercept
+    ).fit(X, y)
     quant_sparse = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=solver
+        quantile=quantile_level, alpha=alpha, fit_intercept=fit_intercept, solver=solver
     ).fit(X_sparse, y)
     assert_allclose(quant_sparse.coef_, quant_dense.coef_, rtol=1e-2)
+    sparse_support = quant_sparse.coef_ != 0
+    dense_support = quant_dense.coef_ != 0
+    assert dense_support.sum() == pytest.approx(n_informative, abs=1)
+    assert sparse_support.sum() == pytest.approx(n_informative, abs=1)
     if fit_intercept:
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
-        assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.57
+        empirical_coverage = np.mean(y < quant_sparse.predict(X_sparse))
+        assert empirical_coverage == approx(quantile_level, abs=3e-2)
 
 
 def test_error_interior_point_future(X_y_data, monkeypatch):

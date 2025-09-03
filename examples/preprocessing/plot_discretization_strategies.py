@@ -76,7 +76,12 @@ for ds_cnt, X in enumerate(X_list):
     i += 1
     # transform the dataset with KBinsDiscretizer
     for strategy in strategies:
-        enc = KBinsDiscretizer(n_bins=4, encode="ordinal", strategy=strategy)
+        enc = KBinsDiscretizer(
+            n_bins=4,
+            encode="ordinal",
+            quantile_method="averaged_inverted_cdf",
+            strategy=strategy,
+        )
         enc.fit(X)
         grid_encoded = enc.transform(grid)
 

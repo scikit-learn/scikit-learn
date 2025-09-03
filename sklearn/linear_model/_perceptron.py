@@ -1,9 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
-from ..utils._param_validation import Interval, StrOptions
-from ._stochastic_gradient import BaseSGDClassifier
+from sklearn.linear_model._stochastic_gradient import BaseSGDClassifier
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 class Perceptron(BaseSGDClassifier):

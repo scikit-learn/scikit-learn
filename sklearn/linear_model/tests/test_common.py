@@ -5,17 +5,20 @@ import inspect
 import numpy as np
 import pytest
 
-from sklearn.base import is_classifier
-from sklearn.datasets import make_low_rank_matrix
+from sklearn.base import clone, is_classifier
+from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
 from sklearn.linear_model import (
     ARDRegression,
     BayesianRidge,
     ElasticNet,
     ElasticNetCV,
+    GammaRegressor,
+    HuberRegressor,
     Lars,
     LarsCV,
     Lasso,
     LassoCV,
+    LassoLars,
     LassoLarsCV,
     LassoLarsIC,
     LinearRegression,
@@ -27,12 +30,24 @@ from sklearn.linear_model import (
     MultiTaskLassoCV,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
+    PassiveAggressiveClassifier,
+    PassiveAggressiveRegressor,
+    Perceptron,
     PoissonRegressor,
     Ridge,
+    RidgeClassifier,
+    RidgeClassifierCV,
     RidgeCV,
+    SGDClassifier,
     SGDRegressor,
+    TheilSenRegressor,
     TweedieRegressor,
 )
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.svm import LinearSVC, LinearSVR
+from sklearn.utils._testing import assert_allclose, set_random_state
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 # Note: GammaRegressor() and TweedieRegressor(power != 1) have a non-canonical link.
@@ -91,7 +106,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     # For reference, see Corollary 3.18, 3.20 and Chapter 5.1.5 of
     # M.V. Wuthrich and M. Merz, "Statistical Foundations of Actuarial Learning and its
     # Applications" (June 3, 2022). http://doi.org/10.2139/ssrn.3822407
-
+    model = clone(model)  # Avoid side effects from shared instances.
     if (
         with_sample_weight
         and "sample_weight" not in inspect.signature(model.fit).parameters.keys()
@@ -135,7 +150,6 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         model.fit(X, y, sample_weight=sw)
     else:
         model.fit(X, y)
-
     # Assert balance property.
     if is_classifier(model):
         assert np.average(model.predict_proba(X)[:, 1], weights=sw) == pytest.approx(
@@ -145,3 +159,128 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         assert np.average(model.predict(X), weights=sw, axis=0) == pytest.approx(
             np.average(y, weights=sw, axis=0), rel=rel
         )
+
+
+@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
+@pytest.mark.filterwarnings("ignore:A column-vector y was passed when a 1d array.*")
+@pytest.mark.parametrize(
+    "Regressor",
+    [
+        ARDRegression,
+        BayesianRidge,
+        ElasticNet,
+        ElasticNetCV,
+        GammaRegressor,
+        HuberRegressor,
+        Lars,
+        LarsCV,
+        Lasso,
+        LassoCV,
+        LassoLars,
+        LassoLarsCV,
+        LassoLarsIC,
+        LinearSVR,
+        LinearRegression,
+        OrthogonalMatchingPursuit,
+        OrthogonalMatchingPursuitCV,
+        PassiveAggressiveRegressor,
+        PoissonRegressor,
+        Ridge,
+        RidgeCV,
+        SGDRegressor,
+        TheilSenRegressor,
+        TweedieRegressor,
+    ],
+)
+@pytest.mark.parametrize("ndim", [1, 2])
+def test_linear_model_regressor_coef_shape(Regressor, ndim):
+    """Check the consistency of linear models `coef` shape."""
+    if Regressor is LinearRegression:
+        pytest.xfail("LinearRegression does not follow `coef_` shape contract!")
+
+    X, y = make_regression(random_state=0, n_samples=200, n_features=20)
+    y = MinMaxScaler().fit_transform(y.reshape(-1, 1))[:, 0] + 1
+    y = y[:, np.newaxis] if ndim == 2 else y
+
+    regressor = Regressor()
+    set_random_state(regressor)
+    regressor.fit(X, y)
+    assert regressor.coef_.shape == (X.shape[1],)
+
+
+@pytest.mark.parametrize(
+    ["Classifier", "params"],
+    [
+        (LinearSVC, {}),
+        (LogisticRegression, {}),
+        (LogisticRegressionCV, {"solver": "newton-cholesky"}),
+        (PassiveAggressiveClassifier, {}),
+        (Perceptron, {}),
+        (RidgeClassifier, {}),
+        (RidgeClassifierCV, {}),
+        (SGDClassifier, {}),
+    ],
+)
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_linear_model_classifier_coef_shape(Classifier, params, n_classes):
+    if Classifier in (RidgeClassifier, RidgeClassifierCV):
+        pytest.xfail(f"{Classifier} does not follow `coef_` shape contract!")
+
+    X, y = make_classification(n_informative=10, n_classes=n_classes, random_state=0)
+    n_features = X.shape[1]
+
+    classifier = Classifier(**params)
+    set_random_state(classifier)
+    classifier.fit(X, y)
+    expected_shape = (1, n_features) if n_classes == 2 else (n_classes, n_features)
+    assert classifier.coef_.shape == expected_shape
+
+
+@pytest.mark.parametrize(
+    "LinearModel, params",
+    [
+        (Lasso, {"tol": 1e-15, "alpha": 0.01}),
+        (LassoCV, {"tol": 1e-15}),
+        (ElasticNetCV, {"tol": 1e-15}),
+        (RidgeClassifier, {"solver": "sparse_cg", "alpha": 0.1}),
+        (ElasticNet, {"tol": 1e-15, "l1_ratio": 1, "alpha": 0.01}),
+        (ElasticNet, {"tol": 1e-15, "l1_ratio": 1e-5, "alpha": 0.01}),
+        (Ridge, {"solver": "sparse_cg", "tol": 1e-12, "alpha": 0.1}),
+        (LinearRegression, {}),
+        (RidgeCV, {}),
+        (RidgeClassifierCV, {}),
+    ],
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container):
+    """Test that sparse and dense linear models give same results.
+
+    Models use a preprocessing pipeline with a StandardScaler.
+    """
+    model_dense = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
+
+    model_sparse = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
+
+    # prepare the data
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.0
+
+    X_sparse = csr_container(X)
+    y = rng.rand(n_samples)
+
+    if is_classifier(model_dense):
+        y = np.sign(y)
+
+    model_dense.fit(X, y)
+    model_sparse.fit(X_sparse, y)
+
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-15)
+    y_pred_dense = model_dense.predict(X)
+    y_pred_sparse = model_sparse.predict(X_sparse)
+    assert_allclose(y_pred_dense, y_pred_sparse)
+
+    assert_allclose(model_dense[1].intercept_, model_sparse[1].intercept_)

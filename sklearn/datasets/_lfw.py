@@ -17,15 +17,20 @@ from os.path import exists, isdir, join
 import numpy as np
 from joblib import Memory
 
-from ..utils import Bunch
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.fixes import tarfile_extractall
-from ._base import (
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _fetch_remote,
     get_data_home,
     load_descr,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +124,7 @@ def _check_fetch_lfw(
         logger.debug("Decompressing the data archive to %s", data_folder_path)
         with tarfile.open(archive_path, "r:gz") as fp:
             tarfile_extractall(fp, path=lfw_home)
+
         remove(archive_path)
 
     return lfw_home, data_folder_path
@@ -168,13 +174,14 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        pil_img = Image.open(file_path)
-        pil_img = pil_img.crop(
-            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
-        )
-        if resize is not None:
-            pil_img = pil_img.resize((w, h))
-        face = np.asarray(pil_img, dtype=np.float32)
+
+        with Image.open(file_path) as pil_img:
+            pil_img = pil_img.crop(
+                (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+            )
+            if resize is not None:
+                pil_img = pil_img.resize((w, h))
+            face = np.asarray(pil_img, dtype=np.float32)
 
         if face.ndim == 0:
             raise RuntimeError(
@@ -511,11 +518,11 @@ def fetch_lfw_pairs(
     Features            real, between 0 and 255
     =================   =======================
 
-    In the official `README.txt`_ this task is described as the
-    "Restricted" task.  As I am not sure as to implement the
-    "Unrestricted" variant correctly, I left it as unsupported for now.
-
-      .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
+    In the `original paper <https://people.cs.umass.edu/~elm/papers/lfw.pdf>`_
+    the "pairs" version corresponds to the "restricted task", where
+    the experimenter should not use the name of a person to infer
+    the equivalence or non-equivalence of two face images that
+    are not explicitly given in the training set.
 
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.
@@ -595,7 +602,7 @@ def fetch_lfw_pairs(
     >>> from sklearn.datasets import fetch_lfw_pairs
     >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
     >>> list(lfw_pairs_train.target_names)
-    ['Different persons', 'Same person']
+    [np.str_('Different persons'), np.str_('Same person')]
     >>> lfw_pairs_train.pairs.shape
     (2200, 2, 62, 47)
     >>> lfw_pairs_train.data.shape

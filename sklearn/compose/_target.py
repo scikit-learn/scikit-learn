@@ -5,20 +5,20 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
-from ..exceptions import NotFittedError
-from ..linear_model import LinearRegression
-from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _safe_indexing, check_array
-from ..utils._metadata_requests import (
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch, _safe_indexing, check_array
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import HasMethods
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
+from sklearn.utils._param_validation import HasMethods
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
@@ -234,19 +234,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Target values.
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the underlying regressor.
 
-                Parameters directly passed to the `fit` method of the
-                underlying regressor.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the underlying regressor.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `fit` method of the
-                underlying regressor.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                    more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -262,7 +258,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             y,
             input_name="y",
             accept_sparse=False,
-            force_all_finite=True,
+            ensure_all_finite=True,
             ensure_2d=False,
             dtype="numeric",
             allow_nd=True,
@@ -285,7 +281,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         # FIXME: a FunctionTransformer can return a 1D array even when validate
         # is set to True. Therefore, we need to check the number of dimension
         # first.
-        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
+        if y_trans.ndim == 2 and y_trans.shape[1] == 1 and self._training_dim == 1:
             y_trans = y_trans.squeeze(axis=1)
 
         self.regressor_ = self._get_regressor(get_clone=True)
@@ -313,19 +309,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Samples.
 
         **predict_params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying regressor.
 
-                Parameters directly passed to the `predict` method of the
-                underlying regressor.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying regressor.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `predict` method of the
-                underlying regressor.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -352,13 +344,13 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         return pred_trans
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         regressor = self._get_regressor()
-
-        return {
-            "poor_score": True,
-            "multioutput": _safe_tags(regressor, key="multioutput"),
-        }
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.input_tags.sparse = get_tags(regressor).input_tags.sparse
+        tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
+        return tags
 
     @property
     def n_features_in_(self):

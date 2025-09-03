@@ -17,6 +17,9 @@ is computed.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Let's start by loading the dataset and creating some sample weights.
 import numpy as np

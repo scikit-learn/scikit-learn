@@ -2,7 +2,7 @@ import re
 
 from docutils import nodes
 from sphinx.transforms.post_transforms import SphinxPostTransform
-from sphinx_design.dropdown import dropdown_main, dropdown_title
+from sphinx_design.dropdown import dropdown_main
 
 
 class DropdownAnchorAdder(SphinxPostTransform):
@@ -12,26 +12,8 @@ class DropdownAnchorAdder(SphinxPostTransform):
     need to make sure that the old anchors still work. See the original implementation
     (in JS): https://github.com/scikit-learn/scikit-learn/pull/27409
 
-    The structure of each sphinx-design dropdown node is expected to be:
-
-    <dropdown_main ...>
-        <dropdown_title ...>
-            ...icon      <-- This exists if the "icon" option of the sphinx-design
-                             dropdown is set; we do not use it in our documentation
-
-            ...title     <-- This may contain multiple nodes, e.g. literal nodes if
-                             there are inline codes; we use the concatenated text of
-                             all these nodes to generate the anchor ID
-
-            Here we insert the anchor link!
-
-            <container ...>  <-- The "dropdown closed" marker
-            <container ...>  <-- The "dropdown open" marker
-        </dropdown_title>
-        <container...>
-            ...main contents
-        </container>
-    </dropdown_main>
+    The anchor links are inserted at the end of the node with class "sd-summary-text"
+    which includes only the title text part of the dropdown (no icon, markers, etc).
     """
 
     default_priority = 9999  # Apply later than everything else
@@ -44,15 +26,13 @@ class DropdownAnchorAdder(SphinxPostTransform):
         anchor_id_counters = {}
 
         for sd_dropdown in self.document.findall(dropdown_main):
-            # Grab the dropdown title
-            sd_dropdown_title = sd_dropdown.next_node(dropdown_title)
+            # Grab the summary text node
+            sd_summary_text = sd_dropdown.next_node(
+                lambda node: "sd-summary-text" in node.get("classes", [])
+            )
 
             # Concatenate the text of relevant nodes as the title text
-            # Since we do not have the prefix icon, the relevant nodes are the very
-            # first child node until the third last node (last two are markers)
-            title_text = "".join(
-                node.astext() for node in sd_dropdown_title.children[:-2]
-            )
+            title_text = "".join(node.astext() for node in sd_summary_text.children)
 
             # The ID uses the first line, lowercased, with spaces replaced by dashes;
             # suffix the anchor ID with a counter if it already exists
@@ -71,7 +51,7 @@ class DropdownAnchorAdder(SphinxPostTransform):
                 'title="Link to this dropdown">#</a>'
             )
             anchor_node = nodes.raw("", anchor_html, format="html")
-            sd_dropdown_title.insert(-2, anchor_node)  # before the two markers
+            sd_summary_text.append(anchor_node)
 
 
 def setup(app):

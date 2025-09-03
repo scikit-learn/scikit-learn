@@ -4,6 +4,7 @@ Utility methods to print system info for debugging
 adapted from :func:`pandas.show_versions`
 """
 
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import platform
@@ -11,8 +12,8 @@ import sys
 
 from threadpoolctl import threadpool_info
 
-from .. import __version__
-from ._openmp_helpers import _openmp_parallelism_enabled
+from sklearn import __version__
+from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled
 
 
 def _get_sys_info():

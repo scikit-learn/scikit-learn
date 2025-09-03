@@ -32,14 +32,14 @@ solves a problem of the form:
 
 .. math:: \min_{w} || X w - y||_2^2
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
-   :target: ../auto_examples/linear_model/plot_ols.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_001.png
+   :target: ../auto_examples/linear_model/plot_ols_ridge.html
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
-and will store the coefficients :math:`w` of the linear model in its
-``coef_`` member::
+:class:`LinearRegression` takes in its ``fit`` method arguments ``X``, ``y``,
+``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
+``coef_`` and ``intercept_`` attributes::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
@@ -47,9 +47,11 @@ and will store the coefficients :math:`w` of the linear model in its
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
+    >>> reg.intercept_
+    0.0
 
 The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and the
+independence of the features. When features are correlated and some
 columns of the design matrix :math:`X` have an approximately linear
 dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
@@ -59,7 +61,7 @@ example, when data are collected without an experimental design.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 
 Non-Negative Least Squares
 --------------------------
@@ -79,7 +81,7 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 The least squares solution is computed using the singular value
-decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
+decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
 this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
@@ -124,7 +126,7 @@ its ``coef_`` member::
     >>> reg.coef_
     array([0.34545455, 0.34545455])
     >>> reg.intercept_
-    0.13636...
+    np.float64(0.13636)
 
 Note that the class :class:`Ridge` allows for the user to specify that the
 solver be automatically chosen by setting `solver="auto"`. When this option
@@ -143,6 +145,11 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Classification
 --------------
@@ -168,15 +175,14 @@ The :class:`RidgeClassifier` can be significantly faster than e.g.
 compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
 This classifier is sometimes referred to as a `Least Squares Support Vector
-Machines
+Machine
 <https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-* :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+
 
 Ridge Complexity
 ----------------
@@ -209,7 +215,7 @@ Usage example::
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
-    0.01
+    np.float64(0.01)
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
@@ -227,24 +233,23 @@ Cross-Validation.
 Lasso
 =====
 
-The :class:`Lasso` is a linear model that estimates sparse coefficients.
+The :class:`Lasso` is a linear model that estimates sparse coefficients, i.e., it is
+able to set coefficients exactly to zero.
 It is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
 features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
-Under certain conditions, it can recover the exact set of non-zero
-coefficients (see
+Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
 Mathematically, it consists of a linear model with an added regularization term.
 The objective function to minimize is:
 
-.. math::  \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
-The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha ||w||_1` added, where
-:math:`\alpha` is a constant and :math:`||w||_1` is the :math:`\ell_1`-norm of
-the coefficient vector.
+The lasso estimate thus solves the least-squares with added penalty
+:math:`\alpha ||w||_1`, where :math:`\alpha` is a constant and :math:`||w||_1` is the
+:math:`\ell_1`-norm of the coefficient vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -275,17 +280,85 @@ computes the coefficients along the full path of possible values.
 
 .. dropdown:: References
 
-  The following two references explain the iterations
-  used in the coordinate descent solver of scikit-learn, as well as
-  the duality gap computation used for convergence control.
+  The following references explain the origin of the Lasso as well as properties
+  of the Lasso problem and the duality gap computation used for convergence control.
 
-  * "Regularization Path For Generalized linear Models by Coordinate Descent",
-    Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-    <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
+  * :doi:`Robert Tibshirani. (1996) Regression Shrinkage and Selection Via the Lasso.
+    J. R. Stat. Soc. Ser. B Stat. Methodol., 58(1):267-288
+    <10.1111/j.2517-6161.1996.tb02080.x>`
   * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
     S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
     in IEEE Journal of Selected Topics in Signal Processing, 2007
     (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+
+.. _coordinate_descent:
+
+Coordinate Descent with Gap Safe Screening Rules
+------------------------------------------------
+
+Coordinate descent (CD) is a strategy so solve a minimization problem that considers a
+single feature :math:`j` at a time. This way, the optimization problem is reduced to a
+1-dimensional problem which is easier to solve:
+
+.. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2 ^ 2 + \alpha |w_j|}
+
+with index :math:`-j` meaning all features but :math:`j`. The solution is
+
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+
+with the soft-thresholding function
+:math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
+Note that the soft-thresholding function is exactly zero whenever
+:math:`\alpha \geq |z|`.
+The CD solver then loops over the features either in a cycle, picking one feature after
+the other in the order given by `X` (`selection="cyclic"`), or by randomly picking
+features (`selection="random"`).
+It stops if the duality gap is smaller than the provided tolerance `tol`.
+
+.. dropdown:: Mathematical details
+
+  The duality gap :math:`G(w, v)` is an upper bound of the difference between the
+  current primal objective function of the Lasso, :math:`P(w)`, and its minimum
+  :math:`P(w^\star)`, i.e. :math:`G(w, v) \leq P(w) - P(w^\star)`. It is given by
+  :math:`G(w, v) = P(w) - D(v)` with dual objective function
+
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
+
+  subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
+  dual scaling
+
+  .. math::
+    c = \begin{cases}
+      1, & ||X^Tr||_{\infty} \leq n_{\text{samples}}\alpha, \\
+      \frac{n_{\text{samples}}\alpha}{||X^Tr||_{\infty}}, & \text{otherwise}
+    \end{cases}
+
+  the stopping criterion is
+
+  .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} < G(w, cr)\,.
+
+A clever method to speedup the coordinate descent algorithm is to screen features such
+that at optimum :math:`w_j = 0`. Gap safe screening rules are such a
+tool. Anywhere during the optimization algorithm, they can tell which feature we can
+safely exclude, i.e., set to zero with certainty.
+
+.. dropdown:: References
+
+  The first reference explains the coordinate descent solver used in scikit-learn, the
+  others treat gap safe screening rules.
+
+  * :doi:`Friedman, Hastie & Tibshirani. (2010).
+    Regularization Path For Generalized linear Models by Coordinate Descent.
+    J Stat Softw 33(1), 1-22 <10.18637/jss.v033.i01>`
+  * :arxiv:`O. Fercoq, A. Gramfort, J. Salmon. (2015).
+    Mind the duality gap: safer rules for the Lasso.
+    Proceedings of Machine Learning Research 37:333-342, 2015.
+    <1505.03410>`
+  * :arxiv:`E. Ndiaye, O. Fercoq, A. Gramfort, J. Salmon. (2017).
+    Gap Safe Screening Rules for Sparsity Enforcing Penalties.
+    Journal of Machine Learning Research 18(128):1-33, 2017.
+    <1611.05780>`
 
 Setting regularization parameter
 --------------------------------
@@ -367,7 +440,7 @@ scikit-learn.
   :math:`d` is the number of parameters (as well referred to as degrees of
   freedom in the previous section).
 
-  The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
+  The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
 
   .. math::
       BIC = -2 \log(\hat{L}) + \log(N) d
@@ -377,7 +450,7 @@ scikit-learn.
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
   where :math:`\sigma^2` is an estimate of the noise variance,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
@@ -504,8 +577,8 @@ The objective function to minimize is in this case
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_coordinate_descent_path_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_002.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
@@ -515,7 +588,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
 
 .. dropdown:: References
@@ -609,8 +682,8 @@ algorithm, and unlike the implementation based on coordinate descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_lars.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_001.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
@@ -621,13 +694,13 @@ function of the norm of its coefficients.
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
    >>> reg.coef_
-   array([0.6..., 0.        ])
+   array([0.6, 0.        ])
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 
-The Lars algorithm provides the full path of the coefficients along
+The LARS algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
 is to retrieve the path with one of the functions :func:`lars_path`
 or :func:`lars_path_gram`.
@@ -648,7 +721,7 @@ or :func:`lars_path_gram`.
   .. rubric:: References
 
   * Original Algorithm is detailed in the paper `Least Angle Regression
-    <https://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+    <https://hastie.su.domains/Papers/LARS/LeastAngle_2002.pdf>`_
     by Hastie et al.
 
 .. _omp:
@@ -657,7 +730,7 @@ Orthogonal Matching Pursuit (OMP)
 =================================
 :class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implement the OMP
 algorithm for approximating the fit of a linear model with constraints imposed
-on the number of non-zero coefficients (ie. the :math:`\ell_0` pseudo-norm).
+on the number of non-zero coefficients (i.e. the :math:`\ell_0` pseudo-norm).
 
 Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
@@ -690,7 +763,7 @@ previously chosen dictionary elements.
 
   * `Matching pursuits with time-frequency dictionaries
     <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+    S. G. Mallat, Z. Zhang, 1993.
 
 .. _bayesian_regression:
 
@@ -731,11 +804,14 @@ The disadvantages of Bayesian regression include:
 
 .. dropdown:: References
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+  * A good introduction to Bayesian methods is given in `C. Bishop: Pattern
+    Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`__.
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+  * Original Algorithm is detailed in the book `Bayesian learning for neural
+    networks
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=db869fa192a3222ae4f2d766674a378e47013b1b>`__
+    by Radford M. Neal.
 
 .. _bayesian_ridge_regression:
 
@@ -788,7 +864,7 @@ The coefficients :math:`w` of the model can be accessed::
     >>> reg.coef_
     array([0.49999993, 0.49999993])
 
-Due to the Bayesian framework, the weights found are slightly different to the
+Due to the Bayesian framework, the weights found are slightly different from the
 ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
 is more robust to ill-posed problems.
 
@@ -831,13 +907,11 @@ prior over all :math:`\lambda_i` is chosen to be the same gamma distribution
 given by the hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 ARD is also known in the literature as *Sparse Bayesian Learning* and *Relevance
-Vector Machine* [3]_ [4]_. For a worked-out comparison between ARD and `Bayesian
-Ridge Regression`_, see the example below.
+Vector Machine* [3]_ [4]_.
 
-.. rubric:: Examples
+See :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a worked-out comparison between ARD and `Bayesian Ridge Regression`_.
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
-
+See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py` for a comparison between various methods - Lasso, ARD and ElasticNet - on correlated data.
 
 .. rubric:: References
 
@@ -847,7 +921,7 @@ Ridge Regression`_, see the example below.
 
 .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-.. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
+.. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
 .. _Logistic_regression:
 
@@ -891,6 +965,7 @@ regularization.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 Binary Case
 -----------
@@ -964,7 +1039,7 @@ logistic regression, see also `log-linear model
 
 .. dropdown:: Mathematical details
 
-  Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
+  Let :math:`y_i \in \{1, \ldots, K\}` be the label (ordinal) encoded target variable for observation :math:`i`.
   Instead of a single coefficient vector, we now have
   a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
   :math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
@@ -1000,6 +1075,8 @@ logistic regression, see also `log-linear model
   | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
   +----------------+----------------------------------------------------------------------------------+
 
+.. _logistic_regression_solvers:
+
 Solvers
 -------
 
@@ -1013,7 +1090,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L2 penalty                   |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| L2 penalty                   |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1023,7 +1100,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Multiclass support**       |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| multinomial multiclass       |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| multinomial multiclass       |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Behaviors**                |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1034,8 +1111,11 @@ The following table summarizes the penalties and multinomial multiclass supporte
 | Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 
-The "lbfgs" solver is used by default for its robustness. For large datasets
-the "saga" solver is usually faster.
+The "lbfgs" solver is used by default for its robustness. For
+`n_samples >> n_features`, "newton-cholesky" is a good choice and can reach high
+precision (tiny `tol` values). For large datasets
+the "saga" solver is usually faster (than "lbfgs"), in particular for low precision
+(high `tol`).
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
@@ -1052,7 +1132,7 @@ are zeroes. This is because for the sample(s) with ``decision_function`` zero,
 :class:`LogisticRegression` and :class:`~sklearn.svm.LinearSVC` predict the
 negative class, while liblinear predicts the positive class. Note that a model
 with ``fit_intercept=False`` and having many samples with ``decision_function``
-zero, is likely to be a underfit, bad model and you are advised to set
+zero, is likely to be an underfit, bad model and you are advised to set
 ``fit_intercept=True`` and increase the ``intercept_scaling``.
 
 .. dropdown:: Solvers' details
@@ -1092,13 +1172,12 @@ zero, is likely to be a underfit, bad model and you are advised to set
     scaled datasets and on datasets with one-hot encoded categorical features with rare
     categories.
 
-  * The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+  * The "newton-cholesky" solver is an exact Newton solver that calculates the Hessian
     matrix and solves the resulting linear system. It is a very good choice for
-    `n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
-    regularization is supported. Furthermore, because the hessian matrix is explicitly
-    computed, the memory usage has a quadratic dependency on `n_features` as well as on
-    `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
-    multiclass case.
+    `n_samples` >> `n_features` and can reach high precision (tiny values of `tol`),
+    but has a few shortcomings: Only :math:`\ell_2` regularization is supported.
+    Furthermore, because the Hessian matrix is explicitly computed, the memory usage
+    has a quadratic dependency on `n_features` as well as on `n_classes`.
 
   For a comparison of some of these solvers, see [9]_.
 
@@ -1273,9 +1352,9 @@ Usage example::
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
     TweedieRegressor(alpha=0.5, link='log', power=1)
     >>> reg.coef_
-    array([0.2463..., 0.4337...])
+    array([0.2463, 0.4337])
     >>> reg.intercept_
-    -0.7638...
+    np.float64(-0.7638)
 
 
 .. rubric:: Examples
@@ -1326,10 +1405,10 @@ You can refer to the dedicated :ref:`sgd` documentation section for more details
 .. _perceptron:
 
 Perceptron
-==========
+----------
 
 The :class:`Perceptron` is another simple classification algorithm suitable for
-large scale learning. By default:
+large scale learning and derives from SGD. By default:
 
 - It does not require a learning rate.
 
@@ -1349,18 +1428,19 @@ for more details.
 .. _passive_aggressive:
 
 Passive Aggressive Algorithms
-=============================
+-----------------------------
 
-The passive-aggressive algorithms are a family of algorithms for large-scale
-learning. They are similar to the Perceptron in that they do not require a
-learning rate. However, contrary to the Perceptron, they include a
-regularization parameter ``C``.
+The passive-aggressive (PA) algorithms are another family of 2 algorithms (PA-I and
+PA-II) for large-scale online learning that derive from SGD. They are similar to the
+Perceptron in that they do not require a learning rate. However, contrary to the
+Perceptron, they include a regularization parameter ``eta0`` (:math:`C` in the
+reference paper).
 
-For classification, :class:`PassiveAggressiveClassifier` can be used with
-``loss='hinge'`` (PA-I) or ``loss='squared_hinge'`` (PA-II).  For regression,
-:class:`PassiveAggressiveRegressor` can be used with
-``loss='epsilon_insensitive'`` (PA-I) or
-``loss='squared_epsilon_insensitive'`` (PA-II).
+For classification,
+:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0)` can
+be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
+:class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
+eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
@@ -1434,7 +1514,7 @@ in these settings.
 
   * :ref:`HuberRegressor <huber_regression>` should be faster than
     :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-    unless the number of samples are very large, i.e. ``n_samples`` >> ``n_features``.
+    unless the number of samples is very large, i.e. ``n_samples`` >> ``n_features``.
     This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
     fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
     and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as
@@ -1582,10 +1662,10 @@ better than an ordinary least squares in high dimension.
 Huber Regression
 ----------------
 
-The :class:`HuberRegressor` is different to :class:`Ridge` because it applies a
-linear loss to samples that are classified as outliers.
+The :class:`HuberRegressor` is different from :class:`Ridge` because it applies a
+linear loss to samples that are defined as outliers by the `epsilon` parameter.
 A sample is classified as an inlier if the absolute error of that sample is
-lesser than a certain threshold. It differs from :class:`TheilSenRegressor`
+less than the threshold `epsilon`. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
 but gives a lesser weight to them.
 
@@ -1600,13 +1680,13 @@ but gives a lesser weight to them.
 
 .. dropdown:: Mathematical details
 
-  The loss function that :class:`HuberRegressor` minimizes is given by
+  :class:`HuberRegressor` minimizes
 
   .. math::
 
     \min_{w, \sigma} {\sum_{i=1}^n\left(\sigma + H_{\epsilon}\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
-  where
+  where the loss function is given by
 
   .. math::
 
@@ -1621,7 +1701,7 @@ but gives a lesser weight to them.
   .. rubric:: References
 
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale
-    estimates, pg 172
+    estimates, p. 172.
 
 The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
 in the following ways.
@@ -1635,10 +1715,10 @@ in the following ways.
   samples while :class:`SGDRegressor` needs a number of passes on the training data to
   produce the same robustness.
 
-Note that this estimator is different from the R implementation of Robust Regression
-(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
-squares implementation with weights given to each sample on the basis of how much the residual is
-greater than a certain threshold.
+Note that this estimator is different from the `R implementation of Robust
+Regression <https://stats.oarc.ucla.edu/r/dae/robust-regression/>`_  because the R
+implementation does a weighted least squares implementation with weights given to each
+sample on the basis of how much the residual is greater than a certain threshold.
 
 .. _quantile_regression:
 

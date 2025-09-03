@@ -5,15 +5,22 @@ precision matrix defined as the inverse of the covariance. Covariance estimation
 closely related to the theory of Gaussian graphical models.
 """
 
-from ._elliptic_envelope import EllipticEnvelope
-from ._empirical_covariance import (
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.covariance._elliptic_envelope import EllipticEnvelope
+from sklearn.covariance._empirical_covariance import (
     EmpiricalCovariance,
     empirical_covariance,
     log_likelihood,
 )
-from ._graph_lasso import GraphicalLasso, GraphicalLassoCV, graphical_lasso
-from ._robust_covariance import MinCovDet, fast_mcd
-from ._shrunk_covariance import (
+from sklearn.covariance._graph_lasso import (
+    GraphicalLasso,
+    GraphicalLassoCV,
+    graphical_lasso,
+)
+from sklearn.covariance._robust_covariance import MinCovDet, fast_mcd
+from sklearn.covariance._shrunk_covariance import (
     OAS,
     LedoitWolf,
     ShrunkCovariance,
@@ -24,13 +31,13 @@ from ._shrunk_covariance import (
 )
 
 __all__ = [
+    "OAS",
     "EllipticEnvelope",
     "EmpiricalCovariance",
     "GraphicalLasso",
     "GraphicalLassoCV",
     "LedoitWolf",
     "MinCovDet",
-    "OAS",
     "ShrunkCovariance",
     "empirical_covariance",
     "fast_mcd",

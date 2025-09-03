@@ -8,21 +8,21 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from .._config import config_context
-from ..base import (
+from sklearn._config import config_context
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics import pairwise_distances_argmin
-from ..metrics.pairwise import euclidean_distances
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import check_is_fitted
-from . import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances_argmin
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _iterate_sparse_X(X):
@@ -461,6 +461,9 @@ class Birch(
     subcluster are updated. This is done recursively till the properties of
     the leaf node are updated.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.MiniBatchKMeans`.
+
     References
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny
@@ -480,6 +483,9 @@ class Birch(
     Birch(n_clusters=None)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
+
+    For a comparison of the BIRCH clustering algorithm with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -537,7 +543,8 @@ class Birch(
                 FutureWarning,
             )
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             reset=first_call,
@@ -663,7 +670,7 @@ class Birch(
             Labelled data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         return self._predict(X)
 
     def _predict(self, X):
@@ -694,7 +701,7 @@ class Birch(
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
             return euclidean_distances(X, self.subcluster_centers_)
 
@@ -735,5 +742,8 @@ class Birch(
         if compute_labels:
             self.labels_ = self._predict(X)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.input_tags.sparse = True
+        return tags

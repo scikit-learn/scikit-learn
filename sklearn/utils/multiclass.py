@@ -10,21 +10,22 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import get_namespace
-from ..utils.fixes import VisibleDeprecationWarning
-from .validation import _assert_all_finite, check_array
+from sklearn.utils._array_api import get_namespace
+from sklearn.utils._unique import attach_unique, cached_unique
+from sklearn.utils.fixes import VisibleDeprecationWarning
+from sklearn.utils.validation import _assert_all_finite, check_array
 
 
-def _unique_multiclass(y):
-    xp, is_array_api_compliant = get_namespace(y)
+def _unique_multiclass(y, xp=None):
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return xp.unique_values(xp.asarray(y))
+        return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
 
-def _unique_indicator(y):
-    xp, _ = get_namespace(y)
+def _unique_indicator(y, xp=None):
+    xp, _ = get_namespace(y, xp=xp)
     return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
@@ -69,8 +70,9 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
+    ys = attach_unique(*ys, return_tuple=True)
     xp, is_array_api_compliant = get_namespace(*ys)
-    if not ys:
+    if len(ys) == 0:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
@@ -104,10 +106,12 @@ def unique_labels(*ys):
 
     if is_array_api_compliant:
         # array_api does not allow for mixed dtypes
-        unique_ys = xp.concat([_unique_labels(y) for y in ys])
+        unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
-    ys_labels = set(chain.from_iterable((i for i in _unique_labels(y)) for y in ys))
+    ys_labels = set(
+        chain.from_iterable((i for i in _unique_labels(y, xp=xp)) for y in ys)
+    )
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
@@ -133,7 +137,7 @@ def is_multilabel(y):
     Returns
     -------
     out : bool
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+        Return ``True``, if ``y`` is in a multilabel format, else ``False``.
 
     Examples
     --------
@@ -157,7 +161,7 @@ def is_multilabel(y):
         check_y_kwargs = dict(
             accept_sparse=True,
             allow_nd=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             ensure_2d=False,
             ensure_min_samples=0,
             ensure_min_features=0,
@@ -181,13 +185,12 @@ def is_multilabel(y):
         if y.format in ("dok", "lil"):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
-        return (
-            len(y.data) == 0
-            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+        return len(y.data) == 0 or (
+            (labels.size == 1 or ((labels.size == 2) and (0 in labels)))
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
-        labels = xp.unique_values(y)
+        labels = cached_unique(y, xp=xp)
 
         return labels.shape[0] < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
@@ -222,17 +225,16 @@ def check_classification_targets(y):
         )
 
 
-def type_of_target(y, input_name=""):
+def type_of_target(y, input_name="", raise_unknown=False):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
     For example:
 
-        * ``binary`` is more specific but compatible with ``multiclass``.
-        * ``multiclass`` of integers is more specific but compatible with
-          ``continuous``.
-        * ``multilabel-indicator`` is more specific but compatible with
-          ``multiclass-multioutput``.
+    * ``binary`` is more specific but compatible with ``multiclass``.
+    * ``multiclass`` of integers is more specific but compatible with ``continuous``.
+    * ``multilabel-indicator`` is more specific but compatible with
+      ``multiclass-multioutput``.
 
     Parameters
     ----------
@@ -244,6 +246,12 @@ def type_of_target(y, input_name=""):
         The data name used to construct the error message.
 
         .. versionadded:: 1.1.0
+
+    raise_unknown : bool, default=False
+        If `True`, raise an error when the type of target returned by
+        :func:`~sklearn.utils.multiclass.type_of_target` is `"unknown"`.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -295,11 +303,21 @@ def type_of_target(y, input_name=""):
     'multilabel-indicator'
     """
     xp, is_array_api_compliant = get_namespace(y)
+
+    def _raise_or_return():
+        """Depending on the value of raise_unknown, either raise an error or return
+        'unknown'.
+        """
+        if raise_unknown:
+            input = input_name if input_name else "data"
+            raise ValueError(f"Unknown label type for {input}: {y!r}")
+        else:
+            return "unknown"
+
     valid = (
         (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
         and not isinstance(y, str)
-        or is_array_api_compliant
-    )
+    ) or is_array_api_compliant
 
     if not valid:
         raise ValueError(
@@ -320,7 +338,7 @@ def type_of_target(y, input_name=""):
     check_y_kwargs = dict(
         accept_sparse=True,
         allow_nd=True,
-        force_all_finite=False,
+        ensure_all_finite=False,
         ensure_2d=False,
         ensure_min_samples=0,
         ensure_min_features=0,
@@ -340,17 +358,12 @@ def type_of_target(y, input_name=""):
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
     try:
-        # TODO(1.7): Change to ValueError when byte labels is deprecated.
-        # labels in bytes format
         first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        # labels in bytes format
         if isinstance(first_row_or_val, bytes):
-            warnings.warn(
-                (
-                    "Support for labels represented as bytes is deprecated in v1.5 and"
-                    " will error in v1.7. Convert the labels to a string or integer"
-                    " format."
-                ),
-                FutureWarning,
+            raise TypeError(
+                "Support for labels represented as bytes is not supported. Convert "
+                "the labels to a string or integer format."
             )
         # The old sequence of sequences format
         if (
@@ -371,17 +384,17 @@ def type_of_target(y, input_name=""):
     # Invalid inputs
     if y.ndim not in (1, 2):
         # Number of dimension greater than 2: [[[1, 2]]]
-        return "unknown"
+        return _raise_or_return()
     if not min(y.shape):
         # Empty ndarray: []/[[]]
         if y.ndim == 1:
             # 1-D empty array: []
             return "binary"  # []
         # 2-D empty array: [[]]
-        return "unknown"
+        return _raise_or_return()
     if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
         # [obj_1] and not ["label_1"]
-        return "unknown"
+        return _raise_or_return()
 
     # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
@@ -400,7 +413,17 @@ def type_of_target(y, input_name=""):
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+    classes = cached_unique(y)
+    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
+        # Only raise the warning when we have at least 20 samples.
+        warnings.warn(
+            "The number of unique classes is greater than 50% of the number "
+            "of samples. `y` could represent a regression problem, not a "
+            "classification problem.",
+            UserWarning,
+            stacklevel=2,
+        )
+    if classes.shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

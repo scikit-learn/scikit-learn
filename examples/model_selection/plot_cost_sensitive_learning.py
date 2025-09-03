@@ -35,6 +35,9 @@ case, the business metric depends on the amount of each individual transaction.
     <https://cseweb.ucsd.edu/~elkan/rescale.pdf>`_
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Cost-sensitive learning with constant gains and costs
 # -----------------------------------------------------
@@ -138,7 +141,7 @@ scoring = {
 # average than the opposite: it is less costly for the financing institution to
 # not grant a credit to a potential customer that will not default (and
 # therefore miss a good customer that would have otherwise both reimbursed the
-# credit and payed interests) than to grant a credit to a customer that will
+# credit and paid interests) than to grant a credit to a customer that will
 # default.
 #
 # We define a python function that weight the confusion matrix and return the
@@ -318,8 +321,7 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            linestyle=linestyle,
-            color=color,
+            curve_kwargs=dict(linestyle=linestyle, color=color),
             ax=axs[1],
             name=name,
             plot_chance_level=idx == 1,
@@ -657,15 +659,18 @@ print(
 #
 # The class :class:`~sklearn.model_selection.FixedThresholdClassifier` allows us to
 # manually set the decision threshold. At prediction time, it behave as the previous
-# tuned model but no search is performed during the fitting process.
+# tuned model but no search is performed during the fitting process. Note that here
+# we use :class:`~sklearn.frozen.FrozenEstimator` to wrap the predictive model to
+# avoid any refitting.
 #
 # Here, we will reuse the decision threshold found in the previous section to create a
 # new model and check that it gives the same results.
+from sklearn.frozen import FrozenEstimator
 from sklearn.model_selection import FixedThresholdClassifier
 
 model_fixed_threshold = FixedThresholdClassifier(
-    estimator=model, threshold=tuned_model.best_threshold_, prefit=True
-).fit(data_train, target_train)
+    estimator=FrozenEstimator(model), threshold=tuned_model.best_threshold_
+)
 
 # %%
 business_score = business_scorer(
@@ -683,3 +688,6 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
+
+# At the end, we disable the configuration flag for metadata routing::
+sklearn.set_config(enable_metadata_routing=False)

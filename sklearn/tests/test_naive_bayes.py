@@ -25,9 +25,6 @@ from sklearn.utils.fixes import CSR_CONTAINERS
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
-msg = "The default value for `force_alpha` will change"
-pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
-
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 y = np.array([1, 1, 1, 2, 2, 2])
@@ -971,3 +968,12 @@ def test_predict_joint_proba(Estimator, global_random_seed):
     log_prob_x = logsumexp(jll, axis=1)
     log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
     assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
+
+
+@pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
+def test_categorical_input_tag(Estimator):
+    tags = Estimator().__sklearn_tags__()
+    if Estimator is CategoricalNB:
+        assert tags.input_tags.categorical
+    else:
+        assert not tags.input_tags.categorical

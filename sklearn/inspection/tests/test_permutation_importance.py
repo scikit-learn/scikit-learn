@@ -311,7 +311,11 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df = pd.DataFrame(X)
 
     # Add a categorical feature that is statistically linked to y:
-    binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    binner = KBinsDiscretizer(
+        n_bins=3,
+        encode="ordinal",
+        quantile_method="averaged_inverted_cdf",
+    )
     cat_column = binner.fit_transform(y.reshape(-1, 1))
 
     # Concatenate the extra column to the numpy array: integers will be
@@ -319,12 +323,8 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X = np.hstack([X, cat_column])
     assert X.dtype.kind == "f"
 
-    # Insert extra column as a non-numpy-native dtype (while keeping backward
-    # compat for old pandas versions):
-    if hasattr(pd, "Categorical"):
-        cat_column = pd.Categorical(cat_column.ravel())
-    else:
-        cat_column = cat_column.ravel()
+    # Insert extra column as a non-numpy-native dtype:
+    cat_column = pd.Categorical(cat_column.ravel())
     new_col_idx = len(X_df.columns)
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype

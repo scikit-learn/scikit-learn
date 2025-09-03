@@ -20,7 +20,8 @@ representation of the data in the low-dimensional space.
 
 """
 
-# Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation
@@ -165,7 +166,7 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 md_scaling = manifold.MDS(
     n_components=n_components,
     max_iter=50,
-    n_init=4,
+    n_init=1,
     random_state=0,
     normalized_stress=False,
 )

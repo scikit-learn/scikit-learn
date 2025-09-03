@@ -24,14 +24,14 @@ cdef packed struct node_struct:
     unsigned int count
     intp_t feature_idx
     X_DTYPE_C num_threshold
-    unsigned char missing_go_to_left
+    uint8_t missing_go_to_left
     unsigned int left
     unsigned int right
     Y_DTYPE_C gain
     unsigned int depth
-    unsigned char is_leaf
+    uint8_t is_leaf
     X_BINNED_DTYPE_C bin_threshold
-    unsigned char is_categorical
+    uint8_t is_categorical
     # The index of the corresponding bitsets in the Predictor's bitset arrays.
     # Only used if is_categorical is True
     unsigned int bitset_idx

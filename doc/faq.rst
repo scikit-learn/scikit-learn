@@ -137,7 +137,7 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adding GPU support by default would introduce heavy harware-specific software
+Adding GPU support by default would introduce heavy hardware-specific software
 dependencies and existing algorithms would need to be reimplemented. This would
 make it both harder for the average user to install scikit-learn and harder for
 the developers to maintain the code.
@@ -181,21 +181,33 @@ discussed in :ref:`preprocessing_categorical_features`.
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
-Why does scikit-learn not directly work with, for example, :class:`pandas.DataFrame`?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note that recently, :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` gained native support for
+categorical features through the option `categorical_features="from_dtype"`. This
+option relies on inferring which columns of the data are categorical based on the
+:class:`pandas.CategoricalDtype` and :class:`polars.datatypes.Categorical` dtypes.
 
-The homogeneous NumPy and SciPy data objects currently expected are most
-efficient to process for most operations. Extensive work would also be needed
-to support Pandas categorical types. Restricting input to homogeneous
-types therefore reduces maintenance cost and encourages usage of efficient
-data structures.
+Does scikit-learn work natively with various types of dataframes?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Note however that :class:`~sklearn.compose.ColumnTransformer` makes it
-convenient to handle heterogeneous pandas dataframes by mapping homogeneous subsets of
-dataframe columns selected by name or dtype to dedicated scikit-learn transformers.
-Therefore :class:`~sklearn.compose.ColumnTransformer` are often used in the first
-step of scikit-learn pipelines when dealing
-with heterogeneous dataframes (see :ref:`pipeline` for more details).
+Scikit-learn has limited support for :class:`pandas.DataFrame` and
+:class:`polars.DataFrame`. Scikit-learn estimators can accept both these dataframe types
+as input, and scikit-learn transformers can output dataframes using the `set_output`
+API. For more details, refer to
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`.
+
+However, the internal computations in scikit-learn estimators rely on numerical
+operations that are more efficiently performed on homogeneous data structures such as
+NumPy arrays or SciPy sparse matrices. As a result, most scikit-learn estimators will
+internally convert dataframe inputs into these homogeneous data structures. Similarly,
+dataframe outputs are generated from these homogeneous data structures.
+
+Also note that :class:`~sklearn.compose.ColumnTransformer` makes it convenient to handle
+heterogeneous pandas dataframes by mapping homogeneous subsets of dataframe columns
+selected by name or dtype to dedicated scikit-learn transformers. Therefore
+:class:`~sklearn.compose.ColumnTransformer` are often used in the first step of
+scikit-learn pipelines when dealing with heterogeneous dataframes (see :ref:`pipeline`
+for more details).
 
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 for an example of working with heterogeneous (e.g. categorical and numeric) data.
@@ -288,6 +300,33 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
+What does the "spam" label for issues or pull requests mean?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "spam" label is an indication for reviewers that the issue or
+pull request may not have received sufficient effort or preparation
+from the author for a productive review. The maintainers are using this label
+as a way to deal with the increase of low value PRs and issues.
+
+If an issue or PR was labeled as spam and simultaneously closed, the decision
+is final. A common reason for this happening is when people open a PR for an
+issue that is still under discussion. Please wait for the discussion to
+converge before opening a PR.
+
+If your issue or PR was labeled as spam and not closed the following steps
+can increase the chances of the label being removed:
+
+- follow the :ref:`contribution guidelines <contributing>` and use the provided
+  issue and pull request templates
+- improve the formatting and grammar of the text of the title and description of the issue/PR
+- improve the diff to remove noise and unrelated changes
+- improve the issue or pull request title to be more descriptive
+- self review your code, especially if :ref:`you used AI tools to generate it <automated_contributions_policy>`
+- refrain from opening PRs that paraphrase existing code or documentation
+  without actually improving the correctness, clarity or educational
+  value of the existing code or documentation.
+
+
 .. _new_algorithms_inclusion_criteria:
 
 What are the inclusion criteria for new algorithms?
@@ -347,6 +386,15 @@ long-term maintenance issues in open-source software, look at
 
 Using scikit-learn
 ------------------
+
+How do I get started with scikit-learn?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are new to scikit-learn, or looking to strengthen your understanding,
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+See our :ref:`External Resources, Videos and Talks page <external_resources>`
+for more details.
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -501,7 +549,7 @@ program. Insert the following instructions in your main script::
 
         # call scikit-learn utils with n_jobs > 1 here
 
-You can find more default on the new start methods in the `multiprocessing
+You can find more details on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
 .. _faq_mkl_threading:

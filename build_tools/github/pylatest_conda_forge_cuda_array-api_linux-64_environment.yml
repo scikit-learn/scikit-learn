@@ -25,10 +25,8 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
-  - pytorch::pytorch
-  - pytorch-cuda
+  - pytorch-gpu
   - polars
   - pyarrow
   - cupy
-  - array-api-compat
   - array-api-strict
