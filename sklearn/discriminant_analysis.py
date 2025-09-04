@@ -958,45 +958,19 @@ class QuadraticDiscriminantAnalysis(
         self.store_covariance = store_covariance
         self.tol = tol
 
-    @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
-        """Fit the model according to the given training data and parameters.
-
-        .. versionchanged:: 0.19
-            ``store_covariances`` has been moved to main constructor as
-            ``store_covariance``.
-
-        .. versionchanged:: 0.19
-            ``tol`` has been moved to main constructor.
+    def _solve_svd(self, X, y):
+        """SVD solver for Quadratic Discriminant Analysis.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
+            Training data.
 
-        y : array-like of shape (n_samples,)
-            Target values (integers).
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target values.
         """
-        X, y = validate_data(self, X, y)
-        check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
-        if n_classes < 2:
-            raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
-                % (n_classes)
-            )
-        if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
-        else:
-            self.priors_ = np.array(self.priors)
 
         cov = None
         store_covariance = self.store_covariance
@@ -1037,6 +1011,48 @@ class QuadraticDiscriminantAnalysis(
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y):
+        """Fit the model according to the given training data and parameters.
+
+        .. versionchanged:: 0.19
+            ``store_covariances`` has been moved to main constructor as
+            ``store_covariance``.
+
+        .. versionchanged:: 0.19
+            ``tol`` has been moved to main constructor.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target values (integers).
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        X, y = validate_data(self, X, y)
+        check_classification_targets(y)
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_samples, n_features = X.shape
+        n_classes = len(self.classes_)
+        if n_classes < 2:
+            raise ValueError(
+                "The number of classes has to be greater than one; got %d class"
+                % (n_classes)
+            )
+        if self.priors is None:
+            self.priors_ = np.bincount(y) / float(n_samples)
+        else:
+            self.priors_ = np.array(self.priors)
+
+        self._solve_svd(X, y)
         return self
 
     def _decision_function(self, X):
