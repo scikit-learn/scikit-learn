@@ -1129,7 +1129,13 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
             return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
 
-        log_beta_bracket = bracket_minimum(log_loss, 0, xmin=-10, xmax=10)
+        def log_loss_array(log_beta_array=None):
+            log_beta_array = (
+                np.asarray([0.0]) if log_beta_array is None else log_beta_array
+            )
+            return np.vectorize(log_loss)(log_beta_array)
+
+        log_beta_bracket = bracket_minimum(log_loss_array, 0, xmin=-10, xmax=10)
         if not log_beta_bracket.success:
             raise RuntimeError(
                 "Temperature scaling fails to optimize during calibration. "
@@ -1138,7 +1144,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             )
 
         log_beta_minimizer = find_minimum(
-            log_loss,
+            log_loss_array,
             log_beta_bracket.bracket,
             tolerances={
                 "xatol": 64 * np.finfo(float).eps,
