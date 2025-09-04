@@ -2095,6 +2095,9 @@ def test__custom_fit_no_run_search():
         BadSearchCV(SVC()).fit(X, y)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_empty_cv_iterator_error():
     # Use global X, y
 
@@ -2120,6 +2123,8 @@ def test_empty_cv_iterator_error():
         ridge.fit(X[:train_size], y[:train_size])
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
 def test_random_search_bad_cv():
     # Use global X, y
 
