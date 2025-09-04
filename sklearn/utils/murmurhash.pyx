@@ -81,6 +81,7 @@ def _murmurhash3_bytes_array_s32(
     return np.asarray(out)
 
 
+# TODO(1.10): remove
 @deprecated(
     "Function `murmurhash3_32` was deprecated in 1.8.0 and will be "
     "removed in 1.10.0."
