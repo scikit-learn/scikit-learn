@@ -7,7 +7,6 @@ import re
 import shutil
 import time
 from tempfile import mkdtemp
-from turtle import pd
 
 import joblib
 import numpy as np
