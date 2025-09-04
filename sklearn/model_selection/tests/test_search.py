@@ -1210,18 +1210,14 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
-    params = dict(C=np.logspace(-4, 1, 3), gamma=np.logspace(-5, 0, 3, base=0.1))
+    params = dict(C=np.logspace(-4, 1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
             # If True, for multi-metric pass refit='accuracy'
-            if refit:
-                probability = True
-                refit = "accuracy" if isinstance(scoring, tuple) else refit
-            else:
-                probability = False
-            clf = SVC(probability=probability, random_state=42)
+            if refit and isinstance(scoring, tuple):
+                refit = "accuracy"
+            clf = LogisticRegression(random_state=42)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -1446,6 +1442,7 @@ def test_search_cv_sample_weight_equivalence(estimator):
     ],
 )
 def test_search_cv_score_samples_method(search_cv):
+    search_cv = clone(search_cv)  # Avoid side effects from previous tests.
     # Set parameters
     rng = np.random.RandomState(42)
     n_samples = 300
@@ -2622,6 +2619,9 @@ def test_search_estimator_param(SearchCV, param_search):
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_search_with_2d_array():
     parameter_grid = {
         "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams

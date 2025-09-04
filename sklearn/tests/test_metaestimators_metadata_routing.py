@@ -310,7 +310,7 @@ METAESTIMATORS: list = [
         "metaestimator": RANSACRegressor,
         "estimator_name": "estimator",
         "estimator": "regressor",
-        "init_args": {"min_samples": 0.5},
+        "init_args": {"min_samples": 0.5, "max_trials": 10},
         "X": X,
         "y": y,
         "preserves_metadata": "subset",
@@ -530,7 +530,9 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     (cv, cv_registry) : (CV splitter, registry)
         The CV splitter and the corresponding registry.
     """
-    kwargs = metaestimator_info.get("init_args", {})
+    # Avoid mutating the original init_args dict to keep the test execution
+    # thread-safe.
+    kwargs = metaestimator_info.get("init_args", {}).copy()
     estimator, estimator_registry = None, None
     scorer, scorer_registry = None, None
     cv, cv_registry = None, None

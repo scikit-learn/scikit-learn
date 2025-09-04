@@ -37,7 +37,7 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import _safe_indexing, check_random_state
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from sklearn.utils.extmath import softmax, stable_cumsum
+from sklearn.utils.extmath import softmax
 from sklearn.utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
@@ -1115,7 +1115,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         sorted_idx = np.argsort(predictions, axis=1)
 
         # Find index of median prediction for each sample
-        weight_cdf = stable_cumsum(self.estimator_weights_[sorted_idx], axis=1)
+        weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 

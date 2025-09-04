@@ -258,6 +258,7 @@ def test_subsamples():
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 9)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbosity():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Theil-Sen can be verbose

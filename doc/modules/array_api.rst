@@ -123,6 +123,7 @@ Estimators
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
 - :class:`preprocessing.PolynomialFeatures`
+- :class:`preprocessing.StandardScaler` (see :ref:`device_support_for_float64`)
 - :class:`mixture.GaussianMixture` (with `init_params="random"` or
   `init_params="random_from_data"` and `warm_start=False`)
 
@@ -197,9 +198,9 @@ Estimators and scoring functions are able to accept input arrays
 from different array libraries and/or devices. When a mixed set of input arrays is
 passed, scikit-learn converts arrays as needed to make them all consistent.
 
-For estimators, the rule is **"everything follows `X`"** - mixed array inputs are
+For estimators, the rule is **"everything follows** `X` **"** - mixed array inputs are
 converted so that they all match the array library and device of `X`.
-For scoring functions the rule is **"everything follows `y_pred`"** - mixed array
+For scoring functions the rule is **"everything follows** `y_pred` **"** - mixed array
 inputs are converted so that they all match the array library and device of `y_pred`.
 
 When a function or method has been called with array API compatible inputs, the
@@ -329,7 +330,8 @@ Note on device support for ``float64``
 
 Certain operations within scikit-learn will automatically perform operations
 on floating-point values with `float64` precision to prevent overflows and ensure
-correctness (e.g., :func:`metrics.pairwise.euclidean_distances`). However,
+correctness (e.g., :func:`metrics.pairwise.euclidean_distances`,
+:class:`preprocessing.StandardScaler`). However,
 certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 (see :ref:`mps_support`) do not support the `float64` data type. In these cases,
 scikit-learn will revert to using the `float32` data type instead. This can result in
