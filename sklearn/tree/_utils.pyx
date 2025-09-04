@@ -122,16 +122,11 @@ cdef class WeightedHeap:
         if self.weights_ != NULL:
             free(self.weights_)
 
-    cdef int reset(self) except -1 nogil:
+    cdef void reset(self) noexcept nogil:
         """Reset to construction state (keeps capacity)."""
         self.size_ = 0
         self.total_weight = 0.0
         self.weighted_sum = 0.0
-        # Ensure buffers still allocated (realloc may raise MemoryError)
-        # TODO: is this really needed?
-        safe_realloc(&self.heap_, self.capacity)
-        safe_realloc(&self.weights_, self.capacity)
-        return 0
 
     cdef bint is_empty(self) noexcept nogil:
         return self.size_ == 0
@@ -145,9 +140,8 @@ cdef class WeightedHeap:
         cdef float64_t stored = value if self.min_heap else -value
 
         if n >= self.capacity:
-            self.capacity *= 2
-            safe_realloc(&self.heap_, self.capacity)
-            safe_realloc(&self.weights_, self.capacity)
+            # should never happen as capacity is set to the max possible size
+            return -1
 
         self.heap_[n] = stored
         self.weights_[n] = weight

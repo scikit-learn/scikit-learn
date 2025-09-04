@@ -56,7 +56,7 @@ cdef class WeightedHeap:
     cdef float64_t weighted_sum
     cdef bint min_heap
 
-    cdef int reset(self) except -1 nogil
+    cdef void reset(self) noexcept nogil
     cdef bint is_empty(self) noexcept nogil
     cdef intp_t size(self) noexcept nogil
     cdef int push(self, float64_t value, float64_t weight) except -1 nogil
