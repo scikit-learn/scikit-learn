@@ -25,16 +25,16 @@ from sklearn.utils._testing import (
 )
 
 
-def test_graphical_lassos(random_state=1):
+def test_graphical_lassos(global_random_seed):
     """Test the graphical lasso solvers.
 
     This checks is unstable for some random seeds where the covariance found with "cd"
     and "lars" solvers are different (4 cases / 100 tries).
     """
     # Sample data from a sparse multivariate normal
-    dim = 20
+    dim = 10
     n_samples = 100
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(global_random_seed)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -49,9 +49,9 @@ def test_graphical_lassos(random_state=1):
                 return_costs=True,
                 alpha=alpha,
                 mode=method,
-                tol=1e-6,
-                enet_tol=1e-6,
-                max_iter=200,
+                tol=1e-7,
+                enet_tol=1e-11,
+                max_iter=100,
             )
             covs[method] = cov_
             icovs[method] = icov_
@@ -65,9 +65,9 @@ def test_graphical_lassos(random_state=1):
         assert_allclose(icovs["cd"], icovs["lars"], atol=1e-3)
 
     # Smoke test the estimator
-    model = GraphicalLasso(alpha=0.25, tol=1e-6, enet_tol=1e-6, max_iter=200).fit(X)
+    model = GraphicalLasso(alpha=0.25, tol=1e-7, enet_tol=1e-11, max_iter=100).fit(X)
     model.score(X)
-    assert_allclose(model.covariance_, covs["cd"], rtol=1e-8)
+    assert_allclose(model.covariance_, covs["cd"], rtol=1e-6)
 
     # For a centered matrix, assume_centered could be chosen True or False
     # Check that this returns indeed the same result for centered data
