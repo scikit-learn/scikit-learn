@@ -7,6 +7,7 @@ import re
 import shutil
 import time
 from tempfile import mkdtemp
+from turtle import pd
 
 import joblib
 import numpy as np
@@ -1337,6 +1338,20 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_ov
 
     with pytest.raises(ValueError, match=msg):
         union.get_feature_names_out()
+
+
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+def test_feature_union_duplicate_column_names(df_lib_name):
+    """Check that FeatureUnion works when transformers output duplicate column names.
+
+    Non-regression test for issue #32104
+    """
+    df_lib = pytest.importorskip(df_lib_name)
+    df = df_lib.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
+    fu = FeatureUnion([("std1", StandardScaler()), ("std2", StandardScaler())])
+    fu.set_output(transform="pandas")
+    df_transformed = fu.fit_transform(df)
+    assert list(df_transformed.columns) == ["std1__a", "std1__b", "std2__a", "std2__b"]
 
 
 def test_step_name_validation():
