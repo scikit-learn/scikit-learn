@@ -858,6 +858,12 @@ class QuadraticDiscriminantAnalysis(
 
     Parameters
     ----------
+    solver : {'svd'}, default='svd'
+        Solver to use, possible values:
+          - 'svd': Singular value decomposition (default).
+            Does not compute the covariance matrix, therefore this solver is
+            recommended for data with a large number of features.
+
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
@@ -944,6 +950,7 @@ class QuadraticDiscriminantAnalysis(
     """
 
     _parameter_constraints: dict = {
+        "solver": [StrOptions({"svd"})],
         "priors": ["array-like", None],
         "reg_param": [Interval(Real, 0, 1, closed="both")],
         "store_covariance": ["boolean"],
@@ -951,8 +958,15 @@ class QuadraticDiscriminantAnalysis(
     }
 
     def __init__(
-        self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
+        self,
+        *,
+        solver="svd",
+        priors=None,
+        reg_param=0.0,
+        store_covariance=False,
+        tol=1.0e-4
     ):
+        self.solver = solver
         self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
@@ -1052,7 +1066,8 @@ class QuadraticDiscriminantAnalysis(
         else:
             self.priors_ = np.array(self.priors)
 
-        self._solve_svd(X, y)
+        if self.solver == "svd":
+            self._solve_svd(X, y)
         return self
 
     def _decision_function(self, X):
