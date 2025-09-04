@@ -43,5 +43,5 @@ tomli==2.2.1
     # via
     #   meson-python
     #   pytest
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via exceptiongroup

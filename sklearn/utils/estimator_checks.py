@@ -424,6 +424,7 @@ def _maybe_mark(
     expected_failed_checks: dict[str, str] | None = None,
     mark: Literal["xfail", "skip", None] = None,
     pytest=None,
+    xfail_strict: bool | None = None,
 ):
     """Mark the test as xfail or skip if needed.
 
@@ -442,6 +443,13 @@ def _maybe_mark(
         Pytest module to use to mark the check. This is only needed if ``mark`` is
         `"xfail"`. Note that one can run `check_estimator` without having `pytest`
         installed. This is used in combination with `parametrize_with_checks` only.
+    xfail_strict : bool, default=None
+        Whether to run checks in xfail strict mode. This option is ignored unless
+        `mark="xfail"`. If True, checks that are expected to fail but actually
+        pass will lead to a test failure. If False, unexpectedly passing tests
+        will be marked as xpass. If None, the default pytest behavior is used.
+
+        .. versionadded:: 1.8
     """
     should_be_marked, reason = _should_be_skipped_or_marked(
         estimator, check, expected_failed_checks
@@ -451,7 +459,14 @@ def _maybe_mark(
 
     estimator_name = estimator.__class__.__name__
     if mark == "xfail":
-        return pytest.param(estimator, check, marks=pytest.mark.xfail(reason=reason))
+        # With xfail_strict=None we want the value from the pytest config to
+        # take precedence and that means not passing strict to the xfail
+        # mark at all.
+        if xfail_strict is None:
+            mark = pytest.mark.xfail(reason=reason)
+        else:
+            mark = pytest.mark.xfail(reason=reason, strict=xfail_strict)
+        return pytest.param(estimator, check, marks=mark)
     else:
 
         @wraps(check)
@@ -501,6 +516,7 @@ def estimator_checks_generator(
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
     mark: Literal["xfail", "skip", None] = None,
+    xfail_strict: bool | None = None,
 ):
     """Iteratively yield all check callables for an estimator.
 
@@ -528,6 +544,13 @@ def estimator_checks_generator(
         xfail(`pytest.mark.xfail`) or skip. Marking a test as "skip" is done via
         wrapping the check in a function that raises a
         :class:`~sklearn.exceptions.SkipTest` exception.
+    xfail_strict : bool, default=None
+        Whether to run checks in xfail strict mode. This option is ignored unless
+        `mark="xfail"`. If True, checks that are expected to fail but actually
+        pass will lead to a test failure. If False, unexpectedly passing tests
+        will be marked as xpass. If None, the default pytest behavior is used.
+
+        .. versionadded:: 1.8
 
     Returns
     -------
@@ -552,6 +575,7 @@ def estimator_checks_generator(
                 expected_failed_checks=expected_failed_checks,
                 mark=mark,
                 pytest=pytest,
+                xfail_strict=xfail_strict,
             )
 
 
@@ -560,6 +584,7 @@ def parametrize_with_checks(
     *,
     legacy: bool = True,
     expected_failed_checks: Callable | None = None,
+    xfail_strict: bool | None = None,
 ):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -605,8 +630,15 @@ def parametrize_with_checks(
         Where `"check_name"` is the name of the check, and `"my reason"` is why
         the check fails. These tests will be marked as xfail if the check fails.
 
-
         .. versionadded:: 1.6
+
+    xfail_strict : bool, default=None
+        Whether to run checks in xfail strict mode. If True, checks that are
+        expected to fail but actually pass will lead to a test failure. If
+        False, unexpectedly passing tests will be marked as xpass. If None,
+        the default pytest behavior is used.
+
+        .. versionadded:: 1.8
 
     Returns
     -------
@@ -640,7 +672,12 @@ def parametrize_with_checks(
 
     def _checks_generator(estimators, legacy, expected_failed_checks):
         for estimator in estimators:
-            args = {"estimator": estimator, "legacy": legacy, "mark": "xfail"}
+            args = {
+                "estimator": estimator,
+                "legacy": legacy,
+                "mark": "xfail",
+                "xfail_strict": xfail_strict,
+            }
             if callable(expected_failed_checks):
                 args["expected_failed_checks"] = expected_failed_checks(estimator)
             yield from estimator_checks_generator(**args)
