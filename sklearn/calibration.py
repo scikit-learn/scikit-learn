@@ -1154,7 +1154,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if not log_beta_minimizer.success:  # pragma: no cover
             raise RuntimeError(
                 "Temperature scaling fails to optimize during calibration. "
-                "Reason from `scipy.optimize.minimize_scalar`: "
+                "Reason from `scipy.optimize.find_minimum`: "
                 f"{log_beta_minimizer.message}"
             )
 
