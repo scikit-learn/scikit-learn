@@ -16,6 +16,13 @@ def _weighted_percentile(
     method when `average=False` (default) and 'averaged_inverted_cdf' when
     `average=True`.
 
+    When the percentile lies exactly on a data point:
+    * 'inverted_cdf' takes the exact data point
+    * 'averaged_inverted_cdf' takes the average of the exact data point and the one
+      above it (this means it gives the same result as `median` for unit weights)
+    When the percentile lies between two data points, both methods take the higher
+    data point.
+
     If `array` is a 2D array, the `values` are selected along axis 0.
 
     `NaN` values are ignored by setting their weights to 0. If `array` is 2D, this
@@ -108,6 +115,8 @@ def _weighted_percentile(
     # For each feature with index j, find sample index i of the scalar value
     # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
     # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
+    # Note `searchsorted` defaults to equality on the right, whereas Hyndman and Fan
+    # reference equation has equality on the left.
     percentile_indices = xp.stack(
         [
             xp.searchsorted(
