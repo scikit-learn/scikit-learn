@@ -92,6 +92,10 @@ def murmurhash3_32(key, seed=0, positive=False):
     latency 32bits hash suitable for implementing lookup tables, Bloom
     filters, count min sketch or feature hashing.
 
+    deprecated:: 1.8
+    Function `murmurhash3_32` was deprecated in 1.8.0 and will be
+    removed in 1.10.0.
+
     Parameters
     ----------
     key : np.int32, bytes, unicode or ndarray of dtype=np.int32

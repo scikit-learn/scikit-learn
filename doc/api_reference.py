@@ -1168,6 +1168,7 @@ API_REFERENCE = {
                     "gen_batches",
                     "gen_even_slices",
                     "indexable",
+                    "murmurhash3_32",
                     "resample",
                     "safe_mask",
                     "safe_sqr",

@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from sklearn.utils.murmurhash import _murmurhash3_32
+from sklearn.utils.murmurhash import _murmurhash3_32, murmurhash3_32
 
 
 def test_mmhash3_int():
@@ -73,3 +74,8 @@ def test_uniform_distribution():
     expected = np.full(n_bins, 1.0 / n_bins)
 
     assert_array_almost_equal(means / expected, np.ones(n_bins), 2)
+
+
+def test_deprecation_warning():
+    with pytest.warns(FutureWarning, match="`murmurhash3_32` was deprecated"):
+        murmurhash3_32(3)
