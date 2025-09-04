@@ -769,7 +769,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     .. math::
 
-        a \\|w\\|_1 + 0.5 b \\|w\\|_2^2
+        a \\cdot \\|w\\|_1 + 0.5 \\cdot b \\cdot \\|w\\|_2^2
 
     where:
 
