@@ -866,6 +866,15 @@ class QuadraticDiscriminantAnalysis(
           - 'eigen': Eigenvalue decomposition.
             Can be combined with shrinkage or custom covariance estimator.
 
+    shrinkage : 'auto' or float, default=None
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default).
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+          - float between 0 and 1: fixed shrinkage parameter.
+
+        This should be left to None if `covariance_estimator` is used.
+        Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
+
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
@@ -889,6 +898,18 @@ class QuadraticDiscriminantAnalysis(
         is raised if the covariance matrix is not full rank.
 
         .. versionadded:: 0.17
+
+    covariance_estimator : covariance estimator, default=None
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying on the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a ``covariance_`` attribute
+        like the estimators in :mod:`sklearn.covariance`.
+        if None the shrinkage parameter drives the estimate.
+
+        This should be left to None if `shrinkage` is used.
+        Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
+        solvers.
 
     Attributes
     ----------
