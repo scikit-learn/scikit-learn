@@ -83,8 +83,8 @@ def _murmurhash3_bytes_array_s32(
 
 # TODO(1.10): remove
 @deprecated(
-    "Function `murmurhash3_32` was deprecated in 1.8.0 and will be "
-    "removed in 1.10.0."
+    "Function `murmurhash3_32` was deprecated in 1.8 and will be "
+    "removed in 1.10."
 )
 def murmurhash3_32(key, seed=0, positive=False):
     """Compute the 32bit murmurhash3 of key at seed.
