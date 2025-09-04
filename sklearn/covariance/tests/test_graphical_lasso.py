@@ -26,11 +26,7 @@ from sklearn.utils._testing import (
 
 
 def test_graphical_lassos(global_random_seed):
-    """Test the graphical lasso solvers.
-
-    This checks is unstable for some random seeds where the covariance found with "cd"
-    and "lars" solvers are different (4 cases / 100 tries).
-    """
+    """Test the graphical lasso solvers."""
     # Sample data from a sparse multivariate normal
     dim = 10
     n_samples = 100
