@@ -858,11 +858,13 @@ class QuadraticDiscriminantAnalysis(
 
     Parameters
     ----------
-    solver : {'svd'}, default='svd'
+    solver : {'svd', 'eigen'}, default='svd'
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
             recommended for data with a large number of features.
+          - 'eigen': Eigenvalue decomposition.
+            Can be combined with shrinkage or custom covariance estimator.
 
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
@@ -1142,6 +1144,14 @@ class QuadraticDiscriminantAnalysis(
             self.priors_ = np.array(self.priors)
 
         if self.solver == "svd":
+            if self.shrinkage is not None:
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
+            if self.covariance_estimator is not None:
+                raise ValueError(
+                    "covariance estimator "
+                    "is not supported "
+                    "with svd solver. Try another solver"
+                )
             self._solve_svd(X, y)
         elif self.solver == "eigen":
             self._solve_eigen(
