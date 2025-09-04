@@ -539,6 +539,95 @@ def test_qda():
         clf.fit(X6, y4)
 
 
+def test_qda_covariance_estimator():
+    # Test that the correct errors are raised when using inapropriate
+    # covariance estimators or shrinkage parameters with QDA.
+    clf = QuadraticDiscriminantAnalysis(solver="svd", shrinkage="auto")
+    with pytest.raises(NotImplementedError):
+        clf.fit(X, y)
+
+    clf = QuadraticDiscriminantAnalysis(
+        solver="eigen", shrinkage=0.1, covariance_estimator=ShrunkCovariance()
+    )
+    with pytest.raises(
+        ValueError,
+        match=(
+            "covariance_estimator and shrinkage "
+            "parameters are not None. "
+            "Only one of the two can be set."
+        ),
+    ):
+        clf.fit(X, y)
+
+    # test bad solver with covariance_estimator
+    clf = QuadraticDiscriminantAnalysis(solver="svd", covariance_estimator=LedoitWolf())
+    with pytest.raises(
+        ValueError, match="covariance estimator is not supported with svd"
+    ):
+        clf.fit(X, y)
+
+    # test bad covariance estimator
+    clf = QuadraticDiscriminantAnalysis(
+        solver="eigen", covariance_estimator=KMeans(n_clusters=2, n_init="auto")
+    )
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
+
+
+def test_qda_ledoitwolf():
+    # When shrinkage="auto" current implementation uses ledoitwolf estimation
+    # of covariance after standardizing the data. This checks that it is indeed
+    # the case
+    class StandardizedLedoitWolf:
+        def fit(self, X):
+            sc = StandardScaler()  # standardize features
+            X_sc = sc.fit_transform(X)
+            s = ledoit_wolf(X_sc)[0]
+            # rescale
+            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
+            self.covariance_ = s
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 10)
+    y = rng.randint(3, size=(100,))
+    c1 = QuadraticDiscriminantAnalysis(
+        store_covariance=True, shrinkage="auto", solver="eigen"
+    )
+    c2 = QuadraticDiscriminantAnalysis(
+        store_covariance=True,
+        covariance_estimator=StandardizedLedoitWolf(),
+        solver="eigen",
+    )
+    c1.fit(X, y)
+    c2.fit(X, y)
+    assert_allclose(c1.means_, c2.means_)
+    assert_allclose(c1.covariance_, c2.covariance_)
+
+
+def test_qda_coefs():
+    # Test if the coefficients of the solvers are approximately the same.
+    n_features = 2
+    n_classes = 2
+    n_samples = 1000
+    X, y = make_blobs(
+        n_samples=n_samples, n_features=n_features, centers=n_classes, random_state=11
+    )
+
+    clf_svd = QuadraticDiscriminantAnalysis(solver="svd")
+    clf_eigen = QuadraticDiscriminantAnalysis(solver="eigen")
+
+    clf_svd.fit(X, y)
+    clf_eigen.fit(X, y)
+
+    for i in range(n_classes):
+        assert_array_almost_equal(
+          np.abs(clf_svd.rotations_[i]), np.abs(clf_eigen.rotations_[i]), 1
+        )
+        assert_array_almost_equal(
+          clf_svd.scalings_[i], clf_eigen.scalings_[i], 1
+        )
+
+
 def test_qda_priors():
     clf = QuadraticDiscriminantAnalysis()
     y_pred = clf.fit(X6, y6).predict(X6)
