@@ -89,13 +89,13 @@ def _murmurhash3_bytes_array_s32(
 def murmurhash3_32(key, seed=0, positive=False):
     """Compute the 32bit murmurhash3 of key at seed.
 
-    The underlying implementation is MurmurHash3_x86_32 generating low
-    latency 32bits hash suitable for implementing lookup tables, Bloom
-    filters, count min sketch or feature hashing.
-
     deprecated:: 1.8
     Function `murmurhash3_32` was deprecated in 1.8.0 and will be
     removed in 1.10.0.
+
+    The underlying implementation is MurmurHash3_x86_32 generating low
+    latency 32bits hash suitable for implementing lookup tables, Bloom
+    filters, count min sketch or feature hashing.
 
     Parameters
     ----------
