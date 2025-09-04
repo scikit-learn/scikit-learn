@@ -110,7 +110,7 @@ cdef class RegressionCriterion(Criterion):
     cdef float64_t[::1] sum_missing  # Same as above, but for missing values in X
 
 
-cdef class MAE(RegressionCriterion):
+cdef class MAE(Criterion):
 
     cdef float64_t[::1] node_medians
     cdef float64_t[:, ::1] left_abs_errors

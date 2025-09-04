@@ -3,7 +3,7 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, INFINITY
+from libc.math cimport INFINITY
 
 import numpy as np
 cimport numpy as cnp
@@ -1065,6 +1065,7 @@ cdef class RegressionCriterion(Criterion):
 
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
+
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
 
@@ -1181,11 +1182,15 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 
-cdef class MAE(RegressionCriterion):
+cdef class MAE(Criterion):
     r"""Mean absolute error impurity criterion.
 
-       MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
-       value and f_i is the predicted value."""
+    MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
+    value and f_i is the predicted value.
+
+    It has almost nothing in common with other regression criterions
+    so it doesn't inherit from RegressionCriterion
+    """
 
     def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
@@ -1297,9 +1302,7 @@ cdef class MAE(RegressionCriterion):
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
-        """
-        For this class, this function is never called
-        """
+        """For this class, this method is never called"""
         return -1
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
@@ -1366,22 +1369,12 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
 
-        Time complexity: O(n)  (n = end - start)
+        Time complexity: O(n_outputs) (precomputed in `.reset()`)
         """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef intp_t i, p, k
-        cdef float64_t w = 1.0
         cdef float64_t impurity = 0.0
 
         for k in range(self.n_outputs):
-            for p in range(self.start, self.end):
-                i = sample_indices[p]
-
-                if sample_weight is not None:
-                    w = sample_weight[i]
-
-                impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
+            impurity += self.right_abs_errors[k, 0]
 
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
@@ -1412,6 +1405,17 @@ cdef class MAE(RegressionCriterion):
                 impurity_right += self.right_abs_errors[k, j]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
+
+    # those 2 methods are copied from the RegressionCriterion abstract class:
+    def __reduce__(self):
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
+
+    cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
 
 
 cdef class FriedmanMSE(MSE):
