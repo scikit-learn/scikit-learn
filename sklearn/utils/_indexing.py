@@ -10,10 +10,11 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
-from ._array_api import _is_numpy_namespace, get_namespace
-from ._param_validation import Interval, validate_params
-from .extmath import _approximate_mode
-from .validation import (
+from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.extmath import _approximate_mode
+from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
+from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
     _is_pandas_df,
@@ -131,7 +132,17 @@ def _pyarrow_indexing(X, key, key_dtype, axis):
         key = np.asarray(key)
 
     if key_dtype == "bool":
+        # TODO(pyarrow): remove version checking and following if-branch when
+        # pyarrow==17.0.0 is the minimal version, see pyarrow issue
+        # https://github.com/apache/arrow/issues/42013 for more info
+        if PYARROW_VERSION_BELOW_17:
+            import pyarrow
+
+            if not isinstance(key, pyarrow.BooleanArray):
+                key = pyarrow.array(key, type=pyarrow.bool_())
+
         X_indexed = X.filter(key)
+
     else:
         X_indexed = X.take(key)
 
@@ -290,7 +301,10 @@ def _safe_indexing(X, indices, *, axis=0):
     indices_dtype = _determine_key_type(indices)
 
     if axis == 0 and indices_dtype == "str":
-        raise ValueError("String indexing is not supported with 'axis=0'")
+        raise ValueError(
+            f"String indexing (indices={indices}) is not supported with 'axis=0'. "
+            "Did you mean to use axis=1 for column selection?"
+        )
 
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")

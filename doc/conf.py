@@ -261,9 +261,9 @@ html_theme_options = {
     "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
-        "image_relative": "logos/scikit-learn-logo-small.png",
-        "image_light": "logos/scikit-learn-logo-small.png",
-        "image_dark": "logos/scikit-learn-logo-small.png",
+        "image_relative": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_light": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_dark": "logos/scikit-learn-logo-without-subtitle.svg",
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
@@ -866,6 +866,8 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
+# TODO(1.10): remove PassiveAggressive
+warnings.filterwarnings("ignore", category=FutureWarning, message="PassiveAggressive")
 if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
     turn_warnings_into_errors()
 
@@ -881,7 +883,7 @@ autosummary_filename_map = {
 # Config for sphinxext.opengraph
 
 ogp_site_url = "https://scikit-learn/stable/"
-ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
 

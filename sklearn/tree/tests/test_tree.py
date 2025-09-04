@@ -49,6 +49,7 @@ from sklearn.tree._tree import (
 )
 from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight, shuffle
+from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1842,7 +1843,7 @@ def test_criterion_copy():
 def test_empty_leaf_infinite_threshold(sparse_container):
     # try to make empty leaf by using near infinite value.
     data = np.random.RandomState(0).randn(100, 11) * 2e38
-    data = np.nan_to_num(data.astype("float32"))
+    data = xpx.nan_to_num(data.astype("float32"))
     X = data[:, :-1]
     if sparse_container is not None:
         X = sparse_container(X)

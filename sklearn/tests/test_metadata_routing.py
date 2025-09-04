@@ -425,7 +425,7 @@ def test_nested_routing_conflict():
                 "In WeightedMetaRegressor, there is a conflict on sample_weight between"
                 " what is requested for this estimator and what is requested by its"
                 " children. You can resolve this conflict by using an alias for the"
-                " child estimator(s) requested metadata."
+                " child estimators' requested metadata."
             )
         ),
     ):
@@ -638,7 +638,7 @@ def test_get_routing_for_object():
 @config_context(enable_metadata_routing=True)
 def test_metadata_request_consumes_method():
     """Test that MetadataRequest().consumes() method works as expected."""
-    request = MetadataRouter(owner="test")
+    request = MetadataRequest(owner="test")
     assert request.consumes(method="fit", params={"foo"}) == set()
 
     request = MetadataRequest(owner="test")
@@ -684,7 +684,7 @@ def test_metaestimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         WeightedMetaRegressorWarn(
             estimator=LinearRegression().set_fit_request(sample_weight=False)
@@ -697,7 +697,7 @@ def test_estimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         MetaRegressor(estimator=ConsumingRegressorWarn()).fit(
             X, y, sample_weight=my_weights

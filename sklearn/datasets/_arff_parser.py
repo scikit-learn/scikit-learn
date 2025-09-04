@@ -12,11 +12,11 @@ from typing import List
 import numpy as np
 import scipy as sp
 
-from ..externals import _arff
-from ..externals._arff import ArffSparseDataType
-from ..utils._chunking import chunk_generator, get_chunk_n_rows
-from ..utils._optional_dependencies import check_pandas_support
-from ..utils.fixes import pd_fillna
+from sklearn.externals import _arff
+from sklearn.externals._arff import ArffSparseDataType
+from sklearn.utils._chunking import chunk_generator, get_chunk_n_rows
+from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils.fixes import pd_fillna
 
 
 def _split_sparse_columns(

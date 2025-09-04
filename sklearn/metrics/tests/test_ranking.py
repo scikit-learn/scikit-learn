@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets, svm
+from sklearn import datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -84,7 +84,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel="linear", probability=True, random_state=0)
+    clf = LogisticRegression(random_state=0)
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -934,7 +934,7 @@ def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
     p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
-    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
+    assert_array_almost_equal(precision_recall_auc, 0.869, 3)
     assert_array_almost_equal(
         precision_recall_auc, average_precision_score(y_true, y_score)
     )
