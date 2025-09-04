@@ -154,10 +154,7 @@ def _routing_repr(obj):
     try:
         return obj._routing_repr()
     except AttributeError:
-        if isinstance(obj, str):
-            return obj
-        else:
-            return type(obj).__name__
+        return obj if isinstance(obj, str) else type(obj).__name__
 
 
 def _routing_enabled():
