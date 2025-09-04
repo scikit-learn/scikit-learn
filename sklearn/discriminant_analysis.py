@@ -950,27 +950,102 @@ class QuadraticDiscriminantAnalysis(
     """
 
     _parameter_constraints: dict = {
-        "solver": [StrOptions({"svd"})],
+        "solver": [StrOptions({"svd", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
         "priors": ["array-like", None],
         "reg_param": [Interval(Real, 0, 1, closed="both")],
         "store_covariance": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
     }
 
     def __init__(
         self,
         *,
         solver="svd",
+        shrinkage=None,
         priors=None,
         reg_param=0.0,
         store_covariance=False,
-        tol=1.0e-4
+        tol=1.0e-4,
+        covariance_estimator=None,
     ):
         self.solver = solver
+        self.shrinkage = shrinkage
         self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
+        self.covariance_estimator = covariance_estimator
+
+    def _solve_eigen(self, X, y, shrinkage, covariance_estimator):
+        """Eigenvalue solver.
+
+        The eigenvalue solver uses the eigen decomposition of the
+        class covariances to compute the rotation and scaling
+        matrices used for scoring new samples. This solver supports
+        use of any covariance estimator.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target values.
+
+        shrinkage : 'auto', float or None
+            Shrinkage parameter, possible values:
+              - None: no shrinkage.
+              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+              - float between 0 and 1: fixed shrinkage constant.
+
+            Shrinkage parameter is ignored if  `covariance_estimator` i
+            not None
+
+        covariance_estimator : estimator, default=None
+            If not None, `covariance_estimator` is used to estimate
+            the covariance matrices instead of relying the empirical
+            covariance estimator (with potential shrinkage).
+            The object should have a fit method and a ``covariance_`` attribute
+            like the estimators in sklearn.covariance.
+            if None the shrinkage parameter drives the estimate.
+        """
+        n_samples, n_features = X.shape
+        n_classes = len(self.classes_)
+
+        means = []
+        cov = []
+        scalings = []
+        rotations = []
+        for ind in range(n_classes):
+            Xg = X[y == ind, :]
+            meang = Xg.mean(0)
+            means.append(meang)
+            if len(Xg) == 1:
+                raise ValueError(
+                    "y has only 1 sample in class %s, covariance is ill defined."
+                    % str(self.classes_[ind])
+                )
+            cov.append(_cov(Xg, shrinkage, covariance_estimator))
+            S2, V = linalg.eigh(cov[-1])
+            V = V[:, np.argsort(S2)[::-1]] # sort eigenvectors
+            S2 = S2[np.argsort(S2)[::-1]] # sort eigenvalues
+            Vt = V.T
+            rank = np.sum(S2 > self.tol)
+            if rank < n_features:
+                warnings.warn(
+                    f"The covariance matrix of class {ind} is not full rank. "
+                    "Increasing the value of parameter `reg_param` might help"
+                    " reducing the collinearity.",
+                    linalg.LinAlgWarning,
+                )
+            scalings.append(S2)
+            rotations.append(Vt.T)
+        self.covariance_ = cov
+        self.means_ = np.asarray(means)
+        self.scalings_ = scalings
+        self.rotations_ = rotations
 
     def _solve_svd(self, X, y):
         """SVD solver for Quadratic Discriminant Analysis.
@@ -1068,6 +1143,13 @@ class QuadraticDiscriminantAnalysis(
 
         if self.solver == "svd":
             self._solve_svd(X, y)
+        elif self.solver == "eigen":
+            self._solve_eigen(
+                X,
+                y,
+                shrinkage=self.shrinkage,
+                covariance_estimator=self.covariance_estimator,
+            )
         return self
 
     def _decision_function(self, X):
