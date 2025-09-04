@@ -760,9 +760,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     .. math::
 
-        \\frac{1}{2 n_{\\rm samples}} \\|y - X w\\|_2^2
-        + \\alpha \\cdot {\\rm l1\\_{ratio}} \\|w\\|_1
-        + 0.5 \\cdot \\alpha \\cdot (1 - {\\rm l1\\_{ratio}}) \\|w\\|_2^2
+        \\frac{1}{2 n_{\\rm samples}} \\cdot \\|y - X w\\|_2^2
+        + \\alpha \\cdot {\\rm l1\\_{ratio}} \\cdot \\|w\\|_1
+        + 0.5 \\cdot \\alpha \\cdot (1 - {\\rm l1\\_{ratio}}) \\cdot \\|w\\|_2^2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to:
