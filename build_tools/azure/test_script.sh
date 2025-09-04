@@ -32,7 +32,7 @@ fi
 CHECKOUT_FOLDER=$PWD
 mkdir -p $TEST_DIR
 cp pyproject.toml $TEST_DIR
-# cd $TEST_DIR
+cd $TEST_DIR
 
 python -c "import joblib; print(f'Number of cores (physical): \
 {joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
@@ -83,7 +83,7 @@ if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
     TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi
 
-TEST_CMD="$TEST_CMD sklearn"
+TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x
 eval "$TEST_CMD"

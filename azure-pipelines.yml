@@ -8,397 +8,264 @@ schedules:
   always: true
 
 jobs:
-# - job: git_commit
-#   displayName: Get Git Commit
-#   pool:
-#     vmImage: ubuntu-24.04
-#   steps:
-#     - bash: python build_tools/azure/get_commit_message.py
-#       name: commit
-#       displayName: Get source version message
+- job: git_commit
+  displayName: Get Git Commit
+  pool:
+    vmImage: ubuntu-24.04
+  steps:
+    - bash: python build_tools/azure/get_commit_message.py
+      name: commit
+      displayName: Get source version message
 
-# - job: linting
-#   dependsOn: [git_commit]
-#   condition: |
-#     and(
-#       succeeded(),
-#       not(contains(dependencies['git_commit']['outputs']['commit.message'], '[lint skip]')),
-#       not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#     )
-#   displayName: Linting
-#   pool:
-#     vmImage: ubuntu-24.04
-#   steps:
-#     - task: UsePythonVersion@0
-#       inputs:
-#         versionSpec: '3.12'
-#     - bash: |
-#         source build_tools/shared.sh
-#         # Include pytest compatibility with mypy
-#         pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
-#       displayName: Install linters
-#     - bash: |
-#         ./build_tools/linting.sh
-#       displayName: Run linters
-#     - bash: |
-#         pip install ninja meson scipy
-#         python build_tools/check-meson-openmp-dependencies.py
-#       displayName: Run Meson OpenMP checks
+- job: linting
+  dependsOn: [git_commit]
+  condition: |
+    and(
+      succeeded(),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[lint skip]')),
+      not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+    )
+  displayName: Linting
+  pool:
+    vmImage: ubuntu-24.04
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.12'
+    - bash: |
+        source build_tools/shared.sh
+        # Include pytest compatibility with mypy
+        pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+      displayName: Install linters
+    - bash: |
+        ./build_tools/linting.sh
+      displayName: Run linters
+    - bash: |
+        pip install ninja meson scipy
+        python build_tools/check-meson-openmp-dependencies.py
+      displayName: Run Meson OpenMP checks
 
 
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: Linux_Nightly
-#     vmImage: ubuntu-22.04
-#     dependsOn: [git_commit, linting]
-#     condition: |
-#       and(
-#         succeeded(),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-#         or(eq(variables['Build.Reason'], 'Schedule'),
-#            contains(dependencies['git_commit']['outputs']['commit.message'], '[scipy-dev]'
-#           )
-#         )
-#       )
-#     matrix:
-#       pylatest_pip_scipy_dev:
-#         DISTRIB: 'conda-pip-scipy-dev'
-#         LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock'
-#         SKLEARN_WARNINGS_AS_ERRORS: '1'
-#         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Nightly
+    vmImage: ubuntu-22.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[scipy-dev]'
+          )
+        )
+      )
+    matrix:
+      pylatest_pip_scipy_dev:
+        DISTRIB: 'conda-pip-scipy-dev'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
 
 - template: build_tools/azure/posix.yml
   # CPython free-threaded build
   parameters:
     name: Linux_free_threaded
     vmImage: ubuntu-22.04
-    # dependsOn: [git_commit, linting]
-    # condition: |
-    #   and(
-    #     succeeded(),
-    #     not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-    #     or(eq(variables['Build.Reason'], 'Schedule'),
-    #        contains(dependencies['git_commit']['outputs']['commit.message'], '[free-threaded]'
-    #       )
-    #     )
-    #   )
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+        or(eq(variables['Build.Reason'], 'Schedule'),
+           contains(dependencies['git_commit']['outputs']['commit.message'], '[free-threaded]'
+          )
+        )
+      )
     matrix:
-      pylatest_free_threaded_1:
+      pylatest_free_threaded:
         DISTRIB: 'conda-free-threaded'
         LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
         COVERAGE: 'false'
         # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
         PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_2:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_3:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_4:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_5:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_6:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_7:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_8:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_9:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_10:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2700  # 30 * 60 seconds
-      pylatest_free_threaded_11:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_12:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_13:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_14:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_15:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_16:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_17:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_18:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_19:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
-      pylatest_free_threaded_20:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: 2400  # 30 * 60 seconds
+        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
 # Will run all the time regardless of linting outcome.
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: Linux_Runs
-#     vmImage: ubuntu-22.04
-#     dependsOn: [git_commit]
-#     condition: |
-#       and(
-#         succeeded(),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     matrix:
-#       pylatest_conda_forge_mkl:
-#         DISTRIB: 'conda'
-#         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
-#         COVERAGE: 'true'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
-#         # Tests that require large downloads over the networks are skipped in CI.
-#         # Here we make sure, that they are still run on a regular basis.
-#         ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
-#           SKLEARN_SKIP_NETWORK_TESTS: '0'
-#         SCIPY_ARRAY_API: '1'
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Runs
+    vmImage: ubuntu-22.04
+    dependsOn: [git_commit]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      pylatest_conda_forge_mkl:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
+        COVERAGE: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
+          SKLEARN_SKIP_NETWORK_TESTS: '0'
+        SCIPY_ARRAY_API: '1'
 
-# # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
-# # By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
-# # the others jobs are run only if `Ubuntu_Jammy_Jellyfish` succeeds.
-# # When "[azure parallel]" is in the commit message, `Ubuntu_Jammy_Jellyfish` will
-# # run in parallel with the rest of the jobs. On Azure, the job's name will be
-# # `Ubuntu_Jammy_Jellyfish_Parallel`.
-# - template: build_tools/azure/posix-all-parallel.yml
-#   parameters:
-#     name: Ubuntu_Jammy_Jellyfish
-#     vmImage: ubuntu-22.04
-#     dependsOn: [git_commit, linting]
-#     condition: |
-#       and(
-#         succeeded(),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     commitMessage: dependencies['git_commit']['outputs']['commit.message']
-#     matrix:
-#       pymin_conda_forge_openblas_ubuntu_2204:
-#         DISTRIB: 'conda'
-#         LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
-#         SKLEARN_WARNINGS_AS_ERRORS: '1'
-#         COVERAGE: 'false'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
+# Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
+# By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
+# the others jobs are run only if `Ubuntu_Jammy_Jellyfish` succeeds.
+# When "[azure parallel]" is in the commit message, `Ubuntu_Jammy_Jellyfish` will
+# run in parallel with the rest of the jobs. On Azure, the job's name will be
+# `Ubuntu_Jammy_Jellyfish_Parallel`.
+- template: build_tools/azure/posix-all-parallel.yml
+  parameters:
+    name: Ubuntu_Jammy_Jellyfish
+    vmImage: ubuntu-22.04
+    dependsOn: [git_commit, linting]
+    condition: |
+      and(
+        succeeded(),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    commitMessage: dependencies['git_commit']['outputs']['commit.message']
+    matrix:
+      pymin_conda_forge_openblas_ubuntu_2204:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
+        COVERAGE: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: Ubuntu_Atlas
-#     vmImage: ubuntu-24.04
-#     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
-#     # Runs when dependencies succeeded or skipped
-#     condition: |
-#       and(
-#         not(or(failed(), canceled())),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     matrix:
-#       # Linux environment to test that scikit-learn can be built against
-#       # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04 Noble Numbat
-#       # i.e. numpy 1.26.4 and scipy 1.11.4
-#       ubuntu_atlas:
-#         DISTRIB: 'ubuntu'
-#         LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
-#         COVERAGE: 'false'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Ubuntu_Atlas
+    vmImage: ubuntu-24.04
+    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
+    condition: |
+      and(
+        not(or(failed(), canceled())),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      # Linux environment to test that scikit-learn can be built against
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04 Noble Numbat
+      # i.e. numpy 1.26.4 and scipy 1.11.4
+      ubuntu_atlas:
+        DISTRIB: 'ubuntu'
+        LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
+        COVERAGE: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
 
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: Linux
-#     vmImage: ubuntu-22.04
-#     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
-#     # Runs when dependencies succeeded or skipped
-#     condition: |
-#       and(
-#         not(or(failed(), canceled())),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     matrix:
-#       # Linux build with minimum supported version of dependencies
-#       pymin_conda_forge_openblas_min_dependencies:
-#         DISTRIB: 'conda'
-#         LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'
-#         # Enable debug Cython directives to capture IndexError exceptions in
-#         # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
-#         # flag for pytest.
-#         # https://github.com/scikit-learn/scikit-learn/pull/24438
-#         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
-#         SKLEARN_RUN_FLOAT32_TESTS: '1'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
-#       # Linux environment to test the latest available dependencies.
-#       # It runs tests requiring lightgbm, pandas and PyAMG.
-#       pylatest_pip_openblas_pandas:
-#         DISTRIB: 'conda-pip-latest'
-#         LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
-#         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-#         SKLEARN_WARNINGS_AS_ERRORS: '1'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
-#         # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
-#         # threaded because by default the tests configuration (sklearn/conftest.py)
-#         # makes sure that they are single threaded in each xdist subprocess.
-#         PYTEST_XDIST_VERSION: 'none'
-#         PIP_BUILD_ISOLATION: 'true'
-#         SCIPY_ARRAY_API: '1'
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-22.04
+    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
+    condition: |
+      and(
+        not(or(failed(), canceled())),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      # Linux build with minimum supported version of dependencies
+      pymin_conda_forge_openblas_min_dependencies:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
+        SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
+        SKLEARN_RUN_FLOAT32_TESTS: '1'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
+      # Linux environment to test the latest available dependencies.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
+      pylatest_pip_openblas_pandas:
+        DISTRIB: 'conda-pip-latest'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
+        # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
+        # threaded because by default the tests configuration (sklearn/conftest.py)
+        # makes sure that they are single threaded in each xdist subprocess.
+        PYTEST_XDIST_VERSION: 'none'
+        PIP_BUILD_ISOLATION: 'true'
+        SCIPY_ARRAY_API: '1'
 
-# - template: build_tools/azure/posix-docker.yml
-#   parameters:
-#     name: Linux_Docker
-#     vmImage: ubuntu-24.04
-#     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
-#     # Runs when dependencies succeeded or skipped
-#     condition: |
-#       and(
-#         not(or(failed(), canceled())),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     matrix:
-#       debian_32bit:
-#         DOCKER_CONTAINER: 'i386/debian:trixie'
-#         DISTRIB: 'debian-32'
-#         COVERAGE: "true"
-#         LOCK_FILE: './build_tools/azure/debian_32bit_lock.txt'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
+- template: build_tools/azure/posix-docker.yml
+  parameters:
+    name: Linux_Docker
+    vmImage: ubuntu-24.04
+    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
+    condition: |
+      and(
+        not(or(failed(), canceled())),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      debian_32bit:
+        DOCKER_CONTAINER: 'i386/debian:trixie'
+        DISTRIB: 'debian-32'
+        COVERAGE: "true"
+        LOCK_FILE: './build_tools/azure/debian_32bit_lock.txt'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
 
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: macOS
-#     vmImage: macOS-13
-#     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
-#     # Runs when dependencies succeeded or skipped
-#     condition: |
-#       and(
-#         not(or(failed(), canceled())),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     matrix:
-#       pylatest_conda_forge_mkl:
-#         DISTRIB: 'conda'
-#         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
-#         SCIPY_ARRAY_API: '1'
-#       pylatest_conda_forge_mkl_no_openmp:
-#         DISTRIB: 'conda'
-#         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock'
-#         SKLEARN_TEST_NO_OPENMP: 'true'
-#         SKLEARN_SKIP_OPENMP_TEST: 'true'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: macOS-13
+    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
+    condition: |
+      and(
+        not(or(failed(), canceled())),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      pylatest_conda_forge_mkl:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
+        SCIPY_ARRAY_API: '1'
+      pylatest_conda_forge_mkl_no_openmp:
+        DISTRIB: 'conda'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock'
+        SKLEARN_TEST_NO_OPENMP: 'true'
+        SKLEARN_SKIP_OPENMP_TEST: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
 
-# - template: build_tools/azure/windows.yml
-#   parameters:
-#     name: Windows
-#     vmImage: windows-latest
-#     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
-#     # Runs when dependencies succeeded or skipped
-#     condition: |
-#       and(
-#         not(or(failed(), canceled())),
-#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
-#       )
-#     matrix:
-#       pymin_conda_forge_openblas:
-#         DISTRIB: 'conda'
-#         LOCK_FILE: ./build_tools/azure/pymin_conda_forge_openblas_win-64_conda.lock
-#         SKLEARN_WARNINGS_AS_ERRORS: '1'
-#         # The Azure Windows runner is typically much slower than other CI
-#         # runners due to the lack of compiler cache. Running the tests with
-#         # coverage enabled make them run extra slower. Since very few parts of
-#         # code should have windows-specific code branches, it should be enable
-#         # to restrict the code coverage collection to the non-windows runners.
-#         COVERAGE: 'false'
-#         # Enable debug Cython directives to capture IndexError exceptions in
-#         # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
-#         # flag for pytest.
-#         # https://github.com/scikit-learn/scikit-learn/pull/24438
-#         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
-#         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
+- template: build_tools/azure/windows.yml
+  parameters:
+    name: Windows
+    vmImage: windows-latest
+    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    # Runs when dependencies succeeded or skipped
+    condition: |
+      and(
+        not(or(failed(), canceled())),
+        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
+      )
+    matrix:
+      pymin_conda_forge_openblas:
+        DISTRIB: 'conda'
+        LOCK_FILE: ./build_tools/azure/pymin_conda_forge_openblas_win-64_conda.lock
+        SKLEARN_WARNINGS_AS_ERRORS: '1'
+        # The Azure Windows runner is typically much slower than other CI
+        # runners due to the lack of compiler cache. Running the tests with
+        # coverage enabled make them run extra slower. Since very few parts of
+        # code should have windows-specific code branches, it should be enable
+        # to restrict the code coverage collection to the non-windows runners.
+        COVERAGE: 'false'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
+        SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
