@@ -1211,14 +1211,13 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_right = 0.0
 
         self.node_medians = np.zeros(n_outputs, dtype=np.float64)
-        # FIXME? Those arrays could maybe be allocated dynamically to reduce memory
-        # footprint. This might even be required.
+
+        # Note: this criterion has an important memory footprint, which is
+        # fine as it's instantiated only once to build an entire tree
         self.left_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
         self.right_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
         self.left_medians = np.empty(n_samples, dtype=np.float64)
         self.right_medians = np.empty(n_samples, dtype=np.float64)
-
-        # FIXME? Same here, I could adapt the code of WeightedHeap to use dynamic allocation
         self.above = WeightedHeap(n_samples, True)   # min-heap
         self.below = WeightedHeap(n_samples, False)  # max-heap
 
@@ -1367,7 +1366,7 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
 
-        Time complexity: O(n := end - start)
+        Time complexity: O(n)  (n = end - start)
         """
         cdef const float64_t[:] sample_weight = self.sample_weight
         cdef const intp_t[:] sample_indices = self.sample_indices

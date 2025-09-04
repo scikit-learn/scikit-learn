@@ -66,6 +66,26 @@ cdef inline float64_t rand_uniform(float64_t low, float64_t high,
 cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
 
+
+def _any_isnan_axis0(const float32_t[:, :] X):
+    """Same as np.any(np.isnan(X), axis=0)"""
+    cdef:
+        intp_t i, j
+        intp_t n_samples = X.shape[0]
+        intp_t n_features = X.shape[1]
+        uint8_t[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
+
+    with nogil:
+        for i in range(n_samples):
+            for j in range(n_features):
+                if isnan_out[j]:
+                    continue
+                if isnan(X[i, j]):
+                    isnan_out[j] = True
+                    break
+    return np.asarray(isnan_out)
+
+
 # =============================================================================
 # WeightedHeap data structure
 # =============================================================================
@@ -78,18 +98,18 @@ cdef class WeightedHeap:
       - if min_heap: store v
       - else (max-heap): store -v
 
-    Attributes
+    Attributes (all should be treated as readonly attributes)
     ----------
     capacity : intp_t
         Allocated capacity for the heap arrays.
 
-    size_ : intp_t
+    size : intp_t
         Current number of elements in the heap.
 
-    heap_ : float64_t*
+    heap : float64_t*
         Array of (possibly sign-adjusted) values that determines ordering.
 
-    weights_ : float64_t*
+    weights : float64_t*
         Parallel array of weights.
 
     total_weight : float64_t
@@ -106,123 +126,104 @@ cdef class WeightedHeap:
         if capacity <= 0:
             capacity = 1
         self.capacity = capacity
-        self.size_ = 0
+        self.size = 0
         self.min_heap = min_heap
         self.total_weight = 0.0
         self.weighted_sum = 0.0
-        self.heap_ = NULL
-        self.weights_ = NULL
+        self.heap = NULL
+        self.weights = NULL
         # safe_realloc can raise MemoryError -> __cinit__ may propagate
-        safe_realloc(&self.heap_, capacity)
-        safe_realloc(&self.weights_, capacity)
+        safe_realloc(&self.heap, capacity)
+        safe_realloc(&self.weights, capacity)
 
     def __dealloc__(self):
-        if self.heap_ != NULL:
-            free(self.heap_)
-        if self.weights_ != NULL:
-            free(self.weights_)
+        if self.heap != NULL:
+            free(self.heap)
+        if self.weights != NULL:
+            free(self.weights)
 
     cdef void reset(self) noexcept nogil:
         """Reset to construction state (keeps capacity)."""
-        self.size_ = 0
+        self.size = 0
         self.total_weight = 0.0
         self.weighted_sum = 0.0
 
     cdef bint is_empty(self) noexcept nogil:
-        return self.size_ == 0
+        return self.size == 0
 
-    cdef intp_t size(self) noexcept nogil:
-        return self.size_
-
-    cdef int push(self, float64_t value, float64_t weight) except -1 nogil:
-        """Insert a (value, weight). Returns 0 or raises MemoryError on alloc fail."""
-        cdef intp_t n = self.size_
+    cdef void push(self, float64_t value, float64_t weight) noexcept nogil:
+        """Insert a (value, weight)."""
+        cdef intp_t n = self.size
         cdef float64_t stored = value if self.min_heap else -value
 
-        if n >= self.capacity:
-            # should never happen as capacity is set to the max possible size
-            return -1
+        assert n < self.capacity
+        # ^ should never raise as capacity is set to the max possible size
 
-        self.heap_[n] = stored
-        self.weights_[n] = weight
-        self.size_ = n + 1
+        self.heap[n] = stored
+        self.weights[n] = weight
+        self.size = n + 1
 
         self.total_weight += weight
         self.weighted_sum += value * weight
 
         self._perc_up(n)
-        return 0
 
-    cdef int pop(self, float64_t* value, float64_t* weight) noexcept nogil:
-        """Pop top element into pointers. Returns 0 on success, -1 if empty."""
-        cdef intp_t n = self.size_
-        if n == 0:
-            return -1
+    cdef void pop(self, float64_t* value, float64_t* weight) noexcept nogil:
+        """Pop top element into pointers."""
+        cdef intp_t n = self.size
+        assert n > 0
 
-        self._peek_raw(value, weight)
+        cdef float64_t stored = self.heap[0]
+        cdef float64_t v = stored if self.min_heap else -stored
+        cdef float64_t w = self.weights[0]
+        value[0] = v
+        weight[0] = w
 
-        # Update aggregates with *original* value (undo sign for max-heap)
-        cdef float64_t orig_v = value[0]
-        cdef float64_t w = weight[0]
+        # Update aggregates
         self.total_weight -= w
-        self.weighted_sum -= orig_v * w
+        self.weighted_sum -= v * w
 
         # Move last to root and sift down
         n -= 1
-        self.size_ = n
+        self.size = n
         if n > 0:
-            self.heap_[0] = self.heap_[n]
-            self.weights_[0] = self.weights_[n]
+            self.heap[0] = self.heap[n]
+            self.weights[0] = self.weights[n]
             self._perc_down(0)
-        return 0
-
-    cdef float64_t get_total_weight(self) noexcept nogil:
-        return self.total_weight
-
-    cdef float64_t get_weighted_sum(self) noexcept nogil:
-        return self.weighted_sum
 
     cdef float64_t top_weight(self) noexcept nogil:
-        if self.size_ == 0:
-            return 0.0
-        return self.weights_[0]
+        assert self.size > 0
+        return self.weights[0]
 
     cdef float64_t top(self) noexcept nogil:
-        if self.size_ == 0:
-            return 0.0
-        cdef float64_t s = self.heap_[0]
+        assert self.size > 0
+        cdef float64_t s = self.heap[0]
         return s if self.min_heap else -s
 
     # ----------------------------
     # Internal helpers (nogil)
     # ----------------------------
 
-    cdef inline void _peek_raw(self, float64_t* value, float64_t* weight) noexcept nogil:
-        """Internal: read top with proper sign restoration."""
-        cdef float64_t stored = self.heap_[0]
-        value[0] = stored if self.min_heap else -stored
-        weight[0] = self.weights_[0]
-
     cdef inline void _swap(self, intp_t i, intp_t j) noexcept nogil:
-        cdef float64_t tv = self.heap_[i]
-        cdef float64_t tw = self.weights_[i]
-        self.heap_[i] = self.heap_[j]
-        self.weights_[i] = self.weights_[j]
-        self.heap_[j] = tv
-        self.weights_[j] = tw
+        cdef float64_t tmp = self.heap[i]
+        self.heap[i] = self.heap[j]
+        self.heap[j] = tmp
+        tmp = self.weights[i]
+        self.weights[i] = self.weights[j]
+        self.weights[j] = tmp
 
     cdef inline void _perc_up(self, intp_t i) noexcept nogil:
         cdef intp_t p
         while i > 0:
             p = (i - 1) >> 1
-            if self.heap_[i] < self.heap_[p]:
+            if self.heap[i] < self.heap[p]:
                 self._swap(i, p)
                 i = p
             else:
                 break
 
     cdef inline void _perc_down(self, intp_t i) noexcept nogil:
-        cdef intp_t n = self.size_
+        cdef intp_t n = self.size
         cdef intp_t left, right, mc
         while True:
             left = (i << 1) + 1
@@ -230,14 +231,17 @@ cdef class WeightedHeap:
             if left >= n:
                 return
             mc = left
-            if right < n and self.heap_[right] < self.heap_[left]:
+            if right < n and self.heap[right] < self.heap[left]:
                 mc = right
-            if self.heap_[i] > self.heap_[mc]:
+            if self.heap[i] > self.heap[mc]:
                 self._swap(i, mc)
                 i = mc
             else:
                 return
 
+# =============================================================================
+# MAE split precomputations algorithm
+# =============================================================================
 
 cdef void precompute_absolute_errors(
     const float64_t[:, ::1] ys,
@@ -251,17 +255,30 @@ cdef void precompute_absolute_errors(
     float64_t[::1] abs_errors,
     float64_t[::1] medians
 ) noexcept nogil:
-    """Fill `abs_errors` with the optimal AEs for (y[:i], w[:i])
-    i in [1, n].
+    """
+    Fill `abs_errors` and `medians`.
 
-    Parameters
-    ----------
-    y : 1D float64_t[::1]
-        Values.
-    w : 1D float64_t[::1]
-        Sample weights.
-    abs_errors : 1D float64_t[::1]
-        Output buffer, must have shape (n,).
+    If start < end:
+        Computes the "prefix" AEs/medians, i.e the AEs for each set of indices
+        sample_indices[start:start + i] with i in {1, ..., n}
+        where n = end - start
+    Else:
+        Computes the "suffix" AEs/medians, i.e the AEs for each set of indices
+        sample_indices[i:] with i in {0, ..., n-1}
+
+    Complexity: O(n log n)
+    This algorithm is an adaptation of the two heaps solution of
+    the "find median from a data stream" problem
+    See for instance: https://www.geeksforgeeks.org/dsa/median-of-stream-of-integers-running-integers/
+
+    But here, it's the weighted median and we also need to compute the AE, so:
+    - instead of balancing the heaps based on their number of elements,
+      rebalance them based on the sum of the weights of their element
+    - rewrite the AE computation by splitting the sum between elements
+      above and below the median, which allow to express it as a simple
+      O(1) computation.
+      See the maths in the PR desc:
+      https://github.com/scikit-learn/scikit-learn/pull/32100
     """
     cdef intp_t j, p, i, step, n
     if start < end:
@@ -277,8 +294,7 @@ cdef void precompute_absolute_errors(
     below.reset()
     cdef float64_t y
     cdef float64_t w = 1.0
-    cdef float64_t val = 0.0
-    cdef float64_t wt = 0.0
+    cdef float64_t top_val, top_weight
     cdef float64_t median = 0.0
     cdef float64_t half_weight
 
@@ -292,35 +308,34 @@ cdef void precompute_absolute_errors(
         # Insert into the appropriate heap
         if below.is_empty():
             above.push(y, w)
+        elif y > below.top():
+            above.push(y, w)
         else:
-            if y > below.top():
-                above.push(y, w)
-            else:
-                below.push(y, w)
+            below.push(y, w)
 
-        half_weight = (above.get_total_weight() + below.get_total_weight()) / 2.0
+        half_weight = (above.total_weight + below.total_weight) / 2.0
 
         # Rebalance heaps
-        while above.get_total_weight() < half_weight and not below.is_empty():
-            if below.pop(&val, &wt) == 0:
-                above.push(val, wt)
+        while above.total_weight < half_weight and not below.is_empty():
+            below.pop(&top_val, &top_weight)
+            above.push(top_val, top_weight)
         while (
             not above.is_empty()
-            and (above.get_total_weight() - above.top_weight()) >= half_weight
+            and (above.total_weight - above.top_weight()) >= half_weight
         ):
-            if above.pop(&val, &wt) == 0:
-                below.push(val, wt)
+            above.pop(&top_val, &top_weight)
+            below.push(top_val, top_weight)
 
         # Current median
-        if above.get_total_weight() > half_weight + 1e-5 * fabs(half_weight):
+        if above.total_weight > half_weight + 1e-5 * fabs(half_weight):
             median = above.top()
         else:  # above and below weight are almost exactly equals
             median = (above.top() + below.top()) / 2.
         medians[j] = median
         abs_errors[j] = (
-            (below.get_total_weight() - above.get_total_weight()) * median
-            - below.get_weighted_sum()
-            + above.get_weighted_sum()
+            (below.total_weight - above.total_weight) * median
+            - below.weighted_sum
+            + above.weighted_sum
         )
         p += step
         j += step
@@ -332,7 +347,15 @@ def _py_precompute_absolute_errors(
     const intp_t[:] sample_indices,
     bint suffix=False
 ):
-    """Used for testing precompute_absolute_errors"""
+    """
+    Used for testing precompute_absolute_errors.
+    - If `suffix` is False:
+        Computes the "prefix" AEs, i.e the AEs for each set of indices
+        sample_indices[:i] with i in {1, ..., n}
+    - If `suffix` is True:
+        Computes the "suffix" AEs, i.e the AEs for each set of indices
+        sample_indices[i:] with i in {0, ..., n-1}
+    """
     cdef:
         intp_t n = sample_weight.size
         WeightedHeap above = WeightedHeap(n, True)
@@ -352,22 +375,3 @@ def _py_precompute_absolute_errors(
         k, start, end, abs_errors, medians
     )
     return np.asarray(abs_errors)
-
-
-def _any_isnan_axis0(const float32_t[:, :] X):
-    """Same as np.any(np.isnan(X), axis=0)"""
-    cdef:
-        intp_t i, j
-        intp_t n_samples = X.shape[0]
-        intp_t n_features = X.shape[1]
-        uint8_t[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
-
-    with nogil:
-        for i in range(n_samples):
-            for j in range(n_features):
-                if isnan_out[j]:
-                    continue
-                if isnan(X[i, j]):
-                    isnan_out[j] = True
-                    break
-    return np.asarray(isnan_out)

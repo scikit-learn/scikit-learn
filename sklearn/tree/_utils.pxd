@@ -49,23 +49,19 @@ cdef float64_t rand_uniform(float64_t low, float64_t high,
 
 cdef class WeightedHeap:
     cdef intp_t capacity
-    cdef intp_t size_
-    cdef float64_t* heap_
-    cdef float64_t* weights_
+    cdef intp_t size
+    cdef float64_t* heap
+    cdef float64_t* weights
     cdef float64_t total_weight
     cdef float64_t weighted_sum
     cdef bint min_heap
 
     cdef void reset(self) noexcept nogil
     cdef bint is_empty(self) noexcept nogil
-    cdef intp_t size(self) noexcept nogil
-    cdef int push(self, float64_t value, float64_t weight) except -1 nogil
-    cdef int pop(self, float64_t* value, float64_t* weight) noexcept nogil
-    cdef float64_t get_total_weight(self) noexcept nogil
-    cdef float64_t get_weighted_sum(self) noexcept nogil
+    cdef void push(self, float64_t value, float64_t weight) noexcept nogil
+    cdef void pop(self, float64_t* value, float64_t* weight) noexcept nogil
     cdef float64_t top_weight(self) noexcept nogil
     cdef float64_t top(self) noexcept nogil
-    cdef void _peek_raw(self, float64_t*, float64_t*) noexcept nogil
     cdef void _swap(self, intp_t, intp_t) noexcept nogil
     cdef void _perc_up(self, intp_t) noexcept nogil
     cdef void _perc_down(self, intp_t) noexcept nogil
