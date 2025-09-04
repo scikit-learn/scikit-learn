@@ -1402,9 +1402,7 @@ def test_n_iter(solver):
     assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
 
-@pytest.mark.parametrize(
-    "solver", sorted(set(SOLVERS) - set(["liblinear", "newton-cholesky"]))
-)
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
 def test_warm_start(solver, warm_start, fit_intercept):
@@ -1435,6 +1433,40 @@ def test_warm_start(solver, warm_start, fit_intercept):
         assert 2.0 > cum_diff, msg
     else:
         assert cum_diff > 2.0, msg
+
+
+@pytest.mark.parametrize("solver", ["newton-cholesky", "newton-cg"])
+@pytest.mark.parametrize("fit_intercept", (True, False))
+@pytest.mark.parametrize("penalty", ("l2", None))
+def test_warm_start_newton_solver(global_random_seed, solver, fit_intercept, penalty):
+    """Test that 2 steps at once are the same as 2 single steps with warm start."""
+    X, y = iris.data, iris.target
+
+    clf1 = LogisticRegression(
+        solver=solver,
+        max_iter=2,
+        fit_intercept=fit_intercept,
+        penalty=penalty,
+        random_state=global_random_seed,
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        clf1.fit(X, y)
+
+    clf2 = LogisticRegression(
+        solver=solver,
+        max_iter=1,
+        warm_start=True,
+        fit_intercept=fit_intercept,
+        penalty=penalty,
+        random_state=global_random_seed,
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        clf2.fit(X, y)
+        clf2.fit(X, y)
+
+    assert_allclose(clf2.coef_, clf1.coef_)
+    if fit_intercept:
+        assert_allclose(clf2.intercept_, clf1.intercept_)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

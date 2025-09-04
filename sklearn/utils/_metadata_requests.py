@@ -1197,8 +1197,8 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
-REQUESTER_DOC = """
-Configure whether metadata should be requested to be passed to the ``{method}`` method.
+REQUESTER_DOC = """        Configure whether metadata should be requested to be \
+passed to the ``{method}`` method.
 
         Note that this method is only relevant when this estimator is used as a
         sub-estimator within a :term:`meta-estimator` and metadata routing is enabled

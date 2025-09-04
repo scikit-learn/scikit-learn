@@ -1530,6 +1530,26 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 @pytest.mark.parametrize(
+    "expected,array",
+    [
+        ("a", ["a", "b"]),
+        (1, [1, 2]),
+        (None, [None, "a"]),
+        (None, [None, 1]),
+        (None, [None, "a", 1]),
+        (1, [1, "1"]),
+        (1, ["1", 1]),
+    ],
+)
+def test_most_frequent_tie_object(expected, array):
+    """Check the tie breaking behavior of the most frequent strategy.
+
+    Non-regression test for issue #31717.
+    """
+    assert expected == _most_frequent(np.array(array, dtype=object), None, 0)
+
+
+@pytest.mark.parametrize(
     "initial_strategy", ["mean", "median", "most_frequent", "constant"]
 )
 def test_iterative_imputer_keep_empty_features(initial_strategy):

@@ -99,8 +99,8 @@ build-backend = "mesonpy"
 requires = [
     "meson-python>=0.16.0,<0.19.0",
     "Cython>=3.0.10,<3.2.0",
-    "numpy>=2,<2.3.0",
-    "scipy>=1.8.0,<1.16.0",
+    "numpy>=2,<2.4.0",
+    "scipy>=1.8.0,<1.17.0",
 ]
 
 [tool.pytest.ini_options]

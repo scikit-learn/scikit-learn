@@ -15,6 +15,54 @@ For a short description of the main highlights of the release, please refer to
 
 .. towncrier release notes start
 
+.. _changes_1_7_2:
+
+Version 1.7.2
+=============
+
+**September 2025**
+
+:mod:`sklearn.compose`
+----------------------
+
+- |Fix| :class:`compose.TransformedTargetRegressor` now passes the transformed target to
+  the regressor with the same number of dimensions as the original target.
+  By :user:`kryggird <kryggird>`. :pr:`31563`
+
+:mod:`sklearn.feature_extraction`
+---------------------------------
+
+- |Fix| Set the tag `requires_fit=False` for the classes
+  :class:`feature_extraction.FeatureHasher` and
+  :class:`feature_extraction.text.HashingVectorizer`.
+  By :user:`hakan çanakcı <hqkqn32>`. :pr:`31851`
+
+:mod:`sklearn.impute`
+---------------------
+
+- |Fix| Fixed a bug in :class:`impute.SimpleImputer` with `strategy="most_frequent"`
+  when there is a tie in the most frequent value and the input data has mixed types.
+  By :user:`Alexandre Abraham <AlexandreAbraham>`. :pr:`31820`
+
+:mod:`sklearn.linear_model`
+---------------------------
+
+- |Fix| Fixed a bug with `solver="newton-cholesky"` on multi-class problems in
+  :class:`linear_model.LogisticRegressionCV` and in
+  :class:`linear_model.LogisticRegression` when used with `warm_start=True`. The bug
+  appeared either with `fit_intercept=True` or with `penalty=None` (both resulting in
+  unpenalized parameters for the solver). The coefficients and intercepts of the last
+  class as provided by warm start were partially wrongly overwritten by zero.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31866`
+
+:mod:`sklearn.pipeline`
+-----------------------
+
+- |Fix| :class:`pipeline.FeatureUnion` now validates that all transformers return 2D
+  outputs and raises an informative error when transformers return 1D outputs,
+  preventing silent failures that previously produced meaningless concatenated results.
+  By :user:`gguiomar <gguiomar>`. :pr:`31559`
+
 .. _changes_1_7_1:
 
 Version 1.7.1
@@ -541,35 +589,36 @@ the project since version 1.6, including:
 
 4hm3d, Aaron Schumacher, Abhijeetsingh Meena, Acciaro Gennaro Daniele,
 Achraf Tasfaout, Adriano Leão, Adrien Linares, Adrin Jalali, Agriya Khetarpal,
-Aiden Frank, Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alfredo
-Saucedo, Anderson Chaves, Andres Guzman-Ballen, Aniruddha Saha, antoinebaker,
-Antony Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash, Ashton Powell,
-ayoub.agouzoul, Ayrat, Bagus Tris Atmaja, Benjamin Danek, Boney Patel, Camille
-Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis, Christine P.
-Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey Farwell,
-Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha,
+Aiden Frank, Aitsaid Azzedine Idir, ajay-sentry, Akanksha Mhadolkar, Alexandre
+Abraham, Alfredo Saucedo, Anderson Chaves, Andres Guzman-Ballen, Aniruddha
+Saha, antoinebaker, Antony Lee, Arjun S, ArthurDbrn, Arturo, Arturo Amor, ash,
+Ashton Powell, ayoub.agouzoul, Ayrat, Bagus Tris Atmaja, Benjamin Danek, Boney
+Patel, Camille Troillard, Chems Ben, Christian Lorentzen, Christian Veenhuis,
+Christine P. Chai, claudio, Code_Blooded, Colas, Colin Coe, Connor Lane, Corey
+Farwell, Daniel Agyapong, Dan Schult, Dea María Léon, Deepak Saldanha,
 dependabot[bot], Dhyey Findoriya, Dimitri Papadopoulos Orfanos, Dmitry Kobak,
-Domenico, Elham Babaei, emelia-hdz, EmilyXinyi, Emma Carballal, Eric Larson,
-Eugen-Bleck, Evgeni Burovski, fabianhenning, Gael Varoquaux, GaetandeCast, Gil
-Ramot, Gordon Grey, Goutam, G Sreeja, Guillaume Lemaitre, Haesun Park, Hanjun
-Kim, Helder Geovane Gomes de Lima, Henri Bonamy, Hleb Levitski, Hugo Boulenger,
-IlyaSolomatin, Irene, Jérémie du Boisberranger, Jérôme Dockès,
-JoaoRodriguesIST, Joel Nothman, Josh, jshn9515, KALLA GANASEKHAR, Kevin Klein,
-Loic Esteve, Lucas Colley, Luc Rocher, Lucy Liu, Luis M. B. Varona, lunovian,
-Mamduh Zabidi, Marc Bresson, Marco Edward Gorelli, Marco Maggi, Maren
-Westermann, Marie Sacksick, Marija Vlajic, Martin Jurča, Mayank Raj, Michael
-Burkhart, Miguel González Duque, Mihir Waknis, Miro Hrončok, Mohamed Ali
-SRIR, Mohamed DHIFALLAH, mohammed benyamna, Mohit Singh Thakur, Mounir Lbath,
-myenugula, Natalia Mokeeva, Nicolas Bolle, Olivier Grisel, omahs, Omar Salman,
-Pedro Lopes, Pedro Olivares, Peter Holzer, Preyas Shah, Radovenchyk, Rahil
-Parikh, Rémi Flamary, Reshama Shaikh, Richard Harris, Rishab Saini,
-rolandrmgservices, SanchitD, Santiago Castro, Santiago Víquez, saskra,
-scikit-learn-bot, Scott Huberty, Shaurya Bisht, Shivam, Shruti Nath, Siddharth
-Bansal, SIKAI ZHANG, Simarjot Sidhu, sisird864, SiyuJin-1, Somdutta Banerjee,
-Sortofamudkip, sotagg, Sourabh Kumar, Stefan, Stefanie Senger, Stefano Gaspari,
-Steffen Rehberg, Stephen Pardy, Success Moses, Sylvain Combettes, Tahar
-Allouche, Thomas J. Fan, Thomas Li, ThorbenMaa, Tim Head, Tingwei Zhu, TJ
-Norred, Umberto Fasci, UV, Vasco Pereira, Vassilis Margonis, Velislav
-Babatchev, Victoria Shevchenko, viktor765, Vipsa Kamani, VirenPassi, Virgil
-Chan, vpz, Xiao Yuan, Yaich Mohamed, Yair Shimony, Yao Xiao, Yaroslav
-Halchenko, Yulia Vilensky, Yuvi Panda
+Domenico, elenafillo, Elham Babaei, emelia-hdz, EmilyXinyi, Emma Carballal,
+Eric Larson, Eugen-Bleck, Evgeni Burovski, fabianhenning, Gael Varoquaux,
+GaetandeCast, Gil Ramot, Gonçalo Guiomar, Gordon Grey, Goutam, G Sreeja,
+Guillaume Lemaitre, Haesun Park, hakan çanakçı, Hanjun Kim, Helder Geovane
+Gomes de Lima, Henri Bonamy, Hleb Levitski, Hugo Boulenger, IlyaSolomatin,
+Irene, Jérémie du Boisberranger, Jérôme Dockès, JoaoRodriguesIST, Joel
+Nothman, Joris Van den Bossche, Josh, jshn9515, KALLA GANASEKHAR, Kevin Klein,
+Krishnan Vignesh, kryggird, Loic Esteve, Lucas Colley, Luc Rocher, Lucy Liu,
+Luis M. B. Varona, lunovian, Mamduh Zabidi, Marc Bresson, Marco Edward Gorelli,
+Marco Maggi, Marek Pokropiński, Maren Westermann, Marie Sacksick, Marija
+Vlajic, Martin Jurča, Mayank Raj, Michael Burkhart, Miguel González Duque,
+Mihir Waknis, Miro Hrončok, Mohamed Ali SRIR, Mohamed DHIFALLAH, mohammed
+benyamna, Mohit Singh Thakur, Mounir Lbath, myenugula, Natalia Mokeeva, Nicolas
+Bolle, Olivier Grisel, omahs, Omar Salman, Pedro Lopes, Pedro Olivares, Peter
+Holzer, Prashant Bansal, Preyas Shah, Radovenchyk, Rahil Parikh, Rémi Flamary,
+Reshama Shaikh, Richard Harris, Rishab Saini, rolandrmgservices, SanchitD,
+Santiago Castro, Santiago Víquez, saskra, scikit-learn-bot, Scott Huberty,
+Shashank S, Shaurya Bisht, Shivam, Shruti Nath, Siddharth Bansal, SIKAI ZHANG,
+Simarjot Sidhu, sisird864, SiyuJin-1, Somdutta Banerjee, Sortofamudkip, sotagg,
+Sourabh Kumar, Stefan, Stefanie Senger, Stefano Gaspari, Steffen Rehberg,
+Stephen Pardy, Success Moses, Sylvain Combettes, Tahar Allouche, Thomas J. Fan,
+Thomas Li, ThorbenMaa, Tim Head, Tingwei Zhu, TJ Norred, Umberto Fasci, UV,
+Vasco Pereira, Vassilis Margonis, Velislav Babatchev, Victoria Shevchenko,
+viktor765, Vipsa Kamani, VirenPassi, Virgil Chan, vpz, Xiao Yuan, Yaich
+Mohamed, Yair Shimony, Yao Xiao, Yaroslav Halchenko, Yulia Vilensky, Yuvi Panda

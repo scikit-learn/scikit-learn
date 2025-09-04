@@ -200,7 +200,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             # Dataframes can have multiple dtypes
             dtypes = X.dtypes
 
-        if not all(np.issubdtype(d, np.number) for d in dtypes):
+        # Not all dtypes are numpy dtypes, they can be pandas dtypes as well
+        if not all(
+            isinstance(d, np.dtype) and np.issubdtype(d, np.number) for d in dtypes
+        ):
             raise ValueError(
                 "'check_inverse' is only supported when all the elements in `X` is"
                 " numerical."
