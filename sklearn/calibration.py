@@ -9,7 +9,8 @@ from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import minimize, minimize_scalar
+from scipy.optimize import minimize
+from scipy.optimize.elementwise import bracket_minimum, find_minimum
 from scipy.special import expit
 
 from sklearn._loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -1128,10 +1129,18 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
             return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
 
-        log_beta_minimizer = minimize_scalar(
+        log_beta_bracket = bracket_minimum(log_loss, 0, xmin=-10, xmax=10)
+        if not log_beta_bracket.success:
+            raise RuntimeError(
+                "Temperature scaling fails to optimize during calibration. "
+                "Reason from `scipy.optimize.bracket_minimum`: "
+                f"{log_beta_bracket.message}"
+            )
+
+        log_beta_minimizer = find_minimum(
             log_loss,
-            bounds=(-10.0, 10.0),
-            options={
+            log_beta_bracket.bracket,
+            tolerances={
                 "xatol": 64 * np.finfo(float).eps,
             },
         )
