@@ -59,6 +59,7 @@ from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
+    _IS_WASM,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -2760,6 +2761,13 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, X)
 
 
+@pytest.mark.xfail(
+    _IS_WASM,
+    reason=(
+        "no floating point exceptions, see"
+        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
+    ),
+)
 def test_yeo_johnson_inverse_transform_warning():
     """Check if a warning is triggered when the inverse transformations of the
     Box-Cox and Yeo-Johnson transformers return NaN values."""
