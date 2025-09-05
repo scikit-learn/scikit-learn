@@ -13,6 +13,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
+from scipy.special import gammainc, gamma
 from scipy.stats import chi2
 
 from sklearn.base import _fit_context
@@ -211,6 +212,35 @@ def _c_step(
     # Convert from list of indices to boolean mask.
     support = np.bincount(support_indices, minlength=n_samples).astype(bool)
     return location, covariance, det, support, dist
+
+
+def _consistency_factor(n_features, alpha):
+    """Multiplicative factor to make covariance estimate
+    consistent at the normal distribution, as described in [Croux1999]_.
+
+    Parameters
+    ----------
+    n_features : int
+        Number of features.
+
+    alpha : float
+        Parameter related to the support fraction.
+        This parameter must be in the range (0, 1).
+
+    Returns
+    -------
+    c_alpha : float
+        Scaling factor to make covariance matrix consistent.
+
+    References
+    ----------
+    .. [Croux1999] Influence Function and Efficiency of the Minimum
+        Covariance Determinant Scatter Matrix Estimator, 1999, Journal of
+        Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
+    """
+    q_alpha = chi2.ppf(alpha, df=n_features)
+    c_alpha = gammainc(n_features/2 + 1, q_alpha/2) / alpha
+    return 1.0 / c_alpha
 
 
 def select_candidates(
@@ -832,6 +862,9 @@ class MinCovDet(EmpiricalCovariance):
         computing location and covariance estimates) described
         in [RVDriessen]_.
 
+        Corrects the re-weighted covariance to be consistent at the normal
+        distribution, following [Croux1999]_
+
         Parameters
         ----------
         data : array-like of shape (n_samples, n_features)
@@ -857,6 +890,9 @@ class MinCovDet(EmpiricalCovariance):
         .. [RVDriessen] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
             and the American Society for Quality, TECHNOMETRICS
+        .. [Croux1999] Influence Function and Efficiency of the Minimum
+            Covariance Determinant Scatter Matrix Estimator, 1999, Journal of
+            Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
         """
         n_samples, n_features = data.shape
         mask = self.dist_ < chi2(n_features).isf(0.025)
@@ -869,7 +905,8 @@ class MinCovDet(EmpiricalCovariance):
         )
         support_reweighted = np.zeros(n_samples, dtype=bool)
         support_reweighted[mask] = True
-        self._set_covariance(covariance_reweighted)
+        consistency_factor = _consistency_factor(n_features, 0.975)
+        self._set_covariance(covariance_reweighted * consistency_factor)
         self.location_ = location_reweighted
         self.support_ = support_reweighted
         X_centered = data - self.location_
