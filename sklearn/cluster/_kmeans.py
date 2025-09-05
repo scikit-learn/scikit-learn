@@ -42,7 +42,7 @@ from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.extmath import row_norms, stable_cumsum
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.parallel import (
     _get_threadpool_controller,
     _threadpool_controller_decorator,
@@ -248,7 +248,7 @@ def _kmeans_plusplus(
         # to the squared distance to the closest existing center
         rand_vals = random_state.uniform(size=n_local_trials) * current_pot
         candidate_ids = np.searchsorted(
-            stable_cumsum(sample_weight * closest_dist_sq), rand_vals
+            np.cumsum(sample_weight * closest_dist_sq), rand_vals
         )
         # XXX: numerical imprecision can result in a candidate_id out of range
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)

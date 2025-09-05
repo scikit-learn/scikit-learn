@@ -1,5 +1,6 @@
 import numbers
 import pickle
+import re
 import warnings
 from copy import deepcopy
 from functools import partial
@@ -51,7 +52,7 @@ from sklearn.metrics._scorer import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
@@ -216,6 +217,15 @@ def test_all_scorers_repr():
     # Test that all scorers have a working repr
     for name in get_scorer_names():
         repr(get_scorer(name))
+
+
+def test_repr_partial():
+    metric = partial(precision_score, pos_label=1)
+    scorer = make_scorer(metric)
+    pattern = (
+        "functools\\.partial\\(<function\\ precision_score\\ at\\ .*>,\\ pos_label=1\\)"
+    )
+    assert re.search(pattern, repr(scorer))
 
 
 def check_scoring_validator_for_single_metric_usecases(scoring_validator):
@@ -1291,37 +1301,27 @@ def test_metadata_kwarg_conflict():
 
 @config_context(enable_metadata_routing=True)
 def test_PassthroughScorer_set_score_request():
-    """Test that _PassthroughScorer.set_score_request adds the correct metadata request
-    on itself and doesn't change its estimator's routing."""
+    """Test that _PassthroughScorer.set_score_request raises when routing enabled."""
     est = LogisticRegression().set_score_request(sample_weight="estimator_weights")
     # make a `_PassthroughScorer` with `check_scoring`:
     scorer = check_scoring(est, None)
-    assert (
-        scorer.get_metadata_routing().score.requests["sample_weight"]
-        == "estimator_weights"
-    )
-
-    scorer.set_score_request(sample_weight="scorer_weights")
-    assert (
-        scorer.get_metadata_routing().score.requests["sample_weight"]
-        == "scorer_weights"
-    )
-
-    # making sure changing the passthrough object doesn't affect the estimator.
-    assert (
-        est.get_metadata_routing().score.requests["sample_weight"]
-        == "estimator_weights"
-    )
+    with pytest.raises(
+        AttributeError,
+        match="'_PassthroughScorer' object has no attribute 'set_score_request'",
+    ):
+        scorer.set_score_request(sample_weight=True)
 
 
 def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
     """Test that _PassthroughScorer.set_score_request raises if metadata routing is
     disabled."""
     scorer = check_scoring(LogisticRegression(), None)
-    msg = "This method is only available when metadata routing is enabled."
 
-    with pytest.raises(RuntimeError, match=msg):
-        scorer.set_score_request(sample_weight="my_weights")
+    with pytest.raises(
+        AttributeError,
+        match="'_PassthroughScorer' object has no attribute 'set_score_request'",
+    ):
+        scorer.set_score_request(sample_weight=True)
 
 
 @config_context(enable_metadata_routing=True)
@@ -1663,3 +1663,26 @@ def test_make_scorer_reponse_method_default_warning():
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
         make_scorer(accuracy_score)
+
+
+@config_context(enable_metadata_routing=True)
+def test_Pipeline_in_PassthroughScorer():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/30937
+
+    Make sure pipeline inside a gridsearchcv works with sample_weight passed!
+    """
+    X, y = make_classification(10, 4)
+    sample_weight = np.ones_like(y)
+    pipe = Pipeline(
+        [
+            (
+                "logistic",
+                LogisticRegression()
+                .set_fit_request(sample_weight=True)
+                .set_score_request(sample_weight=True),
+            )
+        ]
+    )
+    search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
+    search.fit(X, y, sample_weight=sample_weight)
