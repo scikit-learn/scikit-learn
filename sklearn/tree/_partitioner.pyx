@@ -14,8 +14,7 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.stdlib cimport malloc
-from libc.stdlib cimport free
+from libc.stdio cimport printf
 
 from ._utils cimport swap_array_slices, swap_array_slices_f32
 
@@ -104,7 +103,7 @@ cdef class DensePartitioner:
         self.missing_at_the_beginning = False
         self.n_missing = n_missing
 
-    cdef inline void set_missing_at_the_beginning(self) noexcept nogil:
+    cdef void set_missing_at_the_beginning(self) noexcept nogil:
         """
         Assumes `sort_samples_and_feature_values` has been called beforehand
         and hence all missing values are at the end
@@ -116,17 +115,6 @@ cdef class DensePartitioner:
         swap_array_slices(self.samples, self.start, self.end, n_non_missing)
         swap_array_slices_f32(self.feature_values, self.start, self.end, n_non_missing)
         self.missing_at_the_beginning = True
-
-    cdef inline void set_missing_at_the_end(self) noexcept nogil:
-        """
-        Assumes `sort_samples_and_feature_values` and then `set_missing_at_the_beginning`
-        have been called beforehand and hence all missing values are at the beginning
-        """
-        assert self.missing_at_the_beginning
-        cdef intp_t[::1] samples = self.samples
-        swap_array_slices(self.samples, self.start, self.end, self.n_missing)
-        swap_array_slices_f32(self.feature_values, self.start, self.end, self.n_missing)
-        self.missing_at_the_beginning = False
 
     cdef inline void find_min_max(
         self,
@@ -206,8 +194,8 @@ cdef class DensePartitioner:
             intp_t end_non_missing = self.end - self.n_missing
 
         if p[0] == self.start and self.missing_at_the_beginning:
-            p[0] = self.n_missing + 1
-            p_prev[0] = self.n_missing
+            p[0] = self.start + self.n_missing + 1
+            p_prev[0] = p[0] - 1
         elif not self.missing_at_the_beginning and p[0] >= end_non_missing:
             p[0] = self.end
             p_prev[0] = self.end
@@ -375,10 +363,7 @@ cdef class SparsePartitioner:
         # number of missing values for current_feature
         self.n_missing = 0
 
-    cdef inline void set_missing_at_the_beginning(self) noexcept nogil:
-        pass  # missing values not support for sparse
-
-    cdef inline void set_missing_at_the_end(self) noexcept nogil:
+    cdef void set_missing_at_the_beginning(self) noexcept nogil:
         pass  # missing values not support for sparse
 
     cdef inline void find_min_max(

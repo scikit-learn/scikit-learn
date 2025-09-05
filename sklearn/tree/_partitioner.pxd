@@ -79,8 +79,7 @@ cdef class DensePartitioner:
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
     ) noexcept nogil
-    cdef inline void set_missing_at_the_beginning(self) noexcept nogil
-    cdef inline void set_missing_at_the_end(self) noexcept nogil
+    cdef void set_missing_at_the_beginning(self) noexcept nogil
     cdef void init_node_split(
         self,
         intp_t start,
@@ -137,8 +136,7 @@ cdef class SparsePartitioner:
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
     ) noexcept nogil
-    cdef inline void set_missing_at_the_beginning(self) noexcept nogil
-    cdef inline void set_missing_at_the_end(self) noexcept nogil
+    cdef void set_missing_at_the_beginning(self) noexcept nogil
     cdef void init_node_split(
         self,
         intp_t start,
