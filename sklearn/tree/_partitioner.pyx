@@ -519,7 +519,7 @@ cdef class SparsePartitioner:
         """
         cdef intp_t[::1] samples = self.samples
         cdef float32_t[::1] feature_values = self.feature_values
-        cdef intp_t indptr_start = self.X_indptr[feature],
+        cdef intp_t indptr_start = self.X_indptr[feature]
         cdef intp_t indptr_end = self.X_indptr[feature + 1]
         cdef intp_t n_indices = <intp_t>(indptr_end - indptr_start)
         cdef intp_t n_samples = self.end - self.start

@@ -421,6 +421,7 @@ cdef inline int node_split_best(
             while p < end:
                 partitioner.next_p(&p_prev, &p)
                 if p == p_mem:
+                    assert False
                     break
                 p_mem = p
                 if p == end:
