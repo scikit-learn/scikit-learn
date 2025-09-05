@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pytest
 
+from sklearn.base import clone
 from sklearn.datasets import (
     load_iris,
     make_classification,
@@ -237,7 +238,7 @@ def test_get_response_values_binary_classifier_predict_proba(
 def test_get_response_error(estimator, X, y, err_msg, params):
     """Check that we raise the proper error messages in _get_response_values_binary."""
 
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     with pytest.raises(ValueError, match=err_msg):
         _get_response_values_binary(estimator, X, **params)
 
@@ -310,6 +311,7 @@ def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
     It should return the predictions untouched.
     """
+    estimator = clone(estimator)
     estimator.fit(X, y)
     predictions, pos_label = _get_response_values(
         estimator, X, response_method=response_method
