@@ -7,6 +7,7 @@ import scipy
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
+from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _add_to_diagonal,
@@ -18,6 +19,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _fill_diagonal,
     _get_namespace_device_dtype_ids,
+    _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
     _logsumexp,
@@ -795,3 +797,24 @@ def test_supported_float_types(namespace, device_, expected_types):
     float_types = supported_float_dtypes(xp, device=device_)
     expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
     assert float_types == expected
+
+
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_half_multinomial_loss(namespace, device_, dtype_name):
+    n_samples = 5
+    n_classes = 3
+    y = numpy.random.randint(0, n_classes, n_samples).astype(dtype_name)
+    pred = numpy.random.rand(n_samples, n_classes).astype(dtype_name)
+    xp = _array_api_for_tests(namespace, device_)
+    y_xp = xp.asarray(y, device=device_)
+    pred_xp = xp.asarray(pred, device=device_)
+
+    np_loss = HalfMultinomialLoss(sample_weight=None, n_classes=n_classes)(
+        y_true=y, raw_prediction=pred
+    )
+    with config_context(array_api_dispatch=True):
+        xp_loss = _half_multinomial_loss(y=y_xp, pred=pred_xp, xp=xp)
+
+    assert numpy.isclose(np_loss, _convert_to_numpy(xp_loss, xp=xp))

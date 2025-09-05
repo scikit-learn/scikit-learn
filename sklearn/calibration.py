@@ -21,12 +21,19 @@ from sklearn.base import (
     _fit_context,
     clone,
 )
+from sklearn.externals import array_api_extra as xpx
 from sklearn.frozen import FrozenEstimator
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
 from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    get_namespace,
+    get_namespace_and_device,
+)
 from sklearn.utils._param_validation import (
     HasMethods,
     Hidden,
@@ -345,6 +352,17 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self : object
             Returns an instance of self.
         """
+        xp, _, xp_device = get_namespace_and_device(X, y, sample_weight)
+        # Currently only the TemperatureScaling method supports the array API.
+        # Since CalibratedClassifierCV uses another estimator within and also
+        # uses cv methods, we convert all arrays to numpy to ensure that they
+        # can continue to work correctly. We only convert back to the
+        # respective array API when applying the TemperatureScaling method.
+        if not _is_numpy_namespace(xp=xp):
+            X = _convert_to_numpy(X, xp=xp)
+            y = _convert_to_numpy(y, xp=xp)
+            if sample_weight is not None:
+                sample_weight = _convert_to_numpy(sample_weight, xp=xp)
         check_classification_targets(y)
         X, y = indexable(X, y)
         estimator = self._get_estimator()
@@ -388,7 +406,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 y,
                 self.classes_,
                 self.method,
-                sample_weight,
+                xp=xp,
+                xp_device=xp_device,
+                sample_weight=sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -459,6 +479,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         test=test,
                         method=self.method,
                         classes=self.classes_,
+                        xp=xp,
+                        xp_device=xp_device,
                         sample_weight=sample_weight,
                         fit_params=routed_params.estimator.fit,
                     )
@@ -507,7 +529,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     y,
                     self.classes_,
                     self.method,
-                    sample_weight,
+                    xp=xp,
+                    xp_device=xp_device,
+                    sample_weight=sample_weight,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -605,6 +629,8 @@ def _fit_classifier_calibrator_pair(
     test,
     method,
     classes,
+    xp,
+    xp_device,
     sample_weight=None,
     fit_params=None,
 ):
@@ -671,12 +697,21 @@ def _fit_classifier_calibrator_pair(
     else:
         sw_test = None
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y_test, classes, method, sample_weight=sw_test
+        estimator,
+        predictions,
+        y_test,
+        classes,
+        method,
+        xp=xp,
+        xp_device=xp_device,
+        sample_weight=sw_test,
     )
     return calibrated_classifier
 
 
-def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+def _fit_calibrator(
+    clf, predictions, y, classes, method, xp, xp_device, sample_weight=None
+):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
@@ -709,12 +744,12 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     -------
     pipeline : _CalibratedClassifier instance
     """
-    Y = label_binarize(y, classes=classes)
-    label_encoder = LabelEncoder().fit(classes)
-    pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
 
     if method in ("isotonic", "sigmoid"):
+        Y = label_binarize(y, classes=classes)
+        label_encoder = LabelEncoder().fit(classes)
+        pos_class_indices = label_encoder.transform(clf.classes_)
         for class_idx, this_pred in zip(pos_class_indices, predictions.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
@@ -723,13 +758,15 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
+        predictions = xp.asarray(predictions, device=xp_device)
+        y = xp.asarray(y, device=xp_device)
         if len(classes) == 2 and predictions.shape[-1] == 1:
             response_method_name = _check_response_method(
                 clf,
                 ["decision_function", "predict_proba"],
             ).__name__
             if response_method_name == "predict_proba":
-                predictions = np.hstack([1 - predictions, predictions])
+                predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
@@ -940,7 +977,7 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_to_logits(decision_values, eps=1e-12):
+def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
@@ -968,25 +1005,26 @@ def _convert_to_logits(decision_values, eps=1e-12):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
+    xp, _ = get_namespace(decision_values, xp=xp)
     decision_values = check_array(
-        decision_values, dtype=[np.float64, np.float32], ensure_2d=False
+        decision_values, dtype=[xp.float64, np.float32], ensure_2d=False
     )
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
         # Check if it is the output of predict_proba
-        entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
-        row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
+        entries_zero_to_one = xp.all((decision_values >= 0) & (decision_values <= 1))
+        row_sums_to_one = xp.all(xpx.isclose(xp.sum(decision_values, axis=1), 1.0))
 
         if entries_zero_to_one and row_sums_to_one:
-            logits = np.log(decision_values + eps)
+            logits = xp.log(decision_values + eps)
         else:
             logits = decision_values
 
     elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        logits = np.hstack([-decision_values, decision_values])
+        logits = xp.concat([-decision_values, decision_values], axis=1)
 
     elif decision_values.ndim == 1:
-        decision_values = decision_values.reshape(-1, 1)
-        logits = np.hstack([-decision_values, decision_values])
+        decision_values = xp.reshape(decision_values, (-1, 1))
+        logits = xp.concat([-decision_values, decision_values], axis=1)
 
     return logits
 
@@ -1083,15 +1121,17 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        xp, _, xp_device = get_namespace_and_device(X, y)
         X, y = indexable(X, y)
         check_consistent_length(X, y)
-        logits = _convert_to_logits(X)  # guarantees np.float64 or np.float32
+        logits = _convert_to_logits(X)  # guarantees xp.float64 or xp.float32
 
         dtype_ = logits.dtype
         labels = column_or_1d(y, dtype=dtype_)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
+            sample_weight = xp.asarray(sample_weight, device=xp_device)
 
         halfmulti_loss = HalfMultinomialLoss(
             sample_weight=sample_weight, n_classes=logits.shape[1]

@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
@@ -46,9 +47,14 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1251,3 +1257,38 @@ def test_error_less_class_samples_than_folds():
     y = ["a"] * 10 + ["b"] * 10
 
     CalibratedClassifierCV(cv=3).fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_temperature_scaling_array_api_compliance(array_namespace, device_, dtype_name):
+    """Check temperature scaling calibration"""
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_classification(
+        n_samples=1000,
+        n_features=10,
+        n_informative=10,
+        n_redundant=0,
+        n_classes=5,
+        n_clusters_per_class=1,
+        class_sep=2.0,
+        random_state=42,
+    )
+    X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
+    X_train = X_train.astype(dtype_name)
+    y_train = y_train.astype(dtype_name)
+    X_cal = X_cal.astype(dtype_name)
+    y_cal = y_cal.astype(dtype_name)
+    X_cal_xp = xp.asarray(X_cal, device=device_)
+    y_cal_xp = xp.asarray(y_cal, device=device_)
+
+    clf = LogisticRegression(penalty=None, tol=1e-8, max_iter=200, random_state=0)
+    clf.fit(X_train, y_train)
+
+    with config_context(array_api_dispatch=True):
+        cal_clf = CalibratedClassifierCV(
+            FrozenEstimator(clf), cv=3, method="temperature", ensemble=False
+        ).fit(X_cal_xp, y_cal_xp)
