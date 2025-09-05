@@ -1210,18 +1210,14 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
-    params = dict(C=np.logspace(-4, 1, 3), gamma=np.logspace(-5, 0, 3, base=0.1))
+    params = dict(C=np.logspace(-4, 1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
             # If True, for multi-metric pass refit='accuracy'
-            if refit:
-                probability = True
-                refit = "accuracy" if isinstance(scoring, tuple) else refit
-            else:
-                probability = False
-            clf = SVC(probability=probability, random_state=42)
+            if refit and isinstance(scoring, tuple):
+                refit = "accuracy"
+            clf = LogisticRegression(random_state=42)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -1311,6 +1307,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
 )
 def test_search_cv_score_samples_error(search_cv):
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
+    search_cv = clone(search_cv)
     search_cv.fit(X, y)
 
     # Make sure to error out when underlying estimator does not implement
@@ -2098,6 +2095,9 @@ def test__custom_fit_no_run_search():
         BadSearchCV(SVC()).fit(X, y)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_empty_cv_iterator_error():
     # Use global X, y
 
@@ -2123,6 +2123,8 @@ def test_empty_cv_iterator_error():
         ridge.fit(X[:train_size], y[:train_size])
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
 def test_random_search_bad_cv():
     # Use global X, y
 

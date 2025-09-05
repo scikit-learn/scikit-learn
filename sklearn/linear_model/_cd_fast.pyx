@@ -396,6 +396,116 @@ def enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+cdef inline void R_plus_wj_Xj(
+    unsigned int n_samples,
+    floating[::1] R,  # out
+    const floating[::1] X_data,
+    const int[::1] X_indices,
+    const int[::1] X_indptr,
+    const floating[::1] X_mean,
+    bint center,
+    const floating[::1] sample_weight,
+    bint no_sample_weights,
+    floating w_j,
+    unsigned int j,
+) noexcept nogil:
+    """R += w_j * X[:,j]"""
+    cdef unsigned int startptr = X_indptr[j]
+    cdef unsigned int endptr = X_indptr[j + 1]
+    cdef floating sw
+    cdef floating X_mean_j = X_mean[j]
+    if no_sample_weights:
+        for i in range(startptr, endptr):
+            R[X_indices[i]] += X_data[i] * w_j
+        if center:
+            for i in range(n_samples):
+                R[i] -= X_mean_j * w_j
+    else:
+        for i in range(startptr, endptr):
+            sw = sample_weight[X_indices[i]]
+            R[X_indices[i]] += sw * X_data[i] * w_j
+        if center:
+            for i in range(n_samples):
+                R[i] -= sample_weight[i] * X_mean_j * w_j
+
+
+cdef (floating, floating) gap_enet_sparse(
+    int n_samples,
+    int n_features,
+    const floating[::1] w,
+    floating alpha,  # L1 penalty
+    floating beta,  # L2 penalty
+    const floating[::1] X_data,
+    const int[::1] X_indices,
+    const int[::1] X_indptr,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    bint no_sample_weights,
+    const floating[::1] X_mean,
+    bint center,
+    const floating[::1] R,  # current residuals = y - X @ w
+    floating R_sum,
+    floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    bint positive,
+) noexcept nogil:
+    """Compute dual gap for use in sparse_enet_coordinate_descent."""
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating w_norm2 = 0.0
+    cdef floating l1_norm
+    cdef floating A_norm2
+    cdef floating const_
+    cdef unsigned int i, j
+
+    # XtA = X.T @ R - beta * w
+    # sparse X.T @ dense R
+    for j in range(n_features):
+        XtA[j] = 0.0
+        for i in range(X_indptr[j], X_indptr[j + 1]):
+            XtA[j] += X_data[i] * R[X_indices[i]]
+
+        if center:
+            XtA[j] -= X_mean[j] * R_sum
+        XtA[j] -= beta * w[j]
+
+    if positive:
+        dual_norm_XtA = max(n_features, &XtA[0])
+    else:
+        dual_norm_XtA = abs_max(n_features, &XtA[0])
+
+    # R_norm2 = R @ R
+    if no_sample_weights:
+        R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+    else:
+        R_norm2 = 0.0
+        for i in range(n_samples):
+            # R is already multiplied by sample_weight
+            if sample_weight[i] != 0:
+                R_norm2 += (R[i] ** 2) / sample_weight[i]
+
+    # w_norm2 = w @ w
+    if beta > 0:
+        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+
+    if (dual_norm_XtA > alpha):
+        const_ = alpha / dual_norm_XtA
+        A_norm2 = R_norm2 * const_**2
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    l1_norm = _asum(n_features, &w[0], 1)
+
+    gap += (
+        alpha * l1_norm
+        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
+        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    )
+    return gap, dual_norm_XtA
+
+
 def sparse_enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
@@ -411,6 +521,7 @@ def sparse_enet_coordinate_descent(
     object rng,
     bint random=0,
     bint positive=0,
+    bint do_screening=1,
 ):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -425,6 +536,8 @@ def sparse_enet_coordinate_descent(
         + (beta/2) * norm(w, 2)^2
 
     and X_mean is the weighted average of X (per column).
+
+    The rest is the same as enet_coordinate_descent, but for sparse X.
 
     Returns
     -------
@@ -465,24 +578,25 @@ def sparse_enet_coordinate_descent(
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
     cdef const floating[::1] yw
 
+    cdef floating d_j
+    cdef floating Xj_theta
     cdef floating tmp
-    cdef floating w_ii
+    cdef floating w_j
     cdef floating d_w_max
     cdef floating w_max
-    cdef floating d_w_ii
+    cdef floating d_w_j
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
-    cdef floating X_mean_ii
+    cdef floating X_mean_j
     cdef floating R_sum = 0.0
-    cdef floating R_norm2
-    cdef floating w_norm2
-    cdef floating l1_norm
-    cdef floating const_
-    cdef floating A_norm2
     cdef floating normalize_sum
-    cdef unsigned int ii
-    cdef unsigned int jj
+    cdef unsigned int n_active = n_features
+    cdef uint32_t[::1] active_set
+    # TODO: use binset insteaf of array of bools
+    cdef uint8_t[::1] excluded_set
+    cdef unsigned int i
+    cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef unsigned int startptr = X_indptr[0]
@@ -491,7 +605,10 @@ def sparse_enet_coordinate_descent(
     cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
-    cdef int kk
+
+    if do_screening:
+        active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
+        excluded_set = np.empty(n_features, dtype=np.uint8)
 
     if no_sample_weights:
         yw = y
@@ -502,158 +619,224 @@ def sparse_enet_coordinate_descent(
 
     with nogil:
         # center = (X_mean != 0).any()
-        for ii in range(n_features):
-            if X_mean[ii]:
+        for j in range(n_features):
+            if X_mean[j]:
                 center = True
                 break
 
         # R = y - np.dot(X, w)
-        for ii in range(n_features):
-            X_mean_ii = X_mean[ii]
-            endptr = X_indptr[ii + 1]
+        for j in range(n_features):
+            X_mean_j = X_mean[j]
+            endptr = X_indptr[j + 1]
             normalize_sum = 0.0
-            w_ii = w[ii]
+            w_j = w[j]
 
             if no_sample_weights:
-                for jj in range(startptr, endptr):
-                    normalize_sum += (X_data[jj] - X_mean_ii) ** 2
-                    R[X_indices[jj]] -= X_data[jj] * w_ii
-                norm2_cols_X[ii] = normalize_sum + \
-                    (n_samples - endptr + startptr) * X_mean_ii ** 2
+                for i in range(startptr, endptr):
+                    normalize_sum += (X_data[i] - X_mean_j) ** 2
+                    R[X_indices[i]] -= X_data[i] * w_j
+                norm2_cols_X[j] = normalize_sum + \
+                    (n_samples - endptr + startptr) * X_mean_j ** 2
                 if center:
-                    for jj in range(n_samples):
-                        R[jj] += X_mean_ii * w_ii
-                        R_sum += R[jj]
+                    for i in range(n_samples):
+                        R[i] += X_mean_j * w_j
+                        R_sum += R[i]
             else:
                 # R = sw * (y - np.dot(X, w))
-                for jj in range(startptr, endptr):
-                    tmp = sample_weight[X_indices[jj]]
+                for i in range(startptr, endptr):
+                    tmp = sample_weight[X_indices[i]]
                     # second term will be subtracted by loop over range(n_samples)
-                    normalize_sum += (tmp * (X_data[jj] - X_mean_ii) ** 2
-                                      - tmp * X_mean_ii ** 2)
-                    R[X_indices[jj]] -= tmp * X_data[jj] * w_ii
+                    normalize_sum += (tmp * (X_data[i] - X_mean_j) ** 2
+                                      - tmp * X_mean_j ** 2)
+                    R[X_indices[i]] -= tmp * X_data[i] * w_j
                 if center:
-                    for jj in range(n_samples):
-                        normalize_sum += sample_weight[jj] * X_mean_ii ** 2
-                        R[jj] += sample_weight[jj] * X_mean_ii * w_ii
-                        R_sum += R[jj]
-                norm2_cols_X[ii] = normalize_sum
+                    for i in range(n_samples):
+                        normalize_sum += sample_weight[i] * X_mean_j ** 2
+                        R[i] += sample_weight[i] * X_mean_j * w_j
+                        R_sum += R[i]
+                norm2_cols_X[j] = normalize_sum
             startptr = endptr
 
         # Note: No need to update R_sum from here on because the update terms cancel
-        # each other: w_ii * np.sum(X[:,ii] - X_mean[ii]) = 0. R_sum is only ever
+        # each other: w_j * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever
         # needed and calculated if X_mean is provided.
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
-        for n_iter in range(max_iter):
+        # Check convergence before entering the main loop.
+        gap, dual_norm_XtA = gap_enet_sparse(
+            n_samples,
+            n_features,
+            w,
+            alpha,
+            beta,
+            X_data,
+            X_indices,
+            X_indptr,
+            y,
+            sample_weight,
+            no_sample_weights,
+            X_mean,
+            center,
+            R,
+            R_sum,
+            XtA,
+            positive,
+        )
+        if gap <= tol:
+            with gil:
+                return np.asarray(w), gap, tol, 0
 
+        # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+        if do_screening:
+            n_active = 0
+            for j in range(n_features):
+                if norm2_cols_X[j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                    continue
+                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
+                if d_j <= sqrt(2 * gap) / alpha:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # R += w[j] * X[:,j]
+                    R_plus_wj_Xj(
+                        n_samples,
+                        R,
+                        X_data,
+                        X_indices,
+                        X_indptr,
+                        X_mean,
+                        center,
+                        sample_weight,
+                        no_sample_weights,
+                        w[j],
+                        j,
+                    )
+                    w[j] = 0
+                    excluded_set[j] = 1
+
+        for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_active, rand_r_state)
                 else:
-                    ii = f_iter
+                    j = f_iter
 
-                if norm2_cols_X[ii] == 0.0:
+                if do_screening:
+                    j = active_set[j]
+
+                if norm2_cols_X[j] == 0.0:
                     continue
 
-                startptr = X_indptr[ii]
-                endptr = X_indptr[ii + 1]
-                w_ii = w[ii]  # Store previous value
-                X_mean_ii = X_mean[ii]
+                startptr = X_indptr[j]
+                endptr = X_indptr[j + 1]
+                w_j = w[j]  # Store previous value
+                X_mean_j = X_mean[j]
 
-                # tmp = X[:,ii] @ (R + w_ii * X[:,ii])
+                # tmp = X[:,j] @ (R + w_j * X[:,j])
                 tmp = 0.0
-                for jj in range(startptr, endptr):
-                    tmp += R[X_indices[jj]] * X_data[jj]
-                tmp += w_ii * norm2_cols_X[ii]
+                for i in range(startptr, endptr):
+                    tmp += R[X_indices[i]] * X_data[i]
+                tmp += w_j * norm2_cols_X[j]
 
                 if center:
-                    tmp -= R_sum * X_mean_ii
+                    tmp -= R_sum * X_mean_j
 
                 if positive and tmp < 0.0:
-                    w[ii] = 0.0
+                    w[j] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                            / (norm2_cols_X[ii] + beta)
+                    w[j] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                            / (norm2_cols_X[j] + beta)
 
-                if w[ii] != w_ii:
-                    # R -=  (w[ii] - w_ii) * X[:,ii] # Update residual
-                    if no_sample_weights:
-                        for jj in range(startptr, endptr):
-                            R[X_indices[jj]] -= X_data[jj] * (w[ii] - w_ii)
-                        if center:
-                            for jj in range(n_samples):
-                                R[jj] += X_mean_ii * (w[ii] - w_ii)
-                    else:
-                        for jj in range(startptr, endptr):
-                            kk = X_indices[jj]
-                            R[kk] -= sample_weight[kk] * X_data[jj] * (w[ii] - w_ii)
-                        if center:
-                            for jj in range(n_samples):
-                                R[jj] += sample_weight[jj] * X_mean_ii * (w[ii] - w_ii)
+                if w[j] != w_j:
+                    # R -=  (w[j] - w_j) * X[:,j] # Update residual
+                    R_plus_wj_Xj(
+                        n_samples,
+                        R,
+                        X_data,
+                        X_indices,
+                        X_indptr,
+                        X_mean,
+                        center,
+                        sample_weight,
+                        no_sample_weights,
+                        w_j - w[j],
+                        j,
+                    )
 
                 # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                d_w_max = fmax(d_w_max, d_w_ii)
+                d_w_j = fabs(w[j] - w_j)
+                d_w_max = fmax(d_w_max, d_w_j)
 
-                w_max = fmax(w_max, fabs(w[ii]))
+                w_max = fmax(w_max, fabs(w[j]))
 
             if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-
-                # XtA = X.T @ R - beta * w
-                # sparse X.T / dense R dot product
-                for ii in range(n_features):
-                    XtA[ii] = 0.0
-                    for kk in range(X_indptr[ii], X_indptr[ii + 1]):
-                        XtA[ii] += X_data[kk] * R[X_indices[kk]]
-
-                    if center:
-                        XtA[ii] -= X_mean[ii] * R_sum
-                    XtA[ii] -= beta * w[ii]
-
-                if positive:
-                    dual_norm_XtA = max(n_features, &XtA[0])
-                else:
-                    dual_norm_XtA = abs_max(n_features, &XtA[0])
-
-                # R_norm2 = np.dot(R, R)
-                if no_sample_weights:
-                    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
-                else:
-                    R_norm2 = 0.0
-                    for jj in range(n_samples):
-                        # R is already multiplied by sample_weight
-                        if sample_weight[jj] != 0:
-                            R_norm2 += (R[jj] ** 2) / sample_weight[jj]
-
-                # w_norm2 = np.dot(w, w)
-                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-                if (dual_norm_XtA > alpha):
-                    const_ = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * const_**2
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const_ = 1.0
-                    gap = R_norm2
-
-                l1_norm = _asum(n_features, &w[0], 1)
-
-                gap += (alpha * l1_norm
-                        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # np.dot(R.T, y)
-                        + 0.5 * beta * (1 + const_ ** 2) * w_norm2)
+                gap, dual_norm_XtA = gap_enet_sparse(
+                    n_samples,
+                    n_features,
+                    w,
+                    alpha,
+                    beta,
+                    X_data,
+                    X_indices,
+                    X_indptr,
+                    y,
+                    sample_weight,
+                    no_sample_weights,
+                    X_mean,
+                    center,
+                    R,
+                    R_sum,
+                    XtA,
+                    positive,
+                )
 
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
+
+                # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+                if do_screening:
+                    n_active = 0
+                    for j in range(n_features):
+                        if excluded_set[j]:
+                            continue
+                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
+                        d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
+                        if d_j <= sqrt(2 * gap) / alpha:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # R += w[j] * X[:,j]
+                            R_plus_wj_Xj(
+                                n_samples,
+                                R,
+                                X_data,
+                                X_indices,
+                                X_indptr,
+                                X_mean,
+                                center,
+                                sample_weight,
+                                no_sample_weights,
+                                w[j],
+                                j,
+                            )
+                            w[j] = 0
+                            excluded_set[j] = 1
 
         else:
             # for/else, runs if for doesn't end with a `break`

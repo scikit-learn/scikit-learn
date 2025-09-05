@@ -3,6 +3,7 @@
 
 
 import re
+import sys
 import warnings
 from contextlib import suppress
 from functools import partial
@@ -1249,6 +1250,17 @@ if sp_base_version < parse_version("1.11"):
             "scipy < 1.11 implementation of _bsplines does not"
             "support const memory views."
         ),
+    }
+
+linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
+if "pytest_run_parallel" in sys.modules:
+    PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
+        "check_supervised_y_2d": linear_svr_not_thread_safe,
+        "check_regressors_int": linear_svr_not_thread_safe,
+        "check_fit_idempotent": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_dense_data": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_sparse_data": linear_svr_not_thread_safe,
+        "check_regressor_data_not_an_array": linear_svr_not_thread_safe,
     }
 
 

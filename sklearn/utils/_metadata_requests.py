@@ -427,7 +427,7 @@ class MethodMetadataRequest:
         }
         for param in warn_params:
             warn(
-                f"Support for {param} has recently been added to this class. "
+                f"Support for {param} has recently been added to {self.owner} class. "
                 "To maintain backward compatibility, it is ignored now. "
                 f"Using `set_{self.method}_request({param}={{True, False}})` "
                 "on this method of the class, you can set the request value "
