@@ -21,12 +21,12 @@ def test_weighted_percentile_matches_median(size, average):
     """Ensure `_weighted_percentile` matches `median` when expected.
 
     With unit `sample_weight`, `_weighted_percentile` should match median except
-    when `average=False` and the number of samples is odd.
-    When number of samples is odd, `_weighted_percentile(average=False)` always falls
-    on a single observation (not between 2 values, in which case the lower value would
-    be taken) and is thus equal to `np.median`.
-    For an even number of samples, `median` gives the average between the 2 middle
-    samples, `_weighted_percentile(average=False)` gives the higher (right) sample.
+    when `average=False` and the number of samples is even.
+    For an array ordered by increasing values, when number of samples is even,
+    the percentile falls on a single observation. `average=True` gives the average
+    of the single observation and the next higher one, thus matches `median`.
+    `average=False` gives the the single observation, thus does not match `median`.
+    For an odd number of samples, both methods match `median`.
     """
     y = np.arange(size)
     sample_weight = np.ones_like(y)
@@ -37,10 +37,9 @@ def test_weighted_percentile_matches_median(size, average):
     if size == 10 and average is False:
         assert score != np.median(y)
     else:
-        assert score == np.median(y)
+        assert pytest.approx(score) == np.median(y)
 
 
-# test 2D?
 @pytest.mark.parametrize("average", [True, False])
 @pytest.mark.parametrize("percentile_rank", [20, 35, 61])
 @pytest.mark.parametrize("size", [10, 15])
@@ -69,7 +68,7 @@ def test_weighted_percentile_matches_numpy(
     else:
         method = "inverted_cdf"
 
-    assert score == np.percentile(y, percentile_rank, method=method)
+    assert pytest.approx(score) == np.percentile(y, percentile_rank, method=method)
 
 
 @pytest.mark.parametrize("percentile_rank", [50, 100])
@@ -89,7 +88,7 @@ def test_weighted_percentile_plus_one_clip_max(percentile_rank):
     # Note for both `percentile_rank`s 50 and 100,`percentile_indices` is already at
     # max index
     y = np.array([[0, 0], [1, 1]])
-    sw = np.array([[0.1, 0.1], [2, 2]])
+    sw = np.array([[0.1, 0.2], [2, 3]])
     score = _weighted_percentile(y, sw, percentile_rank)
     for idx in range(2):
         assert score[idx] == approx(1.0)
@@ -103,6 +102,7 @@ def test_weighted_percentile_equal():
     assert approx(score) == 0
 
 
+# XXX: is this really what we want? Shouldn't we raise instead?
 def test_weighted_percentile_all_zero_weights():
     """Check `weighted_percentile` with all weights equal to 0 returns last index."""
     y = np.arange(10)
@@ -116,7 +116,7 @@ def test_weighted_percentile_all_zero_weights():
 def test_weighted_percentile_ignores_zero_weight(
     average, percentile_rank, expected_value
 ):
-    """Check `weighted_percentile(percentile_rank=0)` behaves correctly.
+    """Check leading, trailing and middle 0 weights behaves correctly.
 
     Check that leading zero-weight observations ignored when `percentile_rank=0`.
     See #20528 for details.
@@ -135,8 +135,8 @@ def test_weighted_percentile_ignores_zero_weight(
 
 
 @pytest.mark.parametrize("average", [True, False])
-@pytest.mark.parametrize("percentile_rank", [20, 35, 61])
-def test_weighted_median_frequency_weights(
+@pytest.mark.parametrize("percentile_rank", [20, 35, 50, 61])
+def test_weighted_percentile_frequency_weight_semantics(
     global_random_seed, percentile_rank, average
 ):
     """Check integer weights give the same result as repeating values."""
@@ -152,6 +152,9 @@ def test_weighted_median_frequency_weights(
         x_repeated, np.ones_like(x_repeated), percentile_rank, average=average
     )
     assert percentile_weights == approx(percentile_repeated)
+    # Also check `percentile_rank=50` matches `median`
+    if percentile_rank == 50 and average:
+        assert percentile_weights == approx(np.median(x_repeated))
 
 
 @pytest.mark.parametrize("average", [True, False])

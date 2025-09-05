@@ -16,7 +16,8 @@ def _weighted_percentile(
     method when `average=False` (default) and 'averaged_inverted_cdf' when
     `average=True`.
 
-    When the percentile lies exactly on a data point:
+    For an array ordered by increasing values, when the percentile lies exactly on a
+    data point:
     * 'inverted_cdf' takes the exact data point
     * 'averaged_inverted_cdf' takes the average of the exact data point and the one
       above it (this means it gives the same result as `median` for unit weights)
@@ -143,7 +144,7 @@ def _weighted_percentile(
         percentile_plus_one_in_sorted = sorted_idx[
             percentile_plus_one_indices, col_indices
         ]
-        # Handle case when when next index ('plus one') has sample weight of 0
+        # Handle case when next index ('plus one') has sample weight of 0
         zero_weight_cols = col_indices[
             sample_weight[percentile_plus_one_in_sorted, col_indices] == 0
         ]
