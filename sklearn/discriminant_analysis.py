@@ -460,7 +460,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
@@ -514,7 +514,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
@@ -873,7 +873,7 @@ class QuadraticDiscriminantAnalysis(
           - float between 0 and 1: fixed shrinkage parameter.
 
         This should be left to None if `covariance_estimator` is used.
-        Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
+        Note that shrinkage works only with 'eigen' solver.
 
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
@@ -1023,7 +1023,7 @@ class QuadraticDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
