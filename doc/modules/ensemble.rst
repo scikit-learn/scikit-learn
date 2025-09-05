@@ -744,10 +744,19 @@ case.
   loss-dependent. For the log-loss, the probability that
   :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
   x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
+  For binary classification the class probabilities are computed as
+  :math:`\sigma(\sum_i tree_i(X))` and :math:`i = 1 \ldots n`, where :math:`n` is
+  the number of trees or iterations.
 
   For multiclass classification, K trees (for K classes) are built at each of
   the :math:`M` iterations. The probability that :math:`x_i` belongs to class
-  k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
+  k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.The class
+  probability for multiclass class :math:`k` is computed as:
+
+  .. math::
+    
+    softmax(trees(X)) = \frac{e^{\sum_i tree_{i}^{k}(X)}} 
+    {\sum_c e^{\sum_i tree_{i}^{c}(X)}}
 
   Note that even for a classification task, the :math:`h_m` sub-estimator is
   still a regressor, not a classifier. This is because the sub-estimators are
