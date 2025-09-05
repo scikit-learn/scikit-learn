@@ -1052,8 +1052,8 @@ class QuadraticDiscriminantAnalysis(
                 )
             cov.append(_cov(Xg, shrinkage, covariance_estimator))
             S2, V = linalg.eigh(cov[-1])
-            V = V[:, np.argsort(S2)[::-1]] # sort eigenvectors
-            S2 = S2[np.argsort(S2)[::-1]] # sort eigenvalues
+            V = V[:, np.argsort(S2)[::-1]]  # sort eigenvectors
+            S2 = S2[np.argsort(S2)[::-1]]  # sort eigenvalues
             Vt = V.T
             rank = np.sum(S2 > self.tol)
             if rank < n_features:

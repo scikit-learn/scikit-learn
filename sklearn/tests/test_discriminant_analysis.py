@@ -540,7 +540,7 @@ def test_qda():
 
 
 def test_qda_covariance_estimator():
-    # Test that the correct errors are raised when using inapropriate
+    # Test that the correct errors are raised when using inappropriate
     # covariance estimators or shrinkage parameters with QDA.
     clf = QuadraticDiscriminantAnalysis(solver="svd", shrinkage="auto")
     with pytest.raises(NotImplementedError):
@@ -621,11 +621,9 @@ def test_qda_coefs():
 
     for i in range(n_classes):
         assert_array_almost_equal(
-          np.abs(clf_svd.rotations_[i]), np.abs(clf_eigen.rotations_[i]), 1
+            np.abs(clf_svd.rotations_[i]), np.abs(clf_eigen.rotations_[i]), 1
         )
-        assert_array_almost_equal(
-          clf_svd.scalings_[i], clf_eigen.scalings_[i], 1
-        )
+        assert_array_almost_equal(clf_svd.scalings_[i], clf_eigen.scalings_[i], 1)
 
 
 def test_qda_priors():
