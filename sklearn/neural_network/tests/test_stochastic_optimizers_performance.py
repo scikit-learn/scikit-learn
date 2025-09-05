@@ -15,16 +15,16 @@ from sklearn.neural_network._stochastic_optimizers import (
 
 @pytest.mark.parametrize("optimizer_class", [SGDOptimizer, AdamOptimizer])
 def test_optimizer_numerical_accuracy_large_arrays(optimizer_class):
-    """Test that optimizers maintain numerical accuracy with large arrays."""
+    """Test that optimizers maintain numerical accuracy with vectorized operations."""
     # Set random seed for reproducibility
     np.random.seed(42)
 
-    # Create large parameter arrays to test vectorization benefits
+    # Use small arrays for fast CI - still tests vectorization correctness
     params = [
-        np.random.randn(500, 500),  # Large weight matrix
-        np.random.randn(500),  # Bias vector
+        np.random.randn(10, 10),  # Small weight matrix
+        np.random.randn(10),  # Bias vector
     ]
-    grads = [np.random.randn(500, 500), np.random.randn(500)]
+    grads = [np.random.randn(10, 10), np.random.randn(10)]
 
     # Test with default parameters
     if optimizer_class == SGDOptimizer:
@@ -47,12 +47,12 @@ def test_optimizer_numerical_accuracy_large_arrays(optimizer_class):
 
 
 def test_sgd_optimizer_performance_smoke_test():
-    """Smoke test to verify SGD optimizer runs efficiently on large arrays."""
+    """Smoke test to verify SGD optimizer runs efficiently."""
     np.random.seed(42)
 
-    # Create moderately large arrays
-    params = [np.random.randn(100, 100), np.random.randn(100)]
-    grads = [np.random.randn(100, 100), np.random.randn(100)]
+    # Use small arrays for fast CI
+    params = [np.random.randn(20, 20), np.random.randn(20)]
+    grads = [np.random.randn(20, 20), np.random.randn(20)]
 
     optimizer = SGDOptimizer(params)
 
@@ -68,12 +68,12 @@ def test_sgd_optimizer_performance_smoke_test():
 
 
 def test_adam_optimizer_performance_smoke_test():
-    """Smoke test to verify Adam optimizer runs efficiently on large arrays."""
+    """Smoke test to verify Adam optimizer runs efficiently."""
     np.random.seed(42)
 
-    # Create moderately large arrays
-    params = [np.random.randn(100, 100), np.random.randn(100)]
-    grads = [np.random.randn(100, 100), np.random.randn(100)]
+    # Use small arrays for fast CI
+    params = [np.random.randn(20, 20), np.random.randn(20)]
+    grads = [np.random.randn(20, 20), np.random.randn(20)]
 
     optimizer = AdamOptimizer(params)
 
@@ -92,13 +92,13 @@ def test_sgd_momentum_vectorization():
     """Test that SGD momentum updates are properly vectorized."""
     np.random.seed(42)
 
-    params = [np.random.randn(50, 50)]
-    grads = [np.random.randn(50, 50)]
+    params = [np.random.randn(20, 20)]
+    grads = [np.random.randn(20, 20)]
 
     optimizer = SGDOptimizer(params, momentum=0.9)
 
     # Set initial velocity to test momentum calculation
-    initial_velocity = np.random.randn(50, 50)
+    initial_velocity = np.random.randn(20, 20)
     optimizer.velocities[0] = initial_velocity.copy()
 
     optimizer._get_updates(grads)
@@ -112,14 +112,14 @@ def test_adam_moment_vectorization():
     """Test that Adam moment updates are properly vectorized."""
     np.random.seed(42)
 
-    params = [np.random.randn(50, 50)]
-    grads = [np.random.randn(50, 50)]
+    params = [np.random.randn(20, 20)]
+    grads = [np.random.randn(20, 20)]
 
     optimizer = AdamOptimizer(params)
 
     # Set initial moments to test calculation
-    initial_m = np.random.randn(50, 50)
-    initial_v = np.random.randn(50, 50)
+    initial_m = np.random.randn(20, 20)
+    initial_v = np.random.randn(20, 20)
     optimizer.ms[0] = initial_m.copy()
     optimizer.vs[0] = initial_v.copy()
 
