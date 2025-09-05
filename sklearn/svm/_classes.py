@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from numbers import Integral, Real
 
 import numpy as np
@@ -690,6 +691,10 @@ class SVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
+        ..deprecated:: version 1.8 parameter probability will be deprecated in future
+        versions, use CalibratedClassifierCV(SVC(), ensemble=False) instead
+        of SVC(probability=True)
+
     tol : float, default=1e-3
         Tolerance for stopping criterion.
 
@@ -867,7 +872,7 @@ class SVC(BaseSVC):
         gamma="scale",
         coef0=0.0,
         shrinking=True,
-        probability=False,
+        probability="deprecated",
         tol=1e-3,
         cache_size=200,
         class_weight=None,
@@ -877,6 +882,16 @@ class SVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
+        if probability != "deprecated":
+            warnings.warn(
+                "parameter `probability` will be deprecated in version 1.8, "
+                "use `CalibratedClassifierCV(SVC(), ensemble=False)` instead "
+                "of `SVC(probability=True)`",
+                FutureWarning,
+            )
+        else:
+            probability = False
+
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -950,6 +965,10 @@ class NuSVC(BaseSVC):
         to calling `fit`, will slow down that method as it internally uses
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
+
+        ..deprecated:: version 1.8 parameter probability will be deprecated in future
+        versions, use CalibratedClassifierCV(NuSVC(), ensemble=False) instead
+        of NuSVC(probability=True)
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
@@ -1140,6 +1159,15 @@ class NuSVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
+        if probability != "deprecated":
+            warnings.warn(
+                "parameter `probability` will be deprecated in version 1.8, "
+                "use `CalibratedClassifierCV(NuSVC(), ensemble=False)` instead "
+                "of `NuSVC(probability=True)`",
+                FutureWarning,
+            )
+        else:
+            probability = False
         super().__init__(
             kernel=kernel,
             degree=degree,
