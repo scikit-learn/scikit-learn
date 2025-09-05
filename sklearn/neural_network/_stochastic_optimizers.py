@@ -179,17 +179,20 @@ class SGDOptimizer(BaseOptimizer):
         updates : list, length = len(grads)
             The values to add to params
         """
-        updates = [
-            self.momentum * velocity - self.learning_rate * grad
-            for velocity, grad in zip(self.velocities, grads)
-        ]
-        self.velocities = updates
+        # Vectorized update of velocities for better performance
+        for i, (velocity, grad) in enumerate(zip(self.velocities, grads)):
+            np.multiply(self.momentum, velocity, out=velocity)
+            grad_update = -self.learning_rate * grad
+            np.add(velocity, grad_update, out=velocity)
 
         if self.nesterov:
+            # Single-pass Nesterov update using updated velocities
             updates = [
                 self.momentum * velocity - self.learning_rate * grad
                 for velocity, grad in zip(self.velocities, grads)
             ]
+        else:
+            updates = [v.copy() for v in self.velocities]
 
         return updates
 
@@ -267,21 +270,25 @@ class AdamOptimizer(BaseOptimizer):
             The values to add to params
         """
         self.t += 1
-        self.ms = [
-            self.beta_1 * m + (1 - self.beta_1) * grad
-            for m, grad in zip(self.ms, grads)
-        ]
-        self.vs = [
-            self.beta_2 * v + (1 - self.beta_2) * (grad**2)
-            for v, grad in zip(self.vs, grads)
-        ]
-        self.learning_rate = (
+        lr_t = (
             self.learning_rate_init
             * np.sqrt(1 - self.beta_2**self.t)
             / (1 - self.beta_1**self.t)
         )
-        updates = [
-            -self.learning_rate * m / (np.sqrt(v) + self.epsilon)
-            for m, v in zip(self.ms, self.vs)
-        ]
+        updates = []
+
+        for m, v, grad in zip(self.ms, self.vs, grads):
+            # Vectorized updates for first and second moments for better performance
+            np.multiply(self.beta_1, m, out=m)
+            grad_scaled = (1 - self.beta_1) * grad
+            np.add(m, grad_scaled, out=m)
+
+            np.multiply(self.beta_2, v, out=v)
+            grad_squared = (1 - self.beta_2) * (grad**2)
+            np.add(v, grad_squared, out=v)
+
+            # Compute update
+            update = -lr_t * m / (np.sqrt(v) + self.epsilon)
+            updates.append(update)
+
         return updates
