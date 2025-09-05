@@ -406,13 +406,14 @@ cdef inline int node_split_best(
             missing_go_to_left = i == 1
             if missing_go_to_left:
                 partitioner.set_missing_at_the_beginning()
-                printf("missing to the left\n")
+                # printf("missing to the left\n")
             criterion.reset()
-            printf("idx:")
-            for p in range(start, end):
-                # printf(" %.3f", feature_values[p])
-                printf(" %d", samples[p])
-            printf("\n")
+            if False:
+                printf("idx:")
+                for p in range(start, end):
+                    # printf(" %.3f", feature_values[p])
+                    printf(" %d", samples[p])
+                printf("\n")
 
             p = start
             p_mem = start
@@ -424,7 +425,7 @@ cdef inline int node_split_best(
                 p_mem = p
                 if p == end:
                     continue
-                printf("p: %d (prev: %d) - ", p, p_prev)
+                # printf("p: %d (prev: %d) - ", p, p_prev)
 
                 n_left = p - start
                 n_right = end - p
@@ -454,17 +455,17 @@ cdef inline int node_split_best(
                     continue
 
                 current_proxy_improvement = criterion.proxy_impurity_improvement()
-                printf("%.3f\n", current_proxy_improvement)
+                # printf("%.3f\n", current_proxy_improvement)
 
                 if current_proxy_improvement > best_proxy_improvement:
-                    printf("new best split")
+                    # printf("new best split")
                     best_proxy_improvement = current_proxy_improvement
                     # sum of halves is used to avoid infinite value
                     if p == end_non_missing and not missing_go_to_left:
-                        printf(" - missing split\n")
+                        # printf(" - missing split\n")
                         current_split.threshold = INFINITY
                     else:
-                        printf("- v %f; prev: %f\n", feature_values[p], feature_values[p_prev])
+                        # printf("- v %f; prev: %f\n", feature_values[p], feature_values[p_prev])
                         current_split.threshold = (
                             feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
                         )
@@ -489,7 +490,7 @@ cdef inline int node_split_best(
                     criterion.children_impurity(
                         &best_split.impurity_left, &best_split.impurity_right
                     )
-                    printf("impurity: %.3f | %.3f\n", best_split.impurity_left, best_split.impurity_right)
+                    # printf("impurity: %.3f | %.3f\n", best_split.impurity_left, best_split.impurity_right)
 
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
@@ -507,7 +508,7 @@ cdef inline int node_split_best(
         criterion.children_impurity(
             &best_split.impurity_left, &best_split.impurity_right
         )
-        printf("final impurity: %.3f | %.3f\n", best_split.impurity_left, best_split.impurity_right)
+        # printf("final impurity: %.3f | %.3f\n", best_split.impurity_left, best_split.impurity_right)
 
         best_split.improvement = criterion.impurity_improvement(
             impurity,
@@ -549,7 +550,6 @@ cdef inline int node_split_random(
     # Draw random splits and pick the best
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
-    cdef intp_t end_non_missing
     cdef intp_t n_missing = 0
     cdef bint has_missing = 0
     cdef intp_t n_left, n_right
@@ -638,11 +638,10 @@ cdef inline int node_split_random(
             current_split.feature, &min_feature_value, &max_feature_value
         )
         n_missing = partitioner.n_missing
-        end_non_missing = end - n_missing
 
         if (
             # All values for this feature are missing, or
-            end_non_missing == start or
+            end - start == n_missing or
             # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
             max_feature_value <= min_feature_value + FEATURE_THRESHOLD
         ):
@@ -688,12 +687,8 @@ cdef inline int node_split_random(
             current_split.threshold, missing_go_to_left
         )
 
-        if missing_go_to_left:
-            n_left = current_split.pos - start + n_missing
-            n_right = end_non_missing - current_split.pos
-        else:
-            n_left = current_split.pos - start
-            n_right = end_non_missing - current_split.pos + n_missing
+        n_left = current_split.pos - start
+        n_right = end - current_split.pos
 
         # Reject if min_samples_leaf is not guaranteed
         if n_left < min_samples_leaf or n_right < min_samples_leaf:

@@ -1447,6 +1447,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
             "friedman_mse",
+            "absolute_error",
             "poisson",
         }
         tags.input_tags.allow_nan = allow_nan
@@ -1994,6 +1995,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         allow_nan = self.splitter == "random" and self.criterion in {
             "squared_error",
             "friedman_mse",
+            "absolute_error",
             "poisson",
         }
         tags.input_tags.allow_nan = allow_nan
