@@ -1121,7 +1121,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             routing information.
         """
 
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=self.cv,
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
