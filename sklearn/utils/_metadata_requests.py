@@ -138,12 +138,12 @@ METHODS = SIMPLE_METHODS + list(COMPOSITE_METHODS.keys())
 
 
 def _routing_repr(obj):
-    """Get a representation suitable for messages printed in routing machinery.
+    """Get a representation suitable for messages printed in the routing machinery.
 
     This is different than `repr(obj)`, since repr(estimator) can be verbose when
     there are many constructor arguments set by the user.
 
-    This is most usable for Scorers which can give a nice representation of what they
+    This is most suitable for Scorers as it gives a nice representation of what they
     are. This is done by implementing a `_routing_repr` method on the object.
 
     Since the `owner` object could be the type name (str), we return that string if the
