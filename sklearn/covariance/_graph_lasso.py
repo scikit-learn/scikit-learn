@@ -138,16 +138,23 @@ def _graphical_lasso(
                             / (precision_[idx, idx] + 1000 * eps)
                         )
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs,
-                            alpha,
-                            0,
-                            sub_covariance,
-                            row,
-                            row,
-                            max_iter,
-                            enet_tol,
-                            check_random_state(None),
-                            False,
+                            w=coefs,
+                            alpha=alpha,
+                            beta=0,
+                            Q=sub_covariance,
+                            q=row,
+                            y=row,
+                            # TODO: It is not ideal that the max_iter of the outer
+                            # solver (graphical lasso) is coupled with the max_iter of
+                            # the inner solver (CD). Ideally, CD has its own parameter
+                            # enet_max_iter (like enet_tol). A minimum of 20 is rather
+                            # arbitrary, but not unreasonable.
+                            max_iter=max(20, max_iter),
+                            tol=enet_tol,
+                            rng=check_random_state(None),
+                            random=False,
+                            positive=False,
+                            do_screening=True,
                         )
                     else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(

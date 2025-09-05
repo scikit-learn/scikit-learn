@@ -146,6 +146,7 @@ def _sparse_encode_precomputed(
             alpha=alpha,
             fit_intercept=False,
             precompute=gram,
+            tol=1e-8,  # TODO: This parameter should be exposed.
             max_iter=max_iter,
             warm_start=True,
             positive=positive,
