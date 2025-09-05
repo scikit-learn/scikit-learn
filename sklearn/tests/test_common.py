@@ -39,6 +39,7 @@ from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
     _tested_estimators,
+    _yield_instances_for_check,
 )
 from sklearn.utils._testing import (
     SkipTest,
@@ -256,24 +257,27 @@ column_name_estimators = list(
 
 
 @pytest.mark.parametrize(
-    "estimator", column_name_estimators, ids=_get_check_estimator_ids
+    "estimator_orig", column_name_estimators, ids=_get_check_estimator_ids
 )
-def test_pandas_column_name_consistency(estimator):
-    if isinstance(estimator, ColumnTransformer):
+def test_pandas_column_name_consistency(estimator_orig):
+    if isinstance(estimator_orig, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
     if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
-        estimator
+        estimator_orig
     ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        with warnings.catch_warnings(record=True) as record:
-            check_dataframe_column_names_consistency(
-                estimator.__class__.__name__, estimator
-            )
-        for warning in record:
-            assert "was fitted without feature names" not in str(warning.message)
+    for estimator in _yield_instances_for_check(
+        check_dataframe_column_names_consistency, estimator_orig
+    ):
+        with ignore_warnings(category=(FutureWarning)):
+            with warnings.catch_warnings(record=True) as record:
+                check_dataframe_column_names_consistency(
+                    estimator.__class__.__name__, estimator
+                )
+            for warning in record:
+                assert "was fitted without feature names" not in str(warning.message)
 
 
 # TODO: As more modules support get_feature_names_out they should be removed
@@ -347,21 +351,24 @@ SET_OUTPUT_ESTIMATORS = list(
 
 
 @pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator_orig", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_transform(estimator):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
+def test_set_output_transform(estimator_orig):
+    name = estimator_orig.__class__.__name__
+    if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping check_set_output_transform for {name}: Does not support"
             " set_output API"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        check_set_output_transform(estimator.__class__.__name__, estimator)
+    for estimator in _yield_instances_for_check(
+        check_set_output_transform, estimator_orig
+    ):
+        with ignore_warnings(category=(FutureWarning)):
+            check_set_output_transform(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator_orig", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 @pytest.mark.parametrize(
     "check_func",
@@ -372,15 +379,16 @@ def test_set_output_transform(estimator):
         check_global_set_output_transform_polars,
     ],
 )
-def test_set_output_transform_configured(estimator, check_func):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
+def test_set_output_transform_configured(estimator_orig, check_func):
+    name = estimator_orig.__class__.__name__
+    if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        check_func(estimator.__class__.__name__, estimator)
+    for estimator in _yield_instances_for_check(check_func, estimator_orig):
+        with ignore_warnings(category=(FutureWarning)):
+            check_func(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
