@@ -13,7 +13,7 @@ import scipy
 
 try:
     from scipy.differentiate import derivative
-except ImportError:
+except ModuleNotFoundError:
     pass
 
 from sklearn.base import clone
