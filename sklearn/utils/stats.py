@@ -21,8 +21,16 @@ def _weighted_percentile(
     * 'inverted_cdf' takes the exact data point
     * 'averaged_inverted_cdf' takes the average of the exact data point and the one
       above it (this means it gives the same result as `median` for unit weights)
+    E.g., for the array [1, 2, 3, 4] the percentile rank at each data point would
+    be [25, 50, 75, 100]. The median, 50, lies on '2'. Taking the average of '2' and
+    '3' makes it 'symmetrical' because if you reverse the array, rank 50 would fall on
+    '3'.
     When the percentile lies between two data points, both methods take the higher
     data point.
+    E.g., for the array [1, 2, 3, 4, 5] the percentile rank at each data point would
+    be [20, 40, 60, 80, 100]. The median, 50, lies between '2' and '3'. Taking the
+    higher data point is symmetrical because if you reverse the array, 50 would lie
+    between '4' and '3'.
 
     If `array` is a 2D array, the `values` are selected along axis 0.
 

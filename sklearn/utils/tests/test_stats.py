@@ -22,11 +22,8 @@ def test_weighted_percentile_matches_median(size, average):
 
     With unit `sample_weight`, `_weighted_percentile` should match median except
     when `average=False` and the number of samples is even.
-    For an array ordered by increasing values, when number of samples is even,
-    the percentile falls on a single observation. `average=True` gives the average
-    of the single observation and the next higher one, thus matches `median`.
-    `average=False` gives the the single observation, thus does not match `median`.
-    For an odd number of samples, both methods match `median`.
+    For an even array and `average=False`, `percentile_rank=50` gives the lower
+    of the two 'middle' values, that would have been averaged for `median` calculation.
     """
     y = np.arange(size)
     sample_weight = np.ones_like(y)
