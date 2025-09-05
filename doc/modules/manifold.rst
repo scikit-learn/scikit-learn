@@ -274,7 +274,7 @@ It requires ``n_neighbors > n_components``.
 .. rubric:: References
 
 * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
-  <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
+  <https://papers.nips.cc/paper_files/paper/2006/file/fb2606a5068901da92473666256e6e5b-Paper.pdf>`_
   Zhang, Z. & Wang, J.
 
 
@@ -366,8 +366,8 @@ function :func:`spectral_embedding` or its object-oriented counterpart
 
 * `"Laplacian Eigenmaps for Dimensionality Reduction
   and Data Representation"
-  <https://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
-  M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
+  <https://www2.imm.dtu.dk/projects/manifold/Papers/Laplacian.pdf>`_
+  M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396.
 
 
 Local Tangent Space Alignment
