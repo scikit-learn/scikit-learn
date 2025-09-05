@@ -13,7 +13,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
-from scipy.special import gammainc, gamma
+from scipy.special import gammainc
 from scipy.stats import chi2
 
 from sklearn.base import _fit_context
