@@ -247,10 +247,10 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
     bins_weighted = []
     bins_repeated = []
     for i in range(100):
-        est_weighted = _BinMapper(n_bins=n_bins, subsample=200, random_state=i).fit(
+        est_weighted = _BinMapper(n_bins=n_bins, subsample=300, random_state=i).fit(
             X, sample_weight=sw
         )
-        est_repeated = _BinMapper(n_bins=n_bins, subsample=200, random_state=i).fit(
+        est_repeated = _BinMapper(n_bins=n_bins, subsample=300, random_state=i).fit(
             X_repeated, sample_weight=None
         )
         bins_weighted.append(np.hstack(est_weighted.bin_thresholds_))
@@ -266,8 +266,7 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
         ]
     )
     # Apply Bonferroni test correction
-    Bonferroni_correction = 1 / n_bins
-    assert np.all(kstest_pval > (0.025 * Bonferroni_correction))
+    assert (kstest_pval < 0.025).sum() <= 1
 
 
 @pytest.mark.parametrize(
