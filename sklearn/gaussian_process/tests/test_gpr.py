@@ -11,8 +11,10 @@ import numpy as np
 import pytest
 import scipy
 
-if scipy.__version__ >= "1.15.0":
+try:
     from scipy.differentiate import derivative
+except ImportError:
+    pass
 
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
