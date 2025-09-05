@@ -121,6 +121,7 @@ def test_cython_solver_equivalence():
         assert_allclose(coef_1, 0)
 
     # Without gap safe screening rules
+    coef_1 = zc()
     cd_fast.enet_coordinate_descent(
         w=coef_1, alpha=alpha, X=X_centered, y=y, **params, do_screening=False
     )
@@ -137,18 +138,21 @@ def test_cython_solver_equivalence():
     # Sparse
     coef_3 = zc()
     Xs = sparse.csc_matrix(X)
-    cd_fast.sparse_enet_coordinate_descent(
-        w=coef_3,
-        alpha=alpha,
-        X_data=Xs.data,
-        X_indices=Xs.indices,
-        X_indptr=Xs.indptr,
-        y=y,
-        sample_weight=None,
-        X_mean=X_mean,
-        **params,
-    )
-    assert_allclose(coef_3, coef_1)
+    for do_screening in [True, False]:
+        coef_3 = zc()
+        cd_fast.sparse_enet_coordinate_descent(
+            w=coef_3,
+            alpha=alpha,
+            X_data=Xs.data,
+            X_indices=Xs.indices,
+            X_indptr=Xs.indptr,
+            y=y,
+            sample_weight=None,
+            X_mean=X_mean,
+            **params,
+            do_screening=do_screening,
+        )
+        assert_allclose(coef_3, coef_1)
 
     # Gram
     for do_screening in [True, False]:
@@ -855,14 +859,8 @@ def test_warm_start_convergence(sparse_X):
     model.set_params(warm_start=True)
     model.fit(X, y)
     n_iter_warm_start = model.n_iter_
-    if sparse_X:
-        # TODO: sparse_enet_coordinate_descent is not yet updated.
-        # Fit the same model again, using a warm start: the optimizer just performs
-        # a single pass before checking that it has already converged
-        assert n_iter_warm_start == 1
-    else:
-        # enet_coordinate_descent checks dual gap before entering the main loop
-        assert n_iter_warm_start == 0
+    # coordinate descent checks dual gap before entering the main loop
+    assert n_iter_warm_start == 0
 
 
 def test_warm_start_convergence_with_regularizer_decrement():

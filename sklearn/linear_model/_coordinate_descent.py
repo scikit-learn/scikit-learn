@@ -687,6 +687,7 @@ def enet_path(
                 rng=rng,
                 random=random,
                 positive=positive,
+                do_screening=do_screening,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
