@@ -275,7 +275,8 @@ class AdamOptimizer(BaseOptimizer):
             The values to add to params
         """
         self.t += 1
-        lr_t = (
+        # Update the learning rate with bias correction (critical for Adam algorithm)
+        self.learning_rate = (
             self.learning_rate_init
             * np.sqrt(1 - self.beta_2**self.t)
             / (1 - self.beta_1**self.t)
@@ -291,7 +292,7 @@ class AdamOptimizer(BaseOptimizer):
             v += (1 - self.beta_2) * (grad**2)
 
             # Optimized update calculation avoiding division
-            update = -lr_t * m
+            update = -self.learning_rate * m
             sqrt_v = np.sqrt(v)
             sqrt_v += self.epsilon
             update /= sqrt_v
