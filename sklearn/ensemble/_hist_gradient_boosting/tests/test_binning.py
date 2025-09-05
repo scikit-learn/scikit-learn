@@ -266,7 +266,7 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
         ]
     )
     # Apply Bonferroni test correction
-    Bonferroni_correction = 1 / 100
+    Bonferroni_correction = 1 / n_bins
     assert np.all(kstest_pval > (0.025 * Bonferroni_correction))
 
 
