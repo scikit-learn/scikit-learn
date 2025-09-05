@@ -512,11 +512,12 @@ def test_lda_numeric_consistency_float32_float64():
         assert_allclose(clf_32.coef_, clf_64.coef_, rtol=rtol)
 
 
-def test_qda():
+@pytest.mark.parametrize("solver", ["svd", "eigen"])
+def test_qda(solver):
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
     # correct values for a simple toy dataset.
-    clf = QuadraticDiscriminantAnalysis()
+    clf = QuadraticDiscriminantAnalysis(solver=solver)
     y_pred = clf.fit(X6, y6).predict(X6)
     assert_array_equal(y_pred, y6)
 
@@ -680,14 +681,15 @@ def test_qda_store_covariance():
     )
 
 
-def test_qda_regularization():
+@pytest.mark.parametrize("solver", ["svd", "eigen"])
+def test_qda_regularization(solver):
     # The default is reg_param=0. and will cause issues when there is a
     # constant variable.
 
     # Fitting on data with constant variable without regularization
     # triggers a LinAlgError.
     msg = r"The covariance matrix of class .+ is not full rank"
-    clf = QuadraticDiscriminantAnalysis()
+    clf = QuadraticDiscriminantAnalysis(solver=solver)
     with pytest.warns(linalg.LinAlgWarning, match=msg):
         y_pred = clf.fit(X2, y6)
 
@@ -704,7 +706,7 @@ def test_qda_regularization():
 
     # LinAlgWarning should also be there for the n_samples_in_a_class <
     # n_features case.
-    clf = QuadraticDiscriminantAnalysis()
+    clf = QuadraticDiscriminantAnalysis(solver=solver)
     with pytest.warns(linalg.LinAlgWarning, match=msg):
         clf.fit(X5, y5)
 
