@@ -80,7 +80,7 @@ for l in np.unique(label_unstructured):
         s=20,
         edgecolor="k",
     )
-fig1.suptitle(
+_ = fig1.suptitle(
     f"Without connectivity constraints (time {elapsed_time_unstructured:.2f}s)"
 )
 
@@ -115,7 +115,9 @@ for l in np.unique(label_structured):
         s=20,
         edgecolor="k",
     )
-fig2.suptitle(f"With connectivity constraints (time {elapsed_time_structured:.2f}s)")
+_ = fig2.suptitle(
+    f"With connectivity constraints (time {elapsed_time_structured:.2f}s)"
+)
 
 # %%
 # Generate 2D spiral dataset.
@@ -141,7 +143,7 @@ knn_graph = kneighbors_graph(X2, 30, include_self=False)
 
 # %%
 # Plot clustering with and without structure
-fig3 = plt.figure(figsize=(10, 16))
+fig3 = plt.figure(figsize=(8, 12))
 subfigs = fig3.subfigures(4, 1)
 params = [
     (None, 30),
