@@ -239,7 +239,7 @@ def _consistency_factor(n_features, alpha):
         Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
     """
     q_alpha = chi2.ppf(alpha, df=n_features)
-    c_alpha = gammainc(n_features/2 + 1, q_alpha/2) / alpha
+    c_alpha = gammainc(n_features / 2 + 1, q_alpha / 2) / alpha
     return 1.0 / c_alpha
 
 
@@ -848,7 +848,7 @@ class MinCovDet(EmpiricalCovariance):
                 "is equal to 0, try to increase support_fraction"
             )
         consistency_factor = _consistency_factor(
-          self.raw_covariance_.shape[0], n_support / n_samples
+            self.raw_covariance_.shape[0], n_support / n_samples
         )
         covariance_corrected = self.raw_covariance_ * consistency_factor
         self.dist_ /= consistency_factor
