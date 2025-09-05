@@ -908,8 +908,7 @@ class QuadraticDiscriminantAnalysis(
         if None the shrinkage parameter drives the estimate.
 
         This should be left to None if `shrinkage` is used.
-        Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
-        solvers.
+        Note that `covariance_estimator` works only with the 'eigen' solver.
 
     Attributes
     ----------
