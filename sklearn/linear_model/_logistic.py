@@ -1702,6 +1702,31 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
         of L1 and L2.
 
+    use_legacy_attributes : bool, default=True
+        If True, use legacy values for attributes:
+
+        - `C_` is an ndarray of shape (n_classes,) with the same value repeated
+        - `l1_ratio_` is an ndarray of shape (n_classes,) with the same value repeated
+        - `coefs_paths_` is a dict with class labels as keys and ndarrays as values
+        - `scores_` is a dict with class labels as keys and ndarrays as values
+        - `n_iter_` is an ndarray of shape (1, n_folds, n_cs) or similar
+
+        If False, use new values for attributes:
+
+        - `C_` is a float
+        - `l1_ratio_` is a float
+        - `coefs_paths_` is an ndarray of shape
+          (n_folds, n_l1_ratios, n_cs, n_classes, n_features)
+          For binary problems (n_classes=2), the 2nd last dimension is 1.
+        - `scores_` is an ndarray of shape (n_folds, n_l1_ratios, n_cs)
+        - `n_iter_` is an ndarray of shape (n_folds, n_l1_ratios, n_cs)
+
+        .. versionchanged:: 1.10
+           The default will change from True to False in version 1.10.
+        .. deprecated:: 1.10
+           `use_legacy_attributes` will be deprecated in version 1.10 and be removed in
+           1.12.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes, )
@@ -1737,6 +1762,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         If ``penalty='elasticnet'``, there is an additional dimension for the number of
         l1_ratio values (`n_l1_ratios`), which gives a shape of
         ``(n_folds, n_cs, n_l1_ratios_, n_dof)``.
+        See also parameter `use_legacy_attributes`.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1746,6 +1772,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         all classes, since this is the multinomial class. Each dict value
         has shape ``(n_folds, n_cs)`` or ``(n_folds, n_cs, n_l1_ratios)`` if
         ``penalty='elasticnet'``.
+        See also parameter `use_legacy_attributes`.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. For all solvers
@@ -1755,18 +1782,21 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
         `C_` is of shape(n_classes,) when the problem is binary.
+        See also parameter `use_legacy_attributes`.
 
     l1_ratio_ : ndarray of shape (n_classes,) or (n_classes - 1,)
         Array of l1_ratio that maps to the best scores across every class. If
         refit is set to False, then for each class, the best l1_ratio is the
         average of the l1_ratio's that correspond to the best scores for each
         fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
+        See also parameter `use_legacy_attributes`.
 
     n_iter_ : ndarray of shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
         If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
         n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
+        See also parameter `use_legacy_attributes`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1811,6 +1841,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             "l1_ratios": ["array-like", None],
             "refit": ["boolean"],
             "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
+            "use_legacy_attributes": ["boolean", Hidden(StrOptions({"warn"}))],
         }
     )
 
@@ -1834,6 +1865,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         multi_class="deprecated",
         random_state=None,
         l1_ratios=None,
+        use_legacy_attributes="warn",
     ):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -1852,6 +1884,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.multi_class = multi_class
         self.random_state = random_state
         self.l1_ratios = l1_ratios
+        self.use_legacy_attributes = use_legacy_attributes
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, **params):
@@ -1881,6 +1914,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Fitted LogisticRegressionCV estimator.
         """
         _raise_for_params(params, self, "fit")
+
+        if self.use_legacy_attributes == "warn":
+            warnings.warn(
+                "The default value of use_legacy_attributes will change from True"
+                "to False in version 1.10. "
+                "To silence this warning, explicitly set use_legacy_attributes to "
+                "either True or False.",
+                FutureWarning,
+            )
+            use_legacy_attributes = True
+        else:
+            use_legacy_attributes = self.use_legacy_attributes
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -2239,6 +2284,43 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (-1, len(folds), self.l1_ratios_.size, self.Cs_.size)
             )
             self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
+
+        if not use_legacy_attributes:
+            n_folds = len(folds)
+            n_cs = self.Cs_.size
+            n_dof = X.shape[1] + int(self.fit_intercept)
+            self.Cs_ = float(self.Cs_[0])
+            newpaths = np.concat(list(self.coefs_paths_.values()))
+            newscores = self.scores_[classes[0]]  # same for all classes
+            newniter = self.n_iter_[0]
+            if self.l1_ratios is None:
+                if n_classes <= 2:
+                    newpaths = newpaths.reshape(1, n_folds, n_cs, 1, n_dof)
+                else:
+                    newpaths = newpaths.reshape(n_classes, n_folds, n_cs, 1, n_dof)
+                newscores = newscores.reshape(n_folds, n_cs, 1)
+                newniter = newniter.reshape(n_folds, n_cs, 1)
+                if self.penalty == "l1":
+                    self.l1_ratio_ = 1.0
+                else:
+                    self.l1_ratio_ = 0.0
+            else:
+                n_l1_ratios = len(self.l1_ratios_)
+                self.l1_ratio_ = float(self.l1_ratio_[0])
+                if n_classes <= 2:
+                    newpaths = newpaths.reshape(1, n_folds, n_cs, n_l1_ratios, n_dof)
+                else:
+                    newpaths = newpaths.reshape(
+                        n_classes, n_folds, n_cs, n_l1_ratios, n_dof
+                    )
+            # newpaths.shape = (n_classes, n_folds, n_cs, n_l1_ratios, n_dof)
+            # self.coefs_paths_.shape should be
+            # (n_folds, n_l1_ratios, n_cs, n_classes, n_dof)
+            self.coefs_paths_ = np.moveaxis(newpaths, (0, 1, 3), (3, 0, 1))
+            # newscores.shape = (n_folds, n_cs, n_l1_ratios)
+            # self.scores_.shape should be (n_folds, n_l1_ratios, n_cs)
+            self.scores_ = np.moveaxis(newscores, (1, 2), (2, 1))
+            self.n_iter_ = np.moveaxis(newniter, (1, 2), (2, 1))
 
         return self
 
