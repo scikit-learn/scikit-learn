@@ -251,7 +251,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFit()
     scorer = scoring_validator(estimator, scoring="accuracy")
     assert isinstance(scorer, _Scorer)
-    assert scorer._response_method == "predict"
+    assert scorer.response_method == "predict"
 
     # Test the allow_none parameter for check_scoring alone
     if scoring_validator is check_scoring:
@@ -294,7 +294,7 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     assert isinstance(scorers, dict)
     assert sorted(scorers.keys()) == sorted(list(scoring))
     assert all([isinstance(scorer, _Scorer) for scorer in list(scorers.values())])
-    assert all(scorer._response_method == "predict" for scorer in scorers.values())
+    assert all(scorer.response_method == "predict" for scorer in scorers.values())
 
     if "acc" in scoring:
         assert_almost_equal(
@@ -351,12 +351,12 @@ def test_check_scoring_gridsearchcv():
     grid = GridSearchCV(LinearSVC(), param_grid={"C": [0.1, 1]}, cv=3)
     scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _Scorer)
-    assert scorer._response_method == "predict"
+    assert scorer.response_method == "predict"
 
     pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _Scorer)
-    assert scorer._response_method == "predict"
+    assert scorer.response_method == "predict"
 
     # check that cross_val_score definitely calls the scorer
     # and doesn't make any assumptions about the estimator apart from having a
@@ -576,7 +576,10 @@ def test_raises_on_score_list():
         grid_search.fit(X, y)
 
 
-def test_classification_scorer_sample_weight():
+@pytest.mark.parametrize(
+    "name", sorted(set(get_scorer_names()) - set(REGRESSION_SCORERS))
+)
+def test_classification_scorer_sample_weight(name):
     # Test that classification scorers support sample_weight or raise sensible
     # errors
 
@@ -594,45 +597,39 @@ def test_classification_scorer_sample_weight():
     # get sensible estimators for each metric
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
-    for name in get_scorer_names():
-        scorer = get_scorer(name)
-        if name in REGRESSION_SCORERS:
-            # skip the regression scores
-            continue
-        if name == "top_k_accuracy":
-            # in the binary case k > 1 will always lead to a perfect score
-            scorer._kwargs = {"k": 1}
-        if name in MULTILABEL_ONLY_SCORERS:
-            target = y_ml_test
-        else:
-            target = y_test
-        try:
-            weighted = scorer(
-                estimator[name], X_test, target, sample_weight=sample_weight
-            )
-            ignored = scorer(estimator[name], X_test[10:], target[10:])
-            unweighted = scorer(estimator[name], X_test, target)
-            # this should not raise. sample_weight should be ignored if None.
-            _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
-            assert weighted != unweighted, (
-                f"scorer {name} behaves identically when called with "
-                f"sample weights: {weighted} vs {unweighted}"
-            )
-            assert_almost_equal(
-                weighted,
-                ignored,
-                err_msg=(
-                    f"scorer {name} behaves differently "
-                    "when ignoring samples and setting "
-                    f"sample_weight to 0: {weighted} vs {ignored}"
-                ),
-            )
+    scorer = get_scorer(name)
+    if name == "top_k_accuracy":
+        # in the binary case k > 1 will always lead to a perfect score
+        scorer.kwargs = {"k": 1}
+    if name in MULTILABEL_ONLY_SCORERS:
+        target = y_ml_test
+    else:
+        target = y_test
+    try:
+        weighted = scorer(estimator[name], X_test, target, sample_weight=sample_weight)
+        ignored = scorer(estimator[name], X_test[10:], target[10:])
+        unweighted = scorer(estimator[name], X_test, target)
+        # this should not raise. sample_weight should be ignored if None.
+        _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
+        assert weighted != unweighted, (
+            f"scorer {name} behaves identically when called with "
+            f"sample weights: {weighted} vs {unweighted}"
+        )
+        assert_almost_equal(
+            weighted,
+            ignored,
+            err_msg=(
+                f"scorer {name} behaves differently "
+                "when ignoring samples and setting "
+                f"sample_weight to 0: {weighted} vs {ignored}"
+            ),
+        )
 
-        except TypeError as e:
-            assert "sample_weight" in str(e), (
-                f"scorer {name} raises unhelpful exception when called "
-                f"with sample weights: {e}"
-            )
+    except TypeError as e:
+        assert "sample_weight" in str(e), (
+            f"scorer {name} raises unhelpful exception when called "
+            f"with sample weights: {e}"
+        )
 
 
 def test_regression_scorer_sample_weight():
@@ -1182,7 +1179,7 @@ def test_scorer_select_proba_error(scorer):
         n_classes=2, n_informative=3, n_samples=20, random_state=0
     )
     lr = LogisticRegression().fit(X, y)
-    assert scorer._kwargs["pos_label"] not in np.unique(y).tolist()
+    assert scorer.kwargs["pos_label"] not in np.unique(y).tolist()
 
     err_msg = "is not a valid label"
     with pytest.raises(ValueError, match=err_msg):

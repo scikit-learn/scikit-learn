@@ -1430,6 +1430,14 @@ class _MetadataRequester:
             return
 
         for method in SIMPLE_METHODS:
+            # We only override descriptors set by parent classes, and not actual
+            # methods implemented by the classes. "set_{method}_request" is explicitly
+            # implemented in scorers and some splitters for instance.
+            existing_method = getattr(cls, f"set_{method}_request", None)
+            if existing_method is not None and "RequestMethod" not in getattr(
+                existing_method, "__qualname__", ""
+            ):
+                continue
             mmr = getattr(requests, method)
             # set ``set_{method}_request`` methods
             if not len(mmr.requests):
