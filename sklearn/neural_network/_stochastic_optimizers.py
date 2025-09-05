@@ -192,7 +192,7 @@ class SGDOptimizer(BaseOptimizer):
                 for velocity, grad in zip(self.velocities, grads)
             ]
         else:
-            updates = [v.copy() for v in self.velocities]
+            updates = self.velocities
 
         return updates
 
@@ -282,19 +282,19 @@ class AdamOptimizer(BaseOptimizer):
         )
         updates = []
 
+        # Vectorized in-place updates for better performance
         for m, v, grad in zip(self.ms, self.vs, grads):
-            # Vectorized updates for first and second moments for better
-            # performance
-            np.multiply(self.beta_1, m, out=m)
-            grad_scaled = (1 - self.beta_1) * grad
-            np.add(m, grad_scaled, out=m)
+            m *= self.beta_1
+            m += (1 - self.beta_1) * grad
 
-            np.multiply(self.beta_2, v, out=v)
-            grad_squared = (1 - self.beta_2) * (grad**2)
-            np.add(v, grad_squared, out=v)
+            v *= self.beta_2
+            v += (1 - self.beta_2) * (grad**2)
 
-            # Compute update
-            update = -lr_t * m / (np.sqrt(v) + self.epsilon)
+            # Optimized update calculation avoiding division
+            update = -lr_t * m
+            sqrt_v = np.sqrt(v)
+            sqrt_v += self.epsilon
+            update /= sqrt_v
             updates.append(update)
 
         return updates
