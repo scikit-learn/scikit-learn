@@ -319,12 +319,14 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
   The duality gap :math:`G(w, v)` is an upper bound of the difference between the
   current primal objective function of the Lasso, :math:`P(w)`, and its minimum
-  :math:`P(w^\star)`, i.e. :math:`G(w, v) \leq P(w) - P(w^\star)`. It is given by
+  :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
   .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
+  called strong duality).
   With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
   dual scaling
 
@@ -1433,13 +1435,14 @@ Passive Aggressive Algorithms
 The passive-aggressive (PA) algorithms are another family of 2 algorithms (PA-I and
 PA-II) for large-scale online learning that derive from SGD. They are similar to the
 Perceptron in that they do not require a learning rate. However, contrary to the
-Perceptron, they include a regularization parameter ``PA_C``.
+Perceptron, they include a regularization parameter ``eta0`` (:math:`C` in the
+reference paper).
 
 For classification,
-:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", PA_C=1.0)` can
+:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0)` can
 be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
 :class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
-PA_C=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
+eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 

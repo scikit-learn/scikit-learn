@@ -883,7 +883,7 @@ autosummary_filename_map = {
 # Config for sphinxext.opengraph
 
 ogp_site_url = "https://scikit-learn/stable/"
-ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
 
