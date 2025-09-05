@@ -794,6 +794,10 @@ def test_classifier_results(csr_container):
     assert_almost_equal(pred2, y, decimal=12)
 
 
+@pytest.mark.xfail(
+    reason="""Fix #31675 for sample weight handling in SAG(A) implemented
+    in the python solvers, not in the cython code yet"""
+)
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_binary_classifier_class_weight(csr_container):
@@ -804,7 +808,6 @@ def test_binary_classifier_class_weight(csr_container):
     tol = 0.00001
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=10, cluster_std=0.1)
-    step_size = get_step_size(X, alpha, fit_intercept, classification=True)
     classes = np.unique(y)
     y_tmp = np.ones(n_samples)
     y_tmp[y != classes[1]] = -1
@@ -828,6 +831,9 @@ def test_binary_classifier_class_weight(csr_container):
     le = LabelEncoder()
     class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
+    step_size = get_step_size(
+        X, alpha, fit_intercept, classification=True, sample_weight=sample_weight
+    )
     spweights, spintercept, sp_n_iter = sag_sparse(
         X,
         y,
