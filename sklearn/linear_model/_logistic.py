@@ -1800,7 +1800,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     0.98...
     """
 
-    # TODO(1.9): remove this when sample_weight is removed from the `score` signature
+    # TODO(1.10): remove this when sample_weight is removed from the `score` signature
     __metadata_request__score = {"sample_weight": metadata_routing.UNUSED}
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
@@ -2263,7 +2263,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-            .. deprecated:: 1.7
+            .. deprecated:: 1.8
               `sample_weight` needs to be passed as a keyword argument and not as a
               positional argument.
 
@@ -2277,6 +2277,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         score : float
             Score of self.predict(X) w.r.t. y.
         """
+        # TODO(1.10): for backwards compatibility, when `sample_weight` becomes a part
+        # of **score_params, it should be skipped in the following check so that people
+        # can still pass it w/o metadata routing enabled.
         _raise_for_params(score_params, self, "score")
         # TODO(1.10): remove this when sample_weight is removed from the `score`
         # signature
@@ -2293,8 +2296,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             routed_params = Bunch()
             routed_params.scorer = Bunch(score={})
-            if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+            if score_params.get("sample_weight", None) is not None:
+                routed_params.scorer.score["sample_weight"] = score_params[
+                    "sample_weight"
+                ]
 
         return scoring(
             self,
@@ -2319,7 +2324,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=self.cv,

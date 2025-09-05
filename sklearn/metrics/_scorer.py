@@ -67,6 +67,7 @@ from sklearn.metrics.cluster import (
     v_measure_score,
 )
 from sklearn.utils import Bunch
+from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._param_validation import (
     HasMethods,
     Hidden,
@@ -218,7 +219,7 @@ class _MultimetricScorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return MetadataRouter(owner=self.__class__.__name__).add(
+        return MetadataRouter(owner=self).add(
             **self._scorers,
             method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
@@ -273,6 +274,9 @@ class _BaseScorer(_MetadataRequester):
             f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
+
+    def _routing_repr(self):
+        return repr(self)
 
     # TODO (1.10): remove in 1.10
     @_deprecate_positional_args(version="1.10")
@@ -367,7 +371,7 @@ class _BaseScorer(_MetadataRequester):
             ),
             kwargs=kwargs,
         )
-        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        self._metadata_request = MetadataRequest(owner=self)
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
@@ -386,17 +390,27 @@ class _BaseScorer(_MetadataRequester):
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
         else:
-            requests = self._get_default_requests(
-                score_method=self._score_func,
-                ignore_params={
-                    "y_true",
-                    "y_pred",
-                    "y_prob",
-                    "y_proba",
-                    "y_score",
-                    "labels_true",
-                    "labels_pred",
-                },
+            requests = MetadataRequest(owner=self)
+            setattr(
+                requests,
+                "score",
+                MethodMetadataRequest(
+                    owner=self,
+                    method="score",
+                    requests=self._get_class_level_metadata_request_values(
+                        method_name="score",
+                        method=self._score_func,
+                        ignore_params={
+                            "y_true",
+                            "y_pred",
+                            "y_prob",
+                            "y_proba",
+                            "y_score",
+                            "labels_true",
+                            "labels_pred",
+                        },
+                    ),
+                ),
             )
 
         return requests
@@ -527,7 +541,10 @@ class _PassthroughScorer(_MetadataRequester):
         return estimator.score(*args, **kwargs)
 
     def __repr__(self):
-        return f"{self._estimator.__class__}.score"
+        return f"{type(self._estimator).__name__}.score"
+
+    def _routing_repr(self):
+        return repr(self)
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
