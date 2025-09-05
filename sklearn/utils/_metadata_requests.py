@@ -151,6 +151,19 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
+def _auto_routing_enabled():
+    """Return whether auto-requested metadata routing is enabled.
+
+    .. versionadded:: 1.8
+
+    Returns
+    -------
+    enabled : bool
+        Whether auto-requested metadata routing is enabled.
+    """
+    return get_config().get("metadata_request_policy", "empty") == "auto"
+
+
 def _raise_for_params(params, owner, method, allow=None):
     """Raise an error if metadata routing is not enabled and params are passed.
 
@@ -331,6 +344,7 @@ class MethodMetadataRequest:
         self._requests = requests or dict()
         self.owner = owner
         self.method = method
+        self._auto_requests = set()
 
     @property
     def requests(self):
@@ -384,6 +398,15 @@ class MethodMetadataRequest:
         else:
             self._requests[param] = alias
 
+        return self
+
+    def add_auto_request(self, *params):
+        self._auto_requests.update(params)
+        return self
+
+    def actualize_auto_requests(self):
+        for param in self._auto_requests:
+            self.add_request(param=param, alias=True)
         return self
 
     def _get_param_names(self, return_alias):
@@ -569,6 +592,11 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def actualize_auto_requests(self):
+        for method in SIMPLE_METHODS:
+            getattr(self, method).actualize_auto_requests()
+        return self
 
     def consumes(self, method, params):
         """Return params consumed as metadata in a :term:`consumer`.
@@ -862,10 +890,13 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        if getattr(obj, "_type", None) == "metadata_request":
+        if isinstance(obj, _MetadataRequester):
+            obj = obj._get_metadata_request()
+
+        if isinstance(obj, MetadataRequest):
             self._self_request = deepcopy(obj)
-        elif hasattr(obj, "_get_metadata_request"):
-            self._self_request = deepcopy(obj._get_metadata_request())
+        elif isinstance(obj, MetadataRouter):
+            self._self_request = deepcopy(obj._self_request)
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
@@ -1193,11 +1224,18 @@ def get_routing_for_object(obj=None):
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
-    if hasattr(obj, "get_metadata_routing"):
-        return deepcopy(obj.get_metadata_routing())
-
-    elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
+    if isinstance(obj, (MetadataRequest, MetadataRouter)):
         return deepcopy(obj)
+    if hasattr(obj, "_metadata_request"):
+        return deepcopy(obj._metadata_request)
+    elif hasattr(obj, "get_metadata_routing"):
+        requests = deepcopy(obj.get_metadata_routing())
+        if _auto_routing_enabled():
+            if hasattr(requests, "actualize_auto_requests"):
+                requests.actualize_auto_requests()
+            if getattr(requests, "_self_request", None):
+                requests._self_request.actualize_auto_requests()
+        return requests
 
     return MetadataRequest(owner=None)
 
@@ -1331,8 +1369,13 @@ class RequestMethod:
                     f" {len(args)} were given"
                 )
 
-            requests = _instance._get_metadata_request()
-            method_metadata_request = getattr(requests, self.name)
+            requests = get_routing_for_object(_instance)
+            if isinstance(requests, MetadataRouter):
+                consumer_requests = requests._self_request
+            else:
+                consumer_requests = requests
+
+            method_metadata_request = getattr(consumer_requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
@@ -1421,7 +1464,7 @@ class _MetadataRequester:
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
         try:
-            requests = cls._get_default_requests()
+            requests = cls._get_class_requests()
         except Exception:
             # if there are any issues in the default values, it will be raised
             # when ``get_metadata_routing`` is called. Here we are going to
@@ -1480,12 +1523,30 @@ class _MetadataRequester:
         return mmr
 
     @classmethod
-    def _get_default_requests(cls):
-        """Collect default request values.
+    def _get_class_requests(cls):
+        """Collect class level request values.
 
-        This method combines the information present in ``__metadata_request__*``
-        class attributes, as well as determining request keys from method
-        signatures.
+        This method serves two purposes:
+
+        1. During class creation via `__init_subclass__`, it determines what metadata
+           routing methods should be created. It does this by:
+           - Collecting metadata request info from `__metadata_request__*` class
+             attributes
+           - Analyzing method signatures for implicit metadata parameters
+             The collected information is used to create `set_{method}_request` methods
+             (e.g. set_fit_request) that allow runtime configuration of metadata
+             routing.
+
+        2. Before the user sets any specific routing, via `_get_default_requests`, it
+           provides the default metadata routing configuration for the instance. This
+           ensures each instance starts with the class-level routing settings before any
+           instance specific configurations are applied.
+
+        For example, if a method's signature includes `sample_weight`, this method will:
+        - During class creation: Create a `set_{method}_request` method to configure
+          how `sample_weight` should be routed
+        - Right after initialization: Provide the default routing configuration for
+          `sample_weight` based on class attributes and method signatures
         """
         requests = MetadataRequest(owner=cls.__name__)
 
@@ -1537,7 +1598,7 @@ class _MetadataRequester:
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
         else:
-            requests = self._get_default_requests()
+            requests = self._get_class_requests()
 
         return requests
 

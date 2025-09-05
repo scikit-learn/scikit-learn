@@ -19,6 +19,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
+    "metadata_request_policy": "empty",
     "skip_parameter_validation": False,
 }
 _threadlocal = threading.local()
@@ -70,6 +71,7 @@ def set_config(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    metadata_request_policy=None,
     skip_parameter_validation=None,
 ):
     """Set global scikit-learn configuration.
@@ -181,6 +183,19 @@ def set_config(
 
         .. versionadded:: 1.3
 
+    metadata_request_policy : str, default=None
+        Configure the default metadata request policy.
+
+        The default value of this configuration is "empty". Refer to :ref:`metadata
+        routing user guide <metadata_routing>` for more details.
+
+        - `"empty"`: No metadata is requested by default.
+        - `"auto"`: Metadata is requested if the consumer has flagged it as an
+          auto-request.
+        - `None`: Configuration is unchanged.
+
+        .. versionadded:: 1.8
+
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
@@ -226,6 +241,8 @@ def set_config(
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
+    if metadata_request_policy is not None:
+        local_config["metadata_request_policy"] = metadata_request_policy
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
 
@@ -242,6 +259,7 @@ def config_context(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    metadata_request_policy=None,
     skip_parameter_validation=None,
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
@@ -348,6 +366,19 @@ def config_context(
 
         .. versionadded:: 1.3
 
+    metadata_request_policy : str, default=None
+        Configure the default metadata request policy.
+
+        The default value of this configuration is "empty". Refer to :ref:`metadata
+        routing user guide <metadata_routing>` for more details.
+
+        - `"empty"`: No metadata is requested by default.
+        - `"auto"`: Metadata is requested if the consumer has flagged it as an
+          auto-request.
+        - `None`: Configuration is unchanged.
+
+        .. versionadded:: 1.8
+
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
@@ -398,6 +429,7 @@ def config_context(
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
+        metadata_request_policy=metadata_request_policy,
         skip_parameter_validation=skip_parameter_validation,
     )
 

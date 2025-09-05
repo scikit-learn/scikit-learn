@@ -39,6 +39,7 @@ from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
     MethodMetadataRequest,
     MethodPair,
+    _auto_routing_enabled,
     _MetadataRequester,
     request_is_alias,
     request_is_valid,
@@ -756,13 +757,6 @@ def test_string_representations(obj, string):
             "Given caller",
         ),
         (
-            MetadataRouter(owner="test"),
-            "add_self_request",
-            {"obj": MetadataRouter(owner="test")},
-            ValueError,
-            "Given `obj` is neither a `MetadataRequest` nor does it implement",
-        ),
-        (
             ConsumingClassifier(),
             "set_fit_request",
             {"invalid": True},
@@ -1156,3 +1150,39 @@ def test_unbound_set_methods_work():
     # Test positional arguments error after making the descriptor method unbound.
     with pytest.raises(TypeError, match=error_message):
         A().set_fit_request(True)
+
+
+@pytest.mark.parametrize(
+    "metadata_request_policy, default_routing",
+    [
+        ("auto", True),
+        ("empty", False),
+    ],
+)
+def test_default_routing_disabled(metadata_request_policy, default_routing):
+    """Check correctness of _auto_routing_enabled."""
+    with config_context(metadata_request_policy=metadata_request_policy):
+        assert _auto_routing_enabled() == default_routing
+
+
+def test_default_instance_routing_overrides_class_level():
+    """Test that instance-level default routing overrides class-level."""
+
+    class DefaultRoutingEstimator(BaseEstimator):
+        __metadata_request__fit = {"prop": False}
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit.add_auto_request(
+                "prop"
+            )  # Override class-level False with True
+            requests.predict.add_auto_request("prop")  # Add new method request
+            return requests
+
+    est = DefaultRoutingEstimator()
+
+    with config_context(metadata_request_policy="auto"):
+        # Instance-level True should override class-level False
+        assert get_routing_for_object(est).fit.requests["prop"] is True
+        # New method request should be present
+        assert get_routing_for_object(est).predict.requests["prop"] is True
