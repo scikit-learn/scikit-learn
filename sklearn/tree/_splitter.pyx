@@ -192,8 +192,6 @@ cdef class Splitter:
         self.y = y
 
         self.sample_weight = sample_weight
-        if missing_values_in_feature_mask is not None:
-            self.criterion.init_sum_missing()
         return 0
 
     cdef int node_reset(

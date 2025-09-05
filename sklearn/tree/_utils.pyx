@@ -83,11 +83,11 @@ cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n
     if n <= n_rev:
         memcpy(tmp, &array[start], n)  # tmp = array[:n].copy()
         memcpy(&array[start], &array[start + n], n_rev) # array[:-n] = array[n:]
-        memcpy(&array[start + n_rev], &tmp, n) # array[-n:] = tmp
+        memcpy(&array[start + n_rev], tmp, n) # array[-n:] = tmp
     else:
         memcpy(tmp, &array[start + n], n_rev)  # tmp = array[n:].copy()
         memcpy(&array[start + n_rev], &array[start], n) # array[-n:] = array[:n]
-        memcpy(&array[start], &tmp, n_rev) # array[:-n] = tmp
+        memcpy(&array[start], tmp, n_rev) # array[:-n] = tmp
 
     if tmp != NULL:
         free(tmp)
