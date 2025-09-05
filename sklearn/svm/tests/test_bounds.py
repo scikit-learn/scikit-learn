@@ -9,29 +9,20 @@ from sklearn.svm._newrand import bounded_rand_int_wrap, set_seed_wrap
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
-
-Y1 = [0, 1, 1, 1]
-Y2 = [2, 1, 0, 0]
+Y_binary = [0, 1, 1, 1]
 
 
-# TODO(1.8): remove filterwarnings after the deprecation of liblinear multiclass
-#            and maybe remove LogisticRegression from this test
-@pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
-)
 @pytest.mark.parametrize("X_container", CSR_CONTAINERS + [np.array])
 @pytest.mark.parametrize("loss", ["squared_hinge", "log"])
-@pytest.mark.parametrize("Y_label", ["two-classes", "multi-class"])
 @pytest.mark.parametrize("intercept_label", ["no-intercept", "fit-intercept"])
-def test_l1_min_c(X_container, loss, Y_label, intercept_label):
-    Ys = {"two-classes": Y1, "multi-class": Y2}
+def test_l1_min_c(X_container, loss, intercept_label):
     intercepts = {
         "no-intercept": {"fit_intercept": False},
         "fit-intercept": {"fit_intercept": True, "intercept_scaling": 10},
     }
 
     X = X_container(dense_X)
-    Y = Ys[Y_label]
+    Y = Y_binary
     intercept_params = intercepts[intercept_label]
     check_l1_min_c(X, Y, loss, **intercept_params)
 
