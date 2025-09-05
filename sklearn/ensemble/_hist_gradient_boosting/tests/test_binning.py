@@ -265,7 +265,9 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
             for bin_weighted, bin_repeated in zip(bins_weighted, bins_repeated)
         ]
     )
-    assert np.all(kstest_pval > 0.025)
+    # Apply Bonferroni test correction
+    Bonferroni_correction = 1 / 100
+    assert np.all(kstest_pval > (0.025 * Bonferroni_correction))
 
 
 @pytest.mark.parametrize(
