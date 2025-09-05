@@ -146,7 +146,8 @@ class SGDOptimizer(BaseOptimizer):
         """
         if self.lr_schedule == "invscaling":
             self.learning_rate = (
-                float(self.learning_rate_init) / (time_step + 1) ** self.power_t
+                float(self.learning_rate_init)
+                / (time_step + 1) ** self.power_t
             )
 
     def trigger_stopping(self, msg, verbose):
@@ -244,7 +245,12 @@ class AdamOptimizer(BaseOptimizer):
     """
 
     def __init__(
-        self, params, learning_rate_init=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8
+        self,
+        params,
+        learning_rate_init=0.001,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-8,
     ):
         super().__init__(learning_rate_init)
 
@@ -278,7 +284,8 @@ class AdamOptimizer(BaseOptimizer):
         updates = []
 
         for m, v, grad in zip(self.ms, self.vs, grads):
-            # Vectorized updates for first and second moments for better performance
+            # Vectorized updates for first and second moments for better
+            # performance
             np.multiply(self.beta_1, m, out=m)
             grad_scaled = (1 - self.beta_1) * grad
             np.add(m, grad_scaled, out=m)
