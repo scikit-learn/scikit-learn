@@ -1,0 +1,5 @@
+- :class:`metrics.CAPCurveDisplay` implements Cumulative Accuracy Profile
+  to visualize the total count of positive outcomes plotted on the
+  y-axis against the cumulative proportion of cases, ordered by predicted value, on the
+  x-axis. By :user:`Joseph Barbier <josephbarbierdarnal>`, :user:`Olivier Grisel <ogrisel>` and
+  :user:`Christian Lorentzen <lorentzenchr>`.
