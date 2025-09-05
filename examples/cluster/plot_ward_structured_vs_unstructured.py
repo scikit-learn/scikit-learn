@@ -117,8 +117,6 @@ for l in np.unique(label_structured):
     )
 fig2.suptitle(f"With connectivity constraints (time {elapsed_time_structured:.2f}s)")
 
-plt.show()
-
 # %%
 # Generate 2D spiral dataset.
 # ---------------------------
@@ -133,8 +131,8 @@ X2 += 0.7 * np.random.randn(2, n_samples)
 X2 = X2.T
 
 # %%
-# Create a graph capturing local connectivity
-# -------------------------------------------
+# Capture local connectivity using a graph
+# ----------------------------------------
 # Larger number of neighbors will give more homogeneous clusters to
 # the cost of computation time. A very large number of neighbors gives
 # more evenly distributed cluster sizes, but may not impose the local
@@ -143,30 +141,38 @@ knn_graph = kneighbors_graph(X2, 30, include_self=False)
 
 # %%
 # Plot clustering with and without structure
-for connectivity in (None, knn_graph):
-    for n_clusters in (30, 3):
-        plt.figure(figsize=(10, 4))
-        for index, linkage in enumerate(("average", "complete", "ward", "single")):
-            plt.subplot(1, 4, index + 1)
-            model = AgglomerativeClustering(
-                linkage=linkage, connectivity=connectivity, n_clusters=n_clusters
-            )
-            t0 = time.time()
-            model.fit(X2)
-            elapsed_time = time.time() - t0
-            plt.scatter(X2[:, 0], X2[:, 1], c=model.labels_, cmap=plt.cm.nipy_spectral)
-            plt.title(
-                "linkage=%s\n(time %.2fs)" % (linkage, elapsed_time),
-                fontdict=dict(verticalalignment="top"),
-            )
-            plt.axis("equal")
-            plt.axis("off")
+fig3 = plt.figure(figsize=(10, 16))
+subfigs = fig3.subfigures(4, 1)
+params = [
+    (None, 30),
+    (None, 3),
+    (knn_graph, 30),
+    (knn_graph, 3),
+]
 
-            plt.subplots_adjust(bottom=0, top=0.83, wspace=0, left=0, right=1)
-            plt.suptitle(
-                "n_cluster=%i, connectivity=%r"
-                % (n_clusters, connectivity is not None),
-                size=17,
-            )
+for subfig, (connectivity, n_clusters) in zip(subfigs, params):
+    axs = subfig.subplots(1, 4, sharey=True)
+    for index, linkage in enumerate(("average", "complete", "ward", "single")):
+        model = AgglomerativeClustering(
+            linkage=linkage, connectivity=connectivity, n_clusters=n_clusters
+        )
+        t0 = time.time()
+        model.fit(X2)
+        elapsed_time = time.time() - t0
+        axs[index].scatter(
+            X2[:, 0], X2[:, 1], c=model.labels_, cmap=plt.cm.nipy_spectral
+        )
+        axs[index].set_title(
+            "linkage=%s\n(time %.2fs)" % (linkage, elapsed_time),
+            fontdict=dict(verticalalignment="top"),
+        )
+        axs[index].set_aspect("equal")
+        axs[index].axis("off")
+
+        subfig.subplots_adjust(bottom=0, top=0.83, wspace=0, left=0, right=1)
+        subfig.suptitle(
+            "n_cluster=%i, connectivity=%r" % (n_clusters, connectivity is not None),
+            size=17,
+        )
 
 plt.show()

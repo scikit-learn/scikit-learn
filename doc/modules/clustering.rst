@@ -706,8 +706,8 @@ An interesting aspect of :class:`AgglomerativeClustering` is that
 connectivity constraints can be added to this algorithm (only adjacent
 clusters can be merged together), through a connectivity matrix that defines
 for each sample the neighboring samples following a given structure of the
-data. For instance, in the swiss-roll example below, the connectivity
-constraints forbid the merging of points that are not adjacent on the swiss
+data. For instance, in the Swiss-roll example below, the connectivity
+constraints forbid the merging of points that are not adjacent on the Swiss
 roll, and thus avoid forming clusters that extend across overlapping folds of
 the roll.
 
@@ -721,11 +721,11 @@ the roll.
 
 .. centered:: |unstructured| |structured|
 
-These constraint are useful to impose a certain local structure, but they
-also make the algorithm faster, especially when the number of the samples
+These constraints are not only useful to impose a certain local structure, but
+they also make the algorithm faster, especially when the number of the samples
 is high.
 
-The connectivity constraints are imposed via an connectivity matrix: a
+The connectivity constraints are imposed via a connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
 matrix can be constructed from a-priori information: for instance, you
@@ -749,11 +749,7 @@ enable only merging of neighboring pixels on an image, as in the
     :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`).
     Single linkage is the most brittle linkage option with regard to this issue.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_001.png
-    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_002.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_003.png
     :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
@@ -763,7 +759,7 @@ enable only merging of neighboring pixels on an image, as in the
   clustering to split the image of coins in regions.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
-  of Ward algorithm on a swiss-roll, comparison of structured approaches
+  of Ward algorithm on a Swiss-roll, comparison of structured approaches
   versus unstructured approaches.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
