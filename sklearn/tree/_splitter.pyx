@@ -20,7 +20,9 @@ of splitting strategies:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from libc.math cimport isnan
 from libc.string cimport memcpy
+from libc.stdio cimport printf
 
 from ..utils._typedefs cimport int8_t
 from ._criterion cimport Criterion
@@ -319,6 +321,7 @@ cdef inline int node_split_best(
     cdef intp_t n_known_constants = parent_record.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
+    cdef intp_t p_mem
 
     _init_split(&best_split, end)
 
@@ -403,19 +406,28 @@ cdef inline int node_split_best(
             missing_go_to_left = i == 1
             if missing_go_to_left:
                 partitioner.set_missing_at_the_beginning()
+                printf("missing to the left\n")
             criterion.reset()
+            printf("idx:")
+            for p in range(start, end):
+                # printf(" %.3f", feature_values[p])
+                printf(" %d", samples[p])
+            printf("\n")
 
             p = start
+            p_mem = start
 
-            while p < end_non_missing:
+            while p < end:
                 partitioner.next_p(&p_prev, &p)
+                if p == p_mem:
+                    break
+                p_mem = p
+                if p == end:
+                    continue
+                printf("p: %d (prev: %d) - ", p, p_prev)
 
-                if missing_go_to_left:
-                    n_left = p - start + n_missing
-                    n_right = end_non_missing - p
-                else:
-                    n_left = p - start
-                    n_right = end_non_missing - p + n_missing
+                n_left = p - start
+                n_right = end - p
 
                 # Reject if min_samples_leaf is not guaranteed
                 if n_left < min_samples_leaf or n_right < min_samples_leaf:
@@ -442,20 +454,26 @@ cdef inline int node_split_best(
                     continue
 
                 current_proxy_improvement = criterion.proxy_impurity_improvement()
+                printf("%.3f\n", current_proxy_improvement)
 
                 if current_proxy_improvement > best_proxy_improvement:
+                    printf("new best split")
                     best_proxy_improvement = current_proxy_improvement
                     # sum of halves is used to avoid infinite value
-                    current_split.threshold = (
-                        feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
-                    )
-
-                    if (
-                        current_split.threshold == feature_values[p] or
-                        current_split.threshold == INFINITY or
-                        current_split.threshold == -INFINITY
-                    ):
-                        current_split.threshold = feature_values[p_prev]
+                    if p == end_non_missing and not missing_go_to_left:
+                        printf(" - missing split\n")
+                        current_split.threshold = INFINITY
+                    else:
+                        printf("- v %f; prev: %f\n", feature_values[p], feature_values[p_prev])
+                        current_split.threshold = (
+                            feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
+                        )
+                        if (
+                            current_split.threshold == feature_values[p] or
+                            current_split.threshold == INFINITY or
+                            current_split.threshold == -INFINITY
+                        ):
+                            current_split.threshold = feature_values[p_prev]
 
                     current_split.n_missing = n_missing
 
@@ -468,6 +486,11 @@ cdef inline int node_split_best(
                         current_split.missing_go_to_left = missing_go_to_left
 
                     best_split = current_split  # copy
+                    criterion.children_impurity(
+                        &best_split.impurity_left, &best_split.impurity_right
+                    )
+                    printf("impurity: %.3f | %.3f\n", best_split.impurity_left, best_split.impurity_right)
+
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
@@ -484,6 +507,8 @@ cdef inline int node_split_best(
         criterion.children_impurity(
             &best_split.impurity_left, &best_split.impurity_right
         )
+        printf("final impurity: %.3f | %.3f\n", best_split.impurity_left, best_split.impurity_right)
+
         best_split.improvement = criterion.impurity_improvement(
             impurity,
             best_split.impurity_left,

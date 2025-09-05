@@ -17,7 +17,7 @@ from libc.string cimport memcpy
 from libc.stdlib cimport malloc
 from libc.stdlib cimport free
 
-from ._utils cimport swap_array_slices
+from ._utils cimport swap_array_slices, swap_array_slices_f32
 
 import numpy as np
 from scipy.sparse import issparse
@@ -114,6 +114,7 @@ cdef class DensePartitioner:
         cdef intp_t[::1] samples = self.samples
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
         swap_array_slices(self.samples, self.start, self.end, n_non_missing)
+        swap_array_slices_f32(self.feature_values, self.start, self.end, n_non_missing)
         self.missing_at_the_beginning = True
 
     cdef inline void set_missing_at_the_end(self) noexcept nogil:
@@ -124,6 +125,7 @@ cdef class DensePartitioner:
         assert self.missing_at_the_beginning
         cdef intp_t[::1] samples = self.samples
         swap_array_slices(self.samples, self.start, self.end, self.n_missing)
+        swap_array_slices_f32(self.feature_values, self.start, self.end, self.n_missing)
         self.missing_at_the_beginning = False
 
     cdef inline void find_min_max(
@@ -203,17 +205,25 @@ cdef class DensePartitioner:
             float32_t[::1] feature_values = self.feature_values
             intp_t end_non_missing = self.end - self.n_missing
 
-        while (
-            p[0] + 1 < end_non_missing and
-            feature_values[p[0] + 1] <= feature_values[p[0]] + FEATURE_THRESHOLD
-        ):
+        if p[0] == self.start and self.missing_at_the_beginning:
+            p[0] = self.n_missing + 1
+            p_prev[0] = self.n_missing
+        elif not self.missing_at_the_beginning and p[0] >= end_non_missing:
+            p[0] = self.end
+            p_prev[0] = self.end
+        else:
+            end = self.end if self.missing_at_the_beginning else end_non_missing
+            while (
+                p[0] + 1 < end and
+                feature_values[p[0] + 1] <= feature_values[p[0]] + FEATURE_THRESHOLD
+            ):
+                p[0] += 1
+
+            p_prev[0] = p[0]
+
+            # By adding 1, we have
+            # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
             p[0] += 1
-
-        p_prev[0] = p[0]
-
-        # By adding 1, we have
-        # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
-        p[0] += 1
 
     cdef inline intp_t partition_samples(
         self,
@@ -261,48 +271,24 @@ cdef class DensePartitioner:
         """
         cdef:
             # Local invariance: start <= p <= partition_end <= end
-            intp_t start = self.start
-            intp_t p = start
-            intp_t end = self.end - 1
-            intp_t partition_end = end - best_n_missing
+            intp_t p = self.start
+            intp_t partition_end = self.end - 1
             intp_t[::1] samples = self.samples
             const float32_t[:, :] X = self.X
             float32_t current_value
+            bint go_to_left
 
-        # TODO!!! HANDLE best_missing_go_to_left
-        if best_n_missing != 0:
-            # Move samples with missing values to the end while partitioning the
-            # non-missing samples
-            while p < partition_end:
-                # Keep samples with missing values at the end
-                if isnan(X[samples[end], best_feature]):
-                    end -= 1
-                    continue
-
-                # Swap sample with missing values with the sample at the end
-                current_value = X[samples[p], best_feature]
-                if isnan(current_value):
-                    samples[p], samples[end] = samples[end], samples[p]
-                    end -= 1
-
-                    # The swapped sample at the end is always a non-missing value, so
-                    # we can continue the algorithm without checking for missingness.
-                    current_value = X[samples[p], best_feature]
-
-                # Partition the non-missing samples
-                if current_value <= best_threshold:
-                    p += 1
-                else:
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                    partition_end -= 1
-        else:
-            # Partitioning routine when there are no missing values
-            while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
-                    p += 1
-                else:
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                    partition_end -= 1
+        while p < partition_end:
+            current_value = X[samples[p], best_feature]
+            go_to_left = (
+                current_value <= best_threshold
+                or isnan(current_value) and best_missing_go_to_left
+            )
+            if go_to_left:
+                p += 1
+            else:
+                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                partition_end -= 1
 
 
 @final
