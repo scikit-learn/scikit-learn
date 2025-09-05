@@ -3,6 +3,7 @@
 
 # See _criterion.pyx for implementation details.
 from ..utils._typedefs cimport float64_t, int8_t, intp_t
+from ._utils cimport WeightedHeap
 
 
 cdef class Criterion:
@@ -107,3 +108,14 @@ cdef class RegressionCriterion(Criterion):
     cdef float64_t[::1] sum_left     # Same as above, but for the left side of the split
     cdef float64_t[::1] sum_right    # Same as above, but for the right side of the split
     cdef float64_t[::1] sum_missing  # Same as above, but for missing values in X
+
+
+cdef class MAE(Criterion):
+
+    cdef float64_t[::1] node_medians
+    cdef float64_t[:, ::1] left_abs_errors
+    cdef float64_t[:, ::1] right_abs_errors
+    cdef float64_t[::1] left_medians
+    cdef float64_t[::1] right_medians
+    cdef WeightedHeap above
+    cdef WeightedHeap below
