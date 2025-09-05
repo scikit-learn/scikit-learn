@@ -14,6 +14,10 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from libc.stdlib cimport malloc
+from libc.stdlib cimport free
+
+from ._utils cimport swap_array_slices
 
 import numpy as np
 from scipy.sparse import issparse
@@ -44,6 +48,7 @@ cdef class DensePartitioner:
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        self.missing_at_the_beginning = False
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -96,7 +101,30 @@ cdef class DensePartitioner:
                 feature_values[i] = X[samples[i], current_feature]
 
         sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
+        self.missing_at_the_beginning = False
         self.n_missing = n_missing
+
+    cdef inline void set_missing_at_the_beginning(self) noexcept nogil:
+        """
+        Assumes `sort_samples_and_feature_values` has been called beforehand
+        and hence all missing values are at the end
+        """
+        # TODO? handle except?
+        assert not self.missing_at_the_beginning
+        cdef intp_t[::1] samples = self.samples
+        cdef intp_t n_non_missing = self.end - self.start - self.n_missing
+        swap_array_slices(self.samples, self.start, self.end, n_non_missing)
+        self.missing_at_the_beginning = True
+
+    cdef inline void set_missing_at_the_end(self) noexcept nogil:
+        """
+        Assumes `sort_samples_and_feature_values` and then `set_missing_at_the_beginning`
+        have been called beforehand and hence all missing values are at the beginning
+        """
+        assert self.missing_at_the_beginning
+        cdef intp_t[::1] samples = self.samples
+        swap_array_slices(self.samples, self.start, self.end, self.n_missing)
+        self.missing_at_the_beginning = False
 
     cdef inline void find_min_max(
         self,
@@ -189,17 +217,23 @@ cdef class DensePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold
+        float64_t current_threshold,
+        bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
         cdef:
             intp_t p = self.start
-            intp_t partition_end = self.end - self.n_missing
+            intp_t partition_end = self.end
             intp_t[::1] samples = self.samples
             float32_t[::1] feature_values = self.feature_values
+            bint go_to_left
 
         while p < partition_end:
-            if feature_values[p] <= current_threshold:
+            go_to_left = (
+                feature_values[p] <= current_threshold
+                or (isnan(feature_values[p]) and missing_go_to_left)
+            )
+            if go_to_left:
                 p += 1
             else:
                 partition_end -= 1
@@ -217,6 +251,7 @@ cdef class DensePartitioner:
         float64_t best_threshold,
         intp_t best_feature,
         intp_t best_n_missing,
+        bint best_missing_go_to_left
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature.
 
@@ -234,6 +269,7 @@ cdef class DensePartitioner:
             const float32_t[:, :] X = self.X
             float32_t current_value
 
+        # TODO!!! HANDLE best_missing_go_to_left
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
             # non-missing samples
@@ -353,6 +389,12 @@ cdef class SparsePartitioner:
         # number of missing values for current_feature
         self.n_missing = 0
 
+    cdef inline void set_missing_at_the_beginning(self) noexcept nogil:
+        pass  # missing values not support for sparse
+
+    cdef inline void set_missing_at_the_end(self) noexcept nogil:
+        pass  # missing values not support for sparse
+
     cdef inline void find_min_max(
         self,
         intp_t current_feature,
@@ -420,7 +462,8 @@ cdef class SparsePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold
+        float64_t current_threshold,
+        bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
         return self._partition(current_threshold, self.start_positive)
@@ -431,6 +474,7 @@ cdef class SparsePartitioner:
         float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
+        bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
@@ -674,32 +718,6 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     samples[pos_1], samples[pos_2] = samples[pos_2], samples[pos_1]
     index_to_samples[samples[pos_1]] = pos_1
     index_to_samples[samples[pos_2]] = pos_2
-
-
-cdef inline void shift_missing_values_to_left_if_required(
-    SplitRecord* best,
-    intp_t[::1] samples,
-    intp_t end,
-) noexcept nogil:
-    """Shift missing value sample indices to the left of the split if required.
-
-    Note: this should always be called at the very end because it will
-    move samples around, thereby affecting the criterion.
-    This affects the computation of the children impurity, which affects
-    the computation of the next node.
-    """
-    cdef intp_t i, p, current_end
-    # The partitioner partitions the data such that the missing values are in
-    # samples[-n_missing:] for the criterion to consume. If the missing values
-    # are going to the right node, then the missing values are already in the
-    # correct position. If the missing values go left, then we move the missing
-    # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
-    if best.n_missing > 0 and best.missing_go_to_left:
-        for p in range(best.n_missing):
-            i = best.pos + p
-            current_end = end - 1 - p
-            samples[i], samples[current_end] = samples[current_end], samples[i]
-        best.pos += best.n_missing
 
 
 def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):

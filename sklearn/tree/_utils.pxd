@@ -51,6 +51,9 @@ cdef float64_t rand_uniform(float64_t low, float64_t high,
 
 cdef float64_t log(float64_t x) noexcept nogil
 
+
+cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n) except -1 nogil
+
 # =============================================================================
 # WeightedPQueue data structure
 # =============================================================================

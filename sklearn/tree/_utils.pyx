@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
+from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
+from libc.string cimport memcpy
 from libc.math cimport log as ln
 from libc.math cimport isnan
 
@@ -64,6 +66,33 @@ cdef inline float64_t rand_uniform(float64_t low, float64_t high,
 
 cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
+
+
+cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n) except -1 nogil:
+    """
+    Swaps the order of the slices array[start:start + n]
+    and array[start + n:end] while preserving the order
+    in the slices.
+    """
+    cdef intp_t n_rev = end - start - n
+    cdef intp_t n_tmp = min(n, n_rev)
+    cdef intp_t nbytes = n_tmp * sizeof(intp_t)
+    cdef intp_t* tmp = <intp_t*> malloc(nbytes)
+    if tmp == NULL:
+        raise MemoryError(f"could not allocate {nbytes} bytes")
+    if n <= n_rev:
+        memcpy(tmp, &array[start], n)  # tmp = array[:n].copy()
+        memcpy(&array[start], &array[start + n], n_rev) # array[:-n] = array[n:]
+        memcpy(&array[start + n_rev], &tmp, n) # array[-n:] = tmp
+    else:
+        memcpy(tmp, &array[start + n], n_rev)  # tmp = array[n:].copy()
+        memcpy(&array[start + n_rev], &array[start], n) # array[-n:] = array[:n]
+        memcpy(&array[start], &tmp, n_rev) # array[:-n] = tmp
+
+    if tmp != NULL:
+        free(tmp)
+    return 0
+
 
 # =============================================================================
 # WeightedPQueue data structure

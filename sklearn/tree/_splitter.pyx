@@ -25,9 +25,7 @@ from libc.string cimport memcpy
 from ..utils._typedefs cimport int8_t
 from ._criterion cimport Criterion
 from ._partitioner cimport (
-    FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
-    shift_missing_values_to_left_if_required
-)
+    FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner)
 from ._utils cimport RAND_R_MAX, rand_int, rand_uniform
 
 import numpy as np
@@ -393,7 +391,6 @@ cdef inline int node_split_best(
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
-        criterion.init_missing(n_missing)  # initialize even when n_missing == 0
 
         # Evaluate all splits
 
@@ -406,16 +403,14 @@ cdef inline int node_split_best(
 
         for i in range(n_searches):
             missing_go_to_left = i == 1
-            criterion.missing_go_to_left = missing_go_to_left
+            if missing_go_to_left:
+                partitioner.set_missing_at_the_beginning()
             criterion.reset()
 
             p = start
 
             while p < end_non_missing:
                 partitioner.next_p(&p_prev, &p)
-
-                if p >= end_non_missing:
-                    continue
 
                 if missing_go_to_left:
                     n_left = p - start + n_missing
@@ -476,39 +471,15 @@ cdef inline int node_split_best(
 
                     best_split = current_split  # copy
 
-        # Evaluate when there are missing values and all missing values goes
-        # to the right node and non-missing values goes to the left node.
-        if has_missing:
-            n_left, n_right = end - start - n_missing, n_missing
-            p = end - n_missing
-            missing_go_to_left = 0
-
-            if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
-                criterion.missing_go_to_left = missing_go_to_left
-                criterion.update(p)
-
-                if not ((criterion.weighted_n_left < min_weight_leaf) or
-                        (criterion.weighted_n_right < min_weight_leaf)):
-                    current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        current_split.threshold = INFINITY
-                        current_split.missing_go_to_left = missing_go_to_left
-                        current_split.n_missing = n_missing
-                        current_split.pos = p
-                        best_split = current_split
-
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
         partitioner.partition_samples_final(
             best_split.pos,
             best_split.threshold,
             best_split.feature,
-            best_split.n_missing
+            best_split.n_missing,
+            best_split.missing_go_to_left
         )
-        criterion.init_missing(best_split.n_missing)
-        criterion.missing_go_to_left = best_split.missing_go_to_left
 
         criterion.reset()
         criterion.update(best_split.pos)
@@ -520,8 +491,6 @@ cdef inline int node_split_best(
             best_split.impurity_left,
             best_split.impurity_right
         )
-
-        shift_missing_values_to_left_if_required(&best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
@@ -666,7 +635,6 @@ cdef inline int node_split_random(
         f_i -= 1
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
-        criterion.init_missing(n_missing)
 
         # Draw a random threshold
         current_split.threshold = rand_uniform(
@@ -688,14 +656,13 @@ cdef inline int node_split_random(
             missing_go_to_left = rand_int(0, 2, random_state)
         else:
             missing_go_to_left = 0
-        criterion.missing_go_to_left = missing_go_to_left
 
         if current_split.threshold == max_feature_value:
             current_split.threshold = min_feature_value
 
         # Partition
         current_split.pos = partitioner.partition_samples(
-            current_split.threshold
+            current_split.threshold, missing_go_to_left
         )
 
         if missing_go_to_left:
@@ -755,10 +722,9 @@ cdef inline int node_split_random(
                 best_split.pos,
                 best_split.threshold,
                 best_split.feature,
-                best_split.n_missing
+                best_split.n_missing,
+                best_split.missing_go_to_left
             )
-        criterion.init_missing(best_split.n_missing)
-        criterion.missing_go_to_left = best_split.missing_go_to_left
 
         criterion.reset()
         criterion.update(best_split.pos)
@@ -770,8 +736,6 @@ cdef inline int node_split_random(
             best_split.impurity_left,
             best_split.impurity_right
         )
-
-        shift_missing_values_to_left_if_required(&best_split, samples, end)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
