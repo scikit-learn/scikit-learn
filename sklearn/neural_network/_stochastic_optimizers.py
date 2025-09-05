@@ -145,9 +145,8 @@ class SGDOptimizer(BaseOptimizer):
             learning rate for 'invscaling'
         """
         if self.lr_schedule == "invscaling":
-            self.learning_rate = (
-                float(self.learning_rate_init)
-                / (time_step + 1) ** self.power_t
+            self.learning_rate = float(self.learning_rate_init) / (
+                (time_step + 1) ** self.power_t
             )
 
     def trigger_stopping(self, msg, verbose):

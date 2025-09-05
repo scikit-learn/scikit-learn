@@ -104,10 +104,8 @@ def test_sgd_momentum_vectorization():
     optimizer._get_updates(grads)
 
     # Verify the velocity was updated correctly
-    expected_velocity = 0.9 * initial_velocity - 0.1 * grads[0]
-    np.testing.assert_array_almost_equal(
-        optimizer.velocities[0], expected_velocity
-    )
+    expected_vel = 0.9 * initial_velocity - 0.1 * grads[0]
+    np.testing.assert_array_almost_equal(optimizer.velocities[0], expected_vel)
 
 
 def test_adam_moment_vectorization():
