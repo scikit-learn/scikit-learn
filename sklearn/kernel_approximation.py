@@ -9,7 +9,6 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 from scipy.fft import fft, ifft
-from scipy.linalg import svd
 
 from sklearn.base import (
     BaseEstimator,
@@ -23,6 +22,11 @@ from sklearn.metrics.pairwise import (
     pairwise_kernels,
 )
 from sklearn.utils import check_random_state
+from sklearn.utils._array_api import (
+    _find_matching_floating_dtype,
+    _is_numpy_namespace,
+    get_namespace,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import (
@@ -30,6 +34,37 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
+
+
+# Utility Functions
+def _return_float_dtype(X, Y):
+    """
+    1. If dtype of X and Y is float32, then dtype float32 is returned.
+    2. Else dtype float is returned.
+    """
+    if not sp.issparse(X) and not isinstance(X, np.ndarray):
+        X = np.asarray(X)
+    if Y is None:
+        Y_dtype = X.dtype
+    elif not sp.issparse(Y) and not isinstance(Y, np.ndarray):
+        Y = np.asarray(Y)
+        Y_dtype = Y.dtype
+    else:
+        Y_dtype = Y.dtype
+    if X.dtype == Y_dtype == np.float32:
+        dtype = np.float32
+    else:
+        dtype = float
+    return X, Y, dtype
+
+
+def _find_floating_dtype_allow_sparse(X, Y, xp=None):
+    """Find matching floating type, allowing for sparse input."""
+    if any([sp.issparse(X), sp.issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
+    return X, Y, dtype_float
 
 
 class PolynomialCountSketch(
@@ -384,7 +419,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             # output data type during `transform`.
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
-
         self._n_features_out = self.n_components
         return self
 
@@ -1013,6 +1047,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
+
+        xp, _ = get_namespace(X)
         X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
@@ -1031,8 +1067,11 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             n_components = self.n_components
         n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
-        basis_inds = inds[:n_components]
-        basis = X[basis_inds]
+        basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64)
+        if sp.issparse(X):
+            basis = X[basis_inds]
+        else:
+            basis = xp.take(X, basis_inds, axis=0)
 
         basis_kernel = pairwise_kernels(
             basis,
@@ -1043,9 +1082,14 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         )
 
         # sqrt of kernel matrix on basis vectors
-        U, S, V = svd(basis_kernel)
-        S = np.maximum(S, 1e-12)
-        self.normalization_ = np.dot(U / np.sqrt(S), V)
+        _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
+        basis_kernel = xp.asarray(basis_kernel, dtype=dtype)
+        U, S, V = xp.linalg.svd(basis_kernel)
+        S = xp.asarray(S, dtype=dtype)
+        S = xp.maximum(S, xp.asarray(1e-12, dtype=dtype))
+        U = xp.asarray(U, dtype=dtype)
+        V = xp.asarray(V, dtype=dtype)
+        self.normalization_ = xp.matmul(U / xp.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = basis_inds
         self._n_features_out = n_components
@@ -1068,6 +1112,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Transformed data.
         """
         check_is_fitted(self)
+
+        xp, _ = get_namespace(X)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
@@ -1079,7 +1125,9 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             n_jobs=self.n_jobs,
             **kernel_params,
         )
-        return np.dot(embedded, self.normalization_.T)
+        dtype = _find_matching_floating_dtype(embedded, xp=xp)
+        embedded = xp.asarray(embedded, dtype=dtype)
+        return xp.matmul(embedded, self.normalization_.T)
 
     def _get_kernel_params(self):
         params = self.kernel_params
