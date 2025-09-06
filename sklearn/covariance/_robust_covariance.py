@@ -13,8 +13,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
-from scipy.special import gammainc
-from scipy.stats import chi2
+from scipy.stats import chi2, gamma
 
 from sklearn.base import _fit_context
 from sklearn.covariance._empirical_covariance import (
@@ -239,7 +238,7 @@ def _consistency_factor(n_features, alpha):
         Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
     """
     q_alpha = chi2.ppf(alpha, df=n_features)
-    c_alpha = gammainc(n_features / 2 + 1, q_alpha / 2) / alpha
+    c_alpha = gamma.cdf(q_alpha / 2, n_features / 2 + 1) / alpha
     return 1.0 / c_alpha
 
 
