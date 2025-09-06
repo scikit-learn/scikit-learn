@@ -1,0 +1,2 @@
+- :class:`preprocessing.SplineTransformer` can now handle missing values with the
+  parameter `handle_missing`. By :user:`Stefanie Senger <StefanieSenger>`.

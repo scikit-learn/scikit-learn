@@ -694,6 +694,7 @@ def test_oob_multilcass_iris():
     #                           decimal=2)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbose_output():
     # Check verbose=1 does not cause error.
     import sys
@@ -725,6 +726,7 @@ def test_verbose_output():
     assert 10 + 9 == n_lines
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_more_verbose_output():
     # Check verbose=2 does not cause error.
     import sys

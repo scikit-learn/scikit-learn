@@ -5,17 +5,17 @@ from itertools import product
 
 import numpy as np
 
-from ...base import is_classifier
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._plotting import _validate_style_kwargs
-from ...utils.multiclass import unique_labels
-from .. import confusion_matrix
+from sklearn.base import is_classifier
+from sklearn.metrics import confusion_matrix
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _validate_style_kwargs
+from sklearn.utils.multiclass import unique_labels
 
 
 class ConfusionMatrixDisplay:
     """Confusion Matrix visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator` or
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` to
     create a :class:`ConfusionMatrixDisplay`. All parameters are stored as

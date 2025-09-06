@@ -1,4 +1,0 @@
-- The private helper function :func:`utils._safe_indexing` now officially supports
-  pyarrow data. For instance, passing a pyarrow `Table` as `X` in a
-  :class:`compose.ColumnTransformer` is now possible.
-  By :user:`Christian Lorentzen <lorentzenchr>`

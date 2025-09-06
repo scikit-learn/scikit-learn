@@ -28,7 +28,7 @@ cut-off rules: a positive class is predicted when the conditional probability
 :math:`P(y|X)` is greater than 0.5 (obtained with :term:`predict_proba`) or if the
 decision score is greater than 0 (obtained with :term:`decision_function`).
 
-Here, we show an example that illustrates the relation between conditional
+Here, we show an example that illustrates the relatonship between conditional
 probability estimates :math:`P(y|X)` and class labels::
 
     >>> from sklearn.datasets import make_classification

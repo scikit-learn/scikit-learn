@@ -36,7 +36,7 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -46,25 +46,25 @@ from .base import (
     is_classifier,
     is_regressor,
 )
-from .metrics.pairwise import pairwise_distances_argmin
-from .preprocessing import LabelBinarizer
-from .utils import check_random_state
-from .utils._param_validation import HasMethods, Interval
-from .utils._tags import get_tags
-from .utils.metadata_routing import (
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import HasMethods, Interval
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     process_routing,
 )
-from .utils.metaestimators import _safe_split, available_if
-from .utils.multiclass import (
+from sklearn.utils.metaestimators import _safe_split, available_if
+from sklearn.utils.multiclass import (
     _check_partial_fit_first_call,
     _ovr_decision_function,
     check_classification_targets,
 )
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _num_samples,
     check_is_fitted,
@@ -499,10 +499,12 @@ class OneVsRestClassifier(
             maxima = np.empty(n_samples, dtype=float)
             maxima.fill(-np.inf)
             argmaxima = np.zeros(n_samples, dtype=int)
-            for i, e in enumerate(self.estimators_):
+            n_classes = len(self.estimators_)
+            # Iterate in reverse order to match np.argmax tie-breaking behavior
+            for i, e in enumerate(reversed(self.estimators_)):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
-                argmaxima[maxima == pred] = i
+                argmaxima[maxima == pred] = n_classes - i - 1
             return self.classes_[argmaxima]
         else:
             thresh = _threshold_for_binary_predict(self.estimators_[0])
@@ -622,7 +624,7 @@ class OneVsRestClassifier(
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -1026,7 +1028,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -1275,7 +1277,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             routing information.
         """
 
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
