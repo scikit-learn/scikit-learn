@@ -3,14 +3,16 @@
 # build_tools/update_environments_and_lock_files.py
 channels:
   - conda-forge
+  - conda-forge/label/python_rc
 dependencies:
   - python-freethreading
+  - meson-python
+  - cython
   - numpy
+  - scipy
   - joblib
   - threadpoolctl
   - pytest
-  - pytest-xdist
-  - ninja
-  - meson-python
+  - pytest-run-parallel
   - ccache
   - pip

@@ -33,7 +33,7 @@ from matplotlib import rcParams
 
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import PassiveAggressiveClassifier, Perceptron, SGDClassifier
+from sklearn.linear_model import Perceptron, SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
 
@@ -142,10 +142,7 @@ def stream_reuters_documents(data_path=None):
 
     """
 
-    DOWNLOAD_URL = (
-        "http://archive.ics.uci.edu/ml/machine-learning-databases/"
-        "reuters21578-mld/reuters21578.tar.gz"
-    )
+    DOWNLOAD_URL = "https://kdd.ics.uci.edu/databases/reuters21578/reuters21578.tar.gz"
     ARCHIVE_SHA256 = "3bae43c9b14e387f76a61b6d82bf98a4fb5d3ef99ef7e7075ff2ccbcf59f9d30"
     ARCHIVE_FILENAME = "reuters21578.tar.gz"
 
@@ -211,7 +208,9 @@ partial_fit_classifiers = {
     "SGD": SGDClassifier(max_iter=5),
     "Perceptron": Perceptron(),
     "NB Multinomial": MultinomialNB(alpha=0.01),
-    "Passive-Aggressive": PassiveAggressiveClassifier(),
+    "Passive-Aggressive": SGDClassifier(
+        loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0
+    ),
 }
 
 

@@ -112,6 +112,12 @@ from the data itself, without the use of predetermined classifications.
   using manifold learning to map the stock market structure based on historical stock
   prices.
 
+* See :ref:`sphx_glr_auto_examples_manifold_plot_manifold_sphere.py` for an example of
+  manifold learning techniques applied to a spherical data-set.
+
+* See :ref:`sphx_glr_auto_examples_manifold_plot_swissroll.py` for an example of using 
+  manifold learning techniques on a Swiss Roll dataset.
+
 The manifold learning implementations available in scikit-learn are
 summarized below
 
@@ -418,20 +424,19 @@ Multi-dimensional Scaling (MDS)
 representation of the data in which the distances respect well the
 distances in the original high-dimensional space.
 
-In general, :class:`MDS` is a technique used for analyzing similarity or
-dissimilarity data. It attempts to model similarity or dissimilarity data as
-distances in a geometric space. The data can be ratings of similarity between
+In general, :class:`MDS` is a technique used for analyzing
+dissimilarity data. It attempts to model dissimilarities as
+distances in a Euclidean space. The data can be ratings of dissimilarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
 There exist two types of MDS algorithm: metric and non-metric. In
-scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
-similarity matrix arises from a metric (and thus respects the triangular
-inequality), the distances between output two points are then set to be as
-close as possible to the similarity or dissimilarity data. In the non-metric
-version, the algorithms will try to preserve the order of the distances, and
+scikit-learn, the class :class:`MDS` implements both. In metric MDS,
+the distances in the embedding space are set as
+close as possible to the dissimilarity data. In the non-metric
+version, the algorithm will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
-space and the similarities/dissimilarities.
+space and the input dissimilarities.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -439,46 +444,45 @@ space and the similarities/dissimilarities.
    :scale: 50
 
 
-Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
-:math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
-the similarities chosen in some optimal ways. The objective, called the
-stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
+Let :math:`\delta_{ij}` be the dissimilarity matrix between the
+:math:`n` input points (possibly arising as some pairwise distances
+:math:`d_{ij}(X)` between the coordinates :math:`X` of the input points).
+Disparities :math:`\hat{d}_{ij} = f(\delta_{ij})` are some transformation of
+the dissimilarities. The MDS objective, called the raw stress, is then
+defined by :math:`\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2`,
+where :math:`d_{ij}(Z)` are the pairwise distances between the
+coordinates :math:`Z` of the embedded points.
 
 
 .. dropdown:: Metric MDS
 
-  The simplest metric :class:`MDS` model, called *absolute MDS*, disparities are defined by
-  :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
-  should then correspond exactly to the distance between point :math:`i` and
-  :math:`j` in the embedding point.
-
-  Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
+  In the metric :class:`MDS` model (sometimes also called *absolute MDS*),
+  disparities are simply equal to the input dissimilarities
+  :math:`\hat{d}_{ij} = \delta_{ij}`.
 
 .. dropdown:: Nonmetric MDS
 
   Non metric :class:`MDS` focuses on the ordination of the data. If
-  :math:`S_{ij} > S_{jk}`, then the embedding should enforce :math:`d_{ij} <
-  d_{jk}`. For this reason, we discuss it in terms of dissimilarities
-  (:math:`\delta_{ij}`) instead of similarities (:math:`S_{ij}`). Note that
-  dissimilarities can easily be obtained from similarities through a simple
-  transform, e.g. :math:`\delta_{ij}=c_1-c_2 S_{ij}` for some real constants
-  :math:`c_1, c_2`. A simple algorithm to enforce proper ordination is to use a
-  monotonic regression of :math:`d_{ij}` on :math:`\delta_{ij}`, yielding
-  disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
+  :math:`\delta_{ij} > \delta_{kl}`, then the embedding
+  seeks to enforce :math:`d_{ij}(Z) > d_{kl}(Z)`. A simple algorithm
+  to enforce proper ordination is to use an
+  isotonic regression of :math:`d_{ij}(Z)` on :math:`\delta_{ij}`, yielding
+  disparities :math:`\hat{d}_{ij}` that are a monotonic transformation
+  of dissimilarities :math:`\delta_{ij}` and hence having the same ordering.
+  This is done repeatedly after every step of the optimization algorithm.
+  In order to avoid the trivial solution where all embedding points are
+  overlapping, the disparities :math:`\hat{d}_{ij}` are normalized.
 
-  A trivial solution to this problem is to set all the points on the origin. In
-  order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized. Note
-  that since we only care about relative ordering, our objective should be
+  Note that since we only care about relative ordering, our objective should be
   invariant to simple translation and scaling, however the stress used in metric
-  MDS is sensitive to scaling. To address this, non-metric MDS may use a
-  normalized stress, known as Stress-1 defined as
+  MDS is sensitive to scaling. To address this, non-metric MDS returns
+  normalized stress, also known as Stress-1, defined as
 
   .. math::
-      \sqrt{\frac{\sum_{i < j} (d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j} d_{ij}^2}}.
+      \sqrt{\frac{\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2}{\sum_{i < j}
+      d_{ij}(Z)^2}}.
 
-  The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`,
-  however it is only compatible with the non-metric MDS problem and will be ignored
-  in the metric case.
+  Normalized Stress-1 is returned if `normalized_stress=True`.
 
   .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
     :target: ../auto_examples/manifold/plot_mds.html
@@ -486,6 +490,10 @@ stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
     :scale: 60
 
 .. rubric:: References
+
+* `"More on Multidimensional Scaling and Unfolding in R: smacof Version 2"
+  <https://www.jstatsoft.org/article/view/v102i10>`_
+  Mair P, Groenen P., de Leeuw J. Journal of Statistical Software (2022)
 
 * `"Modern Multidimensional Scaling - Theory and Applications"
   <https://www.springer.com/fr/book/9780387251509>`_
@@ -681,5 +689,5 @@ Tips on practical use
 .. seealso::
 
    :ref:`random_trees_embedding` can also be useful to derive non-linear
-   representations of feature space, also it does not perform
+   representations of feature space, but it does not perform
    dimensionality reduction.

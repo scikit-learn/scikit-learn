@@ -6,9 +6,9 @@ set -e
 # inside a git checkout of the scikit-learn/scikit-learn repo. This script is
 # generating notebooks from the scikit-learn python examples.
 
-if [[ ! -f /.dockerenv ]]; then
-    echo "This script was written for repo2docker and is supposed to run inside a docker container."
-    echo "Exiting because this script can delete data if run outside of a docker container."
+if [[ -z "${REPO_DIR}" ]]; then
+    echo "This script was written for repo2docker and the REPO_DIR environment variable is supposed to be set."
+    echo "Exiting because this script can delete data if run outside of a repo2docker context."
     exit 1
 fi
 

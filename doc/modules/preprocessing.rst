@@ -57,16 +57,16 @@ dataset::
   StandardScaler()
 
   >>> scaler.mean_
-  array([1. ..., 0. ..., 0.33...])
+  array([1., 0., 0.33])
 
   >>> scaler.scale_
-  array([0.81..., 0.81..., 1.24...])
+  array([0.81, 0.81, 1.24])
 
   >>> X_scaled = scaler.transform(X_train)
   >>> X_scaled
-  array([[ 0.  ..., -1.22...,  1.33...],
-         [ 1.22...,  0.  ..., -0.26...],
-         [-1.22...,  1.22..., -1.06...]])
+  array([[ 0.  , -1.22,  1.33 ],
+         [ 1.22,  0.  , -0.267],
+         [-1.22,  1.22, -1.06 ]])
 
 ..
         >>> import numpy as np
@@ -147,10 +147,10 @@ It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
   >>> min_max_scaler.scale_
-  array([0.5       , 0.5       , 0.33...])
+  array([0.5       , 0.5       , 0.33])
 
   >>> min_max_scaler.min_
-  array([0.        , 0.5       , 0.33...])
+  array([0.        , 0.5       , 0.33])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
 full formula is::
@@ -351,7 +351,7 @@ previously defined::
 
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +SKIP
-  array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
+  array([ 0.00 ,  0.24,  0.49,  0.73,  0.99 ])
 
 This can be confirmed on an independent testing set with similar remarks::
 
@@ -360,7 +360,7 @@ This can be confirmed on an independent testing set with similar remarks::
   array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +SKIP
-  array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
+  array([ 0.01,  0.25,  0.46,  0.60 ,  0.94])
 
 Mapping to a Gaussian distribution
 ----------------------------------
@@ -401,13 +401,13 @@ the Yeo-Johnson transform and the Box-Cox transform.
     >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
     >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
     >>> X_lognormal
-    array([[1.28..., 1.18..., 0.84...],
-          [0.94..., 1.60..., 0.38...],
-          [1.35..., 0.21..., 1.09...]])
+    array([[1.28, 1.18 , 0.84 ],
+           [0.94, 1.60 , 0.388],
+           [1.35, 0.217, 1.09 ]])
     >>> pt.fit_transform(X_lognormal)
-    array([[ 0.49...,  0.17..., -0.15...],
-          [-0.05...,  0.58..., -0.57...],
-          [ 0.69..., -0.84...,  0.10...]])
+    array([[ 0.49 ,  0.179, -0.156],
+           [-0.051,  0.589, -0.576],
+           [ 0.69 , -0.849,  0.101]])
 
   While the above example sets the `standardize` option to `False`,
   :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
@@ -470,9 +470,9 @@ operation on a single array-like dataset, either using the ``l1``, ``l2``, or
   >>> X_normalized = preprocessing.normalize(X, norm='l2')
 
   >>> X_normalized
-  array([[ 0.40..., -0.40...,  0.81...],
-         [ 1.  ...,  0.  ...,  0.  ...],
-         [ 0.  ...,  0.70..., -0.70...]])
+  array([[ 0.408, -0.408,  0.812],
+         [ 1.   ,  0.   ,  0.   ],
+         [ 0.   ,  0.707, -0.707]])
 
 The ``preprocessing`` module further provides a utility class
 :class:`Normalizer` that implements the same operation using the
@@ -490,12 +490,12 @@ This class is hence suitable for use in the early steps of a
 The normalizer instance can then be used on sample vectors as any transformer::
 
   >>> normalizer.transform(X)
-  array([[ 0.40..., -0.40...,  0.81...],
-         [ 1.  ...,  0.  ...,  0.  ...],
-         [ 0.  ...,  0.70..., -0.70...]])
+  array([[ 0.408, -0.408,  0.812],
+         [ 1.   ,  0.   ,  0.   ],
+         [ 0.   ,  0.707, -0.707]])
 
   >>> normalizer.transform([[-1.,  1., 0.]])
-  array([[-0.70...,  0.70...,  0.  ...]])
+  array([[-0.707,  0.707,  0.]])
 
 
 Note: L2 normalization is also known as spatial sign preprocessing.
@@ -757,8 +757,8 @@ enable the gathering of infrequent categories are `min_frequency` and
    input feature. `max_categories` includes the feature that combines
    infrequent categories.
 
-In the following example with :class:`OrdinalEncoder`, the categories `'dog'` and
-`'snake'` are considered infrequent::
+In the following example with :class:`OrdinalEncoder`, the categories `'dog'`
+and `'snake'` are considered infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T
