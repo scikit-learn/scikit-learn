@@ -1231,6 +1231,33 @@ def test_kneighbors_regressor(
             assert np.all(abs(y_pred - y_target) < 0.3)
 
 
+def test_kneighbors_regressor_predict_with_std(
+    n_samples=40, n_features=5, n_test_pts=10, n_neighbors=3, random_state=0
+):
+    # Test k-neighbors regression with return_std
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = np.sqrt((X**2).sum(1))
+    y /= y.max()
+
+    y_target = y[:n_test_pts]
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ["uniform", "distance", weight_func]:
+            knn = neighbors.KNeighborsRegressor(
+                n_neighbors=n_neighbors, weights=weights, algorithm=algorithm
+            )
+            knn.fit(X, y)
+            epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+            y_pred, y_std = knn.predict(X[:n_test_pts] + epsilon, return_std=True)
+            assert y_pred.shape == y_target.shape
+            assert np.all(abs(y_pred - y_target) < 0.3)
+            assert y_std.shape == y_target.shape
+            assert np.all(y_std >= 0)
+
+
 def test_KNeighborsRegressor_multioutput_uniform_weight():
     # Test k-neighbors in multi-output regression with uniform weight
     rng = check_random_state(0)
