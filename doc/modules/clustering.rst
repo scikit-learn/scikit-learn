@@ -766,8 +766,6 @@ enable only merging of neighboring pixels on an image, as in the
   of dimensionality reduction with feature agglomeration based on Ward
   hierarchical clustering.
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`
-
 
 Varying the metric
 -------------------
