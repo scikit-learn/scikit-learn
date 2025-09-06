@@ -96,6 +96,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "random_state": ["random_state"],
         "warm_start": ["boolean"],
         "average": [Interval(Integral, 0, None, closed="neither"), "boolean"],
+        "eta0": [Interval(Real, 0, None, closed="neither")],
     }
 
     def __init__(
@@ -113,7 +114,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         epsilon=0.1,
         random_state=None,
         learning_rate="optimal",
-        eta0=0.0,
+        eta0=0.01,
         power_t=0.5,
         early_stopping=False,
         validation_fraction=0.1,
@@ -149,11 +150,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         """Validate input params."""
         if self.early_stopping and for_partial_fit:
             raise ValueError("early_stopping should be False with partial_fit")
-        if (
-            self.learning_rate in ("constant", "invscaling", "adaptive")
-            and self.eta0 <= 0.0
-        ):
-            raise ValueError("eta0 must be > 0")
         if self.learning_rate == "optimal" and self.alpha == 0:
             raise ValueError(
                 "alpha must be > 0 since "
@@ -563,7 +559,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         n_jobs=None,
         random_state=None,
         learning_rate="optimal",
-        eta0=0.0,
+        eta0=0.01,
         power_t=0.5,
         early_stopping=False,
         validation_fraction=0.1,
@@ -1098,11 +1094,11 @@ class SGDClassifier(BaseSGDClassifier):
         .. versionadded:: 1.8
            Added options 'pa1' and 'pa2'
 
-    eta0 : float, default=0.0
+    eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
-        'adaptive' schedules. The default value is 0.0 as eta0 is not used by
-        the default schedule 'optimal'.
-        Values must be in the range `[0.0, inf)`.
+        'adaptive' schedules. The default value is 0.01, but note that eta0 is not used
+        by the default learning rate 'optimal'.
+        Values must be in the range `(0.0, inf)`.
 
         For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
         aggressiveness parameter for the passive-agressive algorithm, see [1] where it
@@ -1258,7 +1254,6 @@ class SGDClassifier(BaseSGDClassifier):
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
-        "eta0": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -1277,7 +1272,7 @@ class SGDClassifier(BaseSGDClassifier):
         n_jobs=None,
         random_state=None,
         learning_rate="optimal",
-        eta0=0.0,
+        eta0=0.01,
         power_t=0.5,
         early_stopping=False,
         validation_fraction=0.1,
@@ -1927,7 +1922,7 @@ class SGDRegressor(BaseSGDRegressor):
     eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
-        Values must be in the range `[0.0, inf)`.
+        Values must be in the range `(0.0, inf)`.
 
         For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
         aggressiveness parameter for the passive-agressive algorithm, see [1] where it
@@ -2071,7 +2066,6 @@ class SGDRegressor(BaseSGDRegressor):
             StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
-        "eta0": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -2181,11 +2175,11 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
-    eta0 : float, default=0.0
+    eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
-        'adaptive' schedules. The default value is 0.0 as eta0 is not used by
-        the default schedule 'optimal'.
-        Values must be in the range `[0.0, inf)`.
+        'adaptive' schedules. The default value is 0.0, but note that eta0 is not used
+        by the default learning rate 'optimal'.
+        Values must be in the range `(0.0, inf)`.
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
@@ -2275,7 +2269,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
             Hidden(StrOptions({"pa1", "pa2"})),
         ],
-        "eta0": [Interval(Real, 0, None, closed="left")],
         "power_t": [Interval(Real, None, None, closed="neither")],
     }
 
@@ -2289,7 +2282,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         verbose=0,
         random_state=None,
         learning_rate="optimal",
-        eta0=0.0,
+        eta0=0.01,
         power_t=0.5,
         warm_start=False,
         average=False,
