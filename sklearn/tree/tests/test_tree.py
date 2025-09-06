@@ -17,6 +17,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
 from sklearn import clone, datasets, tree
+from sklearn.datasets import make_classification
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -47,7 +48,7 @@ from sklearn.tree._tree import (
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
-from sklearn.utils import compute_sample_weight
+from sklearn.utils import compute_sample_weight, shuffle
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
     assert_almost_equal,
@@ -501,6 +502,55 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.children_left, reg.tree_.children_left)
     assert_array_equal(clf.tree_.children_right, reg.tree_.children_right)
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
+
+
+@pytest.mark.parametrize("est_name", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_oob_sample_weights(est_name, global_random_seed):
+    # check that setting sample_weight to zero / integer for an oob sample is equivalent
+    # to removing / repeating corresponding samples for unbaised MDI computations
+
+    est = est_name(random_state=global_random_seed)
+
+    n_samples = 100
+    n_features = 4
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        random_state=global_random_seed,
+    )
+    y = y.reshape(-1, 1)  # Tree expects multiple outputs
+    X = X.astype(np.float32)  # Tree expects float32
+    X_train, X_oob, y_train, y_oob = train_test_split(
+        X, y, random_state=global_random_seed
+    )
+    est.fit(X_train, y_train)
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 2, size=X_oob.shape[0])
+
+    X_oob_weighted = X_oob
+    y_oob_weighted = y_oob
+    # repeat samples according to weights
+    X_oob_repeated = X_oob.repeat(repeats=sw, axis=0)
+    y_oob_repeated = y_oob.repeat(repeats=sw, axis=0)
+
+    X_oob_weighted, y_oob_weighted, sw = shuffle(
+        X_oob_weighted, y_oob_weighted, sw, random_state=global_random_seed
+    )
+
+    ufi_weighted = est.compute_unbiased_feature_importance(
+        X_oob_weighted,
+        y_oob_weighted,
+        sample_weight=sw,
+    )[0]
+    ufi_repeated = est.compute_unbiased_feature_importance(
+        X_oob_repeated,
+        y_oob_repeated,
+        sample_weight=np.ones(X_oob_repeated.shape[0]),
+    )[0]
+
+    assert_allclose(ufi_repeated, ufi_weighted, atol=1e-12)
 
 
 def test_max_features():
