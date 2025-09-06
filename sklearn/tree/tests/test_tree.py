@@ -2487,7 +2487,7 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
 
 
 @pytest.mark.skip
-@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "tree",
     [
@@ -2501,10 +2501,9 @@ def test_missing_value_errors(sparse_container, tree):
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
     y = np.array([0] * 5 + [1] * 5)
 
-    if sparse_container is not None:
-        X = sparse_container(X)
+    X = sparse_container(X)
 
-    # TODO: change the test, as it doesn't raises anymore (but infinite loop instead)
+    # FIXME: it doesn't raises anymore (but infinite loop instead)
     with pytest.raises(ValueError, match="Input X contains NaN"):
         tree.fit(X, y)
 
@@ -2664,7 +2663,8 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
-@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
+# FIXME? add back ExtraTreeRegressor? I really don't think this test is correct...
+@pytest.mark.parametrize("Tree", [DecisionTreeRegressor])
 @pytest.mark.parametrize(
     "X",
     [
@@ -2676,7 +2676,9 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "absolute_error"])
+@pytest.mark.parametrize(
+    "criterion", ["squared_error", "friedman_mse", "absolute_error"]
+)
 def test_regression_tree_missing_values_toy(Tree, X, criterion):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.

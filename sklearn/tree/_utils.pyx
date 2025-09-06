@@ -90,43 +90,16 @@ cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n
         raise MemoryError(f"could not allocate {nbytes} bytes")
     if n <= n_rev:
         memcpy(tmp, &array[start], b * n)  # tmp = array[:n].copy()
-        memcpy(&array[start], &array[start + n], b * n_rev) # array[:-n] = array[n:]
-        memcpy(&array[start + n_rev], tmp, b * n) # array[-n:] = tmp
+        memcpy(&array[start], &array[start + n], b * n_rev)  # array[:-n] = array[n:]
+        memcpy(&array[start + n_rev], tmp, b * n)  # array[-n:] = tmp
     else:
         memcpy(tmp, &array[start + n], b * n_rev)  # tmp = array[n:].copy()
-        memcpy(&array[start + n_rev], &array[start], b * n) # array[-n:] = array[:n]
-        memcpy(&array[start], tmp, b * n_rev) # array[:-n] = tmp
+        memcpy(&array[start + n_rev], &array[start], b * n)  # array[-n:] = array[:n]
+        memcpy(&array[start], tmp, b * n_rev)  # array[:-n] = tmp
 
     if tmp != NULL:
         free(tmp)
     return 0
-
-cdef int swap_array_slices_f32(float32_t[::1] array, intp_t start, intp_t end, intp_t n) except -1 nogil:
-    """
-    Swaps the order of the slices array[start:start + n]
-    and array[start + n:end] while preserving the order
-    in the slices.
-    """
-    cdef intp_t b = sizeof(float32_t)
-    cdef intp_t n_rev = end - start - n
-    cdef intp_t n_tmp = min(n, n_rev)
-    cdef intp_t nbytes = n_tmp * b
-    cdef float32_t* tmp = <float32_t*> malloc(nbytes)
-    if tmp == NULL:
-        raise MemoryError(f"could not allocate {nbytes} bytes")
-    if n <= n_rev:
-        memcpy(tmp, &array[start], b * n)  # tmp = array[:n].copy()
-        memcpy(&array[start], &array[start + n], b * n_rev) # array[:-n] = array[n:]
-        memcpy(&array[start + n_rev], tmp, b * n) # array[-n:] = tmp
-    else:
-        memcpy(tmp, &array[start + n], b * n_rev)  # tmp = array[n:].copy()
-        memcpy(&array[start + n_rev], &array[start], b * n) # array[-n:] = array[:n]
-        memcpy(&array[start], tmp, b * n_rev) # array[:-n] = tmp
-
-    if tmp != NULL:
-        free(tmp)
-    return 0
-
 
 # =============================================================================
 # WeightedPQueue data structure

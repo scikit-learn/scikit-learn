@@ -14,9 +14,8 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.stdio cimport printf
 
-from ._utils cimport swap_array_slices, swap_array_slices_f32
+from ._utils cimport swap_array_slices
 
 import numpy as np
 from scipy.sparse import issparse
@@ -110,10 +109,15 @@ cdef class DensePartitioner:
         """
         # TODO? handle except?
         assert not self.missing_on_the_left
-        cdef intp_t[::1] samples = self.samples
+        cdef float32_t[::1] feature_values = self.feature_values
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
+        # TODO: add comments
         swap_array_slices(self.samples, self.start, self.end, n_non_missing)
-        swap_array_slices_f32(self.feature_values, self.start, self.end, n_non_missing)
+        memcpy(
+            &feature_values[self.start + self.n_missing],
+            &feature_values[self.start],
+            sizeof(float32_t) * n_non_missing
+        )
         self.missing_on_the_left = True
 
     cdef inline void find_min_max(
@@ -218,10 +222,13 @@ cdef class DensePartitioner:
         intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
-        intp_t best_n_missing,
         bint best_missing_go_to_left
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature."""
+        """Partition samples for X at the best_threshold and best_feature.
+
+        If missing values are present, this method partitions them accordingly
+        to best_missing_go_to_left
+        """
         cdef:
             # Local invariance: start <= p <= partition_end <= end
             intp_t p = self.start
@@ -409,7 +416,6 @@ cdef class SparsePartitioner:
         intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
-        intp_t n_missing,
         bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""

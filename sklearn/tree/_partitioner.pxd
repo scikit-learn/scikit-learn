@@ -58,7 +58,7 @@ cdef float32_t FEATURE_THRESHOLD = 1e-7
 #         intp_t best_pos,
 #         float64_t best_threshold,
 #         intp_t best_feature,
-#         intp_t n_missing,
+#         bint best_missing_go_to_left
 #     ) noexcept nogil
 
 
@@ -106,7 +106,6 @@ cdef class DensePartitioner:
         intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
-        intp_t n_missing,
         bint best_missing_go_to_left,
     ) noexcept nogil
 
@@ -163,7 +162,6 @@ cdef class SparsePartitioner:
         intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
-        intp_t n_missing,
         bint best_missing_go_to_left,
     ) noexcept nogil
 
