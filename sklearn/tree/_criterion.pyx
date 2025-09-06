@@ -695,12 +695,8 @@ cdef inline void _move_sums_regression(
     float64_t* weighted_n_1,
     float64_t* weighted_n_2,
 ) noexcept nogil:
-    """Distribute sum_total into sum_1 and sum_2.
-
-    """
-    cdef:
-        intp_t i
-        intp_t n_bytes = criterion.n_outputs * sizeof(float64_t)
+    """Distribute sum_total into sum_1 and sum_2."""
+    cdef intp_t n_bytes = criterion.n_outputs * sizeof(float64_t)
 
     memset(&sum_1[0], 0, n_bytes)
     # Assigning sum_2 = sum_total for all outputs.
