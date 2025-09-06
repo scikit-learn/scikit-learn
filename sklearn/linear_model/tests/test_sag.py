@@ -899,3 +899,99 @@ def test_sag_classifier_raises_error(solver):
 
     with pytest.raises(ValueError, match="Floating-point under-/overflow"):
         clf.fit(X, y)
+
+
+@pytest.mark.parametrize("solver", [sag, sag_sparse])
+@pytest.mark.parametrize("decay", [True, False])
+@pytest.mark.parametrize("saga", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.xfail()
+def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
+    n_samples = 100
+    max_iter = 100
+    tol = 1e-10
+    alpha = 1.1
+
+    X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
+    y = 1 * (y >= 1)
+    sample_weights = np.random.randint(1, 3, size=n_samples)
+
+    est = LogisticRegression(
+        max_iter=max_iter,
+        tol=tol,
+        fit_intercept=fit_intercept,
+        solver="lbfgs",
+        penalty="l2",
+        C=1 / (sample_weights.sum() * alpha),
+    )
+    est.fit(X, y, sample_weight=sample_weights)
+    true_weights = est.coef_[0]
+    true_intercept = est.intercept_
+
+    y = 2 * y - 1
+    sag_kwargs = dict(
+        dloss=log_dloss,
+        max_iter=max_iter,
+        sparse=decay,
+        tol=tol,
+        fit_intercept=fit_intercept,
+        saga=saga,
+    )
+
+    step_size = get_step_size(
+        X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
+    )
+
+    weights_weighted, intercept_weighted, n_iter_weighted = solver(
+        X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
+    )
+    assert np.sum((intercept_weighted - true_intercept) ** 2) < tol
+    assert np.sum((weights_weighted - true_weights) ** 2) < tol
+
+
+@pytest.mark.parametrize("solver", [sag, sag_sparse])
+@pytest.mark.parametrize("decay", [True, False])
+@pytest.mark.parametrize("saga", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.xfail()
+def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
+    n_samples = 15
+    max_iter = 100
+    tol = 1e-10
+    alpha = 1.1
+
+    rng = np.random.RandomState(42)
+    X = rng.rand(n_samples, n_samples * 2)
+    y = rng.randint(0, 3, size=n_samples)
+    # Use random integers (including zero) as weights.
+    sample_weights = rng.randint(0, 5, size=n_samples)
+
+    est = Ridge(
+        max_iter=max_iter,
+        tol=tol,
+        fit_intercept=fit_intercept,
+        solver="auto",
+        alpha=(sample_weights.sum() * alpha),
+    )
+    est.fit(X, y, sample_weight=sample_weights)
+    true_weights = est.coef_[0]
+    true_intercept = est.intercept_
+
+    sag_kwargs = dict(
+        dloss=squared_dloss,
+        max_iter=max_iter,
+        sparse=decay,
+        tol=tol,
+        fit_intercept=fit_intercept,
+        saga=saga,
+    )
+
+    step_size = get_step_size(
+        X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
+    )
+
+    weights_weighted, intercept_weighted, n_iter_weighted = solver(
+        X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
+    )
+    assert np.sum((intercept_weighted - true_intercept) ** 2) < tol
+    assert np.sum((weights_weighted - true_weights) ** 2) < tol
