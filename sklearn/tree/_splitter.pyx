@@ -635,6 +635,9 @@ cdef inline int node_split_random(
         current_split.feature = features[f_j]
 
         # Find min, max as we will randomly select a threshold between them
+        # FIXME!! This method likely doesn't partion all the missing values at the end
+        # like sort_... does in node_split_best
+        # Hence the rest of the logic is wrong
         partitioner.find_min_max(
             current_split.feature, &min_feature_value, &max_feature_value
         )

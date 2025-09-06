@@ -47,7 +47,7 @@ cdef class DensePartitioner:
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
-        self.missing_at_the_beginning = False
+        self.missing_on_the_left = False
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -100,21 +100,21 @@ cdef class DensePartitioner:
                 feature_values[i] = X[samples[i], current_feature]
 
         sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
-        self.missing_at_the_beginning = False
+        self.missing_on_the_left = False
         self.n_missing = n_missing
 
-    cdef void set_missing_at_the_beginning(self) noexcept nogil:
+    cdef void shift_missing_to_the_left(self) noexcept nogil:
         """
         Assumes `sort_samples_and_feature_values` has been called beforehand
         and hence all missing values are at the end
         """
         # TODO? handle except?
-        assert not self.missing_at_the_beginning
+        assert not self.missing_on_the_left
         cdef intp_t[::1] samples = self.samples
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
         swap_array_slices(self.samples, self.start, self.end, n_non_missing)
         swap_array_slices_f32(self.feature_values, self.start, self.end, n_non_missing)
-        self.missing_at_the_beginning = True
+        self.missing_on_the_left = True
 
     cdef inline void find_min_max(
         self,
@@ -128,57 +128,27 @@ cdef class DensePartitioner:
         values observed in feature_values is stored in self.n_missing.
         """
         cdef:
-            intp_t p, current_end
+            intp_t p
             float32_t current_feature_value
-            const float32_t[:, :] X = self.X
             intp_t[::1] samples = self.samples
             float32_t min_feature_value = INFINITY_32t
             float32_t max_feature_value = -INFINITY_32t
             float32_t[::1] feature_values = self.feature_values
             intp_t n_missing = 0
-            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
-        # We are copying the values into an array and finding min/max of the array in
-        # a manner which utilizes the cache more effectively. We need to also count
-        # the number of missing-values there are.
-        if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
-            p, current_end = self.start, self.end - 1
-            # Missing values are placed at the end and do not participate in the
-            # min/max calculation.
-            while p <= current_end:
-                # Finds the right-most value that is not missing so that
-                # it can be swapped with missing values towards its left.
-                if isnan(X[samples[current_end], current_feature]):
-                    n_missing += 1
-                    current_end -= 1
-                    continue
+        min_feature_value = self.X[samples[self.start], current_feature]
+        max_feature_value = min_feature_value
 
-                # X[samples[current_end], current_feature] is a non-missing value
-                if isnan(X[samples[p], current_feature]):
-                    samples[p], samples[current_end] = samples[current_end], samples[p]
-                    n_missing += 1
-                    current_end -= 1
+        for p in range(self.start, self.end):
+            current_feature_value = self.X[samples[p], current_feature]
+            feature_values[p] = current_feature_value
 
-                current_feature_value = X[samples[p], current_feature]
-                feature_values[p] = current_feature_value
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
-                p += 1
-        else:
-            min_feature_value = X[samples[self.start], current_feature]
-            max_feature_value = min_feature_value
-
-            feature_values[self.start] = min_feature_value
-            for p in range(self.start + 1, self.end):
-                current_feature_value = X[samples[p], current_feature]
-                feature_values[p] = current_feature_value
-
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
+            if isnan(current_feature_value):
+                n_missing += 1
+            elif current_feature_value < min_feature_value:
+                min_feature_value = current_feature_value
+            elif current_feature_value > max_feature_value:
+                max_feature_value = current_feature_value
 
         min_feature_value_out[0] = min_feature_value
         max_feature_value_out[0] = max_feature_value
@@ -193,14 +163,14 @@ cdef class DensePartitioner:
             float32_t[::1] feature_values = self.feature_values
             intp_t end_non_missing = self.end - self.n_missing
 
-        if p[0] == self.start and self.missing_at_the_beginning:
+        if p[0] == self.start and self.missing_on_the_left:
             p[0] = self.start + self.n_missing + 1
             p_prev[0] = p[0] - 1
-        elif not self.missing_at_the_beginning and p[0] >= end_non_missing:
+        elif not self.missing_on_the_left and p[0] >= end_non_missing:
             p[0] = self.end
             p_prev[0] = self.end
         else:
-            end = self.end if self.missing_at_the_beginning else end_non_missing
+            end = self.end if self.missing_on_the_left else end_non_missing
             while (
                 p[0] + 1 < end and
                 feature_values[p[0] + 1] <= feature_values[p[0]] + FEATURE_THRESHOLD
@@ -251,12 +221,7 @@ cdef class DensePartitioner:
         intp_t best_n_missing,
         bint best_missing_go_to_left
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature.
-
-        If missing values are present, this method partitions `samples`
-        so that the `best_n_missing` missing values' indices are in the
-        right-most end of `samples`, that is `samples[end_non_missing:end]`.
-        """
+        """Partition samples for X at the best_threshold and best_feature."""
         cdef:
             # Local invariance: start <= p <= partition_end <= end
             intp_t p = self.start
@@ -363,7 +328,7 @@ cdef class SparsePartitioner:
         # number of missing values for current_feature
         self.n_missing = 0
 
-    cdef void set_missing_at_the_beginning(self) noexcept nogil:
+    cdef void shift_missing_to_the_left(self) noexcept nogil:
         pass  # missing values not support for sparse
 
     cdef inline void find_min_max(

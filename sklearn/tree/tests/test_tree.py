@@ -2509,8 +2509,6 @@ def test_missing_value_errors(sparse_container, tree):
         tree.fit(X, y)
 
 
-# FIXME: inf loop
-@pytest.mark.skip
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 def test_missing_values_poisson(Tree):
     """Smoke test for poisson regression and missing values."""
@@ -2698,13 +2696,16 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
 
     tree = Tree(criterion=criterion, random_state=0).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
+    # I don't really see why this should work with ExtraTreeRegressor,
+    # the threshold is not in the same range, so even with the same seed
+    # it's different
     # assert tree.tree_.threshold[0] == tree_ref.tree_.threshold[0]
 
     impurity = tree.tree_.impurity
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
     # Check the impurity match after the first split
-    # assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
