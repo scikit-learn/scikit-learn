@@ -11,7 +11,7 @@ Utilizes `_CurveScorer` methods to do all the computation.
 
 from numbers import Integral
 
-from ..utils._param_validation import Interval, validate_params
+from sklearn.utils._param_validation import Interval, validate_params
 
 
 @validate_params(
@@ -105,7 +105,7 @@ def decision_threshold_curve(
     array([0.5, 0.75, 0.75, 0.75])
     """
     # To prevent circular import
-    from ._scorer import _CurveScorer
+    from sklearn.metrics._scorer import _CurveScorer
 
     sign = 1 if greater_is_better else -1
     curve_scorer = _CurveScorer(score_func, sign, {}, thresholds)
