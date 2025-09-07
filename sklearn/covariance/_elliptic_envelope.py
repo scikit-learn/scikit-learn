@@ -135,8 +135,8 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     ...              [3, 3]])
     array([ 1, -1])
     >>> cov.covariance_
-    array([[0.7411, 0.2535],
-           [0.2535, 0.3053]])
+    array([[0.8102, 0.2736],
+           [0.2736, 0.3330]])
     >>> cov.location_
     array([0.0813 , 0.0427])
     """
