@@ -79,6 +79,9 @@ jobs:
           - os: windows-latest
             python: 314
             platform_id: win_amd64
+          - os: windows-latest
+            python: 314t
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -106,6 +109,10 @@ jobs:
             python: 314
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 314t
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-24.04-arm
@@ -131,6 +138,10 @@ jobs:
             cibw_enable: cpython-freethreading
           - os: ubuntu-24.04-arm
             python: 314
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 314t
             platform_id: manylinux_aarch64
             manylinux_image: manylinux2014
 
@@ -154,6 +165,9 @@ jobs:
           - os: macos-13
             python: 314
             platform_id: macosx_x86_64
+          - os: macos-13
+            python: 314t
+            platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-14
@@ -174,6 +188,9 @@ jobs:
             cibw_enable: cpython-freethreading
           - os: macos-14
             python: 314
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 314t
             platform_id: macosx_arm64
 
     steps:
