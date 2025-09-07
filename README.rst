@@ -70,14 +70,14 @@ scikit-learn requires:
 - joblib (>= |JoblibMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
-=======
-
-Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
-classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
-For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
-A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
-require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
+Scikit-learn’s plotting capabilities (i.e., functions starting with ``plot_`` and
+classes ending with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
+Running examples requires Matplotlib >= |MatplotlibMinVersion|.  
+Some examples require:
+- scikit-image >= |Scikit-ImageMinVersion|
+- pandas >= |PandasMinVersion|
+- seaborn >= |SeabornMinVersion|
+- Plotly >= |PlotlyMinVersion|
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -92,7 +92,6 @@ or ``conda``::
     conda install -c conda-forge scikit-learn
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
-
 
 Changelog
 ---------
@@ -127,8 +126,7 @@ Contributing
 ~~~~~~~~~~~~
 
 To learn more about making a contribution to scikit-learn, please see our
-`Contributing guide
-<https://scikit-learn.org/dev/developers/contributing.html>`_.
+`contributing guide <https://scikit-learn.org/dev/developers/contributing.html>`_.
 
 Testing
 ~~~~~~~
@@ -148,20 +146,8 @@ Submitting a Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before opening a Pull Request, have a look at the
-full Contributing page to make sure your code complies
+full contributing page to make sure your code complies
 with our guidelines: https://scikit-learn.org/stable/developers/index.html
-
-Project History
----------------
-
-The project was started in 2007 by David Cournapeau as a Google Summer
-of Code project, and since then many volunteers have contributed. See
-the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
-for a list of core contributors.
-
-The project is currently maintained by a team of volunteers.
-
-**Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 
 Help and Support
 ----------------
@@ -179,35 +165,36 @@ Communication
 Main Channels
 ^^^^^^^^^^^^^
 
-- **Website**: https://scikit-learn.org
-- **Blog**: https://blog.scikit-learn.org
-- **Mailing list**: https://mail.python.org/mailman/listinfo/scikit-learn
+- **Website**: https://scikit-learn.org  
+- **Blog**: https://blog.scikit-learn.org  
+- **Mailing list**: https://mail.python.org/mailman/listinfo/scikit-learn  
 
 Developer & Support
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
-- **GitHub Discussions**: https://github.com/scikit-learn/scikit-learn/discussions
-- **Stack Overflow**: https://stackoverflow.com/questions/tagged/scikit-learn
-- **Discord**: https://discord.gg/h9qyrK8Jc8
+- **GitHub Discussions**: https://github.com/scikit-learn/scikit-learn/discussions  
+- **Stack Overflow**: https://stackoverflow.com/questions/tagged/scikit-learn  
+- **Discord**: https://discord.gg/h9qyrK8Jc8  
 
 Social Media Platforms
 ^^^^^^^^^^^^^^^^^^^^^^
 
-- **LinkedIn**: https://www.linkedin.com/company/scikit-learn
-- **YouTube**: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
-- **Facebook**: https://www.facebook.com/scikitlearnofficial/
-- **Instagram**: https://www.instagram.com/scikitlearnofficial/
-- **TikTok**: https://www.tiktok.com/@scikit.learn
-- **Bluesky**: https://bsky.app/profile/scikit-learn.org
-- **Mastodon**: https://mastodon.social/@sklearn@fosstodon.org
+- **LinkedIn**: https://www.linkedin.com/company/scikit-learn  
+- **YouTube**: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists  
+- **Facebook**: https://www.facebook.com/scikitlearnofficial/  
+- **Instagram**: https://www.instagram.com/scikitlearnofficial/  
+- **TikTok**: https://www.tiktok.com/@scikit.learn  
+- **Bluesky**: https://bsky.app/profile/scikit-learn.org  
+- **Mastodon**: https://mastodon.social/@sklearn@fosstodon.org  
 
 Resources
 ^^^^^^^^^
 
-- **Calendar**: https://blog.scikit-learn.org/calendar/
-- **Logos & Branding**: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
+- **Calendar**: https://blog.scikit-learn.org/calendar/  
+- **Logos & Branding**: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos  
 
 Citation
 ~~~~~~~~
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+
