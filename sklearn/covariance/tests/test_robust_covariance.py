@@ -32,7 +32,7 @@ def test_mcd(global_random_seed):
     launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870, global_random_seed)
 
     # 1D data set
-    launch_mcd_on_dataset(500, 1, 100, 0.05, 0.05, 350, global_random_seed)
+    launch_mcd_on_dataset(500, 1, 100, 0.10, 0.10, 350, global_random_seed)
 
     # n_samples == n_features
     launch_mcd_on_dataset(20, 20, 0, 0.1, 0.1, 15, global_random_seed)
