@@ -2486,7 +2486,6 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
     assert_array_equal(y_pred, [1, 0, 1])
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "tree",
@@ -2503,7 +2502,6 @@ def test_missing_value_errors(sparse_container, tree):
 
     X = sparse_container(X)
 
-    # FIXME: it doesn't raises anymore (but infinite loop instead)
     with pytest.raises(ValueError, match="Input X contains NaN"):
         tree.fit(X, y)
 

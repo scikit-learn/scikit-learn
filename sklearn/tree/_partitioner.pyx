@@ -104,14 +104,14 @@ cdef class DensePartitioner:
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
         """
-        Assumes `sort_samples_and_feature_values` has been called beforehand
-        and hence all missing values are at the end
+        Moves missing values from the right to the left
+            and non-missing values from the left to the right
+            while preserving their ordering
         """
-        # TODO? handle except?
         assert not self.missing_on_the_left
         cdef float32_t[::1] feature_values = self.feature_values
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
-        # TODO: add comments
+        # TODO? handle except?
         swap_array_slices(self.samples, self.start, self.end, n_non_missing)
         memcpy(
             &feature_values[self.start + self.n_missing],
