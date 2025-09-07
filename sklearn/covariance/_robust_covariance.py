@@ -736,7 +736,7 @@ class MinCovDet(EmpiricalCovariance):
     array([[0.8102, 0.2736],
            [0.2736, 0.3330]])
     >>> cov.location_
-    array([0.0813 , 0.0427])
+    array([0.0769 , 0.0397])
     """
 
     _parameter_constraints: dict = {
