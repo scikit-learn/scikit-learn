@@ -1227,6 +1227,11 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
+REQUESTER_DOC_EMPTY = """        No-op.
+
+        Calling this method has no effect.
+
+"""
 REQUESTER_DOC = """        Configure whether metadata should be requested to be \
 passed to the ``{method}`` method.
 
@@ -1257,7 +1262,8 @@ this given alias instead of the original name.
 
         .. versionadded:: 1.3
 
-        Parameters
+"""
+REQUESTER_DOC_PARAMS_SECTION = """        Parameters
         ----------
 """
 REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
@@ -1384,9 +1390,13 @@ class RequestMethod:
             params,
             return_annotation=owner,
         )
-        doc = REQUESTER_DOC.format(method=self.name)
-        for metadata in self.keys:
-            doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        if self.keys:
+            doc = REQUESTER_DOC.format(method=self.name)
+            doc += REQUESTER_DOC_PARAMS_SECTION
+            for metadata in self.keys:
+                doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        else:
+            doc = REQUESTER_DOC_EMPTY
         doc += REQUESTER_DOC_RETURN
         func.__doc__ = doc
         return func
