@@ -882,7 +882,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
-        regularization.
+        regularization. For a visual example on the effect of tuning the `C` parameter
+        with an L1 penalty, see:
+        :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1125,9 +1127,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
-    You can find a visual example here:
-    :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
-
     """
 
     _parameter_constraints: dict = {
