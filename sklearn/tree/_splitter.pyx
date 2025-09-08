@@ -475,9 +475,6 @@ cdef inline int node_split_best(
                         current_split.missing_go_to_left = missing_go_to_left
 
                     best_split = current_split  # copy
-                    criterion.children_impurity(
-                        &best_split.impurity_left, &best_split.impurity_right
-                    )
 
     # Reorganize into samples[start:best_split.pos] + samples[best_split.pos:end]
     if best_split.pos < end:
