@@ -1955,6 +1955,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     np.float64(0.052)
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
     """
 
     _parameter_constraints: dict = {

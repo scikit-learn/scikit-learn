@@ -52,14 +52,7 @@ jobs:
           python-version: '3.12.3'
       - name: Checkout main repository
         uses: actions/checkout@v4
-      - name: Cache conda environment
-        id: cache-conda
-        uses: actions/cache@v4
-        with:
-          path: ~/conda
-          key: ${{ runner.os }}-build-${{ hashFiles('build_tools/github/create_gpu_environment.sh') }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
       - name: Install miniforge
-        if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
         run: bash build_tools/github/create_gpu_environment.sh
       - name: Install scikit-learn
         run: |
