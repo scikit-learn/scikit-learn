@@ -2361,18 +2361,21 @@ def test_min_sample_split_1_error(Tree):
         tree.fit(X, y)
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize(
+    "criterion", ["squared_error", "friedman_mse", "absolute_error"]
+)
 def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+    node_value = np.median if criterion == "absolute_error" else np.mean
 
     dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [np.mean(y[-5:])])
+    assert_allclose(y_pred, [node_value(y[-5:])])
 
     # equal number of elements in both nodes
     X_equal = X[:-1]
@@ -2384,11 +2387,13 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     # Goes to right node because the implementation sets:
     # missing_go_to_left = n_left > n_right, which is False
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [np.mean(y_equal[-4:])])
+    assert_allclose(y_pred, [node_value(y_equal[-4:])])
 
 
 @pytest.mark.parametrize("seed", range(3))
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize(
+    "criterion", ["squared_error", "friedman_mse", "absolute_error"]
+)
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
@@ -2490,8 +2495,8 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
 @pytest.mark.parametrize(
     "tree",
     [
-        DecisionTreeRegressor(criterion="absolute_error"),
-        ExtraTreeRegressor(criterion="absolute_error"),
+        DecisionTreeRegressor(),
+        ExtraTreeRegressor(),
     ],
 )
 def test_missing_value_errors(sparse_container, tree):
@@ -2662,7 +2667,7 @@ def test_deterministic_pickle():
 
 
 # FIXME? add back ExtraTreeRegressor? I really don't think this test is correct...
-@pytest.mark.parametrize("Tree", [DecisionTreeRegressor])
+@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
     [
@@ -2704,8 +2709,10 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     impurity = tree.tree_.impurity
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
-    # Check the impurity match after the first split
-    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+    # Note: the impurity matches after the first split only on greedy trees
+    if Tree is DecisionTreeRegressor:
+        # Check the impurity match after the first split
+        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(

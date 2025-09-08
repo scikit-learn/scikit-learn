@@ -1101,13 +1101,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         tags = super().__sklearn_tags__()
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
-            "gini",
-            "log_loss",
-            "entropy",
-        }
+        tags.input_tags.allow_nan = True
         tags.classifier_tags.multi_label = True
-        tags.input_tags.allow_nan = allow_nan
         return tags
 
 
@@ -1444,13 +1439,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         tags = super().__sklearn_tags__()
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
-            "squared_error",
-            "friedman_mse",
-            "absolute_error",
-            "poisson",
-        }
-        tags.input_tags.allow_nan = allow_nan
+        tags.input_tags.allow_nan = True
         return tags
 
 
@@ -1733,11 +1722,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for the
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random" and self.criterion in {
-            "gini",
-            "log_loss",
-            "entropy",
-        }
+        allow_nan = self.splitter == "random"
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
         return tags
@@ -1992,11 +1977,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for the
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random" and self.criterion in {
-            "squared_error",
-            "friedman_mse",
-            "absolute_error",
-            "poisson",
-        }
+        allow_nan = self.splitter == "random"
         tags.input_tags.allow_nan = allow_nan
         return tags

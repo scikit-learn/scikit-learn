@@ -7,7 +7,7 @@ from libc.stdlib cimport realloc
 from libc.string cimport memcpy
 from libc.math cimport log as ln
 from libc.math cimport isnan
-from libc.stdio cimport printf
+# from libc.stdio cimport printf
 
 import numpy as np
 cimport numpy as cnp
@@ -76,7 +76,7 @@ cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n
     in the slices.
     """
     cdef intp_t b = sizeof(array[0])
-    printf("sizeof intp_t: %d\n", b)
+    # printf("sizeof intp_t: %d\n", b)
     cdef intp_t n_rev = end - start - n
     cdef intp_t n_tmp = min(n, n_rev)
     cdef intp_t nbytes = n_tmp * b
