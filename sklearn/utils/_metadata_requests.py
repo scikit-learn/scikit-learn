@@ -1495,7 +1495,7 @@ class _MetadataRequester:
         # on a class instead of an instance returns an unbound function.
         # If the given method doesn't exist or is not a function on the class, we simply
         # return early with an empty dict.
-        if method is not None and (
+        if method is None and (
             not hasattr(cls, method_name)
             or not inspect.isfunction(getattr(cls, method_name))
         ):

@@ -1269,13 +1269,14 @@ def test_scorer_metadata_request(name):
         # When sample_weight is accepted, `validate_data` passes and `route_params`
         # raises
         router.validate_metadata(params={"sample_weight": 1}, method="score")
-        err_msg = re.escape(
+        scorer_repr = repr(scorer)
+        err_msg = (
             "[sample_weight] are passed but are not explicitly set as requested or not"
-            " requested for _Scorer.score, which is used within test.score. Call"
-            " `_Scorer.set_score_request({metadata}=True/False)` for each"
+            f" requested for {scorer_repr}.score, which is used within test.score."
+            f" Call `{scorer_repr}.set_score_request({{metadata}}=True/False)` for each"
             " metadata you want to request/ignore."
         )
-        with pytest.raises(UnsetMetadataPassedError, match=err_msg):
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(err_msg)):
             router.route_params(params={"sample_weight": 1}, caller="score")
     else:
         # When sample_weight is not accepted, `validate_data` raises and `route_params`
