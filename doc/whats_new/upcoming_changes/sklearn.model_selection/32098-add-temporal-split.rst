@@ -1,0 +1,1 @@
+:feature: |TemporalSplit| was added to allow rolling window time-series cross-validation with fixed-size training and test windows. This addresses the need for cross-validation in financial time series and other scenarios where maintaining constant window sizes is important for evaluation consistency.

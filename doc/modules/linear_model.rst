@@ -714,11 +714,12 @@ or :func:`lars_path_gram`.
   increased in a direction equiangular to each one's correlations with
   the residual.
 
-  Instead of giving a vector result, the LARS solution consists of a
-  curve denoting the solution for each value of the :math:`\ell_1` norm of the
-  parameter vector. The full coefficients path is stored in the array
-  ``coef_path_`` of shape `(n_features, max_features + 1)`. The first
-  column is always zero.
+  Instead of returning one vector of parameters, the LARS solution returns
+  a 2D array ``coef_path_`` of shape `(n_features, max_features + 1)`
+  containing the coefficients of the model at each step of the algorithm.
+  Each column represents the model parameters at different levels of
+  regularization as the :math:`\ell_1` norm constraint is progressively
+  relaxed. The first column is always zero, corresponding to the null model.
 
   .. rubric:: References
 

@@ -29,6 +29,7 @@ from sklearn.model_selection import (
     StratifiedGroupKFold,
     StratifiedKFold,
     StratifiedShuffleSplit,
+    TemporalSplit,
     TimeSeriesSplit,
     check_cv,
     cross_val_score,
@@ -66,6 +67,7 @@ from sklearn.utils.validation import _num_samples
 NO_GROUP_SPLITTERS = [
     KFold(),
     StratifiedKFold(),
+    TemporalSplit(),
     TimeSeriesSplit(),
     LeaveOneOut(),
     LeavePOut(p=2),
@@ -2100,3 +2102,87 @@ def test_stratified_splitter_without_y(cv):
     msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
+
+
+def test_temporal_split_basic():
+    """Test TemporalSplit with basic parameters."""
+    X = np.arange(10).reshape(-1, 1)
+    ts = TemporalSplit(n_splits=3, train_size=3, test_size=1)
+    
+    splits = list(ts.split(X))
+    assert len(splits) == 3
+    
+    # Check first split
+    train_idx, test_idx = splits[0]
+    np.testing.assert_array_equal(train_idx, [0, 1, 2])
+    np.testing.assert_array_equal(test_idx, [3])
+    
+    # Check second split
+    train_idx, test_idx = splits[1]
+    np.testing.assert_array_equal(train_idx, [1, 2, 3])
+    np.testing.assert_array_equal(test_idx, [4])
+    
+    # Check third split
+    train_idx, test_idx = splits[2]
+    np.testing.assert_array_equal(train_idx, [2, 3, 4])
+    np.testing.assert_array_equal(test_idx, [5])
+
+
+def test_temporal_split_with_gap():
+    """Test TemporalSplit with gap parameter."""
+    X = np.arange(10).reshape(-1, 1)
+    ts = TemporalSplit(n_splits=2, train_size=3, test_size=1, gap=1)
+    
+    splits = list(ts.split(X))
+    assert len(splits) == 2
+    
+    # Check first split (gap=1 means skip 1 sample between train and test)
+    train_idx, test_idx = splits[0]
+    np.testing.assert_array_equal(train_idx, [0, 1, 2])
+    np.testing.assert_array_equal(test_idx, [4])  # Skip index 3 due to gap
+    
+    # Check second split
+    train_idx, test_idx = splits[1]
+    np.testing.assert_array_equal(train_idx, [1, 2, 3])
+    np.testing.assert_array_equal(test_idx, [5])  # Skip index 4 due to gap
+
+
+def test_temporal_split_expanding_windows():
+    """Test TemporalSplit falls back to expanding windows when train_size=None."""
+    X = np.arange(12).reshape(-1, 1)
+    
+    with pytest.warns(UserWarning, match="train_size is None"):
+        ts = TemporalSplit(n_splits=3, train_size=None, test_size=2)
+        splits = list(ts.split(X))
+    
+    assert len(splits) == 3
+    
+    # Should behave like TimeSeriesSplit with expanding windows
+    train_idx, test_idx = splits[0]
+    assert len(test_idx) == 2  # test_size=2
+    assert test_idx[0] == 6  # First test starts at position 6
+
+
+def test_temporal_split_get_n_splits():
+    """Test get_n_splits method."""
+    ts = TemporalSplit(n_splits=5, train_size=3, test_size=1)
+    
+    # Without X, should return requested n_splits
+    assert ts.get_n_splits() == 5
+    
+    # With enough data
+    X = np.arange(20).reshape(-1, 1)
+    assert ts.get_n_splits(X) == 5
+    
+    # With insufficient data
+    X_small = np.arange(5).reshape(-1, 1)
+    assert ts.get_n_splits(X_small) < 5
+
+
+def test_temporal_split_insufficient_samples():
+    """Test TemporalSplit with insufficient samples raises error."""
+    X = np.arange(5).reshape(-1, 1)  # Only 5 samples
+    ts = TemporalSplit(n_splits=3, train_size=5, test_size=2)  # Needs more samples
+    
+    with pytest.raises(ValueError, match="Not enough samples"):
+        list(ts.split(X))
