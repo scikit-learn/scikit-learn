@@ -1,4 +1,4 @@
-# ruff: noqa: CPY001, E501
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.1

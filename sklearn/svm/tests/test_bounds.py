@@ -14,6 +14,11 @@ Y1 = [0, 1, 1, 1]
 Y2 = [2, 1, 0, 0]
 
 
+# TODO(1.8): remove filterwarnings after the deprecation of liblinear multiclass
+#            and maybe remove LogisticRegression from this test
+@pytest.mark.filterwarnings(
+    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
+)
 @pytest.mark.parametrize("X_container", CSR_CONTAINERS + [np.array])
 @pytest.mark.parametrize("loss", ["squared_hinge", "log"])
 @pytest.mark.parametrize("Y_label", ["two-classes", "multi-class"])
@@ -80,6 +85,7 @@ def test_newrand_default():
     assert not all(x == generated[0] for x in generated)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("seed, expected", [(0, 54), (_MAX_UNSIGNED_INT, 9)])
 def test_newrand_set_seed(seed, expected):
     """Test that `set_seed` produces deterministic results"""
@@ -95,6 +101,7 @@ def test_newrand_set_seed_overflow(seed):
         set_seed_wrap(seed)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("range_, n_pts", [(_MAX_UNSIGNED_INT, 10000), (100, 25)])
 def test_newrand_bounded_rand_int(range_, n_pts):
     """Test that `bounded_rand_int` follows a uniform distribution"""

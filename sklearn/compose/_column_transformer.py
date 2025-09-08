@@ -8,7 +8,7 @@ different columns.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from collections import Counter, UserList
+from collections import Counter
 from functools import partial
 from itertools import chain
 from numbers import Integral, Real
@@ -16,30 +16,34 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from ..base import TransformerMixin, _fit_context, clone
-from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
-from ..preprocessing import FunctionTransformer
-from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_indexing
-from ..utils._metadata_requests import METHODS
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils._set_output import (
+from sklearn.base import TransformerMixin, _fit_context, clone
+from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch
+from sklearn.utils._indexing import (
+    _determine_key_type,
+    _get_column_indices,
+    _safe_indexing,
+)
+from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import (
     _get_container_adapter,
     _get_output_config,
     _safe_set_output,
 )
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import _BaseComposition
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import _BaseComposition
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
@@ -161,11 +165,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         .. versionchanged:: 1.6
             `verbose_feature_names_out` can be a callable or a string to be formatted.
 
-    force_int_remainder_cols : bool, default=True
-        Force the columns of the last entry of `transformers_`, which
-        corresponds to the "remainder" transformer, to always be stored as
-        indices (int) rather than column names (str). See description of the
-        `transformers_` attribute for details.
+    force_int_remainder_cols : bool, default=False
+        This parameter has no effect.
 
         .. note::
             If you do not access the list of columns for the remainder columns
@@ -177,6 +178,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         .. versionchanged:: 1.7
            The default value for `force_int_remainder_cols` will change from
            `True` to `False` in version 1.7.
+
+        .. deprecated:: 1.7
+           `force_int_remainder_cols` is deprecated and will be removed in 1.9.
 
     Attributes
     ----------
@@ -192,16 +196,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-        .. versionchanged:: 1.5
-            If there are remaining columns and `force_int_remainder_cols` is
-            True, the remaining columns are always represented by their
-            positional indices in the input `X` (as in older versions). If
-            `force_int_remainder_cols` is False, the format attempts to match
-            that of the other transformers: if all columns were provided as
-            column names (`str`), the remaining columns are stored as column
-            names; if all columns were provided as mask arrays (`bool`), so are
-            the remaining columns; in all other cases the remaining columns are
-            stored as indices (`int`).
+        .. versionadded:: 1.7
+            The format of the remaining columns now attempts to match that of the other
+            transformers: if all columns were provided as column names (`str`), the
+            remaining columns are stored as column names; if all columns were provided
+            as mask arrays (`bool`), so are the remaining columns; in all other cases
+            the remaining columns are stored as indices (`int`).
 
     named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
@@ -300,7 +300,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
         "verbose_feature_names_out": ["boolean", str, callable],
-        "force_int_remainder_cols": ["boolean"],
+        "force_int_remainder_cols": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -313,7 +313,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformer_weights=None,
         verbose=False,
         verbose_feature_names_out=True,
-        force_int_remainder_cols=True,
+        force_int_remainder_cols="deprecated",
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -477,13 +477,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if self._remainder[2]:
                 transformers = chain(transformers, [self._remainder])
 
-        # We want the warning about the future change of the remainder
-        # columns dtype to be shown only when a user accesses them
-        # directly, not when they are used by the ColumnTransformer itself.
-        # We disable warnings here; they are enabled when setting
-        # self.transformers_.
-        transformers = _with_dtype_warning_enabled_set_to(False, transformers)
-
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, columns in transformers:
@@ -578,8 +571,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def _get_remainder_cols(self, indices):
         dtype = self._get_remainder_cols_dtype()
-        if self.force_int_remainder_cols and dtype != "int":
-            return _RemainderColsList(indices, future_dtype=dtype)
         if dtype == "str":
             return list(self.feature_names_in_[indices])
         if dtype == "bool":
@@ -753,7 +744,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # sanity check that transformers is exhausted
         assert not list(fitted_transformers)
-        self.transformers_ = _with_dtype_warning_enabled_set_to(True, transformers_)
+        self.transformers_ = transformers_
 
     def _validate_output(self, result):
         """
@@ -983,6 +974,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         _raise_for_params(params, self, "fit_transform")
         _check_feature_names(self, X, reset=True)
+
+        if self.force_int_remainder_cols != "deprecated":
+            warnings.warn(
+                "The parameter `force_int_remainder_cols` is deprecated and will be "
+                "removed in 1.9. It has no effect. Leave it to its default value to "
+                "avoid this warning.",
+                FutureWarning,
+            )
 
         X = _check_X(X)
         # set n_features_in_ attribute
@@ -1290,12 +1289,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         # Here we don't care about which columns are used for which
         # transformers, and whether or not a transformer is used at all, which
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
-        transformers = chain(self.transformers, [("remainder", self.remainder, None)])
+        transformers = self.transformers
+        if self.remainder not in ("drop", "passthrough"):
+            transformers = chain(transformers, [("remainder", self.remainder, None)])
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
@@ -1349,7 +1350,12 @@ def _is_empty_column_selection(column):
     boolean array).
 
     """
-    if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
+    if (
+        hasattr(column, "dtype")
+        # Not necessarily a numpy dtype, can be a pandas dtype as well
+        and isinstance(column.dtype, np.dtype)
+        and np.issubdtype(column.dtype, np.bool_)
+    ):
         return not column.any()
     elif hasattr(column, "__len__"):
         return len(column) == 0 or (
@@ -1380,7 +1386,7 @@ def make_column_transformer(
     n_jobs=None,
     verbose=False,
     verbose_feature_names_out=True,
-    force_int_remainder_cols=True,
+    force_int_remainder_cols="deprecated",
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -1454,10 +1460,7 @@ def make_column_transformer(
         .. versionadded:: 1.0
 
     force_int_remainder_cols : bool, default=True
-        Force the columns of the last entry of `transformers_`, which
-        corresponds to the "remainder" transformer, to always be stored as
-        indices (int) rather than column names (str). See description of the
-        :attr:`ColumnTransformer.transformers_` attribute for details.
+        This parameter has no effect.
 
         .. note::
             If you do not access the list of columns for the remainder columns
@@ -1469,6 +1472,9 @@ def make_column_transformer(
         .. versionchanged:: 1.7
            The default value for `force_int_remainder_cols` will change from
            `True` to `False` in version 1.7.
+
+        .. deprecated:: 1.7
+           `force_int_remainder_cols` is deprecated and will be removed in version 1.9.
 
     Returns
     -------
@@ -1594,105 +1600,6 @@ class make_column_selector:
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
         return cols.tolist()
-
-
-class _RemainderColsList(UserList):
-    """A list that raises a warning whenever items are accessed.
-
-    It is used to store the columns handled by the "remainder" entry of
-    ``ColumnTransformer.transformers_``, ie ``transformers_[-1][-1]``.
-
-    For some values of the ``ColumnTransformer`` ``transformers`` parameter,
-    this list of indices will be replaced by either a list of column names or a
-    boolean mask; in those cases we emit a ``FutureWarning`` the first time an
-    element is accessed.
-
-    Parameters
-    ----------
-    columns : list of int
-        The remainder columns.
-
-    future_dtype : {'str', 'bool'}, default=None
-        The dtype that will be used by a ColumnTransformer with the same inputs
-        in a future release. There is a default value because providing a
-        constructor that takes a single argument is a requirement for
-        subclasses of UserList, but we do not use it in practice. It would only
-        be used if a user called methods that return a new list such are
-        copying or concatenating `_RemainderColsList`.
-
-    warning_was_emitted : bool, default=False
-       Whether the warning for that particular list was already shown, so we
-       only emit it once.
-
-    warning_enabled : bool, default=True
-        When False, the list never emits the warning nor updates
-        `warning_was_emitted``. This is used to obtain a quiet copy of the list
-        for use by the `ColumnTransformer` itself, so that the warning is only
-        shown when a user accesses it directly.
-    """
-
-    def __init__(
-        self,
-        columns,
-        *,
-        future_dtype=None,
-        warning_was_emitted=False,
-        warning_enabled=True,
-    ):
-        super().__init__(columns)
-        self.future_dtype = future_dtype
-        self.warning_was_emitted = warning_was_emitted
-        self.warning_enabled = warning_enabled
-
-    def __getitem__(self, index):
-        self._show_remainder_cols_warning()
-        return super().__getitem__(index)
-
-    def _show_remainder_cols_warning(self):
-        if self.warning_was_emitted or not self.warning_enabled:
-            return
-        self.warning_was_emitted = True
-        future_dtype_description = {
-            "str": "column names (of type str)",
-            "bool": "a mask array (of type bool)",
-            # shouldn't happen because we always initialize it with a
-            # non-default future_dtype
-            None: "a different type depending on the ColumnTransformer inputs",
-        }.get(self.future_dtype, self.future_dtype)
-
-        # TODO(1.7) Update the warning to say that the old behavior will be
-        # removed in 1.9.
-        warnings.warn(
-            (
-                "\nThe format of the columns of the 'remainder' transformer in"
-                " ColumnTransformer.transformers_ will change in version 1.7 to"
-                " match the format of the other transformers.\nAt the moment the"
-                " remainder columns are stored as indices (of type int). With the same"
-                " ColumnTransformer configuration, in the future they will be stored"
-                f" as {future_dtype_description}.\nTo use the new behavior now and"
-                " suppress this warning, use"
-                " ColumnTransformer(force_int_remainder_cols=False).\n"
-            ),
-            category=FutureWarning,
-        )
-
-    def _repr_pretty_(self, printer, *_):
-        """Override display in ipython console, otherwise the class name is shown."""
-        printer.text(repr(self.data))
-
-
-def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
-    result = []
-    for name, trans, columns in transformers:
-        if isinstance(columns, _RemainderColsList):
-            columns = _RemainderColsList(
-                columns.data,
-                future_dtype=columns.future_dtype,
-                warning_was_emitted=columns.warning_was_emitted,
-                warning_enabled=warning_enabled,
-            )
-        result.append((name, trans, columns))
-    return result
 
 
 def _feature_names_out_with_str_format(

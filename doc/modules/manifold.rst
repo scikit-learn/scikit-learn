@@ -112,6 +112,12 @@ from the data itself, without the use of predetermined classifications.
   using manifold learning to map the stock market structure based on historical stock
   prices.
 
+* See :ref:`sphx_glr_auto_examples_manifold_plot_manifold_sphere.py` for an example of
+  manifold learning techniques applied to a spherical data-set.
+
+* See :ref:`sphx_glr_auto_examples_manifold_plot_swissroll.py` for an example of using
+  manifold learning techniques on a Swiss Roll dataset.
+
 The manifold learning implementations available in scikit-learn are
 summarized below
 
@@ -414,29 +420,37 @@ Multi-dimensional Scaling (MDS)
 ===============================
 
 `Multidimensional scaling <https://en.wikipedia.org/wiki/Multidimensional_scaling>`_
-(:class:`MDS`) seeks a low-dimensional
-representation of the data in which the distances respect well the
+(:class:`MDS` and :class:`ClassicalMDS`) seeks a low-dimensional
+representation of the data in which the distances approximate the
 distances in the original high-dimensional space.
 
-In general, :class:`MDS` is a technique used for analyzing
+In general, MDS is a technique used for analyzing
 dissimilarity data. It attempts to model dissimilarities as
 distances in a Euclidean space. The data can be ratings of dissimilarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exist two types of MDS algorithm: metric and non-metric. In
-scikit-learn, the class :class:`MDS` implements both. In metric MDS,
+There exist three types of MDS algorithm: metric, non-metric, and classical. In
+scikit-learn, the class :class:`MDS` implements metric and non-metric MDS,
+while :class:`ClassicalMDS` implements classical MDS. In metric MDS,
 the distances in the embedding space are set as
 close as possible to the dissimilarity data. In the non-metric
 version, the algorithm will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
-space and the input dissimilarities.
+space and the input dissimilarities. Finally, classical MDS is close to PCA
+and, instead of approximating distances, approximates pairwise scalar products,
+which is an easier optimization problem with an analytic solution
+in terms of eigendecomposition.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
+.. |MMDS_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
+    :target: ../auto_examples/manifold/plot_lle_digits.html
+    :scale: 50
 
+.. |NMDS_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_011.png
+    :target: ../auto_examples/manifold/plot_lle_digits.html
+    :scale: 50
+
+.. centered:: |MMDS_img| |NMDS_img|
 
 Let :math:`\delta_{ij}` be the dissimilarity matrix between the
 :math:`n` input points (possibly arising as some pairwise distances
@@ -454,9 +468,9 @@ coordinates :math:`Z` of the embedded points.
   disparities are simply equal to the input dissimilarities
   :math:`\hat{d}_{ij} = \delta_{ij}`.
 
-.. dropdown:: Nonmetric MDS
+.. dropdown:: Non-metric MDS
 
-  Non metric :class:`MDS` focuses on the ordination of the data. If
+  Non-metric :class:`MDS` focuses on the ordination of the data. If
   :math:`\delta_{ij} > \delta_{kl}`, then the embedding
   seeks to enforce :math:`d_{ij}(Z) > d_{kl}(Z)`. A simple algorithm
   to enforce proper ordination is to use an
@@ -482,6 +496,35 @@ coordinates :math:`Z` of the embedded points.
     :target: ../auto_examples/manifold/plot_mds.html
     :align: center
     :scale: 60
+
+Classical MDS, also known as
+*principal coordinates analysis (PCoA)* or *Torgerson's scaling*, is implemented
+in the separate :class:`ClassicalMDS` class. Classical MDS replaces the stress
+loss function with a different loss function called *strain*, which has an
+exact solution in terms of eigendecomposition of the double-centered matrix
+of squared dissimilarities. If the dissimilarity matrix consists of the pairwise
+Euclidean distances between some vectors, then classical MDS is equivalent
+to PCA applied to this set of vectors.
+
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_012.png
+   :target: ../auto_examples/manifold/plot_lle_digits.html
+   :align: center
+   :scale: 50
+
+
+Formally, the loss function of classical MDS (strain) is given by
+
+.. math::
+    \sqrt{\frac{\sum_{i,j} (b_{ij} - z_i^\top z_j)^2}{\sum_{i,j}
+    b_{ij}^2}},
+
+where :math:`z_i` are embedding vectors and :math:`b_{ij}` are the elements
+of the double-centered matrix of squared dissimilarities: :math:`B = -C\Delta C/2`
+with :math:`\Delta` being the matrix of squared input dissimilarities
+:math:`\delta^2_{ij}` and :math:`C=I-J/n` is the centering matrix
+(identity matrix minus a matrix of all ones divided by :math:`n`).
+This can be minimized exactly using the eigendecomposition of :math:`B`.
+
 
 .. rubric:: References
 
@@ -542,7 +585,7 @@ The disadvantages to using t-SNE are roughly:
   initializing points with PCA (using `init='pca'`).
 
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_013.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_015.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50

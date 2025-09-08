@@ -11,13 +11,13 @@ import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._mask import _get_mask
-from ..utils._missing import is_pandas_na, is_scalar_nan
-from ..utils._param_validation import MissingValues, StrOptions
-from ..utils.fixes import _mode
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
+from sklearn.utils._param_validation import MissingValues, StrOptions
+from sklearn.utils.fixes import _mode
+from sklearn.utils.sparsefuncs import _get_median
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _check_n_features,
@@ -38,6 +38,20 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _safe_min(items):
+    """Compute the minimum of a list of potentially non-comparable values.
+
+    If values cannot be directly compared due to type incompatibility, the object with
+    the lowest string representation is returned.
+    """
+    try:
+        return min(items)
+    except TypeError as e:
+        if "'<' not supported between" in str(e):
+            return min(items, key=lambda x: (str(type(x)), str(x)))
+        raise  # pragma: no cover
+
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -50,10 +64,12 @@ def _most_frequent(array, extra_value, n_repeat):
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
             # tie breaking similarly to scipy.stats.mode
-            most_frequent_value = min(
-                value
-                for value, count in counter.items()
-                if count == most_frequent_count
+            most_frequent_value = _safe_min(
+                [
+                    value
+                    for value, count in counter.items()
+                    if count == most_frequent_count
+                ]
             )
         else:
             mode = _mode(array)
@@ -72,7 +88,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return most_frequent_value
     elif most_frequent_count == n_repeat:
         # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        return _safe_min([most_frequent_value, extra_value])
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
@@ -391,16 +407,18 @@ class SimpleImputer(_BaseImputer):
                 fill_value_dtype = type(self.fill_value)
                 err_msg = (
                     f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that both dtypes are of the same kind."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "If fill_value is a Python scalar, instead pass  a numpy scalar "
+                    "(e.g. fill_value=np.uint8(0) if your data is of type np.uint8). "
+                    "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
                 fill_value_dtype = self.statistics_.dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that the dtypes of the input data is of the same kind between "
-                    "fit and transform."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "Make sure that the dtypes of the input data are of the same kind "
+                    "between fit and transform."
                 )
             else:
                 # By default, fill_value=None, and the replacement is always
