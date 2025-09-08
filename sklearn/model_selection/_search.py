@@ -45,6 +45,7 @@ from sklearn.model_selection._validation import (
     _warn_or_raise_about_fit_failures,
 )
 from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._array_api import xpx
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._tags import get_tags
@@ -1163,7 +1164,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     rank_result = np.ones_like(array_means, dtype=np.int32)
                 else:
                     min_array_means = np.nanmin(array_means) - 1
-                    array_means = np.nan_to_num(array_means, nan=min_array_means)
+                    array_means = xpx.nan_to_num(
+                        array_means, fill_value=min_array_means
+                    )
                     rank_result = rankdata(-array_means, method="min").astype(
                         np.int32, copy=False
                     )
@@ -1212,7 +1215,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
