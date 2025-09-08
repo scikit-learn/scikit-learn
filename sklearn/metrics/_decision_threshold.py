@@ -32,8 +32,6 @@ def decision_threshold_curve(
     score_func,
     y_true,
     y_score,
-    # Should below 2 have a default value?
-    thresholds=20,
     greater_is_better=True,
     labels=None,
     **kwargs,
@@ -57,12 +55,6 @@ def decision_threshold_curve(
 
     y_score : array-like of shape (n_samples,)
         Continuous response scores.
-
-    thresholds : int or array-like, default=20
-        Specifies number of decision thresholds to compute score for. If an integer,
-        it will be used to generate `thresholds` thresholds uniformly distributed
-        between the minimum and maximum of `y_score`. If an array-like, it will be
-        used as the thresholds.
 
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is
@@ -108,7 +100,7 @@ def decision_threshold_curve(
     from sklearn.metrics._scorer import _CurveScorer
 
     sign = 1 if greater_is_better else -1
-    curve_scorer = _CurveScorer(score_func, sign, {}, thresholds)
+    curve_scorer = _CurveScorer(score_func, sign, {}, thresholds=None)
     return curve_scorer._scores_from_predictions(
         y_true,
         y_score,

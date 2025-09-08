@@ -1061,11 +1061,13 @@ class _CurveScorer(_BaseScorer):
     kwargs : dict
         Additional parameters to pass to the score function.
 
-    thresholds : int or array-like
-        Specifies number of decision thresholds to compute score for. If an integer,
-        it will be used to generate `thresholds` thresholds uniformly distributed
-        between the minimum and maximum of `y_score`. If an array-like, it will be
-        used as the thresholds.
+    thresholds : int or array-like or None
+        Specifies number of decision thresholds to compute score for.
+
+        * if an integer, it will be used to generate `thresholds` thresholds uniformly
+          distributed between the minimum and maximum of `y_score`
+        * if an array-like, it will be used as the thresholds
+        * if None, a threshold will be set for each unique `y_score`
 
     response_method : str, default=None
         The method to call on the estimator to get the response values.
@@ -1142,7 +1144,14 @@ class _CurveScorer(_BaseScorer):
                 f"`y_true` ({y_true_unique})."
             )
 
-        if isinstance(self._thresholds, Integral):
+        if self._thresholds is None:
+            desc_score_indices = np.argsort(y_score, stable=True)[::-1]
+            y_score = y_score[desc_score_indices]
+            distinct_value_indices = np.nonzero(np.diff(y_score))[0]
+            potential_thresholds = np.concat(
+                [distinct_value_indices, np.asarray([y_true.shape[0] - 1])]
+            )
+        elif isinstance(self._thresholds, Integral):
             potential_thresholds = np.linspace(
                 np.min(y_score), np.max(y_score), self._thresholds
             )
