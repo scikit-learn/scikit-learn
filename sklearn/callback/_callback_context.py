@@ -1,8 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from . import AutoPropagatedProtocol
-from ._task_tree import TaskNode
+from sklearn.callback import AutoPropagatedProtocol
+from sklearn.callback._task_tree import TaskNode
 
 
 class CallbackContext:

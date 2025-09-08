@@ -4,7 +4,7 @@
 from multiprocessing import Manager
 from threading import Thread
 
-from ..utils._optional_dependencies import check_rich_support
+from sklearn.utils._optional_dependencies import check_rich_support
 
 
 class ProgressBar:
@@ -192,7 +192,7 @@ class RichTaskNode:
         colors = ["bright_magenta", "cyan", "dark_orange"]
 
         indent = f"{'  ' * (task_node.depth)}"
-        style = f"[{colors[(task_node.depth)%len(colors)]}]"
+        style = f"[{colors[(task_node.depth) % len(colors)]}]"
 
         task_desc = f"{task_node.estimator_name} - {task_node.task_name}"
         id_mark = f" #{task_node.task_id}" if task_node.parent is not None else ""

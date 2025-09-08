@@ -6,11 +6,11 @@ callbacks for scikit-learn estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._base import AutoPropagatedProtocol, CallbackProtocol
-from ._callback_context import CallbackContext
-from ._mixin import CallbackSupportMixin
-from ._progressbar import ProgressBar
-from ._task_tree import TaskNode
+from sklearn.callback._base import AutoPropagatedProtocol, CallbackProtocol
+from sklearn.callback._callback_context import CallbackContext
+from sklearn.callback._mixin import CallbackSupportMixin
+from sklearn.callback._progressbar import ProgressBar
+from sklearn.callback._task_tree import TaskNode
 
 __all__ = [
     "AutoPropagatedProtocol",

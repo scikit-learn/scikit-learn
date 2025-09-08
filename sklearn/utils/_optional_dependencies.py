@@ -57,6 +57,6 @@ def check_rich_support(caller_name):
         The name of the caller that requires rich.
     """
     try:
-        import rich  # noqa
+        import rich  # noqa: F401
     except ImportError as e:
         raise ImportError(f"{caller_name} requires rich.") from e
