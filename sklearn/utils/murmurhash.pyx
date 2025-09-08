@@ -17,6 +17,8 @@ from ..utils._typedefs cimport int32_t, uint32_t
 
 import numpy as np
 
+from sklearn.utils.deprecation import deprecated
+
 cdef extern from "src/MurmurHash3.h":
     void MurmurHash3_x86_32(void *key, int len, uint32_t seed, void *out)
     void MurmurHash3_x86_128(void *key, int len, uint32_t seed, void *out)
@@ -79,8 +81,17 @@ def _murmurhash3_bytes_array_s32(
     return np.asarray(out)
 
 
+# TODO(1.10): remove
+@deprecated(
+    "Function `murmurhash3_32` was deprecated in 1.8 and will be "
+    "removed in 1.10."
+)
 def murmurhash3_32(key, seed=0, positive=False):
     """Compute the 32bit murmurhash3 of key at seed.
+
+    .. deprecated:: 1.8
+        Function `murmurhash3_32` was deprecated in 1.8.0 and will be
+        removed in 1.10.0.
 
     The underlying implementation is MurmurHash3_x86_32 generating low
     latency 32bits hash suitable for implementing lookup tables, Bloom
@@ -104,6 +115,36 @@ def murmurhash3_32(key, seed=0, positive=False):
     --------
     >>> from sklearn.utils import murmurhash3_32
     >>> murmurhash3_32(b"Hello World!", seed=42)
+    3565178
+    """
+    return _murmurhash3_32(key, seed, positive)
+
+
+def _murmurhash3_32(key, seed=0, positive=False):
+    """Compute the 32bit murmurhash3 of key at seed.
+
+    The underlying implementation is MurmurHash3_x86_32 generating low
+    latency 32bits hash suitable for implementing lookup tables, Bloom
+    filters, count min sketch or feature hashing.
+
+    Parameters
+    ----------
+    key : np.int32, bytes, unicode or ndarray of dtype=np.int32
+        The physical object to hash.
+
+    seed : int, default=0
+        Integer seed for the hashing algorithm.
+
+    positive : bool, default=False
+        True: the results is casted to an unsigned int
+          from 0 to 2 ** 32 - 1
+        False: the results is casted to a signed int
+          from -(2 ** 31) to 2 ** 31 - 1
+
+    Examples
+    --------
+    >>> from sklearn.utils.murmurhash import _murmurhash3_32
+    >>> _murmurhash3_32(b"Hello World!", seed=42)
     3565178
     """
     if isinstance(key, bytes):
