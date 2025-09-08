@@ -22,7 +22,7 @@ by considering all the distances between two clusters when merging them
 shortest distance between clusters). The connectivity graph breaks this
 mechanism for average and complete linkage, making them resemble the more
 brittle single linkage. This effect is more pronounced for very sparse graphs
-(try decreasing the number of neighbors in kneighbors_graph) and with
+(try decreasing the number of neighbors in `kneighbors_graph`) and with
 complete linkage. In particular, having a very small number of neighbors in
 the graph, imposes a geometry that is close to that of single linkage,
 which is well known to have this percolation instability.
@@ -143,6 +143,7 @@ knn_graph = kneighbors_graph(X2, 30, include_self=False)
 
 # %%
 # Plot clustering with and without structure
+# ******************************************
 fig3 = plt.figure(figsize=(8, 12))
 subfigs = fig3.subfigures(4, 1)
 params = [
