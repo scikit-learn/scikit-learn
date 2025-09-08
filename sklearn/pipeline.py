@@ -12,21 +12,17 @@ from itertools import chain, islice
 import numpy as np
 from scipy import sparse
 
-from .base import TransformerMixin, _fit_context, clone
-from .exceptions import NotFittedError
-from .preprocessing import FunctionTransformer
-from .utils import Bunch
-from .utils._estimator_html_repr import _VisualBlock
-from .utils._metadata_requests import METHODS
-from .utils._param_validation import HasMethods, Hidden
-from .utils._set_output import (
-    _get_container_adapter,
-    _safe_set_output,
-)
-from .utils._tags import get_tags
-from .utils._user_interface import _print_elapsed_time
-from .utils.deprecation import _deprecate_Xt_in_inverse_transform
-from .utils.metadata_routing import (
+from sklearn.base import TransformerMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch
+from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._param_validation import HasMethods, Hidden
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import _get_container_adapter, _safe_set_output
+from sklearn.utils._tags import get_tags
+from sklearn.utils._user_interface import _print_elapsed_time
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
@@ -34,9 +30,9 @@ from .utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from .utils.metaestimators import _BaseComposition, available_if
-from .utils.parallel import Parallel, delayed
-from .utils.validation import check_is_fitted, check_memory
+from sklearn.utils.metaestimators import _BaseComposition, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, check_memory
 
 __all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
 
@@ -321,6 +317,8 @@ class Pipeline(_BaseComposition):
         return self
 
     def _validate_steps(self):
+        if not self.steps:
+            raise ValueError("The pipeline is empty. Please add steps.")
         names, estimators = zip(*self.steps)
 
         # validate names
@@ -1096,7 +1094,7 @@ class Pipeline(_BaseComposition):
         return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
-    def inverse_transform(self, X=None, *, Xt=None, **params):
+    def inverse_transform(self, X, **params):
         """Apply `inverse_transform` for each step in a reverse order.
 
         All estimators in the pipeline must support `inverse_transform`.
@@ -1108,15 +1106,6 @@ class Pipeline(_BaseComposition):
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
             ``inverse_transform`` method.
-
-        Xt : array-like of shape (n_samples, n_transformed_features)
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features. Must fulfill
-            input requirements of last step of pipeline's
-            ``inverse_transform`` method.
-
-            .. deprecated:: 1.5
-                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
@@ -1130,15 +1119,13 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed data, that is, data in the original feature
             space.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _raise_or_warn_if_not_fitted(self):
             _raise_for_params(params, self, "inverse_transform")
-
-            X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
             # we don't have to branch here, since params is only non-empty if
             # enable_metadata_routing=True.
@@ -1233,7 +1220,7 @@ class Pipeline(_BaseComposition):
             tags.input_tags.sparse = all(
                 get_tags(step).input_tags.sparse
                 for name, step in self.steps
-                if step != "passthrough"
+                if step is not None and step != "passthrough"
             )
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
@@ -1301,7 +1288,6 @@ class Pipeline(_BaseComposition):
 
         An empty pipeline is considered fitted.
         """
-
         # First find the last step that is not 'passthrough'
         last_step = None
         for _, estimator in reversed(self.steps):
@@ -1324,15 +1310,15 @@ class Pipeline(_BaseComposition):
             return False
 
     def _sk_visual_block_(self):
-        _, estimators = zip(*self.steps)
-
         def _get_name(name, est):
             if est is None or est == "passthrough":
                 return f"{name}: passthrough"
             # Is an estimator
             return f"{name}: {est.__class__.__name__}"
 
-        names = [_get_name(name, est) for name, est in self.steps]
+        names, estimators = zip(
+            *[(_get_name(name, est), est) for name, est in self.steps]
+        )
         name_details = [str(est) for est in estimators]
         return _VisualBlock(
             "serial",
@@ -1354,7 +1340,7 @@ class Pipeline(_BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
 
         # first we add all steps except the last one
         for _, name, trans in self._iter(with_final=False, filter_passthrough=True):
@@ -1660,12 +1646,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[-1.5       ,  3.0..., -0.8...],
-           [ 1.5       ,  5.7...,  0.4...]])
+    array([[-1.5       ,  3.04, -0.872],
+           [ 1.5       ,  5.72,  0.463]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[-1.5       ,  3.0...],
-           [ 1.5       ,  5.7...]])
+    array([[-1.5       ,  3.04],
+           [ 1.5       ,  5.72]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
@@ -2049,15 +2035,23 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        # Check if Xs dimensions are valid
+        for X, (name, _) in zip(Xs, self.transformer_list):
+            if hasattr(X, "shape") and len(X.shape) != 2:
+                raise ValueError(
+                    f"Transformer '{name}' returned an array or dataframe with "
+                    f"{len(X.shape)} dimensions, but expected 2 dimensions "
+                    "(n_samples, n_features)."
+                )
+
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        return np.hstack(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
@@ -2109,7 +2103,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
 
         for name, transformer in self.transformer_list:
             router.add(

@@ -98,6 +98,15 @@ feature, code or documentation improvement).
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
+   .. note::
+
+      If OpenMP is not supported by the compiler, the build will be done with
+      OpenMP functionalities disabled. This is not recommended since it will force
+      some estimators to run in sequential mode instead of leveraging thread-based
+      parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+      (before cythonization) will force the build to fail if OpenMP is not
+      supported.
+
 #. Build the project with pip:
 
    .. prompt:: bash $
@@ -130,61 +139,6 @@ feature, code or documentation improvement).
     Note that `--config-settings` is only supported in `pip` version 23.1 or
     later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
-Dependencies
-------------
-
-Runtime dependencies
-~~~~~~~~~~~~~~~~~~~~
-
-Scikit-learn requires the following dependencies both at build time and at
-runtime:
-
-- Python (>= |PythonMinVersion|),
-- NumPy (>= |NumpyMinVersion|),
-- SciPy (>= |ScipyMinVersion|),
-- Joblib (>= |JoblibMinVersion|),
-- threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-Build dependencies
-~~~~~~~~~~~~~~~~~~
-
-Building Scikit-learn also requires:
-
-..
-    # The following places need to be in sync with regard to Cython version:
-    # - .circleci config file
-    # - sklearn/_build_utils/__init__.py
-    # - advanced installation guide
-
-- Cython >= |CythonMinVersion|
-- A C/C++ compiler and a matching OpenMP_ runtime library. See the
-  :ref:`platform system specific instructions
-  <platform_specific_instructions>` for more details.
-
-.. note::
-
-   If OpenMP is not supported by the compiler, the build will be done with
-   OpenMP functionalities disabled. This is not recommended since it will force
-   some estimators to run in sequential mode instead of leveraging thread-based
-   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
-   (before cythonization) will force the build to fail if OpenMP is not
-   supported.
-
-Since version 0.21, scikit-learn automatically detects and uses the linear
-algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
-build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
-or MKL.
-
-Test dependencies
-~~~~~~~~~~~~~~~~~
-
-Running tests requires:
-
-- pytest >= |PytestMinVersion|
-
-Some tests also require `pandas <https://pandas.pydata.org>`_.
-
-
 Building a specific version from a tag
 --------------------------------------
 
@@ -205,7 +159,7 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, download the `Build Tools for Visual Studio 2019 installer
+First, download the `Build Tools for Visual Studio installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
@@ -214,39 +168,12 @@ screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
 
-Secondly, find out if you are running 64-bit or 32-bit Python. The building
-command depends on the architecture of the Python interpreter. You can check
-the architecture by running the following in ``cmd`` or ``powershell``
-console:
+Build scikit-learn by running the following command in your `sklearn-env` conda environment
+or virtualenv:
 
 .. prompt:: bash $
 
-    python -c "import struct; print(struct.calcsize('P') * 8)"
-
-For 64-bit Python, configure the build environment by running the following
-commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
-
-.. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
-.. so we work around by using a known prompt type and an explicit prompt text.
-..
-.. prompt:: bash C:\>
-
-    SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-
-Replace ``x64`` by ``x86`` to build for 32-bit Python.
-
-Please be aware that the path above might be different from user to user. The
-aim is to point to the "vcvarsall.bat" file that will set the necessary
-environment variables in the current command prompt.
-
-Finally, build scikit-learn with this command prompt:
-
-.. prompt:: bash $
-
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
+    pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
 
 .. _compiler_macos:
 
@@ -261,10 +188,6 @@ to enable OpenMP support:
 
 - or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
-For Apple Silicon M1 hardware, only the conda-forge method below is known to
-work at the time of writing (January 2021). You can install the `macos/arm64`
-distribution of conda using the `conda-forge installer
-<https://conda-forge.org/download/>`_
 
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -352,17 +275,6 @@ Install the LLVM OpenMP library:
 .. prompt:: bash $
 
     brew install libomp
-
-Set the following environment variables:
-
-.. prompt:: bash $
-
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
 Finally, build scikit-learn in verbose mode (to check for the presence of the
 ``-fopenmp`` flag in the compiler commands):

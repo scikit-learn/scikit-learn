@@ -27,7 +27,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -1210,18 +1210,14 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
-    params = dict(C=np.logspace(-4, 1, 3), gamma=np.logspace(-5, 0, 3, base=0.1))
+    params = dict(C=np.logspace(-4, 1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
             # If True, for multi-metric pass refit='accuracy'
-            if refit:
-                probability = True
-                refit = "accuracy" if isinstance(scoring, tuple) else refit
-            else:
-                probability = False
-            clf = SVC(probability=probability, random_state=42)
+            if refit and isinstance(scoring, tuple):
+                refit = "accuracy"
+            clf = LogisticRegression(random_state=42)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -1311,6 +1307,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
 )
 def test_search_cv_score_samples_error(search_cv):
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
+    search_cv = clone(search_cv)
     search_cv.fit(X, y)
 
     # Make sure to error out when underlying estimator does not implement
@@ -1446,6 +1443,7 @@ def test_search_cv_sample_weight_equivalence(estimator):
     ],
 )
 def test_search_cv_score_samples_method(search_cv):
+    search_cv = clone(search_cv)  # Avoid side effects from previous tests.
     # Set parameters
     rng = np.random.RandomState(42)
     n_samples = 300
@@ -2097,6 +2095,9 @@ def test__custom_fit_no_run_search():
         BadSearchCV(SVC()).fit(X, y)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_empty_cv_iterator_error():
     # Use global X, y
 
@@ -2122,6 +2123,8 @@ def test_empty_cv_iterator_error():
         ridge.fit(X[:train_size], y[:train_size])
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
 def test_random_search_bad_cv():
     # Use global X, y
 
@@ -2422,9 +2425,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert (
-            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
-        ), attr_message
+        assert _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise, (
+            attr_message
+        )
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
@@ -2622,6 +2625,9 @@ def test_search_estimator_param(SearchCV, param_search):
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_search_with_2d_array():
     parameter_grid = {
         "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
@@ -2662,43 +2668,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" not in repr_html
-        assert "<pre>LogisticRegression()</pre>" in repr_html
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_inverse_transform_Xt_deprecation(SearchCV):
-    clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
-
-    X2 = search.fit(X, y).transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        search.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        search.inverse_transform(X=X2, Xt=X2)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        search.inverse_transform(X2)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        search.inverse_transform(Xt=X2)
+        assert "<div>DummyClassifier</div>" not in repr_html
+        assert "<div>LogisticRegression</div>" in repr_html
 
 
 # Metadata Routing Tests
@@ -2913,7 +2897,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 

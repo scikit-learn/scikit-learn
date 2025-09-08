@@ -21,7 +21,7 @@ import logging
 import os
 import random
 
-from ._config import config_context, get_config, set_config
+from sklearn._config import config_context, get_config, set_config
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.7.dev0"
+__version__ = "1.8.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -66,12 +66,9 @@ os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 # It is necessary to do this prior to importing show_versions as the
 # later is linked to the OpenMP runtime to make it possible to introspect
 # it and importing it first would fail if the OpenMP dll cannot be found.
-from . import (  # noqa: F401 E402
-    __check_build,
-    _distributor_init,
-)
-from .base import clone  # noqa: E402
-from .utils._show_versions import show_versions  # noqa: E402
+from sklearn import __check_build, _distributor_init  # noqa: E402 F401
+from sklearn.base import clone  # noqa: E402
+from sklearn.utils._show_versions import show_versions  # noqa: E402
 
 _submodules = [
     "calibration",
@@ -137,15 +134,6 @@ def __getattr__(name):
             return globals()[name]
         except KeyError:
             raise AttributeError(f"Module 'sklearn' has no attribute '{name}'")
-
-
-_BUILT_WITH_MESON = False
-try:
-    import sklearn._built_with_meson  # noqa: F401
-
-    _BUILT_WITH_MESON = True
-except ModuleNotFoundError:
-    pass
 
 
 def setup_module(module):

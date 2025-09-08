@@ -13,43 +13,46 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import optimize
 
-from sklearn.metrics import get_scorer_names
-
-from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
-from ..base import _fit_context
-from ..metrics import get_scorer
-from ..model_selection import check_cv
-from ..preprocessing import LabelBinarizer, LabelEncoder
-from ..svm._base import _fit_liblinear
-from ..utils import (
+from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn.base import _fit_context
+from sklearn.linear_model._base import (
+    BaseEstimator,
+    LinearClassifierMixin,
+    SparseCoefMixin,
+)
+from sklearn.linear_model._glm.glm import NewtonCholeskySolver
+from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._sag import sag_solver
+from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.model_selection import check_cv
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.svm._base import _fit_liblinear
+from sklearn.utils import (
     Bunch,
     check_array,
     check_consistent_length,
     check_random_state,
     compute_class_weight,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import row_norms, softmax
-from ..utils.metadata_routing import (
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.extmath import row_norms, softmax
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.multiclass import check_classification_targets
-from ..utils.optimize import _check_optimize_result, _newton_cg
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.optimize import _check_optimize_result, _newton_cg
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     check_is_fitted,
     validate_data,
 )
-from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
-from ._glm.glm import NewtonCholeskySolver
-from ._linear_loss import LinearModelLoss
-from ._sag import sag_solver
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -194,17 +197,19 @@ def _logistic_regression_path(
         only supported by the 'saga' solver.
 
     intercept_scaling : float, default=1.
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equal to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
 
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     multi_class : {'ovr', 'multinomial', 'auto'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
@@ -337,7 +342,7 @@ def _logistic_regression_path(
 
     else:
         if solver in ["sag", "saga", "lbfgs", "newton-cg", "newton-cholesky"]:
-            # SAG, lbfgs, newton-cg and newton-cg multinomial solvers need
+            # SAG, lbfgs, newton-cg and newton-cholesky multinomial solvers need
             # LabelEncoder, not LabelBinarizer, i.e. y as a 1d-array of integers.
             # LabelEncoder also saves memory compared to LabelBinarizer, especially
             # when n_classes is large.
@@ -462,9 +467,9 @@ def _logistic_regression_path(
                 options={
                     "maxiter": max_iter,
                     "maxls": 50,  # default is 20
-                    "iprint": iprint,
                     "gtol": tol,
                     "ftol": 64 * np.finfo(float).eps,
+                    **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
             )
             n_iter_i = _check_optimize_result(
@@ -501,6 +506,15 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
+            if len(classes) > 2:
+                warnings.warn(
+                    "Using the 'liblinear' solver for multiclass classification is "
+                    "deprecated. An error will be raised in 1.8. Either use another "
+                    "solver which supports the multinomial loss or wrap the estimator "
+                    "in a OneVsRestClassifier to keep applying a one-versus-rest "
+                    "scheme.",
+                    FutureWarning,
+                )
             (
                 coef_,
                 intercept_,
@@ -683,16 +697,19 @@ def _log_reg_scoring_path(
         n_samples > n_features.
 
     intercept_scaling : float
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
+        i.e. a "synthetic" feature with constant value equal to
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
+
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     multi_class : {'auto', 'ovr', 'multinomial'}
         If the option chosen is 'ovr', then a binary problem is fit for each
@@ -815,22 +832,21 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
-    This class implements regularized logistic regression using the
-    'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. **Note
-    that regularization is applied by default**. It can handle both dense
-    and sparse input. Use C-ordered arrays or CSR matrices containing 64-bit
-    floats for optimal performance; any other input format will be converted
-    (and copied).
+    This class implements regularized logistic regression using a set of available
+    solvers. **Note that regularization is applied by default**. It can handle both
+    dense and sparse input `X`. Use C-ordered arrays or CSR matrices containing 64-bit
+    floats for optimal performance; any other input format will be converted (and
+    copied).
 
-    The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
-    with primal formulation, or no regularization. The 'liblinear' solver
-    supports both L1 and L2 regularization, with a dual formulation only for
-    the L2 penalty. The Elastic-Net regularization is only supported by the
-    'saga' solver.
+    The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
+    regularization with primal formulation, or no regularization. The 'liblinear'
+    solver supports both L1 and L2 regularization (but not both, i.e. elastic-net),
+    with a dual formulation only for the L2 penalty. The Elastic-Net (combination of L1
+    and L2) regularization is only supported by the 'saga' solver.
 
-    For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-    handle multinomial loss. 'liblinear' and 'newton-cholesky' only handle binary
-    classification but can be extended to handle multiclass by using
+    For :term:`multiclass` problems, all solvers except for 'liblinear' optimize the
+    (penalized) multinomial loss. 'liblinear' only handles binary classification but
+    can be extended to handle multiclass by using
     :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
@@ -872,17 +888,19 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         added to the decision function.
 
     intercept_scaling : float, default=1
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equal to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
 
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -931,7 +949,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            'lbfgs'           'l2', None                     yes
            'liblinear'       'l1', 'l2'                     no
            'newton-cg'       'l2', None                     yes
-           'newton-cholesky' 'l2', None                     no
+           'newton-cholesky' 'l2', None                     yes
            'sag'             'l2', None                     yes
            'saga'            'elasticnet', 'l1', 'l2', None yes
            ================= ============================== ======================
@@ -948,13 +966,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
+           Stochastic Average Gradient (SAG) descent solver. Multinomial support in
+           version 0.18.
         .. versionadded:: 0.19
            SAGA solver.
         .. versionchanged:: 0.22
-            The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
+           The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
         .. versionadded:: 1.2
-           newton-cholesky solver.
+           newton-cholesky solver. Multinomial support in version 1.6.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -972,7 +991,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
-           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.8.
            From then on, the recommended 'multinomial' will always be used for
            `n_classes >= 3`.
            Solvers that do not support 'multinomial' will raise an error.
@@ -1098,10 +1117,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
-    array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
-           [9.7...e-01, 2.8...e-02, ...e-08]])
+    array([[9.82e-01, 1.82e-02, 1.44e-08],
+           [9.72e-01, 2.82e-02, 3.02e-08]])
     >>> clf.score(X, y)
-    0.97...
+    0.97
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
@@ -1238,13 +1257,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        # TODO(1.7) remove multi_class
+        # TODO(1.8) remove multi_class
         multi_class = self.multi_class
         if self.multi_class == "multinomial" and len(self.classes_) == 2:
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " 1.8. From then on, binary problems will be fit as proper binary "
                     " logistic regression models (as if multi_class='ovr' were set)."
                     " Leave it to its default value to avoid this warning."
                 ),
@@ -1254,7 +1273,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, it will always use 'multinomial'."
+                    " 1.8. From then on, it will always use 'multinomial'."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1263,7 +1282,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. Use OneVsRestClassifier(LogisticRegression(..)) instead."
+                    " 1.8. Use OneVsRestClassifier(LogisticRegression(..)) instead."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1274,6 +1293,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         multi_class = _check_multi_class(multi_class, solver, len(self.classes_))
 
         if solver == "liblinear":
+            if len(self.classes_) > 2:
+                warnings.warn(
+                    "Using the 'liblinear' solver for multiclass classification is "
+                    "deprecated. An error will be raised in 1.8. Either use another "
+                    "solver which supports the multinomial loss or wrap the estimator "
+                    "in a OneVsRestClassifier to keep applying a one-versus-rest "
+                    "scheme.",
+                    FutureWarning,
+                )
             if effective_n_jobs(self.n_jobs) != 1:
                 warnings.warn(
                     "'n_jobs' > 1 does not have any effect when"
@@ -1475,17 +1503,21 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     See glossary entry for :term:`cross-validation estimator`.
 
-    This class implements logistic regression using liblinear, newton-cg, sag
-    or lbfgs optimizer. The newton-cg, sag and lbfgs solvers support only L2
-    regularization with primal formulation. The liblinear solver supports both
-    L1 and L2 regularization, with a dual formulation only for the L2 penalty.
-    Elastic-Net penalty is only supported by the saga solver.
+    This class implements regularized logistic regression with implicit cross
+    validation for the penalty parameters `C` and `l1_ratio`, see
+    :class:`LogisticRegression`, using a set of available solvers.
+
+    The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
+    regularization with primal formulation. The 'liblinear'
+    solver supports both L1 and L2 regularization (but not both, i.e. elastic-net),
+    with a dual formulation only for the L2 penalty. The Elastic-Net (combination of L1
+    and L2) regularization is only supported by the 'saga' solver.
 
     For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
     is selected by the cross-validator
     :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
-    using the :term:`cv` parameter. The 'newton-cg', 'sag', 'saga' and 'lbfgs'
-    solvers can warm-start the coefficients (see :term:`Glossary<warm_start>`).
+    using the :term:`cv` parameter. All solvers except 'liblinear' can warm-start the
+    coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1504,7 +1536,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     cv : int or cross-validation generator, default=None
         The default cross-validation generator used is Stratified K-Folds.
-        If an integer is provided, then it is the number of folds used.
+        If an integer is provided, it specifies the number of folds, `n_folds`, used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
@@ -1568,7 +1600,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            'lbfgs'           'l2'                           yes
            'liblinear'       'l1', 'l2'                     no
            'newton-cg'       'l2'                           yes
-           'newton-cholesky' 'l2',                          no
+           'newton-cholesky' 'l2',                          yes
            'sag'             'l2',                          yes
            'saga'            'elasticnet', 'l1', 'l2'       yes
            ================= ============================== ======================
@@ -1579,11 +1611,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            a scaler from :mod:`sklearn.preprocessing`.
 
         .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
+           Stochastic Average Gradient (SAG) descent solver. Multinomial support in
+           version 0.18.
         .. versionadded:: 0.19
            SAGA solver.
         .. versionadded:: 1.2
-           newton-cholesky solver.
+           newton-cholesky solver. Multinomial support in version 1.6.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -1623,17 +1656,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         best scores across folds are averaged.
 
     intercept_scaling : float, default=1
-        Useful only when the solver 'liblinear' is used
-        and self.fit_intercept is set to True. In this case, x becomes
-        [x, self.intercept_scaling],
+        Useful only when the solver `liblinear` is used
+        and `self.fit_intercept` is set to `True`. In this case, `x` becomes
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equal to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        `intercept_scaling` is appended to the instance vector.
+        The intercept becomes
+        ``intercept_scaling * synthetic_feature_weight``.
 
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        .. note::
+            The synthetic feature weight is subject to L1 or L2
+            regularization as all other features.
+            To lessen the effect of regularization on synthetic feature weight
+            (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     multi_class : {'auto, 'ovr', 'multinomial'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
@@ -1648,7 +1683,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
         .. deprecated:: 1.5
-           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.7.
+           ``multi_class`` was deprecated in version 1.5 and will be removed in 1.8.
            From then on, the recommended 'multinomial' will always be used for
            `n_classes >= 3`.
            Solvers that do not support 'multinomial' will raise an error.
@@ -1692,18 +1727,16 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Array of l1_ratios used for cross-validation. If no l1_ratio is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
-    coefs_paths_ : ndarray of shape (n_folds, n_cs, n_features) or \
-                   (n_folds, n_cs, n_features + 1)
-        dict with classes as the keys, and the path of coefficients obtained
-        during cross-validating across each fold and then across each Cs
-        after doing an OvR for the corresponding class as values.
-        If the 'multi_class' option is set to 'multinomial', then
-        the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, n_cs, n_features)`` or
-        ``(n_folds, n_cs, n_features + 1)`` depending on whether the
-        intercept is fit or not. If ``penalty='elasticnet'``, the shape is
-        ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
-        ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
+    coefs_paths_ : dict of ndarray of shape (n_folds, n_cs, n_dof) or \
+            (n_folds, n_cs, n_l1_ratios, n_dof)
+        A dict with classes as the keys, and the path of coefficients obtained
+        during cross-validating across each fold (`n_folds`) and then across each Cs
+        (`n_cs`) after doing an OvR for the corresponding class as values.
+        The size of the coefficients is `n_dof`, i.e. number of degrees of freedom.
+        Without intercept `n_dof=n_features` and with intercept `n_dof=n_features+1`.
+        If ``penalty='elasticnet'``, there is an additional dimension for the number of
+        l1_ratio values (`n_l1_ratios`), which gives a shape of
+        ``(n_folds, n_cs, n_l1_ratios_, n_dof)``.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1715,7 +1748,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         ``penalty='elasticnet'``.
 
     C_ : ndarray of shape (n_classes,) or (n_classes - 1,)
-        Array of C that maps to the best scores across every class. If refit is
+        Array of C that maps to the best scores across every class. For all solvers
+        except 'liblinear', `C_` repeats the best regularization for all classes. As
+        'liblinear' uses OvR, the values in `C_` are the individually best
+        regularization per class. If `refit` is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
         `C_` is of shape(n_classes,) when the problem is binary.
@@ -1900,13 +1936,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         classes = self.classes_ = label_encoder.classes_
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
-        # TODO(1.7) remove multi_class
+        # TODO(1.8) remove multi_class
         multi_class = self.multi_class
         if self.multi_class == "multinomial" and len(self.classes_) == 2:
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, binary problems will be fit as proper binary "
+                    " 1.8. From then on, binary problems will be fit as proper binary "
                     " logistic regression models (as if multi_class='ovr' were set)."
                     " Leave it to its default value to avoid this warning."
                 ),
@@ -1916,7 +1952,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. From then on, it will always use 'multinomial'."
+                    " 1.8. From then on, it will always use 'multinomial'."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -1925,7 +1961,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "'multi_class' was deprecated in version 1.5 and will be removed in"
-                    " 1.7. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
+                    " 1.8. Use OneVsRestClassifier(LogisticRegressionCV(..)) instead."
                     " Leave it to its default value to avoid this warning."
                 ),
                 FutureWarning,
@@ -2269,7 +2305,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=self.cv,

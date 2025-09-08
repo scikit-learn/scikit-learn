@@ -13,11 +13,11 @@ dependencies = [
   "threadpoolctl>=3.1.0",
 ]
 requires-python = ">=3.10"
-license = {file = "COPYING"}
+license = "BSD-3-Clause"
+license-files = ["COPYING"]
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: BSD License",
   "Programming Language :: C",
   "Programming Language :: Python",
   "Topic :: Software Development",
@@ -43,7 +43,7 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.22.0", "scipy>=1.8.0", "cython>=3.0.10", "meson-python>=0.16.0"]
+build = ["numpy>=1.22.0", "scipy>=1.8.0", "cython>=3.1.2", "meson-python>=0.17.1"]
 install = ["numpy>=1.22.0", "scipy>=1.8.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
 benchmark = ["matplotlib>=3.5.0", "pandas>=1.4.0", "memory_profiler>=0.57.0"]
 docs = [
@@ -86,8 +86,7 @@ tests = [
     "rich>=13.6.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.11.0",
-    "black>=24.3.0",
+    "ruff>=0.11.7",
     "mypy>=1.15",
     "pyamg>=4.2.1",
     "polars>=0.20.30",
@@ -95,14 +94,14 @@ tests = [
     "numpydoc>=1.2.0",
     "pooch>=1.6.0",
 ]
-maintenance = ["conda-lock==2.5.7"]
+maintenance = ["conda-lock==3.0.1"]
 
 [build-system]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.16.0",
-    "Cython>=3.0.10",
+    "Cython>=3.1.2",
     "numpy>=2",
     "scipy>=1.8.0",
 ]
@@ -113,38 +112,29 @@ testpaths = "sklearn"
 addopts = [
     "--disable-pytest-warnings",
     "--color=yes",
+    "--import-mode=importlib",
+]
+# Used by pytest-run-parallel when testing thread-safety (with or without GIL).
+thread_unsafe_fixtures = [
+  "hide_available_pandas",  # relies on monkeypatching
+  "tmp_path",  # does not isolate temporary directories across threads
+  "pyplot",  # some tests might mutate some shared state of pyplot.
 ]
 
-[tool.black]
-line-length = 88
-target-version = ['py310', 'py311']
-preview = true
-exclude = '''
-/(
-    \.eggs         # exclude a few common directories in the
-  | \.git          # root of the project
-  | \.mypy_cache
-  | \.vscode
-  | build
-  | dist
-  | doc/_build
-  | doc/auto_examples
-  | sklearn/externals
-  | asv_benchmarks/env
-)/
-'''
 
 [tool.ruff]
-# max line length for black
 line-length = 88
 exclude=[
+    ".eggs",
     ".git",
+    ".mypy_cache",
+    ".vscode",
     "__pycache__",
+    "build",
     "dist",
     "sklearn/externals",
     "doc/_build",
     "doc/auto_examples",
-    "build",
     "asv_benchmarks/env",
     "asv_benchmarks/html",
     "asv_benchmarks/results",
@@ -157,10 +147,8 @@ preview = true
 # This enables us to use the explicit preview rules that we want only
 explicit-preview-rules = true
 # all rules can be found here: https://docs.astral.sh/ruff/rules/
-select = ["E", "F", "W", "I", "CPY001", "RUF"]
+extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF", "TID252"]
 ignore=[
-    # space before : (needed for how black formats slicing)
-    "E203",
     # do not assign a lambda expression, use a def
     "E731",
     # do not use variables named 'l', 'O', or 'I'
@@ -179,10 +167,26 @@ ignore=[
     "RUF012",
     "RUF015",
     "RUF021",
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
 ]
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
@@ -190,7 +194,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
 "**/tests/*"=["CPY001"]
-"asv_benchmarks/*"=["CPY001"]
+"asv_benchmarks/*"=["CPY001", "TID252"]
 "benchmarks/*"=["CPY001"]
 "doc/*"=["CPY001"]
 "build_tools/*"=["CPY001"]
@@ -203,6 +207,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ S
 "examples/svm/plot_rbf_parameters.py"=["CPY001"]
 # __all__ has un-imported names
 "sklearn/__init__.py"=["F822"]
+"sklearn/utils/_metadata_requests.py"=["CPY001"]
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -220,8 +225,6 @@ follow_imports = "skip"
 ignore = [
     # multiple spaces/tab after comma
     'E24',
-    # space before : (needed for how black formats slicing)
-    'E203',
     # line too long
     'E501',
     # do not assign a lambda expression, use a def
@@ -287,12 +290,12 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.7.rst"
+    filename = "doc/whats_new/v1.8.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"

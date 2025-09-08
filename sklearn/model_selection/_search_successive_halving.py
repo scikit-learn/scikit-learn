@@ -7,15 +7,15 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import _fit_context, is_classifier
-from ..metrics._scorer import get_scorer_names
-from ..utils import resample
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
-from . import ParameterGrid, ParameterSampler
-from ._search import BaseSearchCV
-from ._split import _yields_constant_splits, check_cv
+from sklearn.base import _fit_context, is_classifier
+from sklearn.metrics._scorer import get_scorer_names
+from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._split import _yields_constant_splits, check_cv
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import _num_samples, validate_data
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 
@@ -487,13 +487,25 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    refit : bool, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
+    refit : bool or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_params_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``HalvingGridSearchCV`` instance.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -832,13 +844,25 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    refit : bool, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
+    refit : bool or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_params_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``HalvingRandomSearchCV`` instance.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.

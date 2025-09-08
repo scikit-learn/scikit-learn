@@ -3,6 +3,7 @@
 
 
 import re
+import sys
 import warnings
 from contextlib import suppress
 from functools import partial
@@ -66,7 +67,7 @@ from sklearn.ensemble import (
     VotingRegressor,
 )
 from sklearn.exceptions import SkipTestWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_selection import (
     RFE,
     RFECV,
@@ -144,7 +145,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.naive_bayes import CategoricalNB
 from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
@@ -162,10 +162,7 @@ from sklearn.preprocessing import (
     StandardScaler,
     TargetEncoder,
 )
-from sklearn.random_projection import (
-    GaussianRandomProjection,
-    SparseRandomProjection,
-)
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
 from sklearn.semi_supervised import (
     LabelPropagation,
     LabelSpreading,
@@ -898,15 +895,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    CategoricalNB: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
         "check_estimators_nan_inf": "FIXME",
@@ -961,8 +949,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingGridSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -972,8 +959,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingRandomSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -1266,6 +1252,17 @@ if sp_base_version < parse_version("1.11"):
         ),
     }
 
+linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
+if "pytest_run_parallel" in sys.modules:
+    PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
+        "check_supervised_y_2d": linear_svr_not_thread_safe,
+        "check_regressors_int": linear_svr_not_thread_safe,
+        "check_fit_idempotent": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_dense_data": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_sparse_data": linear_svr_not_thread_safe,
+        "check_regressor_data_not_an_array": linear_svr_not_thread_safe,
+    }
+
 
 def _get_expected_failed_checks(estimator):
     """Get the expected failed checks for all estimators in scikit-learn."""
@@ -1284,7 +1281,13 @@ def _get_expected_failed_checks(estimator):
                 }
             )
     if type(estimator) == LinearRegression:
-        if _IS_32BIT:
+        # TODO: remove when scipy min version >= 1.16
+        # Regression introduced in scipy 1.15 and fixed in 1.16, see
+        # https://github.com/scipy/scipy/issues/22791
+        if (
+            parse_version("1.15.0") <= sp_base_version < parse_version("1.16")
+            and _IS_32BIT
+        ):
             failed_checks.update(
                 {
                     "check_sample_weight_equivalence_on_dense_data": (

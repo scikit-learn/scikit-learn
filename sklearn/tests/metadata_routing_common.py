@@ -74,9 +74,9 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     for record in all_records:
         # first check that the names of the metadata passed are the same as
         # expected. The names are stored as keys in `record`.
-        assert set(kwargs.keys()) == set(
-            record.keys()
-        ), f"Expected {kwargs.keys()} vs {record.keys()}"
+        assert set(kwargs.keys()) == set(record.keys()), (
+            f"Expected {kwargs.keys()} vs {record.keys()}"
+        )
         for key, value in kwargs.items():
             recorded_value = record[key]
             # The following condition is used to check for any specified parameters
@@ -87,9 +87,9 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
                 if isinstance(recorded_value, np.ndarray):
                     assert_array_equal(recorded_value, value)
                 else:
-                    assert (
-                        recorded_value is value
-                    ), f"Expected {recorded_value} vs {value}. Method: {method}"
+                    assert recorded_value is value, (
+                        f"Expected {recorded_value} vs {value}. Method: {method}"
+                    )
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
@@ -491,7 +491,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
@@ -520,7 +520,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -550,7 +550,7 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -576,7 +576,7 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
-        return MetadataRouter(owner=self.__class__.__name__).add(
+        return MetadataRouter(owner=self).add(
             transformer=self.transformer,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")

@@ -7,6 +7,7 @@ import pytest
 
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -114,7 +115,7 @@ def test_notfitted():
 
 def test_majority_label_iris(global_random_seed):
     """Check classification by majority label on dataset iris."""
-    clf1 = LogisticRegression(solver="liblinear", random_state=global_random_seed)
+    clf1 = LogisticRegression(random_state=global_random_seed)
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -127,12 +128,12 @@ def test_majority_label_iris(global_random_seed):
 
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
-    clf1 = LogisticRegression(random_state=123, solver="liblinear")
+    clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[("lr", clf1), ("rf", clf2)], voting="hard")
-    assert clf1.fit(X, y).predict(X)[73] == 2
-    assert clf2.fit(X, y).predict(X)[73] == 1
-    assert eclf.fit(X, y).predict(X)[73] == 1
+    assert clf1.fit(X, y).predict(X)[52] == 2
+    assert clf2.fit(X, y).predict(X)[52] == 1
+    assert eclf.fit(X, y).predict(X)[52] == 1
 
 
 def test_weights_iris(global_random_seed):
@@ -321,13 +322,11 @@ def test_parallel_fit(global_random_seed):
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
-# TODO(1.7): remove warning filter when sample_weight is kwarg only
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=global_random_seed)
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
-    clf3 = SVC(probability=True, random_state=global_random_seed)
+    clf3 = CalibratedClassifierCV(SVC(random_state=global_random_seed), ensemble=False)
     eclf1 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
     ).fit(X_scaled, y, sample_weight=np.ones((len(y),)))
@@ -340,7 +339,7 @@ def test_sample_weight(global_random_seed):
     )
     sample_weight = np.random.RandomState(global_random_seed).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[("lr", clf1)], voting="soft")
-    eclf3.fit(X_scaled, y, sample_weight)
+    eclf3.fit(X_scaled, y, sample_weight=sample_weight)
     clf1.fit(X_scaled, y, sample_weight)
     assert_array_equal(eclf3.predict(X_scaled), clf1.predict(X_scaled))
     assert_array_almost_equal(
@@ -355,7 +354,7 @@ def test_sample_weight(global_random_seed):
     )
     msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
     with pytest.raises(TypeError, match=msg):
-        eclf3.fit(X_scaled, y, sample_weight)
+        eclf3.fit(X_scaled, y, sample_weight=sample_weight)
 
     # check that _fit_single_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
@@ -579,6 +578,7 @@ def test_none_estimator_with_weights(X, y, voter):
     ids=["VotingRegressor", "VotingClassifier"],
 )
 def test_n_features_in(est):
+    est = clone(est)
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 

@@ -9,10 +9,22 @@ from scipy import linalg, sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
+from sklearn import config_context
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -28,6 +40,7 @@ from sklearn.utils.extmath import (
     _safe_accumulator_op,
     cartesian,
     density,
+    randomized_range_finder,
     randomized_svd,
     row_norms,
     safe_sparse_dot,
@@ -672,17 +685,15 @@ def test_cartesian_mix_types(arrays, output_dtype):
     assert output.dtype == output_dtype
 
 
-@pytest.fixture()
-def rng():
-    return np.random.RandomState(42)
-
-
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
+@pytest.mark.parametrize("as_list", (True, False))
+def test_incremental_weighted_mean_and_variance_simple(dtype, as_list):
+    rng = np.random.RandomState(42)
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    X1 = X.tolist() if as_list else X
+    mean, var, _ = _incremental_mean_and_var(X1, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
@@ -690,14 +701,51 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     assert_almost_equal(var, expected_var)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_incremental_weighted_mean_and_variance_array_api(
+    array_namespace, device, dtype
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    rng = np.random.RandomState(42)
+    mult = 10
+    X = rng.rand(1000, 20).astype(dtype) * mult
+    sample_weight = rng.rand(X.shape[0]).astype(dtype) * mult
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+
+    X_xp = xp.asarray(X, device=device)
+    sample_weight_xp = xp.asarray(sample_weight, device=device)
+
+    with config_context(array_api_dispatch=True):
+        mean_xp, var_xp, _ = _incremental_mean_and_var(
+            X_xp, 0, 0, 0, sample_weight=sample_weight_xp
+        )
+
+    # The attributes like mean and var are computed and set with respect to the
+    # maximum supported float dtype
+    assert array_device(mean_xp) == array_device(X_xp)
+    assert mean_xp.dtype == _max_precision_float_dtype(xp, device=device)
+    assert array_device(var_xp) == array_device(X_xp)
+    assert var_xp.dtype == _max_precision_float_dtype(xp, device=device)
+
+    mean_xp = _convert_to_numpy(mean_xp, xp=xp)
+    var_xp = _convert_to_numpy(var_xp, xp=xp)
+
+    assert_allclose(mean, mean_xp)
+    assert_allclose(var, var_xp)
+
+
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])
 @pytest.mark.parametrize("var", [1, 1e-8, 1e5])
 @pytest.mark.parametrize(
     "weight_loc, weight_scale", [(0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)]
 )
-def test_incremental_weighted_mean_and_variance(
-    mean, var, weight_loc, weight_scale, rng
-):
+def test_incremental_weighted_mean_and_variance(mean, var, weight_loc, weight_scale):
+    rng = np.random.RandomState(42)
+
     # Testing of correctness and numerical stability
     def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]
@@ -1060,3 +1108,53 @@ def test_approximate_mode():
     # 25% * 99.000 = 24.750
     # 25% *  1.000 =    250
     assert_array_equal(ret, [24750, 250])
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_randomized_svd_array_api_compliance(array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(30, 10)).astype(dtype)
+    X_xp = xp.asarray(X, device=device)
+    n_components = 5
+    atol = 1e-5 if dtype == "float32" else 0
+
+    with config_context(array_api_dispatch=True):
+        u_np, s_np, vt_np = randomized_svd(X, n_components, random_state=0)
+        u_xp, s_xp, vt_xp = randomized_svd(X_xp, n_components, random_state=0)
+
+        assert get_namespace(u_xp)[0].__name__ == xp.__name__
+        assert get_namespace(s_xp)[0].__name__ == xp.__name__
+        assert get_namespace(vt_xp)[0].__name__ == xp.__name__
+
+        assert_allclose(_convert_to_numpy(u_xp, xp), u_np, atol=atol)
+        assert_allclose(_convert_to_numpy(s_xp, xp), s_np, atol=atol)
+        assert_allclose(_convert_to_numpy(vt_xp, xp), vt_np, atol=atol)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_randomized_range_finder_array_api_compliance(array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(30, 10)).astype(dtype)
+    X_xp = xp.asarray(X, device=device)
+    size = 5
+    n_iter = 10
+    atol = 1e-5 if dtype == "float32" else 0
+
+    with config_context(array_api_dispatch=True):
+        Q_np = randomized_range_finder(X, size=size, n_iter=n_iter, random_state=0)
+        Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
+
+        assert get_namespace(Q_xp)[0].__name__ == xp.__name__
+        assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np, atol=atol)

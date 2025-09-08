@@ -28,7 +28,7 @@ dependencies:
   - sphinx
   - sphinx-gallery
   - sphinx-copybutton
-  - numpydoc
+  - numpydoc<1.9.0
   - sphinx-prompt
   - plotly
   - polars
@@ -38,8 +38,8 @@ dependencies:
   - sphinx-design
   - pydata-sphinx-theme
   - towncrier
+  - jupyterlite-sphinx
+  - jupyterlite-pyodide-kernel
   - pip
   - pip:
-    - jupyterlite-sphinx
-    - jupyterlite-pyodide-kernel
     - sphinxcontrib-sass

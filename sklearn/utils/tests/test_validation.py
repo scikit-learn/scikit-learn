@@ -35,7 +35,9 @@ from sklearn.utils import (
     deprecated,
 )
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _is_numpy_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import (
@@ -66,6 +68,7 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
     _check_method_params,
+    _check_pos_label_consistency,
     _check_psd_eigenvalues,
     _check_response_method,
     _check_sample_weight,
@@ -156,6 +159,7 @@ def test_as_float_array():
     "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
 )
 def test_as_float_array_nan(X):
+    X = X.copy()
     X[5, 0] = np.nan
     X[6, 1] = np.nan
     X_converted = as_float_array(X, ensure_all_finite="allow-nan")
@@ -286,7 +290,7 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         assert extended_msg not in ctx.value.args[0]
 
     if input_name == "X":
-        # Veriy that _validate_data is automatically called with the right argument
+        # Verify that _validate_data is automatically called with the right argument
         # to generate the same exception:
         with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
             SVR().fit(data, np.ones(data.shape[0]))
@@ -852,9 +856,9 @@ def test_has_fit_parameter():
         def fit(self, X, y, sample_weight=None):
             pass
 
-    assert has_fit_parameter(
-        TestClassWithDeprecatedFitMethod, "sample_weight"
-    ), "has_fit_parameter fails for class with deprecated fit method."
+    assert has_fit_parameter(TestClassWithDeprecatedFitMethod, "sample_weight"), (
+        "has_fit_parameter fails for class with deprecated fit method."
+    )
 
 
 def test_check_symmetric():
@@ -1161,9 +1165,10 @@ class WrongDummyMemory:
     pass
 
 
-def test_check_memory():
-    memory = check_memory("cache_directory")
-    assert memory.location == "cache_directory"
+def test_check_memory(tmp_path):
+    cache_directory = str(tmp_path / "cache_directory")
+    memory = check_memory(cache_directory)
+    assert memory.location == cache_directory
 
     memory = check_memory(None)
     assert memory.location is None
@@ -1592,6 +1597,41 @@ def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
         _check_psd_eigenvalues(lambdas)
 
 
+def _check_sample_weight_common(xp):
+    # Common checks between numpy/array api tests
+    # for check_sample_weight
+    # check None input
+    sample_weight = _check_sample_weight(None, X=xp.ones((5, 2)))
+    assert_allclose(_convert_to_numpy(sample_weight, xp), np.ones(5))
+
+    # check numbers input
+    sample_weight = _check_sample_weight(2.0, X=xp.ones((5, 2)))
+    assert_allclose(_convert_to_numpy(sample_weight, xp), 2 * np.ones(5))
+
+    # check wrong number of dimensions
+    with pytest.raises(ValueError, match=r"Sample weights must be 1D array or scalar"):
+        _check_sample_weight(xp.ones((2, 4)), X=xp.ones((2, 2)))
+
+    # check incorrect n_samples
+    msg = re.escape(f"sample_weight.shape == {xp.ones(4).shape}, expected (2,)!")
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(xp.ones(4), X=xp.ones((2, 2)))
+
+    # float32 dtype is preserved
+    X = xp.ones((5, 2))
+    sample_weight = xp.ones(5, dtype=xp.float32)
+    sample_weight = _check_sample_weight(sample_weight, X)
+    assert sample_weight.dtype == xp.float32
+
+    # check negative weight when ensure_non_negative=True
+    X = xp.ones((5, 2))
+    sample_weight = xp.ones(_num_samples(X))
+    sample_weight[-1] = -10
+    err_msg = "Negative values in data passed to `sample_weight`"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, ensure_non_negative=True)
+
+
 def test_check_sample_weight():
     # check array order
     sample_weight = np.ones(10)[::2]
@@ -1599,41 +1639,73 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))
     assert sample_weight.flags["C_CONTIGUOUS"]
 
-    # check None input
-    sample_weight = _check_sample_weight(None, X=np.ones((5, 2)))
-    assert_allclose(sample_weight, np.ones(5))
-
-    # check numbers input
-    sample_weight = _check_sample_weight(2.0, X=np.ones((5, 2)))
-    assert_allclose(sample_weight, 2 * np.ones(5))
-
-    # check wrong number of dimensions
-    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
-        _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
-
-    # check incorrect n_samples
-    msg = r"sample_weight.shape == \(4,\), expected \(2,\)!"
-    with pytest.raises(ValueError, match=msg):
-        _check_sample_weight(np.ones(4), X=np.ones((2, 2)))
-
-    # float32 dtype is preserved
-    X = np.ones((5, 2))
-    sample_weight = np.ones(5, dtype=np.float32)
-    sample_weight = _check_sample_weight(sample_weight, X)
-    assert sample_weight.dtype == np.float32
+    _check_sample_weight_common(np)
 
     # int dtype will be converted to float64 instead
     X = np.ones((5, 2), dtype=int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
-    # check negative weight when ensure_non_negative=True
-    X = np.ones((5, 2))
-    sample_weight = np.ones(_num_samples(X))
-    sample_weight[-1] = -10
-    err_msg = "Negative values in data passed to `sample_weight`"
-    with pytest.raises(ValueError, match=err_msg):
-        _check_sample_weight(sample_weight, X, ensure_non_negative=True)
+
+@pytest.mark.parametrize(
+    "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
+)
+def test_check_sample_weight_array_api(array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+    with config_context(array_api_dispatch=True):
+        # check array order
+        sample_weight = xp.ones(10)[::2]
+        if _is_numpy_namespace(xp):
+            assert not sample_weight.flags["C_CONTIGUOUS"]
+        sample_weight = _check_sample_weight(sample_weight, X=xp.ones((5, 1)))
+        if _is_numpy_namespace(xp):
+            assert sample_weight.flags["C_CONTIGUOUS"]
+
+        _check_sample_weight_common(xp)
+
+
+@pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
+def test_check_pos_label_consistency(y_true):
+    assert _check_pos_label_consistency(None, y_true) == 1
+
+
+@pytest.mark.parametrize(
+    "array_namespace,device,dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
+def test_check_pos_label_consistency_array_api(array_namespace, device, dtype, y_true):
+    xp = _array_api_for_tests(array_namespace, device)
+    with config_context(array_api_dispatch=True):
+        arr = xp.asarray(y_true, device=device)
+        assert _check_pos_label_consistency(None, arr) == 1
+
+
+@pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
+def test_check_pos_label_consistency_invalid(y_true):
+    with pytest.raises(ValueError, match="y_true takes value in"):
+        _check_pos_label_consistency(None, y_true)
+    # Make sure we only raise if pos_label is None
+    assert _check_pos_label_consistency("a", y_true) == "a"
+
+
+@pytest.mark.parametrize(
+    "array_namespace,device,dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
+def test_check_pos_label_consistency_invalid_array_api(
+    array_namespace, device, dtype, y_true
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    with config_context(array_api_dispatch=True):
+        arr = xp.asarray(y_true, device=device)
+        with pytest.raises(ValueError, match="y_true takes value in"):
+            _check_pos_label_consistency(None, arr)
+        # Make sure we only raise if pos_label is None
+        assert _check_pos_label_consistency("a", arr) == "a"
 
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])

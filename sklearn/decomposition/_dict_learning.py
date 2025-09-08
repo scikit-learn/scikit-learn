@@ -12,18 +12,18 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
-from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import randomized_svd, row_norms, svd_flip
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from sklearn.utils import check_array, check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _randomized_svd, row_norms, svd_flip
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _check_positive_coding(method, positive):
@@ -842,7 +842,7 @@ def dict_learning_online(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    np.float64(0.53...)
+    np.float64(0.53)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -850,7 +850,7 @@ def dict_learning_online(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    np.float64(0.05...)
+    np.float64(0.053)
     """
     transform_algorithm = "lasso_" + method
 
@@ -1033,7 +1033,7 @@ def dict_learning(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    np.float64(0.6...)
+    np.float64(0.62)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1041,7 +1041,7 @@ def dict_learning(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    np.float64(0.01...)
+    np.float64(0.0192)
     """
     estimator = DictionaryLearning(
         n_components=n_components,
@@ -1174,7 +1174,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -1378,7 +1378,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         return self._inverse_transform(X, self.dictionary)
@@ -1587,7 +1587,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    np.float64(0.52...)
+    np.float64(0.527)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1595,7 +1595,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    np.float64(0.05...)
+    np.float64(0.056)
     """
 
     _parameter_constraints: dict = {
@@ -1954,7 +1954,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    np.float64(0.052...)
+    np.float64(0.052)
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
     """
 
     _parameter_constraints: dict = {
@@ -2049,7 +2052,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self.dict_init
         else:
             # Init V with SVD of X
-            _, S, dictionary = randomized_svd(
+            _, S, dictionary = _randomized_svd(
                 X, self._n_components, random_state=random_state
             )
             dictionary = S[:, np.newaxis] * dictionary

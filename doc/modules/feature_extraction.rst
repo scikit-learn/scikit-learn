@@ -245,7 +245,7 @@ The Bag of Words representation
 -------------------------------
 
 Text Analysis is a major application field for machine learning
-algorithms. However the raw data, a sequence of symbols cannot be fed
+algorithms. However the raw data, a sequence of symbols, cannot be fed
 directly to the algorithms themselves as most of them expect numerical
 feature vectors with a fixed size rather than the raw text documents
 with variable length.
@@ -583,7 +583,7 @@ Again please see the :ref:`reference documentation
   attribute::
 
     >>> transformer.idf_
-    array([1. ..., 2.25..., 1.84...])
+    array([1., 2.25, 1.84])
 
   As tf-idf is very often used for text features, there is also another
   class called :class:`TfidfVectorizer` that combines all the options of
@@ -846,7 +846,7 @@ text classification tasks.
 
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
-``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
+``Perceptron``, ``SGDClassifier``) but it does for
 algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc.).
 
@@ -1040,6 +1040,8 @@ implemented as a scikit-learn transformer, so it can be used in pipelines. See::
     >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
+
+.. _connectivity_graph_image:
 
 Connectivity graph of an image
 -------------------------------

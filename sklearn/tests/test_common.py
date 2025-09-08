@@ -19,13 +19,12 @@ from scipy.linalg import LinAlgWarning
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
@@ -62,6 +61,7 @@ from sklearn.utils.estimator_checks import (
 )
 
 
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
@@ -137,6 +137,11 @@ def test_check_estimator_generate_only_deprecation():
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
 )
+# TODO(1.8): remove this filter
+@pytest.mark.filterwarnings(
+    "ignore:Importing from sklearn.utils._estimator_html_repr is deprecated."
+)
+@pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -169,16 +174,17 @@ def test_root_import_all_completeness():
         assert modname in sklearn.__all__
 
 
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
     HAS_TESTS_EXCEPTIONS = re.compile(
         r"""(?x)
-                                      \.externals(\.|$)|
-                                      \.tests(\.|$)|
-                                      \._
-                                      """
+        \.externals(\.|$)|
+        \.tests(\.|$)|
+        \._
+        """
     )
     resource_modules = {
         "sklearn.datasets.data",
@@ -296,7 +302,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer
@@ -402,37 +407,3 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(kernel="precomputed")
 
     check_inplace_ensure_writeable(name, estimator)
-
-
-# TODO(1.7): Remove this test when the deprecation cycle is over
-def test_transition_public_api_deprecations():
-    """This test checks that we raised deprecation warning explaining how to transition
-    to the new developer public API from 1.5 to 1.6.
-    """
-
-    class OldEstimator(BaseEstimator):
-        def fit(self, X, y=None):
-            X = self._validate_data(X)
-            self._check_n_features(X, reset=True)
-            self._check_feature_names(X, reset=True)
-            return self
-
-        def transform(self, X):
-            return X  # pragma: no cover
-
-    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
-
-    old_estimator = OldEstimator()
-    with pytest.warns(FutureWarning) as warning_list:
-        old_estimator.fit(X)
-
-    assert len(warning_list) == 3
-    assert str(warning_list[0].message).startswith(
-        "`BaseEstimator._validate_data` is deprecated"
-    )
-    assert str(warning_list[1].message).startswith(
-        "`BaseEstimator._check_n_features` is deprecated"
-    )
-    assert str(warning_list[2].message).startswith(
-        "`BaseEstimator._check_feature_names` is deprecated"
-    )

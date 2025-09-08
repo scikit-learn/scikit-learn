@@ -65,6 +65,8 @@ from sklearn.metrics.pairwise import (
     linear_kernel,
     paired_cosine_distances,
     paired_euclidean_distances,
+    pairwise_distances,
+    pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
     sigmoid_kernel,
@@ -555,7 +557,6 @@ NOT_SYMMETRIC_METRICS = {
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
-    "median_absolute_error",
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
@@ -641,7 +642,6 @@ def test_symmetric_metric(name):
 
 @pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
-
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
     metric = ALL_METRICS[name]
@@ -881,6 +881,38 @@ def test_format_invariance_with_1d_vectors(name):
                     metric(y1_row, y2_row)
 
 
+@pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
+def test_classification_with_invalid_sample_weight(metric):
+    # Check invalid `sample_weight` raises correct error
+    random_state = check_random_state(0)
+    n_samples = 20
+    y1 = random_state.randint(0, 2, size=(n_samples,))
+    y2 = random_state.randint(0, 2, size=(n_samples,))
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y1[:3], y2[:3], sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize(
     "name", sorted(set(CLASSIFICATION_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
 )
@@ -1005,14 +1037,15 @@ def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
 @pytest.mark.parametrize(
     "y_true, y_score",
-    invalids_nan_inf +
+    invalids_nan_inf
+    +
     # Add an additional case for classification only
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/6809
     [
         ([np.nan, 1, 2], [1, 2, 3]),
         ([np.inf, 1, 2], [1, 2, 3]),
-    ],  # type: ignore
+    ],
 )
 def test_classification_inf_nan_input(metric, y_true, y_score):
     """check that classification metrics raise a message mentioning the
@@ -1474,9 +1507,10 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-def check_sample_weight_invariance(name, metric, y1, y2):
+def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 10, size=len(y1))
+    if sample_weight is None:
+        sample_weight = rng.randint(1, 10, size=len(y1))
 
     # top_k_accuracy_score always lead to a perfect score for k > 1 in the
     # binary case
@@ -1552,7 +1586,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     if not name.startswith("unnormalized"):
         # check that the score is invariant under scaling of the weights by a
         # common factor
-        for scaling in [2, 0.3]:
+        # Due to numerical instability of floating points in `cumulative_sum` in
+        # `median_absolute_error`, it is not always equivalent when scaling by a float.
+        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+        for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
@@ -1584,8 +1621,52 @@ def test_regression_sample_weight_invariance(name):
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
+    sample_weight = np.arange(len(y_true))
     metric = ALL_METRICS[name]
-    check_sample_weight_invariance(name, metric, y_true, y_pred)
+
+    check_sample_weight_invariance(name, metric, y_true, y_pred, sample_weight)
+
+
+# XXX: ValueError("Complex data not supported") propagates via the warnings
+# machinery which is not thread-safe (at the time of CPython 3.13 at least).
+@pytest.mark.thread_unsafe
+@pytest.mark.parametrize(
+    "name",
+    sorted(
+        set(ALL_METRICS).intersection(set(REGRESSION_METRICS))
+        - METRICS_WITHOUT_SAMPLE_WEIGHT
+    ),
+)
+def test_regression_with_invalid_sample_weight(name):
+    # Check that `sample_weight` with incorrect length raises error
+    n_samples = 50
+    random_state = check_random_state(0)
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    metric = ALL_METRICS[name]
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true[:3], y_pred[:3], sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(
@@ -1867,10 +1948,11 @@ def check_array_api_metric(
         np.asarray(a_xp)
         np.asarray(b_xp)
         numpy_as_array_works = True
-    except (TypeError, RuntimeError):
+    except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
-        # array-api-strict chose to raise RuntimeError instead. Exception type
-        # may need to be updated in the future for other libraries.
+        # array-api-strict chose to raise RuntimeError instead. NumPy raises
+        # a ValueError if the `__array__` dunder does not return an array.
+        # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
     if numpy_as_array_works:
@@ -1896,11 +1978,19 @@ def check_array_api_metric(
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        assert_allclose(
-            _convert_to_numpy(xp.asarray(metric_xp), xp),
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
+        def _check_metric_matches(xp_val, np_val):
+            assert_allclose(
+                _convert_to_numpy(xp.asarray(xp_val), xp),
+                np_val,
+                atol=_atol_for_type(dtype_name),
+            )
+
+        # Handle cases where there are multiple return values, e.g. roc_curve:
+        if isinstance(metric_xp, tuple):
+            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
+                _check_metric_matches(metric_xp_val, metric_np_val)
+        else:
+            _check_metric_matches(metric_xp, metric_np)
 
 
 def check_array_api_binary_classification_metric(
@@ -2104,7 +2194,6 @@ def check_array_api_regression_metric_multioutput(
 
 
 def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
-
     X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
     Y_np = np.array([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], dtype=dtype_name)
 
@@ -2139,12 +2228,21 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
     f1_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
     fbeta_score: [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    jaccard_score: [
+        check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
@@ -2201,6 +2299,10 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    median_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
@@ -2229,6 +2331,11 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    pairwise_kernels: [check_array_api_metric_pairwise],
+    roc_curve: [
+        check_array_api_binary_classification_metric,
+    ],
+    pairwise_distances: [check_array_api_metric_pairwise],
 }
 
 

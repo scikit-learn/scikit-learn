@@ -8,7 +8,7 @@ dependencies:
   - numpy=1.22.0  # min
   - blas
   - scipy=1.8.0  # min
-  - cython=3.0.10  # min
+  - cython=3.1.2  # min
   - joblib
   - threadpoolctl
   - matplotlib=3.5.0  # min
@@ -33,11 +33,11 @@ dependencies:
   - plotly=5.14.0  # min
   - polars=0.20.30  # min
   - pooch=1.6.0  # min
+  - sphinxext-opengraph=0.9.1  # min
   - sphinx-remove-toctrees=1.0.0.post1  # min
   - sphinx-design=0.6.0  # min
   - pydata-sphinx-theme=0.15.3  # min
   - towncrier=24.8.0  # min
   - pip
   - pip:
-    - sphinxext-opengraph==0.9.1  # min
     - sphinxcontrib-sass==0.3.4  # min

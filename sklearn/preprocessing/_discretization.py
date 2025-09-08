@@ -7,19 +7,18 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import resample
-from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
-from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._encoders import OneHotEncoder
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, Options, StrOptions
+from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_array,
     check_is_fitted,
     validate_data,
 )
-from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -180,6 +179,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
+
+    While this preprocessing step can be an optimization, it is important
+    to note the array returned by ``inverse_transform`` will have an internal type
+    of ``np.float64`` or ``np.float32``, denoted by the ``dtype`` input argument.
+    This can drastically increase the memory usage of the array. See the
+    :ref:`sphx_glr_auto_examples_cluster_plot_face_compress.py`
+    where `KBinsDescretizer` is used to cluster the image into bins and increases
+    the size of the image by 8x.
     """
 
     _parameter_constraints: dict = {
@@ -374,7 +381,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
             elif self.strategy == "kmeans":
-                from ..cluster import KMeans  # fixes import loops
+                from sklearn.cluster import KMeans  # fixes import loops
 
                 # Deterministic initialization with uniform spacing
                 uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)
@@ -481,7 +488,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             self._encoder.dtype = dtype_init
         return Xt_enc
 
-    def inverse_transform(self, X=None, *, Xt=None):
+    def inverse_transform(self, X):
         """
         Transform discretized data back to original feature space.
 
@@ -493,18 +500,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
 
-        Xt : array-like of shape (n_samples, n_features)
-            Transformed data in the binned space.
-
-            .. deprecated:: 1.5
-                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
-
         Returns
         -------
-        Xinv : ndarray, dtype={np.float32, np.float64}
+        X_original : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
-        X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
 

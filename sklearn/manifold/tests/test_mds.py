@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_almost_equal
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
 from sklearn.datasets import load_digits
 from sklearn.manifold import _mds as mds
@@ -22,7 +22,7 @@ def test_smacof():
 
 
 def test_nonmetric_lower_normalized_stress():
-    # Testing that nonmetric MDS results in lower normalized stess compared
+    # Testing that nonmetric MDS results in lower normalized stress compared
     # compared to metric MDS (non-regression test for issue 27028)
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
@@ -54,7 +54,6 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
-        eps=1e-15,
         max_iter=2,
         metric=False,
         random_state=42,
@@ -64,7 +63,6 @@ def test_nonmetric_mds_optimization():
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
-        eps=1e-15,
         max_iter=3,
         metric=False,
         random_state=42,
@@ -86,7 +84,7 @@ def test_mds_recovers_true_data(metric):
         random_state=42,
     ).fit(X)
     stress = mds_est.stress_
-    assert_allclose(stress, 0, atol=1e-10)
+    assert_allclose(stress, 0, atol=1e-6)
 
 
 def test_smacof_error():
@@ -94,13 +92,13 @@ def test_smacof_error():
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     with pytest.raises(ValueError):
-        mds.smacof(sim)
+        mds.smacof(sim, n_init=1)
 
     # Not squared similarity matrix:
     sim = np.array([[0, 5, 9, 4], [5, 0, 2, 2], [4, 2, 1, 0]])
 
     with pytest.raises(ValueError):
-        mds.smacof(sim)
+        mds.smacof(sim, n_init=1)
 
     # init not None and not correct format:
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
@@ -110,12 +108,22 @@ def test_smacof_error():
         mds.smacof(sim, init=Z, n_init=1)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_MDS():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
+    mds_clf = mds.MDS(
+        metric=False,
+        n_jobs=3,
+        n_init=3,
+        dissimilarity="precomputed",
+    )
     mds_clf.fit(sim)
 
 
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
     """Test that non-metric MDS normalized stress is scale-invariant."""
@@ -128,6 +136,8 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
     rng = np.random.RandomState(0)
@@ -165,17 +175,63 @@ def test_isotonic_outofbounds():
     mds.smacof(dis, init=init, metric=False, n_init=1)
 
 
-def test_returned_stress():
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("normalized_stress", [True, False])
+def test_returned_stress(normalized_stress):
     # Test that the final stress corresponds to the final embedding
     # (non-regression test for issue 16846)
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
     D = euclidean_distances(X)
 
-    mds_est = mds.MDS(n_components=2, random_state=42).fit(X)
+    mds_est = mds.MDS(
+        n_components=2,
+        random_state=42,
+        normalized_stress=normalized_stress,
+    ).fit(X)
+
     Z = mds_est.embedding_
     stress = mds_est.stress_
 
     D_mds = euclidean_distances(Z)
     stress_Z = ((D_mds.ravel() - D.ravel()) ** 2).sum() / 2
 
+    if normalized_stress:
+        stress_Z = np.sqrt(stress_Z / ((D_mds.ravel() ** 2).sum() / 2))
+
     assert_allclose(stress, stress_Z)
+
+
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("metric", [True, False])
+def test_convergence_does_not_depend_on_scale(metric):
+    # Test that the number of iterations until convergence does not depend on
+    # the scale of the input data
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+
+    mds_est = mds.MDS(
+        n_components=2,
+        random_state=42,
+        metric=metric,
+    )
+
+    mds_est.fit(X * 100)
+    n_iter1 = mds_est.n_iter_
+
+    mds_est.fit(X / 100)
+    n_iter2 = mds_est.n_iter_
+
+    assert_equal(n_iter1, n_iter2)
+
+
+# TODO(1.9): delete this test
+def test_future_warning_n_init():
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+
+    with pytest.warns(FutureWarning):
+        mds.smacof(sim)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS().fit(X)

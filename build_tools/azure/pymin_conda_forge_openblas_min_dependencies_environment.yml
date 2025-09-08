@@ -8,7 +8,7 @@ dependencies:
   - numpy=1.22.0  # min
   - blas[build=openblas]
   - scipy=1.8.0  # min
-  - cython=3.0.10  # min
+  - cython=3.1.2  # min
   - joblib=1.2.0  # min
   - threadpoolctl=3.1.0  # min
   - matplotlib=3.5.0  # min
@@ -20,8 +20,9 @@ dependencies:
   - pillow
   - pip
   - ninja
-  - meson-python=0.16.0  # min
+  - meson-python=0.17.1  # min
   - pytest-cov
   - coverage
   - ccache
   - polars=0.20.30  # min
+  - pyarrow=12.0.0  # min

@@ -12,7 +12,7 @@ SCIPY_MIN_VERSION = "1.8.0"
 JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "3.1.0"
 PYTEST_MIN_VERSION = "7.1.2"
-CYTHON_MIN_VERSION = "3.0.10"
+CYTHON_MIN_VERSION = "3.1.2"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -24,7 +24,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "meson-python": ("0.16.0", "build"),
+    "meson-python": ("0.17.1", "build"),
     "matplotlib": ("3.5.0", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.19.0", "docs, examples, tests"),
     "pandas": ("1.4.0", "benchmark, docs, examples, tests"),
@@ -33,8 +33,7 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.11.0", "tests"),
-    "black": ("24.3.0", "tests"),
+    "ruff": ("0.11.7", "tests"),
     "mypy": ("1.15", "tests"),
     "pyamg": ("4.2.1", "tests"),
     "polars": ("0.20.30", "docs, tests"),
@@ -55,7 +54,7 @@ dependent_packages = {
     "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.5.7", "maintenance"),
+    "conda-lock": ("3.0.1", "maintenance"),
 }
 
 
