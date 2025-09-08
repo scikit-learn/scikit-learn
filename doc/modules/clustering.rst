@@ -320,7 +320,7 @@ small, as shown in the example and cited reference.
 .. dropdown:: References
 
   * `"Web Scale K-Means clustering"
-    <https://citeseerx.ist.psu.edu/document?repid=rep1type=pdf&doi=b452a856a3e3d4d37b1de837996aa6813bedfdcf>`_
+    <https://www.ccs.neu.edu/home/vip/teach/DMcourse/2_cluster_EM_mixt/notes_slides/sculey_webscale_kmeans_approx.pdf>`_
     D. Sculley, *Proceedings of the 19th international conference on World
     wide web* (2010).
 
