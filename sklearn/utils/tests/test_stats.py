@@ -31,7 +31,7 @@ def test_weighted_percentile_matches_median(size, average):
     score = _weighted_percentile(y, sample_weight, 50, average=average)
 
     # `_weighted_percentile(average=False)` does not match `median` when n is even
-    if size == 10 and average is False:
+    if size % 2 == 0 and average is False:
         assert score != np.median(y)
     else:
         assert pytest.approx(score) == np.median(y)
