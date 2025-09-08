@@ -106,7 +106,7 @@ cdef class DensePartitioner:
         """
         Moves missing values from the right to the left
             and non-missing values from the left to the right
-            while preserving their ordering
+            while preserving their inner ordering
         """
         assert not self.missing_on_the_left
         cdef float32_t[::1] feature_values = self.feature_values
