@@ -124,25 +124,6 @@ def _is_deprecated(func):
     return is_deprecated
 
 
-# TODO: remove in 1.7
-def _deprecate_Xt_in_inverse_transform(X, Xt):
-    """Helper to deprecate the `Xt` argument in favor of `X` in inverse_transform."""
-    if X is not None and Xt is not None:
-        raise TypeError("Cannot use both X and Xt. Use X only.")
-
-    if X is None and Xt is None:
-        raise TypeError("Missing required positional argument: X.")
-
-    if Xt is not None:
-        warnings.warn(
-            "Xt was renamed X in version 1.5 and will be removed in 1.7.",
-            FutureWarning,
-        )
-        return Xt
-
-    return X
-
-
 # TODO(1.8): remove force_all_finite and change the default value of ensure_all_finite
 # to True (remove None without deprecation).
 def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):

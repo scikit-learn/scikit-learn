@@ -18,14 +18,14 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._config import config_context
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..metrics.pairwise import pairwise_distances_argmin
-from ..neighbors import NearestNeighbors
-from ..utils import check_array, check_random_state, gen_batches
-from ..utils._param_validation import Interval, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 @validate_params(
@@ -82,7 +82,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
     >>> estimate_bandwidth(X, quantile=0.5)
-    np.float64(1.61...)
+    np.float64(1.61)
     """
     X = check_array(X)
 
@@ -227,8 +227,8 @@ def mean_shift(
     ...               [4, 7], [3, 5], [3, 6]])
     >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
     >>> cluster_centers
-    array([[3.33..., 6.     ],
-           [1.33..., 0.66...]])
+    array([[3.33, 6.     ],
+           [1.33, 0.66]])
     >>> labels
     array([1, 1, 1, 0, 0, 0])
     """

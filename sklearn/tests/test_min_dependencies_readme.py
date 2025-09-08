@@ -32,10 +32,10 @@ def test_min_dependencies_readme():
     # sklearn/_min_dependencies.py
 
     pattern = re.compile(
-        r"(\.\. \|)"
-        + r"(([A-Za-z]+\-?)+)"
-        + r"(MinVersion\| replace::)"
-        + r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
+        r"\.\. \|"
+        r"([A-Za-z-]+)"
+        r"MinVersion\| replace::"
+        r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
     )
 
     readme_path = Path(sklearn.__file__).parent.parent
@@ -53,7 +53,7 @@ def test_min_dependencies_readme():
             if not matched:
                 continue
 
-            package, version = matched.group(2), matched.group(5)
+            package, version = matched.group(0), matched.group(1)
             package = package.lower()
 
             if package in dependent_packages:

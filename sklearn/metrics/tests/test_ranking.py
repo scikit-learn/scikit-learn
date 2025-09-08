@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets, svm
+from sklearn import datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -84,7 +84,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel="linear", probability=True, random_state=0)
+    clf = LogisticRegression(random_state=0)
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -873,7 +873,6 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
 
 
-# TODO(1.7): Update test to check for error when bytes support is removed.
 @pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
@@ -881,12 +880,8 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
-    msg = (
-        "y_true takes value in {b'a', b'b'} and pos_label is not "
-        "specified: either make y_true take value in {0, 1} or "
-        "{-1, 1} or pass pos_label explicitly."
-    )
-    with pytest.raises(ValueError, match=msg):
+    msg = "Support for labels represented as bytes is not supported"
+    with pytest.raises(TypeError, match=msg):
         curve_func(labels, [0.0, 1.0])
 
 
@@ -939,7 +934,7 @@ def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
     p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
-    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
+    assert_array_almost_equal(precision_recall_auc, 0.869, 3)
     assert_array_almost_equal(
         precision_recall_auc, average_precision_score(y_true, y_score)
     )
@@ -1244,18 +1239,18 @@ def test_score_scale_invariance():
         ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),
         ([0, 0, 1], [0.5, 0.75, 1], [0], [0]),
         ([0, 0, 1], [0.25, 0.5, 0.75], [0], [0]),
-        ([0, 1, 0], [0, 0.5, 1], [0.5], [0]),
-        ([0, 1, 0], [0, 0.25, 0.5], [0.5], [0]),
-        ([0, 1, 0], [0.5, 0.75, 1], [0.5], [0]),
-        ([0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]),
+        ([0, 1, 0], [0, 0.5, 1], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0, 0.25, 0.5], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0.5, 0.75, 1], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0.25, 0.5, 0.75], [0.5, 0.5, 0], [0, 1, 1]),
         ([0, 1, 1], [0, 0.5, 1], [0.0], [0]),
         ([0, 1, 1], [0, 0.25, 0.5], [0], [0]),
         ([0, 1, 1], [0.5, 0.75, 1], [0], [0]),
         ([0, 1, 1], [0.25, 0.5, 0.75], [0], [0]),
-        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5, 0], [0, 1, 1, 1]),
         ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]),
         ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]),
         ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
@@ -1271,16 +1266,41 @@ def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
 
 
 @pytest.mark.parametrize(
+    ["y_true", "y_score", "expected_fpr", "expected_fnr", "drop_intermediate"],
+    [
+        # drop when true positives do not change from the previous or subsequent point
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.0], [0, 1, 1], True),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.0], [0, 1, 1], True),
+        # do nothing otherwise
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], True),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], True),
+    ],
+)
+def test_det_curve_drop_intermediate(
+    y_true, y_score, expected_fpr, expected_fnr, drop_intermediate
+):
+    # Check on a batch of small examples.
+    fpr, fnr, _ = det_curve(y_true, y_score, drop_intermediate=drop_intermediate)
+
+    assert_allclose(fpr, expected_fpr)
+    assert_allclose(fnr, expected_fnr)
+
+
+@pytest.mark.parametrize(
     "y_true,y_score,expected_fpr,expected_fnr",
     [
-        ([1, 0], [0.5, 0.5], [1], [0]),
-        ([0, 1], [0.5, 0.5], [1], [0]),
-        ([0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]),
-        ([0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]),
+        ([1, 0], [0.5, 0.5], [1, 0], [0, 1]),
+        ([0, 1], [0.5, 0.5], [1, 0], [0, 1]),
+        ([0, 0, 1], [0.25, 0.5, 0.5], [0.5, 0], [0, 1]),
+        ([0, 1, 0], [0.25, 0.5, 0.5], [0.5, 0], [0, 1]),
         ([0, 1, 1], [0.25, 0.5, 0.5], [0], [0]),
-        ([1, 0, 0], [0.25, 0.5, 0.5], [1], [0]),
-        ([1, 0, 1], [0.25, 0.5, 0.5], [1], [0]),
-        ([1, 1, 0], [0.25, 0.5, 0.5], [1], [0]),
+        ([1, 0, 0], [0.25, 0.5, 0.5], [1, 1, 0], [0, 1, 1]),
+        ([1, 0, 1], [0.25, 0.5, 0.5], [1, 1, 0], [0, 0.5, 1]),
+        ([1, 1, 0], [0.25, 0.5, 0.5], [1, 1, 0], [0, 0.5, 1]),
     ],
 )
 def test_det_curve_tie_handling(y_true, y_score, expected_fpr, expected_fnr):
@@ -1304,9 +1324,9 @@ def test_det_curve_constant_scores(y_score):
         y_true=[0, 1, 0, 1, 0, 1], y_score=np.full(6, y_score)
     )
 
-    assert_allclose(fpr, [1])
-    assert_allclose(fnr, [0])
-    assert_allclose(threshold, [y_score])
+    assert_allclose(fpr, [1, 0])
+    assert_allclose(fnr, [0, 1])
+    assert_allclose(threshold, [y_score, np.inf])
 
 
 @pytest.mark.parametrize(
@@ -2248,25 +2268,3 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
-
-
-# TODO(1.7): remove
-def test_precision_recall_curve_deprecation_warning():
-    """Check the message for future deprecation."""
-    # Check precision_recall_curve function
-    y_true, _, y_score = make_prediction(binary=True)
-
-    warn_msg = "probas_pred was deprecated in version 1.5"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        precision_recall_curve(
-            y_true,
-            probas_pred=y_score,
-        )
-
-    error_msg = "`probas_pred` and `y_score` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        precision_recall_curve(
-            y_true,
-            probas_pred=y_score,
-            y_score=y_score,
-        )

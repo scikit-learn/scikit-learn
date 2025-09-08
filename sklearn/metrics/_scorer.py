@@ -26,22 +26,8 @@ from traceback import format_exc
 
 import numpy as np
 
-from ..base import is_regressor
-from ..utils import Bunch
-from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
-from ..utils._response import _get_response_values
-from ..utils.metadata_routing import (
-    MetadataRequest,
-    MetadataRouter,
-    MethodMapping,
-    _MetadataRequester,
-    _raise_for_params,
-    _routing_enabled,
-    get_routing_for_object,
-    process_routing,
-)
-from ..utils.validation import _check_response_method
-from . import (
+from sklearn.base import is_regressor
+from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
@@ -69,7 +55,7 @@ from . import (
     root_mean_squared_log_error,
     top_k_accuracy_score,
 )
-from .cluster import (
+from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
@@ -80,6 +66,25 @@ from .cluster import (
     rand_score,
     v_measure_score,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils._response import _get_response_values
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    _MetadataRequester,
+    _raise_for_params,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import _check_response_method
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
@@ -95,6 +100,14 @@ def _cached_call(cache, estimator, response_method, *args, **kwargs):
         cache[response_method] = result
 
     return result
+
+
+def _get_func_repr_or_name(func):
+    """Returns the name of the function or repr of a partial."""
+    if isinstance(func, partial):
+        return repr(func)
+
+    return func.__name__
 
 
 class _MultimetricScorer:
@@ -205,7 +218,7 @@ class _MultimetricScorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return MetadataRouter(owner=self.__class__.__name__).add(
+        return MetadataRouter(owner=self).add(
             **self._scorers,
             method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
@@ -257,9 +270,12 @@ class _BaseScorer(_MetadataRequester):
         kwargs_string = "".join([f", {k}={v}" for k, v in self._kwargs.items()])
 
         return (
-            f"make_scorer({self._score_func.__name__}{sign_string}"
+            f"make_scorer({_get_func_repr_or_name(self._score_func)}{sign_string}"
             f"{response_method_string}{kwargs_string})"
         )
+
+    def _routing_repr(self):
+        return repr(self)
 
     def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
@@ -350,7 +366,7 @@ class _BaseScorer(_MetadataRequester):
             ),
             kwargs=kwargs,
         )
-        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        self._metadata_request = MetadataRequest(owner=self)
         for param, alias in kwargs.items():
             self._metadata_request.score.add_request(param=param, alias=alias)
         return self
@@ -476,23 +492,15 @@ class _PassthroughScorer(_MetadataRequester):
     def __init__(self, estimator):
         self._estimator = estimator
 
-        requests = MetadataRequest(owner=self.__class__.__name__)
-        try:
-            requests.score = copy.deepcopy(estimator._metadata_request.score)
-        except AttributeError:
-            try:
-                requests.score = copy.deepcopy(estimator._get_default_requests().score)
-            except AttributeError:
-                pass
-
-        self._metadata_request = requests
-
     def __call__(self, estimator, *args, **kwargs):
         """Method that wraps estimator.score"""
         return estimator.score(*args, **kwargs)
 
     def __repr__(self):
-        return f"{self._estimator.__class__}.score"
+        return f"{type(self._estimator).__name__}.score"
+
+    def _routing_repr(self):
+        return repr(self)
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
@@ -512,32 +520,7 @@ class _PassthroughScorer(_MetadataRequester):
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return get_routing_for_object(self._metadata_request)
-
-    def set_score_request(self, **kwargs):
-        """Set requested parameters by the scorer.
-
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        .. versionadded:: 1.5
-
-        Parameters
-        ----------
-        kwargs : dict
-            Arguments should be of the form ``param_name=alias``, and `alias`
-            can be one of ``{True, False, None, str}``.
-        """
-        if not _routing_enabled():
-            raise RuntimeError(
-                "This method is only available when metadata routing is enabled."
-                " You can enable it using"
-                " sklearn.set_config(enable_metadata_routing=True)."
-            )
-
-        for param, alias in kwargs.items():
-            self._metadata_request.score.add_request(param=param, alias=alias)
-        return self
+        return get_routing_for_object(self._estimator)
 
 
 def _check_multimetric_scoring(estimator, scoring):

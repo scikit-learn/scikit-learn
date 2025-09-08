@@ -8,13 +8,13 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._config import config_context
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..metrics import euclidean_distances, pairwise_distances_argmin
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import euclidean_distances, pairwise_distances_argmin
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -100,7 +100,7 @@ def _affinity_propagation(
         R += tmp
 
         # tmp = Rp; compute availabilities
-        np.maximum(R, 0, tmp)
+        np.maximum(R, 0, out=tmp)
         tmp.flat[:: n_samples + 1] = R.flat[:: n_samples + 1]
 
         # tmp = -Anew
@@ -148,7 +148,7 @@ def _affinity_propagation(
         c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
         for k in range(K):
-            ii = np.where(c == k)[0]
+            ii = np.asarray(c == k).nonzero()[0]
             j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
             I[k] = ii[j]
 

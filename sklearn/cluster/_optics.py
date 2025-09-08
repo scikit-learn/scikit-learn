@@ -13,40 +13,42 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import SparseEfficiencyWarning, issparse
 
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..exceptions import DataConversionWarning
-from ..metrics import pairwise_distances
-from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
-from ..neighbors import NearestNeighbors
-from ..utils import gen_batches
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._param_validation import (
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     RealNotInt,
     StrOptions,
     validate_params,
 )
-from ..utils.validation import check_memory, validate_data
+from sklearn.utils.validation import check_memory, validate_data
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
     """Estimate clustering structure from vector array.
 
     OPTICS (Ordering Points To Identify the Clustering Structure), closely
-    related to DBSCAN, finds core sample of high density and expands clusters
-    from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a variable
+    related to DBSCAN, finds core samples of high density and expands clusters
+    from them [1]_. Unlike DBSCAN, it keeps cluster hierarchy for a variable
     neighborhood radius. Better suited for usage on large datasets than the
-    current sklearn implementation of DBSCAN.
+    current scikit-learn implementation of DBSCAN.
 
-    Clusters are then extracted using a DBSCAN-like method
-    (cluster_method = 'dbscan') or an automatic
+    Clusters are then extracted from the cluster-order using a
+    DBSCAN-like method (cluster_method = 'dbscan') or an automatic
     technique proposed in [1]_ (cluster_method = 'xi').
 
     This implementation deviates from the original OPTICS by first performing
-    k-nearest-neighborhood searches on all points to identify core sizes, then
-    computing only the distances to unprocessed points when constructing the
-    cluster order. Note that we do not employ a heap to manage the expansion
+    k-nearest-neighborhood searches on all points to identify core sizes of
+    all points (instead of computing neighbors while looping through points).
+    Reachability distances to only unprocessed points are then computed, to
+    construct the cluster order, similar to the original OPTICS.
+    Note that we do not employ a heap to manage the expansion
     candidates, so the time complexity will be O(n^2).
 
     Read more in the :ref:`User Guide <optics>`.
@@ -68,9 +70,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     metric : str or callable, default='minkowski'
         Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        or :mod:`scipy.spatial.distance` can be used.
 
-        If metric is a callable function, it is called on each
+        If `metric` is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
@@ -90,8 +92,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'yule']
 
         Sparse matrices are only supported by scikit-learn metrics.
-        See the documentation for scipy.spatial.distance for details on these
-        metrics.
+        See :mod:`scipy.spatial.distance` for details on these metrics.
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
@@ -105,9 +106,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    cluster_method : str, default='xi'
+    cluster_method : {'xi', 'dbscan'}, default='xi'
         The extraction method used to extract clusters using the calculated
-        reachability and ordering. Possible values are "xi" and "dbscan".
+        reachability and ordering.
 
     eps : float, default=None
         The maximum distance between two samples for one to be considered as
@@ -585,10 +586,10 @@ def compute_optics_graph(
     >>> ordering
     array([0, 1, 2, 5, 3, 4])
     >>> core_distances
-    array([3.16..., 1.41..., 1.41..., 1.        , 1.        ,
-           4.12...])
+    array([3.16, 1.41, 1.41, 1.        , 1.        ,
+           4.12])
     >>> reachability
-    array([       inf, 3.16..., 1.41..., 4.12..., 1.        ,
+    array([       inf, 3.16, 1.41, 4.12, 1.        ,
            5.        ])
     >>> predecessor
     array([-1,  0,  1,  5,  3,  2])
