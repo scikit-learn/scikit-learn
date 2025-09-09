@@ -1,4 +1,36 @@
 .. _metrics:
+.. _regression_metrics:
+
+Regression metrics
+------------------
+
+The :mod:`sklearn.metrics` module implements several loss, score, and utility
+functions to measure regression performance. Some of these are presented below.
+
+.. currentmodule:: sklearn.metrics
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   adjusted_r2_score
+   d2_absolute_error_score
+   d2_pinball_score
+   d2_tweedie_score
+   explained_variance_score
+   max_error
+   mean_absolute_error
+   mean_absolute_percentage_error
+   mean_gamma_deviance
+   mean_pinball_loss
+   mean_poisson_deviance
+   mean_squared_error
+   mean_squared_log_error
+   mean_tweedie_deviance
+   median_absolute_error
+   r2_score
+   root_mean_squared_error
+   root_mean_squared_log_error
 
 Pairwise metrics, Affinities and Kernels
 ========================================
