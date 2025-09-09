@@ -10,21 +10,21 @@ import numpy as np
 import scipy.linalg
 from scipy import linalg
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
-from .linear_model._base import LinearClassifierMixin
-from .preprocessing import StandardScaler
-from .utils._array_api import _expit, device, get_namespace, size
-from .utils._param_validation import HasMethods, Interval, StrOptions
-from .utils.extmath import softmax
-from .utils.multiclass import check_classification_targets, unique_labels
-from .utils.validation import check_is_fitted, validate_data
+from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils._array_api import _expit, device, get_namespace, size
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.extmath import softmax
+from sklearn.utils.multiclass import check_classification_targets, unique_labels
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -166,6 +166,84 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         Xg = X[y == group, :]
         cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage, covariance_estimator))
     return cov
+
+
+class DiscriminantAnalysisPredictionMixin:
+    """Mixin class for QuadraticDiscriminantAnalysis and NearestCentroid."""
+
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is `(n_samples,)`, giving the
+            log likelihood ratio of the positive class.
+        """
+        y_scores = self._decision_function(X)
+        if len(self.classes_) == 2:
+            return y_scores[:, 1] - y_scores[:, 0]
+        return y_scores
+
+    def predict(self, X):
+        """Perform classification on an array of vectors `X`.
+
+        Returns the class label for each sample.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Class label for each sample.
+        """
+        scores = self._decision_function(X)
+        return self.classes_.take(scores.argmax(axis=1))
+
+    def predict_proba(self, X):
+        """Estimate class probabilities.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y_proba : ndarray of shape (n_samples, n_classes)
+            Probability estimate of the sample for each class in the
+            model, where classes are ordered as they are in `self.classes_`.
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict_log_proba(self, X):
+        """Estimate log class probabilities.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y_log_proba : ndarray of shape (n_samples, n_classes)
+            Estimated log probabilities.
+        """
+        scores = self._decision_function(X)
+        log_likelihood = scores - scores.max(axis=1)[:, np.newaxis]
+        return log_likelihood - np.log(
+            np.exp(log_likelihood).sum(axis=1)[:, np.newaxis]
+        )
 
 
 class LinearDiscriminantAnalysis(
@@ -518,7 +596,7 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype)
+        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
 
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
@@ -561,11 +639,8 @@ class LinearDiscriminantAnalysis(
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
-           .. versionchanged:: 0.19
-              *store_covariance* has been moved to main constructor.
-
-           .. versionchanged:: 0.19
-              *tol* has been moved to main constructor.
+        .. versionchanged:: 0.19
+            `store_covariance` and `tol` has been moved to main constructor.
 
         Parameters
         ----------
@@ -747,9 +822,9 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
         # Only override for the doc
@@ -761,7 +836,9 @@ class LinearDiscriminantAnalysis(
         return tags
 
 
-class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
+class QuadraticDiscriminantAnalysis(
+    DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
+):
     """Quadratic Discriminant Analysis.
 
     A classifier with a quadratic decision boundary, generated
@@ -885,12 +962,12 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
-            .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
+        .. versionchanged:: 0.19
+            ``store_covariances`` has been moved to main constructor as
+            ``store_covariance``.
 
-            .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
+        .. versionchanged:: 0.19
+            ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -995,14 +1072,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         -------
         C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
-        dec_func = self._decision_function(X)
-        # handle special case of two classes
-        if len(self.classes_) == 2:
-            return dec_func[:, 1] - dec_func[:, 0]
-        return dec_func
+        return super().decision_function(X)
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.
@@ -1020,9 +1093,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples,)
             Estimated probabilities.
         """
-        d = self._decision_function(X)
-        y_pred = self.classes_.take(d.argmax(1))
-        return y_pred
+        return super().predict(X)
 
     def predict_proba(self, X):
         """Return posterior probabilities of classification.
@@ -1037,12 +1108,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
-        values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
-        # compute posterior probabilities
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+        return super().predict_proba(X)
 
     def predict_log_proba(self, X):
         """Return log of posterior probabilities of classification.
@@ -1058,5 +1126,4 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             Posterior log-probabilities of classification per class.
         """
         # XXX : can do better to avoid precision overflows
-        probas_ = self.predict_proba(X)
-        return np.log(probas_)
+        return super().predict_log_proba(X)

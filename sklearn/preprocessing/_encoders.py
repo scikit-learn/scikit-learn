@@ -8,14 +8,19 @@ from numbers import Integral
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array
-from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._set_output import _get_output_config
-from ..utils.validation import (
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
@@ -545,7 +550,7 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
+    handle_unknown : {'error', 'ignore', 'infrequent_if_exist', 'warn'}, \
                      default='error'
         Specifies the way unknown categories are handled during :meth:`transform`.
 
@@ -565,10 +570,16 @@ class OneHotEncoder(_BaseEncoder):
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <encoder_infrequent_categories>`.
+        - 'warn' : When an unknown category is encountered during transform
+          a warning is issued, and the encoding then proceeds as described for
+          `handle_unknown="infrequent_if_exist"`.
 
         .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
             categories and infrequent categories.
+
+        .. versionadded:: 1.6
+           The option `"warn"` was added in 1.6.
 
     min_frequency : int or float, default=None
         Specifies the minimum frequency below which a category will be
@@ -736,7 +747,9 @@ class OneHotEncoder(_BaseEncoder):
         "categories": [StrOptions({"auto"}), list],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": "no_validation",  # validation delegated to numpy
-        "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
+        "handle_unknown": [
+            StrOptions({"error", "ignore", "infrequent_if_exist", "warn"})
+        ],
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
@@ -1024,13 +1037,17 @@ class OneHotEncoder(_BaseEncoder):
             )
 
         # validation of X happens in _check_X called by _transform
-        warn_on_unknown = self.drop is not None and self.handle_unknown in {
-            "ignore",
-            "infrequent_if_exist",
-        }
+        if self.handle_unknown == "warn":
+            warn_on_unknown, handle_unknown = True, "infrequent_if_exist"
+        else:
+            warn_on_unknown = self.drop is not None and self.handle_unknown in {
+                "ignore",
+                "infrequent_if_exist",
+            }
+            handle_unknown = self.handle_unknown
         X_int, X_mask = self._transform(
             X,
-            handle_unknown=self.handle_unknown,
+            handle_unknown=handle_unknown,
             ensure_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
@@ -1092,7 +1109,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        X_tr : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
@@ -1146,7 +1163,7 @@ class OneHotEncoder(_BaseEncoder):
             X_tr[:, i] = cats_wo_dropped[labels]
 
             if self.handle_unknown == "ignore" or (
-                self.handle_unknown == "infrequent_if_exist"
+                self.handle_unknown in ("infrequent_if_exist", "warn")
                 and infrequent_indices[i] is None
             ):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
@@ -1610,7 +1627,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Returns
         -------
-        X_tr : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)

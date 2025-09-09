@@ -3,7 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._data import (
+from sklearn.preprocessing._data import (
     Binarizer,
     KernelCenterer,
     MaxAbsScaler,
@@ -23,13 +23,18 @@ from ._data import (
     robust_scale,
     scale,
 )
-from ._discretization import KBinsDiscretizer
-from ._encoders import OneHotEncoder, OrdinalEncoder
-from ._function_transformer import FunctionTransformer
-from ._label import LabelBinarizer, LabelEncoder, MultiLabelBinarizer, label_binarize
-from ._orthogonal import OrthogonalPolynomialFeatures
-from ._polynomial import PolynomialFeatures, SplineTransformer
-from ._target_encoder import TargetEncoder
+from sklearn.preprocessing._discretization import KBinsDiscretizer
+from sklearn.preprocessing._encoders import OneHotEncoder, OrdinalEncoder
+from sklearn.preprocessing._function_transformer import FunctionTransformer
+from sklearn.preprocessing._label import (
+    LabelBinarizer,
+    LabelEncoder,
+    MultiLabelBinarizer,
+    label_binarize,
+)
+from sklearn.preprocessing._orthogonal import OrthogonalPolynomialFeatures
+from sklearn.preprocessing._polynomial import PolynomialFeatures, SplineTransformer
+from sklearn.preprocessing._target_encoder import TargetEncoder
 
 __all__ = [
     "Binarizer",
@@ -38,28 +43,28 @@ __all__ = [
     "KernelCenterer",
     "LabelBinarizer",
     "LabelEncoder",
-    "MultiLabelBinarizer",
-    "MinMaxScaler",
     "MaxAbsScaler",
-    "QuantileTransformer",
+    "MinMaxScaler",
+    "MultiLabelBinarizer",
     "Normalizer",
     "OneHotEncoder",
     "OrdinalEncoder",
+    "OrthogonalPolynomialFeatures",
+    "PolynomialFeatures",
     "PowerTransformer",
+    "QuantileTransformer",
     "RobustScaler",
     "SplineTransformer",
     "StandardScaler",
     "TargetEncoder",
     "add_dummy_feature",
-    "PolynomialFeatures",
-    "OrthogonalPolynomialFeatures",
     "binarize",
-    "normalize",
-    "scale",
-    "robust_scale",
+    "label_binarize",
     "maxabs_scale",
     "minmax_scale",
-    "label_binarize",
-    "quantile_transform",
+    "normalize",
     "power_transform",
+    "quantile_transform",
+    "robust_scale",
+    "scale",
 ]

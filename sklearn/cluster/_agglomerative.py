@@ -2,10 +2,6 @@
 
 These routines perform some hierarchical agglomerative clustering of some
 input data.
-
-Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
-          Gael Varoquaux
-License: BSD 3 clause
 """
 
 # Authors: The scikit-learn developers
@@ -19,30 +15,31 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     _fit_context,
 )
-from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING64
-from ..metrics.pairwise import _VALID_METRICS, paired_distances
-from ..utils import check_array
-from ..utils._fast_dict import IntFloatDict
-from ..utils._param_validation import (
+
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from sklearn.cluster import (  # type: ignore[attr-defined]
+    _hierarchical_fast as _hierarchical,
+)
+from sklearn.cluster._feature_agglomeration import AgglomerationTransform
+from sklearn.metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import METRIC_MAPPING64
+from sklearn.metrics.pairwise import _VALID_METRICS, paired_distances
+from sklearn.utils import check_array
+from sklearn.utils._fast_dict import IntFloatDict
+from sklearn.utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory, validate_data
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
-from ._feature_agglomeration import AgglomerationTransform
+from sklearn.utils.graph import _fix_connected_components
+from sklearn.utils.validation import check_memory, validate_data
 
 ###############################################################################
 # For non fully-connected graphs
@@ -799,13 +796,14 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
-        as input for the fit method.
+        as input for the fit method. If connectivity is None, linkage is
+        "single" and affinity is not "precomputed" any valid pairwise distance
+        metric can be assigned.
+
+        For an example of agglomerative clustering with different metrics, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`.
 
         .. versionadded:: 1.2
-
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -822,7 +820,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         For an example of connectivity matrix using
         :class:`~sklearn.neighbors.kneighbors_graph`, see
-        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
+        :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
@@ -932,6 +930,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
+
+    For a comparison of Agglomerative clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -939,7 +940,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", "sparse matrix", callable, None],
@@ -1008,20 +1008,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         """
         memory = check_memory(self.memory)
 
-        # TODO(1.6): remove in 1.6
-        if self.metric is None:
-            warnings.warn(
-                (
-                    "`metric=None` is deprecated in version 1.4 and will be removed in "
-                    "version 1.6. Let `metric` be the default value "
-                    "(i.e. `'euclidean'`) instead."
-                ),
-                FutureWarning,
-            )
-            self._metric = "euclidean"
-        else:
-            self._metric = self.metric
-
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
                 "Exactly one of n_clusters and "
@@ -1034,9 +1020,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self._metric != "euclidean":
+        if self.linkage == "ward" and self.metric != "euclidean":
             raise ValueError(
-                f"{self._metric} was provided as metric. Ward can only "
+                f"{self.metric} was provided as metric. Ward can only "
                 "work with euclidean distances."
             )
 
@@ -1070,7 +1056,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self._metric
+            kwargs["affinity"] = self.metric
 
         distance_threshold = self.distance_threshold
 
@@ -1133,11 +1119,16 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
 
 class FeatureAgglomeration(
-    ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+    ClassNamePrefixFeaturesOutMixin, AgglomerationTransform, AgglomerativeClustering
 ):
     """Agglomerate features.
 
     Recursively merges pair of clusters of features.
+
+    Refer to
+    :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+    for an example comparison of :class:`FeatureAgglomeration` strategy with a
+    univariate feature selection strategy (based on ANOVA).
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
@@ -1154,10 +1145,6 @@ class FeatureAgglomeration(
         as input for the fit method.
 
         .. versionadded:: 1.2
-
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -1285,7 +1272,6 @@ class FeatureAgglomeration(
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", "sparse matrix", callable, None],

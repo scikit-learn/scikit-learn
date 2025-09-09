@@ -35,7 +35,6 @@ Single and multi-output problems are both handled.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -45,7 +44,7 @@ import numpy as np
 from scipy.sparse import hstack as sparse_hstack
 from scipy.sparse import issparse
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
@@ -53,36 +52,36 @@ from ..base import (
     _fit_context,
     is_classifier,
 )
-from ..exceptions import DataConversionWarning
-from ..metrics import accuracy_score, r2_score
-from ..preprocessing import OneHotEncoder
-from ..tree import (
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DOUBLE, DTYPE
-from ..utils import check_random_state, compute_sample_weight
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._tags import get_tags
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.tree._tree import DOUBLE, DTYPE
+from sklearn.utils import check_random_state, compute_sample_weight
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._tags import get_tags
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
-    "RandomForestClassifier",
-    "RandomForestRegressor",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
     "RandomTreesEmbedding",
 ]
 
@@ -513,8 +512,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         ):
             y_type = type_of_target(y)
             if y_type == "unknown" or (
-                self._estimator_type == "classifier"
-                and y_type == "multiclass-multioutput"
+                is_classifier(self) and y_type == "multiclass-multioutput"
             ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
@@ -1003,6 +1001,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1168,7 +1167,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.regressor_tags.multi_label = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1180,13 +1179,20 @@ class RandomForestClassifier(ForestClassifier):
     classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
     Trees in the forest use the best split strategy, i.e. equivalent to passing
-    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeClassifier`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
+
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -1292,6 +1298,9 @@ class RandomForestClassifier(ForestClassifier):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
@@ -1345,7 +1354,9 @@ class RandomForestClassifier(ForestClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1570,6 +1581,13 @@ class RandomForestRegressor(ForestRegressor):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
+
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
@@ -1694,6 +1712,9 @@ class RandomForestRegressor(ForestRegressor):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
@@ -1721,7 +1742,9 @@ class RandomForestRegressor(ForestRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1925,6 +1948,14 @@ class ExtraTreesClassifier(ForestClassifier):
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -2029,6 +2060,9 @@ class ExtraTreesClassifier(ForestClassifier):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
@@ -2086,7 +2120,9 @@ class ExtraTreesClassifier(ForestClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2296,6 +2332,14 @@ class ExtraTreesRegressor(ForestRegressor):
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -2414,6 +2458,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
 
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
+
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
@@ -2445,7 +2492,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2638,6 +2687,10 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     The dimensionality of the resulting representation is
     ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
     the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
+
+    For an example of applying Random Trees Embedding to non-linear
+    classification, see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`.
 
     Read more in the :ref:`User Guide <random_trees_embedding>`.
 
@@ -2985,3 +3038,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

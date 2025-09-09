@@ -18,15 +18,15 @@ print(__doc__)
 
 # %%
 # Synthetic example
-###################
+# #################
 #
 # A synthetic random regression dataset is generated. The targets ``y`` are
 # modified by:
 #
-#   1. translating all targets such that all entries are
-#      non-negative (by adding the absolute value of the lowest ``y``) and
-#   2. applying an exponential function to obtain non-linear
-#      targets which cannot be fitted using a simple linear model.
+# 1. translating all targets such that all entries are
+#    non-negative (by adding the absolute value of the lowest ``y``) and
+# 2. applying an exponential function to obtain non-linear
+#    targets which cannot be fitted using a simple linear model.
 #
 # Therefore, a logarithmic (`np.log1p`) and an exponential function
 # (`np.expm1`) will be used to transform the targets before training a linear
@@ -123,7 +123,7 @@ plt.tight_layout()
 
 # %%
 # Real-world data set
-#####################
+# ###################
 #
 # In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
