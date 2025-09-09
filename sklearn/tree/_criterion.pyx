@@ -1191,6 +1191,13 @@ cdef class MAE(Criterion):
     It has almost nothing in common with other regression criterions
     so it doesn't inherit from RegressionCriterion
     """
+    cdef float64_t[::1] node_medians
+    cdef float64_t[::1] left_abs_errors
+    cdef float64_t[::1] right_abs_errors
+    cdef float64_t[::1] left_medians
+    cdef float64_t[::1] right_medians
+    cdef WeightedHeap above
+    cdef WeightedHeap below
 
     def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
@@ -1219,8 +1226,8 @@ cdef class MAE(Criterion):
 
         # Note: this criterion has an important memory footprint, which is
         # fine as it's instantiated only once to build an entire tree
-        self.left_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
-        self.right_abs_errors = np.empty((n_outputs, n_samples), dtype=np.float64)
+        self.left_abs_errors = np.empty(n_samples, dtype=np.float64)
+        self.right_abs_errors = np.empty(n_samples, dtype=np.float64)
         self.left_medians = np.empty(n_samples, dtype=np.float64)
         self.right_medians = np.empty(n_samples, dtype=np.float64)
         self.above = WeightedHeap(n_samples, True)   # min-heap
@@ -1245,14 +1252,13 @@ cdef class MAE(Criterion):
         """
         cdef intp_t i
         cdef float64_t w = 1.0
-        cdef intp_t n = end - start
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
         self.start = start
         self.end = end
-        self.n_node_samples = n
+        self.n_node_samples = end - start
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
@@ -1288,15 +1294,35 @@ cdef class MAE(Criterion):
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
-        for k in range(self.n_outputs - 1, -1, -1):
+        n_bytes = self.n_node_samples * sizeof(float64_t)
+        memset(&self.left_abs_errors[0], 0, n_bytes)
+        memset(&self.right_abs_errors[0], 0, n_bytes)
+
+        # For each output (from last to first), precompute absolute errors and medians
+        # for both left and right splits.
+        # Precomputation is needed here and can't be done step-by-step in the update method
+        # like for other criterions. Indeed, we don't have efficient way to update right child
+        # statistics when removing samples from it. So we compute right child AEs/medians by
+        # traversing from right to left (and hence only adding samples).
+        for k in range(self.n_outputs):
+            # Note that at each iteration of this loop, we overwrite `self.left_medians`
+            # and `self.right_medians` which is fine. Those are used to check
+            # for monoticity constraints, which are allowed only with n_outputs=1.
             precompute_absolute_errors(
-                self.y, self.sample_weight, self.sample_indices, self.above, self.below,
-                k, self.start, self.end, self.left_abs_errors[k], self.left_medians
+                self.y, self.sample_weight, self.sample_indices,
+                self.above, self.below, k, self.start, self.end,
+                # left_abs_errors is incremented, left_medians is overwritten
+                self.left_abs_errors, self.left_medians
             )
+            # For the right child, we consider samples from end-1 to start-1
+            # i.e., reversed, and abs error & median are filled in reverse order to.
             precompute_absolute_errors(
-                self.y, self.sample_weight, self.sample_indices, self.above, self.below,
-                k, self.end - 1, self.start - 1, self.right_abs_errors[k], self.right_medians
+                self.y, self.sample_weight, self.sample_indices,
+                self.above, self.below, k, self.end - 1, self.start - 1,
+                # right_abs_errors is incremented, right_medians is overwritten
+                self.right_abs_errors, self.right_medians
             )
+            # Store the median for the current node
             self.node_medians[k] = self.right_medians[0]
 
         return 0
@@ -1369,14 +1395,12 @@ cdef class MAE(Criterion):
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
 
-        Time complexity: O(n_outputs) (precomputed in `.reset()`)
+        Time complexity: O(1) (precomputed in `.reset()`)
         """
-        cdef float64_t impurity = 0.0
-
-        for k in range(self.n_outputs):
-            impurity += self.right_abs_errors[k, 0]
-
-        return impurity / (self.weighted_n_node_samples * self.n_outputs)
+        return (
+            self.right_abs_errors[0]
+            / (self.weighted_n_node_samples * self.n_outputs)
+        )
 
     cdef void children_impurity(self, float64_t* p_impurity_left,
                                 float64_t* p_impurity_right) noexcept nogil:
@@ -1385,24 +1409,21 @@ cdef class MAE(Criterion):
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
 
-        Time complexity: O(n_outputs)
+        Time complexity: O(1)
         """
         cdef intp_t j = self.pos - self.start
-        cdef intp_t k
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
         # if pos == start, left child is empty, hence impurity is 0
         if self.pos > self.start:
-            for k in range(self.n_outputs):
-                impurity_left += self.left_abs_errors[k, j - 1]
+            impurity_left += self.left_abs_errors[j - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
         # if pos == end, right child is empty, hence impurity is 0
         if self.pos < self.end:
-            for k in range(self.n_outputs):
-                impurity_right += self.right_abs_errors[k, j]
+            impurity_right += self.right_abs_errors[j]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
 

@@ -108,14 +108,3 @@ cdef class RegressionCriterion(Criterion):
     cdef float64_t[::1] sum_left     # Same as above, but for the left side of the split
     cdef float64_t[::1] sum_right    # Same as above, but for the right side of the split
     cdef float64_t[::1] sum_missing  # Same as above, but for missing values in X
-
-
-cdef class MAE(Criterion):
-
-    cdef float64_t[::1] node_medians
-    cdef float64_t[:, ::1] left_abs_errors
-    cdef float64_t[:, ::1] right_abs_errors
-    cdef float64_t[::1] left_medians
-    cdef float64_t[::1] right_medians
-    cdef WeightedHeap above
-    cdef WeightedHeap below

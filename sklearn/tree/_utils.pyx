@@ -332,7 +332,7 @@ cdef void precompute_absolute_errors(
         else:  # above and below weight are almost exactly equals
             median = (above.top() + below.top()) / 2.
         medians[j] = median
-        abs_errors[j] = (
+        abs_errors[j] += (
             (below.total_weight - above.total_weight) * median
             - below.weighted_sum
             + above.weighted_sum
