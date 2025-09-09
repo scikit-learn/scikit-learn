@@ -46,15 +46,18 @@ MetadataRouter
 ~~~~~~~~~~~~~~
 
 The ``MetadataRouter`` objects are constructed via a `get_metadata_routing` method,
-which all scikit-learn estimators provide. Developers of a custom or third party library
-meta-estimator need to implement this method to make metadata routing work.
+which all scikit-learn routers (such as meta-estimators or multi metric scorers)
+provide.
 
-In routers (such as meta-estimators or multi metric scorers), ``get_metadata_routing``
-returns a ``MetadataRouter`` object. It provides information about which method, from
-the router object, calls which method in a consumer's object, and also, which metadata
-had been requested by the consumer's methods, thus specifying how metadata is to be
-passed. If a sub-estimator that is used inside a router is a router on their own, their
-routing information is also stored in the meta-estimator's `MetadataRouter`.
+Developers of custom meta-estimators and third party libraries building on scikit-learn
+estimators need to implement a `get_metadata_routing` method to make metadata routing
+work.
+
+A router's ``MetadataRouter`` object stores information about which method, from the
+router object, calls which method in a consumer's object, and also, which metadata had
+been requested by the consumer's methods, thus specifying how metadata is to be passed.
+If a sub-estimator that is used inside a router is a router on their own, its routing
+information is also stored in the meta-estimator's `MetadataRouter`.
 
 Conceptually, this information looks like:
 
@@ -68,7 +71,7 @@ Conceptually, this information looks like:
 }
 ```
 
-The `MetadataRouter` objects are never stored and are always recreated anew whenever
+A `MetadataRouter` object is never stored and is always recreated anew whenever
 the object's `get_metadata_routing` method is called.
 
 An object that is both a router and a consumer, e.g. a meta-estimator which
@@ -90,8 +93,8 @@ To give the above representation some structure, we use the following objects:
 
 - ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``.
 
-The ``set_{method}_request`` methods are dynamically generated for estimators
-which inherit from ``BaseEstimator``. This is done by attaching instances
+The ``set_{method}_request`` methods are dynamically generated for all estimators, since
+they all inherit from ``BaseEstimator``. This is done by attaching instances
 of the ``RequestMethod`` descriptor to classes, which is done in the
 ``_MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
 This mixin also implements a ``_get_metadata_request`` method.

@@ -1171,7 +1171,7 @@ def test_unbound_set_methods_work():
 @config_context(enable_metadata_routing=True)
 def test_deprecation_get_metadata_routing():
     """Test that the `FutureWarnings` for the deprecated `get_metadata_routing` methods
-    are raised in consumers and not in routers"""
+    are raised in consumers and not in routers."""
 
     with pytest.warns(
         FutureWarning,
