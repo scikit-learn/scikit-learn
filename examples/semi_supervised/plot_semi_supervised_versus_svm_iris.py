@@ -134,7 +134,7 @@ print("Manual:", probs)
 print("API   :", ls.predict_proba(x_query))
 
 # %%
-# ## `predict_proba` in `SelfTrainingClassifier`
+# `predict_proba` in `SelfTrainingClassifier`
 # ----------------------------------------------
 #
 # :class:`~sklearn.semi_supervised.SelfTrainingClassifier` works by repeatedly
