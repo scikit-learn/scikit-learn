@@ -493,7 +493,9 @@ def _plain_sgd{{name_suffix}}(
                     if learning_rate != PA1 and learning_rate != PA2:
                         # sum up all the terms in the optimization objective function 
                         # (i.e. also include regularization in addition to the loss)
-                        # SGD optimizes 0.5 * L2**2 when using weight decay
+                        # SGD optimizes 0.5 * L2**2, due to using weight decay
+                        # that's why the 0.5 coefficient is required
+                        # (compared to direct minimization of L2**2)
                         objective_sum += cur_loss_val
                         if penalty_type > 0: # if regularization is enabled
                             objective_sum += alpha * (
