@@ -1780,12 +1780,13 @@ def test_sgd_oneclass_convergence():
             nu=nu, max_iter=100, tol=1e-3, learning_rate="constant", eta0=1e-3
         )
         model.fit(iris.data)
-        # 6 is the minimal number of iterations, after which optimization can stop
+        # 6 is the minimal number of iterations that should be surpassed, after which
+        # the optimization can stop
         assert model.n_iter_ > 6
 
 
 def test_sgd_oneclass_vs_linear_oneclass():
-    # Test convergence vs. liblinear OCSVM with kernel="linear"
+    # Test convergence vs. liblinear `OneClassSVM` with kernel="linear"
     for nu in [0.1, 0.5, 0.9]:
         # allow enough iterations, small dataset
         model = SGDOneClassSVM(
