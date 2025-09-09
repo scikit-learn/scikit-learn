@@ -418,14 +418,15 @@ def test_solver_multioutput():
 
 
 # Utility to generate sample points from Sudret (2008)
-def get_samples(degree, dimension):
+def get_samples(degree, dimension, tol=12):
     c = [0] * (degree + 2)
     c[-1] = 1
-    roots = legroots(c)
-    norms = dict()
-    for root in product(*[roots for _ in range(dimension)]):
-        norms[root] = np.linalg.norm(root)
-    return np.vstack(sorted(norms, key=norms.get))
+    roots = np.round(legroots(c), tol)  # round roots themselves
+    samples = list(product(*[roots for _ in range(dimension)]))
+    samples.sort(
+        key=lambda x: (round(np.linalg.norm(x), tol),) + tuple(np.round(x, tol))
+    )  # sort first by norm, then lexicographically
+    return np.vstack(samples)
 
 
 # Example 1 from Sudret (2008) - exact values
