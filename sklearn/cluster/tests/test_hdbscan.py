@@ -28,7 +28,6 @@ X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
-
 ALGORITHMS = [
     "kd_tree",
     "ball_tree",
@@ -64,7 +63,7 @@ def test_outlier_data(outlier_type):
     X_outlier = X.copy()
     X_outlier[0] = [outlier, 1]
     X_outlier[5] = [outlier, outlier]
-    model = HDBSCAN(copy=True).fit(X_outlier)
+    model = HDBSCAN(copy=False).fit(X_outlier)
 
     (missing_labels_idx,) = (model.labels_ == label).nonzero()
     assert_array_equal(missing_labels_idx, [0, 5])
@@ -73,7 +72,7 @@ def test_outlier_data(outlier_type):
     assert_array_equal(missing_probs_idx, [0, 5])
 
     clean_indices = list(range(1, 5)) + list(range(6, 200))
-    clean_model = HDBSCAN(copy=True).fit(X_outlier[clean_indices])
+    clean_model = HDBSCAN(copy=False).fit(X_outlier[clean_indices])
     assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
 
 
@@ -98,7 +97,7 @@ def test_hdbscan_distance_matrix():
     D[0, 1] = 10
     D[1, 0] = 1
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
+        HDBSCAN(metric="precomputed", copy=False).fit_predict(D)
 
 
 @pytest.mark.parametrize("sparse_constructor", [*CSR_CONTAINERS, *CSC_CONTAINERS])
@@ -115,7 +114,7 @@ def test_hdbscan_sparse_distance_matrix(sparse_constructor):
     D = sparse_constructor(D)
     D.eliminate_zeros()
 
-    labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
+    labels = HDBSCAN(metric="precomputed", copy=False).fit_predict(D)
     check_label_quality(labels)
 
 
@@ -124,7 +123,7 @@ def test_hdbscan_feature_array():
     Tests that HDBSCAN works with feature array, including an arbitrary
     goodness of fit check. Note that the check is a simple heuristic.
     """
-    labels = HDBSCAN(copy=True).fit_predict(X)
+    labels = HDBSCAN(copy=False).fit_predict(X)
 
     # Check that clustering is arbitrarily good
     # This is a heuristic to guard against regression
@@ -138,7 +137,7 @@ def test_hdbscan_algorithms(algo, metric):
     Tests that HDBSCAN works with the expected combinations of algorithms and
     metrics, or raises the expected errors.
     """
-    labels = HDBSCAN(algorithm=algo, copy=True).fit_predict(X)
+    labels = HDBSCAN(algorithm=algo, copy=False).fit_predict(X)
     check_label_quality(labels)
 
     # Validation for brute is handled by `pairwise_distances`
@@ -160,7 +159,7 @@ def test_hdbscan_algorithms(algo, metric):
         algorithm=algo,
         metric=metric,
         metric_params=metric_params,
-        copy=True,
+        copy=False,
     )
 
     if metric not in ALGOS_TREES[algo].valid_metrics:
@@ -178,7 +177,7 @@ def test_dbscan_clustering():
     Tests that HDBSCAN can generate a sufficiently accurate dbscan clustering.
     This test is more of a sanity check than a rigorous evaluation.
     """
-    clusterer = HDBSCAN(copy=True).fit(X)
+    clusterer = HDBSCAN(copy=False).fit(X)
     labels = clusterer.dbscan_clustering(0.3)
 
     # We use a looser threshold due to dbscan producing a more constrained
@@ -198,7 +197,7 @@ def test_dbscan_clustering_outlier_data(cut_distance):
     X_outlier[0] = [np.inf, 1]
     X_outlier[2] = [1, np.nan]
     X_outlier[5] = [np.inf, np.nan]
-    model = HDBSCAN(copy=True).fit(X_outlier)
+    model = HDBSCAN(copy=False).fit(X_outlier)
     labels = model.dbscan_clustering(cut_distance=cut_distance)
 
     missing_labels_idx = np.flatnonzero(labels == missing_label)
@@ -208,7 +207,7 @@ def test_dbscan_clustering_outlier_data(cut_distance):
     assert_array_equal(infinite_labels_idx, [0])
 
     clean_idx = list(set(range(200)) - set(missing_labels_idx + infinite_labels_idx))
-    clean_model = HDBSCAN(copy=True).fit(X_outlier[clean_idx])
+    clean_model = HDBSCAN(copy=False).fit(X_outlier[clean_idx])
     clean_labels = clean_model.dbscan_clustering(cut_distance=cut_distance)
     assert_array_equal(clean_labels, labels[clean_idx])
 
@@ -218,7 +217,7 @@ def test_hdbscan_best_balltree_metric():
     Tests that HDBSCAN using `BallTree` works.
     """
     labels = HDBSCAN(
-        metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}, copy=True
+        metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}, copy=False
     ).fit_predict(X)
     check_label_quality(labels)
 
@@ -228,7 +227,7 @@ def test_hdbscan_no_clusters():
     Tests that HDBSCAN correctly does not generate a valid cluster when the
     `min_cluster_size` is too large for the data.
     """
-    labels = HDBSCAN(min_cluster_size=len(X) - 1, copy=True).fit_predict(X)
+    labels = HDBSCAN(min_cluster_size=len(X) - 1, copy=False).fit_predict(X)
     assert set(labels).issubset(OUTLIER_SET)
 
 
@@ -238,7 +237,7 @@ def test_hdbscan_min_cluster_size():
     many points
     """
     for min_cluster_size in range(2, len(X), 1):
-        labels = HDBSCAN(min_cluster_size=min_cluster_size, copy=True).fit_predict(X)
+        labels = HDBSCAN(min_cluster_size=min_cluster_size, copy=False).fit_predict(X)
         true_labels = [label for label in labels if label != -1]
         if len(true_labels) != 0:
             assert np.min(np.bincount(true_labels)) >= min_cluster_size
@@ -249,7 +248,7 @@ def test_hdbscan_callable_metric():
     Tests that HDBSCAN works when passed a callable metric.
     """
     metric = distance.euclidean
-    labels = HDBSCAN(metric=metric, copy=True).fit_predict(X)
+    labels = HDBSCAN(metric=metric, copy=False).fit_predict(X)
     check_label_quality(labels)
 
 
@@ -259,7 +258,7 @@ def test_hdbscan_precomputed_non_brute(tree):
     Tests that HDBSCAN correctly raises an error when passing precomputed data
     while requesting a tree-based algorithm.
     """
-    hdb = HDBSCAN(metric="precomputed", algorithm=tree, copy=True)
+    hdb = HDBSCAN(metric="precomputed", algorithm=tree, copy=False)
     msg = "precomputed is not a valid metric for"
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X)
@@ -273,12 +272,12 @@ def test_hdbscan_sparse(csr_container):
     array.
     """
 
-    dense_labels = HDBSCAN(copy=True).fit(X).labels_
+    dense_labels = HDBSCAN(copy=False).fit(X).labels_
     check_label_quality(dense_labels)
 
     _X_sparse = csr_container(X)
     X_sparse = _X_sparse.copy()
-    sparse_labels = HDBSCAN(copy=True).fit(X_sparse).labels_
+    sparse_labels = HDBSCAN(copy=False).fit(X_sparse).labels_
     assert_array_equal(dense_labels, sparse_labels)
 
     # Compare that the sparse and dense non-precomputed routines return the same labels
@@ -286,18 +285,18 @@ def test_hdbscan_sparse(csr_container):
     for outlier_val, outlier_type in ((np.inf, "infinite"), (np.nan, "missing")):
         X_dense = X.copy()
         X_dense[0, 0] = outlier_val
-        dense_labels = HDBSCAN(copy=True).fit(X_dense).labels_
+        dense_labels = HDBSCAN(copy=False).fit(X_dense).labels_
         check_label_quality(dense_labels)
         assert dense_labels[0] == _OUTLIER_ENCODING[outlier_type]["label"]
 
         X_sparse = _X_sparse.copy()
         X_sparse[0, 0] = outlier_val
-        sparse_labels = HDBSCAN(copy=True).fit(X_sparse).labels_
+        sparse_labels = HDBSCAN(copy=False).fit(X_sparse).labels_
         assert_array_equal(dense_labels, sparse_labels)
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="ball_tree", copy=True).fit(X_sparse)
+        HDBSCAN(metric="euclidean", algorithm="ball_tree", copy=False).fit(X_sparse)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -308,7 +307,7 @@ def test_hdbscan_centers(algorithm):
     """
     centers = [(0.0, 0.0), (3.0, 3.0)]
     H, _ = make_blobs(n_samples=2000, random_state=0, centers=centers, cluster_std=0.5)
-    hdb = HDBSCAN(store_centers="both", copy=True).fit(H)
+    hdb = HDBSCAN(store_centers="both", copy=False).fit(H)
 
     for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
         assert_allclose(center, centroid, rtol=1, atol=0.05)
@@ -319,7 +318,7 @@ def test_hdbscan_centers(algorithm):
         algorithm=algorithm,
         store_centers="both",
         min_cluster_size=X.shape[0],
-        copy=True,
+        copy=False,
     ).fit(X)
     assert hdb.centroids_.shape[0] == 0
     assert hdb.medoids_.shape[0] == 0
@@ -337,7 +336,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
         cluster_selection_epsilon=0.0,
         cluster_selection_method="eom",
         allow_single_cluster=True,
-        copy=True,
+        copy=False,
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -353,7 +352,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
         cluster_selection_method="eom",
         allow_single_cluster=True,
         algorithm="kd_tree",
-        copy=True,
+        copy=False,
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -373,7 +372,7 @@ def test_hdbscan_better_than_dbscan():
         cluster_std=[0.2, 0.35, 1.35, 1.35],
         random_state=0,
     )
-    labels = HDBSCAN(copy=True).fit(X).labels_
+    labels = HDBSCAN(copy=False).fit(X).labels_
 
     n_clusters = len(set(labels)) - int(-1 in labels)
     assert n_clusters == 4
@@ -393,7 +392,7 @@ def test_hdbscan_usable_inputs(X, kwargs):
     Tests that HDBSCAN works correctly for array-likes and precomputed inputs
     with non-finite points.
     """
-    HDBSCAN(min_samples=1, copy=True, **kwargs).fit(X)
+    HDBSCAN(min_samples=1, copy=False, **kwargs).fit(X)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -406,7 +405,7 @@ def test_hdbscan_sparse_distances_too_few_nonzero(csr_container):
 
     msg = "There exists points with fewer than"
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="precomputed", copy=True).fit(X)
+        HDBSCAN(metric="precomputed", copy=False).fit(X)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -423,7 +422,7 @@ def test_hdbscan_sparse_distances_disconnected_graph(csr_container):
     X = csr_container(X)
     msg = "HDBSCAN cannot be performed on a disconnected graph"
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="precomputed", copy=True).fit(X)
+        HDBSCAN(metric="precomputed", copy=False).fit(X)
 
 
 def test_hdbscan_tree_invalid_metric():
@@ -438,16 +437,16 @@ def test_hdbscan_tree_invalid_metric():
 
     # Callables are not supported for either
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="kd_tree", metric=metric_callable, copy=True).fit(X)
+        HDBSCAN(algorithm="kd_tree", metric=metric_callable, copy=False).fit(X)
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="ball_tree", metric=metric_callable, copy=True).fit(X)
+        HDBSCAN(algorithm="ball_tree", metric=metric_callable, copy=False).fit(X)
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
     metrics_not_kd = list(set(BallTree.valid_metrics) - set(KDTree.valid_metrics))
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
-            HDBSCAN(algorithm="kd_tree", metric=metrics_not_kd[0], copy=True).fit(X)
+            HDBSCAN(algorithm="kd_tree", metric=metrics_not_kd[0], copy=False).fit(X)
 
 
 def test_hdbscan_too_many_min_samples():
@@ -455,7 +454,7 @@ def test_hdbscan_too_many_min_samples():
     Tests that HDBSCAN correctly raises an error when setting `min_samples`
     larger than the number of samples.
     """
-    hdb = HDBSCAN(min_samples=len(X) + 1, copy=True)
+    hdb = HDBSCAN(min_samples=len(X) + 1, copy=False)
     msg = r"min_samples (.*) must be at most"
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X)
@@ -469,7 +468,7 @@ def test_hdbscan_precomputed_dense_nan():
     X_nan = X.copy()
     X_nan[0, 0] = np.nan
     msg = "np.nan values found in precomputed-dense"
-    hdb = HDBSCAN(metric="precomputed", copy=True)
+    hdb = HDBSCAN(metric="precomputed", copy=False)
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X_nan)
 
@@ -492,7 +491,7 @@ def test_labelling_distinct(global_random_seed, allow_single_cluster, epsilon):
         ],
     )
 
-    est = HDBSCAN(copy=True).fit(X)
+    est = HDBSCAN(copy=False).fit(X)
     condensed_tree = _condense_tree(
         est._single_linkage_tree_, min_cluster_size=est.min_cluster_size
     )
@@ -569,7 +568,7 @@ def test_hdbscan_error_precomputed_and_store_centers(store_centers):
         HDBSCAN(
             metric="precomputed",
             store_centers=store_centers,
-            copy=True,
+            copy=False,
         ).fit(X_dist)
 
 
@@ -580,7 +579,7 @@ def test_hdbscan_cosine_metric_valid_algorithm(valid_algo):
 
     Non-regression test for issue #28631
     """
-    HDBSCAN(metric="cosine", algorithm=valid_algo, copy=True).fit_predict(X)
+    HDBSCAN(metric="cosine", algorithm=valid_algo, copy=False).fit_predict(X)
 
 
 @pytest.mark.parametrize("invalid_algo", ["kd_tree", "ball_tree"])
@@ -588,7 +587,7 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
     """Test that HDBSCAN raises an informative error is raised when an unsupported
     algorithm is used with the "cosine" metric.
     """
-    hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo, copy=True)
+    hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo, copy=False)
     with pytest.raises(ValueError, match="cosine is not a valid metric"):
         hdbscan.fit_predict(X)
 

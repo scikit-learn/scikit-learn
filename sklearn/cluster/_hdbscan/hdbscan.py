@@ -717,6 +717,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             Returns self.
         """
         # TODO(1.10): remove "warn" option
+        # and leave copy to its default value where applicable in examples and doctests.
         if self.copy == "warn":
             warn(
                 "The default value of `copy` will change from False to True in 1.10."
