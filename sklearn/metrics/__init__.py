@@ -49,6 +49,7 @@ from sklearn.metrics._ranking import (
     top_k_accuracy_score,
 )
 from sklearn.metrics._regression import (
+    adjusted_r2_score,
     d2_absolute_error_score,
     d2_pinball_score,
     d2_tweedie_score,
@@ -66,7 +67,6 @@ from sklearn.metrics._regression import (
     r2_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
-    adjusted_r2_score,
 )
 from sklearn.metrics._scorer import (
     check_scoring,

@@ -9,6 +9,7 @@ from scipy.special import factorial, xlogy
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
+    adjusted_r2_score,
     d2_absolute_error_score,
     d2_pinball_score,
     d2_tweedie_score,
@@ -634,7 +635,6 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
-from sklearn.metrics import adjusted_r2_score
 def test_adjusted_r2_matches_formula():
     """Check adjusted_r2_score matches the analytical formula."""
     y_true = [3, -0.5, 2, 7]

@@ -11,12 +11,10 @@ the lower the better.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from numbers import Real
+from numbers import Integral, Real
 
 import numpy as np
-from sklearn.utils.validation import _num_samples
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from numbers import Integral
+
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.utils._array_api import (
     _average,
@@ -38,6 +36,7 @@ from sklearn.utils.validation import (
 )
 
 __ALL__ = [
+    "adjusted_r2_score",
     "max_error",
     "mean_absolute_error",
     "mean_squared_error",
@@ -55,7 +54,6 @@ __ALL__ = [
     "d2_tweedie_score",
     "d2_pinball_score",
     "d2_absolute_error_score",
-    "adjusted_r2_score",
 ]
 
 
@@ -1060,7 +1058,7 @@ def adjusted_r2_score(
     >>> adjusted_r2_score(y_true, y_pred, n_features=2)
     0.843...
     """
-    # START of the new error checking
+    # START of the corrected error checking
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if not isinstance(n_features, Integral) or n_features <= 0:
@@ -1072,7 +1070,7 @@ def adjusted_r2_score(
             f"n_samples={n_samples} must be greater than n_features={n_features} "
             "for Adjusted R^2 to be defined."
         )
-    # END of the new error checking
+    # END of the corrected error checking
 
     r2 = r2_score(
         y_true,
@@ -1082,8 +1080,8 @@ def adjusted_r2_score(
         force_finite=force_finite,
     )
 
+    # Handle the case where the denominator of the adjustment is zero
     if n_samples - n_features - 1 == 0:
-        # Denominator is zero, which is not defined.
         return np.nan
 
     return 1 - (1 - r2) * (n_samples - 1) / (n_samples - n_features - 1)
