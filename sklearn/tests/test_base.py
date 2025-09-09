@@ -951,7 +951,7 @@ def test_dataframe_protocol(constructor_name, minversion):
 @config_context(enable_metadata_routing=True)
 def test_transformer_fit_transform_with_metadata_in_transform():
     """Test that a transformer that does not implement its own `fit_transform` raises a
-    warning when metadata is passed to `transform` and `fit_transform` is called."""
+    warning when metadata is requested by `transform` and `fit_transform` is called."""
 
     class CustomTransformer(BaseEstimator, TransformerMixin):
         def fit(self, X, y=None, metadata=None):
@@ -987,8 +987,9 @@ def test_transformer_fit_transform_with_metadata_in_transform():
             )
             return X
 
-    # passing the metadata to `fit_transform` should raise a warning since it
-    # could potentially be consumed by `transform`
+    # passing the metadata to `fit_transform` should raise a warning that
+    # `fit_transform` does not forward metadata to `transform`, since it is not
+    # implemented
     with pytest.warns(UserWarning, match="`transform` method which consumes metadata"):
         ct = CustomTransformer().set_transform_request(metadata=True)
         ct.fit_transform(X=[[1]], metadata="metadata")
