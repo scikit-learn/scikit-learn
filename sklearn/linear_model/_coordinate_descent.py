@@ -341,7 +341,10 @@ def lasso_path(
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
     interpolation can be used to retrieve model coefficients between the
-    values output by lars_path
+    values output by lars_path.
+
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
     --------
@@ -540,6 +543,9 @@ def enet_path(
     :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
+
     Examples
     --------
     >>> from sklearn.linear_model import enet_path
@@ -566,6 +572,7 @@ def enet_path(
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
+    do_screening = params.pop("do_screening", True)
 
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
@@ -680,10 +687,11 @@ def enet_path(
                 rng=rng,
                 random=random,
                 positive=positive,
+                do_screening=do_screening,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, do_screening
             )
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -705,7 +713,17 @@ def enet_path(
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, positive
+                coef_,
+                l1_reg,
+                l2_reg,
+                X,
+                y,
+                max_iter,
+                tol,
+                rng,
+                random,
+                positive,
+                do_screening,
             )
         else:
             raise ValueError(
@@ -739,20 +757,26 @@ def enet_path(
 class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
-    Minimizes the objective function::
+    Minimizes the objective function:
 
-            1 / (2 * n_samples) * ||y - Xw||^2_2
-            + alpha * l1_ratio * ||w||_1
-            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+    .. math::
+
+        \\frac{1}{2 n_{\\rm samples}} \\cdot \\|y - X w\\|_2^2
+        + \\alpha \\cdot {\\rm l1\\_{ratio}} \\cdot \\|w\\|_1
+        + 0.5 \\cdot \\alpha \\cdot (1 - {\\rm l1\\_{ratio}}) \\cdot \\|w\\|_2^2
 
     If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
+    separately, keep in mind that this is equivalent to:
 
-            a * ||w||_1 + 0.5 * b * ||w||_2^2
+    .. math::
 
-    where::
+        a \\cdot \\|w\\|_1 + 0.5 \\cdot b \\cdot \\|w\\|_2^2
 
-            alpha = a + b and l1_ratio = a / (a + b)
+    where:
+
+    .. math::
+
+        \\alpha = a + b, \\quad {\\rm l1\\_{ratio}} = \\frac{a}{a + b}
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
@@ -870,6 +894,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     is smaller or equal to `tol` times the maximum absolute coefficient,
     :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
     smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
+
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
     --------
@@ -1307,6 +1334,9 @@ class Lasso(ElasticNet):
     It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
     instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
     sparsity in the coefficients.
+
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
     --------
@@ -1919,7 +1949,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=check_cv(self.cv),
@@ -2104,6 +2134,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
     regularization path. It tends to speed up the hyperparameter
     search.
 
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoCV
@@ -2113,7 +2146,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     >>> reg.score(X, y)
     0.9993
     >>> reg.predict(X[:1,])
-    array([-78.4951])
+    array([-79.4755331])
     """
 
     path = staticmethod(lasso_path)
@@ -2381,6 +2414,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     For an example, see
     :ref:`examples/linear_model/plot_lasso_model_selection.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+
+    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
     --------
@@ -3066,10 +3102,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     ...         [[0, 0], [1, 1], [2, 2]])
     MultiTaskElasticNetCV(cv=3)
     >>> print(clf.coef_)
-    [[0.52875032 0.46958558]
-     [0.52875032 0.46958558]]
+    [[0.51841231 0.479658]
+     [0.51841231 0.479658]]
     >>> print(clf.intercept_)
-    [0.00166409 0.00166409]
+    [0.001929... 0.001929...]
     """
 
     _parameter_constraints: dict = {
@@ -3320,7 +3356,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> r2_score(y, reg.predict(X))
     0.9994
     >>> reg.alpha_
-    np.float64(0.5713)
+    np.float64(0.4321...)
     >>> reg.predict(X[:1,])
     array([[153.7971,  94.9015]])
     """
