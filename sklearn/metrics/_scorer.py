@@ -377,7 +377,7 @@ class _BaseScorer(_MetadataRequester):
         return self
 
     def _get_metadata_request(self):
-        """Get requested data properties.
+        """Get requested metadata properties.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
