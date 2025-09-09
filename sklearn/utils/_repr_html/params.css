@@ -36,9 +36,6 @@
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td {
-    color:rgb(255, 94, 0);
-
 /*
     `table td`is set in notebook with right text-align.
     We need to overwrite it.
