@@ -1460,7 +1460,7 @@ class _MetadataRequester:
                 if hasattr(cls, set_method_name) and not is_RequestMethod(
                     cls, set_method_name
                 ):
-                    # The method is not a descriptor, which means it's explicitly\
+                    # The method is not a descriptor, which means it's explicitly
                     # defined in the class, therefore we skip overriding it with a
                     # descriptor here.
                     # This happens, for instance in Scorers where the
