@@ -2903,7 +2903,6 @@ def test_absolute_errors_precomputation_function():
         wc = np.cumsum(w[sorter])
         idx = np.searchsorted(wc, wc[-1] / 2)
         median = y[sorter[idx]]
-        print(y, median)
         # 2) compute the AE
         return (np.abs(y - median) * w).sum()
 
