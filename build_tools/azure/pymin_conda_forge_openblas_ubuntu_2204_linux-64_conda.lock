@@ -19,6 +19,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libjpeg-turbo-3.1.0-hb9d3cd8_0.c
 https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.1-hb9d3cd8_2.conda#1a580f7796c7bf6393fddb8bbbde58dc
 https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.1-hb9d3cd8_1.conda#d864d34357c3b65a4b731f78c0801dc4
 https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-15.1.0-h8f9b012_5.conda#4e02a49aaa9d5190cb630fa43528fbe6
+https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.41.1-he9a06e4_0.conda#af930c65e9a79a3423d6d36e265cef65
 https://conda.anaconda.org/conda-forge/linux-64/libwebp-base-1.6.0-hd42ef1d_0.conda#aea31d2e5b1091feca96fcfe945c3cf9
 https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.1-hb9d3cd8_2.conda#edb0dca6bc32e4f4789199455a1dbeb8
 https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda#47e340acb35de30501a76c7c799c41d7
@@ -32,7 +33,6 @@ https://conda.anaconda.org/conda-forge/linux-64/libgfortran-15.1.0-h69a702a_5.co
 https://conda.anaconda.org/conda-forge/linux-64/libpng-1.6.50-h421ea60_1.conda#7af8e91b0deb5f8e25d1a595dea79614
 https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.50.4-h0c1763c_0.conda#0b367fad34931cb79e0d6b7e5c06bb1c
 https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-ng-15.1.0-h4852527_5.conda#8bba50c7f4679f08c861b597ad2bda6b
-https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.38.1-h0b41bf4_0.conda#40b61aab5c7ba9ff276c41cfffe6b80b
 https://conda.anaconda.org/conda-forge/linux-64/libxcb-1.17.0-h8a09558_0.conda#92ed62436b625154323d40d5f2f11dd7
 https://conda.anaconda.org/conda-forge/linux-64/libxcrypt-4.4.36-hd590300_1.conda#5aa797f8787fe7a17d1b0821485b5adc
 https://conda.anaconda.org/conda-forge/linux-64/ninja-1.13.1-h171cf75_0.conda#6567fa1d9ca189076d9443a0b125541c

@@ -12,7 +12,7 @@ execnet==2.1.1
     # via pytest-xdist
 iniconfig==2.1.0
     # via pytest
-joblib==1.2.0
+joblib==1.3.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 meson==1.9.0
     # via meson-python
@@ -37,7 +37,7 @@ pytest==8.4.2
     #   pytest-xdist
 pytest-xdist==3.8.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-threadpoolctl==3.1.0
+threadpoolctl==3.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 tomli==2.2.1
     # via
