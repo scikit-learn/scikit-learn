@@ -1564,11 +1564,21 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer, removed by
     setting to 'drop' or disabled by setting to 'passthrough' (features are
-    passed without transformation).
+    passed without transformation).S
 
     Read more in the :ref:`User Guide <feature_union>`.
 
     .. versionadded:: 0.13
+
+
+    .. note::
+    When transformer outputs are ``polars`` DataFrames, ``FeatureUnion`` can
+    create a final DataFrame with duplicate column names. Since ``polars``
+    does not support duplicate column names, this will raise an error.
+
+    A possible workaround is to ensure the transformers output a different
+    format, like a NumPy array, by using ``.set_output(transform="default")``.
+
 
     Parameters
     ----------
