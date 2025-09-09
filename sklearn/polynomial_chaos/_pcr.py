@@ -12,28 +12,28 @@ import numpy as np
 from scipy.stats import uniform
 
 # sklearn imports
-from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
-from ..exceptions import DataConversionWarning
-from ..linear_model._base import LinearModel, LinearRegression
-from ..multioutput import MultiOutputRegressor
-from ..pipeline import Pipeline
-from ..preprocessing._orthogonal import OrthogonalPolynomialFeatures
-from ..utils._orthogonal_polynomial import Polynomial
-from ..utils._param_validation import (
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context, clone
+from sklearn.exceptions import DataConversionWarning
+from sklearn.linear_model._base import LinearModel, LinearRegression
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.polynomial_chaos._adaptive import BasisIncrementStrategy
+from sklearn.preprocessing._orthogonal import OrthogonalPolynomialFeatures
+from sklearn.utils._orthogonal_polynomial import Polynomial
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
     Iterable,
     StrOptions,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     _get_feature_names,
     check_is_fitted,
     check_X_y,
     column_or_1d,
     validate_data,
 )
-from ._adaptive import BasisIncrementStrategy
 
 
 class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
@@ -146,7 +146,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
     See Also
     --------
     :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures`: Transformer
-        that maps features into orhtogonal polynomial features.
+        that maps features into orthogonal polynomial features.
 
     Examples
     --------

@@ -61,7 +61,7 @@ pce.fit(X, y)
 # %%
 # After the Polynomial Chaos expansion is fitted, we can visualize the terms
 # in the basis, as well as the value of the coefficient associated with that
-# basis term. The function below can be used to vizualize the polynomial basis
+# basis term. The function below can be used to visualize the polynomial basis
 # terms in two dimensions.
 import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable

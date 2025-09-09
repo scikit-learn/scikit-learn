@@ -76,7 +76,7 @@ y_test = ishigami(X_test)
 X_test = DataFrame(data=X_test, columns=("$x_1$", "$x_2$", "$x_3$"))
 
 # %%
-# We can vizualize the goodness-of-fit as follows.
+# We can visualize the goodness-of-fit as follows.
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import PredictionErrorDisplay
@@ -223,7 +223,7 @@ for j, sens in enumerate([S1_t, S2_t, S3_t]):
         linestyle="dashed",
     )
 plt.xlabel("number of training points")
-plt.ylabel("sensivity indices")
+plt.ylabel("sensitivity indices")
 plt.title("Global sensitivity analysis (Polynomial Chaos)")
 plt.ylim(0, 1)
 plt.legend(frameon=False)
@@ -281,7 +281,7 @@ if scipy_has_sobol_indices:
             linestyle="dashed",
         )
     plt.xlabel("number of training points")
-    plt.ylabel("sensivity indices")
+    plt.ylabel("sensitivity indices")
     plt.title("Global sensitivity analysis (sampling approach)")
     plt.ylim(0, 1)
     plt.legend(frameon=False)
@@ -296,6 +296,6 @@ if scipy_has_sobol_indices:
 # See also
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
 #     an example of how to adaptively construct the multiindex set in the
-#     Polynomial Chaos expansion to compute senstivity indices.
+#     Polynomial Chaos expansion to compute sensitivity indices.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
 #     an example of how to use sparse solvers to deal with noisy measurements.

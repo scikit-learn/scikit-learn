@@ -21,7 +21,7 @@ basis growth strategies for Polynomial Chaos expansions. The main (abstract)
 class is `BasisIncrementStrategy`. Concrete basis increment strategies can be
 added by inheriting from this base class. One adaptive basis growth strategy is
 provided as `GerstnerGriebel`, which implements the basis growth strategy by
-Gerstner & Griebel, originally targetting sparse grids, outlined in their 2020
+Gerstner & Griebel, originally targeting sparse grids, outlined in their 2020
 paper.
 
 The main method is `propose`. Given a `PolynomialChaosRegression`, this method
@@ -63,7 +63,7 @@ class BasisIncrementStrategy(ABC):
 
     @staticmethod
     def from_string(name):
-        """Returns the adaptive basis groth strategy with the given name, if it
+        """Returns the adaptive basis growth strategy with the given name, if it
         exists.
 
         Parameters
@@ -92,7 +92,7 @@ class GerstnerGriebel(BasisIncrementStrategy):
     'active' set. The 'old' multiindex set contains all indices for which all
     forward neighbors (i.e., all multiindices that have one of the coordinates
     increased by 1) are included in the multiindex set. The remaining indices
-    in the active set is composed of those indices for wich at least one
+    in the active set is composed of those indices for which at least one
     forward neighbor is not included in the multiindex set. At each iteration,
     (that is, each call to 'propose'), we select the multiindex from the active
     set for which the variance contribution (coefficient squared times
@@ -113,7 +113,7 @@ class GerstnerGriebel(BasisIncrementStrategy):
             self.active = list()
             self.old = list()
             for index in multiindices:
-                # check if all forward neighors are in the set
+                # check if all forward neighbors are in the set
                 is_old = True
                 for d in range(pce.n_features_in_):
                     index_to_test = index.copy()

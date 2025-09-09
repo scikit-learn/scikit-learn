@@ -73,7 +73,7 @@ degree = 8
 pce = PolynomialChaosRegressor(distribution, degree=degree)
 
 # %%
-# Next, we preform the Polynomial Chaos regression by fitting the model to the
+# Next, we perform the Polynomial Chaos regression by fitting the model to the
 # data :math:`(X, y)`
 pce.fit(X, y)
 
@@ -83,7 +83,7 @@ X_test = distribution.rvs((1000, 2))
 y_test = Sobol(X_test[:, 0], X_test[:, 1])
 
 # %%
-# We can vizualize the goodness-of-fit for the test data as follows.
+# We can visualize the goodness-of-fit for the test data as follows.
 from sklearn.metrics import PredictionErrorDisplay
 
 PredictionErrorDisplay.from_predictions(
@@ -116,7 +116,7 @@ y_noisy = y + noise * np.random.randn(*y.shape)
 pce.fit(X, y_noisy)
 
 # %%
-# We can again vizualize the goodness-of-fit for the test data, shown below.
+# We can again visualize the goodness-of-fit for the test data, shown below.
 PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=pce.predict(X_test), kind="actual_vs_predicted"
 )
@@ -167,4 +167,4 @@ pce.main_sens()
 #     well-known test problem.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
 #     an example of how to adaptively construct the multiindex set in the
-#     Polynomial Chaos expansion to compute senstivity indices.
+#     Polynomial Chaos expansion to compute sensitivity indices.
