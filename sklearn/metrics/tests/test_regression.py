@@ -634,3 +634,45 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+from sklearn.metrics import adjusted_r2_score
+def test_adjusted_r2_matches_formula():
+    """Check adjusted_r2_score matches the analytical formula."""
+    y_true = [3, -0.5, 2, 7]
+    y_pred = [2.5, 0.0, 2, 8]
+    n_features = 2
+    n = len(y_true)
+
+    r2 = r2_score(y_true, y_pred)
+    expected = 1 - (1 - r2) * (n - 1) / (n - n_features - 1)
+
+    score = adjusted_r2_score(y_true, y_pred, n_features=n_features)
+    assert np.allclose(score, expected)
+
+
+def test_adjusted_r2_perfect_fit():
+    """Check adjusted_r2_score returns 1.0 for a perfect prediction."""
+    y_true = [1, 2, 3]
+    y_pred = [1, 2, 3]
+    score = adjusted_r2_score(y_true, y_pred, n_features=1)
+    assert np.allclose(score, 1.0)
+
+
+def test_adjusted_r2_invalid_samples_vs_features():
+    """Check adjusted_r2_score raises when n_samples <= n_features."""
+    y_true = [1, 2]
+    y_pred = [1, 3]
+
+    with pytest.raises(ValueError, match="n_samples"):
+        adjusted_r2_score(y_true, y_pred, n_features=2)
+
+
+def test_adjusted_r2_invalid_n_features_type():
+    """Check adjusted_r2_score raises with invalid n_features input."""
+    y_true = [1, 2, 3]
+    y_pred = [1, 2, 3]
+
+    with pytest.raises(ValueError, match="n_features"):
+        adjusted_r2_score(y_true, y_pred, n_features=0)
+
+    with pytest.raises(ValueError, match="n_features"):
+        adjusted_r2_score(y_true, y_pred, n_features=-1)

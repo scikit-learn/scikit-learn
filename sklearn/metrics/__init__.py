@@ -26,6 +26,7 @@ from sklearn.metrics._classification import (
     precision_score,
     recall_score,
     zero_one_loss,
+    
 )
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics._plot.confusion_matrix import ConfusionMatrixDisplay
@@ -65,6 +66,7 @@ from sklearn.metrics._regression import (
     r2_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
+    adjusted_r2_score,
 )
 from sklearn.metrics._scorer import (
     check_scoring,
