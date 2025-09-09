@@ -14,6 +14,7 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from libc.stdio cimport printf
 
 from ._utils cimport swap_array_slices
 
@@ -163,6 +164,7 @@ cdef class DensePartitioner:
 
         The missing values are not included when iterating through the feature values.
         """
+        printf("next p\n")
         cdef:
             float32_t[::1] feature_values = self.feature_values
             intp_t end_non_missing = self.end - self.n_missing
@@ -201,10 +203,10 @@ cdef class DensePartitioner:
             bint go_to_left
 
         while p < partition_end:
-            go_to_left = (
-                feature_values[p] <= current_threshold
-                or (isnan(feature_values[p]) and missing_go_to_left)
-            )
+            if isnan(feature_values[p]):
+                go_to_left = missing_go_to_left
+            else:
+                go_to_left = feature_values[p] <= current_threshold
             if go_to_left:
                 p += 1
             else:
@@ -240,10 +242,10 @@ cdef class DensePartitioner:
 
         while p < partition_end:
             current_value = X[samples[p], best_feature]
-            go_to_left = (
-                current_value <= best_threshold
-                or isnan(current_value) and best_missing_go_to_left
-            )
+            if isnan(current_value):
+                go_to_left = best_missing_go_to_left
+            else:
+                go_to_left = current_value <= best_threshold
             if go_to_left:
                 p += 1
             else:

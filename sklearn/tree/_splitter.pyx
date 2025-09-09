@@ -318,7 +318,6 @@ cdef inline int node_split_best(
     cdef intp_t n_known_constants = parent_record.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
-    cdef intp_t p_mem
 
     _init_split(&best_split, end)
 
@@ -406,21 +405,15 @@ cdef inline int node_split_best(
             criterion.reset()
 
             p = start
-            p_mem = start
 
             while p < end:
                 partitioner.next_p(&p_prev, &p)
-                if p == p_mem:
-                    assert False
-                    break
-                p_mem = p
                 if p == end:
                     continue
 
+                # Reject if min_samples_leaf is not guaranteed
                 n_left = p - start
                 n_right = end - p
-
-                # Reject if min_samples_leaf is not guaranteed
                 if n_left < min_samples_leaf or n_right < min_samples_leaf:
                     continue
 
