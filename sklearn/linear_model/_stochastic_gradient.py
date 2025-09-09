@@ -104,7 +104,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         *,
         penalty="l2",
         alpha=0.0001,
-        PA_C=1.0,
         l1_ratio=0.15,
         fit_intercept=True,
         max_iter=1000,
@@ -127,7 +126,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.alpha = alpha
-        self.PA_C = PA_C
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.shuffle = shuffle
@@ -396,7 +394,6 @@ def fit_binary(
     X,
     y,
     alpha,
-    PA_C,
     learning_rate,
     max_iter,
     pos_weight,
@@ -425,9 +422,6 @@ def fit_binary(
 
     alpha : float
         The regularization parameter
-
-    PA_C : float
-        Maximum step size for passive aggressive
 
     learning_rate : str
         The learning rate. Accepted values are 'constant', 'optimal',
@@ -493,7 +487,6 @@ def fit_binary(
         est._loss_function_,
         penalty_type,
         alpha,
-        PA_C,
         est._get_l1_ratio(),
         dataset,
         validation_mask,
@@ -572,7 +565,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         learning_rate="optimal",
         eta0=0.0,
         power_t=0.5,
-        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -584,7 +576,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
-            PA_C=PA_C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -770,7 +761,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha,
-            self.PA_C,
             learning_rate,
             max_iter,
             self._expanded_class_weight[1],
@@ -821,7 +811,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 X,
                 y,
                 alpha,
-                self.PA_C,
                 learning_rate,
                 max_iter,
                 self._expanded_class_weight[i],
@@ -1098,10 +1087,10 @@ class SGDClassifier(BaseSGDClassifier):
           training loss by tol or fail to increase validation score by tol if
           `early_stopping` is `True`, the current learning rate is divided by 5.
         - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with `loss='hinge'`.
-          Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
+          Update is `w += eta y x` with `eta = min(eta0, loss/||x||**2)`.
         - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
           `loss='hinge'`.
-          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
+          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 eta0))`.
 
         .. versionadded:: 0.20
             Added 'adaptive' option.
@@ -1115,6 +1104,17 @@ class SGDClassifier(BaseSGDClassifier):
         the default schedule 'optimal'.
         Values must be in the range `[0.0, inf)`.
 
+        For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
+        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        is called C:
+
+        - For PA-I it is the maximum step size.
+        - For PA-II it regularizes the step size (the smaller `eta0` the more it
+          regularizes).
+
+        As a general rule-of-thumb for PA, `eta0` should be small when the data is
+        noisy.
+
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
         Values must be in the range `[0.0, inf)`.
@@ -1122,15 +1122,6 @@ class SGDClassifier(BaseSGDClassifier):
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
             an error in 1.10. Use values in the range [0.0, inf) instead.
-
-    PA_C : float, default=1
-        Aggressiveness parameter for the passive-agressive algorithm, see [1].
-        For PA-I (`'pa1'`) it is the maximum step size. For PA-II (`'pa2'`) it
-        regularizes the step size (the smaller `PA_C` the more it regularizes).
-        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
-        Only used if `learning_rate=pa1` or `pa2`.
-
-        .. versionadded:: 1.8
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1268,7 +1259,6 @@ class SGDClassifier(BaseSGDClassifier):
             StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "eta0": [Interval(Real, 0, None, closed="left")],
-        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
@@ -1289,7 +1279,6 @@ class SGDClassifier(BaseSGDClassifier):
         learning_rate="optimal",
         eta0=0.0,
         power_t=0.5,
-        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -1313,7 +1302,6 @@ class SGDClassifier(BaseSGDClassifier):
             learning_rate=learning_rate,
             eta0=eta0,
             power_t=power_t,
-            PA_C=PA_C,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
@@ -1470,7 +1458,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         learning_rate="invscaling",
         eta0=0.01,
         power_t=0.25,
-        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -1481,7 +1468,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
-            PA_C=PA_C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -1764,7 +1750,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss_function,
             penalty_type,
             alpha,
-            self.PA_C,
             self._get_l1_ratio(),
             dataset,
             validation_mask,
@@ -1928,10 +1913,10 @@ class SGDRegressor(BaseSGDRegressor):
           early_stopping is True, the current learning rate is divided by 5.
         - 'pa1': passive-aggressive algorithm 1, see [1]_. Only with
           `loss='epsilon_insensitive'`.
-          Update is `w += eta y x` with `eta = min(PA_C, loss/||x||**2)`.
+          Update is `w += eta y x` with `eta = min(eta0, loss/||x||**2)`.
         - 'pa2': passive-aggressive algorithm 2, see [1]_. Only with
           `loss='epsilon_insensitive'`.
-          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 PA_C))`.
+          Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 eta0))`.
 
         .. versionadded:: 0.20
             Added 'adaptive' option.
@@ -1944,6 +1929,17 @@ class SGDRegressor(BaseSGDRegressor):
         'adaptive' schedules. The default value is 0.01.
         Values must be in the range `[0.0, inf)`.
 
+        For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
+        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        is called C:
+
+        - For PA-I it is the maximum step size.
+        - For PA-II it regularizes the step size (the smaller `eta0` the more it
+          regularizes).
+
+        As a general rule-of-thumb for PA, `eta0` should be small when the data is
+        noisy.
+
     power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
         Values must be in the range `[0.0, inf)`.
@@ -1951,15 +1947,6 @@ class SGDRegressor(BaseSGDRegressor):
         .. deprecated:: 1.8
             Negative values for `power_t` are deprecated in version 1.8 and will raise
             an error in 1.10. Use values in the range [0.0, inf) instead.
-
-    PA_C : float, default=1
-        Aggressiveness parameter for the passive-agressive algorithm, see [1].
-        For PA-I (`'pa1'`) it is the maximum step size. For PA-II (`'pa2'`) it
-        regularizes the step size (the smaller `PA_C` the more it regularizes).
-        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
-        Only used if `learning_rate=pa1` or `pa2`.
-
-        .. versionadded:: 1.8
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -2085,7 +2072,6 @@ class SGDRegressor(BaseSGDRegressor):
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "eta0": [Interval(Real, 0, None, closed="left")],
-        "PA_C": [Interval(Real, 0, None, closed="right")],
     }
 
     def __init__(
@@ -2105,7 +2091,6 @@ class SGDRegressor(BaseSGDRegressor):
         learning_rate="invscaling",
         eta0=0.01,
         power_t=0.25,
-        PA_C=1.0,
         early_stopping=False,
         validation_fraction=0.1,
         n_iter_no_change=5,
@@ -2127,7 +2112,6 @@ class SGDRegressor(BaseSGDRegressor):
             learning_rate=learning_rate,
             eta0=eta0,
             power_t=power_t,
-            PA_C=PA_C,
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
@@ -2314,7 +2298,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         super().__init__(
             loss="hinge",
             penalty="l2",
-            PA_C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -2388,7 +2371,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             self._loss_function_,
             penalty_type,
             alpha,
-            self.PA_C,
             self.l1_ratio,
             dataset,
             validation_mask,

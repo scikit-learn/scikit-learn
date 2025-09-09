@@ -108,6 +108,9 @@ def test_smacof_error():
         mds.smacof(sim, init=Z, n_init=1)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_MDS():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     mds_clf = mds.MDS(
