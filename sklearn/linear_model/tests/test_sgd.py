@@ -1810,7 +1810,6 @@ def test_sgd_oneclass_vs_linear_oneclass():
         )[0, 1]
         # share of predicted 1's
         share_ones = (preds == 1).sum() / len(preds)
-        share_ones_ref = (preds_ref == 1).sum() / len(preds_ref)
 
         assert dec_fn_corr > 0.99
         assert preds_corr > 0.95
