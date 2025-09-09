@@ -36,7 +36,7 @@ from sklearn.utils.validation import (
 )
 
 
-class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
+class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
     """Polynomial Chaos regression.
 
     In addition to the standard scikit-learn estimator API, this estimator:

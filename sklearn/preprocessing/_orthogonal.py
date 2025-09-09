@@ -24,7 +24,7 @@ from sklearn.utils.validation import (
 )
 
 
-class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
+class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
     r"""Generate orthogonal polynomial and interaction features.
 
     Generate a new feature matrix consisting of combinations of orthogonal
