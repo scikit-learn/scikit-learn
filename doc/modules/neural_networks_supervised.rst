@@ -78,7 +78,7 @@ Classification
 ==============
 
 Class :class:`MLPClassifier` implements a multi-layer perceptron (MLP) algorithm
-that trains using `Backpropagation <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_.
+that trains using `Backpropagation <http://ufldl.stanford.edu/tutorial/supervised/MultiLayerNeuralNetworks/#backpropagation_algorithm>`_.
 
 MLP trains on two arrays: array X of size (n_samples, n_features), which holds
 the training samples represented as floating point feature vectors; and array

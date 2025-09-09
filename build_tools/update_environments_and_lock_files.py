@@ -151,12 +151,12 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pylatest_conda_mkl_no_openmp",
+        "name": "pylatest_conda_forge_mkl_no_openmp",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -209,7 +209,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
@@ -228,7 +228,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
@@ -262,18 +262,17 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["conda-forge", "conda-forge/label/python_rc"],
         "conda_dependencies": [
             "python-freethreading",
+            "meson-python",
+            "cython",
             "numpy",
             "scipy",
-            "cython",
             "joblib",
             "threadpoolctl",
             "pytest",
-            "pytest-xdist",
-            "ninja",
-            "meson-python",
+            "pytest-run-parallel",
             "ccache",
             "pip",
         ],
@@ -393,9 +392,7 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "pyamg"]
-        )
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.10",
@@ -411,6 +408,7 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
+            "pytest-xdist",
             "pytest-cov",
             "ninja",
             "meson-python",

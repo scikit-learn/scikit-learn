@@ -1,0 +1,3 @@
+- `repr` on a scorer which has been created with a `partial` `score_func` now correctly
+  works and uses the `repr` of the given `partial` object.
+  By `Adrin Jalali`_.

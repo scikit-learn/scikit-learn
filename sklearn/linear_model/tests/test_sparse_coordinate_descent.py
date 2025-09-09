@@ -79,7 +79,6 @@ def test_enet_toy_list_input(with_sample_weight, csc_container):
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_enet_toy_explicit_sparse_input(lil_container):
     # Test ElasticNet for various values of alpha and l1_ratio with sparse X
-    f = ignore_warnings
     # training samples
     X = lil_container((3, 1))
     X[0, 0] = -1
@@ -95,7 +94,7 @@ def test_enet_toy_explicit_sparse_input(lil_container):
 
     # this should be the same as lasso
     clf = ElasticNet(alpha=0, l1_ratio=1.0)
-    f(clf.fit)(X, Y)
+    ignore_warnings(clf.fit)(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
@@ -254,18 +253,19 @@ def test_path_parameters(csc_container):
     max_iter = 50
     n_alphas = 10
     clf = ElasticNetCV(
-        n_alphas=n_alphas,
+        alphas=n_alphas,
         eps=1e-3,
         max_iter=max_iter,
         l1_ratio=0.5,
         fit_intercept=False,
     )
-    ignore_warnings(clf.fit)(X, y)  # new params
+    clf.fit(X, y)
     assert_almost_equal(0.5, clf.l1_ratio)
-    assert n_alphas == clf.n_alphas
-    assert n_alphas == len(clf.alphas_)
+    assert clf.alphas == n_alphas
+    assert len(clf.alphas_) == n_alphas
     sparse_mse_path = clf.mse_path_
-    ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
+    # compare with dense data
+    clf.fit(X.toarray(), y)
     assert_almost_equal(clf.mse_path_, sparse_mse_path)
 
 
@@ -291,7 +291,7 @@ def test_sparse_dense_equality(
     else:
         sw = None
     Xs = csc_container(X)
-    params = {"fit_intercept": fit_intercept}
+    params = {"fit_intercept": fit_intercept, "tol": 1e-6}
     reg_dense = Model(**params).fit(X, y, sample_weight=sw)
     reg_sparse = Model(**params).fit(Xs, y, sample_weight=sw)
     if fit_intercept:
@@ -306,23 +306,23 @@ def test_sparse_dense_equality(
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_same_output_sparse_dense_lasso_and_enet_cv(csc_container):
     X, y = make_sparse_data(csc_container, n_samples=40, n_features=10)
-    clfs = ElasticNetCV(max_iter=100)
+    clfs = ElasticNetCV(max_iter=100, tol=1e-7)
     clfs.fit(X, y)
-    clfd = ElasticNetCV(max_iter=100)
+    clfd = ElasticNetCV(max_iter=100, tol=1e-7)
     clfd.fit(X.toarray(), y)
-    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
-    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
-    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
-    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+    assert_allclose(clfs.alpha_, clfd.alpha_)
+    assert_allclose(clfs.intercept_, clfd.intercept_)
+    assert_allclose(clfs.mse_path_, clfd.mse_path_)
+    assert_allclose(clfs.alphas_, clfd.alphas_)
 
-    clfs = LassoCV(max_iter=100, cv=4)
+    clfs = LassoCV(max_iter=100, cv=4, tol=1e-8)
     clfs.fit(X, y)
-    clfd = LassoCV(max_iter=100, cv=4)
+    clfd = LassoCV(max_iter=100, cv=4, tol=1e-8)
     clfd.fit(X.toarray(), y)
-    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
-    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
-    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
-    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+    assert_allclose(clfs.alpha_, clfd.alpha_)
+    assert_allclose(clfs.intercept_, clfd.intercept_)
+    assert_allclose(clfs.mse_path_, clfd.mse_path_)
+    assert_allclose(clfs.alphas_, clfd.alphas_)
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
@@ -356,11 +356,14 @@ def test_same_multiple_output_sparse_dense(coo_container):
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_sparse_enet_coordinate_descent(csc_container):
     """Test that a warning is issued if model does not converge"""
-    clf = Lasso(max_iter=2)
-    n_samples = 5
-    n_features = 2
-    X = csc_container((n_samples, n_features)) * 1e50
-    y = np.ones(n_samples)
+    clf = Lasso(
+        alpha=1e-10, fit_intercept=False, warm_start=True, max_iter=2, tol=1e-10
+    )
+    # Set initial coefficients to very bad values.
+    clf.coef_ = np.array([1, 1, 1, 1000])
+    X = np.array([[-1, -1, 1, 1], [1, 1, -1, -1]])
+    X = csc_container(X)
+    y = np.array([-1, 1])
     warning_message = (
         "Objective did not converge. You might want "
         "to increase the number of iterations."
