@@ -7,16 +7,16 @@
 import numpy as np
 
 # sklearn imports
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._multiindexset import MultiIndexSet
-from ..utils._orthogonal_polynomial import (  # noqa: F401
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._multiindexset import MultiIndexSet
+from sklearn.utils._orthogonal_polynomial import (  # noqa: F401
     Hermite,
     Jacobi,
     Laguerre,
     Legendre,
 )
-from ..utils._param_validation import Integral, Interval, Iterable, StrOptions
-from ..utils.validation import (
+from sklearn.utils._param_validation import Integral, Interval, Iterable, StrOptions
+from sklearn.utils.validation import (
     _check_feature_names_in,
     check_array,
     check_is_fitted,
@@ -298,7 +298,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         -------
         X_trans : ndarray of shape (n_samples, n_output_features_)
             The matrix of features, where `n_output_features_` is the number of
-            othogonal polynomial features generated from all combinations of
+            orthogonal polynomial features generated from all combinations of
             input features.
         """
 

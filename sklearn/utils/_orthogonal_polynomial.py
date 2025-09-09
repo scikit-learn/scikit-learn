@@ -54,8 +54,8 @@ from numpy.polynomial.laguerre import lagvander
 from numpy.polynomial.legendre import legvander
 from scipy.special import eval_jacobi, gamma
 
-from ..utils._param_validation import Integral, Real
-from ..utils.validation import check_array, column_or_1d
+from sklearn.utils._param_validation import Integral, Real
+from sklearn.utils.validation import check_array, column_or_1d
 
 
 class Polynomial(ABC):
@@ -85,7 +85,7 @@ class Polynomial(ABC):
         degree : int
             The maximum degree :math:`k` of this orthogonal polynomial to
             consider. The number of columns in the Vandermonde matrix will be
-            acual to :math:`k + 1`.
+            actual to :math:`k + 1`.
 
         Returns
         -------
@@ -107,9 +107,9 @@ class Polynomial(ABC):
 
     @abstractmethod
     def _vandermonde(self, points, degree):
-        """This method must be overriden by concrete classes."""
+        """This method must be overridden by concrete classes."""
 
-    # This is an alternative construction method that retuns an instance of an
+    # This is an alternative construction method that returns an instance of an
     # orthogonal polynomial, given a `scipy.stats` distribution. This method is
     # used, for example, in Polynomial Chaos expansions: for a given
     # distribution, we want to find the corresponding orthogonal polynomial
@@ -117,7 +117,7 @@ class Polynomial(ABC):
     # match/case to find the corresponding polynomial type. Instead, this
     # function uses `__subclasses__` to automatically loop over all implemented
     # orthogonal polynomial types that inherit from this class, and selects the
-    # apropriate polynomial type based on the distribution name (returned by
+    # appropriate polynomial type based on the distribution name (returned by
     # the `_distribution` method). The advantage of this implementation is
     # extensibility: users can define their own distribution and matching
     # orthogonal polynomial (inheriting from this abstract class), and
@@ -178,7 +178,7 @@ class Polynomial(ABC):
     @staticmethod
     @abstractmethod
     def _distribution():
-        """This method must be overriden by concrete classes."""
+        """This method must be overridden by concrete classes."""
 
     def scale_features_from_distribution(self, X, distribution):
         """Scale the given features, distributed according to the given
@@ -244,7 +244,7 @@ class Polynomial(ABC):
         return np.sqrt(self._norm_squared(degree))
 
     def _norm_squared(self, degree):
-        """This method must be overriden by concrete classes."""
+        """This method must be overridden by concrete classes."""
 
     def __repr__(self):
         return self.__class__.__name__

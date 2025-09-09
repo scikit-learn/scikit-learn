@@ -45,13 +45,13 @@ def test_fit_polynomial():
         poly = OrthogonalPolynomialFeatures(polynomial=("Legendre", "Hermite"))
         poly.fit_transform(X)
 
-    # unkown polynomial type throws error
+    # unknown polynomial type throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=6).reshape(3, 2)
         poly = OrthogonalPolynomialFeatures(polynomial="ab")
         poly.fit_transform(X)
 
-    # unkown polynomial type throws error
+    # unknown polynomial type throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=6).reshape(3, 2)
         poly = OrthogonalPolynomialFeatures(polynomial=3)

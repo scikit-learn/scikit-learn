@@ -15,7 +15,7 @@ can be constructed, which allows one to select certain preferential directions
 in the space of multiindices.
 
 The main (abstract) class is `MultiIndexSet`. This class provides a general
-implemention of a method to generate all indices of the multiindex set of the
+implementation of a method to generate all indices of the multiindex set of the
 desired type. The type of the index set is determined by the concrete class
 that inherits from the abstract multiindex set class. These concrete classes
 only need to implement the (private) method `_contains(self, index)`, that
@@ -71,7 +71,7 @@ from math import prod  # make prod peer to sum
 from re import sub
 
 # sklearn imports
-from ..utils._param_validation import Integral, Iterable, Real
+from sklearn.utils._param_validation import Integral, Iterable, Real
 
 
 class MultiIndexSet(ABC):
@@ -154,7 +154,7 @@ class MultiIndexSet(ABC):
 
     @abstractmethod
     def _contains(self, index):
-        """This method must be overriden by concrete classes."""
+        """This method must be overridden by concrete classes."""
 
     # This is an alternative construction method that returns a multiindex set
     # based on a given name (`str` argument). It uses the `__subclasses__`
