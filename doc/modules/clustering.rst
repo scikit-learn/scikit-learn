@@ -320,9 +320,9 @@ small, as shown in the example and cited reference.
 .. dropdown:: References
 
   * `"Web Scale K-Means clustering"
-    <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+    <https://www.ccs.neu.edu/home/vip/teach/DMcourse/2_cluster_EM_mixt/notes_slides/sculey_webscale_kmeans_approx.pdf>`_
     D. Sculley, *Proceedings of the 19th international conference on World
-    wide web* (2010)
+    wide web* (2010).
 
 .. _affinity_propagation:
 
