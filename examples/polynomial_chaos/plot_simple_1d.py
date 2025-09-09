@@ -60,7 +60,7 @@ degrees = range(1, 21)
 pces = [PolynomialChaosRegressor(distribution, degree=k) for k in degrees]
 
 # %%
-# Next, we fit the Polynomial Chaos expansions to the availble data :math:`(X,
+# Next, we fit the Polynomial Chaos expansions to the available data :math:`(X,
 # y)`.
 for pce in pces:
     pce.fit(X, y)
