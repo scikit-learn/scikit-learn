@@ -29,9 +29,7 @@ from sklearn.utils._orthogonal_polynomial import (
 def test_constructors(polynomial, nargs, error_type):
     (
         # pass
-        polynomial(*[1] * nargs)
-        if nargs > 0
-        else polynomial()
+        polynomial(*[1] * nargs) if nargs > 0 else polynomial()
     )
 
     # constructor with arguments throws error
