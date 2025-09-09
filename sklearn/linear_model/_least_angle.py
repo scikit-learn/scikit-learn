@@ -1821,7 +1821,7 @@ class LarsCV(Lars):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=check_cv(self.cv),
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )

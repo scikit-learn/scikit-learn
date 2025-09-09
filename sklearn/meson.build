@@ -1,7 +1,5 @@
 fs = import('fs')
 
-cython_args = []
-
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
@@ -180,6 +178,7 @@ else:
     check: true
     ).stdout().strip()
 
+cython_args = []
 cython_program = find_program(cython.cmd_array()[0])
 
 scikit_learn_cython_args = [
@@ -193,11 +192,12 @@ scikit_learn_cython_args = [
 cython_args += scikit_learn_cython_args
 
 if cython.version().version_compare('>=3.1.0')
+  cython_args += ['-Xfreethreading_compatible=True']
   cython_shared_src = custom_target(
     install: false,
     output: '_cyutility.c',
     command: [
-      cython_program, '-3', '--fast-fail',
+      cython_program, '-3', '--fast-fail', '-Xfreethreading_compatible=True',
       '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
     ],
   )
