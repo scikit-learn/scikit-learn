@@ -108,7 +108,7 @@ rf.fit(X_train, y_train)
 #
 # By default, random forests subsample a part of the dataset to train each tree, a
 # procedure known as bagging, leaving aside "out-of-bag" (oob) samples.
-# These samples can be leveraged to compute an accuracy score independantly of the
+# These samples can be leveraged to compute an accuracy score independently of the
 # training samples, when setting the parameter `oob_score = True`.
 # This score should be close to the test score.
 
@@ -244,11 +244,11 @@ ax[1].set_xlabel("Decrease in accuracy score")
 fig.tight_layout()
 
 # %%
-# To completely ignore irrelevent features we should compute the permutation importance
+# To completely ignore irrelevant features we should compute the permutation importance
 # of ``rf`` on a held out test set.
 # However when test samples are not available, or when permutation importance becomes
 # too expensive to compute, there exists a modified version of the MDI,
-# `unbiased_feature_importances_` avaible as soon as `oob_score` is set to `True`,
+# `unbiased_feature_importances_` available as soon as `oob_score` is set to `True`,
 # that uses the out-of-bag samples of the trees to solve the bias problem.
 ufi = rf[-1].unbiased_feature_importances_
 mdi_importances = pd.Series(ufi, index=feature_names).sort_values(ascending=True)

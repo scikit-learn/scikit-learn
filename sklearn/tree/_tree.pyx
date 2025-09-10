@@ -1386,7 +1386,7 @@ cdef class Tree:
             for sample_idx in range(n_samples):
                 if is_sparse:
                     for idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                        # Store wich feature of sample_idx is non zero and its value
+                        # Store which feature of sample_idx is non zero and its value
                         feature_to_sample[X_indices[idx]] = sample_idx
                         X_sample[X_indices[idx]] = X_data[idx]
                 # root node

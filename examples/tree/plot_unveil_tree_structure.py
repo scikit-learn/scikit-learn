@@ -248,7 +248,7 @@ print("This is {prop}% of all nodes.".format(prop=100 * len(common_node_id) / n_
 # on might not generalize well, which is why the method
 # `compute_unbiased_feature_importance` takes test samples as input to correct this
 # effect. Additionally the method returns the prediction of the tree on these test
-# samples wich allows to see the performance of the model.
+# samples which allows to see the performance of the model.
 
 importance, prediction = clf.compute_unbiased_feature_importance(X_test, y_test)
 for i in range(len(importance)):
