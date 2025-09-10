@@ -84,7 +84,7 @@ cdef class Tree:
         object y_test,
         object sample_weight,
     )
-    cdef void _compute_oob_node_values_and_predictions(
+    cdef void _compute_cross_impurities(
         self,
         object X_test,
         float64_t[:, ::1] y_regression,
@@ -92,15 +92,7 @@ cdef class Tree:
         float64_t[::1] sample_weight,
         float64_t[:, :, ::1] oob_pred,
         int32_t[::1] has_oob_sample,
-        float64_t[:, :, ::1] oob_node_values,
-    )
-    cdef float64_t ufi_impurity_decrease(
-        self,
-        float64_t[:, :, ::1] oob_node_values,
-        int node_idx,
-        int left_idx,
-        int right_idx,
-        Node node,
+        float64_t[:, ::1] cross_impurities,
     )
 
 # =============================================================================

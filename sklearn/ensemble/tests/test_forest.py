@@ -1846,7 +1846,7 @@ def test_importance_reg_match_onehot_classi(global_random_seed):
 
     assert_almost_equal(cls.feature_importances_, reg.feature_importances_)
     assert_almost_equal(
-        cls.unbiased_feature_importances_, reg.unbiased_feature_importances_ * 2
+        cls.unbiased_feature_importances_, reg.unbiased_feature_importances_
     )
 
 
