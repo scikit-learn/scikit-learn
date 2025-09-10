@@ -239,7 +239,8 @@ cdef class WeightedHeap:
             else:
                 return
 
-    # Python callable wrappers for unit tests:
+    # Wrappers callable from Python for tests:
+
     def _py_push(self, double value, double weight):
         self.push(value, weight)
 
