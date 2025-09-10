@@ -200,9 +200,7 @@ cdef class WeightedHeap:
         cdef float64_t s = self.heap[0]
         return s if self.min_heap else -s
 
-    # ----------------------------
-    # Internal helpers (nogil)
-    # ----------------------------
+    # Internal helpers (nogil):
 
     cdef inline void _swap(self, intp_t i, intp_t j) noexcept nogil:
         cdef float64_t tmp = self.heap[i]
@@ -240,6 +238,18 @@ cdef class WeightedHeap:
                 i = mc
             else:
                 return
+
+    # Python callable wrappers for unit tests:
+    def _py_push(self, double value, double weight):
+        self.push(value, weight)
+
+    def _py_pop(self):
+        cdef double v, w
+        self.pop(&v, &w)
+        return v, w
+
+    def _py_reset(self):
+        self.reset()
 
 # =============================================================================
 # MAE split precomputations algorithm
