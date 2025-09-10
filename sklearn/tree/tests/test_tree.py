@@ -2699,6 +2699,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
     # Note: the impurity matches after the first split only on greedy trees
+    # see https://github.com/scikit-learn/scikit-learn/issues/32125
     if Tree is DecisionTreeRegressor:
         # Check the impurity match after the first split
         assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
