@@ -21,6 +21,8 @@ of splitting strategies:
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.string cimport memcpy
+from libc.stdio cimport printf
+from libc.math cimport isnan
 
 from ..utils._typedefs cimport int8_t
 from ._criterion cimport Criterion
@@ -41,6 +43,7 @@ ctypedef fused Partitioner:
 
 
 cdef float64_t INFINITY = np.inf
+cdef bint DEBUG = False
 
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:
@@ -262,6 +265,36 @@ cdef class Splitter:
         return self.criterion.node_impurity()
 
 
+cdef inline void print_features(
+    const float32_t[:, :] X,
+    intp_t f,
+    const intp_t[:] indices,
+    intp_t start,
+    intp_t end,
+    intp_t missing_frontier,
+    intp_t split,
+) noexcept nogil:
+    if not DEBUG:
+        return
+    printf("[%d - %d] | %d\n", start, end, missing_frontier)
+    cdef intp_t p
+    cdef float32_t val
+    for p in range(start, end):
+        if p - start == missing_frontier:
+            printf("|| ")
+        if p == split:
+            printf("|XXX| ")
+        val = X[indices[p], f]
+        if isnan(val):
+            printf("NaN ")
+        else:
+            printf("%.1f ", val)
+    printf("\n")
+    # for p in range(start, end):
+    #     printf("%d ", indices[p])
+    printf("\n")
+
+
 cdef inline int node_split_best(
     Splitter splitter,
     Partitioner partitioner,
@@ -274,6 +307,7 @@ cdef inline int node_split_best(
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
     """
+    cdef const float32_t[:, :] X = partitioner.X
     cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
     cdef bint with_monotonic_cst = splitter.with_monotonic_cst
 
@@ -367,7 +401,9 @@ cdef inline int node_split_best(
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
         partitioner.sort_samples_and_feature_values(current_split.feature)
+        if DEBUG: printf("sort_samples_and_feature_values: [%d %d]\n", start, end)
         n_missing = partitioner.n_missing
+        print_features(X, current_split.feature, criterion.sample_indices, start, end, end - start - n_missing, -1)
         end_non_missing = end - n_missing
 
         if (
@@ -402,6 +438,8 @@ cdef inline int node_split_best(
             missing_go_to_left = i == 1
             if missing_go_to_left:
                 partitioner.shift_missing_to_the_left()
+                if DEBUG: printf("shift_missing_to_the_left\n")
+                print_features(X, current_split.feature, criterion.sample_indices, start, end, n_missing, -1)
             criterion.reset()
 
             p = start
@@ -477,12 +515,18 @@ cdef inline int node_split_best(
             best_split.feature,
             best_split.missing_go_to_left
         )
+        if DEBUG: printf("partition_samples_final - go to left: %d | split: %d\n",
+            best_split.missing_go_to_left, best_split.pos)
 
         criterion.reset()
         criterion.update(best_split.pos)
         criterion.children_impurity(
             &best_split.impurity_left, &best_split.impurity_right
         )
+        print_features(X, best_split.feature, criterion.sample_indices, start, end,
+            n_missing if best_split.missing_go_to_left else end - start - n_missing,
+            best_split.pos)
+        if DEBUG: printf("impurity: %.2f | %.2f\n", best_split.impurity_left, best_split.impurity_right)
 
         best_split.improvement = criterion.impurity_improvement(
             impurity,

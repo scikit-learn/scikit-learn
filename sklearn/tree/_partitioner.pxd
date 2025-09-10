@@ -115,6 +115,7 @@ cdef class SparsePartitioner:
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
     """
+    cdef const float32_t[:, :] X
     cdef const float32_t[::1] X_data
     cdef const int32_t[::1] X_indices
     cdef const int32_t[::1] X_indptr

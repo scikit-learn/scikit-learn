@@ -14,7 +14,6 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.stdio cimport printf
 
 from ._utils cimport swap_array_slices
 
@@ -164,7 +163,6 @@ cdef class DensePartitioner:
 
         The missing values are not included when iterating through the feature values.
         """
-        printf("next p\n")
         cdef:
             float32_t[::1] feature_values = self.feature_values
             intp_t end_non_missing = self.end - self.n_missing
