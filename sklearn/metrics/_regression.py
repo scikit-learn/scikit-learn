@@ -11,7 +11,7 @@ the lower the better.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from numbers import Real
+from numbers import Integral, Real
 
 import numpy as np
 
@@ -36,6 +36,7 @@ from sklearn.utils.validation import (
 )
 
 __ALL__ = [
+    "adjusted_r2_score",
     "max_error",
     "mean_absolute_error",
     "mean_squared_error",
@@ -997,6 +998,93 @@ def _assemble_r2_explained_variance(
     },
     prefer_skip_nested_validation=True,
 )
+def adjusted_r2_score(
+    y_true,
+    y_pred,
+    *,
+    n_features,
+    sample_weight=None,
+    multioutput="uniform_average",
+    force_finite=True,
+):
+    """Adjusted :math:`R^2` (coefficient of determination) regression score function.
+
+    This modifies the :func:`r2_score` by adjusting for the number
+    of predictors. It increases only if the new predictor improves the
+    model more than would be expected by chance.
+
+    Read more in the :ref:`User Guide <adjusted_r2_score>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    n_features : int
+        Number of features (predictors) used to generate `y_pred`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'}, \
+            array-like of shape (n_outputs,) or None, default='uniform_average'
+        Defines aggregating of multiple output scores.
+
+    force_finite : bool, default=True
+        Whether to replace NaN/-Inf scores with 1.0/0.0 for constant data.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        Adjusted R^2 score.
+
+    Notes
+    -----
+    Adjusted R^2 is defined as:
+
+    .. math::
+        R^2_{adj} = 1 - (1 - R^2) * (n - 1) / (n - p - 1)
+
+    where :math:`n` is number of samples, :math:`p` is number of features.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import adjusted_r2_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> adjusted_r2_score(y_true, y_pred, n_features=2)
+    0.843...
+    """
+    # START of the corrected error checking
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if not isinstance(n_features, Integral) or n_features <= 0:
+        raise ValueError("n_features must be a positive integer.")
+
+    n_samples = _num_samples(y_true)
+    if n_samples <= n_features:
+        raise ValueError(
+            f"n_samples={n_samples} must be greater than n_features={n_features} "
+            "for Adjusted R^2 to be defined."
+        )
+    # END of the corrected error checking
+
+    r2 = r2_score(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        multioutput=multioutput,
+        force_finite=force_finite,
+    )
+
+    # Handle the case where the denominator of the adjustment is zero
+    if n_samples - n_features - 1 == 0:
+        return np.nan
+
+    return 1 - (1 - r2) * (n_samples - 1) / (n_samples - n_features - 1)
 def explained_variance_score(
     y_true,
     y_pred,
