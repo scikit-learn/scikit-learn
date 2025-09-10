@@ -166,7 +166,7 @@ cdef class WeightedHeap:
         self.total_weight += weight
         self.weighted_sum += value * weight
 
-        self._perc_up(n)
+        self._heapify_up(n)
 
     cdef void pop(self, float64_t* value, float64_t* weight) noexcept nogil:
         """Pop top element into pointers."""
@@ -189,7 +189,7 @@ cdef class WeightedHeap:
         if n > 0:
             self.heap[0] = self.heap[n]
             self.weights[0] = self.weights[n]
-            self._perc_down(0)
+            self._heapify_down(0)
 
     cdef float64_t top_weight(self) noexcept nogil:
         assert self.size > 0
@@ -212,7 +212,8 @@ cdef class WeightedHeap:
         self.weights[i] = self.weights[j]
         self.weights[j] = tmp
 
-    cdef inline void _perc_up(self, intp_t i) noexcept nogil:
+    cdef inline void _heapify_up(self, intp_t i) noexcept nogil:
+        """Move up the element at index i until heap invariant is restored."""
         cdef intp_t p
         while i > 0:
             p = (i - 1) >> 1
@@ -222,7 +223,8 @@ cdef class WeightedHeap:
             else:
                 break
 
-    cdef inline void _perc_down(self, intp_t i) noexcept nogil:
+    cdef inline void _heapify_down(self, intp_t i) noexcept nogil:
+        """Move down the element at index i until heap invariant is restored."""
         cdef intp_t n = self.size
         cdef intp_t left, right, mc
         while True:

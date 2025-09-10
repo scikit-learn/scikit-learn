@@ -63,8 +63,8 @@ cdef class WeightedHeap:
     cdef float64_t top_weight(self) noexcept nogil
     cdef float64_t top(self) noexcept nogil
     cdef void _swap(self, intp_t, intp_t) noexcept nogil
-    cdef void _perc_up(self, intp_t) noexcept nogil
-    cdef void _perc_down(self, intp_t) noexcept nogil
+    cdef void _heapify_up(self, intp_t) noexcept nogil
+    cdef void _heapify_down(self, intp_t) noexcept nogil
 
 cdef void precompute_absolute_errors(
     const float64_t[:, ::1] ys,

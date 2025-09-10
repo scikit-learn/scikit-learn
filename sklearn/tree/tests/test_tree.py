@@ -1792,11 +1792,13 @@ def test_mae():
         criterion="absolute_error",
         max_depth=1,  # stop after one split
     )
+    X = [[1], [2], [3], [4], [5]]
     dt_mae.fit(
-        X=[[1], [2], [3], [4], [5]],
+        X=X,
         y=[1, 1, 3, 1, 2],
         sample_weight=[3, 3, 2, 1, 2],
     )
+    assert_allclose(dt_mae.predict(X), [1, 1, 2, 2, 2])
     assert_allclose(dt_mae.tree_.impurity, [6 / 11, 0, 3 / 5])
     assert_array_equal(dt_mae.tree_.value.flat, [1, 1, 2])
 
