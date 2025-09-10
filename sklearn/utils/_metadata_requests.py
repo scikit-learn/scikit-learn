@@ -746,7 +746,7 @@ class MetadataRequest:
 # in routers, returned by their ``get_metadata_routing``.
 
 # `RouterMappingPair` is used to store a `(mapping, router)` tuple where `mapping` is a
-# `MethodMapping` object and `router` is the output of `_get_metadata_request`.
+# `MethodMapping` object and `router` is a `MetadataRequest` or `MetadataRouter` instance.
 # `MetadataRouter` stores a collection of `RouterMappingPair` objects in its
 # `_route_mappings` attribute.
 RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
