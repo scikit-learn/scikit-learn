@@ -429,7 +429,7 @@ cdef class ClassificationCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
-        if (new_pos - pos) <= self.end:
+        if (new_pos - pos) <= (self.end - new_pos):
             for p in range(pos, new_pos):
                 i = sample_indices[p]
 
