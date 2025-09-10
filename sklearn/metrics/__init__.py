@@ -26,6 +26,7 @@ from sklearn.metrics._classification import (
     precision_score,
     recall_score,
     zero_one_loss,
+    
 )
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics._plot.confusion_matrix import ConfusionMatrixDisplay
@@ -48,6 +49,7 @@ from sklearn.metrics._ranking import (
     top_k_accuracy_score,
 )
 from sklearn.metrics._regression import (
+    adjusted_r2_score,
     d2_absolute_error_score,
     d2_pinball_score,
     d2_tweedie_score,
@@ -185,4 +187,5 @@ __all__ = [
     "top_k_accuracy_score",
     "v_measure_score",
     "zero_one_loss",
+    "adjusted_r2_score",
 ]

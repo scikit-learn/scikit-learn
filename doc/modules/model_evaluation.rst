@@ -2550,6 +2550,36 @@ Here is a small example of usage of the :func:`r2_score` function::
   for an example of R² score usage to
   evaluate Lasso and Elastic Net on sparse signals.
 
+
+.. _adjusted_r2_score:
+
+Adjusted R² score
+-----------------
+
+The :func:`adjusted_r2_score` function computes the adjusted R², which is a modified version of the :ref:`r2_score` that adjusts for the number of predictors in a regression model. It is particularly useful for comparing the goodness-of-fit for regression models with a different number of independent variables.
+
+The score increases only if the new term improves the model more than would be expected by chance. It decreases when a predictor improves the model by less than expected by chance. Unlike :math:`R^2`, the adjusted :math:`R^2` can be used to compare models with different numbers of predictors.
+
+If :math:`R^2` is the regular coefficient of determination, :math:`n` is the number of samples, and :math:`p` is the number of features, then the adjusted :math:`R^2` is defined as:
+
+.. math::
+
+  R^2_{\text{adj}} = 1 - \frac{(1 - R^2)(n - 1)}{n - p - 1}
+
+Best possible score is 1.0 and it can be negative. A constant model that always predicts the expected value of y, disregarding the input features, would get an adjusted :math:`R^2` score close to 0.0.
+
+Here is a small example of usage of the :func:`adjusted_r2_score` function::
+
+  >>> from sklearn.metrics import adjusted_r2_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> # With 2 features
+  >>> adjusted_r2_score(y_true, y_pred, n_features=2)
+  0.843...
+  >>> # With 1 feature, the score is higher
+  >>> adjusted_r2_score(y_true, y_pred, n_features=1)
+  0.916...
+
 .. _mean_absolute_error:
 
 Mean absolute error
