@@ -14,6 +14,7 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from libc.stdio cimport printf
 
 from ._utils cimport swap_array_slices
 
@@ -109,15 +110,13 @@ cdef class DensePartitioner:
             while preserving their inner ordering
         """
         assert not self.missing_on_the_left
+        cdef intp_t i
         cdef float32_t[::1] feature_values = self.feature_values
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
         # TODO? handle except?
         swap_array_slices(self.samples, self.start, self.end, n_non_missing)
-        memcpy(
-            &feature_values[self.start + self.n_missing],
-            &feature_values[self.start],
-            sizeof(float32_t) * n_non_missing
-        )
+        for i in range(n_non_missing):
+            feature_values[self.start + self.n_missing + i] = feature_values[self.start + i]
         self.missing_on_the_left = True
 
     cdef inline void find_min_max(
@@ -234,6 +233,7 @@ cdef class DensePartitioner:
             intp_t p = self.start
             intp_t partition_end = self.end - 1
             intp_t[::1] samples = self.samples
+            intp_t tmp
             const float32_t[:, :] X = self.X
             float32_t current_value
             bint go_to_left
@@ -247,8 +247,31 @@ cdef class DensePartitioner:
             if go_to_left:
                 p += 1
             else:
-                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                tmp = samples[p]
+                samples[p] = samples[partition_end]
+                samples[partition_end] = tmp
                 partition_end -= 1
+        
+        # printf("in partition: %d %d %d\n", p, partition_end, best_pos)
+        cdef bint left = True
+        cdef bint first_split = True
+        for p in range(self.start, self.end):
+            current_value = X[samples[p], best_feature]
+            go_to_left = (
+                current_value <= best_threshold
+                or (isnan(current_value) and best_missing_go_to_left)
+            )
+            if not go_to_left:
+                if left:
+                    assert first_split
+                    # printf("--- ")
+                left = False
+                first_split = False
+            else:
+                assert left
+            # printf("%.1f ", current_value)
+        # printf("\n")
+        assert p == partition_end == best_pos
 
 
 @final

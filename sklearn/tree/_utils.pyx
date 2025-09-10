@@ -75,22 +75,22 @@ cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n
     and array[start + n:end] while preserving the order
     in the slices.
     """
-    cdef intp_t b = sizeof(array[0])
-    # printf("sizeof intp_t: %d\n", b)
     cdef intp_t n_rev = end - start - n
-    cdef intp_t n_tmp = min(n, n_rev)
-    cdef intp_t nbytes = n_tmp * b
+    cdef intp_t n_tmp = n
+    cdef intp_t nbytes = n_tmp * sizeof(intp_t)
     cdef intp_t* tmp = <intp_t*> malloc(nbytes)
+    cdef intp_t i
     if tmp == NULL:
         raise MemoryError(f"could not allocate {nbytes} bytes")
-    if n <= n_rev:
-        memcpy(tmp, &array[start], b * n)  # tmp = array[:n].copy()
-        memcpy(&array[start], &array[start + n], b * n_rev)  # array[:-n] = array[n:]
-        memcpy(&array[start + n_rev], tmp, b * n)  # array[-n:] = tmp
-    else:
-        memcpy(tmp, &array[start + n], b * n_rev)  # tmp = array[n:].copy()
-        memcpy(&array[start + n_rev], &array[start], b * n)  # array[-n:] = array[:n]
-        memcpy(&array[start], tmp, b * n_rev)  # array[:-n] = tmp
+    # tmp = array[start:start+n].copy()
+    for i in range(n):
+        tmp[i] = array[start + i]
+    # array[start:start+n_rev] = array[start+n:start+n+n_rev]
+    for i in range(n_rev):
+        array[start + i] = array[start + n + i]
+    # array[start+n_rev:start+n_rev+n] = tmp
+    for i in range(n):
+        array[start + n_rev + i] = tmp[i]
 
     if tmp != NULL:
         free(tmp)

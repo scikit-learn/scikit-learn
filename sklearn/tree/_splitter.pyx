@@ -285,10 +285,14 @@ cdef inline void print_features(
         if p == split:
             printf("|XXX| ")
         val = X[indices[p], f]
-        if isnan(val):
-            printf("NaN ")
-        else:
-            printf("%.1f ", val)
+        printf("%.1f ", val)
+    printf("\n")
+    for p in range(start, end):
+        if p - start == missing_frontier:
+            printf("|| ")
+        if p == split:
+            printf("|XXX| ")
+        printf("%d ", indices[p])
     printf("\n")
     # for p in range(start, end):
     #     printf("%d ", indices[p])
@@ -515,8 +519,8 @@ cdef inline int node_split_best(
             best_split.feature,
             best_split.missing_go_to_left
         )
-        if DEBUG: printf("partition_samples_final - go to left: %d | split: %d\n",
-            best_split.missing_go_to_left, best_split.pos)
+        if DEBUG: printf("partition_samples_final - go to left: %d | split: %d (threshold: %.2f)\n",
+            best_split.missing_go_to_left, best_split.pos, best_split.threshold)
 
         criterion.reset()
         criterion.update(best_split.pos)
