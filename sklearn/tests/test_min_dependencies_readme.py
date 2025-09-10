@@ -53,14 +53,18 @@ def test_min_dependencies_readme():
             if not matched:
                 continue
 
-            package, version = matched.group(0), matched.group(1)
+            package, version = matched.group(1), matched.group(2)
             package = package.lower()
 
             if package in dependent_packages:
                 version = parse_version(version)
                 min_version = parse_version(dependent_packages[package][0])
 
-                assert version == min_version, f"{package} has a mismatched version"
+                message = (
+                    f"{package} has inconsistent minimum versions in pyproject.toml and"
+                    f" _min_depencies.py: {version} != {min_version}"
+                )
+                assert version == min_version, message
 
 
 def check_pyproject_section(
@@ -114,7 +118,11 @@ def check_pyproject_section(
         if package in skip_version_check_for:
             continue
 
-        assert version == expected_min_version, f"{package} has a mismatched version"
+        message = (
+            f"{package} has inconsistent minimum versions in pyproject.toml and"
+            f" _min_depencies.py: {version} != {expected_min_version}"
+        )
+        assert version == expected_min_version, message
 
 
 @pytest.mark.parametrize(

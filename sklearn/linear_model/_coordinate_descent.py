@@ -687,10 +687,11 @@ def enet_path(
                 rng=rng,
                 random=random,
                 positive=positive,
+                do_screening=do_screening,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, do_screening
             )
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -756,20 +757,26 @@ def enet_path(
 class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
-    Minimizes the objective function::
+    Minimizes the objective function:
 
-            1 / (2 * n_samples) * ||y - Xw||^2_2
-            + alpha * l1_ratio * ||w||_1
-            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+    .. math::
+
+        \\frac{1}{2 n_{\\rm samples}} \\cdot \\|y - X w\\|_2^2
+        + \\alpha \\cdot {\\rm l1\\_{ratio}} \\cdot \\|w\\|_1
+        + 0.5 \\cdot \\alpha \\cdot (1 - {\\rm l1\\_{ratio}}) \\cdot \\|w\\|_2^2
 
     If you are interested in controlling the L1 and L2 penalty
-    separately, keep in mind that this is equivalent to::
+    separately, keep in mind that this is equivalent to:
 
-            a * ||w||_1 + 0.5 * b * ||w||_2^2
+    .. math::
 
-    where::
+        a \\cdot \\|w\\|_1 + 0.5 \\cdot b \\cdot \\|w\\|_2^2
 
-            alpha = a + b and l1_ratio = a / (a + b)
+    where:
+
+    .. math::
+
+        \\alpha = a + b, \\quad {\\rm l1\\_{ratio}} = \\frac{a}{a + b}
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
@@ -1942,7 +1949,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=check_cv(self.cv),
@@ -3095,10 +3102,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     ...         [[0, 0], [1, 1], [2, 2]])
     MultiTaskElasticNetCV(cv=3)
     >>> print(clf.coef_)
-    [[0.52875032 0.46958558]
-     [0.52875032 0.46958558]]
+    [[0.51841231 0.479658]
+     [0.51841231 0.479658]]
     >>> print(clf.intercept_)
-    [0.00166409 0.00166409]
+    [0.001929... 0.001929...]
     """
 
     _parameter_constraints: dict = {
@@ -3349,7 +3356,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> r2_score(y, reg.predict(X))
     0.9994
     >>> reg.alpha_
-    np.float64(0.5713)
+    np.float64(0.4321...)
     >>> reg.predict(X[:1,])
     array([[153.7971,  94.9015]])
     """
