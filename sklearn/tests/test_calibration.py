@@ -670,14 +670,10 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
     calib_clf.predict_proba(X)
 
 
-@pytest.mark.parametrize(
-    "clf, cv",
-    [pytest.param(LinearSVC(C=1), 2)],
-)
-def test_calibration_attributes(clf, cv):
+def test_calibration_attributes():
     # Check that `n_features_in_` and `classes_` attributes created properly
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
-    calib_clf = CalibratedClassifierCV(clf, cv=cv)
+    calib_clf = CalibratedClassifierCV(LinearSVC(C=1), cv=2)
     calib_clf.fit(X, y)
 
     classes = LabelEncoder().fit(y).classes_
