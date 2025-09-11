@@ -932,7 +932,7 @@ def test_make_pipeline():
             make_pipeline(StandardScaler()),
             lambda est: get_tags(est).estimator_type is None,
         ),
-        (Pipeline([]), lambda est: est._estimator_type is None),
+        (Pipeline([]), lambda est: get_tags(est).estimator_type is None),
     ],
 )
 def test_pipeline_estimator_type(pipeline, check_estimator_type):
