@@ -136,7 +136,6 @@ def test_cython_solver_equivalence():
     assert_allclose(coef_2, coef_1)
 
     # Sparse
-    coef_3 = zc()
     Xs = sparse.csc_matrix(X)
     for do_screening in [True, False]:
         coef_3 = zc()
