@@ -1057,7 +1057,6 @@ def test_linearsvc_verbose():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
@@ -1105,11 +1104,9 @@ def test_svc_bad_kernel():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_libsvm_convergence_warnings(global_random_seed):
     a = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
-        probability=True,
         random_state=global_random_seed,
         max_iter=2,
     )
