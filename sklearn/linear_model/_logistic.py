@@ -777,7 +777,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
-        regularization.
+        regularization. For a visual example on the effect of tuning the `C` parameter
+        with an L1 penalty, see:
+        :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1296,7 +1298,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
     is selected by the cross-validator
     :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
-    using the :term:`cv` parameter. All solvers except 'liblinear can warm-start the
+    using the :term:`cv` parameter. All solvers except 'liblinear' can warm-start the
     coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
@@ -1316,7 +1318,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     cv : int or cross-validation generator, default=None
         The default cross-validation generator used is Stratified K-Folds.
-        If an integer is provided, then it is the number of folds, `n_folds`, used.
+        If an integer is provided, it specifies the number of folds, `n_folds`, used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
@@ -1986,7 +1988,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=self.cv,
