@@ -1025,6 +1025,8 @@ def explained_variance_score(
        the same Explained Variance score). Most often the :func:`R^2 score
        <r2_score>` should be preferred.
 
+    Read more in the :ref:`User Guide <explained_variance_score>`.
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
