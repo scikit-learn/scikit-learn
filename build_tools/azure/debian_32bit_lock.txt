@@ -38,7 +38,7 @@ pytest==8.4.2
     #   -r build_tools/azure/debian_32bit_requirements.txt
     #   pytest-cov
     #   pytest-xdist
-pytest-cov==7.0.0
+pytest-cov==6.3.0
     # via -r build_tools/azure/debian_32bit_requirements.txt
 pytest-xdist==3.8.0
     # via -r build_tools/azure/debian_32bit_requirements.txt

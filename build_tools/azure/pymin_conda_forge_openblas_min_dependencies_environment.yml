@@ -20,7 +20,7 @@ dependencies:
   - pip
   - ninja
   - meson-python=0.17.1  # min
-  - pytest-cov
+  - pytest-cov<=6.3.0
   - coverage
   - ccache
   - polars=0.20.30  # min

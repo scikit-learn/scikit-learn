@@ -156,7 +156,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libavif16-1.3.0-h6395336_2.conda
 https://conda.anaconda.org/conda-forge/linux-64/libcups-2.3.3-hb8b1518_5.conda#d4a250da4737ee127fb1fa6452a9002e
 https://conda.anaconda.org/conda-forge/linux-64/libfreetype-2.14.0-ha770c72_1.conda#9a8133acc0913a6f5d83cb8a1bad4f2d
 https://conda.anaconda.org/conda-forge/linux-64/libglx-1.7.0-ha4b6fd6_2.conda#c8013e438185f33b13814c5c488acd5c
-https://conda.anaconda.org/conda-forge/linux-64/libsystemd0-257.7-h996ca69_2.conda#073460efed0f557b4d1c9a1501f6becb
+https://conda.anaconda.org/conda-forge/linux-64/libsystemd0-257.9-h996ca69_0.conda#b6d222422c17dc11123e63fae4ad4178
 https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.13.8-h04c0eec_1.conda#10bcbd05e1c1c9d652fccb42b776a9fa
 https://conda.anaconda.org/conda-forge/noarch/locket-1.0.0-pyhd8ed1ab_0.tar.bz2#91e27ef3d05cc772ce627e51cff111c4
 https://conda.anaconda.org/conda-forge/linux-64/markupsafe-3.0.2-py310h89163eb_1.conda#8ce3f0332fd6de0d737e2911d329523f
@@ -231,7 +231,7 @@ https://conda.anaconda.org/conda-forge/linux-64/xorg-libxdamage-1.1.6-hb9d3cd8_0
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxxf86vm-1.1.6-hb9d3cd8_0.conda#5efa5fa6243a622445fdfd72aee15efa
 https://conda.anaconda.org/conda-forge/noarch/beautifulsoup4-4.13.5-pyha770c72_0.conda#de0fd9702fd4c1186e930b8c35af6b6b
 https://conda.anaconda.org/conda-forge/linux-64/c-compiler-1.11.0-h4d9bdce_0.conda#abd85120de1187b0d1ec305c2173c71b
-https://conda.anaconda.org/conda-forge/noarch/dask-core-2025.7.0-pyhe01879c_1.conda#3293644021329a96c606c3d95e180991
+https://conda.anaconda.org/conda-forge/noarch/dask-core-2025.9.0-pyhcf101f3_0.conda#bbd501f34e15f8ac3c22965ba5b8e4e0
 https://conda.anaconda.org/conda-forge/linux-64/fontconfig-2.15.0-h7e30c49_1.conda#8f5b0b297b59e1ac160ad4beec99dbee
 https://conda.anaconda.org/conda-forge/linux-64/gfortran-14.3.0-he448592_5.conda#65703c68538368329f2dcd5c2e6f67e1
 https://conda.anaconda.org/conda-forge/linux-64/gstreamer-1.24.11-hc37bda9_0.conda#056d86cacf2b48c79c6a562a2486eb8c
