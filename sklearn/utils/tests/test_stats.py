@@ -34,7 +34,7 @@ def test_weighted_percentile_matches_median(size, average):
     if size % 2 == 0 and average is False:
         assert score != np.median(y)
     else:
-        assert pytest.approx(score) == np.median(y)
+        assert approx(score) == np.median(y)
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -65,7 +65,7 @@ def test_weighted_percentile_matches_numpy(
     else:
         method = "inverted_cdf"
 
-    assert pytest.approx(score) == np.percentile(y, percentile_rank, method=method)
+    assert approx(score) == np.percentile(y, percentile_rank, method=method)
 
 
 @pytest.mark.parametrize("percentile_rank", [50, 100])
@@ -153,6 +153,25 @@ def test_weighted_percentile_frequency_weight_semantics(
     # Also check `percentile_rank=50` matches `median`
     if percentile_rank == 50 and average:
         assert percentile_weights == approx(np.median(x_repeated))
+
+
+@pytest.mark.parametrize("constant", [5, 0.3])
+@pytest.mark.parametrize("average", [True, False])
+@pytest.mark.parametrize("percentile_rank", [20, 35, 50, 61])
+def test_weighted_percentile_constant_multiplier(
+    global_random_seed, percentile_rank, average, constant
+):
+    """Check multiplying weights by constant does not change result."""
+    rng = np.random.RandomState(global_random_seed)
+    x = rng.randint(20, size=20)
+    weights = rng.choice(5, size=20)
+    weights_multiplied = weights * constant
+
+    percentile = _weighted_percentile(x, weights, percentile_rank, average=average)
+    percentile_multiplier = _weighted_percentile(
+        x, weights_multiplied, percentile_rank, average=average
+    )
+    assert approx(percentile) == approx(percentile_multiplier)
 
 
 @pytest.mark.parametrize("average", [True, False])
