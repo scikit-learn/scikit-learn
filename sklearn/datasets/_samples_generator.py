@@ -2058,11 +2058,13 @@ def make_gaussian_quantiles(
 
     Notes
     -----
-    The dataset is from Zhu et al [1].
+    The dataset is from Zhu et al [1]_.
 
     References
     ----------
-    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+    .. [1] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost."
+           Statistics and its Interface 2.3 (2009): 349-360.
+           <10.4310/SII.2009.v2.n3.a8>`
 
     Examples
     --------
