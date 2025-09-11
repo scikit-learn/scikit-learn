@@ -219,19 +219,19 @@ def _logistic_regression_path(
 
     Returns
     -------
-    coefs : ndarray of shape (n_cs, n_classes, features + int(fit_intercept)) or \
+    coefs : ndarray of shape (n_cs, n_classes, n_features + int(fit_intercept)) or \
             (n_cs, n_features + int(fit_intercept))
         List of coefficients for the Logistic Regression model. If fit_intercept is set
         to True, then the last dimension will be n_features + 1, where the last item
         represents the intercept.
-        For binary problems the second dimension in n_classes is dropped, i.e. only
-        shape `(n_cs, n_features + int(fit_intercept))`.
+        For binary problems the second dimension in n_classes is dropped, i.e. the shape
+        will be `(n_cs, n_features + int(fit_intercept))`.
 
     Cs : ndarray
         Grid of Cs used for cross-validation.
 
     n_iter : array of shape (n_cs,)
-        Actual number of iteration for each Cs.
+        Actual number of iteration for each C in Cs.
 
     Notes
     -----
@@ -275,7 +275,7 @@ def _logistic_regression_path(
     random_state = check_random_state(random_state)
 
     le = LabelEncoder()
-    if isinstance(class_weight, dict) or class_weight is not None:
+    if class_weight is not None:
         class_weight_ = compute_class_weight(
             class_weight, classes=classes, y=y, sample_weight=sample_weight
         )
@@ -283,7 +283,7 @@ def _logistic_regression_path(
 
     if is_binary:
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
-        mask = y == classes[-1]
+        mask = y == classes[1]
         y_bin = np.ones(y.shape, dtype=X.dtype)
         if solver == "liblinear":
             y_bin[~mask] = -1.0
@@ -433,11 +433,7 @@ def _logistic_regression_path(
             w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
-            (
-                coef_,
-                intercept_,
-                n_iter_i,
-            ) = _fit_liblinear(
+            coef_, intercept_, n_iter_i = _fit_liblinear(
                 X,
                 target,
                 C,
@@ -651,13 +647,13 @@ def _log_reg_scoring_path(
 
     Returns
     -------
-    coefs : ndarray of shape (n_cs, n_classes, features + int(fit_intercept)) or \
+    coefs : ndarray of shape (n_cs, n_classes, n_features + int(fit_intercept)) or \
             (n_cs, n_features + int(fit_intercept))
         List of coefficients for the Logistic Regression model. If fit_intercept is set
         to True, then the last dimension will be n_features + 1, where the last item
         represents the intercept.
-        For binary problems the second dimension in n_classes is dropped, i.e. only
-        shape `(n_cs, n_features + int(fit_intercept))`.
+        For binary problems the second dimension in n_classes is dropped, i.e. the shape
+        will be `(n_cs, n_features + int(fit_intercept))`.
 
     Cs : ndarray of shape (n_cs,)
         Grid of Cs used for cross-validation.
@@ -666,7 +662,7 @@ def _log_reg_scoring_path(
         Scores obtained for each Cs.
 
     n_iter : ndarray of shape(n_cs,)
-        Actual number of iteration for each Cs.
+        Actual number of iteration for each C in Cs.
     """
     X_train = X[train]
     X_test = X[test]
@@ -744,8 +740,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     with a dual formulation only for the L2 penalty. The Elastic-Net (combination of L1
     and L2) regularization is only supported by the 'saga' solver.
 
-    For :term:`multiclass` problems, all solvers except 'liblinear' optimize the
-    (penalized) multinomial loss (whenever `n_classes >= 3`). 'liblinear' only handles
+    For :term:`multiclass` problems (whenever `n_classes >= 3`), all solvers except
+    'liblinear' optimize the (penalized) multinomial loss. 'liblinear' only handles
     binary classification but can be extended to handle multiclass by using
     :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
@@ -1161,17 +1157,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             max_squared_sum = None
 
-        classes_ = self.classes_
         if n_classes < 2:
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r" % classes_[0]
+                " class: %r" % self.classes_[0]
             )
-
-        if is_binary:
-            n_classes = 1
-            classes_ = classes_[1:]
 
         if self.warm_start:
             warm_start_coef = getattr(self, "coef_", None)
@@ -1182,9 +1173,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 warm_start_coef, self.intercept_[:, np.newaxis], axis=1
             )
 
-        # TODO: In the future, we would like n_threads = _openmp_effective_n_threads()
-        # respecting effective_n_jobs(self.n_jobs)
-        # For the time being, we just do
+        # TODO: deprecate n_jobs since it's not used anymore and enable multi-threading
+        # if benchmarks show a positive effect.
         n_threads = 1
 
         coefs, _, n_iter = _logistic_regression_path(
@@ -1219,9 +1209,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.intercept_ = self.coef_[:, -1]
                 self.coef_ = self.coef_[:, :-1]
         else:
-            self.intercept_ = np.zeros(n_classes, dtype=X.dtype)
             if is_binary:
+                self.intercept_ = np.zeros(1, dtype=X.dtype)
                 self.coef_ = self.coef_[None, :]
+            else:
+                self.intercept_ = np.zeros(n_classes, dtype=X.dtype)
 
         return self
 
@@ -1701,7 +1693,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r" % classes_[0]
+                f" class: {self.classes_[0]}."
             )
 
         if solver in ["sag", "saga"]:
@@ -1798,7 +1790,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 coefs_paths, (len(folds), len(l1_ratios_), len(self.Cs_), -1)
             )
             # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_features)
-            coefs_paths = np.moveaxis(coefs_paths, (1, 2), (2, 1))[None, ...]
+            coefs_paths = np.swapaxes(coefs_paths, 1, 2)[None, ...]
         else:
             coefs_paths = np.reshape(
                 coefs_paths, (len(folds), len(l1_ratios_), len(self.Cs_), n_classes, -1)
@@ -1807,10 +1799,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             coefs_paths = np.moveaxis(coefs_paths, (0, 1, 3), (1, 3, 0))
         # n_iter_.shape = (n_folds, n_l1_ratios, n_Cs)
         n_iter_ = np.reshape(n_iter_, (len(folds), len(l1_ratios_), len(self.Cs_)))
-        self.n_iter_ = np.moveaxis(n_iter_, (1, 2), (2, 1))[None, ...]
+        self.n_iter_ = np.swapaxes(n_iter_, 1, 2)[None, ...]
         # scores.shape = (n_folds, n_l1_ratios, n_Cs)
         scores = np.reshape(scores, (len(folds), len(l1_ratios_), len(self.Cs_)))
-        scores = np.moveaxis(scores, (1, 2), (2, 1))[None, ...]
+        scores = np.swapaxes(scores, 1, 2)[None, ...]
         # repeat same scores across all classes
         scores = np.tile(scores, (n_classes, 1, 1, 1))
         self.scores_ = dict(zip(classes_, scores))

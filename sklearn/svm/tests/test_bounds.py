@@ -8,9 +8,6 @@ from sklearn.svm._bounds import l1_min_c
 from sklearn.svm._newrand import bounded_rand_int_wrap, set_seed_wrap
 from sklearn.utils.fixes import CSR_CONTAINERS
 
-dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
-Y_binary = [0, 1, 1, 1]
-
 
 @pytest.mark.parametrize("X_container", CSR_CONTAINERS + [np.array])
 @pytest.mark.parametrize("loss", ["squared_hinge", "log"])
@@ -21,8 +18,8 @@ def test_l1_min_c(X_container, loss, intercept_label):
         "fit-intercept": {"fit_intercept": True, "intercept_scaling": 10},
     }
 
-    X = X_container(dense_X)
-    Y = Y_binary
+    X = X_container([[-1, 0], [0, 1], [1, 1], [1, 1]])
+    Y = [0, 1, 1, 1]
     intercept_params = intercepts[intercept_label]
     check_l1_min_c(X, Y, loss, **intercept_params)
 

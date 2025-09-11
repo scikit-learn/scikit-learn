@@ -620,7 +620,7 @@ def test_multinomial_cv_iris():
             coefs = [
                 clf_multi.coefs_paths_[c][fold, :, :-1] for c in clf_multi.classes_
             ]
-            coefs = np.moveaxis(coefs, (1,), (0,)).reshape(len(clf_multi.Cs_), -1)
+            coefs = np.swapaxes(coefs, 1, 0).reshape(len(clf_multi.Cs_), -1)
             norms = np.sum(coefs * coefs, axis=1)  # L2 norm for each C
             assert np.all(np.diff(norms) >= 0)
 
