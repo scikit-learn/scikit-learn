@@ -746,8 +746,8 @@ class MetadataRequest:
 # in routers, returned by their ``get_metadata_routing``.
 
 # `RouterMappingPair` is used to store a `(mapping, router)` tuple where `mapping` is a
-# `MethodMapping` object and `router` is a `MetadataRequest` or `MetadataRouter` instance.
-# `MetadataRouter` stores a collection of `RouterMappingPair` objects in its
+# `MethodMapping` object and `router` is a `MetadataRequest` or another `MetadataRouter`
+# instance. `MetadataRouter` stores a collection of `RouterMappingPair` objects in its
 # `_route_mappings` attribute.
 RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
@@ -1216,7 +1216,7 @@ def get_routing_for_object(obj=None):
         the given object.
     """
 
-    # TODO(1.9): remove when get_metadata_routing is removed
+    # TODO(1.9): remove when get_metadata_routing is removed from _MetadataRequester
     def defines_get_metadata_routing(obj):
         # returns whether get_metadata_routing was not inherited from _MetadataRequester
         cls = obj if isinstance(obj, type) else obj.__class__
@@ -1598,9 +1598,7 @@ class _MetadataRequester:
 
 
 # Here the first two arguments are positional only which makes everything
-# passed as keyword argument a metadata. The first two args also have an `_`
-# prefix to reduce the chances of name collisions with the passed metadata, and
-# since they're positional only, users will never type those underscores.
+# passed as keyword argument a metadata.
 def process_routing(_obj, _method, /, **kwargs):
     """Validate and route metadata.
 
