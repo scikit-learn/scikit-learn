@@ -852,6 +852,68 @@ def sparse_enet_coordinate_descent(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+cdef (floating, floating) gap_enet_gram(
+    int n_features,
+    const floating[::1] w,
+    floating alpha,  # L1 penalty
+    floating beta,  # L2 penalty
+    const floating[::1] Qw,
+    const floating[::1] q,
+    const floating y_norm2,
+    floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    bint positive,
+) noexcept nogil:
+    """Compute dual gap for use in enet_coordinate_descent."""
+    cdef floating gap = 0.0
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating w_norm2 = 0.0
+    cdef floating l1_norm
+    cdef floating A_norm2
+    cdef floating const_
+    cdef floating q_dot_w
+    cdef floating wQw
+    cdef unsigned int j
+
+    # q_dot_w = w @ q
+    q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
+
+    # XtA = X.T @ R - beta * w = X.T @ y - X.T @ X @ w - beta * w
+    for j in range(n_features):
+        XtA[j] = q[j] - Qw[j] - beta * w[j]
+
+    if positive:
+        dual_norm_XtA = max(n_features, &XtA[0])
+    else:
+        dual_norm_XtA = abs_max(n_features, &XtA[0])
+
+    # wQw = w @ Q @ w
+    wQw = _dot(n_features, &w[0], 1, &Qw[0], 1)
+    # R_norm2 = R @ R
+    R_norm2 = y_norm2 + wQw - 2.0 * q_dot_w
+
+    # w_norm2 = w @ w
+    if beta > 0:
+        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+
+    if (dual_norm_XtA > alpha):
+        const_ = alpha / dual_norm_XtA
+        A_norm2 = R_norm2 * (const_ ** 2)
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    l1_norm = _asum(n_features, &w[0], 1)
+
+    gap += (
+        alpha * l1_norm
+        - const_ * (y_norm2 - q_dot_w)  # -const_ * R @ y
+        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    )
+    return gap, dual_norm_XtA
+
+
 def enet_coordinate_descent_gram(
     floating[::1] w,
     floating alpha,
@@ -863,7 +925,8 @@ def enet_coordinate_descent_gram(
     floating tol,
     object rng,
     bint random=0,
-    bint positive=0
+    bint positive=0,
+    bint do_screening=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -871,6 +934,7 @@ def enet_coordinate_descent_gram(
         We minimize
 
         (1/2) * w^T Q w - q^T w + alpha norm(w, 1) + (beta/2) * norm(w, 2)^2
+        +1/2 * y^T y
 
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
@@ -901,20 +965,22 @@ def enet_coordinate_descent_gram(
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
+    cdef floating d_j
+    cdef floating radius
+    cdef floating Xj_theta
     cdef floating tmp
-    cdef floating w_ii
+    cdef floating w_j
     cdef floating d_w_max
     cdef floating w_max
-    cdef floating d_w_ii
-    cdef floating q_dot_w
+    cdef floating d_w_j
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
-    cdef floating R_norm2
-    cdef floating w_norm2
-    cdef floating A_norm2
-    cdef floating const_
-    cdef unsigned int ii
+    cdef unsigned int n_active = n_features
+    cdef uint32_t[::1] active_set
+    # TODO: use binset insteaf of array of bools
+    cdef uint8_t[::1] excluded_set
+    cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -927,85 +993,115 @@ def enet_coordinate_descent_gram(
             "Set l1_ratio > 0 to add L1 regularization."
         )
 
+    if do_screening:
+        active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
+        excluded_set = np.empty(n_features, dtype=np.uint8)
+
     with nogil:
         tol *= y_norm2
+
+        # Check convergence before entering the main loop.
+        gap, dual_norm_XtA = gap_enet_gram(
+            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
+        )
+        if 0 <= gap <= tol:
+            # Only if gap >=0 as singular Q may cause dubious values of gap.
+            with gil:
+                return np.asarray(w), gap, tol, 0
+
+        # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+        if do_screening:
+            # Due to floating point issues, gap might be negative.
+            radius = sqrt(2 * fabs(gap)) / alpha
+            n_active = 0
+            for j in range(n_features):
+                if Q[j, j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                    continue
+                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+                if d_j <= radius:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                    _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                    w[j] = 0
+                    excluded_set[j] = 1
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    j = rand_int(n_active, rand_r_state)
                 else:
-                    ii = f_iter
+                    j = f_iter
 
-                if Q[ii, ii] == 0.0:
+                if do_screening:
+                    j = active_set[j]
+
+                if Q[j, j] == 0.0:
                     continue
 
-                w_ii = w[ii]  # Store previous value
+                w_j = w[j]  # Store previous value
 
-                # if Q = X.T @ X then tmp = X[:,ii] @ (y - X @ w + X[:, ii] * w_ii)
-                tmp = q[ii] - Qw[ii] + w_ii * Q[ii, ii]
+                # if Q = X.T @ X then tmp = X[:,j] @ (y - X @ w + X[:, j] * w_j)
+                tmp = q[j] - Qw[j] + w_j * Q[j, j]
 
                 if positive and tmp < 0:
-                    w[ii] = 0.0
+                    w[j] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                        / (Q[ii, ii] + beta)
+                    w[j] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                        / (Q[j, j] + beta)
 
-                if w[ii] != w_ii:
-                    # Qw +=  (w[ii] - w_ii) * Q[ii]  # Update Qw = Q @ w
-                    _axpy(n_features, w[ii] - w_ii, &Q[ii, 0], 1,
-                          &Qw[0], 1)
+                if w[j] != w_j:
+                    # Qw += (w[j] - w_j) * Q[j]  # Update Qw = Q @ w
+                    _axpy(n_features, w[j] - w_j, &Q[j, 0], 1, &Qw[0], 1)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
+                d_w_j = fabs(w[j] - w_j)
+                if d_w_j > d_w_max:
+                    d_w_max = d_w_j
 
-                if fabs(w[ii]) > w_max:
-                    w_max = fabs(w[ii])
+                if fabs(w[j]) > w_max:
+                    w_max = fabs(w[j])
 
             if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-
-                # q_dot_w = w @ q
-                q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
-
-                for ii in range(n_features):
-                    XtA[ii] = q[ii] - Qw[ii] - beta * w[ii]
-                if positive:
-                    dual_norm_XtA = max(n_features, &XtA[0])
-                else:
-                    dual_norm_XtA = abs_max(n_features, &XtA[0])
-
-                # temp = w @ Q @ w
-                tmp = _dot(n_features, &w[0], 1, &Qw[0], 1)
-                R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
-
-                # w_norm2 = w @ w
-                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-
-                if (dual_norm_XtA > alpha):
-                    const_ = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const_ ** 2)
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const_ = 1.0
-                    gap = R_norm2
-
-                # The call to asum is equivalent to the L1 norm of w
-                gap += (
-                    alpha * _asum(n_features, &w[0], 1)
-                    - const_ * y_norm2
-                    + const_ * q_dot_w
-                    + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+                gap, dual_norm_XtA = gap_enet_gram(
+                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
                 )
 
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
+
+                # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+                if do_screening:
+                    # Due to floating point issues, gap might be negative.
+                    radius = sqrt(2 * fabs(gap)) / alpha
+                    n_active = 0
+                    for j in range(n_features):
+                        if excluded_set[j]:
+                            continue
+                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
+                        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+                        if d_j <= radius:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                            w[j] = 0
+                            excluded_set[j] = 1
 
         else:
             # for/else, runs if for doesn't end with a `break`
