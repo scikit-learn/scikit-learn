@@ -8,6 +8,7 @@ import pytest
 
 
 # TODO(1.8): Remove the entire file
+@pytest.mark.thread_unsafe
 def test_estimator_html_repr_warning():
     with pytest.warns(FutureWarning):
         # Make sure that we check for the warning when loading the module (reloading it
