@@ -3,24 +3,28 @@
 
 from collections import Counter
 
-from ...utils._plotting import (
+from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
+from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
-from .._ranking import average_precision_score, precision_recall_curve
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     """Precision Recall visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
     a :class:`~sklearn.metrics.PrecisionRecallDisplay`. All parameters are
     stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the :ref:`Model
+    Evaluation Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
@@ -37,8 +41,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, then the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The class considered as the positive class. If None, the class will not
-        be shown in the legend.
+        The class considered the positive class when precision and recall metrics
+        computed. If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 0.24
 
@@ -276,6 +280,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot precision-recall curve given an estimator and some data.
 
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <precision_recall_f_measure_metrics>`.
+
         Parameters
         ----------
         estimator : estimator instance
@@ -375,7 +384,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -386,7 +395,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return cls.from_predictions(
             y,
-            y_pred,
+            y_score,
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
@@ -402,7 +411,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=False,
@@ -412,17 +421,26 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
+
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the :ref:`Model
+        Evaluation Guide <precision_recall_f_measure_metrics>`.
 
         Parameters
         ----------
         y_true : array-like of shape (n_samples,)
             True binary labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Estimated probabilities or output of decision function.
+
+            .. versionadded:: 1.8
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -436,7 +454,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the
-            precision and recall metrics.
+            precision and recall metrics. When `pos_label=None`, if `y_true` is
+            in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an error
+            will be raised.
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
@@ -462,6 +482,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Whether to remove the top and right spines from the plot.
 
             .. versionadded:: 1.6
+
+        y_pred : array-like of shape (n_samples,)
+            Estimated probabilities or output of decision function.
+
+            .. deprecated:: 1.8
+                `y_pred` is deprecated and will be removed in 1.10. Use
+                `y_score` instead.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -499,25 +526,26 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> y_pred = clf.predict_proba(X_test)[:, 1]
+        >>> y_score = clf.predict_proba(X_test)[:, 1]
         >>> PrecisionRecallDisplay.from_predictions(
-        ...    y_test, y_pred)
+        ...    y_test, y_score)
         <...>
         >>> plt.show()
         """
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
         precision, recall, _ = precision_recall_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
 
         class_count = Counter(y_true)

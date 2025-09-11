@@ -8,8 +8,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._bicluster import consensus_score
-from ._supervised import (
+from sklearn.metrics.cluster._bicluster import consensus_score
+from sklearn.metrics.cluster._supervised import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
@@ -25,7 +25,7 @@ from ._supervised import (
     rand_score,
     v_measure_score,
 )
-from ._unsupervised import (
+from sklearn.metrics.cluster._unsupervised import (
     calinski_harabasz_score,
     davies_bouldin_score,
     silhouette_samples,
@@ -34,22 +34,23 @@ from ._unsupervised import (
 
 __all__ = [
     "adjusted_mutual_info_score",
-    "normalized_mutual_info_score",
     "adjusted_rand_score",
-    "rand_score",
+    "calinski_harabasz_score",
     "completeness_score",
-    "pair_confusion_matrix",
+    "consensus_score",
     "contingency_matrix",
+    "davies_bouldin_score",
+    # TODO(1.10): Remove
+    "entropy",
     "expected_mutual_information",
+    "fowlkes_mallows_score",
     "homogeneity_completeness_v_measure",
     "homogeneity_score",
     "mutual_info_score",
-    "v_measure_score",
-    "fowlkes_mallows_score",
-    "entropy",
+    "normalized_mutual_info_score",
+    "pair_confusion_matrix",
+    "rand_score",
     "silhouette_samples",
     "silhouette_score",
-    "calinski_harabasz_score",
-    "davies_bouldin_score",
-    "consensus_score",
+    "v_measure_score",
 ]

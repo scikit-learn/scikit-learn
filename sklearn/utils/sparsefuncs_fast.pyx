@@ -15,6 +15,10 @@ ctypedef fused integral:
     int32_t
     int64_t
 
+ctypedef fused integral2:
+    int32_t
+    int64_t
+
 
 def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
@@ -638,3 +642,42 @@ def assign_rows_csr(
             for ind in range(indptr[rX], indptr[rX + 1]):
                 j = indices[ind]
                 out[out_rows[i], j] = data[ind]
+
+
+def csr_matmul_csr_to_dense(
+    const floating[:] a_data,
+    const integral[:] a_indices,
+    const integral[:] a_indptr,
+    const floating[:] b_data,
+    const integral2[:] b_indices,
+    const integral2[:] b_indptr,
+    floating[:, :] out,
+    uint64_t n1,
+    uint64_t n2,
+    uint64_t n3,
+):
+    """Computes a @ b for sparse csr a and b, returns dense array.
+
+    The shape of `a` is `(n1, n2)` and the shape of `b` is `(n2, n3)`.
+
+    See also
+    Gamma: Leveraging Gustavson's Algorithm to Accelerate Sparse Matrix Multiplication
+    https://dl.acm.org/doi/pdf/10.1145/3445814.3446702
+    """
+    cdef uint64_t i
+    cdef uint64_t j
+    cdef integral2 j_ind
+    cdef uint64_t k
+    cdef integral k_ind
+    cdef floating a_value
+
+    for i in range(n1):
+        for j in range(n3):
+            out[i, j] = 0
+        for k_ind in range(a_indptr[i], a_indptr[i + 1]):  # n2
+            k = a_indices[k_ind]
+            a_value = a_data[k_ind]
+            for j_ind in range(b_indptr[k], b_indptr[k + 1]):  # n3
+                j = b_indices[j_ind]
+                # out[i, j] += a[i, k] * b[k, j]
+                out[i, j] += a_value * b_data[j_ind]

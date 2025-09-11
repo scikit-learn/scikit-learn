@@ -265,7 +265,7 @@ for quantile in quantile_list:
     time = cv_results["fit_time"]
     scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
 
-    scores["loss"].append(f"quantile {int(quantile*100)}")
+    scores["loss"].append(f"quantile {int(quantile * 100)}")
     for key, value in cv_results.items():
         if key.startswith("test_"):
             metric = key.split("test_")[1]

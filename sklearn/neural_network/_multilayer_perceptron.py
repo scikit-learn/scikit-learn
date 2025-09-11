@@ -5,42 +5,47 @@
 
 import warnings
 from abc import ABC, abstractmethod
-from itertools import chain
+from itertools import chain, pairwise
 from numbers import Integral, Real
 
 import numpy as np
 import scipy.optimize
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics import accuracy_score, r2_score
-from ..model_selection import train_test_split
-from ..preprocessing import LabelBinarizer
-from ..utils import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from sklearn.neural_network._stochastic_optimizers import AdamOptimizer, SGDOptimizer
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import (
     _safe_indexing,
     check_random_state,
     column_or_1d,
     gen_batches,
     shuffle,
 )
-from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import (
+from sklearn.utils._param_validation import Interval, Options, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import (
     _check_partial_fit_first_call,
     type_of_target,
     unique_labels,
 )
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
 
@@ -399,7 +404,11 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
         # Output for regression
         if not is_classifier(self):
-            self.out_activation_ = "identity"
+            if self.loss == "poisson":
+                self.out_activation_ = "exp"
+            else:
+                # loss = "squared_error"
+                self.out_activation_ = "identity"
         # Output for multi class
         elif self._label_binarizer.y_type_ == "multiclass":
             self.out_activation_ = "softmax"
@@ -491,7 +500,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
         coef_grads = [
             np.empty((n_fan_in_, n_fan_out_), dtype=X.dtype)
-            for n_fan_in_, n_fan_out_ in zip(layer_units[:-1], layer_units[1:])
+            for n_fan_in_, n_fan_out_ in pairwise(layer_units)
         ]
 
         intercept_grads = [
@@ -581,8 +590,8 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             options={
                 "maxfun": self.max_fun,
                 "maxiter": self.max_iter,
-                "iprint": iprint,
                 "gtol": self.tol,
+                **_get_additional_lbfgs_options_dict("iprint", iprint),
             },
             args=(
                 X,
@@ -664,6 +673,12 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                     test_size=self.validation_fraction,
                     stratify=stratify,
                 )
+            if X_val.shape[0] < 2:
+                raise ValueError(
+                    "The validation set is too small. Increase 'validation_fraction' "
+                    "or the size of your dataset."
+                )
+
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
@@ -1133,7 +1148,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     ...                                                     random_state=1)
     >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
     >>> clf.predict_proba(X_test[:1])
-    array([[0.038..., 0.961...]])
+    array([[0.0383, 0.961]])
     >>> clf.predict(X_test[:5, :])
     array([1, 0, 1, 0, 1])
     >>> clf.score(X_test, y_test)
@@ -1378,6 +1393,17 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
+    loss : {'squared_error', 'poisson'}, default='squared_error'
+        The loss function to use when training the weights. Note that the
+        "squared error" and "poisson" losses actually implement
+        "half squares error" and "half poisson deviance" to simplify the
+        computation of the gradient. Furthermore, the "poisson" loss internally uses
+        a log-link (exponential as the output activation function) and requires
+        ``y >= 0``.
+
+        .. versionchanged:: 1.7
+           Added parameter `loss` and option 'poisson'.
+
     hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
@@ -1641,13 +1667,19 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     >>> regr.fit(X_train, y_train)
     MLPRegressor(max_iter=2000, random_state=1, tol=0.1)
     >>> regr.predict(X_test[:2])
-    array([  28..., -290...])
+    array([  28.98, -291])
     >>> regr.score(X_test, y_test)
-    0.98...
+    0.98
     """
+
+    _parameter_constraints: dict = {
+        **BaseMultilayerPerceptron._parameter_constraints,
+        "loss": [StrOptions({"squared_error", "poisson"})],
+    }
 
     def __init__(
         self,
+        loss="squared_error",
         hidden_layer_sizes=(100,),
         activation="relu",
         *,
@@ -1683,7 +1715,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             learning_rate_init=learning_rate_init,
             power_t=power_t,
             max_iter=max_iter,
-            loss="squared_error",
+            loss=loss,
             shuffle=shuffle,
             random_state=random_state,
             tol=tol,

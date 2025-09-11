@@ -543,7 +543,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 - |Fix| :func:`metrics.roc_auc_score` will now correctly return np.nan and
   warn user if only one class is present in the labels.
-  By :user:`Gleb Levitski <glevv>` and :user:`Janez Demšar <janezd>` :pr:`27412`, :pr:`30013`
+  By :user:`Hleb Levitski <glevv>` and :user:`Janez Demšar <janezd>` :pr:`27412`, :pr:`30013`
 
 - |Fix| The functions :func:`metrics.mean_squared_log_error` and
   :func:`metrics.root_mean_squared_log_error` now check whether the inputs are within
@@ -645,7 +645,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 - |Enhancement| Added `warn` option to `handle_unknown` parameter in
   :class:`preprocessing.OneHotEncoder`.
-  By :user:`Gleb Levitski <glevv>` :pr:`28637`
+  By :user:`Hleb Levitski <glevv>` :pr:`28637`
 
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
@@ -748,38 +748,38 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
-Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam 
-J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali, 
-Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan 
-Zihna, Aniruddha Saha, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari, 
-Arthur Courselle, ArthurDbrn, Arturo Amor, Aswathavicky, Audrey Flanders, 
-aurelienmorgan, Austin, awwwyan, AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001, 
-bme-git, Boney Patel, brdav, Brigitta Sipőcz, Cailean Carter, Camille 
-Troillard, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, Christine P. 
-Chai, claudio, Conrad Stevens, datarollhexasphericon, Davide Chicco, David 
-Matthew Cherney, Dea María Léon, Deepak Saldanha, Deepyaman Datta, 
-dependabot[bot], dinga92, Dmitry Kobak, Domenico, Drew Craeton, dymil, Edoardo 
-Abati, EmilyXinyi, Eric Larson, Evelyn, fabianhenning, Farid "Freddie" Taba, 
-Gael Varoquaux, Giorgio Angelotti, Gleb Levitski, Guillaume Lemaitre, Guntitat 
-Sawadwuthikul, Haesun Park, Hanjun Kim, Henrique Caroço, hhchen1105, Hugo 
-Boulenger, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin Chauhan, 
-Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, Jérôme 
-Dockès, Jirair Aroyan, João Morais, Joe Cainey, Joel Nothman, John Enblom, 
-JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy, 
-Kevin Doshi, Lars, Loic Esteve, Lucas Colley, Lucy Liu, lunovian, Marc Bresson, 
-Marco Edward Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann, 
-MarieS-WiMLDS, Martin Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell 
-Liu, Meekail Zain, Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia 
-Mokeeva, Nathan Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov, 
-Nithish Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha, 
-Olivier Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta, 
-Quentin Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath, 
-renaissance0ne, Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427, 
-Santiago Castro, Santiago M. Mola, scikit-learn-bot, sean moiselle, SHREEKANT 
-VITTHAL NANDIYAWAR, Shruti Nath, Søren Bredlund Caspersen, Stefanie Senger, 
-Stefano Gaspari, Steffen Schneider, Štěpán Sršeň, Sylvain Combettes, 
-Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, Thomas Li, ThorbenMaa, 
-Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, Umberto Fasci, UV, vedpawar2254, 
-Velislav Babatchev, Victoria Shevchenko, viktor765, Vince Carey, Virgil Chan, 
-Wang Jiayi, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey, 
+Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam
+J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali,
+Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan
+Zihna, Aniruddha Saha, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari,
+Arthur Courselle, ArthurDbrn, Arturo Amor, Aswathavicky, Audrey Flanders,
+aurelienmorgan, Austin, awwwyan, AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001,
+bme-git, Boney Patel, brdav, Brigitta Sipőcz, Cailean Carter, Camille
+Troillard, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, Christine P.
+Chai, claudio, Conrad Stevens, datarollhexasphericon, Davide Chicco, David
+Matthew Cherney, Dea María Léon, Deepak Saldanha, Deepyaman Datta,
+dependabot[bot], dinga92, Dmitry Kobak, Domenico, Drew Craeton, dymil, Edoardo
+Abati, EmilyXinyi, Eric Larson, Evelyn, fabianhenning, Farid "Freddie" Taba,
+Gael Varoquaux, Giorgio Angelotti, Hleb Levitski, Guillaume Lemaitre, Guntitat
+Sawadwuthikul, Haesun Park, Hanjun Kim, Henrique Caroço, hhchen1105, Hugo
+Boulenger, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin Chauhan,
+Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, Jérôme
+Dockès, Jirair Aroyan, João Morais, Joe Cainey, Joel Nothman, John Enblom,
+JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy,
+Kevin Doshi, Lars, Loic Esteve, Lucas Colley, Lucy Liu, lunovian, Marc Bresson,
+Marco Edward Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann,
+MarieS-WiMLDS, Martin Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell
+Liu, Meekail Zain, Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia
+Mokeeva, Nathan Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov,
+Nithish Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha,
+Olivier Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta,
+Quentin Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath,
+renaissance0ne, Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427,
+Santiago Castro, Santiago M. Mola, scikit-learn-bot, sean moiselle, SHREEKANT
+VITTHAL NANDIYAWAR, Shruti Nath, Søren Bredlund Caspersen, Stefanie Senger,
+Stefano Gaspari, Steffen Schneider, Štěpán Sršeň, Sylvain Combettes,
+Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, Thomas Li, ThorbenMaa,
+Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, Umberto Fasci, UV, vedpawar2254,
+Velislav Babatchev, Victoria Shevchenko, viktor765, Vince Carey, Virgil Chan,
+Wang Jiayi, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey,
 Ziad Amerr

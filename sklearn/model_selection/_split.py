@@ -18,41 +18,41 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
-from ..utils import (
+from sklearn.utils import (
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _convert_to_numpy,
     ensure_common_namespace_device,
     get_namespace,
 )
-from ..utils._param_validation import Interval, RealNotInt, validate_params
-from ..utils.extmath import _approximate_mode
-from ..utils.metadata_routing import _MetadataRequester
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
+from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
+from sklearn.utils.extmath import _approximate_mode
+from sklearn.utils.metadata_routing import _MetadataRequester
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
-    "KFold",
     "GroupKFold",
+    "GroupShuffleSplit",
+    "KFold",
     "LeaveOneGroupOut",
     "LeaveOneOut",
     "LeavePGroupsOut",
     "LeavePOut",
-    "RepeatedStratifiedKFold",
-    "RepeatedKFold",
-    "ShuffleSplit",
-    "GroupShuffleSplit",
-    "StratifiedKFold",
-    "StratifiedGroupKFold",
-    "StratifiedShuffleSplit",
     "PredefinedSplit",
-    "train_test_split",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
+    "ShuffleSplit",
+    "StratifiedGroupKFold",
+    "StratifiedKFold",
+    "StratifiedShuffleSplit",
     "check_cv",
+    "train_test_split",
 ]
 
 
@@ -1088,9 +1088,8 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
             y_counts_per_fold[i] -= group_y_counts
             fold_eval = np.mean(std_per_class)
             samples_in_fold = np.sum(y_counts_per_fold[i])
-            is_current_fold_better = (
-                fold_eval < min_eval
-                or np.isclose(fold_eval, min_eval)
+            is_current_fold_better = fold_eval < min_eval or (
+                np.isclose(fold_eval, min_eval)
                 and samples_in_fold < min_samples_in_fold
             )
             if is_current_fold_better:
@@ -1111,10 +1110,10 @@ class TimeSeriesSplit(_BaseKFold):
     while the train set size accumulates data from previous splits.
 
     This cross-validation object is a variation of :class:`KFold`.
-    In the kth split, it returns first k folds as train set and the
-    (k+1)th fold as test set.
+    In the k-th split, it returns the first k folds as the train set and the
+    (k+1)-th fold as the test set.
 
-    Note that unlike standard cross-validation methods, successive
+    Note that, unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.
@@ -2442,11 +2441,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
     test_size_type = np.asarray(test_size).dtype.kind
     train_size_type = np.asarray(train_size).dtype.kind
 
-    if (
-        test_size_type == "i"
-        and (test_size >= n_samples or test_size <= 0)
-        or test_size_type == "f"
-        and (test_size <= 0 or test_size >= 1)
+    if (test_size_type == "i" and (test_size >= n_samples or test_size <= 0)) or (
+        test_size_type == "f" and (test_size <= 0 or test_size >= 1)
     ):
         raise ValueError(
             "test_size={0} should be either positive and smaller"
@@ -2454,11 +2450,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
             "(0, 1) range".format(test_size, n_samples)
         )
 
-    if (
-        train_size_type == "i"
-        and (train_size >= n_samples or train_size <= 0)
-        or train_size_type == "f"
-        and (train_size <= 0 or train_size >= 1)
+    if (train_size_type == "i" and (train_size >= n_samples or train_size <= 0)) or (
+        train_size_type == "f" and (train_size <= 0 or train_size >= 1)
     ):
         raise ValueError(
             "train_size={0} should be either positive and smaller"
@@ -3031,21 +3024,19 @@ def _build_repr(self):
     class_name = self.__class__.__name__
     params = dict()
     for key in args:
-        # We need deprecation warnings to always be on in order to
-        # catch deprecated param values.
-        # This is set in utils/__init__.py but it gets overwritten
-        # when running under python3 somehow.
-        warnings.simplefilter("always", FutureWarning)
-        try:
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-                if value is None and hasattr(self, "cvargs"):
-                    value = self.cvargs.get(key, None)
-            if len(w) and w[0].category is FutureWarning:
-                # if the parameter is deprecated, don't show it
-                continue
-        finally:
-            warnings.filters.pop(0)
+        with warnings.catch_warnings(record=True) as w:
+            # We need deprecation warnings to always be on in order to
+            # catch deprecated param values.
+            # This is set in utils/__init__.py but it gets overwritten
+            # when running under python3 somehow.
+            warnings.simplefilter("always", FutureWarning)
+            value = getattr(self, key, None)
+            if value is None and hasattr(self, "cvargs"):
+                value = self.cvargs.get(key, None)
+        if len(w) and w[0].category is FutureWarning:
+            # if the parameter is deprecated, don't show it
+            continue
+
         params[key] = value
 
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
