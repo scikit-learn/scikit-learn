@@ -2089,7 +2089,6 @@ def test_transform_tuple_input():
 # =============================
 
 
-# TODO(1.8): change warning to checking for NotFittedError
 @pytest.mark.parametrize(
     "method",
     [
@@ -2140,7 +2139,7 @@ def test_pipeline_warns_not_fitted(method):
             return X
 
     pipe = Pipeline([("estimator", StatelessEstimator())])
-    with pytest.warns(FutureWarning, match="This Pipeline instance is not fitted yet."):
+    with pytest.raises(NotFittedError):
         getattr(pipe, method)([[1]])
 
 
