@@ -490,13 +490,12 @@ def _plain_sgd{{name_suffix}}(
                 if verbose or not early_stopping:
                     cur_loss_val = loss.cy_loss(y, p)
                     sumloss += cur_loss_val
+                    objective_sum += cur_loss_val
                     if learning_rate != PA1 and learning_rate != PA2:
                         # sum up all the terms in the optimization objective function 
                         # (i.e. also include regularization in addition to the loss)
-                        # SGD optimizes 0.5 * L2**2, due to using weight decay
-                        # that's why the 0.5 coefficient is required
-                        # (compared to direct minimization of L2**2)
-                        objective_sum += cur_loss_val
+                        # Note: for the L2 term SGD optimizes 0.5 * L2**2, due to using
+                        # weight decay that's why the 0.5 coefficient is required
                         if penalty_type > 0: # if regularization is enabled
                             objective_sum += alpha * (
                                 (1 - l1_ratio) * 0.5 * w.norm() ** 2 +
@@ -505,9 +504,6 @@ def _plain_sgd{{name_suffix}}(
                         if one_class:  # specific to One-Class SVM
                             # nu is alpha * 2 (alpha is set as nu / 2 by the caller)
                             objective_sum += intercept * (alpha * 2)
-                    else:
-                        # fallback to loss for PA1/PA2 (passive/aggressive model, online algorithm)
-                        objective_sum += cur_loss_val
 
                 if y > 0.0:
                     class_weight = weight_pos
