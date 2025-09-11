@@ -1862,7 +1862,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
-    Adapted with permission from Stephen Marsland's code [1].
+    Adapted with permission from Stephen Marsland's code [1]_.
 
     Parameters
     ----------
@@ -1891,7 +1891,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     Notes
     -----
-    The algorithm is from Marsland [1].
+    The algorithm is from Marsland [1]_.
 
     References
     ----------
