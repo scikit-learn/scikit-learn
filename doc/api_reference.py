@@ -691,6 +691,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
@@ -1350,4 +1351,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]
+DEPRECATED_API_REFERENCE = {"1.8.0": ["utils.murmurhash3_32"]}  # type: ignore[var-annotated]
