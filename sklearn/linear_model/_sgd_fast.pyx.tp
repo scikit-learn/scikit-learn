@@ -503,8 +503,7 @@ def _plain_sgd{{name_suffix}}(
                                 l1_ratio * w.l1norm()
                             )
                         if one_class:  # specific to One-Class SVM
-                            # nu is alpha * 2 (alpha must be nu/2 which is set by the
-                            # caller)
+                            # nu is alpha * 2 (alpha is set as nu / 2 by the caller)
                             objective_sum += intercept * (alpha * 2)
                     else:
                         # fallback to loss for PA1/PA2 (passive/aggressive model, online algorithm)
