@@ -14,7 +14,6 @@ from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.stdio cimport printf
 
 from ._utils cimport swap_array_slices
 
@@ -251,39 +250,7 @@ cdef class DensePartitioner:
                 samples[partition_end] = tmp
                 partition_end -= 1
 
-        cdef bint pok = not(best_pos < p or best_pos > p + 1)
-        if not pok:
-            printf("partition unexpected: %d %d %d\n", p, partition_end, best_pos)
-            if best_pos < p:
-                printf("BEFORE")
-            printf("threshold: %.2f\n", best_threshold)
-            if self.end - self.start < 20:
-                printf("X[%d:%d]", self.start, self.end)
-                for p in range(self.start, self.end):
-                    if p == best_pos or p == partition_end:
-                        printf("[XXX] ")
-                    printf("%.2f ", X[samples[p], best_feature])
-                printf("\n")
-        cdef bint left = True
-        cdef bint first_split = True
-        for p in range(self.start, self.end):
-            current_value = X[samples[p], best_feature]
-            go_to_left = (
-                current_value <= best_threshold
-                or (isnan(current_value) and best_missing_go_to_left)
-            )
-            if not go_to_left:
-                if left:
-                    pass
-                    assert first_split, "partition went wrong"
-                    # printf("--- ")
-                left = False
-                first_split = False
-            else:
-                assert left
-            # printf("%.1f ", current_value)
-        # printf("\n")
-        # assert pok, "partition unexpected"
+        # we could assert that p <= best_pos <= p + 1
 
 
 @final

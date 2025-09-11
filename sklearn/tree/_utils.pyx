@@ -80,17 +80,24 @@ cdef int swap_array_slices(
     cdef intp_t n_rev = end - start - n
     cdef size_t nbytes = n * itemsize
     cdef size_t nbytes_rev = n_rev * itemsize
-    cdef char* tmp = <char*> malloc(nbytes if n <= n_rev else nbytes_rev)
+    cdef size_t nbytes_tmp = nbytes if n <= n_rev else nbytes_rev
+    cdef char* tmp = <char*> malloc(nbytes_tmp)
     if tmp == NULL:
-        raise MemoryError(f"could not allocate {nbytes if n <= n_rev else nbytes_rev} bytes")
+        raise MemoryError(f"could not allocate {nbytes_tmp} bytes")
     cdef char* arr = <char*> array
     if n <= n_rev:
+        # Copy array[start : start + n] to temporary buffer
         memcpy(tmp, arr + start * itemsize, nbytes)
+        # Move array[start + n : end] to array[start : start + n_rev]
         memmove(arr + start * itemsize, arr + (start + n) * itemsize, nbytes_rev)
+        # array[start + n_rev : end] = tmp
         memcpy(arr + (start + n_rev) * itemsize, tmp, nbytes)
     else:
+        # Copy array[start + n : end] to temporary buffer
         memcpy(tmp, arr + (start + n) * itemsize, nbytes_rev)
+        # Move array[start : start + n] to array[start + n_rev : end]
         memmove(arr + (start + n_rev) * itemsize, arr + start * itemsize, nbytes)
+        # array[start : start + n_rev] = tmp
         memcpy(arr + start * itemsize, tmp, nbytes_rev)
     free(tmp)
     return 0
