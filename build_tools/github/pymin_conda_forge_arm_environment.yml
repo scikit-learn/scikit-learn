@@ -18,7 +18,5 @@ dependencies:
   - pip
   - ninja
   - meson-python
-  - pytest-cov
-  - coverage
   - pip
   - ccache
