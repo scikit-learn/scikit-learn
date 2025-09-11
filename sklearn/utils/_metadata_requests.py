@@ -1598,7 +1598,9 @@ class _MetadataRequester:
 
 
 # Here the first two arguments are positional only which makes everything
-# passed as keyword argument a metadata.
+# passed as keyword argument a metadata. The first two args also have an `_`
+# prefix to reduce the chances of name collisions with the passed metadata, and
+# since they're positional only, users will never type those underscores.
 def process_routing(_obj, _method, /, **kwargs):
     """Validate and route metadata.
 
@@ -1654,11 +1656,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
         return EmptyRequest()
 
-    if not (
-        hasattr(_obj, "get_metadata_routing")
-        or hasattr(_obj, "_get_metadata_request")
-        or isinstance(_obj, MetadataRouter)
-    ):
+    if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
             f"The given object ({_routing_repr(_obj)}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"
