@@ -10,7 +10,6 @@ from sklearn.callback._base import AutoPropagatedProtocol, CallbackProtocol
 from sklearn.callback._callback_context import CallbackContext
 from sklearn.callback._mixin import CallbackSupportMixin
 from sklearn.callback._progressbar import ProgressBar
-from sklearn.callback._task_tree import TaskNode
 
 __all__ = [
     "AutoPropagatedProtocol",
@@ -18,5 +17,4 @@ __all__ = [
     "CallbackProtocol",
     "CallbackSupportMixin",
     "ProgressBar",
-    "TaskNode",
 ]

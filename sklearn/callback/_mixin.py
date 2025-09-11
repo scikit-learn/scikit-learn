@@ -31,13 +31,18 @@ class CallbackSupportMixin:
 
         return self
 
-    def init_callback_context(self, task_name="fit"):
+    def init_callback_context(self, task_name="fit", max_subtasks=None):
         """Initialize the callback context for the estimator.
 
         Parameters
         ----------
         task_name : str, default='fit'
             The name of the root task.
+
+        max_subtasks : int or None, default=None
+            The maximum number of tasks that can be children of the subtask. 0 means
+            it's a leaf. None means the maximum number of subtasks is not known in
+            advance.
 
         Returns
         -------
@@ -48,7 +53,7 @@ class CallbackSupportMixin:
         # because in the future we might want to have callbacks in predict/transform
         # which would require their own context.
         self._callback_fit_ctx = CallbackContext._from_estimator(
-            estimator=self, task_name=task_name, task_id=0, max_tasks=1
+            estimator=self, task_name=task_name, task_id=0, max_subtasks=max_subtasks
         )
 
         return self._callback_fit_ctx

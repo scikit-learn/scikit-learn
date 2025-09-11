@@ -24,7 +24,7 @@ class TestingAutoPropagatedCallback(TestingCallback):
 
 
 class NotValidCallback:
-    """Unvalid callback since it's missing a method from the protocol.'"""
+    """Invalid callback since it's missing a method from the protocol.'"""
 
     def _on_fit_begin(self, estimator, *, data):
         pass  # pragma: no cover
@@ -42,12 +42,12 @@ class Estimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self.init_callback_context().eval_on_fit_begin(
-            estimator=self, data={"X_train": X, "y_train": y}
-        )
+        callback_ctx = self.init_callback_context(
+            max_subtasks=self.max_iter
+        ).eval_on_fit_begin(estimator=self, data={"X_train": X, "y_train": y})
 
         for i in range(self.max_iter):
-            subcontext = callback_ctx.subcontext(task_id=i, max_tasks=self.max_iter)
+            subcontext = callback_ctx.subcontext(task_id=i)
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
@@ -76,7 +76,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
         i = 0
         while True:
-            subcontext = callback_ctx.subcontext(task_id=i, max_tasks=None)
+            subcontext = callback_ctx.subcontext(task_id=i)
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
@@ -108,9 +108,9 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self.init_callback_context().eval_on_fit_begin(
-            estimator=self, data={"X_train": X, "y_train": y}
-        )
+        callback_ctx = self.init_callback_context(
+            max_subtasks=self.n_outer
+        ).eval_on_fit_begin(estimator=self, data={"X_train": X, "y_train": y})
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_func)(
@@ -119,7 +119,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
                 X,
                 y,
                 callback_ctx=callback_ctx.subcontext(
-                    task_name="outer", task_id=i, max_tasks=self.n_outer
+                    task_name="outer", task_id=i, max_subtasks=self.n_inner
                 ),
             )
             for i in range(self.n_outer)
@@ -133,7 +133,7 @@ def _func(meta_estimator, inner_estimator, X, y, *, callback_ctx):
         est = clone(inner_estimator)
 
         inner_ctx = callback_ctx.subcontext(
-            task_name="inner", task_id=i, max_tasks=meta_estimator.n_inner
+            task_name="inner", task_id=i
         ).propagate_callbacks(sub_estimator=est)
 
         est.fit(X, y)

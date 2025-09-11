@@ -28,11 +28,11 @@ class ProgressBar:
         self.progress_monitor = _RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
-    def _on_fit_iter_end(self, estimator, task_node, **kwargs):
-        self._queue.put(task_node)
+    def _on_fit_iter_end(self, estimator, task_info, **kwargs):
+        self._queue.put(task_info)
 
-    def _on_fit_end(self, estimator, task_node):
-        self._queue.put(task_node)
+    def _on_fit_end(self, estimator, task_info):
+        self._queue.put(task_info)
         self._queue.put(None)
         self.progress_monitor.join()
 
@@ -92,29 +92,30 @@ class _RichProgressMonitor(Thread):
         self.root_rich_task = None
 
         with self.progress_ctx:
-            while task_node := self.queue.get():
-                self._update_task_tree(task_node)
+            while task_info := self.queue.get():
+                context_path = _get_context_path(task_info)
+                self._update_task_tree(context_path)
                 self._update_tasks()
                 self.progress_ctx.refresh()
 
-    def _update_task_tree(self, task_node):
-        """Update the tree of tasks from a new node."""
+    def _update_task_tree(self, context_path):
+        """Update the tree of tasks from the path of a new node."""
         curr_rich_task, parent_rich_task = None, None
 
-        for curr_node in task_node.path:
-            if curr_node.parent is None:  # root node
+        for curr_node in context_path:
+            if curr_node["parent"] is None:  # root node
                 if self.root_rich_task is None:
                     self.root_rich_task = RichTaskNode(
                         curr_node, progress_ctx=self.progress_ctx
                     )
                 curr_rich_task = self.root_rich_task
-            elif curr_node.task_id not in parent_rich_task.children:
+            elif curr_node["task_id"] not in parent_rich_task.children:
                 curr_rich_task = RichTaskNode(
                     curr_node, progress_ctx=self.progress_ctx, parent=parent_rich_task
                 )
-                parent_rich_task.children[curr_node.task_id] = curr_rich_task
+                parent_rich_task.children[curr_node["task_id"]] = curr_rich_task
             else:  # task already exists
-                curr_rich_task = parent_rich_task.children[curr_node.task_id]
+                curr_rich_task = parent_rich_task.children[curr_node["task_id"]]
             parent_rich_task = curr_rich_task
 
         # Mark the deepest task as finished (this is the one corresponding to the
@@ -154,8 +155,9 @@ class RichTaskNode:
 
     Parameters
     ----------
-    task_node : `TaskNode` instance
-        The task node of an estimator this task corresponds to.
+    task_info : dict
+        Property :meth:`~sklearn.callback.CallbackContext.task_info` of a callback
+        context corresponding to this task.
 
     progress_ctx : `rich.Progress` instance
         The progress context to which this task belongs.
@@ -176,29 +178,29 @@ class RichTaskNode:
         For a leaf, it's an empty dictionary.
     """
 
-    def __init__(self, task_node, progress_ctx, parent=None):
+    def __init__(self, task_info, progress_ctx, parent=None):
         self.parent = parent
         self.children = {}
         self.finished = False
 
-        if task_node.max_subtasks != 0:
-            description = self._format_task_description(task_node)
+        if task_info["max_subtasks"] != 0:
+            description = self._format_task_description(task_info)
             self.task_id = progress_ctx.add_task(
-                description, total=task_node.max_subtasks
+                description, total=task_info["max_subtasks"]
             )
 
-    def _format_task_description(self, task_node):
+    def _format_task_description(self, task_info):
         """Return a formatted description for the task."""
         colors = ["bright_magenta", "cyan", "dark_orange"]
 
-        indent = f"{'  ' * (task_node.depth)}"
-        style = f"[{colors[(task_node.depth) % len(colors)]}]"
+        indent = f"{'  ' * (task_info['depth'])}"
+        style = f"[{colors[(task_info['depth']) % len(colors)]}]"
 
-        task_desc = f"{task_node.estimator_name} - {task_node.task_name}"
-        id_mark = f" #{task_node.task_id}" if task_node.parent is not None else ""
+        task_desc = f"{task_info['estimator_name']} - {task_info['task_name']}"
+        id_mark = f" #{task_info['task_id']}" if task_info["parent"] is not None else ""
         prev_task_desc = (
-            f"{task_node.prev_estimator_name} - {task_node.prev_task_name} | "
-            if task_node.prev_estimator_name is not None
+            f"{task_info['prev_estimator_name']} - {task_info['prev_task_name']} | "
+            if task_info["prev_estimator_name"] is not None
             else ""
         )
 
@@ -210,3 +212,23 @@ class RichTaskNode:
             yield self
             for child in self.children.values():
                 yield from child
+
+
+def _get_context_path(task_info):
+    """Helper function to get the path of task info from this task to the root task.
+
+    Parameters
+    ----------
+    task_info : dict
+        The dictionary representations of a CallbackContext's task node.
+
+    Returns
+    -------
+    list of dict
+        The list of dictionary representations of the parents of the given task.
+    """
+    return (
+        [task_info]
+        if task_info["parent"] is None
+        else _get_context_path(task_info["parent"]) + [task_info]
+    )
