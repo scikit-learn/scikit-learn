@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from numbers import Integral, Real
 
 import numpy as np
@@ -883,17 +882,6 @@ class SVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
-        if probability != "deprecated":
-            warnings.warn(
-                "Parameter `probability` is deprecated in version 1.8, and will"
-                "be removed in 1.10. Use "
-                "`CalibratedClassifierCV(SVC(), ensemble=False)` instead of "
-                "`SVC(probability=True)`",
-                FutureWarning,
-            )
-        else:
-            probability = False
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1162,15 +1150,6 @@ class NuSVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
-        if probability != "deprecated":
-            warnings.warn(
-                "parameter `probability` will be deprecated in version 1.8, "
-                "use `CalibratedClassifierCV(NuSVC(), ensemble=False)` instead "
-                "of `NuSVC(probability=True)`",
-                FutureWarning,
-            )
-        else:
-            probability = False
         super().__init__(
             kernel=kernel,
             degree=degree,
