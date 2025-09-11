@@ -491,6 +491,7 @@ def _plain_sgd{{name_suffix}}(
                     cur_loss_val = loss.cy_loss(y, p)
                     sumloss += cur_loss_val
                     objective_sum += cur_loss_val
+                    # fallback to loss for PA1/PA2 (passive/aggressive model, online algorithm)
                     if learning_rate != PA1 and learning_rate != PA2:
                         # sum up all the terms in the optimization objective function 
                         # (i.e. also include regularization in addition to the loss)
