@@ -22,7 +22,7 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 from libc.stdio cimport printf
-from libc.math cimport isnan
+from libc.stdlib cimport malloc
 
 from ..utils._typedefs cimport int8_t
 from ._criterion cimport Criterion
@@ -276,9 +276,32 @@ cdef inline void print_features(
 ) noexcept nogil:
     if not DEBUG:
         return
-    printf("[%d - %d] | %d\n", start, end, missing_frontier)
     cdef intp_t p
     cdef float32_t val
+    # Check for duplicates in indices using a binary mask
+    cdef intp_t n = end - start
+    cdef intp_t max_index = 0
+    for p in range(start, end):
+        if indices[p] > max_index:
+            max_index = indices[p]
+    max_index += 1
+
+    cdef bint* mask = <bint*>malloc(max_index * sizeof(bint))
+    if mask == NULL:
+        printf("Failed to allocate memory for mask.\n")
+        return
+    for p in range(max_index):
+        mask[p] = 0
+    cdef intp_t n_duplicates = 0
+    for p in range(start, end):
+        if mask[indices[p]]:
+            n_duplicates += 1
+        mask[indices[p]] = 1
+    if n_duplicates > 0:
+        printf("Duplicates in indices: %d/%d\n", n_duplicates, n)
+
+    printf("[%d - %d] | %d\n", start, end, missing_frontier)
+
     for p in range(start, end):
         if p - start == missing_frontier:
             printf("|| ")
@@ -405,7 +428,8 @@ cdef inline int node_split_best(
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
         partitioner.sort_samples_and_feature_values(current_split.feature)
-        if DEBUG: printf("sort_samples_and_feature_values: [%d %d]\n", start, end)
+        if DEBUG:
+            printf("sort_samples_and_feature_values: [%d %d]\n", start, end)
         n_missing = partitioner.n_missing
         print_features(X, current_split.feature, criterion.sample_indices, start, end, end - start - n_missing, -1)
         end_non_missing = end - n_missing
@@ -442,7 +466,8 @@ cdef inline int node_split_best(
             missing_go_to_left = i == 1
             if missing_go_to_left:
                 partitioner.shift_missing_to_the_left()
-                if DEBUG: printf("shift_missing_to_the_left\n")
+                if DEBUG:
+                    printf("shift_missing_to_the_left\n")
                 print_features(X, current_split.feature, criterion.sample_indices, start, end, n_missing, -1)
             criterion.reset()
 
@@ -489,11 +514,12 @@ cdef inline int node_split_best(
                         # and all the missing to the right
                         current_split.threshold = INFINITY
                     else:
+                        if not(feature_values[p_prev] < feature_values[p]):
+                            printf("Split between: %.3f %.3f\n", feature_values[p_prev], feature_values[p])
                         current_split.threshold = (
                             feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
                         )
                         if (
-                            current_split.threshold == feature_values[p] or
                             current_split.threshold == INFINITY or
                             current_split.threshold == -INFINITY
                         ):
@@ -519,18 +545,28 @@ cdef inline int node_split_best(
             best_split.feature,
             best_split.missing_go_to_left
         )
-        if DEBUG: printf("partition_samples_final - go to left: %d | split: %d (threshold: %.2f)\n",
-            best_split.missing_go_to_left, best_split.pos, best_split.threshold)
+        if DEBUG:
+            printf(
+                "partition_samples_final - go to left: %d | split: %d (threshold: %.2f)\n",
+                best_split.missing_go_to_left, best_split.pos, best_split.threshold
+            )
 
         criterion.reset()
         criterion.update(best_split.pos)
         criterion.children_impurity(
             &best_split.impurity_left, &best_split.impurity_right
         )
-        print_features(X, best_split.feature, criterion.sample_indices, start, end,
+        print_features(
+            X, best_split.feature, criterion.sample_indices, start, end,
             n_missing if best_split.missing_go_to_left else end - start - n_missing,
-            best_split.pos)
-        if DEBUG: printf("impurity: %.2f | %.2f\n", best_split.impurity_left, best_split.impurity_right)
+            best_split.pos
+        )
+        if DEBUG:
+            printf("impurity: %.2f | %.2f\n", best_split.impurity_left,
+                   best_split.impurity_right)
+        if best_proxy_improvement > criterion.proxy_impurity_improvement() + 1:
+            printf("Proxy: %f > %f\n", best_proxy_improvement,
+                   criterion.proxy_impurity_improvement())
 
         best_split.improvement = criterion.impurity_improvement(
             impurity,

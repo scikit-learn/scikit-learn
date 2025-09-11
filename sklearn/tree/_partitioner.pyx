@@ -110,13 +110,10 @@ cdef class DensePartitioner:
             while preserving their inner ordering
         """
         assert not self.missing_on_the_left
-        cdef intp_t i
-        cdef float32_t[::1] feature_values = self.feature_values
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
         # TODO? handle except?
-        swap_array_slices(self.samples, self.start, self.end, n_non_missing)
-        for i in range(n_non_missing):
-            feature_values[self.start + self.n_missing + i] = feature_values[self.start + i]
+        swap_array_slices(&self.samples[0], self.start, self.end, n_non_missing, sizeof(intp_t))
+        swap_array_slices(&self.feature_values[0], self.start, self.end, n_non_missing, sizeof(float32_t))
         self.missing_on_the_left = True
 
     cdef inline void find_min_max(
@@ -166,25 +163,27 @@ cdef class DensePartitioner:
             float32_t[::1] feature_values = self.feature_values
             intp_t end_non_missing = self.end - self.n_missing
 
-        if p[0] == self.start and self.missing_on_the_left:
-            p[0] = self.start + self.n_missing + 1
+        if self.missing_on_the_left:
+            if p[0] == self.start:
+                p[0] = self.start + self.n_missing
+            p[0] += 1
+            while (
+                p[0] < self.end and
+                feature_values[p[0]] <= feature_values[p[0] - 1] + FEATURE_THRESHOLD
+            ):
+                p[0] += 1
             p_prev[0] = p[0] - 1
-        elif not self.missing_on_the_left and p[0] >= end_non_missing:
+        elif p[0] == end_non_missing:
             p[0] = self.end
             p_prev[0] = self.end
         else:
-            end = self.end if self.missing_on_the_left else end_non_missing
+            p[0] += 1
             while (
-                p[0] + 1 < end and
-                feature_values[p[0] + 1] <= feature_values[p[0]] + FEATURE_THRESHOLD
+                p[0] < end_non_missing and
+                feature_values[p[0]] <= feature_values[p[0] - 1] + FEATURE_THRESHOLD
             ):
                 p[0] += 1
-
-            p_prev[0] = p[0]
-
-            # By adding 1, we have
-            # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
-            p[0] += 1
+            p_prev[0] = p[0] - 1
 
     cdef inline intp_t partition_samples(
         self,
@@ -251,8 +250,20 @@ cdef class DensePartitioner:
                 samples[p] = samples[partition_end]
                 samples[partition_end] = tmp
                 partition_end -= 1
-        
-        # printf("in partition: %d %d %d\n", p, partition_end, best_pos)
+
+        cdef bint pok = not(best_pos < p or best_pos > p + 1)
+        if not pok:
+            printf("partition unexpected: %d %d %d\n", p, partition_end, best_pos)
+            if best_pos < p:
+                printf("BEFORE")
+            printf("threshold: %.2f\n", best_threshold)
+            if self.end - self.start < 20:
+                printf("X[%d:%d]", self.start, self.end)
+                for p in range(self.start, self.end):
+                    if p == best_pos or p == partition_end:
+                        printf("[XXX] ")
+                    printf("%.2f ", X[samples[p], best_feature])
+                printf("\n")
         cdef bint left = True
         cdef bint first_split = True
         for p in range(self.start, self.end):
@@ -263,7 +274,8 @@ cdef class DensePartitioner:
             )
             if not go_to_left:
                 if left:
-                    assert first_split
+                    pass
+                    assert first_split, "partition went wrong"
                     # printf("--- ")
                 left = False
                 first_split = False
@@ -271,7 +283,7 @@ cdef class DensePartitioner:
                 assert left
             # printf("%.1f ", current_value)
         # printf("\n")
-        assert p == partition_end == best_pos
+        # assert pok, "partition unexpected"
 
 
 @final

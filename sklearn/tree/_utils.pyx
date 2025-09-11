@@ -4,7 +4,7 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memmove
 from libc.math cimport log as ln
 from libc.math cimport isnan
 # from libc.stdio cimport printf
@@ -69,31 +69,30 @@ cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
 
 
-cdef int swap_array_slices(intp_t[::1] array, intp_t start, intp_t end, intp_t n) except -1 nogil:
+cdef int swap_array_slices(
+    void* array, intp_t start, intp_t end, intp_t n, size_t itemsize
+) except -1 nogil:
     """
     Swaps the order of the slices array[start:start + n]
     and array[start + n:end] while preserving the order
-    in the slices.
+    in the slices. Works for any itemsize.
     """
     cdef intp_t n_rev = end - start - n
-    cdef intp_t n_tmp = n
-    cdef intp_t nbytes = n_tmp * sizeof(intp_t)
-    cdef intp_t* tmp = <intp_t*> malloc(nbytes)
-    cdef intp_t i
+    cdef size_t nbytes = n * itemsize
+    cdef size_t nbytes_rev = n_rev * itemsize
+    cdef char* tmp = <char*> malloc(nbytes if n <= n_rev else nbytes_rev)
     if tmp == NULL:
-        raise MemoryError(f"could not allocate {nbytes} bytes")
-    # tmp = array[start:start+n].copy()
-    for i in range(n):
-        tmp[i] = array[start + i]
-    # array[start:start+n_rev] = array[start+n:start+n+n_rev]
-    for i in range(n_rev):
-        array[start + i] = array[start + n + i]
-    # array[start+n_rev:start+n_rev+n] = tmp
-    for i in range(n):
-        array[start + n_rev + i] = tmp[i]
-
-    if tmp != NULL:
-        free(tmp)
+        raise MemoryError(f"could not allocate {nbytes if n <= n_rev else nbytes_rev} bytes")
+    cdef char* arr = <char*> array
+    if n <= n_rev:
+        memcpy(tmp, arr + start * itemsize, nbytes)
+        memmove(arr + start * itemsize, arr + (start + n) * itemsize, nbytes_rev)
+        memcpy(arr + (start + n_rev) * itemsize, tmp, nbytes)
+    else:
+        memcpy(tmp, arr + (start + n) * itemsize, nbytes_rev)
+        memmove(arr + (start + n_rev) * itemsize, arr + start * itemsize, nbytes)
+        memcpy(arr + start * itemsize, tmp, nbytes_rev)
+    free(tmp)
     return 0
 
 # =============================================================================
