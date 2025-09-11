@@ -1837,7 +1837,7 @@ class RandomizedSearchCV(BaseSearchCV):
             'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
-        For an example of comparing models statistically using cv_results_,
+        For an example of analysing ``cv_results_``,
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
         NOTE
