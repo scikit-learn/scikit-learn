@@ -5,14 +5,18 @@ Combine predictors using stacking
 
 .. currentmodule:: sklearn
 
-Stacking refers to a method to blend estimators. In this strategy, some
-estimators are individually fitted on some training data while a final
-estimator is trained using the stacked predictions of these base estimators.
+Stacking is an :ref:`ensemble method <ensemble>`. In this strategy, the
+out-of-fold predictions from several base estimators are used to train a
+meta-model that combines their outputs at inference time. Unlike
+:class:`~sklearn.ensemble.VotingRegressor`, which averages predictions with
+fixed (optionally user-specified) weights,
+:class:`~sklearn.ensemble.StackingRegressor` learns the combination through its
+`final_estimator`.
 
 In this example, we illustrate the use case in which different regressors are
 stacked together and a final linear penalized regressor is used to output the
 prediction. We compare the performance of each individual regressor with the
-stacking strategy. Stacking slightly improves the overall performance.
+stacking strategy. Here, stacking slightly improves the overall performance.
 
 """
 
@@ -20,175 +24,73 @@ stacking strategy. Stacking slightly improves the overall performance.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
-# Download the dataset
-# ####################
+# Generate data
+# #############
 #
-# We will use the `Ames Housing`_ dataset which was first compiled by Dean De Cock
-# and became better known after it was used in Kaggle challenge. It is a set
-# of 1460 residential homes in Ames, Iowa, each described by 80 features. We
-# will use it to predict the final logarithmic price of the houses. In this
-# example we will use only 20 most interesting features chosen using
-# GradientBoostingRegressor() and limit number of entries (here we won't go
-# into the details on how to select the most interesting features).
-#
-# The Ames housing dataset is not shipped with scikit-learn and therefore we
-# will fetch it from `OpenML`_.
-#
-# .. _`Ames Housing`: http://jse.amstat.org/v19n3/decock.pdf
-# .. _`OpenML`: https://www.openml.org/d/42165
+# We use synthetic data generated from a sinusoid plus a linear trend with
+# heteroscedastic Gaussian noise. A sudden drop is introduced, as it cannot be
+# described by a linear model, but a tree-based model can naturally deal with
+# it.
 
 import numpy as np
+import pandas as pd
 
-from sklearn.datasets import fetch_openml
-from sklearn.utils import shuffle
+rng = np.random.RandomState(42)
+X = rng.uniform(-3, 3, size=500)
+trend = 2.4 * X
+seasonal = 3.1 * np.sin(3.2 * X)
+drop = 10.0 * (X > 2).astype(float)
+sigma = 0.75 + 0.75 * X**2
+y = trend + seasonal - drop + rng.normal(loc=0.0, scale=np.sqrt(sigma))
 
-
-def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True)
-    X = df.data
-    y = df.target
-
-    features = [
-        "YrSold",
-        "HeatingQC",
-        "Street",
-        "YearRemodAdd",
-        "Heating",
-        "MasVnrType",
-        "BsmtUnfSF",
-        "Foundation",
-        "MasVnrArea",
-        "MSSubClass",
-        "ExterQual",
-        "Condition2",
-        "GarageCars",
-        "GarageType",
-        "OverallQual",
-        "TotalBsmtSF",
-        "BsmtFinSF1",
-        "HouseStyle",
-        "MiscFeature",
-        "MoSold",
-    ]
-
-    X = X.loc[:, features]
-    X, y = shuffle(X, y, random_state=0)
-
-    X = X.iloc[:600]
-    y = y.iloc[:600]
-    return X, np.log(y)
-
-
-X, y = load_ames_housing()
-
-# %%
-# Make pipeline to preprocess the data
-# ####################################
-#
-# Before we can use Ames dataset we still need to do some preprocessing.
-# First, we will select the categorical and numerical columns of the dataset to
-# construct the first step of the pipeline.
-
-from sklearn.compose import make_column_selector
-
-cat_selector = make_column_selector(dtype_include=object)
-num_selector = make_column_selector(dtype_include=np.number)
-cat_selector(X)
-
-# %%
-num_selector(X)
-
-# %%
-# Then, we will need to design preprocessing pipelines which depends on the
-# ending regressor. If the ending regressor is a linear model, one needs to
-# one-hot encode the categories. If the ending regressor is a tree-based model
-# an ordinal encoder will be sufficient. Besides, numerical values need to be
-# standardized for a linear model while the raw numerical data can be treated
-# as is by a tree-based model. However, both models need an imputer to
-# handle missing values.
-#
-# We will first design the pipeline required for the tree-based models.
-
-from sklearn.compose import make_column_transformer
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
-
-cat_tree_processor = OrdinalEncoder(
-    handle_unknown="use_encoded_value",
-    unknown_value=-1,
-    encoded_missing_value=-2,
-)
-num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
-
-tree_preprocessor = make_column_transformer(
-    (num_tree_processor, num_selector), (cat_tree_processor, cat_selector)
-)
-tree_preprocessor
-
-# %%
-# Then, we will now define the preprocessor used when the ending regressor
-# is a linear model.
-
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
-cat_linear_processor = OneHotEncoder(handle_unknown="ignore")
-num_linear_processor = make_pipeline(
-    StandardScaler(), SimpleImputer(strategy="mean", add_indicator=True)
-)
-
-linear_preprocessor = make_column_transformer(
-    (num_linear_processor, num_selector), (cat_linear_processor, cat_selector)
-)
-linear_preprocessor
+data = np.c_[X, y]
+df = pd.DataFrame(data, columns=["X", "y"])
+_ = df.plot.scatter(x="X", y="y")
 
 # %%
 # Stack of predictors on a single data set
 # ########################################
 #
-# It is sometimes tedious to find the model which will best perform on a given
-# dataset. Stacking provide an alternative by combining the outputs of several
-# learners, without the need to choose a model specifically. The performance of
-# stacking is usually close to the best model and sometimes it can outperform
-# the prediction performance of each individual model.
+# It is sometimes not evident which model is more suited for a given task, as
+# different model families can achieve similar performance while exhibiting
+# different strengths and weaknesses. Stacking combines their outputs to exploit
+# these complementary behaviors and can correct systematic errors that no
+# individual model fixes alone. With appropriate regularization in the
+# `final_estimator`, the `StackingRegressor` often matches the strongest base
+# model, and can outperform it when base learners' errors are only partially
+# correlated, allowing the combination to reduce individual bias/variance.
 #
-# Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
-# to combine their outputs together.
+# Here, we combine 3 learners (linear and non-linear) and use the default
+# :class:`~sklearn.linear_model.RidgeCV` regressor to combine their outputs
+# together.
 #
 # .. note::
-#    Although we will make new pipelines with the processors which we wrote in
-#    the previous section for the 3 learners, the final estimator
-#    :class:`~sklearn.linear_model.RidgeCV()` does not need preprocessing of
-#    the data as it will be fed with the already preprocessed output from the 3
-#    learners.
+#    Although some base learners include preprocessing (such as the
+#    :class:`~sklearn.preprocessing.StandardScaler`), the `final_estimator` does
+#    not need additional preprocessing when using the default
+#    `passthrough=False`, as it receives only the base learners' predictions. If
+#    `passthrough=True`, `final_estimator` should be a pipeline with proper
+#    preprocessing.
 
-from sklearn.linear_model import LassoCV
-
-lasso_pipeline = make_pipeline(linear_preprocessor, LassoCV())
-lasso_pipeline
-
-# %%
-from sklearn.ensemble import RandomForestRegressor
-
-rf_pipeline = make_pipeline(tree_preprocessor, RandomForestRegressor(random_state=42))
-rf_pipeline
-
-# %%
-from sklearn.ensemble import HistGradientBoostingRegressor
-
-gbdt_pipeline = make_pipeline(
-    tree_preprocessor, HistGradientBoostingRegressor(random_state=0)
-)
-gbdt_pipeline
-
-# %%
-from sklearn.ensemble import StackingRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor, StackingRegressor
 from sklearn.linear_model import RidgeCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, SplineTransformer, StandardScaler
+
+linear_ridge = make_pipeline(StandardScaler(), RidgeCV())
+
+spline_ridge = make_pipeline(
+    SplineTransformer(n_knots=6, degree=3),
+    PolynomialFeatures(interaction_only=True),
+    RidgeCV(),
+)
+
+hgbt = HistGradientBoostingRegressor(random_state=0)
 
 estimators = [
-    ("Random Forest", rf_pipeline),
-    ("Lasso", lasso_pipeline),
-    ("Gradient Boosting", gbdt_pipeline),
+    ("Linear Ridge", linear_ridge),
+    ("Spline Ridge", spline_ridge),
+    ("HGBT", hgbt),
 ]
 
 stacking_regressor = StackingRegressor(estimators=estimators, final_estimator=RidgeCV())
@@ -198,14 +100,52 @@ stacking_regressor
 # Measure and plot the results
 # ############################
 #
-# Now we can use Ames Housing dataset to make the predictions. We check the
-# performance of each individual predictor as well as of the stack of the
-# regressors.
-
-
-import time
+# We can directly plot the predictions. Indeed, the sudden drop is correctly
+# described by the :class:`~sklearn.ensemble.HistGradientBoostingRegressor`
+# model, but the spline model is smoother and less overfitting. The stacked
+# regressor then turns to be a smoother version of the HGBT.
 
 import matplotlib.pyplot as plt
+
+X = X.reshape(-1, 1)
+linear_ridge.fit(X, y)
+spline_ridge.fit(X, y)
+hgbt.fit(X, y)
+stacking_regressor.fit(X, y)
+
+x_plot = np.linspace(X.min() - 0.1, X.max() + 0.1, 500).reshape(-1, 1)
+preds = {
+    "Linear Ridge": linear_ridge.predict(x_plot),
+    "Spline Ridge": spline_ridge.predict(x_plot),
+    "HGBT": hgbt.predict(x_plot),
+    "Stacking (Ridge final estimator)": stacking_regressor.predict(x_plot),
+}
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=True, sharey=True)
+axes = axes.ravel()
+for ax, (name, y_pred) in zip(axes, preds.items()):
+    ax.scatter(
+        X[:, 0],
+        y,
+        s=6,
+        alpha=0.35,
+        linewidths=0,
+        label="observed (sample)",
+    )
+
+    ax.plot(x_plot.ravel(), y_pred, linewidth=2, alpha=0.9, label=name)
+    ax.set_title(name)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.legend(loc="best", frameon=False)
+
+plt.show()
+
+# %%
+# We can plot the prediction errors as well and evaluate the performance of the
+# individual predictors and the stack of the regressors.
+
+import time
 
 from sklearn.metrics import PredictionErrorDisplay
 from sklearn.model_selection import cross_val_predict, cross_validate
@@ -219,12 +159,10 @@ for ax, (name, est) in zip(
     scorers = {"R2": "r2", "MAE": "neg_mean_absolute_error"}
 
     start_time = time.time()
-    scores = cross_validate(
-        est, X, y, scoring=list(scorers.values()), n_jobs=-1, verbose=0
-    )
+    scores = cross_validate(est, X, y, scoring=list(scorers.values()), n_jobs=-1)
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    y_pred = cross_val_predict(est, X, y, n_jobs=-1)
     scores = {
         key: (
             f"{np.abs(np.mean(scores[f'test_{value}'])):.2f} +- "
@@ -253,6 +191,92 @@ plt.subplots_adjust(top=0.9)
 plt.show()
 
 # %%
-# The stacked regressor will combine the strengths of the different regressors.
-# However, we also see that training the stacked regressor is much more
-# computationally expensive.
+# Even if the scores overlap considerably after cross-validation, the predictions
+# from the stacked regressor are slightly better.
+#
+# Once fitted, we can inspect the coefficients (or meta-weights) of the trained
+# `final_estimator_` (as long as it is a linear model). They reveal how much the
+# individual estimators contribute to the the stacked regressor:
+
+stacking_regressor.fit(X, y)
+stacking_regressor.final_estimator_.coef_
+
+# %%
+# We see that in this case, the HGBT model is somewhat dominant, with the spline
+# ridge also contributing meaningfully. The plain linear model does not add
+# useful signal once those two are in place; with
+# :class:`~sklearn.linear_model.RidgeCV` as the `final_estimator`, it is not
+# dropped but gets a tiny negative weight that acts as a small correction to
+# counter its residual bias.
+#
+# If we switch to :class:`~sklearn.linear_model.LassoCV` as the
+# `final_estimator`, that small, unhelpful contribution is set exactly to zero,
+# yielding a simpler blend of the spline ridge and HGBT models.
+
+from sklearn.linear_model import LassoCV
+
+stacking_regressor = StackingRegressor(estimators=estimators, final_estimator=LassoCV())
+stacking_regressor.fit(X, y)
+stacking_regressor.final_estimator_.coef_
+
+# %%
+# How to mimic SuperLearner with scikit-learn
+# ###########################################
+#
+# The `SuperLearner` [Polley2010]_ is a stacking strategy implemented as `an R
+# package <https://cran.r-project.org/web/packages/SuperLearner/index.html>`_, but
+# not available off-the-shelf in Python. It is closely related to the
+# :class:`~sklearn.ensemble.StackingRegressor`, as both train the meta-model on
+# out-of-fold predictions from the base estimators.
+#
+# The key difference is that `SuperLearner` estimates a convex set of
+# meta-weights (non-negative and summing to 1) and omits an intercept; by
+# contrast, :class:`~sklearn.ensemble.StackingRegressor` uses an unconstrained
+# meta-learner with an intercept by default (and can optionally include raw
+# features via passthrough).
+#
+# Without an intercept, the meta-weights are directly interpretable as
+# fractional contributions to the final prediction.
+
+from sklearn.linear_model import LinearRegression
+
+linear_reg = LinearRegression(fit_intercept=False, positive=True)
+stacking_regressor = StackingRegressor(
+    estimators=estimators, final_estimator=linear_reg
+)
+stacking_regressor.fit(X, y)
+stacking_regressor.final_estimator_.coef_
+
+# %%
+# The sum of meta-weights in the stacked regressor is close to 1.0, but not
+# exactly one:
+
+stacking_regressor.final_estimator_.coef_.sum()
+
+# %%
+# Beyond interpretability, the normalization to 1.0 constraint in the `SuperLearner`
+# presents the following advantages:
+#
+# - Consensus-preserving: if all base models output the same value at a point,
+#   the ensemble returns that same value (no artificial amplification or
+#   attenuation).
+# - Translation-equivariant: adding a constant to every base prediction shifts
+#   the ensemble by the same constant.
+# - Removes one degree of freedom: avoiding redundancy with a constant term and
+#   modestly stabilizing weights under collinearity.
+#
+# Conclusions
+# ###########
+#
+# The stacked regressor combines the strengths of the different regressors.
+# However, notice that training the stacked regressor is much more
+# computationally expensive than selecting the best performing model.
+#
+# .. rubric:: References
+#
+# .. [Polley2010] Polley, E. C. and van der Laan, M. J., `Super Learner In
+#    Prediction
+#    <https://biostats.bepress.com/cgi/viewcontent.cgi?article=1269&context=ucbbiostat>`_,
+#    2010.
+
+# %%
