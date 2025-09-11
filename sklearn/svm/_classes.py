@@ -691,9 +691,10 @@ class SVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
-        ..deprecated:: version 1.8 parameter probability will be deprecated in future
-        versions, use CalibratedClassifierCV(SVC(), ensemble=False) instead
-        of SVC(probability=True)
+        ..deprecated:: 1.8
+          Parameter `probability` will be removed in 1.10.
+          Use `CalibratedClassifierCV(SVC(), ensemble=False)` instead of
+          `SVC(probability=True)`.
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
@@ -884,9 +885,10 @@ class SVC(BaseSVC):
     ):
         if probability != "deprecated":
             warnings.warn(
-                "parameter `probability` will be deprecated in version 1.8, "
-                "use `CalibratedClassifierCV(SVC(), ensemble=False)` instead "
-                "of `SVC(probability=True)`",
+                "Parameter `probability` is deprecated in version 1.8, and will"
+                "be removed in 1.10. Use "
+                "`CalibratedClassifierCV(SVC(), ensemble=False)` instead of "
+                "`SVC(probability=True)`",
                 FutureWarning,
             )
         else:
@@ -966,9 +968,10 @@ class NuSVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
-        ..deprecated:: version 1.8 parameter probability will be deprecated in future
-        versions, use CalibratedClassifierCV(NuSVC(), ensemble=False) instead
-        of NuSVC(probability=True)
+        ..deprecated:: 1.8
+          Parameter `probability` will be removed in version 1.10, use
+          `CalibratedClassifierCV(NuSVC(), ensemble=False)`
+          instead of `NuSVC(probability=True)`.
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
