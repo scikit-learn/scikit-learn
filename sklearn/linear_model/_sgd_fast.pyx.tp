@@ -608,9 +608,11 @@ def _plain_sgd{{name_suffix}}(
                                 objective_sum / train_count))
                         print("Total training time: %.2f seconds."
                             % (time() - t_start))
-                # use mean of objective, reasonable scale, independent of data size
-                if (tol > -INFINITY
-                        and objective_sum / train_count > best_objective - tol):
+                # true objective = objective_sum / number of samples
+                if (
+                    tol > -INFINITY
+                    and objective_sum / train_count > best_objective - tol
+                ):
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
