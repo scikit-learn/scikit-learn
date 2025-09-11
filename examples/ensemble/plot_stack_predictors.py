@@ -278,5 +278,3 @@ stacking_regressor.final_estimator_.coef_.sum()
 #    Prediction
 #    <https://biostats.bepress.com/cgi/viewcontent.cgi?article=1269&context=ucbbiostat>`_,
 #    2010.
-
-# %%
