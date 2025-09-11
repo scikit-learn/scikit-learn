@@ -483,11 +483,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-    @property
-    # TODO(1.8) remove this property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         sub_estimator_tags = get_tags(self.estimator)
@@ -1215,7 +1210,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
