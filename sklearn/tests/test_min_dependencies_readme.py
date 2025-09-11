@@ -16,14 +16,13 @@ for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(", "):
         min_depencies_tag_to_packages_without_version[extra].append(package)
 
-min_dependencies_tag_to_pyproject_section = {
-    "build": "build-system.requires",
-    "install": "project.dependencies",
+pyproject_section_to_min_dependencies_tag = {
+    "build-system.requires": "build",
+    "project.dependencies": "install",
 }
 for tag in min_depencies_tag_to_packages_without_version:
-    min_dependencies_tag_to_pyproject_section[tag] = (
-        f"project.optional-dependencies.{tag}"
-    )
+    section = f"project.optional-dependencies.{tag}"
+    pyproject_section_to_min_dependencies_tag[section] = tag
 
 
 def test_min_dependencies_readme():
@@ -108,6 +107,10 @@ def check_pyproject_section(
                 "Only >= and == are supported for version requirements"
             )
 
+        # It's Cython in pyproject.toml but cython in _min_dependencies.py
+        if package == "Cython":
+            package = "cython"
+
         pyproject_build_min_versions[package] = version
 
     assert sorted(pyproject_build_min_versions) == sorted(expected_packages)
@@ -126,8 +129,8 @@ def check_pyproject_section(
 
 
 @pytest.mark.parametrize(
-    "min_dependencies_tag, pyproject_section",
-    min_dependencies_tag_to_pyproject_section.items(),
+    "pyproject_section, min_dependencies_tag",
+    pyproject_section_to_min_dependencies_tag.items(),
 )
 def test_min_dependencies_pyproject_toml(pyproject_section, min_dependencies_tag):
     """Check versions in pyproject.toml is consistent with _min_dependencies."""
