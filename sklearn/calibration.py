@@ -152,6 +152,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
 
+        Base estimator clones are fitted in parallel across cross-validation
+        iterations.
+
         See :term:`Glossary <n_jobs>` for more details.
 
         .. versionadded:: 0.24
