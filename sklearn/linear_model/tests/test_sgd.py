@@ -1773,7 +1773,7 @@ def test_ocsvm_vs_sgdocsvm():
 
 def test_sgd_oneclass_convergence():
     # Check that the optimization does not end early and that the stopping criterion
-    # is working. Non-regression test for 30027
+    # is working. Non-regression test for #30027
     for nu in [0.1, 0.5, 0.9]:
         # no need for large max_iter
         model = SGDOneClassSVM(
