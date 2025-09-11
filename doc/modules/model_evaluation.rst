@@ -1651,7 +1651,7 @@ class. The OvO and OvR algorithms support weighting uniformly
   where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
   AUC with class :math:`j` as the positive class and class :math:`k` as the
   negative class. In general,
-  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j)` in the multiclass
   case. This algorithm is used by setting the keyword argument ``multiclass``
   to ``'ovo'`` and ``average`` to ``'macro'``.
 
