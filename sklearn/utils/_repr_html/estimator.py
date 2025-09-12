@@ -225,7 +225,7 @@ def _write_label_html(
             if name == "passthrough":
                 name_details = ""
             fmt_str = "".join(
-                [fmt_str, f"<pre>{name_details}</pre></div>{features_div}"]
+                [fmt_str, f"<pre>here{name_details}</pre></div>{features_div}"]
             )
 
         out.write(fmt_str)
