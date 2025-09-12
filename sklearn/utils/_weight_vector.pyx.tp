@@ -97,8 +97,8 @@ cdef class WeightVector{{name_suffix}}(object):
         cdef int j
         cdef int idx
         cdef double val
-        cdef double l2norm_new = 0.0
-        cdef double l1norm_new = 0.0
+        cdef double l2norm_accumulator = 0.0
+        cdef double l1norm_accumulator = 0.0
 
         # the next two lines save a factor of 2!
         cdef {{c_type}} wscale = self.wscale
@@ -109,11 +109,11 @@ cdef class WeightVector{{name_suffix}}(object):
             val = x_data_ptr[j]
             w_data_ptr[idx] += val * (c / wscale)
 
-            l2norm_new += w_data_ptr[idx] * w_data_ptr[idx]
-            l1norm_new += fabs(w_data_ptr[idx])
+            l2norm_accumulator += w_data_ptr[idx] * w_data_ptr[idx]
+            l1norm_accumulator += fabs(w_data_ptr[idx])
 
-        self.sq_norm = l2norm_new * (wscale * wscale)
-        self.l1_norm = l1norm_new * wscale
+        self.sq_norm = l2norm_accumulator * (wscale * wscale)
+        self.l1_norm = l1norm_accumulator * wscale
 
     # Update the average weights according to the sparse trick defined
     # here: https://research.microsoft.com/pubs/192769/tricks-2012.pdf
