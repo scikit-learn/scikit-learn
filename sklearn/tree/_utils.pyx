@@ -89,6 +89,7 @@ cdef int swap_array_slices(
         # Copy array[start : start + n] to temporary buffer
         memcpy(tmp, arr + start * itemsize, nbytes)
         # Move array[start + n : end] to array[start : start + n_rev]
+        # `memmove` is needed as the dest & source regions overlap
         memmove(arr + start * itemsize, arr + (start + n) * itemsize, nbytes_rev)
         # array[start + n_rev : end] = tmp
         memcpy(arr + (start + n_rev) * itemsize, tmp, nbytes)
@@ -101,6 +102,23 @@ cdef int swap_array_slices(
         memcpy(arr + start * itemsize, tmp, nbytes_rev)
     free(tmp)
     return 0
+
+
+def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n):
+    """
+    Python wrapper for swap_array_slices for testing.
+    `array` must be contiguous.
+    """
+    if not array.flags['C_CONTIGUOUS']:
+        raise ValueError("Input array must be C-contiguous")
+    swap_array_slices(
+        <void*> array.data,
+        start,
+        end,
+        n,
+        array.itemsize
+    )
+
 
 # =============================================================================
 # WeightedPQueue data structure

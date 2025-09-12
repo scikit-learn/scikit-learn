@@ -393,8 +393,10 @@ cdef inline int node_split_best(
         # Evaluate all splits
 
         # If there are missing values, then we search twice for the most optimal split.
-        # The first search will have all the missing values going to the right node.
+        # The first search will have all the missing values going to the right node
+        # and the split with right node being only missing values is evaluated.
         # The second search will have all the missing values going to the left node.
+        # This logic is governed by the partitionner and used here, so there is a strong coupling.
         # If there are no missing values, then we search only once for the most
         # optimal split.
         n_searches = 2 if has_missing else 1
@@ -442,14 +444,13 @@ cdef inline int node_split_best(
                 current_proxy_improvement = criterion.proxy_impurity_improvement()
 
                 if current_proxy_improvement > best_proxy_improvement:
-                    # TODO: make this part decouple with the partitioner
                     best_proxy_improvement = current_proxy_improvement
-                    # sum of halves is used to avoid infinite value
                     if p == end_non_missing and not missing_go_to_left:
-                        # split with all the non-missing to the left
-                        # and all the missing to the right
+                        # split with the right node being only the missing values
                         current_split.threshold = INFINITY
                     else:
+                        # split between two non-missing values
+                        # sum of halves is used to avoid infinite value
                         current_split.threshold = (
                             feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
                         )
@@ -491,7 +492,6 @@ cdef inline int node_split_best(
             best_split.impurity_left,
             best_split.impurity_right
         )
-        # TODO? assert best_split.improvement > 0
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling

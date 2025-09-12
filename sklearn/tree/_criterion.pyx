@@ -425,7 +425,7 @@ cdef class ClassificationCriterion(Criterion):
         # Update statistics up to new_pos
         #
         # Given that
-        #   sum_left[x] +  sum_right[x] = sum_total[x]
+        #   sum_left[x] + sum_right[x] = sum_total[x]
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
@@ -844,9 +844,6 @@ cdef class RegressionCriterion(Criterion):
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_pos.
         if (new_pos - pos) <= (self.end - new_pos):
-            # TODO: investigate why when I made the mistake of writing:
-            # if (new_pos - pos) <= self.end:
-            # it causes subtles test fails in poisson trees.
             for p in range(pos, new_pos):
                 i = sample_indices[p]
 
