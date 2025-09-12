@@ -1225,7 +1225,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def _sk_visual_block_(self):
         transformers = getattr(self, "transformers_", self.transformers)
-        filtered_transformers = [tr for tr in transformers if "remainder" not in tr]
 
         if not (isinstance(self.remainder, str) and self.remainder == "drop"):
             # We can find remainder and its column only when it's fitted
@@ -1241,14 +1240,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     ].tolist()
             else:
                 remainder_columns = ""
-            filtered_transformers = chain(
-                filtered_transformers,
+            transformers = chain(
+                transformers,
                 [("remainder", self.remainder, remainder_columns)],
             )
-        names, filtered_transformers, name_details = zip(*filtered_transformers)
+        elif self.remainder == "drop":
+            transformers = self.transformers
+        names, transformers, name_details = zip(*transformers)
 
         return _VisualBlock(
-            "parallel", filtered_transformers, names=names, name_details=name_details
+            "parallel", transformers, names=names, name_details=name_details
         )
 
     def __getitem__(self, key):
