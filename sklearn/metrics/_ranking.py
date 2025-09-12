@@ -1698,6 +1698,24 @@ def dcg_score(
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
 
+    Notes
+    -----
+    The Discounted Cumulative Gain at cutoff :math:`k` is defined as
+
+    .. math::
+
+       \\mathrm{DCG}@k \\,=\\, \\sum_{i=1}^{k} \\frac{\\mathrm{rel}_i}{\\log_b(i+1)}
+
+    where :math:`\\mathrm{rel}_i` is the true relevance of the item ranked at
+    position :math:`i` when the items are sorted by ``y_score`` in descending
+    order (higher scores correspond to higher rank). The base :math:`b` of
+    the logarithm is controlled by the ``log_base`` parameter (default
+    :math:`b=2`).
+
+    This implementation uses **linear gains** (i.e., :math:`\\mathrm{rel}_i`)
+    rather than the exponential variant (i.e., :math:`2^{\\mathrm{rel}_i}-1`)
+    that also appears in the literature.
+
     References
     ----------
     `Wikipedia entry for Discounted Cumulative Gain
@@ -1725,10 +1743,10 @@ def dcg_score(
     >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> dcg_score(true_relevance, scores)
-    9.49
+    9.49...
     >>> # we can set k to truncate the sum; only top k answers contribute
     >>> dcg_score(true_relevance, scores, k=2)
-    5.63
+    5.63...
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average true
@@ -1860,6 +1878,26 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     --------
     dcg_score : Discounted Cumulative Gain (not normalized).
 
+    Notes
+    -----
+    The Normalized Discounted Cumulative Gain at cutoff :math:`k` is defined as
+
+    .. math::
+
+       \\mathrm{NDCG}@k \\,=\\, \\frac{\\mathrm{DCG}@k}{\\mathrm{IDCG}@k},
+
+    where :math:`\\mathrm{DCG}@k` is defined as in :func:`dcg_score`, and
+    :math:`\\mathrm{IDCG}@k` is the maximum possible DCG at cutoff :math:`k`,
+    obtained by ranking the items according to their true relevance (i.e.,
+    sorting ``y_true`` in descending order within each sample).
+
+    This implementation uses **linear gains** (i.e., :math:`\\mathrm{rel}_i`)
+    and a base-2 logarithmic discount.
+
+    If the ideal DCG at :math:`k` is zero for a given sample (e.g., all
+    relevances are zero up to :math:`k`), the NDCG for that sample is defined
+    as 0.0.
+
     References
     ----------
     `Wikipedia entry for Discounted Cumulative Gain
@@ -1887,13 +1925,13 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> ndcg_score(true_relevance, scores)
-    0.69
+    0.69...
     >>> scores = np.asarray([[.05, 1.1, 1., .5, .0]])
     >>> ndcg_score(true_relevance, scores)
-    0.49
+    0.49...
     >>> # we can set k to truncate the sum; only top k answers contribute.
     >>> ndcg_score(true_relevance, scores, k=4)
-    0.35
+    0.35...
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
