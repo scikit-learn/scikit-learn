@@ -1224,8 +1224,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        transformers = getattr(self, "transformers_", self.transformers)
-        transformers = [t for t in transformers if t[1] != "drop"]
+        transformers = [
+            t
+            for t in getattr(self, "transformers_", self.transformers)
+            if t[1] != "drop"
+        ]
 
         if not (isinstance(self.remainder, str) and self.remainder == "drop"):
             # We can find remainder and its column only when it's fitted
