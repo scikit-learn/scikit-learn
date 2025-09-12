@@ -1013,6 +1013,17 @@ on your specific problem to determine which model is the best fit.
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
+.. note::
+
+   Candidate split thresholds are determined exhaustively. For each feature
+   considered at a split, the training samples are sorted by their feature
+   values, and thresholds are chosen as the midpoints between successive
+   distinct feature values. This results in up to ``O(N × F)`` candidate
+   thresholds, where ``N`` is the number of samples at the node and ``F`` is
+   the number of features considered. In ensembles such as RandomForest,
+   ``F`` is restricted to a random subset of features controlled by the
+   ``max_features`` parameter.
+
 
 Extremely Randomized Trees
 --------------------------
