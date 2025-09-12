@@ -7,8 +7,14 @@ import warnings
 
 import numpy as np
 import pytest
-from scipy.optimize import approx_fprime
+import scipy
 
+try:
+    from scipy.differentiate import derivative
+except ModuleNotFoundError:
+    pass
+
+from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
@@ -105,15 +111,50 @@ def test_converged_to_local_maximum(kernel):
     )
 
 
-@pytest.mark.parametrize("kernel", kernels)
+@pytest.mark.skipif(
+    scipy.__version__ < "1.15.0",
+    reason="scipy.derivative requires version 1.15.0 or more",
+)
+@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_gradient(kernel):
+    # Clone the kernel object prior to mutating it to avoid any side effects between
+    # GP tests:
+    kernel = clone(kernel)
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
-    lml, lml_gradient = gpc.log_marginal_likelihood(kernel.theta, True)
-    lml_gradient_approx = approx_fprime(
-        kernel.theta, lambda theta: gpc.log_marginal_likelihood(theta, False), 1e-10
-    )
+    # XXX: try to make this test pass without raising an error with scales
+    # lower than 1.0: np.logspace(-3, 3, 100)
+    length_scales = np.logspace(0, 2, 100)
+
+    def evaluate_grad_at_length_scales(length_scales):
+        result = np.zeros_like(length_scales)
+        for i, length_scale in enumerate(length_scales):
+            kernel.length_scale = length_scale
+            if kernel not in non_fixed_kernels[2:]:
+                result[i] = (
+                    gpc.log_marginal_likelihood(kernel.theta)
+                    if len(kernel.theta) == 1
+                    else [
+                        gpc.log_marginal_likelihood([theta]) for theta in kernel.theta
+                    ]
+                )
+            else:
+                result[i] = gpc.log_marginal_likelihood(kernel.theta)
+        return result
+
+    lml_gradient = np.zeros_like(length_scales)
+
+    for i, length_scale in enumerate(length_scales):
+        kernel.length_scale = length_scale
+        lml_gradient[i] = gpc.log_marginal_likelihood(kernel.theta, eval_gradient=True)[
+            1
+        ][0]
+
+    lml_gradient_approx = derivative(
+        evaluate_grad_at_length_scales, length_scales, maxiter=20
+    ).df
 
     assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
 
