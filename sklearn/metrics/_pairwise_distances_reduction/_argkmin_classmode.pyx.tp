@@ -13,6 +13,7 @@ from ._classmode cimport WeightingStrategy
 {{for name_suffix in ["32", "64"]}}
 from ._argkmin cimport ArgKmin{{name_suffix}}
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from ._datasets_pair cimport PrecomputedDistanceMatrix{{name_suffix}}
 
 cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
     """
