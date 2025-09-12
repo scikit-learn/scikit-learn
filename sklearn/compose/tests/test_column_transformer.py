@@ -2803,5 +2803,18 @@ def test_unused_transformer_request_present():
     assert router.consumes("fit", ["metadata"]) == set(["metadata"])
 
 
+def test_integer_column_names_raise_error():
+    from sklearn.impute import SimpleImputer
+
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    df.columns = [0, 1]  # int column names
+
+    ct = ColumnTransformer(transformers=[("num", SimpleImputer(), [0, 1])])
+
+    with pytest.raises(ValueError, match="integer column names"):
+        ct.fit(df)
+
+
 # End of Metadata Routing Tests
 # =============================
