@@ -1,6 +1,7 @@
 name: Check Changelog
 permissions:
   contents: read
+  statuses: write
 
 # This check makes sure that the changelog is properly updated
 # when a PR introduces a change in a test file.
@@ -14,9 +15,11 @@ jobs:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
+
       - name: Check if tests have changed
         id: tests_changed
         run: |
@@ -34,3 +37,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_USERNAME: changelog-bot
+
+      - name: Add link to changelog instructions
+        if: failure() && steps.tests_changed.outputs.check_changelog == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.repos.createCommitStatus({
+              sha: context.payload.pull_request.head.sha,
+              state: "error",
+              context: "Click here for changelog instructions.",
+              description: "Missing or malconfigured changelog.",
+              target_url: "https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md"
+            })
