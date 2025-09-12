@@ -1479,8 +1479,8 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-    .. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`,
-           Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+           <10.1023/A:1010933404324>`
 
     Examples
     --------
