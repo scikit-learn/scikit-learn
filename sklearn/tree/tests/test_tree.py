@@ -2666,7 +2666,6 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
-# FIXME? add back ExtraTreeRegressor? I really don't think this test is correct...
 @pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
@@ -2682,7 +2681,7 @@ def test_deterministic_pickle():
 @pytest.mark.parametrize(
     "criterion", ["squared_error", "friedman_mse", "absolute_error"]
 )
-def test_regression_tree_missing_values_toy(Tree, X, criterion):
+def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2699,7 +2698,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = Tree(criterion=criterion, random_state=0).fit(X, y)
+    tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
     # I don't really see why this should work with ExtraTreeRegressor,
     # the threshold is not in the same range, so even with the same seed
@@ -2710,6 +2709,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
     # Note: the impurity matches after the first split only on greedy trees
+    # see https://github.com/scikit-learn/scikit-learn/issues/32125
     if Tree is DecisionTreeRegressor:
         # Check the impurity match after the first split
         assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])

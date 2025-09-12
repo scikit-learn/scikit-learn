@@ -1,3 +1,0 @@
-- Fixed a bug in :class:`impute.SimpleImputer` with `strategy="most_frequent"` when
-  there is a tie in the most frequent value and the input data has mixed types.
-  By :user:`Alexandre Abraham <AlexandreAbraham>`.
