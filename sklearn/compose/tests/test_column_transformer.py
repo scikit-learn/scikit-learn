@@ -2612,6 +2612,9 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
         transformer.fit_transform(df)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.skipif(
     parse_version(joblib.__version__) < parse_version("1.3"),
     reason="requires joblib >= 1.3",

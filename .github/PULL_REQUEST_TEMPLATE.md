@@ -1,6 +1,16 @@
 <!--
-Thanks for contributing a pull request! Please ensure you have taken a look at
-the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md
+🙌 Thanks for contributing a pull request!
+
+👀 Please ensure you have taken a look at the contribution guidelines:
+https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md
+
+✅ In particular following the pull request checklist will increase the likelihood
+of having maintainers review your PR:
+https://scikit-learn.org/dev/developers/contributing.html#pull-request-checklist
+
+📋 If your PR is likely to affect users, you will need to add a changelog entry
+describing your PR changes, see:
+https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
 -->
 
 #### Reference Issues/PRs

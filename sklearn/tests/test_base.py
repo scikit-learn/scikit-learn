@@ -19,12 +19,10 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_clusterer,
-    is_outlier_detector,
     is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
@@ -269,21 +267,6 @@ def test_get_params():
         test.set_params(a__a=2)
 
 
-# TODO(1.8): Remove this test when the deprecation is removed
-def test_is_estimator_type_class():
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_classifier(SVC)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_regressor(SVR)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_clusterer(KMeans)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_outlier_detector(IsolationForest)
-
-
 @pytest.mark.parametrize(
     "estimator, expected_result",
     [
@@ -394,6 +377,7 @@ def test_set_params_updates_valid_params():
     ],
 )
 def test_score_sample_weight(tree, dataset):
+    tree = clone(tree)  # avoid side effects from previous tests.
     rng = np.random.RandomState(0)
     # check that the score with and without sample weights are different
     X, y = dataset
@@ -560,6 +544,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
+# The test modifies global state by changing the the TreeNoVersion class
+@pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
     tree = TreeNoVersion().fit(iris.data, iris.target)
