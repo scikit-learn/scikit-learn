@@ -1274,6 +1274,177 @@ cdef class Tree:
 
         return np.asarray(importances)
 
+    cpdef compute_unbiased_feature_importance(
+        self,
+        object X_test,
+        object y_test,
+        object sample_weight,
+    ):
+        """Compute an unbiased version of the MDI."""
+        cdef int32_t[::1] has_oob_sample = np.zeros(self.node_count, dtype=np.int32)
+        cdef float64_t[::1] importance = np.zeros((X_test.shape[1],), dtype=np.float64)
+        cdef float64_t[:, :, ::1] oob_pred = np.zeros((X_test.shape[0], self.max_n_classes, self.n_outputs), dtype=np.float64)
+        cdef float64_t[:, ::1] cross_impurities = np.zeros((self.node_count, self.n_outputs), dtype=np.float64)
+
+        cdef Node node = self.nodes[0]
+        cdef int node_idx = 0
+
+        # Cast y_test to different types between classif and reg
+        cdef intp_t[:, ::1] y_classification
+        cdef float64_t[:, ::1] y_regression
+        if self.max_n_classes > 1:
+            # Classification
+            y_regression = np.zeros((0, 0), dtype=np.float64)  # Unused
+            y_classification = np.ascontiguousarray(y_test, dtype=np.intp)
+        else:
+            # Regression
+            y_regression = np.ascontiguousarray(y_test, dtype=np.float64)
+            y_classification = np.zeros((0, 0), dtype=np.intp)  # Unused
+
+        cdef float64_t[::1] sample_weight_view = np.ascontiguousarray(sample_weight, dtype=np.float64)
+        self._compute_cross_impurities(X_test, y_regression, y_classification, sample_weight_view, oob_pred, has_oob_sample, cross_impurities)
+
+        # Compute the impurity decrease at each node
+        cdef int k = 0
+        with nogil:
+            for node_idx in range(self.node_count):
+                node = self.nodes[node_idx]
+                if (node.left_child != _TREE_LEAF) and (node.right_child != _TREE_LEAF):
+                    if has_oob_sample[node.left_child] and has_oob_sample[node.right_child]:
+                        for k in range(self.n_outputs):
+                            importance[node.feature] += (
+                                (node.impurity + cross_impurities[node_idx, k])
+                                * node.weighted_n_node_samples
+                                -
+                                (self.nodes[node.left_child].impurity + cross_impurities[node.left_child, k])
+                                * self.nodes[node.left_child].weighted_n_node_samples
+                                -
+                                (self.nodes[node.right_child].impurity + cross_impurities[node.right_child, k])
+                                * self.nodes[node.right_child].weighted_n_node_samples
+                            ) / 2
+
+        for i in range(self.n_features):
+            importance[i] /= self.nodes[0].weighted_n_node_samples
+        return np.asarray(importance), np.asarray(oob_pred)
+
+    cdef void _compute_cross_impurities(
+        self,
+        object X_test,
+        float64_t[:, ::1] y_regression,
+        intp_t[:, ::1] y_classification,
+        float64_t[::1] sample_weight,
+        float64_t[:, :, ::1] oob_pred,
+        int32_t[::1] has_oob_sample,
+        float64_t[:, ::1] cross_impurities,
+    ):
+        """Let oob samples through the tree. At each node they pass, update the node cross impurity. At the leaves, store the prediction."""
+        cdef intp_t is_sparse = -1
+        cdef float32_t[:] X_data
+        cdef int32_t[:] X_indices
+        cdef int32_t[:] X_indptr
+        cdef int32_t[:] feature_to_sample
+        cdef float64_t[:] X_sample
+        cdef float64_t feature_value = 0.0
+
+        cdef float32_t[:, :] X_ndarray
+
+        if X_test.dtype != DTYPE:
+            raise ValueError("X.dtype should be np.float32, got %s" % X_test.dtype)
+        if issparse(X_test):
+            if X_test.format != "csr":
+                raise ValueError("X should be in csr_matrix format, got %s" % type(X_test))
+            is_sparse = 1
+            X_data = X_test.data
+            X_indices = X_test.indices
+            X_indptr = X_test.indptr
+            feature_to_sample = np.zeros(X_test.shape[1], dtype=np.int32)
+            X_sample = np.zeros(X_test.shape[1], dtype=np.float64)
+            # Unused
+            X_ndarray = np.zeros((0, 0), dtype=np.float32)
+        else:
+            if not isinstance(X_test, np.ndarray):
+                raise ValueError("X should be in np.ndarray format, got %s" % type(X_test))
+            is_sparse = 0
+            X_ndarray = X_test
+            # Unused
+            X_data = np.zeros(0, dtype=np.float32)
+            X_indices = np.zeros(0, dtype=np.int32)
+            X_indptr = np.zeros(0, dtype=np.int32)
+            feature_to_sample = np.zeros(0, dtype=np.int32)
+            X_sample = np.zeros(0, dtype=np.float64)
+
+        cdef intp_t n_samples = X_test.shape[0]
+        cdef intp_t* n_classes = self.n_classes
+        cdef intp_t node_count = self.node_count
+        cdef intp_t n_outputs = self.n_outputs
+        cdef intp_t max_n_classes = self.max_n_classes
+        cdef int k, c, node_idx, sample_idx, idx = 0
+        cdef float64_t[:, ::1] total_oob_weight = np.zeros((node_count, n_outputs), dtype=np.float64)
+        cdef int node_value_idx = -1
+
+        cdef Node* node
+
+        with nogil:
+            # pass the oob samples in the tree and compute the cross impurities of nodes
+            for sample_idx in range(n_samples):
+                if is_sparse:
+                    for idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                        # Store which feature of sample_idx is non zero and its value
+                        feature_to_sample[X_indices[idx]] = sample_idx
+                        X_sample[X_indices[idx]] = X_data[idx]
+
+                # Start at root node and continue until at leaf
+                node = self.nodes
+                node_idx = 0
+                while node.left_child != _TREE_LEAF and node.right_child != _TREE_LEAF:
+                    for k in range(n_outputs):
+                        if n_classes[k] > 1:
+                            for c in range(n_classes[k]):
+                                node_value_idx = node_idx * self.value_stride + k * self.max_n_classes + c
+                                cross_impurities[node_idx, k] += sample_weight[sample_idx] * ((y_classification[sample_idx, k] == c) - self.value[node_value_idx]) ** 2.0
+                        else:
+                            node_value_idx = node_idx * self.value_stride + k * max_n_classes
+                            cross_impurities[node_idx, k] += sample_weight[sample_idx] * (y_regression[sample_idx, k] - self.value[node_value_idx]) ** 2.0
+                        total_oob_weight[node_idx, k] += sample_weight[sample_idx]
+
+                    # Find which child node the samples goes to
+                    if is_sparse:
+                        if feature_to_sample[node.feature] == sample_idx:
+                            feature_value = X_sample[node.feature]
+                        else:
+                            feature_value = 0.
+                        if feature_value <= node.threshold:
+                            node_idx = node.left_child
+                        else:
+                            node_idx = node.right_child
+                    else:
+                        if X_ndarray[sample_idx, node.feature] <= node.threshold:
+                            node_idx = node.left_child
+                        else:
+                            node_idx = node.right_child
+                    if sample_weight[sample_idx] > 0.0:
+                        has_oob_sample[node_idx] = 1
+                    node = &self.nodes[node_idx]
+
+                # For leaf nodes, also store the prediction aka value of the leaf
+                for k in range(n_outputs):
+                    if n_classes[k] > 1:
+                        for c in range(n_classes[k]):
+                            node_value_idx = node_idx * self.value_stride + k * self.max_n_classes + c
+                            cross_impurities[node_idx, k] += sample_weight[sample_idx] * ((y_classification[sample_idx, k] == c) - self.value[node_value_idx]) ** 2.0
+                            oob_pred[sample_idx, c, k] = self.value[node_value_idx]
+                    else:
+                        node_value_idx = node_idx * self.value_stride + k * max_n_classes
+                        cross_impurities[node_idx, k] += sample_weight[sample_idx] * (y_regression[sample_idx, k] - self.value[node_value_idx]) ** 2.0
+                        oob_pred[sample_idx, 0, k] = self.value[node_value_idx]
+                    total_oob_weight[node_idx, k] += sample_weight[sample_idx]
+
+            # convert the counts to proportions / sums to averages
+            for node_idx in range(node_count):
+                for k in range(n_outputs):
+                    if total_oob_weight[node_idx, k] > 0.0:
+                        cross_impurities[node_idx, k] /= total_oob_weight[node_idx, k]
+
     cdef cnp.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
 

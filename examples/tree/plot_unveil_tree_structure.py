@@ -13,6 +13,7 @@ show how to retrieve:
 - the leaf that was reached by a sample using the apply method;
 - the rules that were used to predict a sample;
 - the decision path shared by a group of samples.
+- the importance of features computed on a test set
 
 """
 
@@ -24,6 +25,7 @@ from matplotlib import pyplot as plt
 
 from sklearn import tree
 from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
@@ -235,3 +237,24 @@ print(
     )
 )
 print("This is {prop}% of all nodes.".format(prop=100 * len(common_node_id) / n_nodes))
+
+##############################################################################
+# Feature importance on a test set
+# -------------
+# The `compute_unbiased_feature_importance` method allows us to evaluate the relative
+# importance of each feature of the dataset in a non biased way. By looking at how much
+# purity was created in the children of a node, we can assess the ability of the feature
+# used in the node to explain the data. Doing so purely on the data the tree was trained
+# on might not generalize well, which is why the method
+# `compute_unbiased_feature_importance` takes test samples as input to correct this
+# effect. Additionally the method returns the prediction of the tree on these test
+# samples which allows to see the performance of the model.
+
+importance, prediction = clf.compute_unbiased_feature_importance(X_test, y_test)
+for i in range(len(importance)):
+    print(f"Importance of feature {i}: {importance[i]:.3f}")
+print(
+    "Predicted probabilities of classes for the first test sample : \n", prediction[0]
+)
+score = accuracy_score(np.argmax(prediction, axis=1), y_test)
+print(f"Score of the predictions on the test set: {score:.3f}")

@@ -3,25 +3,32 @@
 Permutation Importance vs Random Forest Feature Importance (MDI)
 ================================================================
 
-In this example, we will compare the impurity-based feature importance of
-:class:`~sklearn.ensemble.RandomForestClassifier` with the
-permutation importance on the titanic dataset using
-:func:`~sklearn.inspection.permutation_importance`. We will show that the
-impurity-based feature importance can inflate the importance of numerical
-features.
+In this example, we will show on the titanic dataset how the impurity-based feature
+importance (MDI, introduced by Breiman in [RF2001]_) of
+:class:`~sklearn.ensemble.RandomForestClassifier` can give misleading results by
+favoring high-cardinality features and we will give two alternatives to avoid the
+issue.
 
-Furthermore, the impurity-based feature importance of random forests suffers
-from being computed on statistics derived from the training dataset: the
-importances can be high even for features that are not predictive of the target
-variable, as long as the model has the capacity to use them to overfit.
+In a nutshell, the impurity-based feature importance of random forests suffers from
+being computed on statistics derived from the training dataset: the importances can be
+high even for features that are not predictive of the target variable, as long as the
+model has the capacity to use them to overfit. The effect is stronger the more unique
+values the feature takes.
 
-This example shows how to use Permutation Importances as an alternative that
-can mitigate those limitations.
+A first solution is to use :func:`~sklearn.inspection.permutation_importance` on test
+data instead. Although this method is slower, it is not restricted to random forests and
+does not suffer from the bias of MDI.
+
+Another solution is to use the `unbiased_feature_importances_` attribute of random
+forests, which leverages out-of-bag samples to correct the aforementioned bias. This
+method was introduced by Li et al. in [UFI2020]_ and uses the samples that were not used
+in the construction of each tree of the forest to modify the MDI.
 
 .. rubric:: References
 
-* :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-  2001. <10.1023/A:1010933404324>`
+.. [RF2001] :doi:`"Random Forests" <10.1023/A:1010933404324>` L. Breiman, 2001
+.. [UFI2020] :doi:`"Unbiased Measurement of Feature Importance in Tree-Based Methods"
+   <10.1145/3429445>` Zhengze Zhou, Giles Hooker, 2020
 
 """
 
@@ -87,7 +94,7 @@ preprocessing = ColumnTransformer(
 rf = Pipeline(
     [
         ("preprocess", preprocessing),
-        ("classifier", RandomForestClassifier(random_state=42)),
+        ("classifier", RandomForestClassifier(random_state=42, oob_score=True)),
     ]
 )
 rf.fit(X_train, y_train)
@@ -98,9 +105,16 @@ rf.fit(X_train, y_train)
 # Before inspecting the feature importances, it is important to check that
 # the model predictive performance is high enough. Indeed, there would be little
 # interest in inspecting the important features of a non-predictive model.
+#
+# By default, random forests subsample a part of the dataset to train each tree, a
+# procedure known as bagging, leaving aside "out-of-bag" (oob) samples.
+# These samples can be leveraged to compute an accuracy score independently of the
+# training samples, when setting the parameter `oob_score = True`.
+# This score should be close to the test score.
 
 print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
 print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
+print(f"RF out-of-bag accuracy: {rf[-1].oob_score_:.3f}")
 
 # %%
 # Here, one can observe that the train accuracy is very high (the forest model
@@ -151,96 +165,101 @@ mdi_importances = pd.Series(
 # %%
 ax = mdi_importances.plot.barh()
 ax.set_title("Random Forest Feature Importances (MDI)")
+ax.set_xlabel("Decrease in impurity")
 ax.figure.tight_layout()
 
 # %%
-# As an alternative, the permutation importances of ``rf`` are computed on a
-# held out test set. This shows that the low cardinality categorical feature,
-# `sex` and `pclass` are the most important features. Indeed, permuting the
-# values of these features will lead to the most decrease in accuracy score of the
-# model on the test set.
-#
-# Also, note that both random features have very low importances (close to 0) as
-# expected.
+# To avoid this issue, we can compute permutation importance instead. But we need to be
+# careful as doing so on the train data will give wrong results.
+# Indeed we can see that permutation importance on train data inflates the importance of
+# every feature, even the random ones. Therefore one must be careful to use test data.
+import matplotlib.pyplot as plt
+
 from sklearn.inspection import permutation_importance
 
-result = permutation_importance(
+result_train = permutation_importance(
+    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
+)
+result_test = permutation_importance(
     rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
 )
 
-sorted_importances_idx = result.importances_mean.argsort()
-importances = pd.DataFrame(
-    result.importances[sorted_importances_idx].T,
+sorted_importances_idx = result_test.importances_mean.argsort()
+importances_train = pd.DataFrame(
+    result_train.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-ax = importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (test set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
-ax.figure.tight_layout()
-
-# %%
-# It is also possible to compute the permutation importances on the training
-# set. This reveals that `random_num` and `random_cat` get a significantly
-# higher importance ranking than when computed on the test set. The difference
-# between those two plots is a confirmation that the RF model has enough
-# capacity to use that random numerical and categorical features to overfit.
-result = permutation_importance(
-    rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
-)
-
-sorted_importances_idx = result.importances_mean.argsort()
-importances = pd.DataFrame(
-    result.importances[sorted_importances_idx].T,
+importances_test = pd.DataFrame(
+    result_test.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-ax = importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (train set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
-ax.figure.tight_layout()
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
+importances_train.plot.box(vert=False, whis=10, ax=ax[0])
+ax[0].set_title("Permutation Importances (train set)")
+ax[0].axvline(x=0, color="k", linestyle="--")
+ax[0].set_xlabel("Decrease in accuracy score")
 
+importances_test.plot.box(vert=False, whis=10, ax=ax[1])
+ax[1].set_title("Permutation Importances (test set)")
+ax[1].axvline(x=0, color="k", linestyle="--")
+ax[1].set_xlabel("Decrease in accuracy score")
+fig.tight_layout()
 # %%
-# We can further retry the experiment by limiting the capacity of the trees
-# to overfit by setting `min_samples_leaf` at 20 data points.
+# To see how this problem relates to overfitting, we can set `min_samples_leaf` at 20
+# data points to reduce the overfitting of the model.
 rf.set_params(classifier__min_samples_leaf=20).fit(X_train, y_train)
 
 # %%
-# Observing the accuracy score on the training and testing set, we observe that
+# Looking at the accuracy score on the training and testing set, we observe that
 # the two metrics are very similar now. Therefore, our model is not overfitting
-# anymore. We can then check the permutation importances with this new model.
+# anymore.
 print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
 print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 
 # %%
-train_result = permutation_importance(
+# We can see that our model is now much less reliant on uninformative features and
+# therefore assigns lower importance to those. But we still have non zero importance
+# values for completely random features when using train data only.
+mdi_importances = pd.Series(
+    rf[-1].feature_importances_, index=feature_names
+).sort_values(ascending=True)
+
+result_train = permutation_importance(
     rf, X_train, y_train, n_repeats=10, random_state=42, n_jobs=2
 )
-test_results = permutation_importance(
-    rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
-)
-sorted_importances_idx = train_result.importances_mean.argsort()
 
-# %%
-train_importances = pd.DataFrame(
-    train_result.importances[sorted_importances_idx].T,
+sorted_importances_idx = result_train.importances_mean.argsort()
+importances_train = pd.DataFrame(
+    result_train.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-test_importances = pd.DataFrame(
-    test_results.importances[sorted_importances_idx].T,
-    columns=X.columns[sorted_importances_idx],
-)
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
+ax[0] = mdi_importances.plot.barh(ax=ax[0])
+ax[0].set_xlabel("Decrease in impurity")
+ax[0].set_title("Random Forest Feature Importances (MDI)")
+importances_train.plot.box(vert=False, whis=10, ax=ax[1])
+ax[1].set_title("Permutation Importances (train set)")
+ax[1].axvline(x=0, color="k", linestyle="--")
+ax[1].set_xlabel("Decrease in accuracy score")
+fig.tight_layout()
 
 # %%
-for name, importances in zip(["train", "test"], [train_importances, test_importances]):
-    ax = importances.plot.box(vert=False, whis=10)
-    ax.set_title(f"Permutation Importances ({name} set)")
-    ax.set_xlabel("Decrease in accuracy score")
-    ax.axvline(x=0, color="k", linestyle="--")
-    ax.figure.tight_layout()
+# To completely ignore irrelevant features we should compute the permutation importance
+# of ``rf`` on a held out test set.
+# However when test samples are not available, or when permutation importance becomes
+# too expensive to compute, there exists a modified version of the MDI,
+# `unbiased_feature_importances_` available as soon as `oob_score` is set to `True`,
+# that uses the out-of-bag samples of the trees to solve the bias problem.
+ufi = rf[-1].unbiased_feature_importances_
+mdi_importances = pd.Series(ufi, index=feature_names).sort_values(ascending=True)
 
 # %%
-# Now, we can observe that on both sets, the `random_num` and `random_cat`
-# features have a lower importance compared to the overfitting random forest.
-# However, the conclusions regarding the importance of the other features are
-# still valid.
+ax = mdi_importances.plot.barh()
+ax.set_title("Unbiased Feature Importances (UFI)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Decrease in impurity")
+ax.figure.tight_layout()
+# %%
+# We can see that the random features have an importance of zero and the important
+# features are ordered in the same way as with permutation importance. This method
+# is much faster than permutation importances but is limited to random forests.

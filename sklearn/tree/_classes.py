@@ -689,9 +689,79 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             Normalized total reduction of criteria by feature
             (Gini importance).
         """
+        all_importances = self._unnormalized_feature_importances
+        if not all_importances.any():
+            return np.zeros(all_importances.shape, dtype=np.float64)
+        return all_importances / np.sum(all_importances)
+
+    @property
+    def _unnormalized_feature_importances(self):
         check_is_fitted(self)
 
-        return self.tree_.compute_feature_importances()
+        return self.tree_.compute_feature_importances(normalize=False)
+
+    def compute_unbiased_feature_importance(self, X_test, y_test, sample_weight=None):
+        """
+        Compute unbiased feature importance using held-out validation data.
+
+        This method estimates feature importance by evaluating the impurity decrease
+        at internal decision tree nodes, using only held-out data not seen during
+        training. It also computes model predictions on the held-out data.
+
+        This provides an unbiased estimate of each feature's contribution to the model's
+        predictive performance, avoiding the bias inherent in using training data
+        for importance estimation.
+
+        Feature importance is computed only at internal nodes where both child
+        nodes are sufficiently represented in the held-out dataset.
+
+        This function assumes that `X_test` and `y_test` were not used during
+        training.
+
+        Feature importance for single trees can be misleading. They are accurate when
+        aggregated over multiple trees.
+
+        .. versionadded:: 1.8.0
+
+        Parameters
+        ----------
+        X_test : array-like of shape (n_samples, n_features)
+            Held-out data used for computing feature importance and predictions.
+
+        y_test : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            Ground truth labels or target values. For classification, this should be
+            an array of integer class labels. For regression, float values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, all samples are treated equally.
+
+        Returns
+        -------
+        importance : ndarray of shape (n_features,)
+            Feature importance scores, computed using impurity decrease at decision
+            nodes where both child nodes are represented in the held-out data.
+
+        predictions : ndarray of shape (n_samples, n_classes, n_outputs) for \
+                classification or (n_samples, 1, n_outputs) for regression
+            Model predictions for each sample in `X_test`. For classification, these
+            are class probabilities. For regression, they are predicted target values.
+        """
+        check_is_fitted(self)
+        sample_weight = _check_sample_weight(sample_weight, X_test, dtype=np.float64)
+        X_test, y_test = validate_data(
+            self,
+            X_test,
+            y_test,
+            multi_output=True,
+            accept_sparse="csr",
+            dtype=DTYPE,
+        )
+        if y_test.ndim == 1:
+            y_test = np.reshape(y_test, (-1, 1))
+
+        return self.tree_.compute_unbiased_feature_importance(
+            X_test, y_test, sample_weight
+        )
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
