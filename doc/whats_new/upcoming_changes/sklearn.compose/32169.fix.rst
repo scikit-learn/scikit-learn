@@ -1,0 +1,6 @@
+- :class:`~sklearn.compose.ColumnTransformer` now raises a clear error
+  when input :class:`pandas.DataFrame` objects have integer column names.
+  Integer names are ambiguous, as they can be interpreted both as
+  column positions and as column labels. Users should cast column names
+  to strings, e.g. ``df.columns = df.columns.astype(str)``.
+  (:issue:`30983` by :user:`Tunahanyrd`)
