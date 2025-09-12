@@ -544,7 +544,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "Scikit-learn interprets integers as column positions. "
                 "Please cast column names to string "
                 "(e.g. `df.columns = df.columns.astype(str)`)."
-            )
+            ) 
 
         all_columns = []
         transformer_to_input_indices = {}
