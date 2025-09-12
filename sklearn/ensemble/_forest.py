@@ -1493,6 +1493,15 @@ class RandomForestClassifier(ForestClassifier):
     RandomForestClassifier(...)
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
+    Notes
+    -----
+    The trees in the forest use the same split strategy as
+    :class:`~sklearn.tree.DecisionTreeClassifier` and
+    :class:`~sklearn.tree.DecisionTreeRegressor`.
+
+    For each feature, candidate split thresholds are chosen as the midpoints
+    between consecutive sorted unique feature values. With `splitter="random"`,
+    a random subset of these candidate thresholds is considered at each split.
     """
 
     _parameter_constraints: dict = {
