@@ -219,6 +219,18 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
         solver_type = LIBSVM_IMPL.index(self._impl)
 
+        if self._impl in ["c_svc", "nu_svc"]:
+            est_dep = "SVC" if self._impl == "c_scv" else "NuSVC"
+            if self.probability != "deprecated":
+                warnings.warn(
+                    f"parameter `probability` will be deprecated in version 1.8, "
+                    f"use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
+                    f"instead of `{est_dep}(probability=True)`",
+                    FutureWarning,
+                )
+            else:
+                self.probability = False
+
         # input validation
         n_samples = _num_samples(X)
         if solver_type != 2 and n_samples != y.shape[0]:
