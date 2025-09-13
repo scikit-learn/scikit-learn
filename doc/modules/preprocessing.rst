@@ -275,25 +275,25 @@ positive semidefinite kernel :math:`K`.
   can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 
   .. math::
-    \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+    \tilde{K} = K - 1_{\texttt{n\_samples}} K - K 1_{\texttt{n\_samples}} + 1_{\texttt{n\_samples}} K 1_{\texttt{n\_samples}}
 
-  :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
-  all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
-  `transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
+  :math:`1_{\texttt{n\_samples}}` is a matrix of `(n_samples, n_samples)` where
+  all entries are equal to :math:`1/\texttt{n\_samples}`. In the
+  `transform` step, the kernel becomes :math:`K_\textnormal{test}(X, Y)` defined as:
 
   .. math::
-    K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
+    K_\textnormal{test}(X, Y) = \phi(Y) . \phi(X)^{T}
 
   :math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
-  :math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
-  centering :math:`K_{test}` is done as:
+  :math:`K_\textnormal{test}` is of shape `(n_samples_test, n_samples)`. In this case,
+  centering :math:`K_\textnormal{test}` is done as:
 
   .. math::
-    \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+    \tilde{K}_\textnormal{test}(X, Y) = K_\textnormal{test} - 1'_{\texttt{n\_samples}} K - K_\textnormal{test} 1_{\texttt{n\_samples}} + 1'_{\texttt{n\_samples}} K 1_{\texttt{n\_samples}}
 
-  :math:`1'_{\text{n}_{samples}}` is a matrix of shape
+  :math:`1'_{\texttt{n\_samples}}` is a matrix of shape
   `(n_samples_test, n_samples)` where all entries are equal to
-  :math:`\frac{1}{\text{n}_{samples}}`.
+  :math:`1/{\texttt{n\_samples}}`.
 
   .. rubric:: References
 

@@ -524,6 +524,7 @@ html_context["is_devrelease"] = parsed_version.is_devrelease
 
 
 # -- Options for LaTeX output ------------------------------------------------
+latex_engine = "lualatex"
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
@@ -531,7 +532,7 @@ latex_elements = {
     # 'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
     "preamble": r"""
-        \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
+        \usepackage{unicode-math}
         \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
         \let\oldhref\href
         \renewcommand{\href}[2]{\oldhref{#1}{\hbox{#2}}}
@@ -543,7 +544,7 @@ latex_elements = {
 # [howto/manual]).
 latex_documents = [
     (
-        "contents",
+        root_doc,
         "user_guide.tex",
         "scikit-learn user guide",
         "scikit-learn developers",
