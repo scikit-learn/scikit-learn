@@ -1298,17 +1298,18 @@ cdef class MAE(Criterion):
         memset(&self.left_abs_errors[0], 0, n_bytes)
         memset(&self.right_abs_errors[0], 0, n_bytes)
 
-        # Precompute absolute errors (summed over each ouput) and medians (used only when n_outputs=1)
+        # Precompute absolute errors (summed over each output)
+        # and medians (used only when n_outputs=1)
         # of the right and left child of all possible splits
         # for the current ordering of `sample_indices`
         # Precomputation is needed here and can't be done step-by-step in the update method
-        # like for other criterions. Indeed, we don't have efficient way to update right child
+        # like for other criterions. Indeed, we don't have efficient ways to update right child
         # statistics when removing samples from it. So we compute right child AEs/medians by
         # traversing from right to left (and hence only adding samples).
         for k in range(self.n_outputs):
             # Note that at each iteration of this loop, we overwrite `self.left_medians`
-            # and `self.right_medians` which is fine. Those are used to check
-            # for monoticity constraints, which are allowed only with n_outputs=1.
+            # and `self.right_medians`. They are used to check for monoticity constraints,
+            # which are allowed only with n_outputs=1.
             precompute_absolute_errors(
                 self.y, self.sample_weight, self.sample_indices,
                 self.above, self.below, k, self.start, self.end,
@@ -1330,7 +1331,7 @@ cdef class MAE(Criterion):
 
     cdef int reverse_reset(self) except -1 nogil:
         """For this class, this method is never called"""
-        return -1
+        raise NotImplementedError("This method is not implemented for this subclass")
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
@@ -1410,7 +1411,7 @@ cdef class MAE(Criterion):
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
 
-        Time complexity: O(1)
+        Time complexity: O(1) (precomputed in `.reset()`)
         """
         cdef intp_t j = self.pos - self.start
         cdef float64_t impurity_left = 0.0

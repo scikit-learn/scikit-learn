@@ -3,17 +3,17 @@ from heapq import heappop, heappush
 
 import pytest
 
-from sklearn.tree._utils import WeightedHeap
+from sklearn.tree._utils import PytestWeightedHeap
 
 
 @pytest.mark.parametrize("min_heap", [True, False])
 def test_cython_weighted_heap_vs_heapq(min_heap):
     n = 200
-    w_heap = WeightedHeap(n, min_heap=min_heap)
+    w_heap = PytestWeightedHeap(n, min_heap=min_heap)
     py_heap = []
 
     def pop_from_heaps_and_compare():
-        top, top_w = w_heap._py_pop()
+        top, top_w = w_heap.py_pop()
         top_, top_w_ = heappop(py_heap)
         if not min_heap:
             top_ = -top_
@@ -27,7 +27,7 @@ def test_cython_weighted_heap_vs_heapq(min_heap):
             y = random.random()
             w = random.random()
             heappush(py_heap, (y if min_heap else -y, w))
-            w_heap._py_push(y, w)
+            w_heap.py_push(y, w)
 
     for _ in range(len(py_heap)):
         pop_from_heaps_and_compare()

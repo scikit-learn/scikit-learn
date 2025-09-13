@@ -239,18 +239,18 @@ cdef class WeightedHeap:
             else:
                 return
 
-    # Wrappers callable from Python for tests:
 
-    def _py_push(self, double value, double weight):
+cdef class PytestWeightedHeap(WeightedHeap):
+    """Used for testing only"""
+
+    def py_push(self, double value, double weight):
         self.push(value, weight)
 
-    def _py_pop(self):
+    def py_pop(self):
         cdef double v, w
         self.pop(&v, &w)
         return v, w
 
-    def _py_reset(self):
-        self.reset()
 
 # =============================================================================
 # MAE split precomputations algorithm
