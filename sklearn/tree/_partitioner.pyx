@@ -158,24 +158,17 @@ cdef class DensePartitioner:
 
         The missing values are not included when iterating through the feature values.
         """
-        cdef:
-            float32_t[::1] feature_values = self.feature_values
-            intp_t end_non_missing = self.end - self.n_missing
+        cdef float32_t[::1] feature_values = self.feature_values
+        cdef intp_t end_non_missing = (
+            self.end if self.missing_on_the_left
+            else self.end - self.n_missing)
 
-        if self.missing_on_the_left:
-            if p[0] == self.start:
-                p[0] = self.start + self.n_missing
-            p[0] += 1
-            while (
-                p[0] < self.end and
-                feature_values[p[0]] <= feature_values[p[0] - 1] + FEATURE_THRESHOLD
-            ):
-                p[0] += 1
-            p_prev[0] = p[0] - 1
-        elif p[0] == end_non_missing:
+        if p[0] == end_non_missing and not self.missing_on_the_left:
             p[0] = self.end
             p_prev[0] = self.end
         else:
+            if self.missing_on_the_left and p[0] == self.start:
+                p[0] = self.start + self.n_missing
             p[0] += 1
             while (
                 p[0] < end_non_missing and
