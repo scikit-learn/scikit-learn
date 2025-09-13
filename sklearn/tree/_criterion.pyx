@@ -1298,8 +1298,9 @@ cdef class MAE(Criterion):
         memset(&self.left_abs_errors[0], 0, n_bytes)
         memset(&self.right_abs_errors[0], 0, n_bytes)
 
-        # For each output (from last to first), precompute absolute errors and medians
-        # for both left and right splits.
+        # Precompute absolute errors (summed over each ouput) and medians (used only when n_outputs=1)
+        # of the right and left child of all possible splits
+        # for the current ordering of `sample_indices`
         # Precomputation is needed here and can't be done step-by-step in the update method
         # like for other criterions. Indeed, we don't have efficient way to update right child
         # statistics when removing samples from it. So we compute right child AEs/medians by

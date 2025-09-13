@@ -7,7 +7,7 @@ from sklearn.tree._utils import WeightedHeap
 
 
 @pytest.mark.parametrize("min_heap", [True, False])
-def test_weighted_heap(min_heap):
+def test_cython_weighted_heap_vs_heapq(min_heap):
     n = 200
     w_heap = WeightedHeap(n, min_heap=min_heap)
     py_heap = []
