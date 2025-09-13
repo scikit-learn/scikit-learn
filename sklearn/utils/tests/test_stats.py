@@ -155,13 +155,17 @@ def test_weighted_percentile_frequency_weight_semantics(
         assert percentile_weights == approx(np.median(x_repeated))
 
 
-@pytest.mark.parametrize("constant", [5, 0.3])
+@pytest.mark.parametrize("constant", [5, 8])
 @pytest.mark.parametrize("average", [True, False])
 @pytest.mark.parametrize("percentile_rank", [20, 35, 50, 61])
 def test_weighted_percentile_constant_multiplier(
     global_random_seed, percentile_rank, average, constant
 ):
-    """Check multiplying weights by constant does not change result."""
+    """Check multiplying weights by constant does not change result.
+
+    Note scale invariance does not always hold when multiplying by a
+    float due to cumulative sum numerical error (which grows proportional to n).
+    """
     rng = np.random.RandomState(global_random_seed)
     x = rng.randint(20, size=20)
     weights = rng.choice(5, size=20)
@@ -171,7 +175,7 @@ def test_weighted_percentile_constant_multiplier(
     percentile_multiplier = _weighted_percentile(
         x, weights_multiplied, percentile_rank, average=average
     )
-    assert approx(percentile) == approx(percentile_multiplier)
+    assert percentile == approx(percentile_multiplier)
 
 
 @pytest.mark.parametrize("average", [True, False])
