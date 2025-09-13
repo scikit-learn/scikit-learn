@@ -1015,19 +1015,19 @@ on your specific problem to determine which model is the best fit.
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 .. note::
 
-   Candidate split thresholds are determined exhaustively. For each feature
-   considered at a split, the training samples are sorted by their feature
-   values, and thresholds are chosen as the midpoints between successive
-   distinct feature values.
+  Candidate split thresholds are determined exhaustively. For each feature
+  considered at a split, the training samples are sorted by their feature
+  values, and thresholds are chosen as the midpoints between successive
+  distinct feature values.
 
-   The number of candidate thresholds for a feature is:
+  The number of candidate thresholds for a feature is:
+  
+  - ``n_unique - 1``, if there are no missing values
+  - ``2 × n_unique - 1``, if missing values are present (NaN is not counted in ``n_unique``)
 
-   - ``n_unique - 1``, if there are no missing values
-   - ``2 × n_unique - 1``, if missing values are present (NaN is not counted in ``n_unique``)
-
-   In the worst case, this leads to up to ``O(N × F)`` candidate thresholds,
-   where ``N`` is the number of samples at the node and ``F`` is the number
-   of features.
+  In the worst case, this leads to up to ``O(N × F)`` candidate thresholds,
+  where ``N`` is the number of samples at the node and ``F`` is the number
+  of features.
 
    
 
