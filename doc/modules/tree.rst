@@ -257,12 +257,14 @@ instead of integer values::
    values, and thresholds are chosen as the midpoints between successive
    distinct feature values.
 
-   The number of candidate thresholds for a feature is equal to the number
-   of unique feature values minus one (``n_unique - 1``) if there are no
-   missing values, or ``2 × n_unique - 1`` if missing values are present
-   (NaN is not counted in ``n_unique``). In the worst case, this leads to
-   up to ``O(N × F)`` candidate thresholds, where ``N`` is the number of
-   samples at the node and ``F`` is the number of features.
+   The number of candidate thresholds for a feature is:
+
+   - ``n_unique - 1``, if there are no missing values
+   - ``2 × n_unique - 1``, if missing values are present (NaN is not counted in ``n_unique``)
+
+   In the worst case, this leads to up to ``O(N × F)`` candidate thresholds,
+   where ``N`` is the number of samples at the node and ``F`` is the number
+   of features.
 
 
 Multi-output problems
