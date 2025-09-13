@@ -441,7 +441,8 @@ def move_to(*arrays, xp_ref, device_ref):
     """Convert `arrays` to `namespace` and `device`."""
 
     sparse_mask = [sp.issparse(array) for array in arrays]
-    if all(sparse_mask):
+    none_mask = [array is None for array in arrays]
+    if all(sparse_mask[i] or none_mask[i] for i in range(len(arrays))):
         return arrays
     if any(sparse_mask) and not _is_numpy_namespace(xp_ref):
         raise TypeError(
@@ -451,7 +452,7 @@ def move_to(*arrays, xp_ref, device_ref):
     converted_arrays = []
 
     for i, array in enumerate(arrays):
-        if array is None:
+        if none_mask[i]:
             converted_arrays.append(None)
         elif sparse_mask[i]:
             converted_arrays.append(array)
