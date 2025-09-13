@@ -279,6 +279,28 @@ cdef void precompute_absolute_errors(
         Computes the "suffix" AEs/medians, i.e the AEs for each set of indices
         sample_indices[i:] with i in {0, ..., n-1}
 
+    Parameters
+    ----------
+    ys : const float64_t[:, ::1]
+        Target values. Shape: (n_samples, n_outputs).
+    sample_weight : const float64_t[:]
+        Shape: (n_samples,)
+    sample_indices : const intp_t[:]
+        indices indicating which samples to use. Shape: (n_samples,)
+    above : WeightedHeap
+    below : WeightedHeap
+    k : intp_t
+        Dimension to consider in y. In [0, n_outputs - 1].
+    start : intp_t
+        Start index in `sample_indices`
+    end : intp_t
+        End index (exclusive) in `sample_indices`
+    abs_errors : float64_t[::1]
+        array to store (increment) the computed absolute errors. Shape: (n,)
+        with n := end - start
+    medians : float64_t[::1]
+        array to store (overwrite) the computed medians. Shape: (n,)
+
     Complexity: O(n log n)
     This algorithm is an adaptation of the two heaps solution of
     the "find median from a data stream" problem
@@ -286,7 +308,7 @@ cdef void precompute_absolute_errors(
 
     But here, it's the weighted median and we also need to compute the AE, so:
     - instead of balancing the heaps based on their number of elements,
-      rebalance them based on the sum of the weights of their element
+      rebalance them based on the summed weights of their elements
     - rewrite the AE computation by splitting the sum between elements
       above and below the median, which allow to express it as a simple
       O(1) computation.
