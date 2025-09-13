@@ -30,6 +30,8 @@ weak: the point cloud is very spherical.
 
 import numpy as np
 
+from sklearn.model_selection import train_test_split
+
 n = 500
 # 2 latents vars:
 l1 = np.random.normal(size=n)
@@ -39,10 +41,7 @@ latents = np.array([l1, l1, l2, l2]).T
 X = latents + np.random.normal(size=(n, 4))
 Y = latents + np.random.normal(size=(n, 4))
 
-X_train = X[: n // 2]
-Y_train = Y[: n // 2]
-X_test = X[n // 2 :]
-Y_test = Y[n // 2 :]
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.5)
 
 print("Corr(X)")
 print(np.round(np.corrcoef(X.T), 2))
