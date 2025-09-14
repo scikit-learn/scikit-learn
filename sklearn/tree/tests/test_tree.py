@@ -1663,7 +1663,7 @@ def test_no_sparse_y_support(name, csr_container):
 
 
 def test_mae():
-    """Check MAE criterion produces correct results on small toys dataset:
+    """Check MAE criterion produces correct results on small toy datasets:
 
     ## First toy dataset
     ------------------
@@ -2888,7 +2888,7 @@ def test_sort_log2_build():
 def test_absolute_errors_precomputation_function():
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
-    (used by DecisionTreeRegressor(criterion="asbolute_error")).
+    (used by DecisionTreeRegressor(criterion="absolute_error")).
 
     The implementation of the criterion relies on an efficient precomputation
     of left/right children absolute error for each split. This test verifies this
