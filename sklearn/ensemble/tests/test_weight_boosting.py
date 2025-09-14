@@ -310,6 +310,7 @@ def test_sample_weights_infinite():
         CSC_CONTAINERS + 4 * CSR_CONTAINERS,
     ),
 )
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sparse_classification(sparse_container, expected_internal_type):
     # Check classification with sparse input.
 

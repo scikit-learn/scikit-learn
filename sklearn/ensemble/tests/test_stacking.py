@@ -304,7 +304,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=50_000)),
+                    ("svm", SVC(probability=True, max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -336,6 +336,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
         ),
     ],
 )
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_stacking_classifier_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
         clf = StackingClassifier(**params, cv=3)
