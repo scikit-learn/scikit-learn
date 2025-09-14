@@ -1183,7 +1183,7 @@ cdef class MSE(RegressionCriterion):
 
 # Helper for MAE criterion:
 
-cdef void precompute_absolute_errors(
+cdef void precompute_pinball_losses(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
@@ -1193,18 +1193,18 @@ cdef void precompute_absolute_errors(
     intp_t start,
     intp_t end,
     float64_t q,
-    float64_t[::1] abs_errors,
+    float64_t[::1] losses,
     float64_t[::1] quantiles
 ) noexcept nogil:
     """
-    Fill `abs_errors` and `medians`.
+    Fill `losses` and `quantiles`.
 
     If start < end:
-        Computes the "prefix" AEs/medians, i.e the AEs for each set of indices
+        Computes the "prefix" losses/quantiles, i.e the losses for each set of indices
         sample_indices[start:start + i] with i in {1, ..., n}
         where n = end - start
     Else:
-        Computes the "suffix" AEs/medians, i.e the AEs for each set of indices
+        Computes the "suffix" losses/quantiles, i.e the losses for each set of indices
         sample_indices[i:] with i in {0, ..., n-1}
 
     Parameters
@@ -1224,25 +1224,26 @@ cdef void precompute_absolute_errors(
     end : intp_t
         End index (exclusive) in `sample_indices`
     q : float64_t
-        Quantile
-    abs_errors : float64_t[::1]
+        Probability for the quantile / alpha for the pinball loss
+    losses : float64_t[::1]
         array to store (increment) the computed absolute errors. Shape: (n,)
         with n := end - start
-    medians : float64_t[::1]
-        array to store (overwrite) the computed medians. Shape: (n,)
+    quantiles : float64_t[::1]
+        array to store (overwrite) the computed quantiles. Shape: (n,)
 
     Complexity: O(n log n)
     This algorithm is an adaptation of the two heaps solution of
     the "find median from a data stream" problem
     See for instance: https://www.geeksforgeeks.org/dsa/median-of-stream-of-integers-running-integers/
 
-    But here, it's the weighted median and we also need to compute the AE, so:
+    But here, it's the weighted quantile and we also need to compute the pinball loss, so:
     - instead of balancing the heaps based on their number of elements,
       rebalance them based on the summed weights of their elements
-    - rewrite the AE computation by splitting the sum between elements
-      above and below the median, which allow to express it as a simple
+    - rewrite the pinball loss computation by splitting the sum between
+      elements above and below the median, which allow to express it as a simple
       O(1) computation.
-      See the maths in the PR desc:
+      See the maths in the PR description: TODO
+      Also this the PR for the initial implementation (weighted median and absolute error):
       https://github.com/scikit-learn/scikit-learn/pull/32100
     """
     cdef intp_t j, p, i, step, n
@@ -1278,7 +1279,7 @@ cdef void precompute_absolute_errors(
         else:
             below.push(y, w)
 
-        split_weight = (above.total_weight + below.total_weight) * q
+        split_weight = (above.total_weight + below.total_weight) * (1 - q)
 
         # Rebalance heaps
         while above.total_weight < split_weight and not below.is_empty():
@@ -1298,7 +1299,7 @@ cdef void precompute_absolute_errors(
             quantile = q * above.top() + (1 - q) * below.top()
             # FIXME: check if it should be (1 - q) * ... + q * ...
         quantiles[j] = quantile
-        abs_errors[j] += (
+        losses[j] += (
             q * (above.weighted_sum - above.total_weight * quantile)
             + (1 - q) * (below.total_weight * quantile - below.weighted_sum)
         )
@@ -1306,7 +1307,7 @@ cdef void precompute_absolute_errors(
         j += step
 
 
-def _py_precompute_absolute_errors(
+def _py_precompute_pinball_losses(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
@@ -1329,18 +1330,18 @@ def _py_precompute_absolute_errors(
         intp_t k = 0
         intp_t start = 0
         intp_t end = n
-        float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
-        float64_t[::1] medians = np.zeros(n, dtype=np.float64)
+        float64_t[::1] losses = np.zeros(n, dtype=np.float64)
+        float64_t[::1] quantiles = np.zeros(n, dtype=np.float64)
 
     if suffix:
         start = n - 1
         end = -1
 
-    precompute_absolute_errors(
+    precompute_pinball_losses(
         ys, sample_weight, sample_indices, above, below,
-        k, start, end, q, abs_errors, medians
+        k, start, end, q, losses, quantiles
     )
-    return np.asarray(abs_errors)
+    return np.asarray(losses)
 
 
 cdef class MAE(Criterion):
@@ -1471,7 +1472,7 @@ cdef class MAE(Criterion):
             # Note that at each iteration of this loop, we overwrite `self.left_medians`
             # and `self.right_medians`. They are used to check for monoticity constraints,
             # which are allowed only with n_outputs=1.
-            precompute_absolute_errors(
+            precompute_pinball_losses(
                 self.y, self.sample_weight, self.sample_indices,
                 self.above, self.below, k, self.start, self.end, 0.5,
                 # left_abs_errors is incremented, left_medians is overwritten
@@ -1479,7 +1480,7 @@ cdef class MAE(Criterion):
             )
             # For the right child, we consider samples from end-1 to start-1
             # i.e., reversed, and abs error & median are filled in reverse order to.
-            precompute_absolute_errors(
+            precompute_pinball_losses(
                 self.y, self.sample_weight, self.sample_indices,
                 self.above, self.below, k, self.end - 1, self.start - 1, 0.5,
                 # right_abs_errors is incremented, right_medians is overwritten
@@ -1488,6 +1489,7 @@ cdef class MAE(Criterion):
             # Store the median for the current node
             self.node_medians[k] = self.right_medians[0]
 
+        # pinball loss with q=0.5 is half of the AE
         for p in range(self.start, self.end):
             self.left_abs_errors[p] *= 2
             self.right_abs_errors[p] *= 2
