@@ -19,21 +19,25 @@ from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
-from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import label_binarize
-from ..utils import (
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
+from sklearn.preprocessing import label_binarize
+from sklearn.utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import stable_cumsum
-from ..utils.multiclass import type_of_target
-from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
-from ._base import _average_binary_score, _average_multiclass_ovo_score
+from sklearn.utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+    size,
+)
+from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.sparsefuncs import count_nonzero
+from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
 
 
 @validate_params(
@@ -183,6 +187,10 @@ def average_precision_score(
     roc_auc_score : Compute the area under the ROC curve.
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
+    PrecisionRecallDisplay.from_estimator : Plot the precision recall curve
+        using an estimator and data.
+    PrecisionRecallDisplay.from_predictions : Plot the precision recall curve
+        using true and predicted labels.
 
     Notes
     -----
@@ -203,7 +211,7 @@ def average_precision_score(
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
-    0.83...
+    0.83
     >>> y_true = np.array([0, 0, 1, 1, 2, 2])
     >>> y_scores = np.array([
     ...     [0.7, 0.2, 0.1],
@@ -214,7 +222,7 @@ def average_precision_score(
     ...     [0.1, 0.2, 0.7],
     ... ])
     >>> average_precision_score(y_true, y_scores)
-    0.77...
+    0.77
     """
 
     def _binary_uninterpolated_average_precision(
@@ -622,19 +630,19 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
-    0.99...
+    0.99
     >>> roc_auc_score(y, clf.decision_function(X))
-    0.99...
+    0.99
 
     Multiclass case:
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
-    0.99...
+    0.99
 
     Multilabel case:
 
@@ -649,11 +657,11 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+    array([0.828, 0.852, 0.94, 0.869, 0.95])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)
-    array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
+    array([0.82, 0.847, 0.93, 0.872, 0.944])
     """
 
     y_type = type_of_target(y_true, input_name="y_true")
@@ -858,6 +866,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
+    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
@@ -879,7 +889,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
-    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
     y_score = y_score[desc_score_indices]
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
@@ -890,17 +900,27 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_score))[0]
-    threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
 
     # accumulate the true positives with decreasing threshold
-    tps = stable_cumsum(y_true * weight)[threshold_idxs]
+    max_float_dtype = _max_precision_float_dtype(xp, device)
+    # Perform the weighted cumulative sum using float64 precision when possible
+    # to avoid numerical stability problem with tens of millions of very noisy
+    # predictions:
+    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+    y_true = xp.astype(y_true, max_float_dtype)
+    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
         # the presence of floating point errors
-        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
+        fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
+            threshold_idxs
+        ]
     else:
-        fps = 1 + threshold_idxs - tps
+        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
     return fps, tps, y_score[threshold_idxs]
 
 
@@ -1093,9 +1113,9 @@ def roc_curve(
         Sample weights.
 
     drop_intermediate : bool, default=True
-        Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve. This is useful in order to create lighter
-        ROC curves.
+        Whether to drop thresholds where the resulting point is collinear with
+        its neighbors in ROC space. This has no effect on the ROC AUC or visual
+        shape of the curve, but reduces the number of plotted points.
 
         .. versionadded:: 0.17
            parameter *drop_intermediate*.
@@ -1112,8 +1132,12 @@ def roc_curve(
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
-        fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `np.inf`.
+        fpr and tpr. The first threshold is set to `np.inf`.
+
+        .. versionchanged:: 1.3
+           An arbitrary threshold at infinity (stored in `thresholds[0]`) is
+           added to represent a classifier that always predicts the negative
+           class, i.e. `fpr=0` and `tpr=0`.
 
     See Also
     --------
@@ -1129,9 +1153,6 @@ def roc_curve(
     Since the thresholds are sorted from low to high values, they
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
-
-    An arbritrary threshold at infinity is added to represent a classifier
-    that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
 
     References
     ----------
@@ -1155,6 +1176,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
+    xp, _, device = get_namespace_and_device(y_true, y_score)
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -1168,9 +1190,15 @@ def roc_curve(
     # _binary_clf_curve). This keeps all cases where the point should be kept,
     # but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
-    if drop_intermediate and len(fps) > 2:
-        optimal_idxs = np.where(
-            np.r_[True, np.logical_or(np.diff(fps, 2), np.diff(tps, 2)), True]
+    if drop_intermediate and fps.shape[0] > 2:
+        optimal_idxs = xp.where(
+            xp.concat(
+                [
+                    xp.asarray([True], device=device),
+                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    xp.asarray([True], device=device),
+                ]
+            )
         )[0]
         fps = fps[optimal_idxs]
         tps = tps[optimal_idxs]
@@ -1178,17 +1206,18 @@ def roc_curve(
 
     # Add an extra threshold position
     # to make sure that the curve starts at (0, 0)
-    tps = np.r_[0, tps]
-    fps = np.r_[0, fps]
+    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    fps = xp.concat([xp.asarray([0.0], device=device), fps])
     # get dtype of `y_score` even if it is an array-like
-    thresholds = np.r_[np.inf, thresholds]
+    thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
+    thresholds = xp.concat([xp.asarray([xp.inf], device=device), thresholds])
 
     if fps[-1] <= 0:
         warnings.warn(
             "No negative samples in y_true, false positive value should be meaningless",
             UndefinedMetricWarning,
         )
-        fpr = np.repeat(np.nan, fps.shape)
+        fpr = xp.full(fps.shape, xp.nan)
     else:
         fpr = fps / fps[-1]
 
@@ -1197,7 +1226,7 @@ def roc_curve(
             "No positive samples in y_true, true positive value should be meaningless",
             UndefinedMetricWarning,
         )
-        tpr = np.repeat(np.nan, tps.shape)
+        tpr = xp.full(tps.shape, xp.nan)
     else:
         tpr = tps / tps[-1]
 
@@ -1256,7 +1285,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
-    0.416...
+    0.416
     """
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
@@ -1440,7 +1469,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     >>> y_true = [[1, 0, 0], [0, 0, 1]]
     >>> y_score = [[0.75, 0.5, 1], [1, 0.2, 0.1]]
     >>> label_ranking_loss(y_true, y_score)
-    0.75...
+    0.75
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
@@ -1696,10 +1725,10 @@ def dcg_score(
     >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> dcg_score(true_relevance, scores)
-    9.49...
+    9.49
     >>> # we can set k to truncate the sum; only top k answers contribute
     >>> dcg_score(true_relevance, scores, k=2)
-    5.63...
+    5.63
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average true
@@ -1858,13 +1887,13 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> ndcg_score(true_relevance, scores)
-    0.69...
+    0.69
     >>> scores = np.asarray([[.05, 1.1, 1., .5, .0]])
     >>> ndcg_score(true_relevance, scores)
-    0.49...
+    0.49
     >>> # we can set k to truncate the sum; only top k answers contribute.
     >>> ndcg_score(true_relevance, scores, k=4)
-    0.35...
+    0.35
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
@@ -1874,7 +1903,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
     >>> ndcg_score(true_relevance, scores, k=1)
-    0.75...
+    0.75
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:

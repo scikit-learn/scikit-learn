@@ -25,7 +25,6 @@ from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
     OrthogonalMatchingPursuit,
-    PassiveAggressiveClassifier,
     Ridge,
     SGDClassifier,
     SGDRegressor,
@@ -196,6 +195,9 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
@@ -368,9 +370,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(
-        LogisticRegression(solver="liblinear", random_state=seed)
-    )
+    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
 
     clf.fit(X, Y)
 
@@ -378,20 +378,20 @@ def test_multiclass_multioutput_estimator_predict_proba():
     y_actual = [
         np.array(
             [
-                [0.23481764, 0.76518236],
-                [0.67196072, 0.32803928],
-                [0.54681448, 0.45318552],
-                [0.34883923, 0.65116077],
-                [0.73687069, 0.26312931],
+                [0.31525135, 0.68474865],
+                [0.81004803, 0.18995197],
+                [0.65664086, 0.34335914],
+                [0.38584929, 0.61415071],
+                [0.83234285, 0.16765715],
             ]
         ),
         np.array(
             [
-                [0.5171785, 0.23878628, 0.24403522],
-                [0.22141451, 0.64102704, 0.13755846],
-                [0.16751315, 0.18256843, 0.64991843],
-                [0.27357372, 0.55201592, 0.17441036],
-                [0.65745193, 0.26062899, 0.08191907],
+                [0.65759215, 0.20976588, 0.13264197],
+                [0.14996984, 0.82591444, 0.02411571],
+                [0.13111876, 0.13294966, 0.73593158],
+                [0.24663053, 0.65860244, 0.09476703],
+                [0.81458885, 0.1728158, 0.01259535],
             ]
         ),
     ]
@@ -679,7 +679,7 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
@@ -712,6 +712,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
     ],
 )
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    estimator = clone(estimator)  # Avoid side effects from shared instances
     X, y = dataset
     some_param = np.zeros_like(X)
     estimator.fit(X, y, some_param=some_param)
@@ -851,7 +852,7 @@ def test_fit_params_no_routing(Cls, method):
     underlying classifier.
     """
     X, y = make_classification(n_samples=50)
-    clf = Cls(PassiveAggressiveClassifier())
+    clf = Cls(SGDClassifier())
 
     with pytest.raises(ValueError, match="is only supported if"):
         getattr(clf, method)(X, y, test=1)

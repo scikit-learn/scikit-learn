@@ -5,6 +5,7 @@ cython
 joblib
 threadpoolctl
 pytest
-pytest-cov
+pytest-xdist
+pytest-cov<=6.3.0
 ninja
 meson-python

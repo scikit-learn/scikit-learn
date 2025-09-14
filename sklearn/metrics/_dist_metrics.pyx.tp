@@ -846,7 +846,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
 
             intp_t i1, i2
             intp_t x1_start, x1_end
-            {{INPUT_DTYPE_t}} * x2_data
+            const {{INPUT_DTYPE_t}} * x2_data
 
         with nogil:
             # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
@@ -910,7 +910,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             {{INPUT_DTYPE_t}}[:, ::1] Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
 
             intp_t i1, i2
-            {{INPUT_DTYPE_t}} * x1_data
+            const {{INPUT_DTYPE_t}} * x1_data
 
             intp_t x2_start, x2_end
 

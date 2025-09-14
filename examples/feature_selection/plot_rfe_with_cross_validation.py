@@ -105,11 +105,11 @@ import numpy as np
 
 for i in range(cv.n_splits):
     mask = rfecv.cv_results_[f"split{i}_support"][
-        rfecv.n_features_
+        rfecv.n_features_ - 1
     ]  # mask of features selected by the RFE
     features_selected = np.ma.compressed(np.ma.masked_array(feat_names, mask=1 - mask))
     print(f"Features selected in fold {i}: {features_selected}")
 # %%
-# In the five folds, the selected features are consistant. This is good news,
-# it means that the selection is stable accross folds, and it confirms that
+# In the five folds, the selected features are consistent. This is good news,
+# it means that the selection is stable across folds, and it confirms that
 # these features are the most informative ones.

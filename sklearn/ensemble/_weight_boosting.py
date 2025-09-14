@@ -25,30 +25,30 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
     is_regressor,
 )
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import _safe_indexing, check_random_state
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils.extmath import softmax, stable_cumsum
-from ..utils.metadata_routing import (
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils.extmath import softmax
+from sklearn.utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
 )
-from ._base import BaseEnsemble
 
 __all__ = [
     "AdaBoostClassifier",
@@ -476,7 +476,7 @@ class AdaBoostClassifier(
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.96...
+    0.96
 
     For a detailed example of using AdaBoost to fit a sequence of DecisionTrees
     as weaklearners, please refer to
@@ -973,9 +973,9 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([4.7972...])
+    array([4.7972])
     >>> regr.score(X, y)
-    0.9771...
+    0.9771
 
     For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
     to fit a sequence of decision trees as weak learners, please refer to
@@ -1115,7 +1115,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         sorted_idx = np.argsort(predictions, axis=1)
 
         # Find index of median prediction for each sample
-        weight_cdf = stable_cumsum(self.estimator_weights_[sorted_idx], axis=1)
+        weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 

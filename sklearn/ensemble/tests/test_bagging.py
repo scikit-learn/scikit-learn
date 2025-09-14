@@ -5,6 +5,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import re
 from itertools import cycle, product
 
 import joblib
@@ -42,7 +43,11 @@ from sklearn.tests.metadata_routing_common import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 rng = check_random_state(0)
@@ -499,6 +504,9 @@ def test_parallel_classification():
     assert_array_almost_equal(decisions1, decisions3)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel_regression():
     # Check parallel regression.
     rng = check_random_state(0)
@@ -537,6 +545,9 @@ def test_gridsearch():
     GridSearchCV(BaggingClassifier(SVC()), parameters, scoring="roc_auc").fit(X, y)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_estimator():
     # Check estimator and its default values.
     rng = check_random_state(0)
@@ -587,28 +598,6 @@ def test_bagging_with_pipeline():
     )
     estimator.fit(iris.data, iris.target)
     assert isinstance(estimator[0].steps[-1][1].random_state, int)
-
-
-class DummyZeroEstimator(BaseEstimator):
-    def fit(self, X, y):
-        self.classes_ = np.unique(y)
-        return self
-
-    def predict(self, X):
-        return self.classes_[np.zeros(X.shape[0], dtype=int)]
-
-
-def test_bagging_sample_weight_unsupported_but_passed():
-    estimator = BaggingClassifier(DummyZeroEstimator())
-    rng = check_random_state(0)
-
-    estimator.fit(iris.data, iris.target).predict(iris.data)
-    with pytest.raises(ValueError):
-        estimator.fit(
-            iris.data,
-            iris.target,
-            sample_weight=rng.randint(10, size=(iris.data.shape[0])),
-        )
 
 
 def test_warm_start(random_state=42):
@@ -690,6 +679,138 @@ def test_warm_start_with_oob_score_fails():
     clf = BaggingClassifier(n_estimators=5, warm_start=True, oob_score=True)
     with pytest.raises(ValueError):
         clf.fit(X, y)
+
+
+def test_warning_bootstrap_sample_weight():
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+    clf = BaggingClassifier(bootstrap=False)
+    warn_msg = (
+        "When fitting BaggingClassifier with sample_weight "
+        "it is recommended to use bootstrap=True"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf.fit(X, y, sample_weight=sample_weight)
+
+    X, y = diabetes.data, diabetes.target
+    sample_weight = np.ones_like(y)
+    reg = BaggingRegressor(bootstrap=False)
+    warn_msg = (
+        "When fitting BaggingRegressor with sample_weight "
+        "it is recommended to use bootstrap=True"
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        reg.fit(X, y, sample_weight=sample_weight)
+
+
+def test_invalid_sample_weight_max_samples_bootstrap_combinations():
+    X, y = iris.data, iris.target
+
+    # Case 1: small weights and fractional max_samples would lead to sampling
+    # less than 1 sample, which is not allowed.
+    clf = BaggingClassifier(max_samples=1.0)
+    sample_weight = np.ones_like(y) / (2 * len(y))
+    expected_msg = (
+        r"The total sum of sample weights is 0.5(\d*), which prevents resampling with "
+        r"a fractional value for max_samples=1\.0\. Either pass max_samples as an "
+        r"integer or use a larger sample_weight\."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        clf.fit(X, y, sample_weight=sample_weight)
+
+    # Case 2: large weights and bootstrap=False would lead to sampling without
+    # replacement more than the number of samples, which is not allowed.
+    clf = BaggingClassifier(bootstrap=False, max_samples=1.0)
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = 2
+    expected_msg = re.escape(
+        "max_samples=151 must be <= n_samples=150 to be able to sample without "
+        "replacement."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        with pytest.warns(
+            UserWarning, match="When fitting BaggingClassifier with sample_weight"
+        ):
+            clf.fit(X, y, sample_weight=sample_weight)
+
+
+class EstimatorAcceptingSampleWeight(BaseEstimator):
+    """Fake estimator accepting sample_weight"""
+
+    def fit(self, X, y, sample_weight=None):
+        """Record values passed during fit"""
+        self.X_ = X
+        self.y_ = y
+        self.sample_weight_ = sample_weight
+
+    def predict(self, X):
+        pass
+
+
+class EstimatorRejectingSampleWeight(BaseEstimator):
+    """Fake estimator rejecting sample_weight"""
+
+    def fit(self, X, y):
+        """Record values passed during fit"""
+        self.X_ = X
+        self.y_ = y
+
+    def predict(self, X):
+        pass
+
+
+@pytest.mark.parametrize("bagging_class", [BaggingRegressor, BaggingClassifier])
+@pytest.mark.parametrize("accept_sample_weight", [False, True])
+@pytest.mark.parametrize("metadata_routing", [False, True])
+@pytest.mark.parametrize("max_samples", [10, 0.8])
+def test_draw_indices_using_sample_weight(
+    bagging_class, accept_sample_weight, metadata_routing, max_samples
+):
+    X = np.arange(100).reshape(-1, 1)
+    y = np.repeat([0, 1], 50)
+    # all indices except 4 and 5 have zero weight
+    sample_weight = np.zeros(100)
+    sample_weight[4] = 1
+    sample_weight[5] = 2
+    if accept_sample_weight:
+        base_estimator = EstimatorAcceptingSampleWeight()
+    else:
+        base_estimator = EstimatorRejectingSampleWeight()
+
+    n_samples, n_features = X.shape
+
+    if isinstance(max_samples, float):
+        # max_samples passed as a fraction of the input data. Since
+        # sample_weight are provided, the effective number of samples is the
+        # sum of the sample weights.
+        expected_integer_max_samples = int(max_samples * sample_weight.sum())
+    else:
+        expected_integer_max_samples = max_samples
+
+    with config_context(enable_metadata_routing=metadata_routing):
+        # TODO(slep006): remove block when default routing is implemented
+        if metadata_routing and accept_sample_weight:
+            base_estimator = base_estimator.set_fit_request(sample_weight=True)
+        bagging = bagging_class(base_estimator, max_samples=max_samples, n_estimators=4)
+        bagging.fit(X, y, sample_weight=sample_weight)
+        for estimator, samples in zip(bagging.estimators_, bagging.estimators_samples_):
+            counts = np.bincount(samples, minlength=n_samples)
+            assert sum(counts) == len(samples) == expected_integer_max_samples
+            # only indices 4 and 5 should appear
+            assert np.isin(samples, [4, 5]).all()
+            if accept_sample_weight:
+                # sampled indices represented through weighting
+                assert estimator.X_.shape == (n_samples, n_features)
+                assert estimator.y_.shape == (n_samples,)
+                assert_allclose(estimator.X_, X)
+                assert_allclose(estimator.y_, y)
+                assert_allclose(estimator.sample_weight_, counts)
+            else:
+                # sampled indices represented through indexing
+                assert estimator.X_.shape == (expected_integer_max_samples, n_features)
+                assert estimator.y_.shape == (expected_integer_max_samples,)
+                assert_allclose(estimator.X_, X[samples])
+                assert_allclose(estimator.y_, y[samples])
 
 
 def test_oob_score_removed_on_warm_start():

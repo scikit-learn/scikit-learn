@@ -12,7 +12,7 @@ import numpy as np
 from scipy.special import expit, logit
 from scipy.stats import gmean
 
-from ..utils.extmath import softmax
+from sklearn.utils.extmath import softmax
 
 
 @dataclass

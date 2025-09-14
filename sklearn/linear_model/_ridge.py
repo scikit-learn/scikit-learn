@@ -15,14 +15,25 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from sklearn.base import BaseEstimator
-
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
-from ..exceptions import ConvergenceWarning
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection import GridSearchCV
-from ..preprocessing import LabelBinarizer
-from ..utils import (
+from sklearn.base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    _preprocess_data,
+    _rescale_data,
+)
+from sklearn.linear_model._sag import sag_solver
+from sklearn.metrics import check_scoring, get_scorer, get_scorer_names
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import (
     Bunch,
     check_array,
     check_consistent_length,
@@ -30,27 +41,29 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _ravel,
     device,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import _sparse_linalg_cg
-from ..utils.metadata_routing import (
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.fixes import _sparse_linalg_cg
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
-from ._sag import sag_solver
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
@@ -568,11 +581,12 @@ def ridge_regression(
     >>> rng = np.random.RandomState(0)
     >>> X = rng.randn(100, 4)
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
-    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
-    >>> list(coef)
-    [np.float64(1.9...), np.float64(-1.0...), np.float64(-0.0...), np.float64(-0.0...)]
+    >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True,
+    ...                                    random_state=0)
+    >>> coef
+    array([ 1.97, -1., -2.69e-3, -9.27e-4 ])
     >>> intercept
-    np.float64(-0.0...)
+    np.float64(-.0012)
     """
     return _ridge_regression(
         X,
@@ -951,12 +965,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=False,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -1343,6 +1358,12 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
         return tags
+
+    def _get_scorer_instance(self):
+        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        parent class. This is used for routing `sample_weight`.
+        """
+        return get_scorer("accuracy")
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -2138,12 +2159,13 @@ class _RidgeGCV(LinearModel):
         self.alphas = np.asarray(self.alphas)
 
         unscaled_y = y
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, sqrt_sw = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
+            rescale_with_sw=True,
         )
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
@@ -2161,9 +2183,7 @@ class _RidgeGCV(LinearModel):
 
         n_samples = X.shape[0]
 
-        if sample_weight is not None:
-            X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
-        else:
+        if sqrt_sw is None:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
@@ -2482,10 +2502,10 @@ class _BaseRidgeCV(LinearModel):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
-                scorer=self.scoring,
+                scorer=self._get_scorer(),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
             .add(
@@ -2496,14 +2516,20 @@ class _BaseRidgeCV(LinearModel):
         return router
 
     def _get_scorer(self):
-        scorer = check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
+        """Make sure the scorer is weighted if necessary.
+
+        This uses `self._get_scorer_instance()` implemented in child objects to get the
+        raw scorer instance of the estimator, which will be ignored if `self.scoring` is
+        not None.
+        """
         if _routing_enabled() and self.scoring is None:
             # This estimator passes an array of 1s as sample_weight even if
             # sample_weight is not provided by the user. Therefore we need to
             # always request it. But we don't set it if it's passed explicitly
             # by the user.
-            scorer.set_score_request(sample_weight=True)
-        return scorer
+            return self._get_scorer_instance().set_score_request(sample_weight=True)
+
+        return check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2692,6 +2718,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def _get_scorer_instance(self):
+        """Return a scorer which corresponds to what's defined in RegressorMixin
+        parent class. This is used for routing `sample_weight`.
+        """
+        return get_scorer("r2")
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):

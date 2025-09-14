@@ -241,7 +241,7 @@ The following toy example demonstrates that samples with a sample weight of zero
     >>> gb.predict([[1, 0]])
     array([1])
     >>> gb.predict_proba([[1, 0]])[0, 1]
-    np.float64(0.999...)
+    np.float64(0.999)
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
@@ -308,7 +308,7 @@ values.
   all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
   categories. This can quickly become prohibitive when :math:`K` is large.
   Fortunately, since gradient boosting trees are always regression trees (even
-  for classification problems), there exist a faster strategy that can yield
+  for classification problems), there exists a faster strategy that can yield
   equivalent splits. First, the categories of a feature are sorted according to
   the variance of the target, for each category `k`. Once the categories are
   sorted, one can consider *continuous partitions*, i.e. treat the categories
@@ -369,13 +369,17 @@ following modelling constraint:
 
 Also, monotonic constraints are not supported for multiclass classification.
 
+For a practical implementation of monotonic constraints with the histogram-based
+gradient boosting, including how they can improve generalization when domain knowledge
+is available, see
+:ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`.
+
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
     monotonic constraints on categorical features.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:
@@ -513,7 +517,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
       >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
       ...     max_depth=1, random_state=0).fit(X_train, y_train)
       >>> clf.score(X_test, y_test)
-      0.913...
+      0.913
 
   The number of weak learners (i.e. regression trees) is controlled by the
   parameter ``n_estimators``; :ref:`The size of each tree
@@ -556,7 +560,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
       ...     loss='squared_error'
       ... ).fit(X_train, y_train)
       >>> mean_squared_error(y_test, est.predict(X_test))
-      5.00...
+      5.00
 
   The figure below shows the results of applying :class:`GradientBoostingRegressor`
   with least squares loss and 500 base learners to the diabetes dataset
@@ -604,11 +608,11 @@ fitted model.
   ... )
   >>> est = est.fit(X_train, y_train)  # fit with 100 trees
   >>> mean_squared_error(y_test, est.predict(X_test))
-  5.00...
+  5.00
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and increase num of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))
-  3.84...
+  3.84
 
 .. _gradient_boosting_tree_size:
 
@@ -900,7 +904,8 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_
-    array([0.10..., 0.10..., 0.11..., ...
+    array([0.107, 0.105, 0.113, 0.0987, 0.0947,
+           0.107, 0.0916, 0.0972, 0.0958, 0.0906])
 
 Note that this computation of feature importance is based on entropy, and it
 is distinct from :func:`sklearn.inspection.permutation_importance` which is
@@ -917,7 +922,7 @@ based on permutation of the features.
    Annals of Statistics, 29, 1189-1232.
 
 .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-   <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+   <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=48caac2f65bce47f6d27400ae4f60d8395cec2f3>`_.
    Computational Statistics & Data Analysis, 38, 367-378.
 
 .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
@@ -960,7 +965,7 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the features values of
+best split is found through an exhaustive search of the feature values of
 either all input features or a random subset of size ``max_features``.
 (See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
@@ -1035,13 +1040,13 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.98...)
+    np.float64(0.98)
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.999...)
+    np.float64(0.999)
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
@@ -1410,40 +1415,17 @@ classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
 weighted average  0.37          0.4             0.23
 ================  ==========    ==========      ==========
 
-Here, the predicted class label is 2, since it has the highest average probability. See
-this example on :ref:`Visualising class probabilities in a Voting Classifier
-<sphx_glr_auto_examples_ensemble_plot_voting_probas.py>` for a detailed illustration of
-class probabilities averaged by soft voting.
+Here, the predicted class label is 2, since it has the highest average
+predicted probability. See the example on
+:ref:`sphx_glr_auto_examples_ensemble_plot_voting_decision_regions.py` for a
+demonstration of how the predicted class label can be obtained from the weighted
+average of predicted probabilities.
 
-Also, the following example illustrates how the decision regions may change
-when a soft :class:`VotingClassifier` is used based on a linear Support
-Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
+The following figure illustrates how the decision regions may change when
+a soft :class:`VotingClassifier` is trained with weights on three linear
+models:
 
-   >>> from sklearn import datasets
-   >>> from sklearn.tree import DecisionTreeClassifier
-   >>> from sklearn.neighbors import KNeighborsClassifier
-   >>> from sklearn.svm import SVC
-   >>> from itertools import product
-   >>> from sklearn.ensemble import VotingClassifier
-
-   >>> # Loading some example data
-   >>> iris = datasets.load_iris()
-   >>> X = iris.data[:, [0, 2]]
-   >>> y = iris.target
-
-   >>> # Training classifiers
-   >>> clf1 = DecisionTreeClassifier(max_depth=4)
-   >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(kernel='rbf', probability=True)
-   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)],
-   ...                         voting='soft', weights=[2, 1, 2])
-
-   >>> clf1 = clf1.fit(X, y)
-   >>> clf2 = clf2.fit(X, y)
-   >>> clf3 = clf3.fit(X, y)
-   >>> eclf = eclf.fit(X, y)
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_002.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
     :align: center
     :scale: 75%
@@ -1601,15 +1583,15 @@ Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[142..., 138..., 146...],
-         [179..., 182..., 151...],
-         [139..., 132..., 158...],
-         [286..., 292..., 225...],
-         [126..., 124..., 164...]])
+  array([[142, 138, 146],
+         [179, 182, 151],
+         [139, 132, 158],
+         [286, 292, 225],
+         [126, 124, 164]])
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
-strengths of the these predictors. However, training a stacking predictor is
+strengths of these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::
@@ -1707,7 +1689,7 @@ learners::
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.9...)
+    np.float64(0.95)
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in

@@ -10,10 +10,10 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import get_namespace
-from ..utils.fixes import VisibleDeprecationWarning
-from ._unique import attach_unique, cached_unique
-from .validation import _assert_all_finite, check_array
+from sklearn.utils._array_api import get_namespace
+from sklearn.utils._unique import attach_unique, cached_unique
+from sklearn.utils.fixes import VisibleDeprecationWarning
+from sklearn.utils.validation import _assert_all_finite, check_array
 
 
 def _unique_multiclass(y, xp=None):
@@ -413,7 +413,17 @@ def type_of_target(y, input_name="", raise_unknown=False):
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
-    if cached_unique(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+    classes = cached_unique(y)
+    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
+        # Only raise the warning when we have at least 20 samples.
+        warnings.warn(
+            "The number of unique classes is greater than 50% of the number "
+            "of samples. `y` could represent a regression problem, not a "
+            "classification problem.",
+            UserWarning,
+            stacklevel=2,
+        )
+    if classes.shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

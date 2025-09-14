@@ -1,7 +1,5 @@
 fs = import('fs')
 
-cython_args = []
-
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
@@ -100,7 +98,7 @@ inc_np = include_directories(incdir_numpy)
 # Don't use the deprecated NumPy C API. Define this to a fixed version instead of
 # NPY_API_VERSION in order not to break compilation for released SciPy versions
 # when NumPy introduces a new deprecation.
-numpy_no_deprecated_api = ['-DNPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION']
+numpy_no_deprecated_api = ['-DNPY_NO_DEPRECATED_API=NPY_1_22_API_VERSION']
 np_dep = declare_dependency(include_directories: inc_np, compile_args: numpy_no_deprecated_api)
 
 openmp_dep = dependency('OpenMP', language: 'c', required: false)
@@ -180,6 +178,9 @@ else:
     check: true
     ).stdout().strip()
 
+cython_args = []
+cython_program = find_program(cython.cmd_array()[0])
+
 scikit_learn_cython_args = [
   '-X language_level=3', '-X boundscheck=' + boundscheck, '-X wraparound=False',
   '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
@@ -190,23 +191,42 @@ scikit_learn_cython_args = [
 ]
 cython_args += scikit_learn_cython_args
 
-# Write file in Meson build dir to be able to figure out from Python code
-# whether scikit-learn was built with Meson. Adapted from pandas
-# _version_meson.py.
-custom_target('write_built_with_meson_file',
-    output: '_built_with_meson.py',
+if cython.version().version_compare('>=3.1.0')
+  cython_args += ['-Xfreethreading_compatible=True']
+  cython_shared_src = custom_target(
+    install: false,
+    output: '_cyutility.c',
     command: [
-        py, '-c', 'with open("sklearn/_built_with_meson.py", "w") as f: f.write("")'
+      cython_program, '-3', '--fast-fail', '-Xfreethreading_compatible=True',
+      '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
     ],
+  )
+
+  py.extension_module('_cyutility',
+    cython_shared_src,
+    subdir: 'sklearn',
+    cython_args: cython_args,
     install: true,
-    install_dir: py.get_install_dir() / 'sklearn'
+  )
+
+  cython_args += ['--shared=sklearn._cyutility']
+endif
+
+cython_gen = generator(cython_program,
+  arguments : cython_args + ['@INPUT@', '--output-file', '@OUTPUT@'],
+  output : '@BASENAME@.c',
+)
+
+cython_gen_cpp = generator(cython_program,
+  arguments : cython_args + ['--cplus', '@INPUT@', '--output-file', '@OUTPUT@'],
+  output : '@BASENAME@.cpp',
 )
 
 extensions = ['_isotonic']
 
 py.extension_module(
   '_isotonic',
-  '_isotonic.pyx',
+  cython_gen.process('_isotonic.pyx'),
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',

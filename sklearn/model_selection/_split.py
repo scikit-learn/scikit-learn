@@ -18,22 +18,22 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
-from ..utils import (
+from sklearn.utils import (
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
-from ..utils._array_api import (
+from sklearn.utils._array_api import (
     _convert_to_numpy,
     ensure_common_namespace_device,
     get_namespace,
 )
-from ..utils._param_validation import Interval, RealNotInt, validate_params
-from ..utils.extmath import _approximate_mode
-from ..utils.metadata_routing import _MetadataRequester
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
+from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
+from sklearn.utils.extmath import _approximate_mode
+from sklearn.utils.metadata_routing import _MetadataRequester
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -1110,10 +1110,10 @@ class TimeSeriesSplit(_BaseKFold):
     while the train set size accumulates data from previous splits.
 
     This cross-validation object is a variation of :class:`KFold`.
-    In the kth split, it returns first k folds as train set and the
-    (k+1)th fold as test set.
+    In the k-th split, it returns the first k folds as the train set and the
+    (k+1)-th fold as the test set.
 
-    Note that unlike standard cross-validation methods, successive
+    Note that, unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.
@@ -3024,21 +3024,19 @@ def _build_repr(self):
     class_name = self.__class__.__name__
     params = dict()
     for key in args:
-        # We need deprecation warnings to always be on in order to
-        # catch deprecated param values.
-        # This is set in utils/__init__.py but it gets overwritten
-        # when running under python3 somehow.
-        warnings.simplefilter("always", FutureWarning)
-        try:
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-                if value is None and hasattr(self, "cvargs"):
-                    value = self.cvargs.get(key, None)
-            if len(w) and w[0].category is FutureWarning:
-                # if the parameter is deprecated, don't show it
-                continue
-        finally:
-            warnings.filters.pop(0)
+        with warnings.catch_warnings(record=True) as w:
+            # We need deprecation warnings to always be on in order to
+            # catch deprecated param values.
+            # This is set in utils/__init__.py but it gets overwritten
+            # when running under python3 somehow.
+            warnings.simplefilter("always", FutureWarning)
+            value = getattr(self, key, None)
+            if value is None and hasattr(self, "cvargs"):
+                value = self.cvargs.get(key, None)
+        if len(w) and w[0].category is FutureWarning:
+            # if the parameter is deprecated, don't show it
+            continue
+
         params[key] = value
 
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
