@@ -29,7 +29,6 @@ from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -148,17 +147,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-        .. versionchanged:: 1.6
-            `"prefit"` is deprecated. Use :class:`~sklearn.frozen.FrozenEstimator`
-            instead.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
 
         Base estimator clones are fitted in parallel across cross-validation
-        iterations. Therefore parallelism happens only when `cv != "prefit"`.
+        iterations.
 
         See :term:`Glossary <n_jobs>` for more details.
 
@@ -285,7 +280,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             None,
         ],
         "method": [StrOptions({"isotonic", "sigmoid", "temperature"})],
-        "cv": ["cv_object", Hidden(StrOptions({"prefit"}))],
+        "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean", StrOptions({"auto"})],
     }
@@ -354,36 +349,118 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             _ensemble = not isinstance(estimator, FrozenEstimator)
 
         self.calibrated_classifiers_ = []
-        if self.cv == "prefit":
-            # TODO(1.8): Remove this code branch and cv='prefit'
-            warnings.warn(
-                "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
-                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
-                " instead.",
-                category=FutureWarning,
-            )
-            # `classes_` should be consistent with that of estimator
-            check_is_fitted(self.estimator, attributes=["classes_"])
-            self.classes_ = self.estimator.classes_
 
-            predictions, _ = _get_response_values(
-                estimator,
-                X,
-                response_method=["decision_function", "predict_proba"],
+        # Set `classes_` using all `y`
+        label_encoder_ = LabelEncoder().fit(y)
+        self.classes_ = label_encoder_.classes_
+
+        if _routing_enabled():
+            routed_params = process_routing(
+                self,
+                "fit",
+                sample_weight=sample_weight,
+                **fit_params,
             )
-            if predictions.ndim == 1:
-                # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+        else:
+            # sample_weight checks
+            fit_parameters = signature(estimator.fit).parameters
+            supports_sw = "sample_weight" in fit_parameters
+            if sample_weight is not None and not supports_sw:
+                estimator_name = type(estimator).__name__
+                warnings.warn(
+                    f"Since {estimator_name} does not appear to accept"
+                    " sample_weight, sample weights will only be used for the"
+                    " calibration itself. This can be caused by a limitation of"
+                    " the current scikit-learn API. See the following issue for"
+                    " more details:"
+                    " https://github.com/scikit-learn/scikit-learn/issues/21134."
+                    " Be warned that the result of the calibration is likely to be"
+                    " incorrect."
+                )
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split={})  # no routing for splitter
+            routed_params.estimator = Bunch(fit=fit_params)
+            if sample_weight is not None and supports_sw:
+                routed_params.estimator.fit["sample_weight"] = sample_weight
+
+        # Check that each cross-validation fold can have at least one
+        # example per class
+        if isinstance(self.cv, int):
+            n_folds = self.cv
+        elif hasattr(self.cv, "n_splits"):
+            n_folds = self.cv.n_splits
+        else:
+            n_folds = None
+        if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
+            raise ValueError(
+                f"Requesting {n_folds}-fold "
+                "cross-validation but provided less than "
+                f"{n_folds} examples for at least one class."
+            )
+        if isinstance(self.cv, LeaveOneOut):
+            raise ValueError(
+                "LeaveOneOut cross-validation does not allow"
+                "all classes to be present in test splits. "
+                "Please use a cross-validation generator that allows "
+                "all classes to appear in every test and train split."
+            )
+        cv = check_cv(self.cv, y, classifier=True)
+
+        if _ensemble:
+            parallel = Parallel(n_jobs=self.n_jobs)
+            self.calibrated_classifiers_ = parallel(
+                delayed(_fit_classifier_calibrator_pair)(
+                    clone(estimator),
+                    X,
+                    y,
+                    train=train,
+                    test=test,
+                    method=self.method,
+                    classes=self.classes_,
+                    sample_weight=sample_weight,
+                    fit_params=routed_params.estimator.fit,
+                )
+                for train, test in cv.split(X, y, **routed_params.splitter.split)
+            )
+        else:
+            this_estimator = clone(estimator)
+            method_name = _check_response_method(
+                this_estimator,
+                ["decision_function", "predict_proba"],
+            ).__name__
+            predictions = cross_val_predict(
+                estimator=this_estimator,
+                X=X,
+                y=y,
+                cv=cv,
+                method=method_name,
+                n_jobs=self.n_jobs,
+                params=routed_params.estimator.fit,
+            )
+            if len(self.classes_) == 2:
+                # Ensure shape (n_samples, 1) in the binary case
+                if method_name == "predict_proba":
+                    # Select the probability column of the positive class
+                    predictions = _process_predict_proba(
+                        y_pred=predictions,
+                        target_type="binary",
+                        classes=self.classes_,
+                        pos_label=self.classes_[1],
+                    )
                 predictions = predictions.reshape(-1, 1)
 
             if sample_weight is not None:
-                # Check that the sample_weight dtype is consistent with the predictions
-                # to avoid unintentional upcasts.
+                # Check that the sample_weight dtype is consistent with the
+                # predictions to avoid unintentional upcasts.
                 sample_weight = _check_sample_weight(
                     sample_weight, predictions, dtype=predictions.dtype
                 )
 
+            this_estimator.fit(X, y, **routed_params.estimator.fit)
+            # Note: Here we don't pass on fit_params because the supported
+            # calibrators don't support fit_params anyway
             calibrated_classifier = _fit_calibrator(
-                estimator,
+                this_estimator,
                 predictions,
                 y,
                 self.classes_,
@@ -391,125 +468,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
-        else:
-            # Set `classes_` using all `y`
-            label_encoder_ = LabelEncoder().fit(y)
-            self.classes_ = label_encoder_.classes_
-
-            if _routing_enabled():
-                routed_params = process_routing(
-                    self,
-                    "fit",
-                    sample_weight=sample_weight,
-                    **fit_params,
-                )
-            else:
-                # sample_weight checks
-                fit_parameters = signature(estimator.fit).parameters
-                supports_sw = "sample_weight" in fit_parameters
-                if sample_weight is not None and not supports_sw:
-                    estimator_name = type(estimator).__name__
-                    warnings.warn(
-                        f"Since {estimator_name} does not appear to accept"
-                        " sample_weight, sample weights will only be used for the"
-                        " calibration itself. This can be caused by a limitation of"
-                        " the current scikit-learn API. See the following issue for"
-                        " more details:"
-                        " https://github.com/scikit-learn/scikit-learn/issues/21134."
-                        " Be warned that the result of the calibration is likely to be"
-                        " incorrect."
-                    )
-                routed_params = Bunch()
-                routed_params.splitter = Bunch(split={})  # no routing for splitter
-                routed_params.estimator = Bunch(fit=fit_params)
-                if sample_weight is not None and supports_sw:
-                    routed_params.estimator.fit["sample_weight"] = sample_weight
-
-            # Check that each cross-validation fold can have at least one
-            # example per class
-            if isinstance(self.cv, int):
-                n_folds = self.cv
-            elif hasattr(self.cv, "n_splits"):
-                n_folds = self.cv.n_splits
-            else:
-                n_folds = None
-            if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
-                raise ValueError(
-                    f"Requesting {n_folds}-fold "
-                    "cross-validation but provided less than "
-                    f"{n_folds} examples for at least one class."
-                )
-            if isinstance(self.cv, LeaveOneOut):
-                raise ValueError(
-                    "LeaveOneOut cross-validation does not allow"
-                    "all classes to be present in test splits. "
-                    "Please use a cross-validation generator that allows "
-                    "all classes to appear in every test and train split."
-                )
-            cv = check_cv(self.cv, y, classifier=True)
-
-            if _ensemble:
-                parallel = Parallel(n_jobs=self.n_jobs)
-                self.calibrated_classifiers_ = parallel(
-                    delayed(_fit_classifier_calibrator_pair)(
-                        clone(estimator),
-                        X,
-                        y,
-                        train=train,
-                        test=test,
-                        method=self.method,
-                        classes=self.classes_,
-                        sample_weight=sample_weight,
-                        fit_params=routed_params.estimator.fit,
-                    )
-                    for train, test in cv.split(X, y, **routed_params.splitter.split)
-                )
-            else:
-                this_estimator = clone(estimator)
-                method_name = _check_response_method(
-                    this_estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-                predictions = cross_val_predict(
-                    estimator=this_estimator,
-                    X=X,
-                    y=y,
-                    cv=cv,
-                    method=method_name,
-                    n_jobs=self.n_jobs,
-                    params=routed_params.estimator.fit,
-                )
-                if len(self.classes_) == 2:
-                    # Ensure shape (n_samples, 1) in the binary case
-                    if method_name == "predict_proba":
-                        # Select the probability column of the positive class
-                        predictions = _process_predict_proba(
-                            y_pred=predictions,
-                            target_type="binary",
-                            classes=self.classes_,
-                            pos_label=self.classes_[1],
-                        )
-                    predictions = predictions.reshape(-1, 1)
-
-                if sample_weight is not None:
-                    # Check that the sample_weight dtype is consistent with the
-                    # predictions to avoid unintentional upcasts.
-                    sample_weight = _check_sample_weight(
-                        sample_weight, predictions, dtype=predictions.dtype
-                    )
-
-                this_estimator.fit(X, y, **routed_params.estimator.fit)
-                # Note: Here we don't pass on fit_params because the supported
-                # calibrators don't support fit_params anyway
-                calibrated_classifier = _fit_calibrator(
-                    this_estimator,
-                    predictions,
-                    y,
-                    self.classes_,
-                    self.method,
-                    sample_weight,
-                )
-                self.calibrated_classifiers_.append(calibrated_classifier)
 
         first_clf = self.calibrated_classifiers_[0].estimator
         if hasattr(first_clf, "n_features_in_"):
