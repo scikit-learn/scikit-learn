@@ -123,10 +123,11 @@ def test_classification():
         ["predict", "predict_proba", "predict_log_proba", "decision_function"],
     ),
 )
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
 
-    class CustomSVC(SVC):
+    class CustomSVC(SVC(probability=True)):
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
