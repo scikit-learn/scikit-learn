@@ -20,7 +20,6 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -345,7 +344,9 @@ def test_nystroem_approximation():
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
-        if kern != "laplacian":  # Laplacian kernel not supported for non-numpy namespaces
+        if (
+            kern != "laplacian"
+        ):  # Laplacian kernel not supported for non-numpy namespaces
             trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
             X_transformed = trans.fit(X).transform(X)
             assert X_transformed.shape == (X.shape[0], 2)
@@ -380,7 +381,6 @@ def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
         # test that available kernels fit and transform
         kernels_available = kernel_metrics()
         for kern in kernels_available:
-
             trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
             X_xp_transformed = trans.fit(X_xp).transform(X_xp)
             assert X_xp_transformed.shape == (X_xp.shape[0], 2)
