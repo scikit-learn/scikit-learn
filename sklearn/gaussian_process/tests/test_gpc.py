@@ -9,13 +9,9 @@ import numpy as np
 import pytest
 import scipy
 
-try:
-    from scipy.differentiate import derivative
-except ModuleNotFoundError:
-    pass
-
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
     RBF,
@@ -27,6 +23,10 @@ from sklearn.gaussian_process.kernels import (
 )
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+
+sp_version = parse_version(scipy.__version__)
+if not sp_version < parse_version("1.15.0"):
+    from scipy.differentiate import derivative
 
 
 def f(x):
@@ -112,7 +112,7 @@ def test_converged_to_local_maximum(kernel):
 
 
 @pytest.mark.skipif(
-    scipy.__version__ < "1.15.0",
+    sp_version < parse_version("1.15.0"),
     reason="scipy.derivative requires version 1.15.0 or more",
 )
 @pytest.mark.xfail(raises=AssertionError)
