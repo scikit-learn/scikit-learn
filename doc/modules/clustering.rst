@@ -1200,7 +1200,7 @@ The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
 
-This algorithm can be viewed as an instance or data reduction method,
+This algorithm can be viewed as an instance of a data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
 from the leaves of the CFT. This reduced data can be further processed by feeding
 it into a global clusterer. This global clusterer can be set by ``n_clusters``.

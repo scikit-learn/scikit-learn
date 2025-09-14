@@ -373,16 +373,6 @@ class Pipeline(_BaseComposition):
             return self.named_steps[ind]
         return est
 
-    # TODO(1.8): Remove this property
-    @property
-    def _estimator_type(self):
-        """Return the estimator type of the last step in the pipeline."""
-
-        if not self.steps:
-            return None
-
-        return self.steps[-1][1]._estimator_type
-
     @property
     def named_steps(self):
         """Access the steps by name.
