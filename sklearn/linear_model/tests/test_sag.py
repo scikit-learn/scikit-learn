@@ -957,8 +957,8 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
 @pytest.mark.xfail()
 def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
     n_samples = 15
-    max_iter = 100
-    tol = 1e-10
+    max_iter = 700
+    tol = 1e-11
     alpha = 1.1
 
     rng = np.random.RandomState(42)
