@@ -1,5 +1,5 @@
 - Deprecation of `probability=True` in :class:`sklearn.svm.SVC` and
   :class:`sklearn.svm.NuSVC` due to not being thread-safe. In future use
-  :class:`sklearn.calibration.CalibratedClassifierCV` with `ensemble=False`
-  instead.
+  :class:`sklearn.calibration.CalibratedClassifierCV` with the respective
+  base estimator and `ensemble=False` instead.
   By :user:`Shruti Nath <snath-xoc>`.
