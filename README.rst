@@ -1,3 +1,23 @@
+.. _decision_tree_split_candidates:
+
+How are candidate splits chosen in scikit-learn's decision trees?
+---------------------------------------------------------------
+
+For regression and classification trees in scikit-learn (e.g., ``DecisionTreeRegressor``, ``DecisionTreeClassifier``), the candidate split points for each feature are determined as follows:
+
+- For each feature, the data is sorted.
+- The candidate splits are the midpoints between each pair of consecutive unique feature values present in the training data at the current node.
+- This results in at most $O(N \times F)$ candidate splits per node, where $N$ is the number of samples at the node and $F$ is the number of features.
+
+This approach is exhaustive and ensures that all possible splits that separate the data are considered.
+
+**Where is this implemented in the code?**
+
+The logic for finding candidate splits is implemented in the Cython code in ``sklearn/tree/_splitter.pyx`` (see the ``BestSplitter`` class and its methods). The relevant Python entry points are in ``sklearn/tree/_classes.py`` (e.g., ``DecisionTreeClassifier``, ``DecisionTreeRegressor``), but the actual split search is performed in the Cython backend for efficiency.
+
+**References:**
+- https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/tree/_splitter.pyx
+- https://scikit-learn.org/stable/modules/tree.html#tree-algorithms
 .. -*- mode: rst -*-
 
 |Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
