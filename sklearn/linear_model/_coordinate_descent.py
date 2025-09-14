@@ -691,7 +691,7 @@ def enet_path(
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, do_screening
             )
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -710,6 +710,7 @@ def enet_path(
                 rng,
                 random,
                 positive,
+                do_screening,
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
@@ -3102,10 +3103,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     ...         [[0, 0], [1, 1], [2, 2]])
     MultiTaskElasticNetCV(cv=3)
     >>> print(clf.coef_)
-    [[0.52875032 0.46958558]
-     [0.52875032 0.46958558]]
+    [[0.51841231 0.479658]
+     [0.51841231 0.479658]]
     >>> print(clf.intercept_)
-    [0.00166409 0.00166409]
+    [0.001929... 0.001929...]
     """
 
     _parameter_constraints: dict = {
@@ -3356,7 +3357,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> r2_score(y, reg.predict(X))
     0.9994
     >>> reg.alpha_
-    np.float64(0.5713)
+    np.float64(0.4321...)
     >>> reg.predict(X[:1,])
     array([[153.7971,  94.9015]])
     """

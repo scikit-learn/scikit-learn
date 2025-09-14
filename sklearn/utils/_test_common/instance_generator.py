@@ -9,6 +9,8 @@ from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
+import numpy as np
+
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
@@ -176,6 +178,8 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
+
+rng = np.random.RandomState(0)
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
@@ -441,6 +445,7 @@ INIT_PARAMS = {
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
+    SparseCoder: dict(dictionary=rng.normal(size=(5, 3))),
     SparsePCA: dict(max_iter=5),
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
@@ -711,6 +716,38 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SparseCoder: {
+        "check_estimators_dtypes": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_dtype_object": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_transformers_unfitted_stateless": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_fit_idempotent": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_transformer_preserve_dtypes": dict(
+            dictionary=rng.normal(size=(5, 3)).astype(np.float32)
+        ),
+        "check_set_output_transform": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_output_transform_pandas": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_set_output_transform_pandas": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_set_output_transform_polars": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_set_output_transform_polars": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_dataframe_column_names_consistency": dict(
+            dictionary=rng.normal(size=(5, 8))
+        ),
+        "check_estimators_overwrite_params": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimators_fit_returns_self": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_fit2d_1feature": dict(dictionary=rng.normal(size=(5, 1))),
+    },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     SpectralBiclustering: {
@@ -748,7 +785,7 @@ def _tested_estimators(type_filter=None):
                 yield estimator
 
 
-SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
+SKIPPED_ESTIMATORS = [FrozenEstimator]
 
 
 def _construct_instances(Estimator):

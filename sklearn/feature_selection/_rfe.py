@@ -228,11 +228,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.importance_getter = importance_getter
         self.verbose = verbose
 
-    # TODO(1.8) remove this property
-    @property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     @property
     def classes_(self):
         """Classes labels available when `estimator` is a classifier.
