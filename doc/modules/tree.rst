@@ -572,7 +572,7 @@ Mean Absolute Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
-Note that it fits much slower than the MSE criterion.
+Note that it fits slower than the MSE criterion.
 
 .. _tree_missing_value_support:
 
