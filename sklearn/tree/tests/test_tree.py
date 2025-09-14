@@ -2915,11 +2915,11 @@ def test_absolute_errors_precomputation_function():
         y = np.random.uniform(size=(n, 1))
         w = np.random.rand(n)
         indices = np.arange(n)
-        abs_errors = _py_precompute_absolute_errors(y, w, indices)
+        abs_errors = 2 * _py_precompute_absolute_errors(y, w, indices)
         expected = compute_prefix_abs_errors_naive(y, w)
         assert np.allclose(abs_errors, expected)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, suffix=True)
+        abs_errors = 2 * _py_precompute_absolute_errors(y, w, indices, suffix=True)
         expected = compute_prefix_abs_errors_naive(y[::-1], w[::-1])[::-1]
         assert np.allclose(abs_errors, expected)
 
@@ -2929,10 +2929,10 @@ def test_absolute_errors_precomputation_function():
         y_sorted = y[indices]
         w_sorted = w[indices]
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices)
+        abs_errors = 2 * _py_precompute_absolute_errors(y, w, indices)
         expected = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
         assert np.allclose(abs_errors, expected)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, suffix=True)
+        abs_errors = 2 * _py_precompute_absolute_errors(y, w, indices, suffix=True)
         expected = compute_prefix_abs_errors_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
         assert np.allclose(abs_errors, expected)

@@ -1192,8 +1192,9 @@ cdef void precompute_absolute_errors(
     intp_t k,
     intp_t start,
     intp_t end,
+    float64_t q,
     float64_t[::1] abs_errors,
-    float64_t[::1] medians
+    float64_t[::1] quantiles
 ) noexcept nogil:
     """
     Fill `abs_errors` and `medians`.
@@ -1222,6 +1223,8 @@ cdef void precompute_absolute_errors(
         Start index in `sample_indices`
     end : intp_t
         End index (exclusive) in `sample_indices`
+    q : float64_t
+        Quantile
     abs_errors : float64_t[::1]
         array to store (increment) the computed absolute errors. Shape: (n,)
         with n := end - start
@@ -1257,8 +1260,8 @@ cdef void precompute_absolute_errors(
     cdef float64_t y
     cdef float64_t w = 1.0
     cdef float64_t top_val, top_weight
-    cdef float64_t median = 0.0
-    cdef float64_t half_weight
+    cdef float64_t quantile = 0.0
+    cdef float64_t split_weight
 
     p = start
     for _ in range(n):
@@ -1275,29 +1278,29 @@ cdef void precompute_absolute_errors(
         else:
             below.push(y, w)
 
-        half_weight = (above.total_weight + below.total_weight) / 2.0
+        split_weight = (above.total_weight + below.total_weight) * q
 
         # Rebalance heaps
-        while above.total_weight < half_weight and not below.is_empty():
+        while above.total_weight < split_weight and not below.is_empty():
             below.pop(&top_val, &top_weight)
             above.push(top_val, top_weight)
         while (
             not above.is_empty()
-            and (above.total_weight - above.top_weight()) >= half_weight
+            and (above.total_weight - above.top_weight()) >= split_weight
         ):
             above.pop(&top_val, &top_weight)
             below.push(top_val, top_weight)
 
         # Current median
-        if above.total_weight > half_weight + 1e-5 * fabs(half_weight):
-            median = above.top()
-        else:  # above and below weight are almost exactly equals
-            median = (above.top() + below.top()) / 2.
-        medians[j] = median
+        if above.total_weight > split_weight + 1e-5 * fabs(split_weight):
+            quantile = above.top()
+        else:  # above and below heaps are almost exactly balanced
+            quantile = q * above.top() + (1 - q) * below.top()
+            # FIXME: check if it should be (1 - q) * ... + q * ...
+        quantiles[j] = quantile
         abs_errors[j] += (
-            (below.total_weight - above.total_weight) * median
-            - below.weighted_sum
-            + above.weighted_sum
+            q * (above.weighted_sum - above.total_weight * quantile)
+            + (1 - q) * (below.total_weight * quantile - below.weighted_sum)
         )
         p += step
         j += step
@@ -1307,7 +1310,8 @@ def _py_precompute_absolute_errors(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
-    bint suffix=False
+    bint suffix=False,
+    float64_t q=0.5
 ):
     """
     Used for testing precompute_absolute_errors.
@@ -1334,7 +1338,7 @@ def _py_precompute_absolute_errors(
 
     precompute_absolute_errors(
         ys, sample_weight, sample_indices, above, below,
-        k, start, end, abs_errors, medians
+        k, start, end, q, abs_errors, medians
     )
     return np.asarray(abs_errors)
 
@@ -1469,7 +1473,7 @@ cdef class MAE(Criterion):
             # which are allowed only with n_outputs=1.
             precompute_absolute_errors(
                 self.y, self.sample_weight, self.sample_indices,
-                self.above, self.below, k, self.start, self.end,
+                self.above, self.below, k, self.start, self.end, 0.5,
                 # left_abs_errors is incremented, left_medians is overwritten
                 self.left_abs_errors, self.left_medians
             )
@@ -1477,12 +1481,16 @@ cdef class MAE(Criterion):
             # i.e., reversed, and abs error & median are filled in reverse order to.
             precompute_absolute_errors(
                 self.y, self.sample_weight, self.sample_indices,
-                self.above, self.below, k, self.end - 1, self.start - 1,
+                self.above, self.below, k, self.end - 1, self.start - 1, 0.5,
                 # right_abs_errors is incremented, right_medians is overwritten
                 self.right_abs_errors, self.right_medians
             )
             # Store the median for the current node
             self.node_medians[k] = self.right_medians[0]
+
+        for p in range(self.start, self.end):
+            self.left_abs_errors[p] *= 2
+            self.right_abs_errors[p] *= 2
 
         return 0
 
