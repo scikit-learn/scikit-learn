@@ -1,0 +1,5 @@
+- Added support for setting `with_std` to 2 in
+  :func:`preprocessing.scale` and :class:`preprocessing.StandardScaler`
+  to scale data to have a standard deviation of 0.5,
+  which can improve the interpretability of linear model coefficients.
+  By :user:`Álvaro Kothe <Alvaro-Kothe>`
