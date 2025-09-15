@@ -5,7 +5,7 @@ Decision boundary of semi-supervised classifiers versus SVM on the Iris dataset
 
 This example compares decision boundaries learned by two semi-supervised
 methods, namely :class:`~sklearn.semi_supervised.LabelSpreading` and
-:class:`~sklearn.semi_supervised.SelfTrainingClassifier`, when varying the
+:class:`~sklearn.semi_supervised.SelfTrainingClassifier`, while varying the
 proportion of labeled training data from small fractions up to the full dataset.
 
 Both methods rely on RBF kernels: Label Spreading uses it by default, and
@@ -103,7 +103,7 @@ plt.show()
 # connected to every other with a weight that decays with their squared
 # Euclidean distance, scaled by a parameter `gamma`.
 #
-# Once you have that weighted graph, labels are propagated along the graph
+# Once we have that weighted graph, labels are propagated along the graph
 # edges. Each sample gradually takes on a soft label distribution that reflects
 # a weighted average of the labels of its neighbors until the process converges.
 # These per-sample distributions are stored in `label_distributions_`.
@@ -113,13 +113,13 @@ plt.show()
 # from the RBF kernel similarities between the new point and the training
 # samples. The averaged values are then renormalized so that they sum to one.
 #
-# Just keep into account that these "probabilities" are graph-based scores, not
+# Just keep in mind that these "probabilities" are graph-based scores, not
 # calibrated posteriors. Don't over-interpret their absolute values.
 
 from sklearn.metrics.pairwise import rbf_kernel
 
 ls = ls100[0]  # fitted LabelSpreading instance
-x_query = np.array([3.5, 1.5]).reshape(1, -1)  # point in the soft blue region
+x_query = np.array([[3.5, 1.5]])  # point in the soft blue region
 
 # Step 1: similarities between query and all training samples
 W = rbf_kernel(x_query, X, gamma=ls.gamma)  # `gamma=20` by default
