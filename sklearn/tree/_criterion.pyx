@@ -1381,7 +1381,7 @@ cdef class MAE(Criterion):
 
         self.node_medians = np.zeros(n_outputs, dtype=np.float64)
 
-        # Note: this criterion has an important memory footprint, which is
+        # Note: this criterion has a  n_samples x 64 bytes memory footprint, which is
         # fine as it's instantiated only once to build an entire tree
         self.left_abs_errors = np.empty(n_samples, dtype=np.float64)
         self.right_abs_errors = np.empty(n_samples, dtype=np.float64)
