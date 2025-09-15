@@ -10,9 +10,9 @@ proportion of labeled training data from small fractions up to the full dataset.
 
 Both methods rely on RBF kernels: Label Spreading uses it by default, and
 Self-training is paired here with :class:`~sklearn.svm.SVC` as base estimator
-(also RBF-based by default) to allow a fair comparison. Self-training with 100%
-labeled data is omitted since it is identical to training a fully supervised SVC
-directly.
+(also RBF-based by default) to allow a fair comparison. With 100% labeled data,
+Self-training reduces to a fully supervised SVC, since there are no unlabeled
+points left to pseudo-label.
 
 In a second section, we explain how `predict_proba` is computed in Label
 Spreading and Self-training.
