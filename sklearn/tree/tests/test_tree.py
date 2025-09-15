@@ -20,7 +20,12 @@ from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
+from sklearn.metrics import (
+    accuracy_score,
+    mean_absolute_error,
+    mean_poisson_deviance,
+    mean_squared_error,
+)
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
@@ -55,7 +60,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     create_memmap_backed_data,
     ignore_warnings,
-    skip_if_32bit,
 )
 from sklearn.utils.fixes import (
     _IS_32BIT,
@@ -336,25 +340,27 @@ def test_diabetes_overfit(name, Tree, criterion):
     )
 
 
-@skip_if_32bit
-@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize(
-    "criterion, max_depth, metric, max_loss",
+    "criterion, metric",
     [
-        ("squared_error", 15, mean_squared_error, 60),
-        ("absolute_error", 20, mean_squared_error, 60),
-        ("friedman_mse", 15, mean_squared_error, 60),
-        ("poisson", 15, mean_poisson_deviance, 30),
+        ("squared_error", mean_squared_error),
+        ("absolute_error", mean_absolute_error),
+        ("friedman_mse", mean_squared_error),
+        ("poisson", mean_poisson_deviance),
     ],
 )
-def test_diabetes_underfit(name, Tree, criterion, max_depth, metric, max_loss):
+def test_diabetes_underfit(Tree, criterion, metric, global_random_seed):
     # check consistency of trees when the depth and the number of features are
     # limited
-
-    reg = Tree(criterion=criterion, max_depth=max_depth, max_features=6, random_state=0)
-    reg.fit(diabetes.data, diabetes.target)
-    loss = metric(diabetes.target, reg.predict(diabetes.data))
-    assert 0 < loss < max_loss
+    kwargs = dict(criterion=criterion, max_features=6, random_state=global_random_seed)
+    X, y = diabetes.data, diabetes.target
+    loss1 = metric(y, Tree(**kwargs, max_depth=1).fit(X, y).predict(X))
+    loss4 = metric(y, Tree(**kwargs, max_depth=4).fit(X, y).predict(X))
+    loss7 = metric(y, Tree(**kwargs, max_depth=7).fit(X, y).predict(X))
+    # less depth => higher error
+    # diabetes.data.shape[0] > 2^7 so it can't overfit to get a 0 error
+    assert 0 < loss7 < loss4 < loss1, (loss7, loss4, loss1)
 
 
 def test_probability():
@@ -437,25 +443,26 @@ def test_numerical_stability():
 
 def test_importances():
     # Check variable importances.
+    n_features = 10
+    n_informative = 3
     X, y = datasets.make_classification(
         n_samples=5000,
-        n_features=10,
-        n_informative=3,
+        n_features=n_features,
+        n_informative=n_informative,
         n_redundant=0,
         n_repeated=0,
         shuffle=False,
-        random_state=0,
     )
 
     for name, Tree in CLF_TREES.items():
-        clf = Tree(random_state=0)
+        clf = Tree()
 
         clf.fit(X, y)
         importances = clf.feature_importances_
-        n_important = np.sum(importances > 0.1)
-
-        assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        assert n_important == 3, "Failed with {0}".format(name)
+        assert importances.shape[0] == n_features, f"Failed with {name}"
+        top = np.argsort(-importances)[:n_informative]
+        # Note: the informative features are the first ones
+        assert set(top) == set(range(n_informative)), f"Failed with {name}"
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
