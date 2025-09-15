@@ -1228,7 +1228,10 @@ def get_routing_for_object(obj=None):
 
     # using hasattr and getattr instead of a try/except since an AttributeError could be
     # raised for other reasons.
-    # TODO(1.9): remove second part of condition when get_metadata_routing is removed
+    # TODO(1.9): remove second part of condition when get_metadata_routing is removed;
+    # also since only routers can then have a `get_metadata_routing` method, we can
+    # `return obj.get_metadata_routing()` instead of
+    # `return deepcopy(obj.get_metadata_routing())`
     if hasattr(obj, "get_metadata_routing") and defines_get_metadata_routing(obj):
         return deepcopy(obj.get_metadata_routing())
 
