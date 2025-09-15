@@ -1305,15 +1305,9 @@ def _py_precompute_absolute_errors(
 ):
     """
     Used for testing precompute_absolute_errors.
-    - If `suffix` is False:
-        Computes the "prefix" AEs, i.e the AEs for each set of indices
-        sample_indices[:i] with i in {1, ..., n}
-    - If `suffix` is True:
-        Computes the "suffix" AEs, i.e the AEs for each set of indices
-        sample_indices[i:] with i in {0, ..., n-1}
     """
     cdef:
-        intp_t n = sample_weight.size
+        intp_t n = end - start if start < end else start - end
         WeightedHeap above = WeightedHeap(n, True)
         WeightedHeap below = WeightedHeap(n, False)
         intp_t k = 0
