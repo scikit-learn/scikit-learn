@@ -191,6 +191,9 @@ def _write_label_html(
         else:
             features_div = f'<div class="features">{features} Output features</div>'
 
+        if name == "passthrough":
+            name_caption = ""
+
         name_caption_div = (
             ""
             if name_caption is None
