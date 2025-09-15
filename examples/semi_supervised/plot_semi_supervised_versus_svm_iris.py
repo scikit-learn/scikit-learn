@@ -166,6 +166,10 @@ print("API   :", st.predict_proba(x_query))
 # In both methods, semi-supervised learning can be understood as constructing a
 # categorical distribution over classes for each sample. Label Spreading keeps
 # these distributions soft and updates them through graph-based propagation.
+# Predictions (including `predict_proba`) remain tied to the training set, which
+# must be stored for inference.
+#
 # Self-training instead uses these distributions internally to decide which
 # unlabeled points to assign pseudo-labels during training, but at prediction
-# time the returned probabilities come directly from the final fitted estimator.
+# time the returned probabilities come directly from the final fitted estimator,
+# and therefore the decision rule does not require storing the training data.
