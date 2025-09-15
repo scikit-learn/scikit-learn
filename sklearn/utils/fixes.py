@@ -21,8 +21,8 @@ try:
 except ImportError:
     pd = None
 
-from ..externals._packaging.version import parse as parse_version
-from .parallel import _get_threadpool_controller
+from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.utils.parallel import _get_threadpool_controller
 
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
@@ -354,7 +354,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian
+    from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:
     from scipy.sparse.csgraph import (
         laplacian,  # noqa: F401  # pragma: no cover

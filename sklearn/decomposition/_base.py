@@ -8,9 +8,13 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
-from ..utils._array_api import _add_to_diagonal, device, get_namespace
-from ..utils.validation import check_array, check_is_fitted, validate_data
+from sklearn.base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+)
+from sklearn.utils._array_api import _add_to_diagonal, device, get_namespace
+from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
 class _BasePCA(

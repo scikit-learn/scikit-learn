@@ -3,14 +3,17 @@
 
 
 import re
+import sys
 import warnings
 from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
-from ... import clone, config_context
-from ...calibration import CalibratedClassifierCV
-from ...cluster import (
+import numpy as np
+
+from sklearn import clone, config_context
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.cluster import (
     HDBSCAN,
     AffinityPropagation,
     AgglomerativeClustering,
@@ -24,10 +27,10 @@ from ...cluster import (
     SpectralClustering,
     SpectralCoclustering,
 )
-from ...compose import ColumnTransformer
-from ...covariance import GraphicalLasso, GraphicalLassoCV
-from ...cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
-from ...decomposition import (
+from sklearn.compose import ColumnTransformer
+from sklearn.covariance import GraphicalLasso, GraphicalLassoCV
+from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
+from sklearn.decomposition import (
     NMF,
     PCA,
     DictionaryLearning,
@@ -43,9 +46,9 @@ from ...decomposition import (
     SparsePCA,
     TruncatedSVD,
 )
-from ...discriminant_analysis import LinearDiscriminantAnalysis
-from ...dummy import DummyClassifier
-from ...ensemble import (
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import (
     AdaBoostClassifier,
     AdaBoostRegressor,
     BaggingClassifier,
@@ -65,9 +68,9 @@ from ...ensemble import (
     VotingClassifier,
     VotingRegressor,
 )
-from ...exceptions import SkipTestWarning
-from ...experimental import enable_halving_search_cv  # noqa: F401
-from ...feature_selection import (
+from sklearn.exceptions import SkipTestWarning
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.feature_selection import (
     RFE,
     RFECV,
     SelectFdr,
@@ -75,14 +78,14 @@ from ...feature_selection import (
     SelectKBest,
     SequentialFeatureSelector,
 )
-from ...frozen import FrozenEstimator
-from ...kernel_approximation import (
+from sklearn.frozen import FrozenEstimator
+from sklearn.kernel_approximation import (
     Nystroem,
     PolynomialCountSketch,
     RBFSampler,
     SkewedChi2Sampler,
 )
-from ...linear_model import (
+from sklearn.linear_model import (
     ARDRegression,
     BayesianRidge,
     ElasticNet,
@@ -117,15 +120,15 @@ from ...linear_model import (
     TheilSenRegressor,
     TweedieRegressor,
 )
-from ...manifold import (
+from sklearn.manifold import (
     MDS,
     TSNE,
     Isomap,
     LocallyLinearEmbedding,
     SpectralEmbedding,
 )
-from ...mixture import BayesianGaussianMixture, GaussianMixture
-from ...model_selection import (
+from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
+from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
@@ -133,18 +136,18 @@ from ...model_selection import (
     RandomizedSearchCV,
     TunedThresholdClassifierCV,
 )
-from ...multiclass import (
+from sklearn.multiclass import (
     OneVsOneClassifier,
     OneVsRestClassifier,
     OutputCodeClassifier,
 )
-from ...multioutput import (
+from sklearn.multioutput import (
     ClassifierChain,
     MultiOutputClassifier,
     MultiOutputRegressor,
     RegressorChain,
 )
-from ...neighbors import (
+from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
     KNeighborsRegressor,
@@ -152,32 +155,31 @@ from ...neighbors import (
     NeighborhoodComponentsAnalysis,
     RadiusNeighborsTransformer,
 )
-from ...neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
-from ...pipeline import FeatureUnion, Pipeline
-from ...preprocessing import (
+from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
+from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.preprocessing import (
     KBinsDiscretizer,
     OneHotEncoder,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
 )
-from ...random_projection import (
-    GaussianRandomProjection,
-    SparseRandomProjection,
-)
-from ...semi_supervised import (
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
+from sklearn.semi_supervised import (
     LabelPropagation,
     LabelSpreading,
     SelfTrainingClassifier,
 )
-from ...svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSVM
-from ...tree import DecisionTreeClassifier, DecisionTreeRegressor
-from .. import all_estimators
-from .._tags import get_tags
-from .._testing import SkipTest
-from ..fixes import _IS_32BIT, parse_version, sp_base_version
+from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSVM
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import all_estimators
+from sklearn.utils._tags import get_tags
+from sklearn.utils._testing import SkipTest
+from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
+
+rng = np.random.RandomState(0)
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
@@ -443,6 +445,7 @@ INIT_PARAMS = {
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
+    SparseCoder: dict(dictionary=rng.normal(size=(5, 3))),
     SparsePCA: dict(max_iter=5),
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
@@ -713,6 +716,38 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SparseCoder: {
+        "check_estimators_dtypes": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_dtype_object": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_transformers_unfitted_stateless": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_fit_idempotent": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_transformer_preserve_dtypes": dict(
+            dictionary=rng.normal(size=(5, 3)).astype(np.float32)
+        ),
+        "check_set_output_transform": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_output_transform_pandas": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_set_output_transform_pandas": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_set_output_transform_polars": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_set_output_transform_polars": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_dataframe_column_names_consistency": dict(
+            dictionary=rng.normal(size=(5, 8))
+        ),
+        "check_estimators_overwrite_params": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimators_fit_returns_self": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_fit2d_1feature": dict(dictionary=rng.normal(size=(5, 1))),
+    },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     SpectralBiclustering: {
@@ -750,7 +785,7 @@ def _tested_estimators(type_filter=None):
                 yield estimator
 
 
-SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
+SKIPPED_ESTIMATORS = [FrozenEstimator]
 
 
 def _construct_instances(Estimator):
@@ -1252,6 +1287,17 @@ if sp_base_version < parse_version("1.11"):
             "scipy < 1.11 implementation of _bsplines does not"
             "support const memory views."
         ),
+    }
+
+linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
+if "pytest_run_parallel" in sys.modules:
+    PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
+        "check_supervised_y_2d": linear_svr_not_thread_safe,
+        "check_regressors_int": linear_svr_not_thread_safe,
+        "check_fit_idempotent": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_dense_data": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_sparse_data": linear_svr_not_thread_safe,
+        "check_regressor_data_not_an_array": linear_svr_not_thread_safe,
     }
 
 

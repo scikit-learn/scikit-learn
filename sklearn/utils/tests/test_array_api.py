@@ -718,7 +718,7 @@ def test_median(namespace, device, dtype_name, axis):
         result_xp = _median(X_xp, axis=axis)
 
         if xp.__name__ != "array_api_strict":
-            # We covert array-api-strict arrays to numpy arrays as `median` is not
+            # We convert array-api-strict arrays to numpy arrays as `median` is not
             # part of the Array API spec
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device

@@ -22,8 +22,9 @@ if [[ $FREE_THREADED_BUILD == "False" && "$PLATFORM_ID" != "win_arm64" ]]; then
     # Dot the Python version for identifying the base Docker image
     PYTHON_DOCKER_IMAGE_PART=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
-    if [[ "$CIBW_PRERELEASE_PYTHONS" =~ [tT]rue ]]; then
-        PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_PART}-rc"
+    # TODO Remove this when Python 3.14 is released and there is a Docker image
+    if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.14" ]]; then
+        PYTHON_DOCKER_IMAGE_PART="3.14-rc"
     fi
 
     # We could have all of the following logic in a Dockerfile but it's a lot

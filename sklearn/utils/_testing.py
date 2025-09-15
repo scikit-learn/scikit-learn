@@ -37,26 +37,22 @@ from numpy.testing import (
     assert_array_less,
 )
 
-from .. import __file__ as sklearn_path
-from . import (
+from sklearn import __file__ as sklearn_path
+from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
     Tags,
     TargetTags,
     TransformerTags,
 )
-from ._array_api import _check_array_api_dispatch
-from .fixes import (
+from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils.fixes import (
     _IS_32BIT,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
-from .multiclass import check_classification_targets
-from .validation import (
-    check_array,
-    check_is_fitted,
-    check_X_y,
-)
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 __all__ = [
     "SkipTest",
@@ -1443,6 +1439,12 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
+        ),
+        # TODO(1.10): remove PassiveAgressive
+        WarningInfo(
+            "ignore",
+            message="Class PassiveAggressive.+is deprecated",
+            category=FutureWarning,
         ),
     ]
 

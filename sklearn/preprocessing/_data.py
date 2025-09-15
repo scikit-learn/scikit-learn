@@ -9,42 +9,50 @@ import numpy as np
 from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     OneToOneFeatureMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array, metadata_routing, resample
-from ..utils._array_api import (
+from sklearn.preprocessing._encoders import OneHotEncoder
+from sklearn.utils import _array_api, check_array, metadata_routing, resample
+from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
+    _max_precision_float_dtype,
     _modify_in_place_if_numpy,
     device,
     get_namespace,
     get_namespace_and_device,
+    size,
+    supported_float_dtypes,
 )
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.extmath import _incremental_mean_and_var, row_norms
-from ..utils.fixes import _yeojohnson_lambda
-from ..utils.sparsefuncs import (
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.fixes import _yeojohnson_lambda
+from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
     mean_variance_axis,
     min_max_axis,
 )
-from ..utils.sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
     check_is_fitted,
     check_random_state,
     validate_data,
 )
-from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -81,7 +89,9 @@ def _is_constant_feature(var, mean, n_samples):
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.
-    eps = np.finfo(np.float64).eps
+    xp, _, device_ = get_namespace_and_device(var, mean)
+    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    eps = xp.finfo(max_float_dtype).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
     return var <= upper_bound
@@ -947,12 +957,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        xp, _, X_device = get_namespace_and_device(X)
         first_call = not hasattr(self, "n_samples_seen_")
         X = validate_data(
             self,
             X,
             accept_sparse=("csr", "csc"),
-            dtype=FLOAT_DTYPES,
+            dtype=supported_float_dtypes(xp, X_device),
             ensure_all_finite="allow-nan",
             reset=first_call,
         )
@@ -966,14 +977,14 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
-        # transform it to a NumPy array of shape (n_features,) required by
+        # transform it to an array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
-        dtype = np.int64 if sample_weight is None else X.dtype
-        if not hasattr(self, "n_samples_seen_"):
-            self.n_samples_seen_ = np.zeros(n_features, dtype=dtype)
-        elif np.size(self.n_samples_seen_) == 1:
-            self.n_samples_seen_ = np.repeat(self.n_samples_seen_, X.shape[1])
-            self.n_samples_seen_ = self.n_samples_seen_.astype(dtype, copy=False)
+        dtype = xp.int64 if sample_weight is None else X.dtype
+        if first_call:
+            self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype, device=X_device)
+        elif size(self.n_samples_seen_) == 1:
+            self.n_samples_seen_ = xp.repeat(self.n_samples_seen_, X.shape[1])
+            self.n_samples_seen_ = xp.astype(self.n_samples_seen_, dtype, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -1031,7 +1042,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             if not self.with_mean and not self.with_std:
                 self.mean_ = None
                 self.var_ = None
-                self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
+                self.n_samples_seen_ += X.shape[0] - xp.isnan(X).sum(axis=0)
 
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = _incremental_mean_and_var(
@@ -1045,7 +1056,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
         # missing values)
-        if np.ptp(self.n_samples_seen_) == 0:
+        if xp.max(self.n_samples_seen_) == xp.min(self.n_samples_seen_):
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
@@ -1055,7 +1066,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 self.var_, self.mean_, self.n_samples_seen_
             )
             self.scale_ = _handle_zeros_in_scale(
-                np.sqrt(self.var_), copy=False, constant_mask=constant_mask
+                xp.sqrt(self.var_), copy=False, constant_mask=constant_mask
             )
         else:
             self.scale_ = None
@@ -1077,6 +1088,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
+        xp, _, X_device = get_namespace_and_device(X)
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
@@ -1086,7 +1098,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse="csr",
             copy=copy,
-            dtype=FLOAT_DTYPES,
+            dtype=supported_float_dtypes(xp, X_device),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1101,9 +1113,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 inplace_column_scale(X, 1 / self.scale_)
         else:
             if self.with_mean:
-                X -= self.mean_
+                X -= xp.astype(self.mean_, X.dtype)
             if self.with_std:
-                X /= self.scale_
+                X /= xp.astype(self.scale_, X.dtype)
         return X
 
     def inverse_transform(self, X, copy=None):
@@ -1122,6 +1134,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
+        xp, _, X_device = get_namespace_and_device(X)
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
@@ -1129,7 +1142,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            dtype=FLOAT_DTYPES,
+            dtype=supported_float_dtypes(xp, X_device),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1144,9 +1157,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 inplace_column_scale(X, self.scale_)
         else:
             if self.with_std:
-                X *= self.scale_
+                X *= xp.astype(self.scale_, X.dtype)
             if self.with_mean:
-                X += self.mean_
+                X += xp.astype(self.mean_, X.dtype)
         return X
 
     def __sklearn_tags__(self):
@@ -1154,6 +1167,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         tags.input_tags.allow_nan = True
         tags.input_tags.sparse = not self.with_mean
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.array_api_support = True
         return tags
 
 
@@ -3487,9 +3501,21 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             "yeo-johnson": self._yeo_johnson_inverse_transform,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            with np.errstate(invalid="ignore"):  # hide NaN warnings
-                X[:, i] = inv_fun(X[:, i], lmbda)
-
+            with warnings.catch_warnings(record=True) as captured_warnings:
+                with np.errstate(invalid="warn"):
+                    X[:, i] = inv_fun(X[:, i], lmbda)
+            if any(
+                "invalid value encountered in power" in str(w.message)
+                for w in captured_warnings
+            ):
+                warnings.warn(
+                    f"Some values in column {i} of the inverse-transformed data "
+                    f"are NaN. This may be caused by numerical issues in the "
+                    f"transformation process, e.g. extremely skewed data. "
+                    f"Consider inspecting the input data or preprocessing it "
+                    f"before applying the transformation.",
+                    UserWarning,
+                )
         return X
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):

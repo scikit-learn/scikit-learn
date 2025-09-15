@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._array_api import get_namespace
+from sklearn.utils._array_api import get_namespace
 
 
 def _attach_unique(y):

@@ -15,8 +15,8 @@ from numbers import Real
 
 import numpy as np
 
-from ..exceptions import UndefinedMetricWarning
-from ..utils._array_api import (
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.utils._array_api import (
     _average,
     _find_matching_floating_dtype,
     _median,
@@ -24,12 +24,10 @@ from ..utils._array_api import (
     get_namespace_and_device,
     size,
 )
-from ..utils._array_api import (
-    _xlogy as xlogy,
-)
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
-from ..utils.validation import (
+from sklearn.utils._array_api import _xlogy as xlogy
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_array,
@@ -1021,10 +1019,11 @@ def explained_variance_score(
     definition.
 
     .. note::
-       The Explained Variance score is similar to the
-       :func:`R^2 score <r2_score>`, with the notable difference that it
-       does not account for systematic offsets in the prediction. Most often
-       the :func:`R^2 score <r2_score>` should be preferred.
+       The Explained Variance score is similar to the :func:`R^2 score <r2_score>`,
+       but the former does not account for systematic offsets in the prediction
+       (such as the intercept in linear models, i.e. different intercepts give
+       the same Explained Variance score). Most often the :func:`R^2 score
+       <r2_score>` should be preferred.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 

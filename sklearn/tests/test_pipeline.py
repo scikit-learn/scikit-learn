@@ -932,7 +932,7 @@ def test_make_pipeline():
             make_pipeline(StandardScaler()),
             lambda est: get_tags(est).estimator_type is None,
         ),
-        (Pipeline([]), lambda est: est._estimator_type is None),
+        (Pipeline([]), lambda est: get_tags(est).estimator_type is None),
     ],
 )
 def test_pipeline_estimator_type(pipeline, check_estimator_type):
@@ -992,6 +992,9 @@ def test_feature_union_weights():
     assert X_fit_transformed_wo_method.shape == (X.shape[0], 7)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_feature_union_parallel():
     # test that n_jobs work for FeatureUnion
     X = JUNK_FOOD_DOCS
@@ -1386,11 +1389,11 @@ def test_pipeline_memory():
     cachedir = mkdtemp()
     try:
         memory = joblib.Memory(location=cachedir, verbose=10)
-        # Test with Transformer + SVC
-        clf = SVC(probability=True, random_state=0)
+        # Test with transformer + logistic regression
+        clf = LogisticRegression(random_state=0)
         transf = DummyTransf()
-        pipe = Pipeline([("transf", clone(transf)), ("svc", clf)])
-        cached_pipe = Pipeline([("transf", transf), ("svc", clf)], memory=memory)
+        pipe = Pipeline([("transf", clone(transf)), ("logreg", clf)])
+        cached_pipe = Pipeline([("transf", transf), ("logreg", clf)], memory=memory)
 
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
@@ -1420,10 +1423,10 @@ def test_pipeline_memory():
         assert ts == cached_pipe.named_steps["transf"].timestamp_
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = SVC(probability=True, random_state=0)
+        clf_2 = LogisticRegression(random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline(
-            [("transf_2", transf_2), ("svc", clf_2)], memory=memory
+            [("transf_2", transf_2), ("logreg", clf_2)], memory=memory
         )
         cached_pipe_2.fit(X, y)
 
@@ -2086,7 +2089,6 @@ def test_transform_tuple_input():
 # =============================
 
 
-# TODO(1.8): change warning to checking for NotFittedError
 @pytest.mark.parametrize(
     "method",
     [
@@ -2137,7 +2139,7 @@ def test_pipeline_warns_not_fitted(method):
             return X
 
     pipe = Pipeline([("estimator", StatelessEstimator())])
-    with pytest.warns(FutureWarning, match="This Pipeline instance is not fitted yet."):
+    with pytest.raises(NotFittedError):
         getattr(pipe, method)([[1]])
 
 
