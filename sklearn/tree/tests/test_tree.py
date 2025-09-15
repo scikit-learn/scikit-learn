@@ -441,7 +441,7 @@ def test_numerical_stability():
             reg.fit(-X, -y)
 
 
-def test_importances():
+def test_importances(global_random_seed):
     # Check variable importances.
     n_features = 10
     n_informative = 3
@@ -452,22 +452,27 @@ def test_importances():
         n_redundant=0,
         n_repeated=0,
         shuffle=False,
+        random_state=global_random_seed,
     )
 
     for name, Tree in CLF_TREES.items():
-        clf = Tree()
-
-        clf.fit(X, y)
-        importances = clf.feature_importances_
-        assert importances.shape[0] == n_features, f"Failed with {name}"
-        top = np.argsort(-importances)[:n_informative]
-        # Note: the informative features are the first ones
-        assert set(top) == set(range(n_informative)), f"Failed with {name}"
+        n_fail = 0
+        for _ in range(5):
+            clf = Tree(random_state=global_random_seed)
+            clf.fit(X, y)
+            importances = clf.feature_importances_
+            assert importances.shape[0] == n_features, f"Failed with {name}"
+            top = np.argsort(-importances)[:n_informative]
+            # Note: the informative features are the first ones
+            if set(top) != set(range(n_informative)):
+                n_fail += 1
+        assert n_fail <= 1, f"Failed with {name}"
 
     # Check on iris that importances are the same for all builders
-    clf = DecisionTreeClassifier(random_state=0)
+    clf = DecisionTreeClassifier(random_state=0)  # dfs builder
     clf.fit(iris.data, iris.target)
     clf2 = DecisionTreeClassifier(random_state=0, max_leaf_nodes=len(iris.data))
+    # ^ bfs builder
     clf2.fit(iris.data, iris.target)
 
     assert_array_equal(clf.feature_importances_, clf2.feature_importances_)
