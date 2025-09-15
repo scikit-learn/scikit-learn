@@ -1303,9 +1303,7 @@ def _py_precompute_absolute_errors(
     const intp_t start,
     const intp_t end,
 ):
-    """
-    Used for testing precompute_absolute_errors.
-    """
+    """Used for testing precompute_absolute_errors."""
     cdef:
         intp_t n = end - start if start < end else start - end
         WeightedHeap above = WeightedHeap(n, True)
