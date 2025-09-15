@@ -2885,7 +2885,7 @@ def test_sort_log2_build():
     assert_array_equal(samples, expected_samples)
 
 
-def test_absolute_errors_precomputation_function():
+def test_absolute_errors_precomputation_function(global_random_seed):
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
     (used by DecisionTreeRegressor(criterion="absolute_error")).
@@ -2911,28 +2911,30 @@ def test_absolute_errors_precomputation_function():
         # 2) compute the AE
         return (np.abs(y - median) * w).sum()
 
+    rng = np.random.RandomState(global_random_seed)
+
     for n in [3, 5, 10, 20, 50, 100]:
-        y = np.random.uniform(size=(n, 1))
-        w = np.random.rand(n)
+        y = rng.uniform(size=(n, 1))
+        w = rng.rand(n)
         indices = np.arange(n)
-        abs_errors = _py_precompute_absolute_errors(y, w, indices)
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, 0, n)
         expected = compute_prefix_abs_errors_naive(y, w)
         assert np.allclose(abs_errors, expected)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, suffix=True)
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, n - 1, -1)
         expected = compute_prefix_abs_errors_naive(y[::-1], w[::-1])[::-1]
         assert np.allclose(abs_errors, expected)
 
-        x = np.random.rand(n)
+        x = rng.rand(n)
         indices = np.argsort(x)
         w[:] = 1
         y_sorted = y[indices]
         w_sorted = w[indices]
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices)
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, 0, n)
         expected = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
         assert np.allclose(abs_errors, expected)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, suffix=True)
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, n - 1, -1)
         expected = compute_prefix_abs_errors_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
         assert np.allclose(abs_errors, expected)

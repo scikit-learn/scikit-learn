@@ -1300,7 +1300,8 @@ def _py_precompute_absolute_errors(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
-    bint suffix=False
+    const intp_t start,
+    const intp_t end,
 ):
     """
     Used for testing precompute_absolute_errors.
@@ -1316,14 +1317,8 @@ def _py_precompute_absolute_errors(
         WeightedHeap above = WeightedHeap(n, True)
         WeightedHeap below = WeightedHeap(n, False)
         intp_t k = 0
-        intp_t start = 0
-        intp_t end = n
         float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
         float64_t[::1] medians = np.zeros(n, dtype=np.float64)
-
-    if suffix:
-        start = n - 1
-        end = -1
 
     precompute_absolute_errors(
         ys, sample_weight, sample_indices, above, below,
