@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
+import itertools
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -512,15 +513,25 @@ def test_column_transformer_list():
     assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_column_transformer_sparse_stacking(csr_container):
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+@pytest.mark.parametrize(
+        "csr_container, constructor_name",
+        itertools.product(CSR_CONTAINERS, ["numpy", "polars", "pandas"])
+)
+def test_column_transformer_sparse_stacking(csr_container, constructor_name):
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    if constructor_name != "numpy":
+        pytest.importorskip(constructor_name)
+        X = _convert_container(
+            X, constructor_name, columns_name=["first", "second"]
+        )
+
     col_trans = ColumnTransformer(
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.8,
     )
-    col_trans.fit(X_array)
-    X_trans = col_trans.transform(X_array)
+    col_trans.fit(X)
+    X_trans = col_trans.transform(X)
     assert sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
@@ -531,8 +542,8 @@ def test_column_transformer_sparse_stacking(csr_container):
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.1,
     )
-    col_trans.fit(X_array)
-    X_trans = col_trans.transform(X_array)
+    col_trans.fit(X)
+    X_trans = col_trans.transform(X)
     assert not sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
