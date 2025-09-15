@@ -438,16 +438,25 @@ def get_namespace_and_device(
 
 
 def move_to(*arrays, xp_ref, device_ref):
-    """Convert `arrays` to `namespace` and `device`."""
+    """Convert `arrays` to `namespace` and `device`.
+
+    * If `xp_ref` is not numpy, `arrays` cannot contain sparse arrays.
+    * If `xp_ref` is numpy, sparse arrays are returned unaltered.
+    * If any `arrays` is None, None will be returned.
+    """
+    print(f"{xp_ref=}")
 
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
-    if all(sparse_mask[i] or none_mask[i] for i in range(len(arrays))):
-        return arrays
     if any(sparse_mask) and not _is_numpy_namespace(xp_ref):
         raise TypeError(
             "Array inputs cannot contain both sparse arrays and non-NumPy arrays."
         )
+    # Early return if all `arrays` are sparse or None (to numpy)
+    if all(
+        sparse_mask[i] or none_mask[i] for i in range(len(arrays))
+    ) and _is_numpy_namespace(xp_ref):
+        return arrays
 
     converted_arrays = []
 

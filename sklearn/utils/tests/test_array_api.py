@@ -109,27 +109,27 @@ def test_get_namespace_array_api(monkeypatch):
             get_namespace(X_xp)
 
 
-@pytest.mark.parametrize(
-    "array_namespace, array_device", [("cupy", None), ("numpy", None)]
-)
 def test_move_to_array_api_conversions():
     """Check conversion"""
-    xp_ref = _array_api_for_tests("torch", "cuda")
-    device_ref = xp_ref.asarray([1], device="cuda").device
+    xp_torch = _array_api_for_tests("torch", "cuda")
+    device_torch = xp_torch.asarray([1], device="cuda").device
 
-    xp_1 = _array_api_for_tests("cupy", None)
-    array_1 = xp_1.asarray([1, 2, 3], device=None)
+    xp_cupy = _array_api_for_tests("cupy", None)
+    array_cupy = xp_cupy.asarray([1, 2, 3], device=None)
 
-    array_2 = numpy.asarray([1, 2, 3], device=None)
+    array_np = numpy.asarray([1, 2, 3], device=None)
 
-    array_1_out, array_2_out = move_to(array_1, array_2, xp_ref, device_ref)
+    array_1_out, array_2_out = move_to(
+        array_cupy, array_np, xp_ref=xp_torch, xp_device=device_torch
+    )
     for array in (array_1_out, array_2_out):
-        assert get_namespace(array) == xp_ref
-        assert device(array) == device_ref
+        assert get_namespace(array) == xp_torch
+        assert device(array) == device_torch
 
 
-def test_move_to_sparse_none():
+def test_move_to_sparse():
     """Check sparse inputs are handled correctly."""
+    xp_numpy = _array_api_for_tests("numpy", None)
     xp_torch = _array_api_for_tests("torch", "cpu")
     device_cpu = xp_torch.asarray([1]).device
 
@@ -137,27 +137,22 @@ def test_move_to_sparse_none():
     sparse2 = sp.csr_matrix([0, 1, 0, 1])
     numpy_array = numpy.array([1, 2, 3])
 
-    # only sparse arrays
-    result1, result2 = move_to(sparse1, sparse2, xp_torch, device_cpu)
+    # sparse to numpy
+    result1, result2 = move_to(sparse1, sparse2, xp_ref=xp_numpy, device_ref=None)
     assert result1 is sparse1
     assert result2 is sparse2
 
-    # only sparse and None
-    result1, result2 = move_to(sparse1, None, xp_torch, device_cpu)
+    # sparse and None to numpy
+    result1, result2 = move_to(sparse1, None, xp_ref=xp_numpy, device_ref=None)
     assert result1 is sparse1
     assert result2 is None
 
-    # sparse and non-sparse array input, convert to non-Numpy
-    msg = "Array inputs cannot both sparse arrays and non-NumPy arrays"
+    # sparse to non-Numpy
+    msg = "Array inputs cannot contain both sparse arrays and non-NumPy arrays"
     with pytest.raises(TypeError, match=msg):
-        move_to(sparse1, numpy_array, xp_torch, device_cpu)
-
-    # sparse and non-sparse array input, convert to Numpy
-    xp_numpy = _array_api_for_tests("numpy", None)
-    torch_array = xp_torch.asarray([1, 2, 3])
-    result1, result2 = move_to(sparse1, torch_array, xp_numpy, None)
-    assert result1 is sparse1
-    assert get_namespace(result2) == xp_numpy
+        move_to(sparse1, numpy_array, xp_ref=xp_torch, device_ref=device_cpu)
+    with pytest.raises(TypeError, match=msg):
+        move_to(sparse1, None, xp_ref=xp_torch, device_ref=device_cpu)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
