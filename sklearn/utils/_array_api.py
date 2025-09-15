@@ -444,8 +444,6 @@ def move_to(*arrays, xp_ref, device_ref):
     * If `xp_ref` is numpy, sparse arrays are returned unaltered.
     * If any `arrays` is None, None will be returned.
     """
-    print(f"{xp_ref=}")
-
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
     if any(sparse_mask) and not _is_numpy_namespace(xp_ref):
