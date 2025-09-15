@@ -27,6 +27,7 @@ performance.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -71,6 +72,12 @@ classifiers = (ls10, st10, ls30, st30, ls100, rbf_svc)
 fig, axes = plt.subplots(nrows=3, ncols=2, sharex="col", sharey="row", figsize=(10, 12))
 axes = axes.ravel()
 
+handles = [
+    mpatches.Patch(facecolor=tab10(i), edgecolor="black", label=iris.target_names[i])
+    for i in np.unique(y)
+]
+handles.append(mpatches.Patch(facecolor="white", edgecolor="black", label="Unlabeled"))
+
 for ax, (clf, y_train, title) in zip(axes, classifiers):
     DecisionBoundaryDisplay.from_estimator(
         clf,
@@ -82,8 +89,12 @@ for ax, (clf, y_train, title) in zip(axes, classifiers):
     colors = [color_map[label] for label in y_train]
     ax.scatter(X[:, 0], X[:, 1], c=colors, edgecolor="black")
     ax.set_title(title)
-
-fig.suptitle("Unlabeled points are colored white", y=1)
+fig.suptitle(
+    "Semi-supervised decision boundaries with varying fractions of labeled data", y=1
+)
+fig.legend(
+    handles=handles, loc="lower center", ncol=len(handles), bbox_to_anchor=(0.5, -0.02)
+)
 plt.tight_layout()
 plt.show()
 
