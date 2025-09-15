@@ -232,11 +232,11 @@ def _write_label_html(
                 features_div = "".join([features_div, f"<li>{feature}</li>"])
             features_div = "".join([features_div, "Output features</ul></div>"])
 
-        fmt_str = "".join([fmt_str, features_div])
+        fmt_str = "".join([fmt_str, "</div></div>", features_div])
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
-    out.write("</div></div>")  # outer_class inner_class
+        out.write("</div></div>")  # outer_class inner_class
 
 
 def _get_visual_block(estimator):
