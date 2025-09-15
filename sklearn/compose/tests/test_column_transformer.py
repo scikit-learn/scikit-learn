@@ -514,17 +514,15 @@ def test_column_transformer_list():
 
 
 @pytest.mark.parametrize(
-        "csr_container, constructor_name",
-        itertools.product(CSR_CONTAINERS, ["numpy", "polars", "pandas"])
+    "csr_container, constructor_name",
+    itertools.product(CSR_CONTAINERS, ["numpy", "polars", "pandas"]),
 )
 def test_column_transformer_sparse_stacking(csr_container, constructor_name):
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     if constructor_name != "numpy":
         pytest.importorskip(constructor_name)
-        X = _convert_container(
-            X, constructor_name, columns_name=["first", "second"]
-        )
+        X = _convert_container(X, constructor_name, columns_name=["first", "second"])
 
     col_trans = ColumnTransformer(
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
