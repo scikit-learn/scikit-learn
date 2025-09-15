@@ -189,24 +189,6 @@ jobs:
         with:
           miniforge-version: latest
 
-      # PyPI not yet hosting SciPy wheel as WoA PR of SciPy recently merged.
-      # This workaround will be removed once PyPI hosts SciPy wheel.
-      - name: Patch pyproject.toml for WoA
-        if: matrix.os == 'windows-11-arm'
-        shell: bash
-        run: |
-          echo "Patching pyproject.toml to force SciPy from pypi.anaconda.org"
-
-          PY_VER=${{ matrix.python }}
-          CP_TAG="cp${PY_VER}-cp${PY_VER}"
-
-          # Handle free-threaded builds (313t)
-          if [[ "$PY_VER" == "313t" ]]; then
-            CP_TAG="cp313-cp313t"
-          fi
-
-          sed -i "s|scipy>=1\.8\.0|scipy @ https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/scipy/1.17.0.dev0/scipy-1.17.0.dev0-${CP_TAG}-win_arm64.whl|" "$GITHUB_WORKSPACE/pyproject.toml"
-
       - name: Build and test wheels
         env:
           CIBW_ENABLE: ${{ matrix.cibw_enable }}
