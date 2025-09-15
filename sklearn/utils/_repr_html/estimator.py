@@ -186,11 +186,6 @@ def _write_label_html(
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
 
-        if features is None or features == "":
-            features_div = ""
-        else:
-            features_div = f'<div class="features">{features} Output features</div>'
-
         if name == "passthrough":
             name_caption = ""
 
@@ -223,14 +218,21 @@ def _write_label_html(
         )
 
         if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>{features_div}"])
+            fmt_str = "".join([fmt_str, f"{params}</div>"])
         elif name_details and ("Pipeline" not in name):
             if name == "passthrough":
                 name_details = ""
-            fmt_str = "".join(
-                [fmt_str, f"<pre>{name_details}</pre></div>{features_div}"]
-            )
+            fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
+        if len(features) == 0:
+            features_div = ""
+        else:
+            features_div = '<div class="features"><ul>'
+            for feature in features:
+                features_div += f"<li>{feature}</li>"
+            features_div += "Output features</ul></div>"
+
+        fmt_str = "".join([fmt_str, features_div])
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
@@ -406,7 +408,7 @@ def _write_estimator_html(
             and not hasattr(estimator, "steps")
             and hasattr(estimator, "n_features_in_")
         ):
-            features = str(estimator.get_feature_names_out())
+            features = estimator.get_feature_names_out()
         else:
             features = ""
 

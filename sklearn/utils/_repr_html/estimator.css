@@ -413,6 +413,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 .features {
     font-size: smaller;
+    display: block;
     width: 100%;
     padding-top: 3%;
     padding-bottom: 3%;
