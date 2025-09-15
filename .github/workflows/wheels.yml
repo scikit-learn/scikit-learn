@@ -98,6 +98,12 @@ jobs:
             python: 313t
             platform_id: win_arm64
             cibw_enable: cpython-freethreading
+          - os: windows-11-arm
+            python: 314
+            platform_id: win_arm64
+          - os: windows-11-arm
+            python: 314t
+            platform_id: win_arm64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
