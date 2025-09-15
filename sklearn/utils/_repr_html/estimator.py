@@ -229,8 +229,8 @@ def _write_label_html(
         else:
             features_div = '<div class="features"><ul>'
             for feature in features:
-                features_div += f"<li>{feature}</li>"
-            features_div += "Output features</ul></div>"
+                features_div = "".join([features_div, f"<li>{feature}</li>"])
+            features_div = "".join([features_div, "Output features</ul></div>"])
 
         fmt_str = "".join([fmt_str, features_div])
         out.write(fmt_str)
