@@ -1185,7 +1185,7 @@ def get_routing_for_object(obj=None):
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` or a
     :class:`~sklearn.utils.metadata_routing.MetadataRequest` from the given input.
 
-    This function always returns a copy or an instance constructed from the
+    This function always returns a copy or a new instance constructed from the
     input, such that changing the output of this function will not change the
     original object.
 
@@ -1208,6 +1208,23 @@ def get_routing_for_object(obj=None):
     obj : MetadataRequest or MetadataRouter
         A ``MetadataRequest`` or a ``MetadataRouter`` taken or created from
         the given object.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.linear_model import LogisticRegressionCV
+    >>> from sklearn.utils.metadata_routing import get_routing_for_object
+    >>> X, y = make_classification()
+    >>> pipe = Pipeline([('scaler', StandardScaler()), ('lg', LogisticRegressionCV())])
+    >>> pipe.fit(X, y) # doctest: +SKIP
+    >>> print(type(get_routing_for_object(pipe)))
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
+    >>> print(type(get_routing_for_object(pipe.named_steps.scaler)))
+    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
+    >>> print(type(get_routing_for_object(pipe.named_steps.lg)))
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
@@ -1578,9 +1595,23 @@ def process_routing(_obj, _method, /, **kwargs):
     a call to this function would be:
     ``process_routing(self, "fit", sample_weight=sample_weight, **fit_params)``.
 
+    Internally, the function uses the router's `MetadataRouter` object (as
+    returned by a call to its `get_metadata_routing` method) to validate
+    per method that the routed metadata had been requested by the underlying
+    estimator, and extracts a mapping of the given metadata to the requested
+    metadata based on the routing information defined by the `MetadataRouter`.
+
     Note that if routing is not enabled and ``kwargs`` is empty, then it
     returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
     is always an empty dictionary.
+
+    The output of this function is a :class:`~sklearn.utils.Bunch` that has a key for
+    each consuming object and those hold keys for their consuming methods, which then
+    contain keys for the metadata which should be routed to them.
+
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
     .. versionadded:: 1.3
 
@@ -1599,12 +1630,39 @@ def process_routing(_obj, _method, /, **kwargs):
     Returns
     -------
     routed_params : Bunch
-        A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
-        {metadata: value}}}`` which can be used to pass the required metadata to
-        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
-        {metadata: value}}}`` which can be used to pass the required metadata to
-        corresponding methods or corresponding child objects. The object names
-        are those defined in `obj.get_metadata_routing()`.
+        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name":
+        {"method_name": {metadata: value}}}`` which can be used to pass the
+        required metadata to corresponding methods or corresponding child objects.
+        The object names are those defined in `obj.get_metadata_routing()`.
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator, ClassifierMixin
+    >>> from sklearn.utils.metadata_routing import (MetadataRouter, MethodMapping,
+    ...             process_routing)
+    >>> from sklearn.linear_model import LinearRegression
+    >>> set_config(enable_metadata_routing=True)
+    >>> X, y = make_classification(random_state=0)
+    >>> sample_weight = np.ones_like(y)
+    >>> class MetaClassifier(ClassifierMixin, BaseEstimator):
+    >>>     def __init__(self, estimator):
+    >>>         self.estimator = estimator
+    >>>     def get_metadata_routing(self):
+    >>>         router = MetadataRouter(owner=self).add(
+    >>>             estimator=self.estimator,
+    >>>             method_mapping=MethodMapping()
+    >>>             .add(caller="fit", callee="fit")
+    >>>         )
+    >>>         return router
+    >>>     def fit(self, X, y, **fit_params):
+    >>>         routed_params = process_routing(self, "fit", **fit_params)
+    >>>         print(routed_params)
+    >>>         return self
+    >>> MetaClassifier(estimator=LinearRegression().set_fit_request(
+    ...             sample_weight=True)).fit(X, y, sample_weight=sample_weight)
+    >>> set_config(enable_metadata_routing=False)
     """
     if not kwargs:
         # If routing is not enabled and kwargs are empty, then we don't have to
