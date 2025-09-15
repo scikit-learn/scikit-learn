@@ -1,3 +1,0 @@
-- The function :function:`utils.murmurhash.murmurhash3_32` is now deprecated and will be
-  removed in version 1.10.
-  By :user:`François Paugam <FrancoisPgm>`.

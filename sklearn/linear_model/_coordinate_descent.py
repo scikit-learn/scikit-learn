@@ -710,6 +710,7 @@ def enet_path(
                 rng,
                 random,
                 positive,
+                do_screening,
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
