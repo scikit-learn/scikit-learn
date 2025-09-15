@@ -2,6 +2,7 @@
 Test the ColumnTransformer.
 """
 
+import itertools
 import pickle
 import re
 import warnings
@@ -11,7 +12,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
-import itertools
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
