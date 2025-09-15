@@ -158,7 +158,6 @@ cdef class DensePartitioner:
 
         The missing values are not included when iterating through the feature values.
         """
-        cdef float32_t[::1] feature_values = self.feature_values
         cdef intp_t end_non_missing = (
             self.end if self.missing_on_the_left
             else self.end - self.n_missing)
@@ -172,7 +171,7 @@ cdef class DensePartitioner:
             p[0] += 1
             while (
                 p[0] < end_non_missing and
-                feature_values[p[0]] <= feature_values[p[0] - 1] + FEATURE_THRESHOLD
+                self.feature_values[p[0]] <= self.feature_values[p[0] - 1] + FEATURE_THRESHOLD
             ):
                 p[0] += 1
             p_prev[0] = p[0] - 1
@@ -378,9 +377,7 @@ cdef class SparsePartitioner:
 
     cdef inline void next_p(self, intp_t* p_prev, intp_t* p) noexcept nogil:
         """Compute the next p_prev and p for iterating over feature values."""
-        cdef:
-            intp_t p_next
-            float32_t[::1] feature_values = self.feature_values
+        cdef intp_t p_next
 
         if p[0] + 1 != self.end_negative:
             p_next = p[0] + 1
@@ -388,7 +385,7 @@ cdef class SparsePartitioner:
             p_next = self.start_positive
 
         while (p_next < self.end and
-                feature_values[p_next] <= feature_values[p[0]] + FEATURE_THRESHOLD):
+                self.feature_values[p_next] <= self.feature_values[p[0]] + FEATURE_THRESHOLD):
             p[0] = p_next
             if p[0] + 1 != self.end_negative:
                 p_next = p[0] + 1

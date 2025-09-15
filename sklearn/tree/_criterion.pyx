@@ -413,8 +413,6 @@ cdef class ClassificationCriterion(Criterion):
             child to the left child.
         """
         cdef intp_t pos = self.pos
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef const float64_t[:] sample_weight = self.sample_weight
 
         cdef intp_t i
         cdef intp_t p
@@ -431,10 +429,10 @@ cdef class ClassificationCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_po.
         if (new_pos - pos) <= (self.end - new_pos):
             for p in range(pos, new_pos):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k, <intp_t> self.y[i, k]] += w
@@ -445,10 +443,10 @@ cdef class ClassificationCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(self.end - 1, new_pos - 1, -1):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k, <intp_t> self.y[i, k]] -= w
@@ -826,9 +824,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-
         cdef intp_t pos = self.pos
 
         cdef intp_t i
@@ -845,10 +840,10 @@ cdef class RegressionCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_pos.
         if (new_pos - pos) <= (self.end - new_pos):
             for p in range(pos, new_pos):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k] += w * self.y[i, k]
@@ -858,10 +853,10 @@ cdef class RegressionCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(self.end - 1, new_pos - 1, -1):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k] -= w * self.y[i, k]
