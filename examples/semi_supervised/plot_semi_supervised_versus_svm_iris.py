@@ -62,7 +62,11 @@ st30 = (
     y_30,
     "Self-training with 30% labeled data",
 )
-rbf_svc = (base_classifier.fit(X, y), y, "SVC with rbf kernel (100% labeled data)")
+rbf_svc = (
+    base_classifier.fit(X, y),
+    y,
+    "SVC with rbf kernel\n(equivalent to Self-training with 100% labeled data)",
+)
 
 tab10 = plt.get_cmap("tab10")
 color_map = {cls: tab10(cls) for cls in np.unique(y)}
