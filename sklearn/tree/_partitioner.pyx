@@ -154,19 +154,25 @@ cdef class DensePartitioner:
         self.n_missing = n_missing
 
     cdef inline void next_p(self, intp_t* p_prev, intp_t* p) noexcept nogil:
-        """Compute the next p_prev and p for iterating over feature values.
+        """
+        Compute the next p_prev and p for iterating over feature values.
 
-        The missing values are not included when iterating through the feature values.
+        TODO:
+        - if self.missing_on_the_left: go over the p in [start + n_missing + 1, end[
+        - else: go over the p in [start, end_non_missing]
         """
         cdef intp_t end_non_missing = (
             self.end if self.missing_on_the_left
             else self.end - self.n_missing)
 
         if p[0] == end_non_missing and not self.missing_on_the_left:
+            # skip the missing values up to the end
+            # (which will end the for loop in the best split function)
             p[0] = self.end
             p_prev[0] = self.end
         else:
             if self.missing_on_the_left and p[0] == self.start:
+                # skip the missing values up to the first non-missing value:
                 p[0] = self.start + self.n_missing
             p[0] += 1
             while (
