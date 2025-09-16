@@ -1219,12 +1219,13 @@ def get_routing_for_object(obj=None):
     >>> X, y = make_classification()
     >>> pipe = Pipeline([('scaler', StandardScaler()), ('lg', LogisticRegressionCV())])
     >>> pipe.fit(X, y) # doctest: +SKIP
-    >>> print(type(get_routing_for_object(pipe)))
-    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
-    >>> print(type(get_routing_for_object(pipe.named_steps.scaler)))
-    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
-    >>> print(type(get_routing_for_object(pipe.named_steps.lg)))
-    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
+    Pipeline(steps=[('scaler', StandardScaler()), ('lg', LogisticRegressionCV())])
+    >>> type(get_routing_for_object(pipe))
+    sklearn.utils._metadata_requests.MetadataRouter
+    >>> type(get_routing_for_object(pipe.named_steps.scaler))
+    sklearn.utils._metadata_requests.MetadataRequest
+    >>> type(get_routing_for_object(pipe.named_steps.lg))
+    sklearn.utils._metadata_requests.MetadataRouter
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
@@ -1637,8 +1638,9 @@ def process_routing(_obj, _method, /, **kwargs):
 
     Examples
     --------
-    >>> from sklearn import set_config
     >>> import numpy as np
+    >>> from sklearn import set_config
+    >>> from sklearn.datasets import make_classification
     >>> from sklearn.base import BaseEstimator, ClassifierMixin
     >>> from sklearn.utils.metadata_routing import (MetadataRouter, MethodMapping,
     ...             process_routing)
@@ -1658,10 +1660,10 @@ def process_routing(_obj, _method, /, **kwargs):
     >>>         return router
     >>>     def fit(self, X, y, **fit_params):
     >>>         routed_params = process_routing(self, "fit", **fit_params)
-    >>>         print(routed_params)
     >>>         return self
     >>> MetaClassifier(estimator=LinearRegression().set_fit_request(
     ...             sample_weight=True)).fit(X, y, sample_weight=sample_weight)
+    MetaClassifier(estimator=LinearRegression())
     >>> set_config(enable_metadata_routing=False)
     """
     if not kwargs:
