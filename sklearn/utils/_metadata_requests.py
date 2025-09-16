@@ -865,6 +865,30 @@ class MetadataRouter:
     ----------
     owner : object
         The object to which these requests belong.
+
+    Examples
+    --------
+    >>> from pprint import pprint
+    >>> from sklearn import set_config
+    >>> from sklearn.feature_selection import SelectFromModel
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+    >>> set_config(enable_metadata_routing=True)
+    >>> meta_estimator = SelectFromModel(
+    ...     estimator=LinearRegression().set_fit_request(sample_weight=True)
+    ... )
+    >>> router = MetadataRouter(owner=meta_estimator).add(
+    ...     estimator=meta_estimator.estimator,
+    ...     method_mapping=MethodMapping()
+    ...     .add(caller="partial_fit", callee="partial_fit")
+    ...     .add(caller="fit", callee="fit"),
+    ... )
+    >>> pprint(router)
+    {'estimator': {'mapping': [{'caller': 'partial_fit', 'callee': 'partial_fit'},
+                           {'caller': 'fit', 'callee': 'fit'}],
+               'router': {'fit': {'sample_weight': True},
+                          'score': {'sample_weight': None}}}}
+    >>> set_config(enable_metadata_routing=False)
     """
 
     # this is here for us to use this attribute's value instead of doing
