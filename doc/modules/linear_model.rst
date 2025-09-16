@@ -62,6 +62,7 @@ example, when data are collected without an experimental design.
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 
 Non-Negative Least Squares
 --------------------------
@@ -98,10 +99,6 @@ Regression
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
 coefficients. The ridge coefficients minimize a penalized residual sum
 of squares:
-
-See also the example :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
-illustrating how Ridge coefficients change with the regularization strength.
-
 
 
 .. math::
@@ -237,19 +234,12 @@ Cross-Validation.
 Lasso
 =====
 
-
-
-
 The :class:`Lasso` is a linear model that estimates sparse coefficients, i.e., it is
 able to set coefficients exactly to zero.
 It is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
 features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
-
-For end-to-end Lasso model selection using AIC/BIC and cross-validation,
-see :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`.
-
 Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
