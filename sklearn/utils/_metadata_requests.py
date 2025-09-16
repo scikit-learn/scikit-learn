@@ -561,10 +561,11 @@ class MetadataRequest:
     """Contains the metadata request info of a consumer.
 
     Instances of `MethodMetadataRequest` are used in this class for each
-    available method under `metadatarequest.{method}`.
+    available method under `MetadataRequest(owner=obj).{method}`.
 
-    Consumer-only classes such as simple estimators return a serialized
-    version of this class as the output of `get_metadata_routing()`.
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
     .. versionadded:: 1.3
 
@@ -572,6 +573,22 @@ class MetadataRequest:
     ----------
     owner : object
         The object to which these requests belong.
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> set_config(enable_metadata_routing=True)
+    >>> lr = (
+    ...     LogisticRegression()
+    ...     .set_fit_request(sample_weight=True)
+    ...     .set_score_request(sample_weight=False)
+    ... )
+    >>> lr._metadata_request
+    {'fit': {'sample_weight': True}, 'score': {'sample_weight': False}}
+    >>> type(lr._metadata_request)
+    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
+    >>> set_config(enable_metadata_routing=False)
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -763,6 +780,10 @@ class MethodMapping:
     Iterating through an instance of this class yields
     ``MethodPair(caller, callee)`` instances.
 
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+
     .. versionadded:: 1.3
     """
 
@@ -833,6 +854,10 @@ class MetadataRouter:
     ``router`` is either a
     :class:`~sklearn.utils.metadata_routing.MetadataRequest` or another
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
+
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
     .. versionadded:: 1.3
 

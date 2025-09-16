@@ -6,8 +6,8 @@ Metadata Routing
 .. currentmodule:: sklearn
 
 This document shows how you can use the :ref:`metadata routing mechanism
-<metadata_routing>` in scikit-learn to route metadata to the estimators,
-scorers, and CV splitters consuming them.
+<metadata_routing>` in scikit-learn to build estimators that route metadata
+to other estimators, scorers, and CV splitters consuming them.
 
 To better understand the following document, we need to introduce two concepts:
 routers and consumers. A router is an object which forwards some given data and
