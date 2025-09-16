@@ -842,9 +842,9 @@ class PCA(_BasePCA):
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         solver = getattr(self, "_fit_svd_solver", self.fit_solver)
         tags.array_api_support = (
-            solver == "full"
-            or solver == "randomized"
-            and self.power_iteration_normalizer == "QR"
+            solver not in ["arpack", "randomized"]
+            or (solver == "randomized"
+            and self.power_iteration_normalizer == "QR"))
         )
         tags.input_tags.sparse = self.svd_solver in (
             "auto",
