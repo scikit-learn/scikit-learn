@@ -771,7 +771,7 @@ MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
 class MethodMapping:
-    """Stores the mapping between caller and callee methods for a :term:`router`.
+    """Stores the mapping between `caller` and `callee` methods for a :term:`router`.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between the router's methods and a sub-object (a
@@ -785,6 +785,12 @@ class MethodMapping:
     <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
     .. versionadded:: 1.3
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import MethodMapping
+    >>> MethodMapping().add(caller="fit", callee="split")
+    [{'caller': 'fit', 'callee': 'split'}]
     """
 
     def __init__(self):
