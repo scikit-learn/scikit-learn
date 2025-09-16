@@ -1760,7 +1760,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 feature_names_out = self._transformers_feature_names_out[i]
             else:
                 raise AttributeError(
-                    f"Transformer {str(name)} (type {type(trans).__name__}) does not "
+                    f"Transformer {name} (type {type(trans).__name__}) does not "
                     "provide get_feature_names_out."
                 )
             transformer_with_feature_names_out.append((name, feature_names_out))
