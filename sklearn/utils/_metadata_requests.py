@@ -1221,11 +1221,11 @@ def get_routing_for_object(obj=None):
     >>> pipe.fit(X, y) # doctest: +SKIP
     Pipeline(steps=[('scaler', StandardScaler()), ('lg', LogisticRegressionCV())])
     >>> type(get_routing_for_object(pipe))
-    sklearn.utils._metadata_requests.MetadataRouter
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     >>> type(get_routing_for_object(pipe.named_steps.scaler))
-    sklearn.utils._metadata_requests.MetadataRequest
+    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
     >>> type(get_routing_for_object(pipe.named_steps.lg))
-    sklearn.utils._metadata_requests.MetadataRouter
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
