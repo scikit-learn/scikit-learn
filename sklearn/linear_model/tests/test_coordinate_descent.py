@@ -103,16 +103,25 @@ def test_cython_solver_equivalence():
         "positive": False,
     }
 
-    coef_1 = np.zeros(X.shape[1])
-    coef_2, coef_3, coef_4 = coef_1.copy(), coef_1.copy(), coef_1.copy()
+    def zc():
+        """Create a new zero coefficient array (zc)."""
+        return np.zeros(X.shape[1])
 
     # For alpha_max, coefficients must all be zero.
-    cd_fast.enet_coordinate_descent(
-        w=coef_1, alpha=alpha_max, X=X_centered, y=y, **params
-    )
-    assert_allclose(coef_1, 0)
+    coef_1 = zc()
+    for do_screening in [True, False]:
+        cd_fast.enet_coordinate_descent(
+            w=coef_1,
+            alpha=alpha_max,
+            X=X_centered,
+            y=y,
+            **params,
+            do_screening=do_screening,
+        )
+        assert_allclose(coef_1, 0)
 
     # Without gap safe screening rules
+    coef_1 = zc()
     cd_fast.enet_coordinate_descent(
         w=coef_1, alpha=alpha, X=X_centered, y=y, **params, do_screening=False
     )
@@ -120,6 +129,7 @@ def test_cython_solver_equivalence():
     assert 2 <= np.sum(np.abs(coef_1) > 1e-8) < X.shape[1]
 
     # With gap safe screening rules
+    coef_2 = zc()
     cd_fast.enet_coordinate_descent(
         w=coef_2, alpha=alpha, X=X_centered, y=y, **params, do_screening=True
     )
@@ -127,29 +137,35 @@ def test_cython_solver_equivalence():
 
     # Sparse
     Xs = sparse.csc_matrix(X)
-    cd_fast.sparse_enet_coordinate_descent(
-        w=coef_3,
-        alpha=alpha,
-        X_data=Xs.data,
-        X_indices=Xs.indices,
-        X_indptr=Xs.indptr,
-        y=y,
-        sample_weight=None,
-        X_mean=X_mean,
-        **params,
-    )
-    assert_allclose(coef_3, coef_1)
+    for do_screening in [True, False]:
+        coef_3 = zc()
+        cd_fast.sparse_enet_coordinate_descent(
+            w=coef_3,
+            alpha=alpha,
+            X_data=Xs.data,
+            X_indices=Xs.indices,
+            X_indptr=Xs.indptr,
+            y=y,
+            sample_weight=None,
+            X_mean=X_mean,
+            **params,
+            do_screening=do_screening,
+        )
+        assert_allclose(coef_3, coef_1)
 
     # Gram
-    cd_fast.enet_coordinate_descent_gram(
-        w=coef_4,
-        alpha=alpha,
-        Q=X_centered.T @ X_centered,
-        q=X_centered.T @ y,
-        y=y,
-        **params,
-    )
-    assert_allclose(coef_4, coef_1)
+    for do_screening in [True, False]:
+        coef_4 = zc()
+        cd_fast.enet_coordinate_descent_gram(
+            w=coef_4,
+            alpha=alpha,
+            Q=X_centered.T @ X_centered,
+            q=X_centered.T @ y,
+            y=y,
+            **params,
+            do_screening=do_screening,
+        )
+        assert_allclose(coef_4, coef_1)
 
 
 def test_lasso_zero():
@@ -694,7 +710,7 @@ def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV(cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
-    clf = MultiTaskLassoCV(cv=3).fit(X, y)
+    clf = MultiTaskLassoCV(cv=3, tol=1e-6).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
     X, y, _, _ = build_dataset(n_targets=3)
@@ -842,14 +858,8 @@ def test_warm_start_convergence(sparse_X):
     model.set_params(warm_start=True)
     model.fit(X, y)
     n_iter_warm_start = model.n_iter_
-    if sparse_X:
-        # TODO: sparse_enet_coordinate_descent is not yet updated.
-        # Fit the same model again, using a warm start: the optimizer just performs
-        # a single pass before checking that it has already converged
-        assert n_iter_warm_start == 1
-    else:
-        # enet_coordinate_descent checks dual gap before entering the main loop
-        assert n_iter_warm_start == 0
+    # coordinate descent checks dual gap before entering the main loop
+    assert n_iter_warm_start == 0
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
@@ -940,9 +950,9 @@ def test_sparse_dense_descent_paths(csr_container):
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = csr_container(X)
     for path in [enet_path, lasso_path]:
-        _, coefs, _ = path(X, y)
-        _, sparse_coefs, _ = path(csr, y)
-        assert_array_almost_equal(coefs, sparse_coefs)
+        _, coefs, _ = path(X, y, tol=1e-10)
+        _, sparse_coefs, _ = path(csr, y, tol=1e-10)
+        assert_allclose(coefs, sparse_coefs)
 
 
 @pytest.mark.parametrize("path_func", [enet_path, lasso_path])
@@ -1231,7 +1241,7 @@ def test_multi_task_lasso_cv_dtype():
     X = rng.binomial(1, 0.5, size=(n_samples, n_features))
     X = X.astype(int)  # make it explicit that X is int
     y = X[:, [0, 0]].copy()
-    est = MultiTaskLassoCV(alphas=5, fit_intercept=True).fit(X, y)
+    est = MultiTaskLassoCV(alphas=5, fit_intercept=True, tol=1e-6).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
 
 

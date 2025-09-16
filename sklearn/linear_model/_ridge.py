@@ -2502,7 +2502,7 @@ class _BaseRidgeCV(LinearModel):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 scorer=self._get_scorer(),
