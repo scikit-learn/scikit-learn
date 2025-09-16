@@ -244,13 +244,13 @@ clickable and can be expanded/collapsed.
 }
 
 /* On hover, darken the color of the background */
-#$id div.sk-label:hover label.sk-toggleable__label {
+#$id div.sk-label label.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
 /* Label box, darken color on hover, fitted */
-#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+#$id div.sk-label.fitted label.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
 }
