@@ -1339,18 +1339,50 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_ov
         union.get_feature_names_out()
 
 
+# DfOutTransformer that does not define get_feature_names_out
+class DfOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
-def test_feature_union_duplicate_column_names(df_lib_name):
-    """Check that FeatureUnion works when transformers output duplicate column names.
+@pytest.mark.parametrize(
+    "T1",
+    [StandardScaler(), DfOutTransformer(), "passthrough"],
+    ids=["StandardScaler", "DfOutTransformer", "passthrough"],
+)
+def test_feature_union_duplicate_column_names(df_lib_name, T1):
+    """Check FeatureUnion behavior when transformers output duplicate column names.
+
+    Check that an error is raised when verbose_feature_names_out is False.
+    Check that no error is raised and columns are correctly prefixed when
+    verbose_feature_names_out is True.
 
     Non-regression test for issue #32104
     """
     df_lib = pytest.importorskip(df_lib_name)
     df = df_lib.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
-    fu = FeatureUnion([("std1", StandardScaler()), ("std2", StandardScaler())])
-    fu.set_output(transform="pandas")
-    df_transformed = fu.fit_transform(df)
-    assert list(df_transformed.columns) == ["std1__a", "std1__b", "std2__a", "std2__b"]
+    fu = FeatureUnion([("t1", T1), ("t2", StandardScaler())])
+    fu.set_output(transform=df_lib_name)
+
+    # by default, verbose_feature_names_out is True
+    df_t = fu.fit_transform(df)
+    assert list(df_t.columns) == ["t1__a", "t1__b", "t2__a", "t2__b"]
+
+    fu.set_params(verbose_feature_names_out=False)
+    with pytest.raises(ValueError, match=r"Output feature names:.*are not unique"):
+        fu.fit_transform(df)
 
 
 def test_step_name_validation():
