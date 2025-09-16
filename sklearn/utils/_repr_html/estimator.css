@@ -243,16 +243,28 @@ clickable and can be expanded/collapsed.
   color: var(--sklearn-color-text-on-default-background);
 }
 
-/* On hover, darken the color of the background */
+/* Label colors when unfitted */
 #$id div.sk-label label.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
-/* Label box, darken color on hover, fitted */
+/* Label colors when  fitted */
 #$id div.sk-label.fitted label.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* On hover, darken the color of the backgroundq, unfitted*/
+#$id div.sk-label:hover label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-1);
+}
+
+/* On hover, darken the color of the background, fitted */
+#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-1);
 }
 
 /* Estimator label */
