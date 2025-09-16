@@ -914,7 +914,7 @@ cdef (floating, floating) gap_enet_gram(
     return gap, dual_norm_XtA
 
 
-cdef inline bint screen_feature_j_gram(
+cdef inline bint screen_feature_enet_gram(
     const floating[:, ::1] Q,
     const floating[::1] XtA,
     floating[::1] w,
@@ -929,6 +929,8 @@ cdef inline bint screen_feature_j_gram(
     uint32_t n_active,
     uint32_t j,
 ) noexcept nogil:
+    """Apply gap safe screening for a single feature within
+    enet_coordinate_descent_gram"""
     cdef floating d_j
     cdef floating Xj_theta
     cdef bint included
@@ -1052,7 +1054,7 @@ def enet_coordinate_descent_gram(
                     excluded_set[j] = 1
                     continue
 
-                n_active += screen_feature_j_gram(
+                n_active += screen_feature_enet_gram(
                     Q=Q,
                     XtA=XtA,
                     w=w,
@@ -1124,7 +1126,7 @@ def enet_coordinate_descent_gram(
                     for j in range(n_features):
                         if excluded_set[j]:
                             continue
-                        n_active += screen_feature_j_gram(
+                        n_active += screen_feature_enet_gram(
                             Q=Q,
                             XtA=XtA,
                             w=w,
