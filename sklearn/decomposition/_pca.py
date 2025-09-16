@@ -840,7 +840,7 @@ class PCA(_BasePCA):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
-        solver = getattr(self, "_fit_svd_solver", self.fit_solver)
+        solver = getattr(self, "_fit_svd_solver", self.svd_solver)
         tags.array_api_support = solver not in ["arpack", "randomized"] or (
             solver == "randomized" and self.power_iteration_normalizer == "QR"
         )
