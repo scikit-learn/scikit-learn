@@ -247,6 +247,7 @@ clickable and can be expanded/collapsed.
 #$id div.sk-label label.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
+  border-bottom: .005em solid grey;
 }
 
 /* Label colors when  fitted */
