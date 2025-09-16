@@ -110,7 +110,7 @@ def test_get_namespace_array_api(monkeypatch):
 
 
 def test_move_to_array_api_conversions():
-    """Check conversion"""
+    """Check conversion of cupy and numpy to torch."""
     xp_torch = _array_api_for_tests("torch", "cuda")
     device_torch = xp_torch.asarray([1], device="cuda").device
 
