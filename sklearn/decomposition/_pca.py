@@ -844,7 +844,7 @@ class PCA(_BasePCA):
         tags.array_api_support = (
             solver not in ["arpack", "randomized"]
             or (solver == "randomized"
-            and self.power_iteration_normalizer == "QR"))
+            and self.power_iteration_normalizer == "QR")
         )
         tags.input_tags.sparse = self.svd_solver in (
             "auto",
