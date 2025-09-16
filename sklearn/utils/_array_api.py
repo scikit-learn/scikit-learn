@@ -476,9 +476,10 @@ def move_to(*arrays, xp_ref, device_ref):
                     # Note: copy=None is the default since 2023.12. Namespace libraries
                     # should only trigger a copy automatically if needed.
                     array_converted = xp_ref.from_dlpack(array, device=device_ref)
-                    # `TypeError` for packages that do not yet support dlpack 1.0
+                    # `TypeError` and `NotImplementedError` for packages that do not
+                    # yet support dlpack 1.0
                     # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
-                except (AttributeError, TypeError):
+                except (AttributeError, TypeError, NotImplementedError):
                     # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp_ref):
                         array_converted = _convert_to_numpy(array, xp_array)

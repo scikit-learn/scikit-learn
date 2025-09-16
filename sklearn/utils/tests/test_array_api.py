@@ -120,7 +120,7 @@ def test_move_to_array_api_conversions():
     array_np = numpy.asarray([1, 2, 3], device=None)
 
     array_1_out, array_2_out = move_to(
-        array_cupy, array_np, xp_ref=xp_torch, xp_device=device_torch
+        array_cupy, array_np, xp_ref=xp_torch, device_ref=device_torch
     )
     for array in (array_1_out, array_2_out):
         assert get_namespace(array) == xp_torch
