@@ -441,15 +441,19 @@ scikit-learn implementation does not support categorical variables for now.
 Mathematical formulation
 ========================
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
-:math:`y \in R^l`, a decision tree recursively partitions the feature space
-such that the samples with the same labels or similar target values are grouped
 together.
 
-Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`n_m`
-samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a
-feature :math:`j` and threshold :math:`t_m`, partition the data into
-:math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets
+Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector :math:`y \in R^l`, a decision tree recursively partitions the feature space such that the samples with the same labels or similar target values are grouped together.
+
+Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`n_m` samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a feature :math:`j` and threshold :math:`t_m`, partition the data into :math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets.
+
+**How candidate splits are selected:**
+
+- With the **best splitter** (default, ``splitter='best'``), for each feature, all possible split points (thresholds between sorted unique values) are considered. The algorithm exhaustively evaluates each candidate split to find the one that minimizes the impurity. This brute-force approach ensures the optimal split is chosen at each node. For :math:`n` samples and :math:`f` features, this results in :math:`O(n \times f)` candidate splits per node.
+
+- With the **random splitter** (``splitter='random'``), for each feature, a single split point (threshold) is chosen at random from the range of possible values. The best among these randomly chosen splits is selected for the node. This approach is faster but may be less accurate, as it does not guarantee the optimal split is found.
+
+Both approaches are available via the ``splitter`` parameter.
 
 .. math::
 
