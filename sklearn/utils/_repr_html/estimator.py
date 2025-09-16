@@ -9,6 +9,7 @@ from pathlib import Path
 from string import Template
 
 from sklearn import config_context
+from sklearn.utils._repr_html.features import _features_html
 
 
 class _IDCounter:
@@ -227,10 +228,7 @@ def _write_label_html(
         if len(features) == 0:
             features_div = ""
         else:
-            features_div = '<div class="features"><ul>'
-            for feature in features:
-                features_div = "".join([features_div, f"<li>{feature}</li>"])
-            features_div = "".join([features_div, "Output features</ul></div>", "<br>"])
+            features_div = _features_html(features)
 
         fmt_str = "".join([fmt_str, "</div></div>", features_div])
         out.write(fmt_str)
