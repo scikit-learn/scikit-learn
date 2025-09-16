@@ -57,7 +57,7 @@ def test_write_label_html(checked):
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
             r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
-            r'<div><div class="sk-nowrap">LogisticRegression</div></div>'
+            r"<div><div>LogisticRegression</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
@@ -205,9 +205,7 @@ def test_estimator_html_repr_pipeline():
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
         assert html.escape(str(num_trans["pass"])) in html_output
-        assert (
-            '<div><div class="sk-nowrap">passthrough</div></div></label>' in html_output
-        )
+        assert "<div><div>passthrough</div></div></label>" in html_output
         assert html.escape(str(num_trans["imputer"])) in html_output
 
         for _, _, cols in preprocess.transformers:
@@ -261,13 +259,12 @@ def test_stacking_regressor(final_estimator):
         estimators=[("svr", LinearSVR())], final_estimator=final_estimator
     )
     html_output = estimator_html_repr(reg)
-    print(html_output)
 
     assert html.escape(str(reg.estimators[0][0])) in html_output
     p = (
         r'<label for="sk-estimator-id-[0-9]*"'
         r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
-        r'<div><div class="sk-nowrap">LinearSVR'
+        r"<div><div>LinearSVR</div></div>"
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
@@ -276,7 +273,7 @@ def test_stacking_regressor(final_estimator):
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
             r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
-            r'<div><div class="sk-nowrap">RidgeCV'
+            r"<div><div>RidgeCV</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -293,10 +290,7 @@ def test_birch_duck_typing_meta():
     with config_context(print_changed_only=True):
         assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
 
-        p = (
-            r'<div><div class="sk-nowrap">AgglomerativeClustering(.+?)</div></div>'
-            r"</label>"
-        )
+        p = r"<div><div>AgglomerativeClustering</div></div><div>.+</div></label>"
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
 
@@ -316,7 +310,7 @@ def test_ovo_classifier_duck_typing_meta():
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
             r'class="sk-toggleable__label  sk-toggleable__label-arrow">'
-            r'<div><div class="sk-nowrap">LinearSVC'
+            r"<div><div>LinearSVC</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -335,7 +329,7 @@ def test_duck_typing_nested_estimator():
         param_distributions=param_distributions,
     )
     html_output = estimator_html_repr(kernel_ridge_tuned)
-    assert '<div><div class="sk-nowrap">estimator: KernelRidge' in html_output
+    assert "<div><div>estimator: KernelRidge</div></div></label>" in html_output
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])
@@ -366,7 +360,7 @@ def test_show_arrow_pipeline():
     html_output = estimator_html_repr(pipe)
     assert (
         'class="sk-toggleable__label  sk-toggleable__label-arrow">'
-        '<div><div class="sk-nowrap">Pipeline' in html_output
+        "<div><div>Pipeline</div></div>" in html_output
     )
 
 
@@ -610,8 +604,8 @@ def test_function_transformer_show_caption(func, expected_name):
 
     p = (
         r'<label for="sk-estimator-id-[0-9]*" class="sk-toggleable__label fitted '
-        rf'sk-toggleable__label-arrow"><div><div class="sk-nowrap">{expected_name}(.+?)'
-        r'</div><div class="caption">FunctionTransformer</div></div>'
+        rf'sk-toggleable__label-arrow"><div><div>{expected_name}</div>'
+        r'<div class="caption">FunctionTransformer</div></div>'
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)

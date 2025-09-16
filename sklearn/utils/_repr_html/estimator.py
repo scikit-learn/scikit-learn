@@ -190,21 +190,16 @@ def _write_label_html(
             if name_caption is None
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
-
-        icons_html = ""
-        if doc_link or is_fitted_icon:
-            icons_html = (
-                f"&nbsp;{doc_link}{is_fitted_icon}"
-                if doc_link or is_fitted_icon
-                else ""
-            )
-
-        name_with_icons = f'<div class="sk-nowrap">{name}{icons_html}</div>'
-        name_caption_div = f"<div>{name_with_icons}{name_caption_div}</div>"
+        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
+        links_div = (
+            f"<div>{doc_link}{is_fitted_icon}</div>"
+            if doc_link or is_fitted_icon
+            else ""
+        )
 
         label_html = (
             f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'sk-toggleable__label-arrow">{name_caption_div}</label>'
+            f'sk-toggleable__label-arrow">{name_caption_div}{links_div}</label>'
         )
 
         fmt_str = (
