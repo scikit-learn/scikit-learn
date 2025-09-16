@@ -416,12 +416,15 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   width: 100%;
   padding-top: 3%;
   padding-bottom: 3%;
-  text-align: center;
+  text-align: left;
   background: var(--sklearn-color-fitted-level-1);
   border-top: 1px solid gray;
+  max-height: 10em;
+  overflow-y: auto;
 
 }
 
-.features ul {
+.features li {
+  padding-left: 2em;
   list-style-type: none;
 }
