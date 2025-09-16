@@ -539,6 +539,7 @@ def test_fowlkes_mallows_sparse_deprecated(sparse):
 
 @skip_if_array_api_compat_not_configured
 def test_contingency_matrix_array_api_sparse():
+    "Check sparse array can be returned when `array_api_dispatch=True`."
     with config_context(array_api_dispatch=True):
         res = contingency_matrix(
             np.array([1, 2]),
