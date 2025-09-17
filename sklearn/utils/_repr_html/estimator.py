@@ -230,7 +230,13 @@ def _write_label_html(
         else:
             features_div = _features_html(features)
 
-        fmt_str = "".join([fmt_str, "</div></div>", features_div])
+        fmt_str = "".join(
+            [
+                fmt_str,
+                "</div></div>",
+                features_div,
+            ]
+        )
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")

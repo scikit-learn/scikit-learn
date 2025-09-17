@@ -118,7 +118,7 @@ div.sk-item {
 
 /* Serial-specific style estimator block */
 
-#$id div.sk-serial {
+#$id div.sk-serial, {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -409,22 +409,4 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 #$id a.estimator_doc_link.fitted:hover {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
-}
-
-.features {
-  font-size: smaller;
-  width: 100%;
-  padding-top: 3%;
-  padding-bottom: 3%;
-  text-align: left;
-  background: var(--sklearn-color-fitted-level-1);
-  border-top: 1px solid gray;
-  max-height: 10em;
-  overflow-y: auto;
-
-}
-
-.features li {
-  padding-left: 2em;
-  list-style-type: none;
 }
