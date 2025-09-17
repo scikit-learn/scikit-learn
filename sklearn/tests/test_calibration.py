@@ -21,7 +21,6 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     VotingClassifier,
 )
-from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.frozen import FrozenEstimator
 from sklearn.impute import SimpleImputer
@@ -53,7 +52,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -321,12 +319,10 @@ def test_calibration_zero_probability():
     assert_allclose(probas, 1.0 / clf.n_classes_)
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
-def test_calibration_prefit(csr_container, method):
-    """Test calibration for prefitted classifiers"""
-    # TODO(1.8): Remove cv="prefit" options here and the @ignore_warnings of the test
+def test_calibration_frozen(csr_container, method):
+    """Test calibration for frozen classifiers"""
     n_samples = 50
     X, y = make_classification(n_samples=3 * n_samples, n_features=6, random_state=42)
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
@@ -344,11 +340,6 @@ def test_calibration_prefit(csr_container, method):
 
     # Naive-Bayes
     clf = MultinomialNB()
-    # Check error if clf not prefit
-    unfit_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
-    with pytest.raises(NotFittedError):
-        unfit_clf.fit(X_calib, y_calib)
-
     clf.fit(X_train, y_train, sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
@@ -357,21 +348,16 @@ def test_calibration_prefit(csr_container, method):
         (X_calib, X_test),
         (csr_container(X_calib), csr_container(X_test)),
     ]:
-        cal_clf_prefit = CalibratedClassifierCV(clf, method=method, cv="prefit")
         cal_clf_frozen = CalibratedClassifierCV(FrozenEstimator(clf), method=method)
 
         for sw in [sw_calib, None]:
-            cal_clf_prefit.fit(this_X_calib, y_calib, sample_weight=sw)
             cal_clf_frozen.fit(this_X_calib, y_calib, sample_weight=sw)
 
-            y_prob_prefit = cal_clf_prefit.predict_proba(this_X_test)
             y_prob_frozen = cal_clf_frozen.predict_proba(this_X_test)
-            y_pred_prefit = cal_clf_prefit.predict(this_X_test)
             y_pred_frozen = cal_clf_frozen.predict(this_X_test)
             prob_pos_cal_clf_frozen = y_prob_frozen[:, 1]
-            assert_array_equal(y_pred_prefit, y_pred_frozen)
             assert_array_equal(
-                y_pred_prefit, np.array([0, 1])[np.argmax(y_prob_prefit, axis=1)]
+                y_pred_frozen, np.array([0, 1])[np.argmax(y_prob_frozen, axis=1)]
             )
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 y_test, prob_pos_cal_clf_frozen
@@ -684,32 +670,15 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
     calib_clf.predict_proba(X)
 
 
-@pytest.mark.parametrize(
-    "clf, cv",
-    [
-        pytest.param(LinearSVC(C=1), 2),
-        pytest.param(LinearSVC(C=1), "prefit"),
-    ],
-)
-def test_calibration_attributes(clf, cv):
+def test_calibration_attributes():
     # Check that `n_features_in_` and `classes_` attributes created properly
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
-    if cv == "prefit":
-        clf = clf.fit(X, y)
-        calib_clf = CalibratedClassifierCV(clf, cv=cv)
-        with pytest.warns(FutureWarning):
-            calib_clf.fit(X, y)
-    else:
-        calib_clf = CalibratedClassifierCV(clf, cv=cv)
-        calib_clf.fit(X, y)
+    calib_clf = CalibratedClassifierCV(LinearSVC(C=1), cv=2)
+    calib_clf.fit(X, y)
 
-    if cv == "prefit":
-        assert_array_equal(calib_clf.classes_, clf.classes_)
-        assert calib_clf.n_features_in_ == clf.n_features_in_
-    else:
-        classes = LabelEncoder().fit(y).classes_
-        assert_array_equal(calib_clf.classes_, classes)
-        assert calib_clf.n_features_in_ == X.shape[1]
+    classes = LabelEncoder().fit(y).classes_
+    assert_array_equal(calib_clf.classes_, classes)
+    assert calib_clf.n_features_in_ == X.shape[1]
 
 
 def test_calibration_inconsistent_prefit_n_features_in():
@@ -1232,14 +1201,6 @@ def test_float32_predict_proba(data, use_sample_weight, method):
     calibrator = CalibratedClassifierCV(FrozenEstimator(model), method=method)
     # Does not raise an error.
     calibrator.fit(*data, sample_weight=sample_weight)
-
-    # TODO(1.8): remove me once the deprecation period is over.
-    # Check with prefit model using the deprecated cv="prefit" argument:
-    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
-    calibrator = CalibratedClassifierCV(model, method=method, cv="prefit")
-    # Does not raise an error.
-    with pytest.warns(FutureWarning):
-        calibrator.fit(*data, sample_weight=sample_weight)
 
 
 def test_error_less_class_samples_than_folds():

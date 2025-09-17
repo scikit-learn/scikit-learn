@@ -88,6 +88,9 @@ default_package_constraints = {
     # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
     # and released.
     "numpydoc": "<1.9.0",
+    # TODO: remove once when we're using the new way to enable coverage in subprocess
+    # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
+    "pytest-cov": "<=6.3.0",
 }
 
 

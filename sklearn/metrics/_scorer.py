@@ -249,8 +249,6 @@ class _BaseScorer(_MetadataRequester):
         self._sign = sign
         self._kwargs = kwargs
         self._response_method = response_method
-        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
-        self._deprecation_msg = None
 
     def _get_pos_label(self):
         if "pos_label" in self._kwargs:
@@ -309,12 +307,6 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
-        if self._deprecation_msg is not None:
-            warnings.warn(
-                self._deprecation_msg, category=DeprecationWarning, stacklevel=2
-            )
-
         _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
@@ -468,12 +460,7 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            if scoring == "max_error":
-                # TODO (1.8): scoring="max_error" has been deprecated in 1.6,
-                # remove in 1.8
-                scorer = max_error_scorer
-            else:
-                scorer = copy.deepcopy(_SCORERS[scoring])
+            scorer = copy.deepcopy(_SCORERS[scoring])
         except KeyError:
             raise ValueError(
                 "%r is not a valid scoring value. "
@@ -717,14 +704,6 @@ def make_scorer(
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
 neg_max_error_scorer = make_scorer(max_error, greater_is_better=False)
-max_error_scorer = make_scorer(max_error, greater_is_better=False)
-# TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
-deprecation_msg = (
-    "Scoring method max_error was renamed to "
-    "neg_max_error in version 1.6 and will "
-    "be removed in 1.8."
-)
-max_error_scorer._deprecation_msg = deprecation_msg
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error, greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(
     mean_squared_log_error, greater_is_better=False

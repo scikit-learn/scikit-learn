@@ -500,10 +500,16 @@ redirects = {
     "auto_examples/linear_model/plot_iris_logistic": (
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
+    "auto_examples/linear_model/plot_logistic": (
+        "auto_examples/calibration/plot_calibration_curve"
+    ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
     "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
     "auto_examples/linear_model/plot_ols_ridge_variance": (
         "auto_examples/linear_model/plot_ols_ridge"
+    ),
+    "auto_examples/cluster/plot_agglomerative_clustering.html": (
+        "auto_examples/cluster/plot_ward_structured_vs_unstructured.html"
     ),
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"

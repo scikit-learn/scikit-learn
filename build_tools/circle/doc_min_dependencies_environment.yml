@@ -5,16 +5,16 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
-  - numpy=1.22.0  # min
+  - numpy=1.24.1  # min
   - blas
-  - scipy=1.8.0  # min
+  - scipy=1.10.0  # min
   - cython=3.1.2  # min
   - joblib
   - threadpoolctl
-  - matplotlib=3.5.0  # min
-  - pandas=1.4.0  # min
+  - matplotlib=3.6.1  # min
+  - pandas=1.5.0  # min
   - rich
-  - pyamg=4.2.1  # min
+  - pyamg=5.0.0  # min
   - pytest
   - pytest-xdist
   - pillow

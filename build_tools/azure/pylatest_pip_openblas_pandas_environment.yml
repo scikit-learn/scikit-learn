@@ -22,7 +22,7 @@ dependencies:
     - pillow
     - ninja
     - meson-python
-    - pytest-cov
+    - pytest-cov<=6.3.0
     - coverage
     - sphinx
     - numpydoc<1.9.0
