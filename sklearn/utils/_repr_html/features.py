@@ -6,7 +6,7 @@ def _features_html(features):
     FEATURES_TABLE_TEMPLATE = """
         <div class="features">
           <details>
-            <summary class="features-title">Output features</summary>
+            <summary class="features-title">{total_features} features</summary>
               <ul>
                {rows}
               </ul>
@@ -18,8 +18,10 @@ def _features_html(features):
     FEATURES_ROW_TEMPLATE = """
         <li>{feature}</li>
     """
-
+    total_features = len(features)
     rows = []
     for feature in features:
         rows.append(FEATURES_ROW_TEMPLATE.format(feature=feature))
-    return FEATURES_TABLE_TEMPLATE.format(rows="".join(rows))
+    return FEATURES_TABLE_TEMPLATE.format(
+        total_features=total_features, rows="".join(rows)
+    )
