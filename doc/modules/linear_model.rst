@@ -150,7 +150,7 @@ the corresponding solver is chosen.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
-* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.p`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
 
 Classification
 --------------
