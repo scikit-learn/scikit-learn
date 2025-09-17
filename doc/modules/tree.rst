@@ -560,9 +560,9 @@ Mean Poisson deviance:
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
-necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion. For performance reasons the actual implementation minimizes
-the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
+necessary condition to use this criterion. For performance reasons the actual
+implementation minimizes the half mean poisson deviance, i.e. the mean poisson
+deviance divided by 2.
 
 Mean Absolute Error:
 
