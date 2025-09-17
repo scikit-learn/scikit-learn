@@ -1019,10 +1019,11 @@ def explained_variance_score(
     definition.
 
     .. note::
-       The Explained Variance score is similar to the
-       :func:`R^2 score <r2_score>`, with the notable difference that it
-       does not account for systematic offsets in the prediction. Most often
-       the :func:`R^2 score <r2_score>` should be preferred.
+       The Explained Variance score is similar to the :func:`R^2 score <r2_score>`,
+       but the former does not account for systematic offsets in the prediction
+       (such as the intercept in linear models, i.e. different intercepts give
+       the same Explained Variance score). Most often the :func:`R^2 score
+       <r2_score>` should be preferred.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 

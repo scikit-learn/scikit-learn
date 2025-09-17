@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass, field
 
 # Authors: The scikit-learn developers
@@ -248,59 +247,10 @@ class Tags:
     input_tags: InputTags = field(default_factory=InputTags)
 
 
-# TODO(1.8): Remove this function
-def default_tags(estimator) -> Tags:
-    """Get the default tags for an estimator.
-
-    This ignores any ``__sklearn_tags__`` method that the estimator may have.
-
-    If the estimator is a classifier or a regressor, ``target_tags.required``
-    will be set to ``True``, otherwise it will be set to ``False``.
-
-    ``transformer_tags`` will be set to :class:`~.sklearn.utils. TransformerTags` if the
-    estimator has a ``transform`` or ``fit_transform`` method, otherwise it will be set
-    to ``None``.
-
-    ``classifier_tags`` will be set to :class:`~.sklearn.utils.ClassifierTags` if the
-    estimator is a classifier, otherwise it will be set to ``None``.
-    a classifier, otherwise it will be set to ``None``.
-
-    ``regressor_tags`` will be set to :class:`~.sklearn.utils.RegressorTags` if the
-    estimator is a regressor, otherwise it will be set to ``None``.
-
-    Parameters
-    ----------
-    estimator : estimator object
-        The estimator for which to get the default tags.
-
-    Returns
-    -------
-    tags : Tags
-        The default tags for the estimator.
-    """
-    est_is_classifier = getattr(estimator, "_estimator_type", None) == "classifier"
-    est_is_regressor = getattr(estimator, "_estimator_type", None) == "regressor"
-    target_required = est_is_classifier or est_is_regressor
-
-    return Tags(
-        estimator_type=getattr(estimator, "_estimator_type", None),
-        target_tags=TargetTags(required=target_required),
-        transformer_tags=(
-            TransformerTags()
-            if hasattr(estimator, "transform") or hasattr(estimator, "fit_transform")
-            else None
-        ),
-        classifier_tags=ClassifierTags() if est_is_classifier else None,
-        regressor_tags=RegressorTags() if est_is_regressor else None,
-    )
-
-
 def get_tags(estimator) -> Tags:
     """Get estimator tags.
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
-    However, if an estimator does not inherit from this base class, we should
-    fall-back to the default tags.
 
     For scikit-learn built-in estimators, we should still rely on
     `self.__sklearn_tags__()`. `get_tags(est)` should be used when we
@@ -324,18 +274,13 @@ def get_tags(estimator) -> Tags:
     try:
         tags = estimator.__sklearn_tags__()
     except AttributeError as exc:
-        # TODO(1.8): turn the warning into an error
         if "object has no attribute '__sklearn_tags__'" in str(exc):
-            # Fall back to the default tags if the estimator does not
-            # implement __sklearn_tags__.
-            # In particular, workaround the regression reported in
-            # https://github.com/scikit-learn/scikit-learn/issues/30479
-            # `__sklearn_tags__` is implemented by calling
+            # Happens when `__sklearn_tags__` is implemented by calling
             # `super().__sklearn_tags__()` but there is no `__sklearn_tags__`
             # method in the base class. Typically happens when only inheriting
             # from Mixins.
 
-            warnings.warn(
+            raise AttributeError(
                 f"The following error was raised: {exc}. It seems that "
                 "there are no classes that implement `__sklearn_tags__` "
                 "in the MRO and/or all classes in the MRO call "
@@ -343,12 +288,8 @@ def get_tags(estimator) -> Tags:
                 "`BaseEstimator` which implements `__sklearn_tags__` (or "
                 "alternatively define `__sklearn_tags__` but we don't recommend "
                 "this approach). Note that `BaseEstimator` needs to be on the "
-                "right side of other Mixins in the inheritance order. The "
-                "default are now used instead since retrieving tags failed. "
-                "This warning will be replaced by an error in 1.8.",
-                category=DeprecationWarning,
+                "right side of other Mixins in the inheritance order."
             )
-            tags = default_tags(estimator)
         else:
             raise
 

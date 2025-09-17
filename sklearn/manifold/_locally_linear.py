@@ -21,7 +21,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
@@ -351,7 +350,7 @@ def _locally_linear_embedding(
         # this is the size of the largest set of eigenvalues
         # such that Sum[v; v in set]/Sum[v; v not in set] < eta
         s_range = np.zeros(N, dtype=int)
-        evals_cumsum = stable_cumsum(evals, 1)
+        evals_cumsum = np.cumsum(evals, 1)
         eta_range = evals_cumsum[:, -1:] / evals_cumsum[:, :-1] - 1
         for i in range(N):
             s_range[i] = np.searchsorted(eta_range[i, ::-1], eta)

@@ -100,7 +100,7 @@ def _affinity_propagation(
         R += tmp
 
         # tmp = Rp; compute availabilities
-        np.maximum(R, 0, tmp)
+        np.maximum(R, 0, out=tmp)
         tmp.flat[:: n_samples + 1] = R.flat[:: n_samples + 1]
 
         # tmp = -Anew

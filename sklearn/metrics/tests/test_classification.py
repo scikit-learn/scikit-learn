@@ -5,7 +5,7 @@ from itertools import chain, permutations, product
 
 import numpy as np
 import pytest
-from scipy import linalg
+from scipy import linalg, sparse
 from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
@@ -215,6 +215,10 @@ def test_classification_report_output_dict_empty_input():
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
+        # We need "always" instead of "once" for free-threaded with
+        # pytest-run-parallel to capture all the warnings in the
+        # zero_division="warn" case.
+        warnings.filterwarnings("always", message=".+Use `zero_division`")
         classification_report(
             y_true, y_pred, zero_division=zero_division, output_dict=True
         )
@@ -2589,6 +2593,30 @@ def test__check_targets_multiclass_with_both_y_true_and_y_pred_binary():
     assert _check_targets(y_true, y_pred)[0] == "multiclass"
 
 
+@pytest.mark.parametrize(
+    "y, target_type",
+    [
+        (sparse.csr_matrix([[1], [0], [1], [0]]), "binary"),
+        (sparse.csr_matrix([[0], [1], [2], [1]]), "multiclass"),
+        (sparse.csr_matrix([[1, 0, 1], [0, 1, 0], [1, 1, 0]]), "multilabel"),
+    ],
+)
+def test__check_targets_sparse_inputs(y, target_type):
+    """Check correct behaviour when different target types are sparse."""
+    if target_type in ("binary", "multiclass"):
+        with pytest.raises(
+            TypeError, match="Sparse input is only supported when targets"
+        ):
+            _check_targets(y, y)
+    else:
+        # This should not raise an error
+        y_type, y_true_out, y_pred_out, _ = _check_targets(y, y)
+
+        assert y_type == "multilabel-indicator"
+        assert y_true_out.format == "csr"
+        assert y_pred_out.format == "csr"
+
+
 def test_hinge_loss_binary():
     y_true = np.array([-1, 1, 1, -1])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
@@ -3151,6 +3179,9 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
     assert f1_score(y_true, y_pred, zero_division=1.0) == pytest.approx(expected_score)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "scoring",
     [

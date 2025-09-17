@@ -1,4 +1,3 @@
-
 - Additional `sample_weight` checking has been added to
   :func:`metrics.accuracy_score`,
   :func:`metrics.balanced_accuracy_score`,

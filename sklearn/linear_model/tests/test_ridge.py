@@ -1058,6 +1058,7 @@ def _test_ridge_cv(sparse_container):
 def test_ridge_gcv_cv_results_not_stored(ridge, make_dataset):
     # Check that `cv_results_` is not stored when store_cv_results is False
     X, y = make_dataset(n_samples=6, random_state=42)
+    ridge = clone(ridge)
     ridge.fit(X, y)
     assert not hasattr(ridge, "cv_results_")
 
@@ -1070,6 +1071,7 @@ def test_ridge_gcv_cv_results_not_stored(ridge, make_dataset):
 def test_ridge_best_score(ridge, make_dataset, cv):
     # check that the best_score_ is store
     X, y = make_dataset(n_samples=6, random_state=42)
+    ridge = clone(ridge)  # Avoid side effects from shared instances
     ridge.set_params(store_cv_results=False, cv=cv)
     ridge.fit(X, y)
     assert hasattr(ridge, "best_score_")
@@ -2373,6 +2375,7 @@ def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
     `RidgeClassifierCV.fit()` when using the default scoring and no
     UnsetMetadataPassedError is raised. Regression test for the fix in PR #29634."""
     X, y = make_dataset(n_samples=100, n_features=5, random_state=42)
+    metaestimator = clone(metaestimator)  # Avoid side effects from shared instances
     metaestimator.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 

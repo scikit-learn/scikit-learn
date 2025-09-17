@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPi| |DOI| |Benchmark|
+|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
    :target: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -20,7 +20,7 @@
 .. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
    :target: https://pypi.org/project/scikit-learn/
 
-.. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
+.. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
@@ -30,14 +30,14 @@
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
 .. |PythonMinVersion| replace:: 3.10
-.. |NumPyMinVersion| replace:: 1.22.0
-.. |SciPyMinVersion| replace:: 1.8.0
-.. |JoblibMinVersion| replace:: 1.2.0
-.. |ThreadpoolctlMinVersion| replace:: 3.1.0
-.. |MatplotlibMinVersion| replace:: 3.5.0
+.. |NumPyMinVersion| replace:: 1.24.1
+.. |SciPyMinVersion| replace:: 1.10.0
+.. |JoblibMinVersion| replace:: 1.3.0
+.. |ThreadpoolctlMinVersion| replace:: 3.2.0
+.. |MatplotlibMinVersion| replace:: 3.6.1
 .. |Scikit-ImageMinVersion| replace:: 0.19.0
-.. |PandasMinVersion| replace:: 1.4.0
-.. |SeabornMinVersion| replace:: 0.9.0
+.. |PandasMinVersion| replace:: 1.5.0
+.. |SeabornMinVersion| replace:: 0.9.1
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.14.0
 
@@ -77,7 +77,7 @@ classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
+|SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -134,7 +134,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the source
-directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
+directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 
     pytest sklearn
 
