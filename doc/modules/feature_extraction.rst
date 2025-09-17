@@ -622,7 +622,7 @@ Again please see the :ref:`reference documentation
   and comparison with :class:`HashingVectorizer`.
 
 * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`:
-  Tuning hyperparamters as part of a pipeline.
+  Tuning hyperparamters of :class:`TfidfVectorizer` as part of a pipeline.
 
 
 Decoding text files
