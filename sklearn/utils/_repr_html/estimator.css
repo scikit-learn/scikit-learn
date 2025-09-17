@@ -118,7 +118,7 @@ div.sk-item {
 
 /* Serial-specific style estimator block */
 
-#$id div.sk-serial, {
+#$id div.sk-serial {
   display: flex;
   flex-direction: column;
   align-items: center;

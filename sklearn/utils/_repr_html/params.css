@@ -1,4 +1,4 @@
-.estimator-table summary, {
+.estimator-table summary {
     padding: .5rem;
     font-family: monospace;
     cursor: pointer;
