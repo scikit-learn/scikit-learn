@@ -490,10 +490,6 @@ cdef class ClassificationCriterion(Criterion):
         # self.sample_indices[-self.n_missing:] that is
         # self.sample_indices[end_non_missing:self.end].
         cdef intp_t end_non_missing = self.end - self.n_missing
-
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef const float64_t[:] sample_weight = self.sample_weight
-
         cdef intp_t i
         cdef intp_t p
         cdef intp_t k
@@ -509,10 +505,10 @@ cdef class ClassificationCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_po.
         if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k, <intp_t> self.y[i, k]] += w
@@ -523,10 +519,10 @@ cdef class ClassificationCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(end_non_missing - 1, new_pos - 1, -1):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k, <intp_t> self.y[i, k]] -= w
@@ -964,9 +960,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-
         cdef intp_t pos = self.pos
 
         # The missing samples are assumed to be in
@@ -987,10 +980,10 @@ cdef class RegressionCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_pos.
         if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k] += w * self.y[i, k]
@@ -1000,10 +993,10 @@ cdef class RegressionCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(end_non_missing - 1, new_pos - 1, -1):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k] -= w * self.y[i, k]
@@ -1311,31 +1304,18 @@ def _py_precompute_pinball_losses(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
-    bint suffix=False,
-    float64_t q=0.5
+    const intp_t start,
+    const intp_t end,
+    float64_t q=0.5,
 ):
-    """
-    Used for testing precompute_absolute_errors.
-    - If `suffix` is False:
-        Computes the "prefix" AEs, i.e the AEs for each set of indices
-        sample_indices[:i] with i in {1, ..., n}
-    - If `suffix` is True:
-        Computes the "suffix" AEs, i.e the AEs for each set of indices
-        sample_indices[i:] with i in {0, ..., n-1}
-    """
+    """Used for testing precompute_absolute_errors."""
     cdef:
-        intp_t n = sample_weight.size
+        intp_t n = end - start if start < end else start - end
         WeightedHeap above = WeightedHeap(n, True)
         WeightedHeap below = WeightedHeap(n, False)
         intp_t k = 0
-        intp_t start = 0
-        intp_t end = n
         float64_t[::1] losses = np.zeros(n, dtype=np.float64)
         float64_t[::1] quantiles = np.zeros(n, dtype=np.float64)
-
-    if suffix:
-        start = n - 1
-        end = -1
 
     precompute_pinball_losses(
         ys, sample_weight, sample_indices, above, below,
@@ -1389,7 +1369,7 @@ cdef class Pinball(Criterion):
 
         self.node_quantiles = np.zeros(n_outputs, dtype=np.float64)
 
-        # Note: this criterion has an important memory footprint, which is
+        # Note: this criterion has a  n_samples x 64 bytes memory footprint, which is
         # fine as it's instantiated only once to build an entire tree
         self.left_pinball_losses = np.empty(n_samples, dtype=np.float64)
         self.right_pinball_losses = np.empty(n_samples, dtype=np.float64)

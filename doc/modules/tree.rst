@@ -472,9 +472,16 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
-:math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
+Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)`
+until a stopping condition is reached, for instance some examples include
+(for others see the docstring of the estimators):
+
+* the maximum allowable depth is reached (`max_depth`)
+
+* :math:`n_m` is smaller than `min_samples_split`
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`
+
 
 Classification criteria
 -----------------------
@@ -572,7 +579,7 @@ Mean Absolute Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
-Note that it fits slower than the MSE criterion.
+Note that it is 3–6× slower to fit than the MSE criterion as of version 1.8.
 
 .. _tree_missing_value_support:
 

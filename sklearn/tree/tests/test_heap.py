@@ -8,6 +8,12 @@ from sklearn.tree._utils import PytestWeightedHeap
 
 @pytest.mark.parametrize("min_heap", [True, False])
 def test_cython_weighted_heap_vs_heapq(min_heap):
+    """
+    Test Cython's weighted heap vs STL's heapq implementation.
+
+    This unit-test first populates Cython Weighted Heap and STL's heap
+    with weighted samples, and then compares values that are popped.
+    """
     n = 200
     w_heap = PytestWeightedHeap(n, min_heap=min_heap)
     py_heap = []

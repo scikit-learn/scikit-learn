@@ -1668,7 +1668,7 @@ def test_no_sparse_y_support(name, csr_container):
 
 
 def test_mae():
-    """Check MAE criterion produces correct results on small toys dataset:
+    """Check MAE criterion produces correct results on small toy datasets:
 
     ## First toy dataset
     ------------------
@@ -2891,10 +2891,10 @@ def test_sort_log2_build():
 
 
 @pytest.mark.parametrize("q", [0.5, 0.2, 0.9])
-def test_absolute_errors_precomputation_function(q):
+def test_pinball_loss_precomputation_function(q, global_random_seed):
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
-    (used by DecisionTreeRegressor(criterion="asbolute_error")).
+    (used by DecisionTreeRegressor(criterion="absolute_error")).
 
     The implementation of the criterion relies on an efficient precomputation
     of left/right children absolute error for each split. This test verifies this
@@ -2924,28 +2924,30 @@ def test_absolute_errors_precomputation_function(q):
         # 2) compute the pinball loss
         return mean_pinball_loss(y, y_pred, sample_weight=w, alpha=q) * w.sum()
 
+    rng = np.random.RandomState(global_random_seed)
+
     for n in [3, 5, 10, 20, 50, 100]:
-        y = np.random.uniform(size=(n, 1))
-        w = np.random.rand(n)
+        y = rng.uniform(size=(n, 1))
+        w = rng.rand(n)
         indices = np.arange(n)
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, q=q)
+        abs_errors = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
         expected = compute_prefix_losses_naive(y, w)
         assert np.allclose(abs_errors, expected)
 
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, suffix=True, q=q)
+        abs_errors = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
         expected = compute_prefix_losses_naive(y[::-1], w[::-1])[::-1]
         assert np.allclose(abs_errors, expected)
 
-        x = np.random.rand(n)
+        x = rng.rand(n)
         indices = np.argsort(x)
         w[:] = 1
         y_sorted = y[indices]
         w_sorted = w[indices]
 
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, q=q)
+        abs_errors = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
         expected = compute_prefix_losses_naive(y_sorted, w_sorted)
         assert np.allclose(abs_errors, expected)
 
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, suffix=True, q=q)
+        abs_errors = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
         expected = compute_prefix_losses_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
         assert np.allclose(abs_errors, expected)
