@@ -280,7 +280,6 @@ def _plain_sgd{{name_suffix}}(
     CyLossFunction loss,
     int penalty_type,
     double alpha,
-    double C,
     double l1_ratio,
     SequentialDataset{{name_suffix}} dataset,
     const uint8_t[::1] validation_mask,
@@ -322,8 +321,6 @@ def _plain_sgd{{name_suffix}}(
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
         The regularization parameter.
-    C : float
-        Maximum step size for passive aggressive.
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
@@ -361,10 +358,19 @@ def _plain_sgd{{name_suffix}}(
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
         (4) adaptive decrease
-        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
-        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (5) Passive Aggressive-I, eta = min(eta0, loss/norm(x)**2), see [1]
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x)**2 + 0.5/eta0), see [1]
     eta0 : double
         The initial learning rate.
+        For PA-1 (`learning_rate=PA1`) and PA-II (`PA2`), it specifies the
+        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        is called C:
+
+        - For PA-I it is the maximum step size.
+        - For PA-II it regularizes the step size (the smaller `eta0` the more it
+          regularizes).
+
+        As a general rule-of-thumb for PA, `eta0` should be small when the data is noisy.
     power_t : double
         The exponent for inverse scaling learning rate.
     one_class : boolean
@@ -376,7 +382,6 @@ def _plain_sgd{{name_suffix}}(
     average : int
         The number of iterations before averaging starts. average=1 is
         equivalent to averaging for all iterations.
-
 
     Returns
     -------
@@ -392,6 +397,12 @@ def _plain_sgd{{name_suffix}}(
         Values are valid only if average > 0.
     n_iter_ : int
         The actual number of iter (epochs).
+
+    References
+    ----------
+    .. [1] Online Passive-Aggressive Algorithms
+       <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
     """
 
     # get the data information into easy vars
@@ -486,10 +497,10 @@ def _plain_sgd{{name_suffix}}(
                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                     if update == 0:
                         continue
-                    update = min(C, loss.cy_loss(y, p) / update)
+                    update = min(eta0, loss.cy_loss(y, p) / update)
                 elif learning_rate == PA2:
                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    update = loss.cy_loss(y, p) / (update + 0.5 / C)
+                    update = loss.cy_loss(y, p) / (update + 0.5 / eta0)
                 else:
                     dloss = loss.cy_gradient(y, p)
                     # clip dloss with large values to avoid numerical

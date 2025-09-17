@@ -87,6 +87,9 @@ default_package_constraints = {
     # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
     # and released.
     "numpydoc": "<1.9.0",
+    # TODO: remove once when we're using the new way to enable coverage in subprocess
+    # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
+    "pytest-cov": "<=6.3.0",
 }
 
 
@@ -262,18 +265,17 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["conda-forge", "conda-forge/label/python_rc"],
         "conda_dependencies": [
             "python-freethreading",
+            "meson-python",
+            "cython",
             "numpy",
             "scipy",
-            "cython",
             "joblib",
             "threadpoolctl",
             "pytest",
-            "pytest-xdist",
-            "ninja",
-            "meson-python",
+            "pytest-run-parallel",
             "ccache",
             "pip",
         ],
@@ -393,9 +395,7 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "pyamg"]
-        )
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.10",
@@ -411,6 +411,7 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
+            "pytest-xdist",
             "pytest-cov",
             "ninja",
             "meson-python",

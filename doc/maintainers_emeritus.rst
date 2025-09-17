@@ -14,6 +14,7 @@
 - Jaques Grobler
 - Yaroslav Halchenko
 - Brian Holt
+- Nicolas Hug
 - Arnaud Joly
 - Thouis (Ray) Jones
 - Kyle Kastner

@@ -584,6 +584,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -943,6 +945,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator

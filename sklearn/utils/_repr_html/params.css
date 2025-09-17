@@ -1,7 +1,14 @@
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -13,6 +20,7 @@
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -31,24 +39,85 @@
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
-.user-set td {
-    color:rgb(255, 94, 0);
+/*
+    `table td`is set in notebook with right text-align.
+    We need to overwrite it.
+*/
+.estimator-table table td.param {
     text-align: left;
+    position: relative;
+    padding: 0;
 }
 
-.user-set td.value pre {
-    color:rgb(255, 94, 0) !important;
-    background-color: transparent !important;
+.user-set td {
+    color:rgb(255, 94, 0);
+    text-align: left !important;
+}
+
+.user-set td.value {
+    color:rgb(255, 94, 0);
+    background-color: transparent;
 }
 
 .default td {
     color: black;
-    text-align: left;
+    text-align: left !important;
 }
 
 .user-set td i,
 .default td i {
     color: black;
+}
+
+/*
+    Styles for parameter documentation links
+    We need styling for visited so jupyter doesn't overwrite it
+*/
+a.param-doc-link,
+a.param-doc-link:link,
+a.param-doc-link:visited {
+    text-decoration: underline dashed;
+    text-underline-offset: .3em;
+    color: inherit;
+    display: block;
+    padding: .5em;
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+}
+
+.param-doc-description {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    padding: .5ex;
+    margin-left: 1.5em;
+    color: var(--sklearn-color-text);
+    box-shadow: .3em .3em .4em #999;
+    width: max-content;
+    text-align: left;
+    max-height: 10em;
+    overflow-y: auto;
+
+    /* unfitted */
+    background: var(--sklearn-color-unfitted-level-0);
+    border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+/* Fitted state for parameter tooltips */
+.fitted .param-doc-description {
+    /* fitted */
+    background: var(--sklearn-color-fitted-level-0);
+    border: thin solid var(--sklearn-color-fitted-level-3);
+}
+
+.param-doc-link:hover .param-doc-description {
+    display: block;
 }
 
 .copy-paste-icon {

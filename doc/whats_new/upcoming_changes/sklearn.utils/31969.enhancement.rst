@@ -1,0 +1,3 @@
+- Fixed the alignment of the "?" and "i" symbols and improved the color style of the
+  HTML representation of estimators.
+  By :user:`Guillaume Lemaitre <glemaitre>`.

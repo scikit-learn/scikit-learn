@@ -469,6 +469,19 @@ class NewtonCholeskySolver(NewtonSolver):
         self.is_multinomial_no_penalty = (
             self.linear_loss.base_loss.is_multiclass and self.l2_reg_strength == 0
         )
+        if self.is_multinomial_no_penalty:
+            # See inner_solve. The provided coef might not adhere to the convention
+            # that the last class is set to zero.
+            # This is done by the usual freedom of a (overparametrized) multinomial to
+            # add a constant to all classes which doesn't change predictions.
+            n_classes = self.linear_loss.base_loss.n_classes
+            coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
+            coef -= coef[-1, :]  # coef -= coef of last class
+        elif self.is_multinomial_with_intercept:
+            # See inner_solve. Same as above, but only for the intercept.
+            n_classes = self.linear_loss.base_loss.n_classes
+            # intercept -= intercept of last class
+            self.coef[-n_classes:] -= self.coef[-1]
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -518,10 +531,10 @@ class NewtonCholeskySolver(NewtonSolver):
             #
             # We choose the standard approach and set all the coefficients of the last
             # class to zero, for all features including the intercept.
+            # Note that coef was already dealt with in setup.
             n_classes = self.linear_loss.base_loss.n_classes
             n_dof = self.coef.size // n_classes  # degree of freedom per class
             n = self.coef.size - n_dof  # effective size
-            self.coef[n_classes - 1 :: n_classes] = 0
             self.gradient[n_classes - 1 :: n_classes] = 0
             self.hessian[n_classes - 1 :: n_classes, :] = 0
             self.hessian[:, n_classes - 1 :: n_classes] = 0
@@ -544,7 +557,7 @@ class NewtonCholeskySolver(NewtonSolver):
         elif self.is_multinomial_with_intercept:
             # Here, only intercepts are unpenalized. We again choose the last class and
             # set its intercept to zero.
-            self.coef[-1] = 0
+            # Note that coef was already dealt with in setup.
             self.gradient[-1] = 0
             self.hessian[-1, :] = 0
             self.hessian[:, -1] = 0
@@ -597,7 +610,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # Instead, we resort to lbfgs.
             if self.verbose:
                 print(
-                    "  The inner solver stumbled upon an singular or ill-conditioned "
+                    "  The inner solver stumbled upon a singular or ill-conditioned "
                     "Hessian matrix and resorts to LBFGS instead."
                 )
             self.use_fallback_lbfgs_solve = True

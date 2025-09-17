@@ -159,6 +159,7 @@ def test_as_float_array():
     "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
 )
 def test_as_float_array_nan(X):
+    X = X.copy()
     X[5, 0] = np.nan
     X[6, 1] = np.nan
     X_converted = as_float_array(X, ensure_all_finite="allow-nan")
@@ -289,7 +290,7 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         assert extended_msg not in ctx.value.args[0]
 
     if input_name == "X":
-        # Veriy that _validate_data is automatically called with the right argument
+        # Verify that _validate_data is automatically called with the right argument
         # to generate the same exception:
         with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
             SVR().fit(data, np.ones(data.shape[0]))
@@ -1608,7 +1609,7 @@ def _check_sample_weight_common(xp):
     assert_allclose(_convert_to_numpy(sample_weight, xp), 2 * np.ones(5))
 
     # check wrong number of dimensions
-    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+    with pytest.raises(ValueError, match=r"Sample weights must be 1D array or scalar"):
         _check_sample_weight(xp.ones((2, 4)), X=xp.ones((2, 2)))
 
     # check incorrect n_samples

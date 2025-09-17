@@ -1,0 +1,4 @@
+- The default value of the `copy` parameter in :class:`cluster.HDBSCAN` 
+  will change from `False` to `True` in 1.10 to avoid data modification
+  and maintain consistency with other estimators.
+  By :user:`Sarthak Puri <sarthakpurii>`.

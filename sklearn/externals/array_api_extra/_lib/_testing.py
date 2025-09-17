@@ -5,10 +5,13 @@ Note that this is private API; don't expect it to be stable.
 See also ..testing for public testing utilities.
 """
 
+from __future__ import annotations
+
 import math
 from types import ModuleType
-from typing import cast
+from typing import Any, cast
 
+import numpy as np
 import pytest
 
 from ._utils._compat import (
@@ -16,16 +19,24 @@ from ._utils._compat import (
     is_array_api_strict_namespace,
     is_cupy_namespace,
     is_dask_namespace,
+    is_jax_namespace,
+    is_numpy_namespace,
     is_pydata_sparse_namespace,
+    is_torch_array,
     is_torch_namespace,
+    to_device,
 )
-from ._utils._typing import Array
+from ._utils._typing import Array, Device
 
-__all__ = ["xp_assert_close", "xp_assert_equal"]
+__all__ = ["as_numpy_array", "xp_assert_close", "xp_assert_equal", "xp_assert_less"]
 
 
 def _check_ns_shape_dtype(
-    actual: Array, desired: Array
+    actual: Array,
+    desired: Array,
+    check_dtype: bool,
+    check_shape: bool,
+    check_scalar: bool,
 ) -> ModuleType:  # numpydoc ignore=RT03
     """
     Assert that namespace, shape and dtype of the two arrays match.
@@ -36,6 +47,11 @@ def _check_ns_shape_dtype(
         The array produced by the tested function.
     desired : Array
         The expected array (typically hardcoded).
+    check_dtype, check_shape : bool, default: True
+        Whether to check agreement between actual and desired dtypes and shapes
+    check_scalar : bool, default: False
+        NumPy only: whether to check agreement between actual and desired types -
+        0d array vs scalar.
 
     Returns
     -------
@@ -47,25 +63,86 @@ def _check_ns_shape_dtype(
     msg = f"namespaces do not match: {actual_xp} != f{desired_xp}"
     assert actual_xp == desired_xp, msg
 
-    actual_shape = actual.shape
-    desired_shape = desired.shape
+    # Dask uses nan instead of None for unknown shapes
+    actual_shape = cast(tuple[float, ...], actual.shape)
+    desired_shape = cast(tuple[float, ...], desired.shape)
+    assert None not in actual_shape  # Requires explicit support
+    assert None not in desired_shape
     if is_dask_namespace(desired_xp):
-        # Dask uses nan instead of None for unknown shapes
-        if any(math.isnan(i) for i in cast(tuple[float, ...], actual_shape)):
+        if any(math.isnan(i) for i in actual_shape):
             actual_shape = actual.compute().shape  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-        if any(math.isnan(i) for i in cast(tuple[float, ...], desired_shape)):
+        if any(math.isnan(i) for i in desired_shape):
             desired_shape = desired.compute().shape  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
-    msg = f"shapes do not match: {actual_shape} != f{desired_shape}"
-    assert actual_shape == desired_shape, msg
+    if check_shape:
+        msg = f"shapes do not match: {actual_shape} != f{desired_shape}"
+        assert actual_shape == desired_shape, msg
+    else:
+        # Ignore shape, but check flattened size. This is normally done by
+        # np.testing.assert_array_equal etc even when strict=False, but not for
+        # non-materializable arrays.
+        actual_size = math.prod(actual_shape)  # pyright: ignore[reportUnknownArgumentType]
+        desired_size = math.prod(desired_shape)  # pyright: ignore[reportUnknownArgumentType]
+        msg = f"sizes do not match: {actual_size} != f{desired_size}"
+        assert actual_size == desired_size, msg
 
-    msg = f"dtypes do not match: {actual.dtype} != {desired.dtype}"
-    assert actual.dtype == desired.dtype, msg
+    if check_dtype:
+        msg = f"dtypes do not match: {actual.dtype} != {desired.dtype}"
+        assert actual.dtype == desired.dtype, msg
+
+    if is_numpy_namespace(actual_xp) and check_scalar:
+        # only NumPy distinguishes between scalars and arrays; we do if check_scalar.
+        _msg = (
+            "array-ness does not match:\n Actual: "
+            f"{type(actual)}\n Desired: {type(desired)}"
+        )
+        assert np.isscalar(actual) == np.isscalar(desired), _msg
 
     return desired_xp
 
 
-def xp_assert_equal(actual: Array, desired: Array, err_msg: str = "") -> None:
+def _is_materializable(x: Array) -> bool:
+    """
+    Return True if you can call `as_numpy_array(x)`; False otherwise.
+    """
+    # Important: here we assume that we're not tracing -
+    # e.g. we're not inside `jax.jit`` nor `cupy.cuda.Stream.begin_capture`.
+    return not is_torch_array(x) or x.device.type != "meta"  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def as_numpy_array(array: Array, *, xp: ModuleType) -> np.typing.NDArray[Any]:
+    """
+    Convert array to NumPy, bypassing GPU-CPU transfer guards and densification guards.
+    """
+    if is_cupy_namespace(xp):
+        return xp.asnumpy(array)
+    if is_pydata_sparse_namespace(xp):
+        return array.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+
+    if is_torch_namespace(xp):
+        array = to_device(array, "cpu")
+    if is_array_api_strict_namespace(xp):
+        cpu: Device = xp.Device("CPU_DEVICE")
+        array = to_device(array, cpu)
+    if is_jax_namespace(xp):
+        import jax
+
+        # Note: only needed if the transfer guard is enabled
+        cpu = cast(Device, jax.devices("cpu")[0])
+        array = to_device(array, cpu)
+
+    return np.asarray(array)
+
+
+def xp_assert_equal(
+    actual: Array,
+    desired: Array,
+    *,
+    err_msg: str = "",
+    check_dtype: bool = True,
+    check_shape: bool = True,
+    check_scalar: bool = False,
+) -> None:
     """
     Array-API compatible version of `np.testing.assert_array_equal`.
 
@@ -77,47 +154,60 @@ def xp_assert_equal(actual: Array, desired: Array, err_msg: str = "") -> None:
         The expected array (typically hardcoded).
     err_msg : str, optional
         Error message to display on failure.
+    check_dtype, check_shape : bool, default: True
+        Whether to check agreement between actual and desired dtypes and shapes
+    check_scalar : bool, default: False
+        NumPy only: whether to check agreement between actual and desired types -
+        0d array vs scalar.
 
     See Also
     --------
     xp_assert_close : Similar function for inexact equality checks.
     numpy.testing.assert_array_equal : Similar function for NumPy arrays.
     """
-    xp = _check_ns_shape_dtype(actual, desired)
+    xp = _check_ns_shape_dtype(actual, desired, check_dtype, check_shape, check_scalar)
+    if not _is_materializable(actual):
+        return
+    actual_np = as_numpy_array(actual, xp=xp)
+    desired_np = as_numpy_array(desired, xp=xp)
+    np.testing.assert_array_equal(actual_np, desired_np, err_msg=err_msg)
 
-    if is_cupy_namespace(xp):
-        xp.testing.assert_array_equal(actual, desired, err_msg=err_msg)
-    elif is_torch_namespace(xp):
-        # PyTorch recommends using `rtol=0, atol=0` like this
-        # to test for exact equality
-        xp.testing.assert_close(
-            actual,
-            desired,
-            rtol=0,
-            atol=0,
-            equal_nan=True,
-            check_dtype=False,
-            msg=err_msg or None,
-        )
-    else:
-        import numpy as np  # pylint: disable=import-outside-toplevel
 
-        if is_pydata_sparse_namespace(xp):
-            actual = actual.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-            desired = desired.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+def xp_assert_less(
+    x: Array,
+    y: Array,
+    *,
+    err_msg: str = "",
+    check_dtype: bool = True,
+    check_shape: bool = True,
+    check_scalar: bool = False,
+) -> None:
+    """
+    Array-API compatible version of `np.testing.assert_array_less`.
 
-        actual_np = None
-        desired_np = None
-        if is_array_api_strict_namespace(xp):
-            # __array__ doesn't work on array-api-strict device arrays
-            # We need to convert to the CPU device first
-            actual_np = np.asarray(xp.asarray(actual, device=xp.Device("CPU_DEVICE")))
-            desired_np = np.asarray(xp.asarray(desired, device=xp.Device("CPU_DEVICE")))
+    Parameters
+    ----------
+    x, y : Array
+        The arrays to compare according to ``x < y`` (elementwise).
+    err_msg : str, optional
+        Error message to display on failure.
+    check_dtype, check_shape : bool, default: True
+        Whether to check agreement between actual and desired dtypes and shapes
+    check_scalar : bool, default: False
+        NumPy only: whether to check agreement between actual and desired types -
+        0d array vs scalar.
 
-        # JAX/Dask arrays work with `np.testing`
-        actual_np = actual if actual_np is None else actual_np
-        desired_np = desired if desired_np is None else desired_np
-        np.testing.assert_array_equal(actual_np, desired_np, err_msg=err_msg)  # pyright: ignore[reportUnknownArgumentType]
+    See Also
+    --------
+    xp_assert_close : Similar function for inexact equality checks.
+    numpy.testing.assert_array_equal : Similar function for NumPy arrays.
+    """
+    xp = _check_ns_shape_dtype(x, y, check_dtype, check_shape, check_scalar)
+    if not _is_materializable(x):
+        return
+    x_np = as_numpy_array(x, xp=xp)
+    y_np = as_numpy_array(y, xp=xp)
+    np.testing.assert_array_less(x_np, y_np, err_msg=err_msg)
 
 
 def xp_assert_close(
@@ -127,6 +217,9 @@ def xp_assert_close(
     rtol: float | None = None,
     atol: float = 0,
     err_msg: str = "",
+    check_dtype: bool = True,
+    check_shape: bool = True,
+    check_scalar: bool = False,
 ) -> None:
     """
     Array-API compatible version of `np.testing.assert_allclose`.
@@ -143,6 +236,11 @@ def xp_assert_close(
         Absolute tolerance. Default: 0.
     err_msg : str, optional
         Error message to display on failure.
+    check_dtype, check_shape : bool, default: True
+        Whether to check agreement between actual and desired dtypes and shapes
+    check_scalar : bool, default: False
+        NumPy only: whether to check agreement between actual and desired types -
+        0d array vs scalar.
 
     See Also
     --------
@@ -154,55 +252,33 @@ def xp_assert_close(
     -----
     The default `atol` and `rtol` differ from `xp.all(xpx.isclose(a, b))`.
     """
-    xp = _check_ns_shape_dtype(actual, desired)
+    xp = _check_ns_shape_dtype(actual, desired, check_dtype, check_shape, check_scalar)
+    if not _is_materializable(actual):
+        return
 
-    floating = xp.isdtype(actual.dtype, ("real floating", "complex floating"))
-    if rtol is None and floating:
-        # multiplier of 4 is used as for `np.float64` this puts the default `rtol`
-        # roughly half way between sqrt(eps) and the default for
-        # `numpy.testing.assert_allclose`, 1e-7
-        rtol = xp.finfo(actual.dtype).eps ** 0.5 * 4
-    elif rtol is None:
-        rtol = 1e-7
+    if rtol is None:
+        if xp.isdtype(actual.dtype, ("real floating", "complex floating")):
+            # multiplier of 4 is used as for `np.float64` this puts the default `rtol`
+            # roughly half way between sqrt(eps) and the default for
+            # `numpy.testing.assert_allclose`, 1e-7
+            rtol = xp.finfo(actual.dtype).eps ** 0.5 * 4
+        else:
+            rtol = 1e-7
 
-    if is_cupy_namespace(xp):
-        xp.testing.assert_allclose(
-            actual, desired, rtol=rtol, atol=atol, err_msg=err_msg
-        )
-    elif is_torch_namespace(xp):
-        xp.testing.assert_close(
-            actual, desired, rtol=rtol, atol=atol, equal_nan=True, msg=err_msg or None
-        )
-    else:
-        import numpy as np  # pylint: disable=import-outside-toplevel
-
-        if is_pydata_sparse_namespace(xp):
-            actual = actual.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-            desired = desired.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-
-        actual_np = None
-        desired_np = None
-        if is_array_api_strict_namespace(xp):
-            # __array__ doesn't work on array-api-strict device arrays
-            # We need to convert to the CPU device first
-            actual_np = np.asarray(xp.asarray(actual, device=xp.Device("CPU_DEVICE")))
-            desired_np = np.asarray(xp.asarray(desired, device=xp.Device("CPU_DEVICE")))
-
-        # JAX/Dask arrays work with `np.testing`
-        actual_np = actual if actual_np is None else actual_np
-        desired_np = desired if desired_np is None else desired_np
-
-        assert isinstance(rtol, float)
-        np.testing.assert_allclose(  # pyright: ignore[reportCallIssue]
-            actual_np,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-            desired_np,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-            rtol=rtol,
-            atol=atol,
-            err_msg=err_msg,
-        )
+    actual_np = as_numpy_array(actual, xp=xp)
+    desired_np = as_numpy_array(desired, xp=xp)
+    np.testing.assert_allclose(  # pyright: ignore[reportCallIssue]
+        actual_np,
+        desired_np,
+        rtol=rtol,  # pyright: ignore[reportArgumentType]
+        atol=atol,
+        err_msg=err_msg,
+    )
 
 
-def xfail(request: pytest.FixtureRequest, reason: str) -> None:
+def xfail(
+    request: pytest.FixtureRequest, *, reason: str, strict: bool | None = None
+) -> None:
     """
     XFAIL the currently running test.
 
@@ -216,5 +292,13 @@ def xfail(request: pytest.FixtureRequest, reason: str) -> None:
         ``request`` argument of the test function.
     reason : str
         Reason for the expected failure.
+    strict: bool, optional
+        If True, the test will be marked as failed if it passes.
+        If False, the test will be marked as passed if it fails.
+        Default: ``xfail_strict`` value in ``pyproject.toml``, or False if absent.
     """
-    request.node.add_marker(pytest.mark.xfail(reason=reason))
+    if strict is not None:
+        marker = pytest.mark.xfail(reason=reason, strict=strict)
+    else:
+        marker = pytest.mark.xfail(reason=reason)
+    request.node.add_marker(marker)
