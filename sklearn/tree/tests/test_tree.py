@@ -1827,8 +1827,8 @@ def test_criterion_copy():
             assert n_outputs == n_outputs_
             assert_array_equal(n_classes, n_classes_)
 
-        for _, typename in CRITERIA_REG.items():
-            criteria = typename(n_outputs, n_samples)
+        for name, typename in CRITERIA_REG.items():
+            criteria = DecisionTreeRegressor(criterion=name).criterion
             result = copy_func(criteria).__reduce__()
             typename_, (n_outputs_, n_samples_), _ = result
             assert typename == typename_

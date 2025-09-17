@@ -77,6 +77,7 @@ CRITERIA_REG = {
     "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
     "poisson": _criterion.Poisson,
+    "pinball": _criterion.Pinball,
 }
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter, "random": _splitter.RandomSplitter}
@@ -383,7 +384,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self.n_outputs_, self.n_classes_
                 )
             else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+                args = (self.n_outputs_, n_samples)
+                if self.criterion == "pinball":
+                    args = (*args, self.pinball_alpha)
+                if self.criterion == "absolute_error":
+                    # FIXME: this is coupled with code at a much lower level
+                    # because of some inheritance shenanigans with __cinit__
+                    args = (*args, 0.5)
+                criterion = CRITERIA_REG[self.criterion](*args)
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -1338,9 +1346,18 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            StrOptions(
+                {
+                    "squared_error",
+                    "friedman_mse",
+                    "absolute_error",
+                    "poisson",
+                    "pinball",
+                }
+            ),
             Hidden(Criterion),
         ],
+        "pinball_alpha": [Interval(RealNotInt, 0.0, 1.0, closed="neither")],
     }
 
     def __init__(
@@ -1358,6 +1375,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        pinball_alpha=0.5,
     ):
         super().__init__(
             criterion=criterion,
@@ -1373,6 +1391,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+        self.pinball_alpha = pinball_alpha
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
@@ -1971,6 +1990,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        pinball_alpha=0.5,
     ):
         super().__init__(
             criterion=criterion,
@@ -1985,6 +2005,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            pinball_alpha=pinball_alpha,
         )
 
     def __sklearn_tags__(self):
