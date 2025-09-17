@@ -2573,7 +2573,9 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
     """Check that we raise an error when using `ColumnTransformer` and
     the columns names are duplicated between transformers."""
     lib = pytest.importorskip(dataframe_lib)
+
     df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
+
     transformer = ColumnTransformer(
         transformers=[
             ("A", "passthrough", ["x1", "x2", "x3"]),
