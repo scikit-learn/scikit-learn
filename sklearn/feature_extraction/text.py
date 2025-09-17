@@ -1737,20 +1737,7 @@ class TfidfVectorizer(CountVectorizer):
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
 
-    For an example of usage, see
-    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
-
-    For an efficiency comparison of the different feature extractors, see
-    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
-
-    For an example of document clustering and comparison with
-    :class:`~sklearn.feature_extraction.text.HashingVectorizer`, see
-    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
-
-    For use in hyperparamter tuning of a pipeline, see
-    :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`.
-
-    Read more in the :ref:`User Guide <text_feature_extraction>`.
+    Read more in the :ref:`User Guide <tfidf>`.
 
     Parameters
     ----------
