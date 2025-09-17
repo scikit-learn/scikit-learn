@@ -1217,24 +1217,12 @@ def _check_large_sparse(X, accept_large_sparse=False):
 
 
 def check_X_y(
-    X,
-    y=None,
-    accept_sparse=False,
-    *,
-    accept_large_sparse=True,
-    dtype="numeric",
-    order=None,
-    copy=False,
-    force_writeable=False,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
-    ensure_2d=True,
-    allow_nd=False,
-    multi_output=False,
-    ensure_min_samples=1,
-    ensure_min_features=1,
-    y_numeric=False,
-    estimator=None,
+   X, y=None, *, accept_sparse=False, dtype="numeric",
+              order=None, copy=False, force_all_finite=True,
+              ensure_2d=True, allow_nd=False, multi_output=False,
+              ensure_min_samples=1, ensure_min_features=1,
+              y_numeric=False, estimator=None, input_name="X",
+              groups=None
 ):
     """Input validation for standard estimators.
 
@@ -1374,20 +1362,18 @@ def check_X_y(
     """
     if y is None:
         return check_array(X, dtype=dtype, accept_sparse=accept_sparse)
+    if ensure_all_finite is None:
+        ensure_all_finite = True  # or whatever your intended default is
+        # Only then call _deprecate_force_all_finite
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
-
-
-    if y is None:
-        if estimator is None:
-            estimator_name = "estimator"
-        else:
-            estimator_name = _check_estimator_name(estimator)
-        raise ValueError(
-            f"{estimator_name} requires y to be passed, but the target y is None"
-        )
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
+    if ensure_all_finite is None:
+        ensure_all_finite = True
 
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
+    
     X = check_array(
         X,
         accept_sparse=accept_sparse,
@@ -1433,6 +1419,11 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
         y = y.astype(np.float64)
 
     return y
+    if y is None:
+    # Only validate X
+       X = check_array(X, ...)
+       return X, None
+
 
 
 def column_or_1d(y, *, dtype=None, warn=False, device=None):
@@ -1473,6 +1464,16 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
     >>> column_or_1d([1, 1])
     array([1, 1])
     """
+    def _check_input_parameters(X, y=None, groups=None, caller_name="check_X_y"):
+        if y is None and groups is None:
+            return X, None, None
+
+    # validate X and y (original behavior)
+        X, y = check_X_y(X, y, ...)
+
+    # validate groups if necessary (optional)
+        return X, y, groups
+
     xp, _ = get_namespace(y)
     y = check_array(
         y,
@@ -2228,11 +2229,25 @@ def _check_sample_weight(
                     sample_weight.shape, (n_samples,)
                 )
             )
+import warnings
+
+def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "The 'force_all_finite' parameter is deprecated and will be removed "
+            "in version 1.3. Use 'ensure_all_finite' instead.",
+            FutureWarning,
+        )
+    return force_all_finite if ensure_all_finite is None else ensure_all_finite
 
     if ensure_non_negative:
         check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight
+    if ensure_all_finite is None:
+        ensure_all_finite = True
+
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
 
 def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
@@ -2273,6 +2288,16 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         "Can only compare two sparse matrices, not a sparse matrix and an array"
     )
 
+import warnings
+
+def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "The 'force_all_finite' parameter is deprecated and will be removed "
+            "in version 1.3. Use 'ensure_all_finite' instead.",
+            FutureWarning,
+        )
+    return force_all_finite if ensure_all_finite is None else ensure_all_finite
 
 def _check_response_method(estimator, response_method):
     """Check if `response_method` is available in estimator and return it.

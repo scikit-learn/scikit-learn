@@ -1153,7 +1153,23 @@ def test_check_dataframe_with_only_boolean():
     array = check_array(df, dtype=None)
     assert array.dtype == np.float64
     assert_array_equal(array, [[True], [False], [True]])
-
+def test_check_X_y_with_only_X():
+    X = np.array([[1, 2], [3, 4]])
+    
+    # y is None — we're testing if check_X_y can handle this
+    X_out, y_out = check_X_y(X, None)
+    
+    # Should return X unchanged and y as None
+    assert_array_equal(X_out, X)
+    assert y_out is None
+def test_check_X_y_with_groups_none():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    
+    X_out, y_out = check_X_y(X, y, groups=None)
+    
+    assert_array_equal(X_out, X)
+    assert_array_equal(y_out, y)
 
 class DummyMemory:
     def cache(self, func):
