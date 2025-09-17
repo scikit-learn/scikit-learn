@@ -131,26 +131,36 @@ a.param-doc-link::before {
 .features {
   margin-left: auto;
   margin-right: auto;
-
   font-size: smaller;
-  width: 80%;
-  padding-top: 3%;
-  padding-bottom: 3%;
+  width: 70%;
   text-align: left;
   background: var(--sklearn-color-fitted-level-1);
   border-top: 1px solid gray;
   max-height: 10em;
-  overflow-y: auto;
+  overflow-y: scroll;
   font-family: monospace;
   cursor: pointer;
+  position: relative;
+  padding: .5em;
 }
 
-.features .features-title {
+.features-title {
   padding-left: .5rem;
+  position: sticky;
+  top: 0;
+  background: var(--sklearn-color-fitted-level-1);
+  z-index: 1;
 }
 
+.features ul {
+  padding: 0;
+  margin-left: 1em;
+  white-space: nowrap;
+
+}
 
 .features li {
-  padding-left: 2em;
+  text-align: left;
   list-style-type: none;
+  max-width: 10em;
 }

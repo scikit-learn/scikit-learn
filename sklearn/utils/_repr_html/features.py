@@ -6,7 +6,7 @@ def _features_html(features):
     FEATURES_TABLE_TEMPLATE = """
         <div class="features">
           <details>
-            <summary class="features-title">Output features </summary>
+            <summary class="features-title">Output features</summary>
               <ul>
                {rows}
               </ul>
