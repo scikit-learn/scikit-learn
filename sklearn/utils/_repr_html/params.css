@@ -129,38 +129,35 @@ a.param-doc-link::before {
 }
 
 .features {
-  margin-left: auto;
-  margin-right: auto;
-  font-size: smaller;
-  width: 70%;
-  text-align: left;
-  background: var(--sklearn-color-fitted-level-1);
-  border-top: 1px solid gray;
-  max-height: 10em;
-  overflow-y: scroll;
-  font-family: monospace;
-  cursor: pointer;
-  position: relative;
-  padding: .5em;
+    font-family: monospace;
+    font-size: smaller;
+    cursor: pointer;
+    background: var(--sklearn-color-fitted-level-1);
 }
 
-.features-title {
-  padding-left: .5rem;
+.features table {
+    display: block;
+    max-height: 10em;
+    overflow-y: auto;
+    width: 100%;
+    text-align: left;
+    padding: .5em;
+
+}
+
+.features summary {
   position: sticky;
   top: 0;
-  background: var(--sklearn-color-fitted-level-1);
   z-index: 1;
+  margin: 0;
+  padding: .5em;
+  border: .1em solid grey;
 }
 
-.features ul {
+.features td {
+  text-align: left;
+  max-width: 10em;
   padding: 0;
-  margin-left: 1em;
   white-space: nowrap;
 
-}
-
-.features li {
-  text-align: left;
-  list-style-type: none;
-  max-width: 10em;
 }

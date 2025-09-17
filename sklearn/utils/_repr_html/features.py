@@ -6,17 +6,20 @@ def _features_html(features):
     FEATURES_TABLE_TEMPLATE = """
         <div class="features">
           <details>
-            <summary class="features-title">{total_features} features</summary>
-              <ul>
+            <summary>{total_features} features
+            </summary>
+            <table>
+              <tbody>
                {rows}
-              </ul>
+              </tbody>
+            </table>
           </details>
         </div>
         <br>
     """
 
     FEATURES_ROW_TEMPLATE = """
-        <li>{feature}</li>
+        <tr><td>{feature}</td></tr>
     """
     total_features = len(features)
     rows = []
