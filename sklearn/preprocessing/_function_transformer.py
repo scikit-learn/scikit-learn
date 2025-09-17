@@ -266,12 +266,16 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 # Use the feature names seen **at fit-time** if available (stored on
                 # the transformer instance). If absent, fall back to the input X's
                 # feature names (previous behavior).
-                feature_names_in = getattr(self, "feature_names_in_", _get_feature_names(X))
-
-                same_feature_names_in_out = (
-                    feature_names_in is not None and list(feature_names_in) == list(out.columns)
+                feature_names_in = getattr(
+                    self, "feature_names_in_", _get_feature_names(X)
                 )
-                not_all_str_columns = not all(isinstance(col, str) for col in out.columns)
+
+                same_feature_names_in_out = feature_names_in is not None and list(
+                    feature_names_in
+                ) == list(out.columns)
+                not_all_str_columns = not all(
+                    isinstance(col, str) for col in out.columns
+                )
 
                 # If the output column labels are a permutation of the expected feature
                 # names, reorder by label so values stay aligned with their names.
@@ -283,8 +287,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                         # polars.DataFrame.select expects a list of column names
                         out = out.select(list(feature_names_out))
                     else:
-                        # Generic fallback: let adapter create the target container. The
-                        # adapter should handle container reconstructions where possible.
+                        # Generic fallback: let adapter create the target container.The
+                        # adapter should handle container reconstructions where possible
                         adapter = _get_adapter_from_container(out)
                         out = adapter.create_container(
                             X_output=out,
