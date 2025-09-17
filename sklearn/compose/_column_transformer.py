@@ -588,15 +588,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
 
-    def _get_feature_name_out_for_transformer(self, name, trans, feature_names_in):
-        """Gets feature names of transformer.
-
-        Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
-        """
-        column_indices = self._transformer_to_input_indices[name]
-        names = feature_names_in[column_indices]
-        return trans.get_feature_names_out(names)
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -631,9 +622,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         ):
             if hasattr(trans, "get_feature_names_out"):
-                feature_names_out = self._get_feature_name_out_for_transformer(
-                    name, trans, input_features
-                )
+                column_indices = self._transformer_to_input_indices[name]
+                feature_names_out = input_features[column_indices]
             elif hasattr(self, "_transformers_feature_names_out"):
                 # Fallback to feature names returned by transformers that output
                 # dataframes but don't implement get_feature_names_out.
