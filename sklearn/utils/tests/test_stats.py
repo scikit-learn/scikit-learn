@@ -20,10 +20,10 @@ from sklearn.utils.stats import _weighted_percentile
 def test_weighted_percentile_matches_median(size, average):
     """Ensure `_weighted_percentile` matches `median` when expected.
 
-    With unit `sample_weight`, `_weighted_percentile` should match median except
+    With unit `sample_weight`, `_weighted_percentile` should match the median except
     when `average=False` and the number of samples is even.
     For an even array and `average=False`, `percentile_rank=50` gives the lower
-    of the two 'middle' values, that would have been averaged for `median` calculation.
+    of the two 'middle' values, that are averaged when calculating the `median`.
     """
     y = np.arange(size)
     sample_weight = np.ones_like(y)
@@ -114,9 +114,9 @@ def test_weighted_percentile_all_zero_weights():
 def test_weighted_percentile_ignores_zero_weight(
     average, percentile_rank, expected_value
 ):
-    """Check leading, trailing and middle 0 weights behaves correctly.
+    """Check leading, trailing and middle 0 weights behave correctly.
 
-    Check that leading zero-weight observations ignored when `percentile_rank=0`.
+    Check that leading zero-weight observations are ignored when `percentile_rank=0`.
     See #20528 for details.
     Check that when `average=True` and the `j+1` ('plus one') index has sample weight
     of 0, it is ignored. Also check that trailing zero weight observations are ignored
@@ -161,7 +161,7 @@ def test_weighted_percentile_frequency_weight_semantics(
 def test_weighted_percentile_constant_multiplier(
     global_random_seed, percentile_rank, average, constant
 ):
-    """Check multiplying weights by constant does not change result.
+    """Check multiplying weights by a constant does not change the result.
 
     Note scale invariance does not always hold when multiplying by a
     float due to cumulative sum numerical error (which grows proportional to n).
@@ -180,7 +180,7 @@ def test_weighted_percentile_constant_multiplier(
 
 @pytest.mark.parametrize("average", [True, False])
 def test_weighted_percentile_2d(global_random_seed, average):
-    """Check `_weighted_percentile` behaviour correct when `array` is 2D."""
+    """Check `_weighted_percentile` behaviour is correct when `array` is 2D."""
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(global_random_seed)
     x1 = rng.randint(10, size=10)
@@ -378,7 +378,7 @@ def test_weighted_percentile_all_nan_column():
 def test_weighted_percentile_like_numpy_quantile(
     percentile, average, uniform_weight, global_random_seed
 ):
-    """Check `_weighted_percentile` equivalent to `np.quantile` with weights."""
+    """Check `_weighted_percentile` is equivalent to `np.quantile` with weights."""
     # TODO: remove the following skip once no longer applicable.
     if average and not uniform_weight:
         pytest.skip(

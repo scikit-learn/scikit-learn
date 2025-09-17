@@ -50,7 +50,7 @@ def _weighted_percentile(
             Supports handling of `NaN` values.
 
         .. versionchanged:: 1.8
-            Supports `average`, which calculates percentile using
+            Supports `average`, which calculates percentile using the
             "averaged_inverted_cdf" method.
 
     Parameters
