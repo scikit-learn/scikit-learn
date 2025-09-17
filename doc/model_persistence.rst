@@ -324,7 +324,7 @@ environment for the updated software.
 .. dropdown:: InconsistentVersionWarning
 
   When an estimator is loaded with a scikit-learn version that is inconsistent
-  with the version the estimator was pickled with, a
+  with the version the estimator was pickled with, an
   :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
   can be caught to obtain the original version the estimator was pickled with::
 

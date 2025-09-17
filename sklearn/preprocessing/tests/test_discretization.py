@@ -13,7 +13,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.fixes import np_version, parse_version
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
@@ -664,42 +663,3 @@ def test_invalid_quantile_method_with_sample_weight():
             X,
             sample_weight=[1, 1, 2, 2],
         )
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize(
-    "strategy, quantile_method",
-    [("uniform", "warn"), ("quantile", "averaged_inverted_cdf"), ("kmeans", "warn")],
-)
-def test_KBD_inverse_transform_Xt_deprecation(strategy, quantile_method):
-    X = np.arange(10)[:, None]
-    kbd = KBinsDiscretizer(strategy=strategy, quantile_method=quantile_method)
-    X = kbd.fit_transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        kbd.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        kbd.inverse_transform(X=X, Xt=X)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        kbd.inverse_transform(X)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        kbd.inverse_transform(Xt=X)
-
-
-# TODO: remove this test when numpy min version >= 1.22
-@pytest.mark.skipif(
-    condition=np_version >= parse_version("1.22"),
-    reason="newer numpy versions do support the 'method' parameter",
-)
-def test_invalid_quantile_method_on_old_numpy():
-    expected_msg = (
-        "quantile_method='closest_observation' is not supported with numpy < 1.22"
-    )
-    with pytest.raises(ValueError, match=expected_msg):
-        KBinsDiscretizer(
-            quantile_method="closest_observation", strategy="quantile"
-        ).fit(X)
