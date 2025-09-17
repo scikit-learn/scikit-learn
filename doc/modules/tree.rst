@@ -472,8 +472,9 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)
-until a stopping condition is reached, for instance some examples include (for others see the docstring of the estimators):
+Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)`
+until a stopping condition is reached, for instance some examples include
+(for others see the docstring of the estimators):
 
 * the maximum allowable depth is reached (`max_depth`)
 
