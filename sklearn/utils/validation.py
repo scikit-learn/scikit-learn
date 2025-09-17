@@ -1373,7 +1373,7 @@ def check_X_y(
 
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
-    
+
     X = check_array(
         X,
         accept_sparse=accept_sparse,
@@ -2229,7 +2229,6 @@ def _check_sample_weight(
                     sample_weight.shape, (n_samples,)
                 )
             )
-import warnings
 
 def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
     if force_all_finite != "deprecated":
@@ -2288,7 +2287,6 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         "Can only compare two sparse matrices, not a sparse matrix and an array"
     )
 
-import warnings
 
 def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
     if force_all_finite != "deprecated":
