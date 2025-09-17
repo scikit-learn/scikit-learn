@@ -1,3 +1,0 @@
-- Fixed a bug in :class:`pipeline.FeatureUnion` with `set_output(transform="polars")`
-  when transformers produce duplicate column names.
-  By :user:`Jérémie du Boisberranger <jeremiedbb>`.
