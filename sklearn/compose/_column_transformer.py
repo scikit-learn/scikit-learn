@@ -623,7 +623,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ):
             if hasattr(trans, "get_feature_names_out"):
                 column_indices = self._transformer_to_input_indices[name]
-                feature_names_out = input_features[column_indices]
+                names = input_features[column_indices]
+                feature_names_out = trans.get_feature_names_out(names)
             elif hasattr(self, "_transformers_feature_names_out"):
                 # Fallback to feature names returned by transformers that output
                 # dataframes but don't implement get_feature_names_out.
