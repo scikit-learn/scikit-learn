@@ -40,9 +40,7 @@ def test_set_callbacks_error(callbacks):
     """Check the error message when not passing a valid callback to `set_callbacks`."""
     estimator = Estimator()
 
-    with pytest.raises(
-        TypeError, match="callbacks must follow the CallbackProtocol protocol."
-    ):
+    with pytest.raises(TypeError, match="callbacks must follow the Callback protocol."):
         estimator.set_callbacks(callbacks)
 
 

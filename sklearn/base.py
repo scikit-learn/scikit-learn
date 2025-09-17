@@ -136,6 +136,8 @@ def _clone_parametrized(estimator, *, safe=True):
 
     # attach callbacks to the new estimator
     if hasattr(estimator, "_skl_callbacks"):
+        # TODO(callbacks): Figure out the exact behavior we want when cloning an
+        # estimator with callbacks.
         new_object._skl_callbacks = clone(estimator._skl_callbacks, safe=False)
 
     # quick sanity check of the parameters of the clone

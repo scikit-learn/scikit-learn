@@ -9,13 +9,13 @@ from sklearn.utils.parallel import Parallel, delayed
 
 
 class TestingCallback:
-    def _on_fit_begin(self, estimator, *, data):
+    def _on_fit_begin(self, estimator):
         pass
 
     def _on_fit_end(self):
         pass
 
-    def _on_fit_iter_end(self, estimator, node, **kwargs):
+    def _on_fit_task_end(self, estimator, task_info, **kwargs):
         pass
 
 
@@ -26,10 +26,10 @@ class TestingAutoPropagatedCallback(TestingCallback):
 class NotValidCallback:
     """Invalid callback since it's missing a method from the protocol.'"""
 
-    def _on_fit_begin(self, estimator, *, data):
+    def _on_fit_begin(self, estimator):
         pass  # pragma: no cover
 
-    def _on_fit_iter_end(self, estimator, node, **kwargs):
+    def _on_fit_task_end(self, estimator, task_info, **kwargs):
         pass  # pragma: no cover
 
 
@@ -44,14 +44,14 @@ class Estimator(CallbackSupportMixin, BaseEstimator):
     def fit(self, X=None, y=None):
         callback_ctx = self.init_callback_context(
             max_subtasks=self.max_iter
-        ).eval_on_fit_begin(estimator=self, data={"X_train": X, "y_train": y})
+        ).eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
             subcontext = callback_ctx.subcontext(task_id=i)
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
-            if subcontext.eval_on_fit_iter_end(
+            if subcontext.eval_on_fit_task_end(
                 estimator=self,
                 data={"X_train": X, "y_train": y},
             ):
@@ -70,9 +70,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self.init_callback_context().eval_on_fit_begin(
-            estimator=self, data={"X_train": X, "y_train": y}
-        )
+        callback_ctx = self.init_callback_context().eval_on_fit_begin(estimator=self)
 
         i = 0
         while True:
@@ -80,7 +78,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
-            if subcontext.eval_on_fit_iter_end(
+            if subcontext.eval_on_fit_task_end(
                 estimator=self,
                 data={"X_train": X, "y_train": y},
             ):
@@ -110,7 +108,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
     def fit(self, X=None, y=None):
         callback_ctx = self.init_callback_context(
             max_subtasks=self.n_outer
-        ).eval_on_fit_begin(estimator=self, data={"X_train": X, "y_train": y})
+        ).eval_on_fit_begin(estimator=self)
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_func)(
@@ -138,12 +136,12 @@ def _func(meta_estimator, inner_estimator, X, y, *, callback_ctx):
 
         est.fit(X, y)
 
-        inner_ctx.eval_on_fit_iter_end(
+        inner_ctx.eval_on_fit_task_end(
             estimator=meta_estimator,
             data={"X_train": X, "y_train": y},
         )
 
-    callback_ctx.eval_on_fit_iter_end(
+    callback_ctx.eval_on_fit_task_end(
         estimator=meta_estimator,
         data={"X_train": X, "y_train": y},
     )

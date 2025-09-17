@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.callback._base import CallbackProtocol
+from sklearn.callback._base import Callback
 from sklearn.callback._callback_context import CallbackContext
 
 
@@ -24,8 +24,8 @@ class CallbackSupportMixin:
         if not isinstance(callbacks, list):
             callbacks = [callbacks]
 
-        if not all(isinstance(callback, CallbackProtocol) for callback in callbacks):
-            raise TypeError("callbacks must follow the CallbackProtocol protocol.")
+        if not all(isinstance(callback, Callback) for callback in callbacks):
+            raise TypeError("callbacks must follow the Callback protocol.")
 
         self._skl_callbacks = callbacks
 
@@ -40,9 +40,8 @@ class CallbackSupportMixin:
             The name of the root task.
 
         max_subtasks : int or None, default=None
-            The maximum number of tasks that can be children of the subtask. 0 means
-            it's a leaf. None means the maximum number of subtasks is not known in
-            advance.
+            The maximum number of subtasks that can be children of the root task. None
+            means the maximum number of subtasks is not known in advance.
 
         Returns
         -------

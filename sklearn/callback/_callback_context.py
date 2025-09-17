@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.callback import AutoPropagatedProtocol
+from sklearn.callback import AutoPropagatedCallback
 
 # The computations performed by an estimator have an inherent tree structure, with
 # each node representing a task. Each loop in the estimator represents a parent task
@@ -275,31 +275,26 @@ class CallbackContext:
             max_subtasks=max_subtasks,
         )
 
-    def eval_on_fit_begin(self, estimator, *, data):
+    def eval_on_fit_begin(self, estimator):
         """Evaluate the _on_fit_begin method of the callbacks.
 
         Parameters
         ----------
         estimator : estimator instance
             The estimator calling this callback hook.
-
-        data : dict
-            Dictionary containing the training and validation data. The possible
-            keys are "X_train", "y_train", "sample_weight_train", "X_val", "y_val"
-            and "sample_weight_val".
         """
         for callback in self._callbacks:
             # Only call the on_fit_begin method of callbacks that are not
             # propagated from a meta-estimator.
             if not (
-                isinstance(callback, AutoPropagatedProtocol) and self.parent is not None
+                isinstance(callback, AutoPropagatedCallback) and self.parent is not None
             ):
-                callback._on_fit_begin(estimator, data=data)
+                callback._on_fit_begin(estimator)
 
         return self
 
-    def eval_on_fit_iter_end(self, estimator, **kwargs):
-        """Evaluate the _on_fit_iter_end method of the callbacks.
+    def eval_on_fit_task_end(self, estimator, **kwargs):
+        """Evaluate the _on_fit_task_end method of the callbacks.
 
         Parameters
         ----------
@@ -340,7 +335,7 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this task node.
         """
         return any(
-            callback._on_fit_iter_end(estimator, self.task_info, **kwargs)
+            callback._on_fit_task_end(estimator, self.task_info, **kwargs)
             for callback in self._callbacks
         )
 
@@ -356,7 +351,7 @@ class CallbackContext:
             # Only call the on_fit_end method of callbacks that are not
             # propagated from a meta-estimator.
             if not (
-                isinstance(callback, AutoPropagatedProtocol) and self.parent is not None
+                isinstance(callback, AutoPropagatedCallback) and self.parent is not None
             ):
                 callback._on_fit_end(estimator, task_info=self.task_info)
 
@@ -371,7 +366,7 @@ class CallbackContext:
         bad_callbacks = [
             callback.__class__.__name__
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
-            if isinstance(callback, AutoPropagatedProtocol)
+            if isinstance(callback, AutoPropagatedCallback)
         ]
 
         if bad_callbacks:
@@ -385,7 +380,7 @@ class CallbackContext:
         callbacks_to_propagate = [
             callback
             for callback in self._callbacks
-            if isinstance(callback, AutoPropagatedProtocol)
+            if isinstance(callback, AutoPropagatedCallback)
             and (
                 callback.max_estimator_depth is None
                 or self._estimator_depth < callback.max_estimator_depth

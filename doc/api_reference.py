@@ -149,12 +149,11 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    "AutoPropagatedProtocol",
+                    "AutoPropagatedCallback",
                     "CallbackContext",
-                    "CallbackProtocol",
+                    "Callback",
                     "CallbackSupportMixin",
                     "ProgressBar",
-                    "TaskNode",
                 ],
             },
         ],
