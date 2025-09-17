@@ -86,7 +86,7 @@ def test_weighted_percentile_plus_one_clip_max(percentile_rank):
     # max index
     y = np.array([[0, 0], [1, 1]])
     sw = np.array([[0.1, 0.2], [2, 3]])
-    score = _weighted_percentile(y, sw, percentile_rank)
+    score = _weighted_percentile(y, sw, percentile_rank, average=True)
     for idx in range(2):
         assert score[idx] == approx(1.0)
 
