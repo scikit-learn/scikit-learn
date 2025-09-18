@@ -145,8 +145,8 @@ class SGDOptimizer(BaseOptimizer):
             learning rate for 'invscaling'
         """
         if self.lr_schedule == "invscaling":
-            self.learning_rate = float(self.learning_rate_init) / (
-                (time_step + 1) ** self.power_t
+            self.learning_rate = (
+                float(self.learning_rate_init) / (time_step + 1) ** self.power_t
             )
 
     def trigger_stopping(self, msg, verbose):
@@ -179,7 +179,7 @@ class SGDOptimizer(BaseOptimizer):
         updates : list, length = len(grads)
             The values to add to params
         """
-        # Vectorized update of velocities for better performance
+        #  in-place update of velocities for better performance
         for i, (velocity, grad) in enumerate(zip(self.velocities, grads)):
             np.multiply(self.momentum, velocity, out=velocity)
             grad_update = -self.learning_rate * grad
@@ -244,12 +244,7 @@ class AdamOptimizer(BaseOptimizer):
     """
 
     def __init__(
-        self,
-        params,
-        learning_rate_init=0.001,
-        beta_1=0.9,
-        beta_2=0.999,
-        epsilon=1e-8,
+        self, params, learning_rate_init=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8
     ):
         super().__init__(learning_rate_init)
 
