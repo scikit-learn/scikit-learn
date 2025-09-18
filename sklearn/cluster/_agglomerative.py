@@ -45,7 +45,7 @@ from sklearn.utils.validation import check_memory, validate_data
 # For non fully-connected graphs
 
 
-def _fix_connectivity(X, connectivity, affinity):
+def _fix_connectivity(X, connectivity, metric):
     """
     Fixes the connectivity matrix.
 
@@ -67,7 +67,7 @@ def _fix_connectivity(X, connectivity, affinity):
         be symmetric and only the upper triangular half is used.
         Default is `None`, i.e, the Ward algorithm is unstructured.
 
-    affinity : {"euclidean", "precomputed"}, default="euclidean"
+    metric : {"euclidean", "precomputed"}, default="euclidean"
         Which affinity to use. At the moment `precomputed` and
         ``euclidean`` are supported. `euclidean` uses the
         negative squared Euclidean distance between points.
@@ -114,7 +114,7 @@ def _fix_connectivity(X, connectivity, affinity):
             graph=connectivity,
             n_connected_components=n_connected_components,
             component_labels=labels,
-            metric=affinity,
+            metric=metric,
             mode="connectivity",
         )
 
@@ -187,10 +187,13 @@ def _single_linkage_tree(
         "connectivity": ["array-like", "sparse matrix", None],
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "return_distance": ["boolean"],
+        "extra": [None],
     },
     prefer_skip_nested_validation=True,
 )
-def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
+def ward_tree(
+    X, *, connectivity=None, n_clusters=None, return_distance=False, extra=None
+):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -225,6 +228,9 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
     return_distance : bool, default=False
         If `True`, return the distance between the clusters.
+
+    extra: dict, default={}
+        Extra arguments for the given `metric`.
 
     Returns
     -------
@@ -321,7 +327,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
             return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity="euclidean"
+        X, connectivity, metric="euclidean"
     )
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
@@ -424,14 +430,15 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         return children, n_connected_components, n_leaves, parent
 
 
-# single average and complete linkage
+# single, average and complete linkage
 def linkage_tree(
     X,
     connectivity=None,
     n_clusters=None,
     linkage="complete",
-    affinity="euclidean",
+    metric="euclidean",
     return_distance=False,
+    extra={},
 ):
     """Linkage agglomerative clustering based on a Feature matrix.
 
@@ -471,7 +478,7 @@ def linkage_tree(
             - "single" uses the minimum of the distances between all
               observations of the two sets.
 
-    affinity : str or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         Which metric to use. Can be 'euclidean', 'manhattan', or any
         distance known to paired distance (see metric.pairwise).
 
@@ -526,7 +533,7 @@ def linkage_tree(
             % (linkage_choices.keys(), linkage)
         ) from e
 
-    if affinity == "cosine" and np.any(~np.any(X, axis=1)):
+    if metric == "cosine" and np.any(~np.any(X, axis=1)):
         raise ValueError("Cosine affinity cannot be used when X contains zero vectors")
 
     if connectivity is None:
@@ -545,7 +552,7 @@ def linkage_tree(
                 stacklevel=2,
             )
 
-        if affinity == "precomputed":
+        if metric == "precomputed":
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
             # by sklearn.metrics.pairwise_distances.
@@ -555,23 +562,23 @@ def linkage_tree(
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-        elif affinity == "l2":
+        elif metric == "l2":
             # Translate to something understood by scipy
-            affinity = "euclidean"
-        elif affinity in ("l1", "manhattan"):
-            affinity = "cityblock"
-        elif callable(affinity):
-            X = affinity(X)
+            metric = "euclidean"
+        elif metric in ("l1", "manhattan"):
+            metric = "cityblock"
+        elif callable(metric):
+            X = metric(X)
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         if (
             linkage == "single"
-            and affinity != "precomputed"
-            and not callable(affinity)
-            and affinity in METRIC_MAPPING64
+            and metric != "precomputed"
+            and not callable(metric)
+            and metric in METRIC_MAPPING64
         ):
             # We need the fast cythonized metric from neighbors
-            dist_metric = DistanceMetric.get_metric(affinity)
+            dist_metric = DistanceMetric.get_metric(metric, **extra)
 
             # The Cython routines used require contiguous arrays
             X = np.ascontiguousarray(X, dtype=np.double)
@@ -583,7 +590,9 @@ def linkage_tree(
             # Convert edge list into standard hierarchical clustering format
             out = _hierarchical.single_linkage_label(mst)
         else:
-            out = hierarchy.linkage(X, method=linkage, metric=affinity)
+            # TODO: hierarchy.linkage does not provide a way to pass extra
+            # arguments to pdist like V for "seuclidean".
+            out = hierarchy.linkage(X, method=linkage, metric=metric)
         children_ = out[:, :2].astype(int, copy=False)
 
         if return_distance:
@@ -592,7 +601,7 @@ def linkage_tree(
         return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity=affinity
+        X, connectivity, metric=metric
     )
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -602,13 +611,13 @@ def linkage_tree(
     connectivity.data = connectivity.data[diag_mask]
     del diag_mask
 
-    if affinity == "precomputed":
+    if metric == "precomputed":
         distances = X[connectivity.row, connectivity.col].astype(np.float64, copy=False)
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
         distances = paired_distances(
-            X[connectivity.row], X[connectivity.col], metric=affinity
+            X[connectivity.row], X[connectivity.col], metric=metric
         )
     connectivity.data = distances
 
@@ -841,11 +850,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         - 'ward' minimizes the variance of the clusters being merged.
         - 'average' uses the average of the distances of each observation of
-          the two sets.
+            the two sets.
         - 'complete' or 'maximum' linkage uses the maximum distances between
-          all observations of the two sets.
+            all observations of the two sets.
         - 'single' uses the minimum of the distances between all observations
-          of the two sets.
+            of the two sets.
 
         .. versionadded:: 0.20
             Added the 'single' option
@@ -869,6 +878,26 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         For an example of dendrogram visualization, see
         :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
+
+    V : ndarray, optional
+        The variance vector for standardized Euclidean.
+
+        .. versionadded:: 1.7
+
+    VI : ndarray, optional
+        The inverse of the covariance matrix for Mahalanobis.
+
+        .. versionadded:: 1.7
+
+    p : float, optional
+        The p-norm to apply for Minkowski, weighted and unweighted.
+
+        .. versionadded:: 1.7
+
+    w : ndarray, optional
+        The weight vector for metrics that support weights (e.g., Minkowski).
+
+        .. versionadded:: 1.7
 
     Attributes
     ----------
@@ -904,7 +933,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
-        node and has children `children_[i - n_samples]`. Alternatively
+    c        node and has children `children_[i - n_samples]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`.
 
@@ -947,6 +976,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
         "compute_distances": ["boolean"],
+        "V": ["array-like", None],
+        "VI": ["array-like", None],
+        "p": [None],
+        "w": ["array-like", None],
     }
 
     def __init__(
@@ -960,6 +993,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         linkage="ward",
         distance_threshold=None,
         compute_distances=False,
+        V=None,
+        VI=None,
+        p=None,
+        w=None,
     ):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
@@ -969,11 +1006,15 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.linkage = linkage
         self.metric = metric
         self.compute_distances = compute_distances
+        self.V = V
+        self.VI = VI
+        self.p = p
+        self.w = w
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
-
+s
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features) or \
@@ -1056,17 +1097,28 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self.metric
+            kwargs["metric"] = self.metric
 
         distance_threshold = self.distance_threshold
 
         return_distance = (distance_threshold is not None) or self.compute_distances
+
+        extra_metric_kwargs = {}
+        if self.V is not None:
+            extra_metric_kwargs["V"] = self.V
+        if self.VI is not None:
+            extra_metric_kwargs["VI"] = self.VI
+        if self.p is not None:
+            extra_metric_kwargs["p"] = self.p
+        if self.w is not None:
+            extra_metric_kwargs["w"] = self.w
 
         out = memory.cache(tree_builder)(
             X,
             connectivity=connectivity,
             n_clusters=n_clusters,
             return_distance=return_distance,
+            extra=extra_metric_kwargs,
             **kwargs,
         )
         (self.children_, self.n_connected_components_, self.n_leaves_, parents) = out[
