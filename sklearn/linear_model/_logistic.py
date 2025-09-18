@@ -8,10 +8,8 @@ Logistic Regression
 import numbers
 import warnings
 from numbers import Integral, Real
-from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 import numpy as np
-from joblib import effective_n_jobs
 from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -54,6 +52,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
+
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -1175,6 +1175,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     ):
         if n_jobs is not None:
             import warnings
+
             warnings.warn(
                 "`n_jobs` is deprecated in LogisticRegression and will be removed in a future release. "
                 "This parameter has no effect.",
