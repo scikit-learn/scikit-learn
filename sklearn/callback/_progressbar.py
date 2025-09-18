@@ -25,7 +25,7 @@ class ProgressBar:
 
     def _on_fit_begin(self, estimator):
         self._queue = Manager().Queue()
-        self.progress_monitor = _RichProgressMonitor(queue=self._queue)
+        self.progress_monitor = RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
     def _on_fit_task_end(self, estimator, task_info, **kwargs):
@@ -59,7 +59,7 @@ except ImportError:
     pass
 
 
-class _RichProgressMonitor(Thread):
+class RichProgressMonitor(Thread):
     """Thread monitoring the progress of an estimator with rich based display.
 
     The display is a list of nested rich tasks using `rich.Progress`. There is one for
@@ -99,18 +99,21 @@ class _RichProgressMonitor(Thread):
                 self.progress_ctx.refresh()
 
     def _update_task_tree(self, task_info_path):
-        """Update the tree of tasks from the path of a new node."""
+        """Update the tree of rich tasks from the path of a new task.
+
+        A new rich task is created for the task and all its ancestors if needed.
+        """
         curr_rich_task, parent_rich_task = None, None
 
         for task_info in task_info_path:
             if task_info["parent_task_info"] is None:  # root node
                 if self.root_rich_task is None:
-                    self.root_rich_task = RichTaskNode(
+                    self.root_rich_task = RichTask(
                         task_info, progress_ctx=self.progress_ctx
                     )
                 curr_rich_task = self.root_rich_task
             elif task_info["task_id"] not in parent_rich_task.children:
-                curr_rich_task = RichTaskNode(
+                curr_rich_task = RichTask(
                     task_info, progress_ctx=self.progress_ctx, parent=parent_rich_task
                 )
                 parent_rich_task.children[task_info["task_id"]] = curr_rich_task
@@ -150,8 +153,8 @@ class _RichProgressMonitor(Thread):
             self.progress_ctx._ordered_tasks.append(task)
 
 
-class RichTaskNode:
-    """A node in the tree of rich tasks.
+class RichTask:
+    """A task, i.e. progressbar, in the tree of rich tasks.
 
     Parameters
     ----------
@@ -163,7 +166,7 @@ class RichTaskNode:
     progress_ctx : `rich.Progress` instance
         The progress context to which this task belongs.
 
-    parent : `RichTaskNode` instance
+    parent : `RichTask` instance
         The parent of this task.
 
     Attributes
@@ -175,7 +178,7 @@ class RichTaskNode:
         The ID of the task in the Progress context.
 
     children : dict
-        A mapping from the index of a child to the child node `{idx: RichTaskNode}`.
+        A mapping from the index of a child to the child node `{idx: RichTask}`.
         For a leaf, it's an empty dictionary.
     """
 
