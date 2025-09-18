@@ -1750,6 +1750,13 @@ def d2_pinball_score(
     This metric is not well-defined for a single point and will return a NaN
     value if n_samples is less than two.
 
+    This metric is not a built-in :ref:`string name scorer
+    <scoring_string_names>` to use along with tools such as `GridSearchCV` or
+    `RandomizedSearchCV`.
+    Instead, you can :ref:`pass a callable <scoring_adapt_metric>` to
+    :func:`~sklearn.metrics.make_scorer` together with the value of `alpha`. See
+    the `Examples` section for details.
+
      References
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
@@ -1772,6 +1779,24 @@ def d2_pinball_score(
     -1.045...
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
+
+    Usage with :func:`~sklearn.metrics.make_scorer`:
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import make_scorer
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.linear_model import QuantileRegressor
+    >>> X = np.array([[1], [2], [3], [4]])
+    >>> y = np.array([2.5, 0.0, 2, 8])
+    >>> pinball_95_scorer = make_scorer(d2_pinball_score, alpha=0.95)
+    >>> grid = GridSearchCV(
+    ...     QuantileRegressor(quantile=0.95),
+    ...     param_grid={"fit_intercept": [True, False]},
+    ...     scoring=pinball_95_scorer,
+    ...     cv=2,
+    ... ).fit(X, y)
+    >>> grid.best_params_
+    {'fit_intercept': True}
     """
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
         y_true, y_pred, sample_weight, multioutput
