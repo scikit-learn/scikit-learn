@@ -109,10 +109,16 @@ def test_cython_solver_equivalence():
 
     # For alpha_max, coefficients must all be zero.
     coef_1 = zc()
-    cd_fast.enet_coordinate_descent(
-        w=coef_1, alpha=alpha_max, X=X_centered, y=y, **params
-    )
-    assert_allclose(coef_1, 0)
+    for do_screening in [True, False]:
+        cd_fast.enet_coordinate_descent(
+            w=coef_1,
+            alpha=alpha_max,
+            X=X_centered,
+            y=y,
+            **params,
+            do_screening=do_screening,
+        )
+        assert_allclose(coef_1, 0)
 
     # Without gap safe screening rules
     coef_1 = zc()
@@ -148,16 +154,18 @@ def test_cython_solver_equivalence():
         assert_allclose(coef_3, coef_1)
 
     # Gram
-    coef_4 = zc()
-    cd_fast.enet_coordinate_descent_gram(
-        w=coef_4,
-        alpha=alpha,
-        Q=X_centered.T @ X_centered,
-        q=X_centered.T @ y,
-        y=y,
-        **params,
-    )
-    assert_allclose(coef_4, coef_1)
+    for do_screening in [True, False]:
+        coef_4 = zc()
+        cd_fast.enet_coordinate_descent_gram(
+            w=coef_4,
+            alpha=alpha,
+            Q=X_centered.T @ X_centered,
+            q=X_centered.T @ y,
+            y=y,
+            **params,
+            do_screening=do_screening,
+        )
+        assert_allclose(coef_4, coef_1)
 
 
 def test_lasso_zero():
