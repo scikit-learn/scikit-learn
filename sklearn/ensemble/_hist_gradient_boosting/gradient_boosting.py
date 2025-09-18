@@ -719,9 +719,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             random_state=self._random_seed,
             n_threads=n_threads,
         )
-        X_binned_train = self._bin_data(X_train, is_training_data=True)
+        X_binned_train = self._bin_data(
+            X_train, sample_weight_train, is_training_data=True
+        )
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, is_training_data=False)
+            X_binned_val = self._bin_data(
+                X_val, sample_weight_val, is_training_data=False
+            )
         else:
             X_binned_val = None
 
@@ -1218,7 +1222,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         recent_improvements = [score > reference_score for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, is_training_data):
+    def _bin_data(self, X, sample_weight, is_training_data):
         """Bin data X.
 
         If is_training_data, then fit the _bin_mapper attribute.
@@ -1234,7 +1238,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         tic = time()
         if is_training_data:
-            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.fit_transform(
+                X, sample_weight=sample_weight
+            )  # F-aligned array
         else:
             X_binned = self._bin_mapper.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
@@ -1736,7 +1742,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.92...
+    0.93...
     """
 
     _parameter_constraints: dict = {
