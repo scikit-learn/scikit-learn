@@ -1470,6 +1470,12 @@ class RandomForestClassifier(ForestClassifier):
 
     Notes
     -----
+    The method for generating candidate splits is exhaustive. For each feature,
+    the feature values are sorted, and the split points are chosen at the
+    midpoints between successive unique values. This results in O(n_features * n_samples)
+    possible splits, from which the best split is selected according to the
+    criterion (e.g. ``gini``, ``entropy``, or ``log_loss``).
+
     The default values for the parameters controlling the size of the trees
     (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
@@ -1850,6 +1856,12 @@ class RandomForestRegressor(ForestRegressor):
 
     Notes
     -----
+    The method for generating candidate splits is exhaustive. For each feature,
+    the feature values are sorted, and the split points are chosen at the
+    midpoints between successive unique values. This results in O(n_features * n_samples)
+    possible splits, from which the best split is selected according to the
+    criterion (e.g. ``squared_error``, ``absolute_error``, ``friedman_mse``, or ``poisson``).
+
     The default values for the parameters controlling the size of the trees
     (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
