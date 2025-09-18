@@ -1209,12 +1209,13 @@ class RandomForestClassifier(ForestClassifier):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "log_loss" and "entropy" both for the
         Shannon information gain, see :ref:`tree_mathematical_formulation`.
-        
-        Trees in the forest use the best split strategy, i.e. equivalent to passing
-        `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeClassifier`.
-        At each node, the algorithm considers all features and finds the optimal
-        split point that maximizes the criterion reduction.
-        
+
+        Trees in the forest use the best split strategy, i.e. equivalent to
+        passing `splitter="best"` to the underlying
+        :class:`~sklearn.tree.DecisionTreeClassifier`. At each node, the
+        algorithm considers all features and finds the optimal split point that
+        maximizes the criterion reduction.
+
         Note: This parameter is tree-specific.
 
     max_depth : int, default=None
@@ -1472,9 +1473,10 @@ class RandomForestClassifier(ForestClassifier):
     -----
     The method for generating candidate splits is exhaustive. For each feature,
     the feature values are sorted, and the split points are chosen at the
-    midpoints between successive unique values. This results in O(n_features * n_samples)
-    possible splits, from which the best split is selected according to the
-    criterion (e.g. ``gini``, ``entropy``, or ``log_loss``).
+    midpoints between successive unique values. This results in
+    O(n_features * n_samples) possible splits, from which the best split is
+    selected according to the criterion (e.g. ``gini``, ``entropy``, or
+    ``log_loss``).
 
     The default values for the parameters controlling the size of the trees
     (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
@@ -1625,12 +1627,13 @@ class RandomForestRegressor(ForestRegressor):
         splits, "absolute_error" for the mean absolute error, which minimizes
         the L1 loss using the median of each terminal node, and "poisson" which
         uses reduction in Poisson deviance to find splits.
-        
-        Trees in the forest use the best split strategy, i.e. equivalent to passing
-        `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
-        At each node, the algorithm considers all features and finds the optimal
-        split point that maximizes the criterion reduction.
-        
+
+        Trees in the forest use the best split strategy, i.e. equivalent to
+        passing `splitter="best"` to the underlying
+        :class:`~sklearn.tree.DecisionTreeRegressor`. At each node, the
+        algorithm considers all features and finds the optimal split point that
+        maximizes the criterion reduction.
+
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -1858,9 +1861,10 @@ class RandomForestRegressor(ForestRegressor):
     -----
     The method for generating candidate splits is exhaustive. For each feature,
     the feature values are sorted, and the split points are chosen at the
-    midpoints between successive unique values. This results in O(n_features * n_samples)
-    possible splits, from which the best split is selected according to the
-    criterion (e.g. ``squared_error``, ``absolute_error``, ``friedman_mse``, or ``poisson``).
+    midpoints between successive unique values. This results in
+    O(n_features * n_samples) possible splits, from which the best split is
+    selected according to the criterion (e.g. ``squared_error``,
+    ``absolute_error``, ``friedman_mse``, or ``poisson``).
 
     The default values for the parameters controlling the size of the trees
     (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
