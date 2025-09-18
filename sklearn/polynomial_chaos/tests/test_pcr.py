@@ -10,13 +10,14 @@ from scipy.stats import beta, expon, norm, uniform
 # sklearn imports
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_friedman1
+from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import (
     ElasticNetCV,
     LassoCV,
     LinearRegression,
     OrthogonalMatchingPursuitCV,
 )
-from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.polynomial_chaos import PolynomialChaosRegressor
 from sklearn.utils import check_random_state
@@ -408,6 +409,43 @@ def test_solver_multioutput():
     with pytest.raises(ValueError, match="'coef_'"):
         pce = PolynomialChaosRegressor(solver=DumbDummySolver())
         pce.fit(X, Y)
+
+
+# Test feature selector
+def test_feature_selector_valid():
+    distribution = uniform(loc=-1, scale=2)
+    random_state = check_random_state(17)
+    X = distribution.rvs((100, 2), random_state=random_state)
+    y = X[:, 0] * X[:, 1]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    pce = PolynomialChaosRegressor(
+        distribution=[distribution] * 2,
+        degree=3,
+        solver=LinearRegression(fit_intercept=False),
+        feature_selector=SelectFromModel(LassoCV(fit_intercept=False)),
+    )
+    pce.fit(X_train, y_train)
+
+    assert pce.score(X_test, y_test) > 0.999
+    assert np.linalg.norm(pce.main_sens()) < 1e-12
+    assert np.linalg.norm(pce.total_sens() - np.array([1, 1])) < 1e-12
+    assert np.abs(pce.joint_sens(0, 1) - 1) < 1e-12
+
+
+# Verify input checking for feature selector
+def test_feature_selector():
+    distribution = uniform(loc=-1, scale=2)
+    random_state = check_random_state(17)
+    X = distribution.rvs((100, 2), random_state=random_state)
+    y = X[:, 0] * X[:, 1]
+
+    class DummyFeatureSelector(BaseEstimator):
+        def fit(self, X, y):
+            pass
+
+    with pytest.warns(ValueError, match="fit and transform"):
+        pce = PolynomialChaosRegressor(feature_selector=DummyFeatureSelector())
+        pce.fit(X, y)
 
 
 ###############################################################################

@@ -86,6 +86,14 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         `LinearModel` that has a :term:`fit` method. Make sure to set
         `fit_intercept = False`.
 
+    feature_selector : SelectorMixin, default=None
+        The meta-transformer used to select basis terms after fitting. This
+        is useful when using sparsity promoting linear solvers, such as
+        :class:`~sklearn.linear_model.LassoCV`. The feature selector can be
+        used to prune the basis terms with near-zero coefficients to speed-up
+        and reduce memory usage at prediction time. If
+        `feature_selector = None`, all features will be retained.
+
     multiindices : ndarray of shape \
         (n_output_features_, n_features_in_), default=None
         The combination of `degree`, `truncation` and `weights` provides a
@@ -175,6 +183,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         ],
         "weights": ["array-like", None],
         "solver": [HasMethods("fit"), None],
+        "feature_selector": [HasMethods("fit"), None],
         "multiindices": ["array-like", None],
         "scale_outputs": [bool],
     }
@@ -186,6 +195,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         truncation="total_degree",
         weights=None,
         solver=None,
+        feature_selector=None,
         multiindices=None,
         scale_outputs=True,
     ):
@@ -194,6 +204,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         self.truncation = truncation
         self.weights = weights
         self.solver = solver
+        self.feature_selector = feature_selector
         self.multiindices = multiindices
         self.scale_outputs = scale_outputs
 
@@ -294,6 +305,20 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
                 )
             solver = clone(self.solver)
 
+        # check feature_selector
+        if self.feature_selector is not None:
+            if not (
+                hasattr(self.feature_selector, "fit")
+                and hasattr(self.feature_selector, "transform")
+            ):
+                raise ValueError(
+                    "feature_selector must be a transformer with fit and transform "
+                    f"methods, got '{type(self.feature_selector)}'"
+                )
+            feature_selector = clone(self.feature_selector)
+        else:
+            feature_selector = None
+
         # check outputs
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -348,15 +373,26 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
                 multiindices=self.multiindices_,
             )
 
-            # create pipeline
-            self.pipeline_ = Pipeline([("basis", basis), ("solver", solver)])
+            # build pipeline
+            steps = [("basis", basis)]
+            if feature_selector is not None:
+                steps.append(("feature_selector", feature_selector))
+            steps.append(("solver", solver))
 
-            # solve for coefficients
+            self.pipeline_ = Pipeline(steps)
+
+            # fit pipeline
             self.pipeline_.fit(X_scaled, y)
 
             # convenient access to multiindices and norms
             self.multiindices_ = self.pipeline_["basis"].multiindices_
             self.norms_ = self.pipeline_["basis"].norms_
+
+            if feature_selector is not None:
+                # after fitting, feature_selector has support mask
+                support = self.pipeline_["feature_selector"].get_support()
+                self.multiindices_ = self.multiindices_[support]
+                self.norms_ = self.norms_[support]
 
             # convenient access to coefficients
             if hasattr(self.pipeline_["solver"], "coef_"):
