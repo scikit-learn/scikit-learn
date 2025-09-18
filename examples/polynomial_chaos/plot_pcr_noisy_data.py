@@ -168,3 +168,6 @@ pce.main_sens()
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
 #     an example of how to adaptively construct the multiindex set in the
 #     Polynomial Chaos expansion to compute sensitivity indices.
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_feature_selection_g.py`
+#     for an example of how to use pruning to remove small basis terms from
+#     the expansion.
