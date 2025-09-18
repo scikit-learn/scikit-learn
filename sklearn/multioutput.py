@@ -669,7 +669,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
-    # TODO(1.8): This is a temporary getter method to validate input wrt deprecation.
+    # TODO(1.9): This is a temporary getter method to validate input wrt deprecation.
     # It was only included to avoid relying on the presence of self.estimator_
     def _get_estimator(self):
         """Get and validate estimator."""

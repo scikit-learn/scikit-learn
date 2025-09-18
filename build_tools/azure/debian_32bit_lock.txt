@@ -33,12 +33,12 @@ pygments==2.19.2
     # via pytest
 pyproject-metadata==0.9.1
     # via meson-python
-pytest==8.4.1
+pytest==8.4.2
     # via
     #   -r build_tools/azure/debian_32bit_requirements.txt
     #   pytest-cov
     #   pytest-xdist
-pytest-cov==6.2.1
+pytest-cov==6.3.0
     # via -r build_tools/azure/debian_32bit_requirements.txt
 pytest-xdist==3.8.0
     # via -r build_tools/azure/debian_32bit_requirements.txt
