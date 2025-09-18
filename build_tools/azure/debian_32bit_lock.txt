@@ -6,7 +6,7 @@
 #
 coverage[toml]==7.10.6
     # via pytest-cov
-cython==3.1.3
+cython==3.1.4
     # via -r build_tools/azure/debian_32bit_requirements.txt
 execnet==2.1.1
     # via pytest-xdist
