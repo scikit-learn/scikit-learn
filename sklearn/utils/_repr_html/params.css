@@ -130,3 +130,37 @@ a.param-doc-link::before {
     height: 14px;
     cursor: pointer;
 }
+
+.features {
+    font-family: monospace;
+    font-size: smaller;
+    cursor: pointer;
+    background: var(--sklearn-color-fitted-level-1);
+}
+
+.features table {
+    display: block;
+    max-height: 10em;
+    overflow-y: auto;
+    width: 100%;
+    text-align: left;
+    padding: .5em;
+
+}
+
+.features summary {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: .5em;
+  border: .1em solid grey;
+}
+
+.features td {
+  text-align: left;
+  max-width: 10em;
+  padding: 0;
+  white-space: nowrap;
+
+}
