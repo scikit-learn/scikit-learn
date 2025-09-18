@@ -8,49 +8,9 @@ from sklearn.callback._callback_context import CallbackContext
 from sklearn.callback.tests._utils import (
     Estimator,
     MetaEstimator,
-    NotValidCallback,
     TestingAutoPropagatedCallback,
     TestingCallback,
 )
-
-
-@pytest.mark.parametrize(
-    "callbacks",
-    [
-        TestingCallback(),
-        [TestingCallback()],
-        [TestingCallback(), TestingAutoPropagatedCallback()],
-    ],
-)
-def test_set_callbacks(callbacks):
-    """Sanity check for the `set_callbacks` method."""
-    estimator = Estimator()
-
-    set_callbacks_return = estimator.set_callbacks(callbacks)
-    assert hasattr(estimator, "_skl_callbacks")
-
-    expected_callbacks = [callbacks] if not isinstance(callbacks, list) else callbacks
-    assert estimator._skl_callbacks == expected_callbacks
-
-    assert set_callbacks_return is estimator
-
-
-@pytest.mark.parametrize("callbacks", [None, NotValidCallback()])
-def test_set_callbacks_error(callbacks):
-    """Check the error message when not passing a valid callback to `set_callbacks`."""
-    estimator = Estimator()
-
-    with pytest.raises(TypeError, match="callbacks must follow the Callback protocol."):
-        estimator.set_callbacks(callbacks)
-
-
-def test_init_callback_context():
-    """Sanity check for the `init_callback_context` method."""
-    estimator = Estimator()
-    callback_ctx = estimator.init_callback_context()
-
-    assert hasattr(estimator, "_callback_fit_ctx")
-    assert hasattr(callback_ctx, "_callbacks")
 
 
 def test_propagate_callbacks():
@@ -100,6 +60,7 @@ def test_auto_propagated_callbacks():
 
 
 def _make_task_tree(n_children, n_grandchildren):
+    """Helper function to create a tree of tasks with a context for each task."""
     estimator = Estimator()
     root = CallbackContext._from_estimator(
         estimator,
@@ -132,21 +93,21 @@ def test_task_tree():
     """Check that the task tree is correctly built."""
     root = _make_task_tree(n_children=3, n_grandchildren=5)
 
-    assert root.parent is None
-    assert root.depth == 0
-    assert len(root.children_map) == 3
+    assert root._parent is None
+    assert root._depth == 0
+    assert len(root._children_map) == 3
 
-    for child in root.children_map.values():
-        assert child.parent is root
-        assert child.depth == 1
-        assert len(child.children_map) == 5
-        assert root.max_subtasks == 3
+    for child in root._children_map.values():
+        assert child._parent is root
+        assert child._depth == 1
+        assert len(child._children_map) == 5
+        assert root._max_subtasks == 3
 
-        for grandchild in child.children_map.values():
-            assert grandchild.parent is child
-            assert grandchild.depth == 2
-            assert len(grandchild.children_map) == 0
-            assert child.max_subtasks == 5
+        for grandchild in child._children_map.values():
+            assert grandchild._parent is child
+            assert grandchild._depth == 2
+            assert len(grandchild._children_map) == 0
+            assert child._max_subtasks == 5
 
     # 1 root + 1 * 3 children + 1 * 3 * 5 grandchildren
     expected_n_nodes = np.sum(np.cumprod([1, 3, 5]))
@@ -154,12 +115,12 @@ def test_task_tree():
     assert actual_n_nodes == expected_n_nodes
 
     # None of the nodes should have been merged with another node
-    assert all(node.prev_estimator_name is None for node in root)
-    assert all(node.prev_task_name is None for node in root)
+    assert all(node._prev_estimator_name is None for node in root)
+    assert all(node._prev_task_name is None for node in root)
 
 
-def test_add_task():
-    """Check that informative error messages are raised when adding tasks."""
+def test_add_child():
+    """Sanity check for the `_add_child` method."""
     estimator = Estimator()
     root = CallbackContext._from_estimator(
         estimator, task_name="root task", task_id=0, max_subtasks=2
@@ -168,8 +129,8 @@ def test_add_task():
     root._add_child(
         CallbackContext._from_estimator(estimator, task_name="child task", task_id=0)
     )
-    assert root.max_subtasks == 2
-    assert len(root.children_map) == 1
+    assert root._max_subtasks == 2
+    assert len(root._children_map) == 1
 
     # root already has a child with id 0
     with pytest.raises(
@@ -184,7 +145,7 @@ def test_add_task():
     root._add_child(
         CallbackContext._from_estimator(estimator, task_name="child task", task_id=1)
     )
-    assert len(root.children_map) == 2
+    assert len(root._children_map) == 2
 
     # root can have at most 2 children
     with pytest.raises(ValueError, match=r"Cannot add child to callback context"):
@@ -196,6 +157,7 @@ def test_add_task():
 
 
 def test_merge_with():
+    """Sanity check for the `_merge_with` method."""
     estimator = Estimator()
     meta_estimator = MetaEstimator(estimator)
     outer_root = CallbackContext._from_estimator(
@@ -213,11 +175,11 @@ def test_merge_with():
     inner_root = CallbackContext._from_estimator(estimator, task_name="root", task_id=0)
     inner_root._merge_with(outer_child)
 
-    assert inner_root.parent is outer_root
-    assert inner_root.task_id == outer_child.task_id
-    assert outer_child not in outer_root.children_map.values()
-    assert inner_root in outer_root.children_map.values()
+    assert inner_root._parent is outer_root
+    assert inner_root._task_id == outer_child._task_id
+    assert outer_child not in outer_root._children_map.values()
+    assert inner_root in outer_root._children_map.values()
 
     # The name and estimator name of the tasks it was merged with are stored
-    assert inner_root.prev_task_name == outer_child.task_name
-    assert inner_root.prev_estimator_name == outer_child.estimator_name
+    assert inner_root._prev_task_name == outer_child._task_name
+    assert inner_root._prev_estimator_name == outer_child._estimator_name

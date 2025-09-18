@@ -8,7 +8,6 @@ import pytest
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import Estimator, MetaEstimator, WhileEstimator
 from sklearn.utils._optional_dependencies import check_rich_support
-from sklearn.utils._testing import SkipTest
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -58,4 +57,4 @@ def test_progressbar_requires_rich_error():
         with pytest.raises(ImportError, match=err_msg):
             ProgressBar()
     else:
-        raise SkipTest("This test requires rich to not be installed.")
+        pytest.skip("This test requires rich to not be installed.")

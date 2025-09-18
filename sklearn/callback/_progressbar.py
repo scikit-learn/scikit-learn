@@ -103,7 +103,7 @@ class _RichProgressMonitor(Thread):
         curr_rich_task, parent_rich_task = None, None
 
         for task_info in task_info_path:
-            if task_info["parent"] is None:  # root node
+            if task_info["parent_task_info"] is None:  # root node
                 if self.root_rich_task is None:
                     self.root_rich_task = RichTaskNode(
                         task_info, progress_ctx=self.progress_ctx
@@ -198,7 +198,11 @@ class RichTaskNode:
         style = f"[{colors[(task_info['depth']) % len(colors)]}]"
 
         task_desc = f"{task_info['estimator_name']} - {task_info['task_name']}"
-        id_mark = f" #{task_info['task_id']}" if task_info["parent"] is not None else ""
+        id_mark = (
+            f" #{task_info['task_id']}"
+            if task_info["parent_task_info"] is not None
+            else ""
+        )
         prev_task_desc = (
             f"{task_info['prev_estimator_name']} - {task_info['prev_task_name']} | "
             if task_info["prev_estimator_name"] is not None
@@ -231,6 +235,6 @@ def _get_task_info_path(task_info):
     """
     return (
         [task_info]
-        if task_info["parent"] is None
-        else _get_task_info_path(task_info["parent"]) + [task_info]
+        if task_info["parent_task_info"] is None
+        else _get_task_info_path(task_info["parent_task_info"]) + [task_info]
     )
