@@ -443,7 +443,7 @@ def test_feature_selector():
         def fit(self, X, y):
             pass
 
-    with pytest.warns(ValueError, match="fit and transform"):
+    with pytest.raises(ValueError, match="fit and transform"):
         pce = PolynomialChaosRegressor(feature_selector=DummyFeatureSelector())
         pce.fit(X, y)
 
