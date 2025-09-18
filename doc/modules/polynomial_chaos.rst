@@ -161,6 +161,13 @@ Usage tips
   problems, use regularization to avoid overfitting. See also
   :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`.
 
+* When using a sparse solver such as :class:`~sklearn.linear_model.LassoCV` or
+  :class:`~sklearn.linear_model.ElasticNetCV`, many of the basis terms might be
+  small, meaning that they can be removed from the expansion without impacting
+  the prediction accuracy. This can be done by pruning the basis terms using,
+  for example, :class:`~sklearn.feature_selection.SelectFromModel`. See also
+  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_feature_selection.py`.
+
 Polynomial Chaos examples
 =========================
 
@@ -171,6 +178,7 @@ Polynomial Chaos examples
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py`
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py`
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`
+   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_feature_selection.py`
 
 Simple one-dimensional model
 ----------------------------
@@ -263,6 +271,21 @@ parity plot shown in the figure below.
 
 .. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_noisy_data_004.png
    :target: ../auto_examples/polynomial_chaos/plot_pcr_noisy_data.html
+   :align: center
+
+Pruning basis terms in Polynomial Chaos regression
+--------------------------------------------------
+
+This example illustrates how to use Polynomial Chaos regression with basis
+pruning. By default, a Polynomial Chaos expansion of degree :math:`k` includes
+all multivariate polynomial terms up to that degree, which can lead to large
+models with many small terms. Using a feature selection method like
+:class:`~sklearn.feature_selection.SelectFromModel`, we can automatically prune
+away irrelevant polynomial terms during fitting. This results in a sparse and
+more interpretable expansion that can be faster to evaluate during prediction.
+
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_feature_selection_001.png
+   :target: ../auto_examples/polynomial_chaos/plot_feature_selection.html
    :align: center
 
 References
