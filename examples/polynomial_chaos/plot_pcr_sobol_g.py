@@ -161,6 +161,6 @@ _ = plt.title("Convergence of adaptive basis construction")
 #     well-known test problem.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
 #     an example of how to use sparse solvers to deal with noisy measurements.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_feature_selection_g.py`
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection_g.py`
 #     for an example of how to use pruning to remove small basis terms from
 #     the expansion.

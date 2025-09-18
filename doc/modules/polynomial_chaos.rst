@@ -166,7 +166,7 @@ Usage tips
   small, meaning that they can be removed from the expansion without impacting
   the prediction accuracy. This can be done by pruning the basis terms using,
   for example, :class:`~sklearn.feature_selection.SelectFromModel`. See also
-  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_feature_selection.py`.
+  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection.py`.
 
 Polynomial Chaos examples
 =========================
@@ -178,7 +178,7 @@ Polynomial Chaos examples
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py`
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py`
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`
-   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_feature_selection.py`
+   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection.py`
 
 Simple one-dimensional model
 ----------------------------
@@ -284,15 +284,15 @@ models with many small terms. Using a feature selection method like
 away irrelevant polynomial terms during fitting. This results in a sparse and
 more interpretable expansion that can be faster to evaluate during prediction.
 
-.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_feature_selection_001.png
-   :target: ../auto_examples/polynomial_chaos/plot_feature_selection.html
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_feature_selection_001.png
+   :target: ../auto_examples/polynomial_chaos/plot_pcr_feature_selection.html
    :align: center
 
 References
 ----------
 
-.. [Gerstner2003] `Gerstner, T., and Griebel, M. "Dimension–adaptive
-    tensor–product quadrature." Computing 71, 2003.
+.. [Gerstner2003] `Gerstner, T., and Griebel, M. "Dimension-adaptive
+    tensor-product quadrature." Computing 71, 2003.
     <https://link.springer.com/content/pdf/10.1007/s00607-003-0015-5.pdf>`_
 
 .. [Saltelli2000] `Saltelli, A., et al. "Global sensitivity analysis: the
