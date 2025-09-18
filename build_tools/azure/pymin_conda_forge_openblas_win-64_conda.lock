@@ -62,7 +62,7 @@ https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.1-pyhd8ed1ab_1.conda#a
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_1.conda#6837f3eff7dcea42ecd714ce1ac2b108
 https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.9-py310h1e1005b_1.conda#a0695050d0379e201f0c40b89d3b58dd
 https://conda.anaconda.org/conda-forge/win-64/libcblas-3.9.0-35_h2a8eebe_openblas.conda#b319a1bffa6c2c8ba7f6c8f12a40d898
-https://conda.anaconda.org/conda-forge/win-64/libclang13-21.1.0-default_ha2db4b5_1.conda#9065d254995bd88bda60c77c77fcad3d
+https://conda.anaconda.org/conda-forge/win-64/libclang13-21.1.1-default_ha2db4b5_0.conda#17f5b2e04b696f148b1b8ff1d5d55b75
 https://conda.anaconda.org/conda-forge/win-64/libfreetype6-2.14.0-hdbac1cb_1.conda#10dd24f0c2a81775f09952badfb52019
 https://conda.anaconda.org/conda-forge/win-64/libglib-2.84.3-h1c1036b_0.conda#2bcc00752c158d4a70e1eaccbf6fe8ae
 https://conda.anaconda.org/conda-forge/win-64/liblapack-3.9.0-35_hd232482_openblas.conda#e446e419a887c9e0a04fee684f9b0551
@@ -74,7 +74,7 @@ https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#3
 https://conda.anaconda.org/conda-forge/noarch/packaging-25.0-pyh29332c3_1.conda#58335b26c38bf4a20f399384c33cbcf9
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhd8ed1ab_0.conda#7da7ccd349dbf6487a7778579d2bb971
 https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda#6b6ece66ebcae2d5f326c77ef2c5a066
-https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.2.3-pyhe01879c_2.conda#aa0028616c0750c773698fdc254b2b8d
+https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.2.4-pyhcf101f3_0.conda#bf1f1292fc78307956289707e85cb1bf
 https://conda.anaconda.org/conda-forge/noarch/setuptools-80.9.0-pyhff2d567_0.conda#4de79c071274a53dcaf2a8c749d1499e
 https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda#3339e3b65d58accf4ca4fb8748ab16b3
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda#9d64911b31d57ca443e9f1e36b04385f

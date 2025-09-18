@@ -60,7 +60,7 @@ def test_min_dependencies_readme():
                 min_version = parse_version(dependent_packages[package][0])
 
                 message = (
-                    f"{package} has inconsistent minimum versions in pyproject.toml and"
+                    f"{package} has inconsistent minimum versions in README.rst and"
                     f" _min_depencies.py: {version} != {min_version}"
                 )
                 assert version == min_version, message
