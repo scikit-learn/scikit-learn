@@ -483,11 +483,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-    @property
-    # TODO(1.8) remove this property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         sub_estimator_tags = get_tags(self.estimator)
@@ -1451,6 +1446,9 @@ class GridSearchCV(BaseSearchCV):
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
+        For an example of visualization and interpretation of GridSearch results,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
         NOTE
 
         The key ``'params'`` is used to store a list of parameter
@@ -1833,6 +1831,9 @@ class RandomizedSearchCV(BaseSearchCV):
             'std_score_time'     : [0.00, 0.00, 0.00],
             'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
+
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
         NOTE
 
