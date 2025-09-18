@@ -100,8 +100,6 @@ for mindex in pruned_pce.multiindices_:
 # Pruning recovers the correct sparse structure of the model
 # (quadratic in :math:`x_1`, linear in :math:`x_2`, and with an interaction
 # term), while maintaining a high predictive accuracy on the test data.
-
-# Let's now visualize the index sets
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 from matplotlib.ticker import MaxNLocator
