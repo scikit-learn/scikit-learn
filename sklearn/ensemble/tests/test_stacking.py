@@ -304,12 +304,12 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(probability=True, max_iter=50_000)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
-            ValueError,
-            "does not implement the method predict_proba",
+            AttributeError,
+            "This 'SVC' has no attribute 'predict_proba'",
         ),
         (
             y_iris,
@@ -336,7 +336,6 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
         ),
     ],
 )
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_stacking_classifier_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
         clf = StackingClassifier(**params, cv=3)

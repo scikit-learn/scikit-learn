@@ -7,6 +7,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.ensemble._weight_boosting import _samme_proba
@@ -310,11 +311,10 @@ def test_sample_weights_infinite():
         CSC_CONTAINERS + 4 * CSR_CONTAINERS,
     ),
 )
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sparse_classification(sparse_container, expected_internal_type):
     # Check classification with sparse input.
 
-    class CustomSVC(SVC):
+    class CustomSVC(CalibratedClassifierCV):
         """SVC variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
@@ -336,13 +336,13 @@ def test_sparse_classification(sparse_container, expected_internal_type):
 
     # Trained on sparse format
     sparse_classifier = AdaBoostClassifier(
-        estimator=CustomSVC(probability=True),
+        estimator=CustomSVC(estimator=SVC(), ensemble=True),
         random_state=1,
     ).fit(X_train_sparse, y_train)
 
     # Trained on dense format
     dense_classifier = AdaBoostClassifier(
-        estimator=CustomSVC(probability=True),
+        estimator=CustomSVC(estimator=SVC(), ensemble=True),
         random_state=1,
     ).fit(X_train, y_train)
 
