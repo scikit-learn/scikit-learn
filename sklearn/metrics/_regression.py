@@ -1753,9 +1753,9 @@ def d2_pinball_score(
     This metric is not a built-in :ref:`string name scorer
     <scoring_string_names>` to use along with tools such as `GridSearchCV` or
     `RandomizedSearchCV`.
-    Instead, you can :ref:`pass a callable <scoring_adapt_metric>` to
-    :func:`~sklearn.metrics.make_scorer` together with the value of `alpha`. See
-    the `Examples` section for details.
+    Instead, you can :ref:`create a scorer object <scoring_adapt_metric>` using
+    :func:`~sklearn.metrics.make_scorer`, with any desired parameter settings.
+    See the `Examples` section for details.
 
      References
     ----------
@@ -1780,7 +1780,7 @@ def d2_pinball_score(
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
 
-    Usage with :func:`~sklearn.metrics.make_scorer`:
+    Creating a scorer object with :func:`~sklearn.metrics.make_scorer`:
 
     >>> import numpy as np
     >>> from sklearn.metrics import make_scorer
