@@ -914,7 +914,7 @@ cdef (floating, floating) gap_enet_gram(
     return gap, dual_norm_XtA
 
 
-cdef inline bint screen_feature_enet_gram(
+cdef inline bint screen_features_enet_gram(
     const floating[:, ::1] Q,
     const floating[::1] XtA,
     floating[::1] w,
@@ -926,31 +926,34 @@ cdef inline bint screen_feature_enet_gram(
     floating gap,
     floating dual_norm_XtA,
     uint32_t n_features,
-    uint32_t n_active,
-    uint32_t j,
 ) noexcept nogil:
-    """Apply gap safe screening for a single feature within
-    enet_coordinate_descent_gram"""
+    """Apply gap safe screening for all features within enet_coordinate_descent_gram"""
     cdef floating d_j
     cdef floating Xj_theta
-    cdef bint included
+    cdef uint32_t n_active = 0
     # Due to floating point issues, gap might be negative.
     cdef floating radius = sqrt(2 * fabs(gap)) / alpha
 
-    Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
-    d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
-    if d_j <= radius:
-        # include feature j
-        active_set[n_active] = j
-        excluded_set[j] = 0
-        included = 1
-    else:
-        # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
-        _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
-        w[j] = 0
-        excluded_set[j] = 1
-        included = 0
-    return included
+    for j in range(n_features):
+        if Q[j, j] == 0:
+            w[j] = 0
+            excluded_set[j] = 1
+            continue
+
+        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+        if d_j <= radius:
+            # include feature j
+            active_set[n_active] = j
+            excluded_set[j] = 0
+            n_active += 1
+        else:
+            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+            w[j] = 0
+            excluded_set[j] = 1
+
+    return n_active
 
 
 def enet_coordinate_descent_gram(
@@ -1047,28 +1050,19 @@ def enet_coordinate_descent_gram(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
-            n_active = 0
-            for j in range(n_features):
-                if Q[j, j] == 0:
-                    w[j] = 0
-                    excluded_set[j] = 1
-                    continue
-
-                n_active += screen_feature_enet_gram(
-                    Q=Q,
-                    XtA=XtA,
-                    w=w,
-                    Qw=Qw,
-                    active_set=active_set,
-                    excluded_set=excluded_set,
-                    alpha=alpha,
-                    beta=beta,
-                    gap=gap,
-                    dual_norm_XtA=dual_norm_XtA,
-                    n_features=n_features,
-                    n_active=n_active,
-                    j=j,
-                )
+            n_active = screen_features_enet_gram(
+                Q=Q,
+                XtA=XtA,
+                w=w,
+                Qw=Qw,
+                active_set=active_set,
+                excluded_set=excluded_set,
+                alpha=alpha,
+                beta=beta,
+                gap=gap,
+                dual_norm_XtA=dual_norm_XtA,
+                n_features=n_features,
+            )
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -1122,25 +1116,19 @@ def enet_coordinate_descent_gram(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
-                    n_active = 0
-                    for j in range(n_features):
-                        if excluded_set[j]:
-                            continue
-                        n_active += screen_feature_enet_gram(
-                            Q=Q,
-                            XtA=XtA,
-                            w=w,
-                            Qw=Qw,
-                            active_set=active_set,
-                            excluded_set=excluded_set,
-                            alpha=alpha,
-                            beta=beta,
-                            gap=gap,
-                            dual_norm_XtA=dual_norm_XtA,
-                            n_features=n_features,
-                            n_active=n_active,
-                            j=j,
-                        )
+                    n_active = screen_features_enet_gram(
+                        Q=Q,
+                        XtA=XtA,
+                        w=w,
+                        Qw=Qw,
+                        active_set=active_set,
+                        excluded_set=excluded_set,
+                        alpha=alpha,
+                        beta=beta,
+                        gap=gap,
+                        dual_norm_XtA=dual_norm_XtA,
+                        n_features=n_features,
+                    )
 
         else:
             # for/else, runs if for doesn't end with a `break`
