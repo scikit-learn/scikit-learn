@@ -219,6 +219,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
         solver_type = LIBSVM_IMPL.index(self._impl)
 
+        probability = self.probability
         if self._impl in ["c_svc", "nu_svc"]:
             est_dep = "SVC" if self._impl == "c_scv" else "NuSVC"
             if self.probability != "deprecated":
@@ -229,7 +230,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     FutureWarning,
                 )
             else:
-                self.probability = False
+                probability = False
 
         # input validation
         n_samples = _num_samples(X)
@@ -275,7 +276,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             print("[LibSVM]", end="")
 
         seed = rnd.randint(np.iinfo("i").max)
-        fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
+        fit(X, y, sample_weight, solver_type, kernel, probability, random_seed=seed)
         # see comment on the other call to np.iinfo in this file
 
         self.shape_fit_ = X.shape if hasattr(X, "shape") else (n_samples,)
@@ -329,7 +330,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 ConvergenceWarning,
             )
 
-    def _dense_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
+    def _dense_fit(
+        self, X, y, sample_weight, solver_type, kernel, probability, random_seed
+    ):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
@@ -362,7 +365,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             kernel=kernel,
             C=self.C,
             nu=self.nu,
-            probability=self.probability,
+            probability=probability,
             degree=self.degree,
             shrinking=self.shrinking,
             tol=self.tol,
@@ -376,7 +379,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         self._warn_from_fit_status()
 
-    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
+    def _sparse_fit(
+        self, X, y, sample_weight, solver_type, kernel, probability, random_seed
+    ):
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
         X.sort_indices()
 
@@ -413,7 +418,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.cache_size,
             self.epsilon,
             int(self.shrinking),
-            int(self.probability),
+            int(probability),
             self.max_iter,
             random_seed,
         )
@@ -492,6 +497,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
 
     def _sparse_predict(self, X):
+        probability = self.probability
+        if self._impl in ["c_svc", "nu_svc"] and self.probability == "deprecated":
+            probability = False
+
         # Precondition: X is a csr_matrix of dtype np.float64.
         kernel = self.kernel
         if callable(kernel):
@@ -521,7 +530,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -593,6 +602,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
 
     def _sparse_decision_function(self, X):
+        probability = self.probability
+        if self._impl in ["c_svc", "nu_svc"] and self.probability == "deprecated":
+            probability = False
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
 
         kernel = self.kernel
@@ -621,7 +633,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -847,7 +859,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     # probabilities are not available depending on a setting, introduce two
     # estimators.
     def _check_proba(self):
-        if not self.probability:
+        if not self.probability or self.probability == "deprecated":
             raise AttributeError(
                 "predict_proba is not available when probability=False"
             )

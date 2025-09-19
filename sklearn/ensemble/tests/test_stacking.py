@@ -309,7 +309,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
                 "stack_method": "predict_proba",
             },
             AttributeError,
-            "This 'SVC' has no attribute 'predict_proba'",
+            "predict_proba is not available when fitted with probability=False",
         ),
         (
             y_iris,

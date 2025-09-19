@@ -132,7 +132,8 @@ def test_sparse_classification(sparse_container, params, method):
     else:
         svm = CalibratedClassifierCV
         params_svm = dict(
-            estimator=SVC(kernel="linear", decision_function_shape="ovr"), ensemble=True
+            estimator=SVC(kernel="linear", decision_function_shape="ovr"),
+            ensemble=False,
         )
 
     class CustomSVC(svm):
@@ -157,6 +158,7 @@ def test_sparse_classification(sparse_container, params, method):
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
+    print(sparse_classifier, method)
     sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
     # Trained on dense format
@@ -381,7 +383,10 @@ def test_oob_score_classification():
         iris.data, iris.target, random_state=rng
     )
 
-    for estimator in [DecisionTreeClassifier(), SVC()]:
+    for estimator in [
+        DecisionTreeClassifier(),
+        CalibratedClassifierCV(SVC(), ensemble=False),
+    ]:
         clf = BaggingClassifier(
             estimator=estimator,
             n_estimators=100,
