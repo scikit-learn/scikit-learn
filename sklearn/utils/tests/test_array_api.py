@@ -817,4 +817,4 @@ def test_half_multinomial_loss(namespace, device_, dtype_name):
     with config_context(array_api_dispatch=True):
         xp_loss = _half_multinomial_loss(y=y_xp, pred=pred_xp, xp=xp)
 
-    assert numpy.isclose(np_loss, _convert_to_numpy(xp_loss, xp=xp))
+    assert numpy.isclose(np_loss, xp_loss)

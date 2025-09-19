@@ -30,8 +30,9 @@ from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    _half_multinomial_loss,
     _is_numpy_namespace,
-    get_namespace,
+    _max_precision_float_dtype,
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import (
@@ -714,7 +715,8 @@ def _fit_calibrator(
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        predictions = xp.asarray(predictions, device=xp_device)
+        max_float_dtype = _max_precision_float_dtype(xp, xp_device)
+        predictions = xp.asarray(predictions, dtype=max_float_dtype, device=xp_device)
         y = xp.asarray(y, device=xp_device)
         if len(classes) == 2 and predictions.shape[-1] == 1:
             response_method_name = _check_response_method(
@@ -961,14 +963,19 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
-    xp, _ = get_namespace(decision_values, xp=xp)
+    xp, _, device_ = get_namespace_and_device(decision_values, xp=xp)
     decision_values = check_array(
         decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
     )
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
         # Check if it is the output of predict_proba
         entries_zero_to_one = xp.all((decision_values >= 0) & (decision_values <= 1))
-        row_sums_to_one = xp.all(xpx.isclose(xp.sum(decision_values, axis=1), 1.0))
+        row_sums_to_one = xp.all(
+            xpx.isclose(
+                xp.sum(decision_values, axis=1),
+                xp.asarray(1.0, device=device_, dtype=decision_values.dtype),
+            )
+        )
 
         if entries_zero_to_one and row_sums_to_one:
             logits = xp.log(decision_values + eps)
@@ -1121,14 +1128,22 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             #   - NumPy 2+:  result.dtype is float64
             #
             #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
-            raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
-            return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
+            if _is_numpy_namespace(xp):
+                raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
+                return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
 
+            log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
+            raw_prediction = xp.exp(log_beta) * logits
+            return _half_multinomial_loss(
+                y=labels, pred=raw_prediction, sample_weight=sample_weight, xp=xp
+            )
+
+        xatol = 64 * xp.finfo(dtype_).eps
         log_beta_minimizer = minimize_scalar(
             log_loss,
             bounds=(-10.0, 10.0),
             options={
-                "xatol": 64 * np.finfo(float).eps,
+                "xatol": xatol,
             },
         )
 
