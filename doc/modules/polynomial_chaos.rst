@@ -112,18 +112,18 @@ Usage tips
 ==========
 
 * Polynomial Chaos expansions work best for a moderate amount of features (say,
-  a few dozen). However, always keep in mind that the complexity of the method
-  scales with the number of polynomial basis terms. For the default
+  a few dozen). However, always keep in mind that the number of basis terms
+  grows combinatorially with both the polynomial degree :math:`k`` and the
+  number of input features (i.e., the dimension :math:`d`). For the default
   `total_degree` multiindex set shape, the number of polynomial terms is
 
   .. math::
     P = \frac{(d + k)!}{d!k!}
 
-  where :math:`d` is the dimension (i.e., the number of input features), and
-  :math:`k` is the degree of the polynomial. The table below shows the value of
-  :math:`P` for various combinations of :math:`d` (columns) and :math:`k`
-  (rows). Note that the values in the table are symmetric (i.e., the role of
-  :math:`d` and :math:`k` can be interchanged).
+  The table below shows the value of :math:`P` for various combinations of
+  :math:`d` (columns) and :math:`k` (rows). Note that the values in the table
+  are symmetric (i.e., the role of :math:`d` and :math:`k` can be
+  interchanged).
 
   +--------------------------+-----+-----+-----+------+------+------+-------+-------+-------+--------+
   |   :math:`k` \\ :math:`d` |   1 |   2 |   3 |    4 |    5 |    6 |     7 |     8 |     9 |     10 |
@@ -148,6 +148,25 @@ Usage tips
   +--------------------------+-----+-----+-----+------+------+------+-------+-------+-------+--------+
   |                       10 |  11 |  66 | 286 | 1001 | 3003 | 8008 | 19448 | 43758 | 92378 | 184756 |
   +--------------------------+-----+-----+-----+------+------+------+-------+-------+-------+--------+
+
+* Fitting a Polynomial Chaos model with ordinary least squares requires
+  solving a regression problem of size :math:`n \times P` where :math:`n` is
+  the number of training samples and :math:`P` is the number of basis terms.
+  The cost depends on the regime:
+
+  * If :math:`P \ll n` (many training samples, few basis terms):
+
+  .. math::
+    \mathcal{O()}(nP^2 + P^3)
+
+  * If :math:`P \gg n` (many basis terms, few training samples):
+
+  .. math::
+    \mathcal{O()}(n^2P + n^3)
+
+  In either case, the design matrix of size :math:`n \times P` must be stored
+  in memory (about :math:`8nP` bytes in double precision). This often makes RAM
+  the practical bottleneck well before CPU time.
 
 * When using the default estimator
   (:class:`~sklearn.linear_model.LinearRegression`), and for large :math:`d` or
