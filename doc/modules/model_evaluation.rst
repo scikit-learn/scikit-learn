@@ -2185,49 +2185,46 @@ of 0.0.
     -0.552
 
 
-|details-start|
-**D2 Brier score**
-|details-split|
+.. dropdown:: **D2 Brier score**
 
-The :func:`d2_brier_score` function implements the special case
-of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+   The :func:`d2_brier_score` function implements the special case
+   of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
 
-.. math::
+  .. math::
 
-  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+    \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS).
 
-Here are some usage examples of the :func:`d2_brier_score` function::
+  Here are some usage examples of the :func:`d2_brier_score` function::
 
-  >>> from sklearn.metrics import d2_brier_score
-  >>> y_true = [1, 1, 2, 3]
-  >>> y_pred = [
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  0.0
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...    [0.98, 0.01, 0.01],
-  ...    [0.01, 0.98, 0.01],
-  ...    [0.01, 0.01, 0.98],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  0.9991
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...    [0.1, 0.6, 0.3],
-  ...    [0.1, 0.6, 0.3],
-  ...    [0.4, 0.5, 0.1],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  -0.370...
+    >>> from sklearn.metrics import d2_brier_score
+    >>> y_true = [1, 1, 2, 3]
+    >>> y_pred = [
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.98, 0.01, 0.01],
+    ...    [0.01, 0.98, 0.01],
+    ...    [0.01, 0.01, 0.98],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.9991
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.4, 0.5, 0.1],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    -0.370...
 
-|details-end|
 
 .. _multilabel_ranking_metrics:
 
