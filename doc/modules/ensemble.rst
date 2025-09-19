@@ -964,10 +964,9 @@ In random forests (see :class:`RandomForestClassifier` and
 from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
-Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the feature values of
 either all input features or a random subset of size ``max_features``.
-(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
+
+Furthermore, when splitting each node during the construction of a tree, scikit-learn’s Random Forest uses the "best" splitter: for each candidate feature (or a random subset of size ``max_features``), an exhaustive search is performed to find the split (threshold) that yields the greatest reduction in impurity. This means all possible split points (between sorted unique values for each feature) are considered, ensuring the optimal split is chosen at each node. (See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high
