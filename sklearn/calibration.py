@@ -963,7 +963,7 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     """
     xp, _ = get_namespace(decision_values, xp=xp)
     decision_values = check_array(
-        decision_values, dtype=[xp.float64, np.float32], ensure_2d=False
+        decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
     )
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
         # Check if it is the output of predict_proba
