@@ -10,7 +10,6 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from joblib import effective_n_jobs
 from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -53,6 +52,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
+
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -1172,6 +1173,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_jobs=None,
         l1_ratio=None,
     ):
+        if n_jobs is not None:
+            import warnings
+
+            warnings.warn(
+                "`n_jobs` is deprecated in LogisticRegression and will be removed in a future release. "
+                "This parameter has no effect.",
+                FutureWarning,
+                stacklevel=2,
+            )
+
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
@@ -1304,11 +1315,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     "scheme.",
                     FutureWarning,
                 )
-            if effective_n_jobs(self.n_jobs) != 1:
+            if _openmp_effective_n_threads() != 1:
                 warnings.warn(
                     "'n_jobs' > 1 does not have any effect when"
                     " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                    " = {}.".format(effective_n_jobs(self.n_jobs))
+                    " = {}.".format(_openmp_effective_n_threads())
                 )
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
@@ -1376,7 +1387,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if (
             solver in ["lbfgs", "newton-cg", "newton-cholesky"]
             and len(classes_) == 1
-            and effective_n_jobs(self.n_jobs) == 1
+            and _openmp_effective_n_threads() == 1
         ):
             # In the future, we would like n_threads = _openmp_effective_n_threads()
             # For the time being, we just do
