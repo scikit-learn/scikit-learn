@@ -75,7 +75,7 @@ def test_weighted_percentile_zero_weight():
     sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
     value = _weighted_percentile(y, sw, 50)
-    assert approx(value) == 1.0
+    assert np.isnan(value)
 
 
 def test_weighted_percentile_zero_weight_zero_percentile():

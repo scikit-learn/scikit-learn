@@ -309,12 +309,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         )
         idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
 
-        if not np.any(sample_mask[idx_val]):
-            raise ValueError(
-                "The sample weights for validation set are all zero, consider using a"
-                " different random state."
-            )
-
         if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
             raise ValueError(
                 "Splitting %d samples into a train set and a validation set "

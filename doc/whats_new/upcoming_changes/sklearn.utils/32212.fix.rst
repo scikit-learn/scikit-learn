@@ -1,0 +1,2 @@
+- Make :func:`_weighted_percentile` return nan and :func:`_check_sample_weight` raise error when all sample weights are 0.
+  By :user:`John Hendricks <j-hendricks>`
