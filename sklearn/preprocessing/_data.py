@@ -4,6 +4,7 @@
 
 import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
@@ -2266,7 +2267,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        xp, _, device = get_namespace_and_device(X)
+        xp, _, _device = get_namespace_and_device(X)
         float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
         cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
@@ -2619,6 +2620,7 @@ def add_dummy_feature(X, value=1.0):
     X = check_array(X, accept_sparse=["csc", "csr", "coo"], dtype=FLOAT_DTYPES)
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
+
     if sparse.issparse(X):
         if X.format == "coo":
             # Shift columns to the right.
@@ -2800,8 +2802,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 " sparse matrix. This parameter has no effect."
             )
 
-        n_samples, n_features = X.shape
+        n_samples, _n_features = X.shape
         references = self.references_ * 100
+
 
         if self.subsample is not None and self.subsample < n_samples:
             # Take a subsample of `X`
