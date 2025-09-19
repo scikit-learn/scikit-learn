@@ -668,6 +668,37 @@ def test_ovo_decision_function():
         assert len(np.unique(decisions[:, class_idx])) > 146
 
 
+def test_ovo_decision_function_predict_proba():
+    n_samples = iris.data.shape[0]
+    # A classifier which implements predict_proba. (doesn't have a decision function)
+    ovo = OneVsOneClassifier(MultinomialNB())
+    # first binary
+    ovo.fit(iris.data, iris.target == 0)
+    decisions = ovo.decision_function(iris.data)
+    assert decisions.shape == (n_samples,)
+
+    # then multi-class
+    ovo.fit(iris.data, iris.target)
+    decisions = ovo.decision_function(iris.data)
+
+    assert decisions.shape == (n_samples, n_classes)
+    assert_array_equal(decisions.argmax(axis=1), ovo.predict(iris.data))
+
+    # Compute the votes
+    votes = np.zeros((n_samples, n_classes))
+
+    k = 0
+    for i in range(n_classes):
+        for j in range(i + 1, n_classes):
+            pred = ovo.estimators_[k].predict(iris.data)
+            votes[pred == 0, i] += 1
+            votes[pred == 1, j] += 1
+            k += 1
+
+    # Extract votes and verify
+    assert_array_equal(votes, np.round(decisions))
+
+
 def test_ovo_gridsearch():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]

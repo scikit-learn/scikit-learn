@@ -992,10 +992,25 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         predictions = np.vstack(
             [est.predict(Xi) for est, Xi in zip(self.estimators_, Xs)]
         ).T
-        confidences = np.vstack(
-            [_predict_binary(est, Xi) for est, Xi in zip(self.estimators_, Xs)]
-        ).T
-        Y = _ovr_decision_function(predictions, confidences, len(self.classes_))
+
+        confidences, probabilities_indexes = [], []
+        for iteration_num, (est, Xi) in enumerate(zip(self.estimators_, Xs)):
+            if is_regressor(est):
+                confidences.append(est.predict(Xi))
+            else:
+                try:
+                    score = np.ravel(est.decision_function(Xi))
+                except (AttributeError, NotImplementedError):
+                    # probabilities of the positive class
+                    score = est.predict_proba(Xi)[:, 1]
+                    probabilities_indexes.append(iteration_num)
+                confidences.append(score)
+
+        confidences = np.stack(confidences).T
+
+        Y = _ovr_decision_function(
+            predictions, confidences, len(self.classes_), probabilities_indexes
+        )
         if self.n_classes_ == 2:
             return Y[:, 1]
         return Y
