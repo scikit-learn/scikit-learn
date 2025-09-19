@@ -1,14 +1,19 @@
-Fix OVR Decision and Vectorize SGD/Adam Optimizers
---------------------------------------------------
+.. _fix-ovr-decision:
+
+Fix OVR Decision Function in MLP Optimizers
+===========================================
 
 This PR introduces vectorized implementations of the stochastic optimizers
 (SGDOptimizer and AdamOptimizer) used in MLP to improve performance by
 leveraging NumPy operations instead of Python loops.
 
-Additionally, it resolves linting issues in `sklearn/preprocessing/_data.py`
-by prefixing unused variables with an underscore, ensuring all pre-commit
-checks pass.
+Additionally, this PR:
 
-- Optimized MLP stochastic optimizers for better performance.
-- Fixed linting issues in preprocessing module.
-- All existing functionality remains intact.
+- Resolves linting issues in `sklearn/preprocessing/_data.py` (unused variables prefixed with `_`).
+- Ensures all pre-commit checks pass.
+- Keeps all existing functionality intact and passes local tests.
+
+Reference Issues/PRs
+--------------------
+
+- Fixes #30742 (related optimizer performance issue)
