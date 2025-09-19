@@ -180,10 +180,9 @@ class SGDOptimizer(BaseOptimizer):
             The values to add to params
         """
         #  in-place update of velocities for better performance
-        for i, (velocity, grad) in enumerate(zip(self.velocities, grads)):
-            np.multiply(self.momentum, velocity, out=velocity)
-            grad_update = -self.learning_rate * grad
-            np.add(velocity, grad_update, out=velocity)
+        for velocity, grad in zip(self.velocities, grads):
+            velocity *= self.momentum
+            velocity -= self.learning_rate * grad
 
         if self.nesterov:
             # Single-pass Nesterov update using updated velocities
@@ -278,7 +277,7 @@ class AdamOptimizer(BaseOptimizer):
         )
         updates = []
 
-        # Vectorized in-place updates for better performance
+        # in-place updates for better performance
         for m, v, grad in zip(self.ms, self.vs, grads):
             m *= self.beta_1
             m += (1 - self.beta_1) * grad
