@@ -75,7 +75,7 @@ div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
   /* draw centered vertical line to link estimators */
-  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
+  background-image: linear-gradient(var(--sklearn-color-line));
   background-size: 2px 100%;
   background-repeat: no-repeat;
   background-position: center center;
@@ -86,7 +86,7 @@ div.sk-item {
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
-  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
+  border-bottom: 2px solid var(--sklearn-color-line);
   flex-grow: 1;
 }
 
@@ -243,16 +243,29 @@ clickable and can be expanded/collapsed.
   color: var(--sklearn-color-text-on-default-background);
 }
 
-/* On hover, darken the color of the background */
-#$id div.sk-label:hover label.sk-toggleable__label {
+/* Label colors when unfitted */
+#$id div.sk-label label.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
+  border-bottom: .005em solid grey;
 }
 
-/* Label box, darken color on hover, fitted */
-#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+/* Label colors when  fitted */
+#$id div.sk-label.fitted label.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* On hover, darken the color of the backgroundq, unfitted*/
+#$id div.sk-label:hover label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-1);
+}
+
+/* On hover, darken the color of the background, fitted */
+#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-1);
 }
 
 /* Estimator label */
