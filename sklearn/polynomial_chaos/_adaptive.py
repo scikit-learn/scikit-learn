@@ -9,7 +9,7 @@ a large number of features, the required number of basis terms to reach a
 certain accuracy may be prohibitively expensive. When the number of basis terms
 is larger than the number of samples (i.e., there are more unknowns than
 equations) the system is underdetermined. In that case, it is beneficial to use
-linear solvers that promote sparsity in the solution (such as `Lasso`,
+linear estimators that promote sparsity in the solution (such as `Lasso`,
 `Lars`...) as a way to regularize the problem. Since the required number of
 basis terms is unknown a priori, it can be beneficial to use adaptive basis
 incremental strategies. In these approaches, additional basis terms are added

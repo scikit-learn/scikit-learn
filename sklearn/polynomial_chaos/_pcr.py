@@ -80,7 +80,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         None`, an unweighted multiindex set will be used. The default is
         `None`.
 
-    solver : LinearModel, default=LinearRegression(fit_intercept=False)
+    estimator : LinearModel, default=LinearRegression(fit_intercept=False)
         The :class:`~sklearn.linear_model.LinearModel` used to solve for the
         coefficients of the Polynomial Chaos expansion. This should be another
         `LinearModel` that has a :term:`fit` method. Make sure to set
@@ -88,7 +88,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
 
     feature_selector : SelectorMixin, default=None
         The meta-transformer used to select basis terms after fitting. This
-        is useful when using sparsity promoting linear solvers, such as
+        is useful when using sparsity promoting linear estimators, such as
         :class:`~sklearn.linear_model.LassoCV`. The feature selector can be
         used to prune the basis terms with near-zero coefficients to speed-up
         and reduce memory usage at prediction time. If
@@ -182,7 +182,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
             )
         ],
         "weights": ["array-like", None],
-        "solver": [HasMethods("fit"), None],
+        "estimator": [HasMethods("fit"), None],
         "feature_selector": [HasMethods("fit"), None],
         "multiindices": ["array-like", None],
         "scale_outputs": [bool],
@@ -194,7 +194,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         degree=2,
         truncation="total_degree",
         weights=None,
-        solver=None,
+        estimator=None,
         feature_selector=None,
         multiindices=None,
         scale_outputs=True,
@@ -203,7 +203,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
         self.degree = degree
         self.truncation = truncation
         self.weights = weights
-        self.solver = solver
+        self.estimator = estimator
         self.feature_selector = feature_selector
         self.multiindices = multiindices
         self.scale_outputs = scale_outputs
@@ -275,35 +275,38 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
                 f"or a tuple/list, got '{type(self.distribution)}'"
             )
 
-        # check solver
-        if self.solver is None:
-            solver = LinearRegression(fit_intercept=False)
+        # check estimator
+        if self.estimator is None:
+            estimator = LinearRegression(fit_intercept=False)
         else:
-            if not isinstance(self.solver, BaseEstimator):
+            if not isinstance(self.estimator, BaseEstimator):
                 raise ValueError(
-                    "solver must be an instance of 'sklearn.BaseEstimator', got"
-                    f" '{type(self.solver)}'"
+                    "estimator must be an instance of 'sklearn.BaseEstimator', got"
+                    f" '{type(self.estimator)}'"
                 )
-            if isinstance(self.solver, LinearModel) or isinstance(
-                self.solver, MultiOutputRegressor
+            if isinstance(self.estimator, LinearModel) or isinstance(
+                self.estimator, MultiOutputRegressor
             ):
                 if (
-                    isinstance(self.solver, LinearModel) and self.solver.fit_intercept
+                    isinstance(self.estimator, LinearModel)
+                    and self.estimator.fit_intercept
                 ) or (
-                    isinstance(self.solver, MultiOutputRegressor)
-                    and self.solver.estimator.fit_intercept
+                    isinstance(self.estimator, MultiOutputRegressor)
+                    and self.estimator.estimator.fit_intercept
                 ):
-                    raise ValueError("make sure to set 'fit_intercept=False' in solver")
+                    raise ValueError(
+                        "make sure to set 'fit_intercept=False' in estimator"
+                    )
 
             else:
                 warn(
                     (
                         "cannot explicitly check the value of 'fit_intercept' in"
-                        " solver, please ensure 'fit_intercept=False'"
+                        " estimator, please ensure 'fit_intercept=False'"
                     ),
                     UserWarning,
                 )
-            solver = clone(self.solver)
+            estimator = clone(self.estimator)
 
         # check feature_selector
         if self.feature_selector is not None:
@@ -377,7 +380,7 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
             steps = [("basis", basis)]
             if feature_selector is not None:
                 steps.append(("feature_selector", feature_selector))
-            steps.append(("solver", solver))
+            steps.append(("estimator", estimator))
 
             self.pipeline_ = Pipeline(steps)
 
@@ -395,19 +398,19 @@ class PolynomialChaosRegressor(RegressorMixin, BaseEstimator):
                 self.norms_ = self.norms_[support]
 
             # convenient access to coefficients
-            if hasattr(self.pipeline_["solver"], "coef_"):
-                self.coef_ = self.pipeline_["solver"].coef_
-            elif hasattr(self.pipeline_["solver"], "estimators_"):
+            if hasattr(self.pipeline_["estimator"], "coef_"):
+                self.coef_ = self.pipeline_["estimator"].coef_
+            elif hasattr(self.pipeline_["estimator"], "estimators_"):
                 self.coef_ = np.vstack(
                     [
                         estimator.coef_
-                        for estimator in self.pipeline_["solver"].estimators_
+                        for estimator in self.pipeline_["estimator"].estimators_
                     ]
                 )
             else:
                 raise ValueError(
-                    "unable to access coefficients from solver, please make sure"
-                    " the solver is a 'LinearModel' with a 'coef_' attribute, or a"
+                    "unable to access coefficients from estimator, please make sure"
+                    " the estimator is a 'LinearModel' with a 'coef_' attribute, or a"
                     " 'MultiOutputRegressor' with an estimator that has a 'coef_'"
                     " attribute"
                 )

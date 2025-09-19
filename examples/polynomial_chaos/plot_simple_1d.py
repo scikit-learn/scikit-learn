@@ -129,12 +129,12 @@ plt.show()
 # `scikit-learn` as :class:`~sklearn.linear_model.LassoCV`.
 from sklearn.linear_model import LassoCV
 
-solver = solver = LassoCV(fit_intercept=False, max_iter=100000, tol=1e-1)
+estimator = LassoCV(fit_intercept=False, max_iter=100000, tol=1e-1)
 
 # %%
-# Let's refit the Polynomimal Chaos expansions using this new solver.
+# Let's refit the Polynomimal Chaos expansions using this new estimator.
 for pce in pces:
-    pce.set_params(solver=solver)
+    pce.set_params(estimator=estimator)
     pce.fit(X, y)
 
 # %%

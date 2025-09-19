@@ -32,8 +32,8 @@ def test_adaptive_construction():
     random_state = check_random_state(17)
     a = np.array([1, 2, 5, 10, 20, 50, 100, 500])
     dimension = len(a)
-    solver = LassoCV(fit_intercept=False, tol=1e-4)
-    pce = PolynomialChaosRegressor(uniform(), degree=0, solver=solver)
+    estimator = LassoCV(fit_intercept=False, tol=1e-4)
+    pce = PolynomialChaosRegressor(uniform(), degree=0, estimator=estimator)
     N = 66
     X = uniform().rvs((N, dimension), random_state=random_state)
     y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))

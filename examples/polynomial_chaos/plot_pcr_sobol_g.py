@@ -137,9 +137,11 @@ pce = PolynomialChaosRegressor(distribution, degree=1)
 pce.fit(X, y)
 errors = [np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S)]
 iters = [1]
-solver = LassoCV(fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000)
+estimator = LassoCV(
+    fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
+)
 for i in range(10, 35, 5):
-    pce = PolynomialChaosRegressor(distribution, degree=1, solver=solver)
+    pce = PolynomialChaosRegressor(distribution, degree=1, estimator=estimator)
     pce.fit(X, y, max_iter=i)
     errors.append(np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S))
     iters.append(i)
@@ -160,7 +162,7 @@ _ = plt.title("Convergence of adaptive basis construction")
 #     a global sensitivity analysis of the Ishigami function, another
 #     well-known test problem.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
-#     an example of how to use sparse solvers to deal with noisy measurements.
+#     an example of how to use sparse estimators to deal with noisy measurements.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection_g.py`
 #     for an example of how to use pruning to remove small basis terms from
 #     the expansion.

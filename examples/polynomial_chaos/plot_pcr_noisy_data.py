@@ -130,13 +130,13 @@ print("training error:", mean_absolute_error(y, pce.predict(X)))
 print("test error:", mean_absolute_error(y_test, pce.predict(X_test)))
 
 # %%
-# We can somewhat alleviate this issue by using a sparsity-promoting solver.
+# We can somewhat alleviate this issue by using a sparsity-promoting estimator.
 from sklearn.linear_model import LassoCV
 
-solver = solver = LassoCV(
+estimator = LassoCV(
     fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=500000
 )
-pce.set_params(solver=solver)
+pce.set_params(estimator=estimator)
 pce.fit(X, y_noisy)
 PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=pce.predict(X_test), kind="actual_vs_predicted"
@@ -150,7 +150,7 @@ print("training error:", mean_absolute_error(y, pce.predict(X)))
 print("test error:", mean_absolute_error(y_test, pce.predict(X_test)))
 
 # %%
-# Using the sparse solver, training and test data are much smaller. They are
+# Using the sparse estimator, training and test data are much smaller. They are
 # also of similar magnitude, indicating that our surrogate model is not
 # overfiting. Hence, despite the noisy outputs, we are able to construct a
 # reasonably accurate surrogate.

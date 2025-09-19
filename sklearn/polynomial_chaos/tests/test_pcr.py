@@ -92,8 +92,8 @@ def test_fit_distributions():
         pce.fit(X, y)
 
 
-# Test fit with solvers
-def test_fit_solvers():
+# Test fit with estimators
+def test_fit_estimators():
     # generate data
     random_state = check_random_state(17)
     X = uniform().rvs((28, 2), random_state=random_state)
@@ -101,7 +101,7 @@ def test_fit_solvers():
 
     # passes
     pce = PolynomialChaosRegressor(
-        (uniform(), uniform()), degree=12, solver=LassoCV(fit_intercept=False)
+        (uniform(), uniform()), degree=12, estimator=LassoCV(fit_intercept=False)
     )
     pce.fit(X, y)
     y_fit = pce.predict(X)
@@ -112,26 +112,28 @@ def test_fit_solvers():
         pce = PolynomialChaosRegressor(
             (uniform(), uniform()),
             degree=12,
-            solver=LassoCV(fit_intercept=True),
+            estimator=LassoCV(fit_intercept=True),
         )
         pce.fit(X, y)
 
-    # unknown solver type raises error
+    # unknown estimator type raises error
     with pytest.raises(ValueError, match="fit"):
-        pce = PolynomialChaosRegressor((uniform(), uniform()), degree=12, solver=False)
+        pce = PolynomialChaosRegressor(
+            (uniform(), uniform()), degree=12, estimator=False
+        )
         pce.fit(X, y)
 
 
-# Test solvers with noise
+# Test estimators with noise
 @pytest.mark.parametrize(
-    "solver",
+    "estimator",
     [
         LassoCV(fit_intercept=False, alphas=np.logspace(-12, 2, 25)),
         ElasticNetCV(fit_intercept=False, l1_ratio=np.logspace(-2, 0, 25)),
         OrthogonalMatchingPursuitCV(fit_intercept=False),
     ],
 )
-def test_solvers_with_noise(solver):
+def test_estimators_with_noise(estimator):
     random_state = check_random_state(123)
     distribution = uniform(loc=-1, scale=2)
     X = distribution.rvs((27, 2), random_state=random_state)
@@ -142,7 +144,7 @@ def test_solvers_with_noise(solver):
     )
     y += 0.1 * random_state.randn(len(y))
     pce = PolynomialChaosRegressor(
-        distribution, degree=3, scale_outputs=False, solver=solver
+        distribution, degree=3, scale_outputs=False, estimator=estimator
     )
     pce.fit(X, y)
     assert np.linalg.norm(y - pce.predict(X)) / np.linalg.norm(y) < 0.05
@@ -189,7 +191,7 @@ def test_grid_search():
                 "hyperbolic_cross",
                 "Zaremba_cross",
             ],
-            "solver": [
+            "estimator": [
                 LinearRegression(fit_intercept=False),
                 LassoCV(fit_intercept=False, alphas=np.logspace(-12, 2, 25)),
             ],
@@ -216,10 +218,12 @@ def test_grid_search_1_polynomial():
             "degree": range(2, 6),
         }
     ]
-    solver = LassoCV(
+    estimator = LassoCV(
         fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
     )
-    pce = PolynomialChaosRegressor(distribution, solver=solver, scale_outputs=False)
+    pce = PolynomialChaosRegressor(
+        distribution, estimator=estimator, scale_outputs=False
+    )
     pceCV = GridSearchCV(pce, param_grid, cv=KFold(n_splits=5))
     pceCV.fit(X, y)
     assert pceCV.best_params_["degree"] == 4
@@ -262,11 +266,11 @@ def test_main_sensitivity():
 # Test main sensitivity on Friedman 1 problem
 def test_friedman1():
     X, y = make_friedman1(n_samples=100, n_features=10, random_state=0)
-    solver = LassoCV(
+    estimator = LassoCV(
         fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
     )
     pce = PolynomialChaosRegressor(
-        uniform(-1, 2), degree=5, solver=solver, scale_outputs=False
+        uniform(-1, 2), degree=5, estimator=estimator, scale_outputs=False
     )
     pce.fit(X, y)
     assert np.sum(pce.main_sens() > 0.001) == 5  # 5 important features
@@ -379,35 +383,35 @@ def test_multi_output_statistics():
         )
 
 
-# Verify input checking for solver with multioutput
-def test_solver_multioutput():
+# Verify input checking for estimator with multioutput
+def test_estimator_multioutput():
     X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
     y1 = (X * np.sin(X)).ravel()
     y2 = (X * np.cos(X)).ravel()
     Y = np.vstack([y1, y2]).T
 
     with pytest.raises(ValueError, match="fit_intercept=False"):
-        pce = PolynomialChaosRegressor(solver=LassoCV())
+        pce = PolynomialChaosRegressor(estimator=LassoCV())
         pce.fit(X, y1)
 
     with pytest.raises(ValueError, match="fit_intercept=False"):
-        pce = PolynomialChaosRegressor(solver=MultiOutputRegressor(LassoCV()))
+        pce = PolynomialChaosRegressor(estimator=MultiOutputRegressor(LassoCV()))
         pce.fit(X, Y)
 
-    class DummySolver(BaseEstimator):
+    class DummyEstimator(BaseEstimator):
         def fit(self, X, y):
             self.coef_ = 0
 
     with pytest.warns(UserWarning, match="fit_intercept=False"):
-        pce = PolynomialChaosRegressor(solver=DummySolver())
+        pce = PolynomialChaosRegressor(estimator=DummyEstimator())
         pce.fit(X, Y)
 
-    class DumbDummySolver(BaseEstimator):
+    class DumbDummyEstimator(BaseEstimator):
         def fit(self, X, y):
             pass
 
     with pytest.raises(ValueError, match="'coef_'"):
-        pce = PolynomialChaosRegressor(solver=DumbDummySolver())
+        pce = PolynomialChaosRegressor(estimator=DumbDummyEstimator())
         pce.fit(X, Y)
 
 
@@ -421,7 +425,7 @@ def test_feature_selector_valid():
     pce = PolynomialChaosRegressor(
         distribution=[distribution] * 2,
         degree=3,
-        solver=LinearRegression(fit_intercept=False),
+        estimator=LinearRegression(fit_intercept=False),
         feature_selector=SelectFromModel(LassoCV(fit_intercept=False)),
     )
     pce.fit(X_train, y_train)

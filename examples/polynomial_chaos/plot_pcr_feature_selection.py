@@ -50,7 +50,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.polynomial_chaos import PolynomialChaosRegressor
 
 pce = PolynomialChaosRegressor(
-    distribution=distribution, degree=5, solver=LinearRegression(fit_intercept=False)
+    distribution=distribution, degree=5, estimator=LinearRegression(fit_intercept=False)
 )
 pce.fit(X_train, y_train)
 print(f"R^2 on test set: {pce.score(X_test, y_test):.2f}")
@@ -82,7 +82,7 @@ from sklearn.linear_model import LassoCV
 pruned_pce = PolynomialChaosRegressor(
     distribution=distribution,
     degree=5,
-    solver=LinearRegression(fit_intercept=False),
+    estimator=LinearRegression(fit_intercept=False),
     feature_selector=SelectFromModel(LassoCV(fit_intercept=False), max_features=5),
 )
 pruned_pce.fit(X_train, y_train)

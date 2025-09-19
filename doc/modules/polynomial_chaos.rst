@@ -102,7 +102,7 @@ to solve to obtain the Polynomial Chaos coefficients can be underdetermined
 `regularization <https://en.wikipedia.org/wiki/Regularization_(mathematics)>`_ of
 the problem may be required to find a good Polynomial Chaos surrogate. We can
 take advantage of the various linear models, such as
-:class:`~sklearn.linear_model.LassoCV`, by specifying the `solver` argument in
+:class:`~sklearn.linear_model.LassoCV`, by specifying the `estimator` argument in
 the :class:`PolynomialChaosRegressor`.
 
 For more details and a technical description of Polynomial Chaos expansions, we
@@ -149,19 +149,19 @@ Usage tips
   |                       10 |  11 |  66 | 286 | 1001 | 3003 | 8008 | 19448 | 43758 | 92378 | 184756 |
   +--------------------------+-----+-----+-----+------+------+------+-------+-------+-------+--------+
 
-* When using the default solver
+* When using the default estimator
   (:class:`~sklearn.linear_model.LinearRegression`), and for large :math:`d` or
   :math:`k`, the resulting linear system for the Polynomial Chaos coefficients
   can become undetermined, meaning that we have fewer model evaluations than
   polynomial basis terms. In such cases, make sure to use regularization by
-  choosing a different solver, such as :class:`~sklearn.linear_model.LassoCV`.
+  choosing a different estimator, such as :class:`~sklearn.linear_model.LassoCV`.
   See also :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_simple_1d.py`.
 
 * When the output data is noisy, as is the case in almost all real-world
   problems, use regularization to avoid overfitting. See also
   :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`.
 
-* When using a sparse solver such as :class:`~sklearn.linear_model.LassoCV` or
+* When using a sparse estimator such as :class:`~sklearn.linear_model.LassoCV` or
   :class:`~sklearn.linear_model.ElasticNetCV`, many of the basis terms might be
   small, meaning that they can be removed from the expansion without impacting
   the prediction accuracy. This can be done by pruning the basis terms using,

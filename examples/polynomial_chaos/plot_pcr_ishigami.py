@@ -298,4 +298,4 @@ if scipy_has_sobol_indices:
 #     an example of how to adaptively construct the multiindex set in the
 #     Polynomial Chaos expansion to compute sensitivity indices.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
-#     an example of how to use sparse solvers to deal with noisy measurements.
+#     an example of how to use sparse estimators to deal with noisy measurements.
