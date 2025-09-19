@@ -308,8 +308,8 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
                 ],
                 "stack_method": "predict_proba",
             },
-            AttributeError,
-            "predict_proba is not available when fitted with probability=False",
+            ValueError,
+            "Underlying estimator svm does not implement the method predict_proba",
         ),
         (
             y_iris,

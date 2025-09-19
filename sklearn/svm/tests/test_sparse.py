@@ -107,6 +107,7 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
 )
 @pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_svc(X_train, y_train, X_test, kernel, sparse_container):
     """Check that sparse SVC gives the same result as SVC."""
     X_train = sparse_container(X_train)
@@ -122,6 +123,7 @@ def test_svc(X_train, y_train, X_test, kernel, sparse_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_unsorted_indices(csr_container):
     # test that the result with sorted and unsorted indices in csr is the same
     # we use a subset of digits as iris, blobs or make_classification didn't
@@ -458,6 +460,7 @@ def test_sparse_realdata(csr_container):
 
 
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sparse_svc_clone_with_callable_kernel(lil_container):
     # Test that the "dense_fit" is called even though we use sparse input
     # meaning that everything works fine.
@@ -478,6 +481,7 @@ def test_sparse_svc_clone_with_callable_kernel(lil_container):
 
 
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_timeout(lil_container):
     sp = svm.SVC(
         C=1, kernel=lambda x, y: x @ y.T, probability=True, random_state=0, max_iter=1
@@ -493,6 +497,7 @@ def test_timeout(lil_container):
 # XXX: probability=True is not thread-safe:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     with ignore_warnings(category=ConvergenceWarning):
