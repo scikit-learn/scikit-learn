@@ -1,0 +1,6 @@
+- :class:`tree.DecisionTreeRegressor` with `criterion="absolute_error"`
+  would sometimes make sub-optimal splits
+  (i.e. splits that don't minimize the absolute error).
+  Now it's fixed. Hence retraining trees might gives slightly different
+  results.
+  By :user:`Arthur Lacote <cakedev0>`

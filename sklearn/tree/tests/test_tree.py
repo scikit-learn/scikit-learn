@@ -36,6 +36,7 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
+from sklearn.tree._criterion import _py_precompute_absolute_errors
 from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
@@ -1662,8 +1663,9 @@ def test_no_sparse_y_support(name, csr_container):
 
 
 def test_mae():
-    """Check MAE criterion produces correct results on small toy dataset:
+    """Check MAE criterion produces correct results on small toy datasets:
 
+    ## First toy dataset
     ------------------
     | X | y | weight |
     ------------------
@@ -1734,6 +1736,31 @@ def test_mae():
             = 1.2 / 1.6
             = 0.75
             ------
+
+    ## Second toy dataset:
+    ------------------
+    | X | y | weight |
+    ------------------
+    | 1 | 1 |   3    |
+    | 2 | 1 |   3    |
+    | 3 | 3 |   2    |
+    | 4 | 1 |   1    |
+    | 5 | 2 |   2    |
+    ------------------
+    |sum wt:|   11   |
+    ------------------
+
+    The weighted median is 1
+    Total error = Absolute(1 - 3) * 2 + Absolute(1 - 2) * 2 = 6
+
+    The best split is between X values of 2 and 3, with:
+    - left node being the first 2 data points, both with y=1
+      => AE and impurity is 0
+    - right node being the last 3 data points, weighted median is 2.
+      Total error = (Absolute(2 - 3) * 2)
+                  + (Absolute(2 - 1) * 1)
+                  + (Absolute(2 - 2) * 2)
+                  = 3
     """
     dt_mae = DecisionTreeRegressor(
         random_state=0, criterion="absolute_error", max_leaf_nodes=2
@@ -1759,6 +1786,21 @@ def test_mae():
     dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
+
+    dt_mae = DecisionTreeRegressor(
+        random_state=0,
+        criterion="absolute_error",
+        max_depth=1,  # stop after one split
+    )
+    X = [[1], [2], [3], [4], [5]]
+    dt_mae.fit(
+        X=X,
+        y=[1, 1, 3, 1, 2],
+        sample_weight=[3, 3, 2, 1, 2],
+    )
+    assert_allclose(dt_mae.predict(X), [1, 1, 2, 2, 2])
+    assert_allclose(dt_mae.tree_.impurity, [6 / 11, 0, 3 / 5])
+    assert_array_equal(dt_mae.tree_.value.flat, [1, 1, 2])
 
 
 def test_criterion_copy():
@@ -2841,3 +2883,58 @@ def test_sort_log2_build():
     ]
     # fmt: on
     assert_array_equal(samples, expected_samples)
+
+
+def test_absolute_errors_precomputation_function(global_random_seed):
+    """
+    Test the main bit of logic of the MAE(RegressionCriterion) class
+    (used by DecisionTreeRegressor(criterion="absolute_error")).
+
+    The implementation of the criterion relies on an efficient precomputation
+    of left/right children absolute error for each split. This test verifies this
+    part of the computation, in case of major refactor of the MAE class,
+    it can be safely removed.
+    """
+
+    def compute_prefix_abs_errors_naive(y: np.ndarray, w: np.ndarray):
+        y = y.ravel()
+        return np.array([compute_abs_error(y[:i], w[:i]) for i in range(1, y.size + 1)])
+
+    def compute_abs_error(y: np.ndarray, w: np.ndarray):
+        # 1) compute the weighted median
+        # i.e. once ordered by y, search for i such that:
+        # sum(w[:i]) <= 1/2  and sum(w[i+1:]) <= 1/2
+        sorter = np.argsort(y)
+        wc = np.cumsum(w[sorter])
+        idx = np.searchsorted(wc, wc[-1] / 2)
+        median = y[sorter[idx]]
+        # 2) compute the AE
+        return (np.abs(y - median) * w).sum()
+
+    rng = np.random.RandomState(global_random_seed)
+
+    for n in [3, 5, 10, 20, 50, 100]:
+        y = rng.uniform(size=(n, 1))
+        w = rng.rand(n)
+        indices = np.arange(n)
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, 0, n)
+        expected = compute_prefix_abs_errors_naive(y, w)
+        assert np.allclose(abs_errors, expected)
+
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, n - 1, -1)
+        expected = compute_prefix_abs_errors_naive(y[::-1], w[::-1])[::-1]
+        assert np.allclose(abs_errors, expected)
+
+        x = rng.rand(n)
+        indices = np.argsort(x)
+        w[:] = 1
+        y_sorted = y[indices]
+        w_sorted = w[indices]
+
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, 0, n)
+        expected = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
+        assert np.allclose(abs_errors, expected)
+
+        abs_errors = _py_precompute_absolute_errors(y, w, indices, n - 1, -1)
+        expected = compute_prefix_abs_errors_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
+        assert np.allclose(abs_errors, expected)
