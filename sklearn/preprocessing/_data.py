@@ -2805,7 +2805,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, _n_features = X.shape
         references = self.references_ * 100
 
-
         if self.subsample is not None and self.subsample < n_samples:
             # Take a subsample of `X`
             X = resample(
