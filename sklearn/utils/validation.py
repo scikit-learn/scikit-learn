@@ -1427,7 +1427,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False, device=None):
+def column_or_1d(y, *, dtype=None, input_name="y", warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1439,6 +1439,11 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
         Data type for `y`.
 
         .. versionadded:: 1.2
+
+    input_name : str, default="y"
+        The data name used to construct the error message.
+
+        .. versionadded:: 1.8
 
     warn : bool, default=False
        To control display of warnings.
@@ -1470,7 +1475,7 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
         y,
         ensure_2d=False,
         dtype=dtype,
-        input_name="y",
+        input_name=input_name,
         ensure_all_finite=False,
         ensure_min_samples=0,
     )
@@ -2222,7 +2227,11 @@ def _check_sample_weight(
             input_name="sample_weight",
         )
         if sample_weight.ndim != 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+            raise ValueError(
+                f"Sample weights must be 1D array or scalar, got "
+                f"{sample_weight.ndim}D array. Expected either a scalar value "
+                f"or a 1D array of length {n_samples}."
+            )
 
         if sample_weight.shape != (n_samples,):
             raise ValueError(

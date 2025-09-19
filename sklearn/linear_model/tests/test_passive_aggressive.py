@@ -4,8 +4,13 @@ from numpy.testing import assert_allclose
 from scipy.sparse import issparse
 
 from sklearn.base import ClassifierMixin
-from sklearn.datasets import load_iris
-from sklearn.linear_model import PassiveAggressiveClassifier, PassiveAggressiveRegressor
+from sklearn.datasets import load_iris, make_classification, make_regression
+from sklearn.linear_model import (
+    PassiveAggressiveClassifier,
+    PassiveAggressiveRegressor,
+    SGDClassifier,
+    SGDRegressor,
+)
 from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.utils import check_random_state
@@ -23,6 +28,7 @@ X = iris.data[indices]
 y = iris.target[indices]
 
 
+# TODO(1.10): Move to test_sgd.py
 class MyPassiveAggressive(ClassifierMixin):
     def __init__(
         self,
@@ -78,6 +84,7 @@ class MyPassiveAggressive(ClassifierMixin):
         return np.dot(X, self.w) + self.b
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
@@ -101,6 +108,7 @@ def test_classifier_accuracy(csr_container, fit_intercept, average):
         assert hasattr(clf, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 def test_classifier_partial_fit(csr_container, average):
@@ -118,6 +126,7 @@ def test_classifier_partial_fit(csr_container, average):
         assert hasattr(clf, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_classifier_refit():
     # Classifier can be retrained on different labels and features.
     clf = PassiveAggressiveClassifier(max_iter=5).fit(X, y)
@@ -127,6 +136,8 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
+# TODO(1.10): Move to test_sgd.py
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("loss", ("hinge", "squared_hinge"))
 def test_classifier_correctness(loss, csr_container):
@@ -143,6 +154,7 @@ def test_classifier_correctness(loss, csr_container):
     assert_allclose(clf1.w, clf2.coef_.ravel())
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "predict_log_proba", "transform"]
 )
@@ -152,6 +164,7 @@ def test_classifier_undefined_methods(response_method):
         getattr(clf, response_method)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_class_weights():
     # Test class weights.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
@@ -174,6 +187,7 @@ def test_class_weights():
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
@@ -181,6 +195,7 @@ def test_partial_fit_weight_class_balanced():
         clf.partial_fit(X, y, classes=np.unique(y))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
@@ -201,6 +216,7 @@ def test_equal_class_weight():
     assert_almost_equal(clf.coef_, clf_balanced.coef_, decimal=2)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_wrong_class_weight_label():
     # ValueError due to wrong class_weight label.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
@@ -211,6 +227,7 @@ def test_wrong_class_weight_label():
         clf.fit(X2, y2)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
@@ -236,6 +253,7 @@ def test_regressor_mse(csr_container, fit_intercept, average):
         assert hasattr(reg, "_standard_coef")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("average", [False, True])
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 def test_regressor_partial_fit(csr_container, average):
@@ -255,6 +273,8 @@ def test_regressor_partial_fit(csr_container, average):
         assert hasattr(reg, "_standard_coef")
 
 
+# TODO(1.10): Move to test_sgd.py
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("loss", ("epsilon_insensitive", "squared_epsilon_insensitive"))
 def test_regressor_correctness(loss, csr_container):
@@ -271,7 +291,55 @@ def test_regressor_correctness(loss, csr_container):
     assert_allclose(reg1.w, reg2.coef_.ravel())
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     with pytest.raises(AttributeError):
         reg.transform(X)
+
+
+# TODO(1.10): remove
+@pytest.mark.parametrize(
+    "Estimator", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
+)
+def test_class_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning.
+
+    with pytest.warns(FutureWarning, match="Class PassiveAggressive.+is deprecated"):
+        Estimator()
+
+
+@pytest.mark.parametrize(["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")])
+def test_passive_aggressive_classifier_vs_sgd(loss, lr):
+    """Test that both are equivalent."""
+    X, y = make_classification(
+        n_samples=100, n_features=10, n_informative=5, random_state=1234
+    )
+    pa = PassiveAggressiveClassifier(loss=loss, C=0.987, random_state=42).fit(X, y)
+    sgd = SGDClassifier(
+        loss="hinge", penalty=None, learning_rate=lr, eta0=0.987, random_state=42
+    ).fit(X, y)
+    assert_allclose(pa.decision_function(X), sgd.decision_function(X))
+
+
+@pytest.mark.parametrize(
+    ["loss", "lr"],
+    [("epsilon_insensitive", "pa1"), ("squared_epsilon_insensitive", "pa2")],
+)
+def test_passive_aggressive_regressor_vs_sgd(loss, lr):
+    """Test that both are equivalent."""
+    X, y = make_regression(
+        n_samples=100, n_features=10, n_informative=5, random_state=1234
+    )
+    pa = PassiveAggressiveRegressor(
+        loss=loss, epsilon=0.123, C=0.987, random_state=42
+    ).fit(X, y)
+    sgd = SGDRegressor(
+        loss="epsilon_insensitive",
+        epsilon=0.123,
+        penalty=None,
+        learning_rate=lr,
+        eta0=0.987,
+        random_state=42,
+    ).fit(X, y)
+    assert_allclose(pa.predict(X), sgd.predict(X))
