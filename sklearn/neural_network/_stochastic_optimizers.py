@@ -286,7 +286,6 @@ class AdamOptimizer(BaseOptimizer):
             v *= self.beta_2
             v += (1 - self.beta_2) * (grad**2)
 
-            # Optimized update calculation avoiding division
             update = -self.learning_rate * m
             sqrt_v = np.sqrt(v)
             sqrt_v += self.epsilon
