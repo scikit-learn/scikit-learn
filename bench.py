@@ -14,8 +14,8 @@ xp = torch
 device_ = "cuda"
 dtype_np = np.float64
 dtype_xp = xp.float64
-n_samples = 100000
-n_classes = 500
+n_samples = 10000
+n_classes = 100
 
 
 execution_times = []
