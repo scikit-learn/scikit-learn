@@ -1492,6 +1492,9 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore[valid-type,misc]
 joblib.register_parallel_backend("testing", MyBackend)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)

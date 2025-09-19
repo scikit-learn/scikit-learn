@@ -7,15 +7,15 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import _fit_context, is_classifier
-from ..metrics._scorer import get_scorer_names
-from ..utils import resample
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
-from . import ParameterGrid, ParameterSampler
-from ._search import BaseSearchCV
-from ._split import _yields_constant_splits, check_cv
+from sklearn.base import _fit_context, is_classifier
+from sklearn.metrics._scorer import get_scorer_names
+from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._split import _yields_constant_splits, check_cv
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import _num_samples, validate_data
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 
@@ -584,6 +584,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -943,6 +945,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator

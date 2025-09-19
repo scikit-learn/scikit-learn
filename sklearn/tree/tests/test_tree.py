@@ -48,6 +48,7 @@ from sklearn.tree._tree import (
 )
 from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
+from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1792,7 +1793,7 @@ def test_criterion_copy():
 def test_empty_leaf_infinite_threshold(sparse_container):
     # try to make empty leaf by using near infinite value.
     data = np.random.RandomState(0).randn(100, 11) * 2e38
-    data = np.nan_to_num(data.astype("float32"))
+    data = xpx.nan_to_num(data.astype("float32"))
     X = data[:, :-1]
     if sparse_container is not None:
         X = sparse_container(X)
@@ -2674,7 +2675,7 @@ def test_deterministic_pickle():
     ],
 )
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(Tree, X, criterion):
+def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2691,14 +2692,17 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = Tree(criterion=criterion, random_state=0).fit(X, y)
+    tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
-    # Check the impurity match after the first split
-    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+    # Note: the impurity matches after the first split only on greedy trees
+    # see https://github.com/scikit-learn/scikit-learn/issues/32125
+    if Tree is DecisionTreeRegressor:
+        # Check the impurity match after the first split
+        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
