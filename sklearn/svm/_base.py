@@ -794,7 +794,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == "ovr" and len(self.classes_) > 2:
-            return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
+            return _ovr_decision_function(dec < 0, -dec, len(self.classes_), [])
         return dec
 
     def predict(self, X):

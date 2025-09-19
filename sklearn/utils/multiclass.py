@@ -539,7 +539,7 @@ def class_distribution(y, sample_weight=None):
     return (classes, n_classes, class_prior)
 
 
-def _ovr_decision_function(predictions, confidences, n_classes):
+def _ovr_decision_function(predictions, confidences, n_classes, probabilities_indexes):
     """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
@@ -557,6 +557,10 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     n_classes : int
         Number of classes. n_classifiers must be
         ``n_classes * (n_classes - 1 ) / 2``.
+
+    probabilities_indexes: list of int with a maximum size of n_classes
+        Contains the indexes of the binary classifiers for which confidences
+        were provided as predicted probabilities.
     """
     n_samples = predictions.shape[0]
     votes = np.zeros((n_samples, n_classes))
@@ -565,8 +569,27 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     k = 0
     for i in range(n_classes):
         for j in range(i + 1, n_classes):
-            sum_of_confidences[:, i] -= confidences[:, k]
-            sum_of_confidences[:, j] += confidences[:, k]
+            # Handle confidences as probabilities
+            # if probabilities are >= 0.5, (j is more probable) we should increase
+            # the sum of confidences of j and decrease the sum of confidences of i
+            if k in probabilities_indexes:
+                sum_of_confidences[confidences[:, k] >= 0.5, i] -= confidences[
+                    confidences[:, k] >= 0.5, k
+                ]
+                sum_of_confidences[confidences[:, k] < 0.5, i] += confidences[
+                    confidences[:, k] < 0.5, k
+                ]
+
+                sum_of_confidences[confidences[:, k] >= 0.5, j] += confidences[
+                    confidences[:, k] >= 0.5, k
+                ]
+                sum_of_confidences[confidences[:, k] < 0.5, j] -= confidences[
+                    confidences[:, k] < 0.5, k
+                ]
+            else:
+                sum_of_confidences[:, i] -= confidences[:, k]
+                sum_of_confidences[:, j] += confidences[:, k]
+
             votes[predictions[:, k] == 0, i] += 1
             votes[predictions[:, k] == 1, j] += 1
             k += 1
