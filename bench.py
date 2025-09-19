@@ -15,7 +15,7 @@ device_ = "cuda"
 dtype_np = np.float64
 dtype_xp = xp.float64
 n_samples = 10000
-n_classes = 100
+n_classes = 300
 
 
 execution_times = []
