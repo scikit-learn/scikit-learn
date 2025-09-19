@@ -1751,8 +1751,9 @@ def d2_pinball_score(
     value if n_samples is less than two.
 
     This metric is not a built-in :ref:`string name scorer
-    <scoring_string_names>` to use along with tools such as `GridSearchCV` or
-    `RandomizedSearchCV`.
+    <scoring_string_names>` to use along with tools such as
+    :class:`~sklearn.model_selection.GridSearchCV` or
+    :class:`~sklearn.model_selection.RandomizedSearchCV`.
     Instead, you can :ref:`create a scorer object <scoring_adapt_metric>` using
     :func:`~sklearn.metrics.make_scorer`, with any desired parameter settings.
     See the `Examples` section for details.
