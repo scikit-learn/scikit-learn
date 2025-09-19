@@ -78,7 +78,7 @@ extensions = [
 ]
 
 # Exclude sphinx.ext.linkcode on native Windows
-if not sys.platform.startswith("win"):
+if platform.system() != "Windows":
     extensions.append("sphinx.ext.linkcode")
 
 # Specify how to identify the prompt when copying code snippets
