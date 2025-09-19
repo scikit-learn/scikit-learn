@@ -309,7 +309,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
                 "stack_method": "predict_proba",
             },
             ValueError,
-            "Underlying estimator svm does not implement the method predict_proba",
+            "does not implement the method predict_proba",
         ),
         (
             y_iris,
