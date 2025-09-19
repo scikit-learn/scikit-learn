@@ -2913,13 +2913,8 @@ def test_pinball_loss_precomputation_function(q, global_random_seed):
         )
 
     def compute_pinball_loss(y: np.ndarray, w: np.ndarray):
-        # 1) compute the weighted median
-        # i.e. once ordered by y, search for i such that:
-        # sum(w[:i]) <= q*sum(w) and sum(w[i+1:]) >= q*sum(w)
-        sorter = np.argsort(y)
-        wc = np.cumsum(w[sorter])
-        idx = np.searchsorted(wc, wc[-1] * q)
-        quantile = y[sorter[idx]]
+        # 1) compute the weighted quantile
+        quantile = np.quantile(y, q, weights=w, method="inverted_cdf")
         y_pred = np.full(y.size, quantile)
         # 2) compute the pinball loss
         return mean_pinball_loss(y, y_pred, sample_weight=w, alpha=q) * w.sum()

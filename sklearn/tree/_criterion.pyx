@@ -1289,12 +1289,13 @@ cdef void precompute_pinball_losses(
         if above.total_weight > split_weight + 1e-5 * fabs(split_weight):
             quantile = above.top()
         else:  # above and below heaps are almost exactly balanced
-            quantile = q * above.top() + (1 - q) * below.top()
-            # FIXME: check if it should be (1 - q) * ... + q * ...
+            # Any value between below.top() and above.top() is valid here.
+            # We choose the midpoint for determinism.
+            quantile = 0.5 * (above.top() + below.top())
         quantiles[j] = quantile
         losses[j] += (
-            q * (above.weighted_sum - above.total_weight * quantile)
-            + (1 - q) * (below.total_weight * quantile - below.weighted_sum)
+            q * (above.weighted_sum - quantile * above.total_weight)
+            + (1 - q) * (quantile * below.total_weight - below.weighted_sum)
         )
         p += step
         j += step
@@ -1321,7 +1322,7 @@ def _py_precompute_pinball_losses(
         ys, sample_weight, sample_indices, above, below,
         k, start, end, q, losses, quantiles
     )
-    return np.asarray(losses)
+    return np.asarray(losses), np.asarray(quantiles)
 
 
 cdef class Pinball(Criterion):
