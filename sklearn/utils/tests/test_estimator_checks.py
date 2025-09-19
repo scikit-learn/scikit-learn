@@ -971,6 +971,9 @@ def test_check_no_attributes_set_in_init():
         # making sure our __metadata_request__* class attributes are okay!
         __metadata_request__fit = {"foo": True}
 
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
