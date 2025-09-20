@@ -10,14 +10,14 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import column_or_1d
-from ..utils._array_api import device, get_namespace, xpx
-from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Interval, validate_params
-from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.sparsefuncs import min_max_axis
-from ..utils.validation import _num_samples, check_array, check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import column_or_1d
+from sklearn.utils._array_api import device, get_namespace, xpx
+from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.sparsefuncs import min_max_axis
+from sklearn.utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
     "LabelBinarizer",

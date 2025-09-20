@@ -7,14 +7,8 @@ from typing import NamedTuple
 
 import numpy as np
 
-from ._array_api import (
-    _isin,
-    _searchsorted,
-    device,
-    get_namespace,
-    xpx,
-)
-from ._missing import is_scalar_nan
+from sklearn.utils._array_api import _isin, _searchsorted, device, get_namespace, xpx
+from sklearn.utils._missing import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):

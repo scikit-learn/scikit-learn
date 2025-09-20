@@ -12,20 +12,16 @@ from scipy.linalg import eigh
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh, lobpcg
 
-from ..base import BaseEstimator, _fit_context
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import (
-    check_array,
-    check_random_state,
-    check_symmetric,
-)
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.fixes import laplacian as csgraph_laplacian
-from ..utils.fixes import parse_version, sp_version
-from ..utils.validation import validate_data
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.utils import check_array, check_random_state, check_symmetric
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.fixes import laplacian as csgraph_laplacian
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.validation import validate_data
 
 
 def _graph_connected_component(graph, node_id):

@@ -18,25 +18,21 @@ import scipy.sparse as sp
 from joblib import effective_n_jobs
 from scipy.special import gammaln, logsumexp
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative, validate_data
-from ._online_lda_fast import (
+from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
 )
-from ._online_lda_fast import (
-    _dirichlet_expectation_2d,
-)
-from ._online_lda_fast import (
-    mean_change as cy_mean_change,
-)
+from sklearn.decomposition._online_lda_fast import _dirichlet_expectation_2d
+from sklearn.decomposition._online_lda_fast import mean_change as cy_mean_change
+from sklearn.utils import check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
 EPS = np.finfo(float).eps
 

@@ -8,13 +8,12 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._bicluster import consensus_score
-from ._supervised import (
+from sklearn.metrics.cluster._bicluster import consensus_score
+from sklearn.metrics.cluster._supervised import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     completeness_score,
     contingency_matrix,
-    # TODO(1.10): Remove
     entropy,
     expected_mutual_information,
     fowlkes_mallows_score,
@@ -26,7 +25,7 @@ from ._supervised import (
     rand_score,
     v_measure_score,
 )
-from ._unsupervised import (
+from sklearn.metrics.cluster._unsupervised import (
     calinski_harabasz_score,
     davies_bouldin_score,
     silhouette_samples,

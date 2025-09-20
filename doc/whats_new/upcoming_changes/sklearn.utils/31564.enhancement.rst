@@ -1,0 +1,5 @@
+- The parameter table in the HTML representation of all scikit-learn estimators and
+  more generally of estimators inheriting from :class:`base.BaseEstimator`
+  now displays the parameter description as a tooltip and has a link to the online
+  documentation for each parameter.
+  By :user:`Dea María Léon <DeaMariaLeon>`.

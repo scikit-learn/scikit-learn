@@ -3,29 +3,24 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections import Counter, defaultdict
-from contextlib import contextmanager
 from copy import deepcopy
 from itertools import chain, islice
 
 import numpy as np
 from scipy import sparse
 
-from .base import TransformerMixin, _fit_context, clone
-from .exceptions import NotFittedError
-from .preprocessing import FunctionTransformer
-from .utils import Bunch
-from .utils._metadata_requests import METHODS
-from .utils._param_validation import HasMethods, Hidden
-from .utils._repr_html.estimator import _VisualBlock
-from .utils._set_output import (
-    _get_container_adapter,
-    _safe_set_output,
-)
-from .utils._tags import get_tags
-from .utils._user_interface import _print_elapsed_time
-from .utils.metadata_routing import (
+from sklearn.base import TransformerMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import Bunch
+from sklearn.utils._metadata_requests import METHODS
+from sklearn.utils._param_validation import HasMethods, Hidden
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import _get_container_adapter, _safe_set_output
+from sklearn.utils._tags import get_tags
+from sklearn.utils._user_interface import _print_elapsed_time
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
@@ -33,38 +28,11 @@ from .utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from .utils.metaestimators import _BaseComposition, available_if
-from .utils.parallel import Parallel, delayed
-from .utils.validation import check_is_fitted, check_memory
+from sklearn.utils.metaestimators import _BaseComposition, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, check_memory
 
 __all__ = ["FeatureUnion", "Pipeline", "make_pipeline", "make_union"]
-
-
-@contextmanager
-def _raise_or_warn_if_not_fitted(estimator):
-    """A context manager to make sure a NotFittedError is raised, if a sub-estimator
-    raises the error.
-
-    Otherwise, we raise a warning if the pipeline is not fitted, with the deprecation.
-
-    TODO(1.8): remove this context manager and replace with check_is_fitted.
-    """
-    try:
-        yield
-    except NotFittedError as exc:
-        raise NotFittedError("Pipeline is not fitted yet.") from exc
-
-    # we only get here if the above didn't raise
-    try:
-        check_is_fitted(estimator)
-    except NotFittedError:
-        warnings.warn(
-            "This Pipeline instance is not fitted yet. Call 'fit' with "
-            "appropriate arguments before using other methods such as transform, "
-            "predict, etc. This will raise an error in 1.8 instead of the current "
-            "warning.",
-            FutureWarning,
-        )
 
 
 def _final_estimator_has(attr):
@@ -404,16 +372,6 @@ class Pipeline(_BaseComposition):
             # Not an int, try get step by name
             return self.named_steps[ind]
         return est
-
-    # TODO(1.8): Remove this property
-    @property
-    def _estimator_type(self):
-        """Return the estimator type of the last step in the pipeline."""
-
-        if not self.steps:
-            return None
-
-        return self.steps[-1][1]._estimator_type
 
     @property
     def named_steps(self):
@@ -779,22 +737,19 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `predict` on the final estimator.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            Xt = X
+        check_is_fitted(self)
+        Xt = X
 
-            if not _routing_enabled():
-                for _, name, transform in self._iter(with_final=False):
-                    Xt = transform.transform(Xt)
-                return self.steps[-1][1].predict(Xt, **params)
-
-            # metadata routing enabled
-            routed_params = process_routing(self, "predict", **params)
+        if not _routing_enabled():
             for _, name, transform in self._iter(with_final=False):
-                Xt = transform.transform(Xt, **routed_params[name].transform)
-            return self.steps[-1][1].predict(
-                Xt, **routed_params[self.steps[-1][0]].predict
-            )
+                Xt = transform.transform(Xt)
+            return self.steps[-1][1].predict(Xt, **params)
+
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict", **params)
+        for _, name, transform in self._iter(with_final=False):
+            Xt = transform.transform(Xt, **routed_params[name].transform)
+        return self.steps[-1][1].predict(Xt, **routed_params[self.steps[-1][0]].predict)
 
     @available_if(_final_estimator_has("fit_predict"))
     @_fit_context(
@@ -895,22 +850,21 @@ class Pipeline(_BaseComposition):
         y_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_proba` on the final estimator.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            Xt = X
+        check_is_fitted(self)
+        Xt = X
 
-            if not _routing_enabled():
-                for _, name, transform in self._iter(with_final=False):
-                    Xt = transform.transform(Xt)
-                return self.steps[-1][1].predict_proba(Xt, **params)
-
-            # metadata routing enabled
-            routed_params = process_routing(self, "predict_proba", **params)
+        if not _routing_enabled():
             for _, name, transform in self._iter(with_final=False):
-                Xt = transform.transform(Xt, **routed_params[name].transform)
-            return self.steps[-1][1].predict_proba(
-                Xt, **routed_params[self.steps[-1][0]].predict_proba
-            )
+                Xt = transform.transform(Xt)
+            return self.steps[-1][1].predict_proba(Xt, **params)
+
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict_proba", **params)
+        for _, name, transform in self._iter(with_final=False):
+            Xt = transform.transform(Xt, **routed_params[name].transform)
+        return self.steps[-1][1].predict_proba(
+            Xt, **routed_params[self.steps[-1][0]].predict_proba
+        )
 
     @available_if(_final_estimator_has("decision_function"))
     def decision_function(self, X, **params):
@@ -942,23 +896,22 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            _raise_for_params(params, self, "decision_function")
+        check_is_fitted(self)
+        _raise_for_params(params, self, "decision_function")
 
-            # not branching here since params is only available if
-            # enable_metadata_routing=True
-            routed_params = process_routing(self, "decision_function", **params)
+        # not branching here since params is only available if
+        # enable_metadata_routing=True
+        routed_params = process_routing(self, "decision_function", **params)
 
-            Xt = X
-            for _, name, transform in self._iter(with_final=False):
-                Xt = transform.transform(
-                    Xt, **routed_params.get(name, {}).get("transform", {})
-                )
-            return self.steps[-1][1].decision_function(
-                Xt,
-                **routed_params.get(self.steps[-1][0], {}).get("decision_function", {}),
+        Xt = X
+        for _, name, transform in self._iter(with_final=False):
+            Xt = transform.transform(
+                Xt, **routed_params.get(name, {}).get("transform", {})
             )
+        return self.steps[-1][1].decision_function(
+            Xt,
+            **routed_params.get(self.steps[-1][0], {}).get("decision_function", {}),
+        )
 
     @available_if(_final_estimator_has("score_samples"))
     def score_samples(self, X):
@@ -980,12 +933,11 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples,)
             Result of calling `score_samples` on the final estimator.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            Xt = X
-            for _, _, transformer in self._iter(with_final=False):
-                Xt = transformer.transform(Xt)
-            return self.steps[-1][1].score_samples(Xt)
+        check_is_fitted(self)
+        Xt = X
+        for _, _, transformer in self._iter(with_final=False):
+            Xt = transformer.transform(Xt)
+        return self.steps[-1][1].score_samples(Xt)
 
     @available_if(_final_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X, **params):
@@ -1026,22 +978,21 @@ class Pipeline(_BaseComposition):
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_log_proba` on the final estimator.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            Xt = X
+        check_is_fitted(self)
+        Xt = X
 
-            if not _routing_enabled():
-                for _, name, transform in self._iter(with_final=False):
-                    Xt = transform.transform(Xt)
-                return self.steps[-1][1].predict_log_proba(Xt, **params)
-
-            # metadata routing enabled
-            routed_params = process_routing(self, "predict_log_proba", **params)
+        if not _routing_enabled():
             for _, name, transform in self._iter(with_final=False):
-                Xt = transform.transform(Xt, **routed_params[name].transform)
-            return self.steps[-1][1].predict_log_proba(
-                Xt, **routed_params[self.steps[-1][0]].predict_log_proba
-            )
+                Xt = transform.transform(Xt)
+            return self.steps[-1][1].predict_log_proba(Xt, **params)
+
+        # metadata routing enabled
+        routed_params = process_routing(self, "predict_log_proba", **params)
+        for _, name, transform in self._iter(with_final=False):
+            Xt = transform.transform(Xt, **routed_params[name].transform)
+        return self.steps[-1][1].predict_log_proba(
+            Xt, **routed_params[self.steps[-1][0]].predict_log_proba
+        )
 
     def _can_transform(self):
         return self._final_estimator == "passthrough" or hasattr(
@@ -1081,17 +1032,16 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed data.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            _raise_for_params(params, self, "transform")
+        check_is_fitted(self)
+        _raise_for_params(params, self, "transform")
 
-            # not branching here since params is only available if
-            # enable_metadata_routing=True
-            routed_params = process_routing(self, "transform", **params)
-            Xt = X
-            for _, name, transform in self._iter():
-                Xt = transform.transform(Xt, **routed_params[name].transform)
-            return Xt
+        # not branching here since params is only available if
+        # enable_metadata_routing=True
+        routed_params = process_routing(self, "transform", **params)
+        Xt = X
+        for _, name, transform in self._iter():
+            Xt = transform.transform(Xt, **routed_params[name].transform)
+        return Xt
 
     def _can_inverse_transform(self):
         return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
@@ -1126,19 +1076,16 @@ class Pipeline(_BaseComposition):
             Inverse transformed data, that is, data in the original feature
             space.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            _raise_for_params(params, self, "inverse_transform")
+        check_is_fitted(self)
+        _raise_for_params(params, self, "inverse_transform")
 
-            # we don't have to branch here, since params is only non-empty if
-            # enable_metadata_routing=True.
-            routed_params = process_routing(self, "inverse_transform", **params)
-            reverse_iter = reversed(list(self._iter()))
-            for _, name, transform in reverse_iter:
-                X = transform.inverse_transform(
-                    X, **routed_params[name].inverse_transform
-                )
-            return X
+        # we don't have to branch here, since params is only non-empty if
+        # enable_metadata_routing=True.
+        routed_params = process_routing(self, "inverse_transform", **params)
+        reverse_iter = reversed(list(self._iter()))
+        for _, name, transform in reverse_iter:
+            X = transform.inverse_transform(X, **routed_params[name].inverse_transform)
+        return X
 
     @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None, **params):
@@ -1177,28 +1124,25 @@ class Pipeline(_BaseComposition):
         score : float
             Result of calling `score` on the final estimator.
         """
-        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _raise_or_warn_if_not_fitted(self):
-            Xt = X
-            if not _routing_enabled():
-                for _, name, transform in self._iter(with_final=False):
-                    Xt = transform.transform(Xt)
-                score_params = {}
-                if sample_weight is not None:
-                    score_params["sample_weight"] = sample_weight
-                return self.steps[-1][1].score(Xt, y, **score_params)
-
-            # metadata routing is enabled.
-            routed_params = process_routing(
-                self, "score", sample_weight=sample_weight, **params
-            )
-
-            Xt = X
+        check_is_fitted(self)
+        Xt = X
+        if not _routing_enabled():
             for _, name, transform in self._iter(with_final=False):
-                Xt = transform.transform(Xt, **routed_params[name].transform)
-            return self.steps[-1][1].score(
-                Xt, y, **routed_params[self.steps[-1][0]].score
-            )
+                Xt = transform.transform(Xt)
+            score_params = {}
+            if sample_weight is not None:
+                score_params["sample_weight"] = sample_weight
+            return self.steps[-1][1].score(Xt, y, **score_params)
+
+        # metadata routing is enabled.
+        routed_params = process_routing(
+            self, "score", sample_weight=sample_weight, **params
+        )
+
+        Xt = X
+        for _, name, transform in self._iter(with_final=False):
+            Xt = transform.transform(Xt, **routed_params[name].transform)
+        return self.steps[-1][1].score(Xt, y, **routed_params[self.steps[-1][0]].score)
 
     @property
     def classes_(self):
@@ -1343,7 +1287,7 @@ class Pipeline(_BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
 
         # first we add all steps except the last one
         for _, name, trans in self._iter(with_final=False, filter_passthrough=True):
@@ -2038,15 +1982,23 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        # Check if Xs dimensions are valid
+        for X, (name, _) in zip(Xs, self.transformer_list):
+            if hasattr(X, "shape") and len(X.shape) != 2:
+                raise ValueError(
+                    f"Transformer '{name}' returned an array or dataframe with "
+                    f"{len(X.shape)} dimensions, but expected 2 dimensions "
+                    "(n_samples, n_features)."
+                )
+
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+            return sparse.hstack(Xs).tocsr()
+
+        return np.hstack(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
@@ -2098,7 +2050,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
 
         for name, transformer in self.transformer_list:
             router.add(

@@ -7,26 +7,22 @@ from typing import List
 import numpy as np
 from scipy.sparse import issparse
 
-from ... import get_config
-from .._dist_metrics import (
-    BOOL_METRICS,
-    METRIC_MAPPING64,
-    DistanceMetric,
-)
-from ._argkmin import (
-    ArgKmin32,
-    ArgKmin64,
-)
-from ._argkmin_classmode import (
+from sklearn import get_config
+from sklearn.metrics._dist_metrics import BOOL_METRICS, METRIC_MAPPING64, DistanceMetric
+from sklearn.metrics._pairwise_distances_reduction._argkmin import ArgKmin32, ArgKmin64
+from sklearn.metrics._pairwise_distances_reduction._argkmin_classmode import (
     ArgKminClassMode32,
     ArgKminClassMode64,
 )
-from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
-from ._radius_neighbors import (
+from sklearn.metrics._pairwise_distances_reduction._base import (
+    _sqeuclidean_row_norms32,
+    _sqeuclidean_row_norms64,
+)
+from sklearn.metrics._pairwise_distances_reduction._radius_neighbors import (
     RadiusNeighbors32,
     RadiusNeighbors64,
 )
-from ._radius_neighbors_classmode import (
+from sklearn.metrics._pairwise_distances_reduction._radius_neighbors_classmode import (
     RadiusNeighborsClassMode32,
     RadiusNeighborsClassMode64,
 )

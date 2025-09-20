@@ -1,0 +1,6 @@
+- :class:`sklearn.covariance.GraphicalLasso`,
+  :class:`sklearn.covariance.GraphicalLassoCV` and
+  :func:`sklearn.covariance.graphical_lasso` with `mode="cd"` profit from the
+  fit time performance improvement of :class:`sklearn.linear_model.Lasso` by means of
+  gap safe screening rules.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

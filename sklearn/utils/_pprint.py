@@ -69,9 +69,9 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 import inspect
 import pprint
 
-from .._config import get_config
-from ..base import BaseEstimator
-from ._missing import is_scalar_nan
+from sklearn._config import get_config
+from sklearn.base import BaseEstimator
+from sklearn.utils._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):

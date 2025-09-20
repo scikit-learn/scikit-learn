@@ -3,8 +3,8 @@
 
 import warnings
 
-from ._repr_html.base import _HTMLDocumentationLinkMixin
-from ._repr_html.estimator import (
+from sklearn.utils._repr_html.base import _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import (
     _get_visual_block,
     _IDCounter,
     _VisualBlock,

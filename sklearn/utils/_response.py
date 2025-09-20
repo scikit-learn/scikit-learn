@@ -8,9 +8,9 @@ It allows to make uniform checks and validation.
 
 import numpy as np
 
-from ..base import is_classifier
-from .multiclass import type_of_target
-from .validation import _check_response_method, check_is_fitted
+from sklearn.base import is_classifier
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_response_method, check_is_fitted
 
 
 def _process_predict_proba(*, y_pred, target_type, classes, pos_label):

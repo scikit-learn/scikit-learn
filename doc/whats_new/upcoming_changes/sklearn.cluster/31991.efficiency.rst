@@ -1,0 +1,3 @@
+- :func:`cluster.kmeans_plusplus` now uses `np.cumsum` directly without extra
+  numerical stability checks and without casting to `np.float64`.
+  By :user:`Tiziano Zito <otizonaizit>`

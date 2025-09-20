@@ -6,8 +6,8 @@
 import numpy as np
 from scipy import sparse
 
-from ..metrics.pairwise import pairwise_distances
-from ._param_validation import Integral, Interval, validate_params
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils._param_validation import Integral, Interval, validate_params
 
 
 ###############################################################################

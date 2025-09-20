@@ -10,13 +10,13 @@ import numpy as np
 from scipy import special, stats
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator, _fit_context
-from ..preprocessing import LabelBinarizer
-from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted, validate_data
-from ._base import SelectorMixin
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.feature_selection._base import SelectorMixin
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _clean_nans(scores):

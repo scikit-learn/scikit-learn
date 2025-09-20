@@ -924,8 +924,10 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
 
 # TODO(1.9): remove
-def test_y_score_and_y_pred_specified_error():
-    """Check that an error is raised when both y_score and y_pred are specified."""
+def test_y_score_and_y_pred_specified_error(pyplot):
+    """1. Check that an error is raised when both y_score and y_pred are specified.
+    2. Check that a warning is raised when y_pred is specified.
+    """
     y_true = np.array([0, 1, 1, 0])
     y_score = np.array([0.1, 0.4, 0.35, 0.8])
     y_pred = np.array([0.2, 0.3, 0.5, 0.1])
@@ -935,22 +937,15 @@ def test_y_score_and_y_pred_specified_error():
     ):
         RocCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
-
-# TODO(1.9): remove
-def test_y_pred_deprecation_warning(pyplot):
-    """Check that a warning is raised when y_pred is specified."""
-    y_true = np.array([0, 1, 1, 0])
-    y_score = np.array([0.1, 0.4, 0.35, 0.8])
-
-    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.7"):
         display_y_pred = RocCurveDisplay.from_predictions(y_true, y_pred=y_score)
-
-    assert_allclose(display_y_pred.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display_y_pred.tpr, [0, 0, 1, 1])
+    desired_fpr, desired_fnr, _ = roc_curve(y_true, y_score)
+    assert_allclose(display_y_pred.fpr, desired_fpr)
+    assert_allclose(display_y_pred.tpr, desired_fnr)
 
     display_y_score = RocCurveDisplay.from_predictions(y_true, y_score)
-    assert_allclose(display_y_score.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display_y_score.tpr, [0, 0, 1, 1])
+    assert_allclose(display_y_score.fpr, desired_fpr)
+    assert_allclose(display_y_score.tpr, desired_fnr)
 
 
 @pytest.mark.parametrize("despine", [True, False])

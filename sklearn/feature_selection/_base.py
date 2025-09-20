@@ -10,11 +10,11 @@ from operator import attrgetter
 import numpy as np
 from scipy.sparse import csc_matrix, issparse
 
-from ..base import TransformerMixin
-from ..utils import _safe_indexing, check_array, safe_sqr
-from ..utils._set_output import _get_output_config
-from ..utils._tags import get_tags
-from ..utils.validation import (
+from sklearn.base import TransformerMixin
+from sklearn.utils import _safe_indexing, check_array, safe_sqr
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _is_pandas_df,
     check_is_fitted,

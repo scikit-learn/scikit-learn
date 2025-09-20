@@ -5,12 +5,12 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from . import check_consistent_length
-from ._optional_dependencies import check_matplotlib_support
-from ._response import _get_response_values_binary
-from .fixes import parse_version
-from .multiclass import type_of_target
-from .validation import _check_pos_label_consistency, _num_samples
+from sklearn.utils import check_consistent_length
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils.fixes import parse_version
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_pos_label_consistency, _num_samples
 
 
 class _BinaryClassifierCurveDisplayMixin:
@@ -417,3 +417,27 @@ def _check_param_lengths(required, optional, class_name):
             f"{params_formatted} from `{class_name}` initialization{or_plot}, "
             f"should all be lists of the same length. Got: {lengths_formatted}"
         )
+
+
+# TODO(1.10): remove after the end of the deprecation period of `y_pred`
+def _deprecate_y_pred_parameter(y_score, y_pred, version):
+    """Deprecate `y_pred` in favour of of `y_score`."""
+    version = parse_version(version)
+    version_remove = f"{version.major}.{version.minor + 2}"
+    if y_score is not None and not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        raise ValueError(
+            "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+            f" only as `y_pred` was deprecated in {version} and will be "
+            f"removed in {version_remove}."
+        )
+    if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        warnings.warn(
+            (
+                f"y_pred was deprecated in {version} and will be removed in"
+                f" {version_remove}. Please use `y_score` instead."
+            ),
+            FutureWarning,
+        )
+        return y_pred
+
+    return y_score

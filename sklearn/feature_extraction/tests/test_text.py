@@ -1329,18 +1329,19 @@ def test_vectorizer_stop_words_inconsistent():
             vec.fit_transform(["hello world"])
         # reset stop word validation
         del vec._stop_words_id
-        assert _check_stop_words_consistency(vec) is False
+        with pytest.warns(UserWarning, match=message):
+            assert _check_stop_words_consistency(vec) is False
 
-    # Only one warning per stop list
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        vec.fit_transform(["hello world"])
-    assert _check_stop_words_consistency(vec) is None
+        # Only one warning per stop list
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            vec.fit_transform(["hello world"])
+        assert _check_stop_words_consistency(vec) is None
 
-    # Test caching of inconsistency assessment
-    vec.set_params(stop_words=["you've", "you", "you'll", "blah", "AND"])
-    with pytest.warns(UserWarning, match=message):
-        vec.fit_transform(["hello world"])
+        # Test caching of inconsistency assessment
+        vec.set_params(stop_words=["you've", "you", "you'll", "blah", "AND"])
+        with pytest.warns(UserWarning, match=message):
+            vec.fit_transform(["hello world"])
 
 
 @skip_if_32bit
@@ -1626,3 +1627,18 @@ def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
     X = [str(uuid.uuid4()) for i in range(100_000)]
     vectorizer = TfidfVectorizer(dtype=dtype).fit(X)
     assert vectorizer.idf_.dtype == dtype
+
+
+def test_hashing_vectorizer_requires_fit_tag():
+    """Test that HashingVectorizer has requires_fit=False tag."""
+    vectorizer = HashingVectorizer()
+    tags = vectorizer.__sklearn_tags__()
+    assert not tags.requires_fit
+
+
+def test_hashing_vectorizer_transform_without_fit():
+    """Test that HashingVectorizer can transform without fitting."""
+    vectorizer = HashingVectorizer(n_features=10)
+    corpus = ["This is test", "Another test"]
+    result = vectorizer.transform(corpus)
+    assert result.shape == (2, 10)

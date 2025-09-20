@@ -11,37 +11,41 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.optimize
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics import accuracy_score, r2_score
-from ..model_selection import train_test_split
-from ..preprocessing import LabelBinarizer
-from ..utils import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from sklearn.neural_network._stochastic_optimizers import AdamOptimizer, SGDOptimizer
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import (
     _safe_indexing,
     check_random_state,
     column_or_1d,
     gen_batches,
     shuffle,
 )
-from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _get_additional_lbfgs_options_dict
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import (
+from sklearn.utils._param_validation import Interval, Options, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import (
     _check_partial_fit_first_call,
     type_of_target,
     unique_labels,
 )
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
 

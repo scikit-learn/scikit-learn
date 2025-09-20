@@ -38,25 +38,29 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin, _fit_context
-from ...metrics import pairwise_distances
-from ...metrics._dist_metrics import DistanceMetric
-from ...metrics.pairwise import _VALID_METRICS
-from ...neighbors import BallTree, KDTree, NearestNeighbors
-from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import (
-    _allclose_dense_sparse,
-    _assert_all_finite,
-    validate_data,
-)
-from ._linkage import (
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._hdbscan._linkage import (
     MST_edge_dtype,
     make_single_linkage,
     mst_from_data_matrix,
     mst_from_mutual_reachability,
 )
-from ._reachability import mutual_reachability_graph
-from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
+from sklearn.cluster._hdbscan._reachability import mutual_reachability_graph
+from sklearn.cluster._hdbscan._tree import (
+    HIERARCHY_dtype,
+    labelling_at_cut,
+    tree_to_labels,
+)
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 
 FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
@@ -530,6 +534,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Currently, it only applies when `metric="precomputed"`, when passing
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
 
+        .. versionchanged:: 1.10
+            The default value for `copy` will change from `False` to `True`
+            in version 1.10.
+
     Attributes
     ----------
     labels_ : ndarray of shape (n_samples,)
@@ -609,7 +617,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     .. [4] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and
        Sander, J. Density-Based Clustering Validation.
-       <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
+       <https://epubs.siam.org/doi/pdf/10.1137/1.9781611973440.96>`_
 
     .. [5] :arxiv:`Malzer, C., & Baum, M. "A Hybrid Approach To Hierarchical
        Density-based Cluster Selection."<1911.02282>`.
@@ -620,9 +628,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20)
+    >>> hdb = HDBSCAN(copy=True, min_cluster_size=20)
     >>> hdb.fit(X)
-    HDBSCAN(min_cluster_size=20)
+    HDBSCAN(copy=True, min_cluster_size=20)
     >>> hdb.labels_.shape == (X.shape[0],)
     True
     >>> np.unique(hdb.labels_).tolist()
@@ -651,7 +659,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean"],
+        "copy": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 
     def __init__(
@@ -669,7 +677,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        copy=False,
+        copy="warn",
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -708,6 +716,18 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        # TODO(1.10): remove "warn" option
+        # and leave copy to its default value where applicable in examples and doctests.
+        if self.copy == "warn":
+            warn(
+                "The default value of `copy` will change from False to True in 1.10."
+                " Explicitly set a value for `copy` to silence this warning.",
+                FutureWarning,
+            )
+            _copy = False
+        else:
+            _copy = self.copy
+
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
@@ -816,7 +836,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = _copy
             elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -829,7 +849,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = _copy
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims

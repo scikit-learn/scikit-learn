@@ -78,7 +78,7 @@ Classification
 ==============
 
 Class :class:`MLPClassifier` implements a multi-layer perceptron (MLP) algorithm
-that trains using `Backpropagation <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_.
+that trains using `Backpropagation <http://ufldl.stanford.edu/tutorial/supervised/MultiLayerNeuralNetworks/#backpropagation_algorithm>`_.
 
 MLP trains on two arrays: array X of size (n_samples, n_features), which holds
 the training samples represented as floating point feature vectors; and array
@@ -194,8 +194,8 @@ loss function with respect to a parameter that needs adaptation, i.e.
 
 .. math::
 
-    w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w}
-    + \frac{\partial Loss}{\partial w})
+    w \leftarrow w - \eta \left[\alpha \frac{\partial R(w)}{\partial w}
+    + \frac{\partial Loss}{\partial w}\right]
 
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space search.  :math:`Loss` is the loss function used

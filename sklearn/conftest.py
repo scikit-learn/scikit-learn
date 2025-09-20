@@ -16,7 +16,6 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
-from sklearn import set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -37,6 +36,14 @@ from sklearn.utils.fixes import (
     parse_version,
     sp_version,
 )
+
+try:
+    import pytest_run_parallel  # noqa:F401
+
+    PARALLEL_RUN_AVAILABLE = True
+except ImportError:
+    PARALLEL_RUN_AVAILABLE = False
+
 
 try:
     from scipy_doctest.conftest import dt_config
@@ -318,6 +325,11 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("global_random_seed", random_seeds)
 
 
+def pytest_addoption(parser, pluginmanager):
+    if not PARALLEL_RUN_AVAILABLE:
+        parser.addini("thread_unsafe_fixtures", "list of stuff")
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -347,6 +359,25 @@ def pytest_configure(config):
         faulthandler.enable()
         faulthandler.dump_traceback_later(faulthandler_timeout, exit=True)
 
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line(
+            "markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line(
+            "markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+
 
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
@@ -359,14 +390,6 @@ def hide_available_pandas(monkeypatch):
         return import_orig(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
-
-
-@pytest.fixture
-def print_changed_only_false():
-    """Set `print_changed_only` to False for the duration of the test."""
-    set_config(print_changed_only=False)
-    yield
-    set_config(print_changed_only=True)  # reset to default
 
 
 if dt_config is not None:

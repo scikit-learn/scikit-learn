@@ -15,8 +15,8 @@ as an attribute of the impute module::
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .. import impute
-from ..impute._iterative import IterativeImputer
+from sklearn import impute
+from sklearn.impute._iterative import IterativeImputer
 
 # use settattr to avoid mypy errors when monkeypatching
 setattr(impute, "IterativeImputer", IterativeImputer)

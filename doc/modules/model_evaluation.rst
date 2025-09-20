@@ -233,6 +233,7 @@ Scoring string name                    Function                                 
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 'd2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
+'d2_brier_score'                       :func:`metrics.d2_brier_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -343,7 +344,7 @@ Creating a custom scorer object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can create your own custom scorer object using
-:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
+:func:`make_scorer`.
 
 .. dropdown:: Custom scorer objects using `make_scorer`
 
@@ -392,32 +393,6 @@ You can create your own custom scorer object using
       0.69
       >>> score(clf, X, y)
       -0.69
-
-.. dropdown:: Custom scorer objects from scratch
-
-  You can generate even more flexible model scorers by constructing your own
-  scoring object from scratch, without using the :func:`make_scorer` factory.
-
-  For a callable to be a scorer, it needs to meet the protocol specified by
-  the following two rules:
-
-  - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-    is the model that should be evaluated, ``X`` is validation data, and ``y`` is
-    the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
-    unsupervised case).
-
-  - It returns a floating point number that quantifies the
-    ``estimator`` prediction quality on ``X``, with reference to ``y``.
-    Again, by convention higher numbers are better, so if your scorer
-    returns loss, that value should be negated.
-
-  - Advanced: If it requires extra metadata to be passed to it, it should expose
-    a ``get_metadata_routing`` method returning the requested metadata. The user
-    should be able to set the requested metadata via a ``set_score_request``
-    method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
-    Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
-    more details.
-
 
 .. dropdown:: Using custom scorers in functions where n_jobs > 1
 
@@ -731,7 +706,7 @@ defined as:
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
 \frac{1}{n\_classes}`.  In the binary case, this is also known as
-`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
+`Youden's J statistic <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
 .. note::
@@ -742,7 +717,7 @@ or *informedness*.
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
       [Guyon2015]_ adopt the adjusted version to ensure that random predictions
-      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
@@ -1676,7 +1651,7 @@ class. The OvO and OvR algorithms support weighting uniformly
   where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
   AUC with class :math:`j` as the positive class and class :math:`k` as the
   negative class. In general,
-  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j)` in the multiclass
   case. This algorithm is used by setting the keyword argument ``multiclass``
   to ``'ovo'`` and ``average`` to ``'macro'``.
 
@@ -2156,7 +2131,7 @@ D² score for classification
 The D² score computes the fraction of deviance explained.
 It is a generalization of R², where the squared error is generalized and replaced
 by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Log loss). D² is a form of a *skill score*.
+(e.g., Log loss, Brier score,). D² is a form of a *skill score*.
 It is calculated as
 
 .. math::
@@ -2164,7 +2139,7 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+(e.g., the per-class proportion of `y_true` in the case of the Log loss and Brier score).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts
@@ -2209,6 +2184,50 @@ of 0.0.
     >>> d2_log_loss_score(y_true, y_pred)
     -0.552
 
+
+|details-start|
+**D2 Brier score**
+|details-split|
+
+The :func:`d2_brier_score` function implements the special case
+of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+
+This is also referred to as the Brier Skill Score (BSS).
+
+Here are some usage examples of the :func:`d2_brier_score` function::
+
+  >>> from sklearn.metrics import d2_brier_score
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.98, 0.01, 0.01],
+  ...    [0.01, 0.98, 0.01],
+  ...    [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  0.9991
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.1, 0.6, 0.3],
+  ...    [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_brier_score(y_true, y_pred)
+  -0.370...
+
+|details-end|
 
 .. _multilabel_ranking_metrics:
 

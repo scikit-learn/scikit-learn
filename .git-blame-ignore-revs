@@ -46,3 +46,9 @@ ff78e258ccf11068e2b3a433c51517ae56234f88
 
 # PR 31226: Enforce ruff/pygrep-hooks rules
 b98dc797c480b1b9495f918e201d45ee07f29feb
+
+# PR 31817: Consistently use relative imports
+4abf564cb4ac58d61fbbe83552c28f764284a69d
+
+# PR 31847 Switch to absolute imports enforced by ruff
+1fe659545c70d9f805c1c4097dd2fce9a6285a12

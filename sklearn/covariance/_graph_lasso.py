@@ -14,30 +14,30 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import _fit_context
-from ..exceptions import ConvergenceWarning
+from sklearn.base import _fit_context
+from sklearn.covariance import EmpiricalCovariance, empirical_covariance, log_likelihood
+from sklearn.exceptions import ConvergenceWarning
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from ..linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from ..linear_model import lars_path_gram
-from ..model_selection import check_cv, cross_val_score
-from ..utils import Bunch
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.metadata_routing import (
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import lars_path_gram
+from sklearn.model_selection import check_cv, cross_val_score
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
     check_random_state,
     check_scalar,
     validate_data,
 )
-from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -138,16 +138,23 @@ def _graphical_lasso(
                             / (precision_[idx, idx] + 1000 * eps)
                         )
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs,
-                            alpha,
-                            0,
-                            sub_covariance,
-                            row,
-                            row,
-                            max_iter,
-                            enet_tol,
-                            check_random_state(None),
-                            False,
+                            w=coefs,
+                            alpha=alpha,
+                            beta=0,
+                            Q=sub_covariance,
+                            q=row,
+                            y=row,
+                            # TODO: It is not ideal that the max_iter of the outer
+                            # solver (graphical lasso) is coupled with the max_iter of
+                            # the inner solver (CD). Ideally, CD has its own parameter
+                            # enet_max_iter (like enet_tol). A minimum of 20 is rather
+                            # arbitrary, but not unreasonable.
+                            max_iter=max(20, max_iter),
+                            tol=enet_tol,
+                            rng=check_random_state(None),
+                            random=False,
+                            positive=False,
+                            do_screening=True,
                         )
                     else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(
@@ -1138,7 +1145,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=check_cv(self.cv),
             method_mapping=MethodMapping().add(callee="split", caller="fit"),
         )

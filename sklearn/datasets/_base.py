@@ -27,10 +27,10 @@ from urllib.request import urlretrieve
 
 import numpy as np
 
-from ..preprocessing import scale
-from ..utils import Bunch, check_random_state
-from ..utils._optional_dependencies import check_pandas_support
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.preprocessing import scale
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"

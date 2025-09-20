@@ -14,12 +14,22 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils import deprecated
-from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
-from ...utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ...utils.multiclass import type_of_target
-from ...utils.validation import check_array, check_consistent_length
-from ._expected_mutual_info_fast import expected_mutual_information
+from sklearn.metrics.cluster._expected_mutual_info_fast import (
+    expected_mutual_information,
+)
+from sklearn.utils import deprecated
+from sklearn.utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+)
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import check_array, check_consistent_length
 
 
 def check_clusterings(labels_true, labels_pred):

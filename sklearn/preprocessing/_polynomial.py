@@ -15,29 +15,28 @@ from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._csr_polynomial_expansion import (
+    _calc_expanded_nnz,
+    _calc_total_nnz,
+    _csr_polynomial_expansion,
+)
+from sklearn.utils import check_array
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     get_namespace_and_device,
     supported_float_dtypes,
 )
-
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array
-from ..utils._mask import _get_mask
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import parse_version, sp_version
-from ..utils.stats import _weighted_percentile
-from ..utils.validation import (
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _check_sample_weight,
     check_is_fitted,
     validate_data,
-)
-from ._csr_polynomial_expansion import (
-    _calc_expanded_nnz,
-    _calc_total_nnz,
-    _csr_polynomial_expansion,
 )
 
 __all__ = [

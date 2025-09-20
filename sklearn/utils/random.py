@@ -8,8 +8,8 @@ import array
 import numpy as np
 import scipy.sparse as sp
 
-from . import check_random_state
-from ._random import sample_without_replacement
+from sklearn.utils import check_random_state
+from sklearn.utils._random import sample_without_replacement
 
 __all__ = ["sample_without_replacement"]
 

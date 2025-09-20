@@ -1,0 +1,3 @@
+- :class:`preprocessing.MaxAbsScaler` can now clip out-of-range values in held-out data
+  with the parameter `clip`.
+  By :user:`Hleb Levitski <glevv>`.

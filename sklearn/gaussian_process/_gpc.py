@@ -11,15 +11,15 @@ import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve
 from scipy.special import erf, expit
 
-from ..base import BaseEstimator, ClassifierMixin, _fit_context, clone
-from ..multiclass import OneVsOneClassifier, OneVsRestClassifier
-from ..preprocessing import LabelEncoder
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import check_is_fitted, validate_data
-from .kernels import RBF, CompoundKernel, Kernel
-from .kernels import ConstantKernel as C
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context, clone
+from sklearn.gaussian_process.kernels import RBF, CompoundKernel, Kernel
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:

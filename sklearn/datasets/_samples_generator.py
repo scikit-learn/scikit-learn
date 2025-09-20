@@ -14,13 +14,11 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
-from sklearn.utils import Bunch
-
-from ..preprocessing import MultiLabelBinarizer
-from ..utils import check_array, check_random_state
-from ..utils import shuffle as util_shuffle
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.random import sample_without_replacement
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.utils import Bunch, check_array, check_random_state
+from sklearn.utils import shuffle as util_shuffle
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.random import sample_without_replacement
 
 
 def _generate_hypercube(samples, dimensions, rng):
@@ -1864,7 +1862,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
-    Adapted with permission from Stephen Marsland's code [1].
+    Adapted with permission from Stephen Marsland's code [1]_.
 
     Parameters
     ----------
@@ -1893,7 +1891,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     Notes
     -----
-    The algorithm is from Marsland [1].
+    The algorithm is from Marsland [1]_.
 
     References
     ----------
@@ -2060,11 +2058,13 @@ def make_gaussian_quantiles(
 
     Notes
     -----
-    The dataset is from Zhu et al [1].
+    The dataset is from Zhu et al [1]_.
 
     References
     ----------
-    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+    .. [1] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost."
+           Statistics and its Interface 2.3 (2009): 349-360.
+           <10.4310/SII.2009.v2.n3.a8>`
 
     Examples
     --------

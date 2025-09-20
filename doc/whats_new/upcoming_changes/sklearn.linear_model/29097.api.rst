@@ -1,0 +1,7 @@
+- :class:`linear_model.PassiveAggressiveClassifier` and
+  :class:`linear_model.PassiveAggressiveRegressor` are deprecated and will be removed
+  in 1.10. Equivalent estimators are available with :class:`linear_model.SGDClassifier`
+  and :class:`SGDRegressor`, both of which expose the options `learning_rate="pa1"` and
+  `"pa2"`. The parameter `eta0` can be used to specify the aggressiveness parameter of
+  the Passive-Aggressive-Algorithms, called C in the reference paper.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31932` and

@@ -524,7 +524,7 @@ You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add
 tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
-    from dataclasses import dataclass, asdict
+    from dataclasses import dataclass, fields
 
     @dataclass
     class MyTags(Tags):
@@ -660,13 +660,11 @@ In addition, we add the following guidelines:
 * Avoid multiple statements on one line. Prefer a line return after
   a control flow statement (``if``/``for``).
 
-* Use relative imports for references inside scikit-learn.
+* Use absolute imports
 
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
+* Unit tests should use imports exactly as client code would.
+  If ``sklearn.foo`` exports a class or function that is implemented in
+  ``sklearn.foo.bar.baz``, the test should import it from ``sklearn.foo``.
 
 * **Please don't use** ``import *`` **in any case**. It is considered harmful
   by the `official Python recommendations

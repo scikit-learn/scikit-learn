@@ -9,10 +9,8 @@ from numbers import Real
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import (
+from sklearn.mixture._base import BaseMixture, _check_shape
+from sklearn.mixture._gaussian_mixture import (
     _check_precision_matrix,
     _check_precision_positivity,
     _compute_log_det_cholesky,
@@ -20,6 +18,8 @@ from ._gaussian_mixture import (
     _estimate_gaussian_parameters,
     _estimate_log_gaussian_prob,
 )
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _log_dirichlet_norm(dirichlet_concentration):

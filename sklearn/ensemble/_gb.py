@@ -28,7 +28,7 @@ from time import time
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, issparse
 
-from .._loss.loss import (
+from sklearn._loss.loss import (
     _LOSSES,
     AbsoluteError,
     ExponentialLoss,
@@ -38,20 +38,28 @@ from .._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from ..base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
-from ..dummy import DummyClassifier, DummyRegressor
-from ..exceptions import NotFittedError
-from ..model_selection import train_test_split
-from ..preprocessing import LabelEncoder
-from ..tree import DecisionTreeRegressor
-from ..tree._tree import DOUBLE, DTYPE, TREE_LEAF
-from ..utils import check_array, check_random_state, column_or_1d
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.stats import _weighted_percentile
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._base import BaseEnsemble
-from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
+from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.ensemble._gradient_boosting import (
+    _random_sample_mask,
+    predict_stage,
+    predict_stages,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree._tree import DOUBLE, DTYPE, TREE_LEAF
+from sklearn.utils import check_array, check_random_state, column_or_1d
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -114,7 +122,7 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
         predictions = estimator.predict_proba(X)
         if not loss.is_multiclass:
             predictions = predictions[:, 1]  # probability of positive class
-        eps = np.finfo(np.float32).eps  # FIXME: This is quite large!
+        eps = np.finfo(np.float64).eps
         predictions = np.clip(predictions, eps, 1 - eps, dtype=np.float64)
     else:
         predictions = estimator.predict(X).astype(np.float64)

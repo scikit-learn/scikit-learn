@@ -21,7 +21,7 @@ import logging
 import os
 import random
 
-from ._config import config_context, get_config, set_config
+from sklearn._config import config_context, get_config, set_config
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +66,9 @@ os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 # It is necessary to do this prior to importing show_versions as the
 # later is linked to the OpenMP runtime to make it possible to introspect
 # it and importing it first would fail if the OpenMP dll cannot be found.
-from . import (  # noqa: F401 E402
-    __check_build,
-    _distributor_init,
-)
-from .base import clone  # noqa: E402
-from .utils._show_versions import show_versions  # noqa: E402
+from sklearn import __check_build, _distributor_init  # noqa: E402 F401
+from sklearn.base import clone  # noqa: E402
+from sklearn.utils._show_versions import show_versions  # noqa: E402
 
 _submodules = [
     "calibration",

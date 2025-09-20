@@ -6,14 +6,14 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import optimize
 
-from ..base import BaseEstimator, RegressorMixin, _fit_context
-from ..utils._mask import axis0_safe_slice
-from ..utils._param_validation import Interval
-from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _get_additional_lbfgs_options_dict
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _check_sample_weight, validate_data
-from ._base import LinearModel
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils._mask import axis0_safe_slice
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
 def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):

@@ -11,12 +11,12 @@ from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
-from ..base import BaseEstimator, BiclusterMixin, _fit_context
-from ..utils import check_random_state, check_scalar
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import _randomized_svd, make_nonnegative, safe_sparse_dot
-from ..utils.validation import assert_all_finite, validate_data
-from ._kmeans import KMeans, MiniBatchKMeans
+from sklearn.base import BaseEstimator, BiclusterMixin, _fit_context
+from sklearn.cluster._kmeans import KMeans, MiniBatchKMeans
+from sklearn.utils import check_random_state, check_scalar
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_svd, make_nonnegative, safe_sparse_dot
+from sklearn.utils.validation import assert_all_finite, validate_data
 
 __all__ = ["SpectralBiclustering", "SpectralCoclustering"]
 

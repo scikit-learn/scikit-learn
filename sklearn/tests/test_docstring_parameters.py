@@ -172,6 +172,10 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+# TODO(1.10): remove copy warning filter
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `copy` will change from False to True in 1.10."
+)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
