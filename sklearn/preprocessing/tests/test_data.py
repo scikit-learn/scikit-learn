@@ -2832,15 +2832,17 @@ def test_power_transformer_no_warnings():
 
 
 def test_power_transformer_features_names_no_warnings():
-    """Check that PowerTransformer operates without raising any warnings on feature names"""
+    """Check that PowerTransformer does not raise any warnings on feature names"""
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.simplefilter("always")
-        
+
         X, y = datasets.load_iris(return_X_y=True, as_frame=True)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.25, random_state=42
+        )
         pipeline = TransformedTargetRegressor(
             regressor=LinearRegression(),
-            transformer=PowerTransformer().set_output(transform="pandas")
+            transformer=PowerTransformer().set_output(transform="pandas"),
         )
         pipeline.fit(X_train, y_train)
         y_test_pred = pipeline.predict(X_test)
