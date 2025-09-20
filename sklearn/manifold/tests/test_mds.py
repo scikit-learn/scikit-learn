@@ -133,6 +133,7 @@ def test_MDS():
         n_jobs=3,
         n_init=3,
         metric="precomputed",
+        init="random",
     )
     mds_clf.fit(sim)
 

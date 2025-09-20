@@ -232,6 +232,10 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "MDS":
         # default raises a FutureWarning
         est.set_params(n_init=1)
+    # TODO(1.10) remove
+    elif Estimator.__name__ == "MDS":
+        # default raises a FutureWarning
+        est.set_params(init="random")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
