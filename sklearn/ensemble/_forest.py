@@ -1206,10 +1206,11 @@ class RandomForestClassifier(ForestClassifier):
            in 0.22.
 
     criterion : {"gini", "entropy", "log_loss"}, default="gini"
-        The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
-        Shannon information gain, see :ref:`tree_mathematical_formulation`.
-        Note: This parameter is tree-specific.
+    The function to measure the quality of a split:
+    
+    - "gini": Gini impurity (default). Lower values indicate purer splits.  
+    - "entropy": Information gain based on Shannon entropy.  
+    - "log_loss": Log loss (cross-entropy). Useful for probabilistic classification.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1603,8 +1604,14 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
-            default="squared_error"
+    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, default="squared_error"
+    The function to measure the quality of a split:
+
+    - "squared_error": Mean squared error, variance reduction.  
+    - "absolute_error": Mean absolute error.  
+    - "friedman_mse": Friedman’s improvement score for potential splits.  
+    - "poisson": Reduction in Poisson deviance (requires positive targets).
+    
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
