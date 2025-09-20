@@ -5,6 +5,7 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
 from sklearn.datasets import load_digits, load_iris
+from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
 
@@ -273,3 +274,20 @@ def test_future_warning_init_and_metric():
     # default init will become classical_mds in the future
     with pytest.warns(FutureWarning):
         mds.MDS(metric="euclidean").fit(X)
+
+
+# TODO(1.9): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+def test_classical_mds_init_to_mds():
+    X, _ = load_iris(return_X_y=True)
+
+    cmds = ClassicalMDS()
+    Z_classical = cmds.fit_transform(X)
+
+    mds1 = mds.MDS(init="classical_mds")
+    Z1 = mds1.fit_transform(X)
+
+    mds2 = mds.MDS(init="random")
+    Z2 = mds1.fit_transform(X, init=Z_classical)
+
+    assert_allclose(Z1, Z2)
