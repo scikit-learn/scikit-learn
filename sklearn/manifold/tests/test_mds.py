@@ -129,10 +129,10 @@ def test_smacof_error():
 def test_MDS():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     mds_clf = mds.MDS(
-        metric=False,
+        metric_mds=False,
         n_jobs=3,
         n_init=3,
-        dissimilarity="precomputed",
+        metric="precomputed",
     )
     mds_clf.fit(sim)
 
@@ -257,17 +257,18 @@ def test_future_warning_init_and_metric():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
+    # dissimilarity argument deprecated
     with pytest.warns(FutureWarning):
         mds.MDS(dissimilarity="precomputed", init="random").fit(sim)
 
+    # metric=True deprecated
     with pytest.warns(FutureWarning):
         mds.MDS(metric=True, init="random").fit(X)
 
+    # metric=False deprecated
     with pytest.warns(FutureWarning):
         mds.MDS(metric=False, init="random").fit(X)
 
+    # default init will become classical_mds in the future
     with pytest.warns(FutureWarning):
-        mds.MDS(metric=True).fit(sim)
-
-    with pytest.warns(FutureWarning):
-        mds.MDS(init="random").fit(sim)
+        mds.MDS(metric="euclidean").fit(X)
