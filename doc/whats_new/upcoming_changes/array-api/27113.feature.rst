@@ -1,0 +1,3 @@
+- :class:`sklearn.preprocessing.StandardScaler` now supports Array API compliant inputs.
+  :pr:`27113` by :user:`Alexander Fabisch <AlexanderFabisch>`, :user:`Edoardo Abati <EdAbati>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Charles Hill <charlesjhill>`.

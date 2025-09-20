@@ -90,7 +90,6 @@ can provide additional strategies beyond what is built-in:
   - :class:`linear_model.LogisticRegressionCV` (most solvers)
   - :class:`linear_model.SGDClassifier`
   - :class:`linear_model.Perceptron`
-  - :class:`linear_model.PassiveAggressiveClassifier`
 
 
 - **Support multilabel:**

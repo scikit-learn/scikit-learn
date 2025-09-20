@@ -8,21 +8,21 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import sparse
 
-from .._config import config_context
-from ..base import (
+from sklearn._config import config_context
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics import pairwise_distances_argmin
-from ..metrics.pairwise import euclidean_distances
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import check_is_fitted, validate_data
-from . import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances_argmin
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _iterate_sparse_X(X):
@@ -403,14 +403,6 @@ class Birch(
     compute_labels : bool, default=True
         Whether or not to compute labels for each fit.
 
-    copy : bool, default=True
-        Whether or not to make a copy of the given data. If set to False,
-        the initial data will be overwritten.
-
-        .. deprecated:: 1.6
-            `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect
-            as the estimator does not perform in-place operations on the input data.
-
     Attributes
     ----------
     root_ : _CFNode
@@ -493,7 +485,6 @@ class Birch(
         "branching_factor": [Interval(Integral, 1, None, closed="neither")],
         "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],
-        "copy": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -503,13 +494,11 @@ class Birch(
         branching_factor=50,
         n_clusters=3,
         compute_labels=True,
-        copy="deprecated",
     ):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
         self.compute_labels = compute_labels
-        self.copy = copy
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
@@ -534,14 +523,6 @@ class Birch(
     def _fit(self, X, partial):
         has_root = getattr(self, "root_", None)
         first_call = not (partial and has_root)
-
-        if self.copy != "deprecated" and first_call:
-            warnings.warn(
-                "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
-                "has no effect internally. Simply leave this parameter to its default "
-                "value to avoid this warning.",
-                FutureWarning,
-            )
 
         X = validate_data(
             self,
