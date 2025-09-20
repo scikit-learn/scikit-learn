@@ -7,6 +7,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import DetCurveDisplay, det_curve
 
 
+@pytest.fixture(scope="module")
+def data_binary():
+    X, y = load_iris(return_X_y=True)
+    # Binarize the data with only the two first classes
+    X, y = X[y < 2], y[y < 2]
+    return X, y
+
+
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
@@ -14,15 +22,14 @@ from sklearn.metrics import DetCurveDisplay, det_curve
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_det_curve_display(
     pyplot,
+    data_binary,
     constructor_name,
     response_method,
     with_sample_weight,
     drop_intermediate,
     with_strings,
 ):
-    X, y = load_iris(return_X_y=True)
-    # Binarize the data with only the two first classes
-    X, y = X[y < 2], y[y < 2]
+    X, y = data_binary
 
     pos_label = None
     if with_strings:
@@ -45,7 +52,7 @@ def test_det_curve_display(
 
     common_kwargs = {
         "name": lr.__class__.__name__,
-        "alpha": 0.8,
+        "curve_kwargs": {"alpha": 0.8},
         "sample_weight": sample_weight,
         "drop_intermediate": drop_intermediate,
         "pos_label": pos_label,
@@ -66,7 +73,7 @@ def test_det_curve_display(
     assert_allclose(disp.fpr, fpr, atol=1e-7)
     assert_allclose(disp.fnr, fnr, atol=1e-7)
 
-    assert disp.estimator_name == "LogisticRegression"
+    assert disp.name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl
@@ -93,13 +100,12 @@ def test_det_curve_display(
 )
 def test_det_curve_display_default_name(
     pyplot,
+    data_binary,
     constructor_name,
     expected_clf_name,
 ):
     # Check the default name display in the figure when `name` is not provided
-    X, y = load_iris(return_X_y=True)
-    # Binarize the data with only the two first classes
-    X, y = X[y < 2], y[y < 2]
+    X, y = data_binary
 
     lr = LogisticRegression().fit(X, y)
     y_score = lr.predict_proba(X)[:, 1]
@@ -109,7 +115,7 @@ def test_det_curve_display_default_name(
     else:
         disp = DetCurveDisplay.from_predictions(y, y_score)
 
-    assert disp.estimator_name == expected_clf_name
+    assert disp.name == expected_clf_name
     assert disp.line_.get_label() == expected_clf_name
 
 
