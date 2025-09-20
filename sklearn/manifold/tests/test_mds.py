@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
-from sklearn.datasets import load_digits
+from sklearn.datasets import load_digits, load_iris
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
 
@@ -24,8 +24,10 @@ def test_smacof():
 def test_nonmetric_lower_normalized_stress():
     # Testing that nonmetric MDS results in lower normalized stress compared
     # compared to metric MDS (non-regression test for issue 27028)
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    Z = np.array([[-0.266, -0.539], [0.451, 0.252], [0.016, -0.238], [-0.200, 0.524]])
+    X, _ = load_iris(return_X_y=True)
+    sim = euclidean_distances(X)
+    np.random.seed(42)
+    Z = np.random.normal(size=(X.shape[0], 2))
 
     _, stress1 = mds.smacof(
         sim, init=Z, n_components=2, max_iter=1000, n_init=1, normalized_stress=True
@@ -40,7 +42,17 @@ def test_nonmetric_lower_normalized_stress():
         normalized_stress=True,
         metric=False,
     )
+
     assert stress1 > stress2
+
+    # A metric MDS solution (local minimum of the raw stress) can be rescaled to
+    # decrease the stress-1 (which is returned with normalized_stress=True).
+    # The optimal rescaling can be computed analytically, see Borg & Groenen,
+    # Modern Multidimensional Scaling, Chapter 11.1. After rescaling, stress-1
+    # becomes sqrt(s^2 / (1 + s^2)), where s is the value of stress-1 before
+    # rescaling.
+    stress1_rescaled = np.sqrt(stress1**2 / (1 + stress1**2))
+    assert stress1_rescaled > stress2
 
 
 def test_nonmetric_mds_optimization():
@@ -55,7 +67,8 @@ def test_nonmetric_mds_optimization():
         n_components=2,
         n_init=1,
         max_iter=2,
-        metric=False,
+        metric_mds=False,
+        init="random",
         random_state=42,
     ).fit(X)
     stress_after_2_iter = mds_est.stress_
@@ -64,7 +77,8 @@ def test_nonmetric_mds_optimization():
         n_components=2,
         n_init=1,
         max_iter=3,
-        metric=False,
+        metric_mds=False,
+        init="random",
         random_state=42,
     ).fit(X)
     stress_after_3_iter = mds_est.stress_
@@ -72,15 +86,16 @@ def test_nonmetric_mds_optimization():
     assert stress_after_2_iter > stress_after_3_iter
 
 
-@pytest.mark.parametrize("metric", [True, False])
-def test_mds_recovers_true_data(metric):
+@pytest.mark.parametrize("metric_mds", [True, False])
+def test_mds_recovers_true_data(metric_mds):
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
     mds_est = mds.MDS(
         n_components=2,
         n_init=1,
         eps=1e-15,
         max_iter=1000,
-        metric=metric,
+        metric_mds=metric_mds,
+        init="random",
         random_state=42,
     ).fit(X)
     stress = mds_est.stress_
@@ -122,7 +137,7 @@ def test_MDS():
     mds_clf.fit(sim)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
@@ -136,7 +151,7 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
@@ -175,7 +190,7 @@ def test_isotonic_outofbounds():
     mds.smacof(dis, init=init, metric=False, n_init=1)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("normalized_stress", [True, False])
 def test_returned_stress(normalized_stress):
@@ -202,10 +217,10 @@ def test_returned_stress(normalized_stress):
     assert_allclose(stress, stress_Z)
 
 
-# TODO(1.9): remove warning filter
+# TODO(1.10): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("metric", [True, False])
-def test_convergence_does_not_depend_on_scale(metric):
+@pytest.mark.parametrize("metric_mds", [True, False])
+def test_convergence_does_not_depend_on_scale(metric_mds):
     # Test that the number of iterations until convergence does not depend on
     # the scale of the input data
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
@@ -213,7 +228,7 @@ def test_convergence_does_not_depend_on_scale(metric):
     mds_est = mds.MDS(
         n_components=2,
         random_state=42,
-        metric=metric,
+        metric_mds=metric_mds,
     )
 
     mds_est.fit(X * 100)
@@ -234,4 +249,25 @@ def test_future_warning_n_init():
         mds.smacof(sim)
 
     with pytest.warns(FutureWarning):
-        mds.MDS().fit(X)
+        mds.MDS(init="random").fit(X)
+
+
+# TODO(1.10): delete this test
+def test_future_warning_init_and_metric():
+    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(dissimilarity="precomputed", init="random").fit(sim)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(metric=True, init="random").fit(X)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(metric=False, init="random").fit(X)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(metric=True).fit(sim)
+
+    with pytest.warns(FutureWarning):
+        mds.MDS(init="random").fit(sim)
