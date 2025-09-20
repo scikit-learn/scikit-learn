@@ -429,9 +429,9 @@ def smacof(
 
 
 # TODO(1.9): change default `n_init` to 1, see PR #31117
-# TODO(1.10): change default `init` to "classical_mds", see PR #INSERT_NUMBER
-# TODO(1.10): drop support for boolean `metric`, see PR #INSERT_NUMBER
-# TODO(1.10): drop support for `dissimilarity`, see PR #INSERT_NUMBER
+# TODO(1.10): change default `init` to "classical_mds", see PR #32229
+# TODO(1.10): drop support for boolean `metric`, see PR #32229
+# TODO(1.10): drop support for `dissimilarity`, see PR #32229
 class MDS(BaseEstimator):
     """Multidimensional scaling.
 
