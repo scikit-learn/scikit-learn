@@ -6,7 +6,6 @@ import warnings
 
 import numpy as np
 import numpy.linalg as la
-import pandas as pd
 import pytest
 from scipy import sparse, stats
 
@@ -2834,6 +2833,7 @@ def test_power_transformer_no_warnings():
 
 def test_power_transformer_features_names_no_warnings():
     """Check that PowerTransformer does not raise any warnings on feature names"""
+    pd = pytest.importorskip("pandas")
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.simplefilter("always")
 
