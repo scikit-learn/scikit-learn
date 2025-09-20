@@ -79,11 +79,6 @@ else
 fi
 
 if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
-    # Make sure that GIL is disabled even when importing extensions that have
-    # not declared free-threaded compatibility. This can be removed when numpy,
-    # scipy and scikit-learn extensions all have declared free-threaded
-    # compatibility.
-    export PYTHON_GIL=0
     # Use pytest-run-parallel
     TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi

@@ -320,9 +320,9 @@ small, as shown in the example and cited reference.
 .. dropdown:: References
 
   * `"Web Scale K-Means clustering"
-    <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+    <https://www.ccs.neu.edu/home/vip/teach/DMcourse/2_cluster_EM_mixt/notes_slides/sculey_webscale_kmeans_approx.pdf>`_
     D. Sculley, *Proceedings of the 19th international conference on World
-    wide web* (2010)
+    wide web* (2010).
 
 .. _affinity_propagation:
 
@@ -706,8 +706,8 @@ An interesting aspect of :class:`AgglomerativeClustering` is that
 connectivity constraints can be added to this algorithm (only adjacent
 clusters can be merged together), through a connectivity matrix that defines
 for each sample the neighboring samples following a given structure of the
-data. For instance, in the swiss-roll example below, the connectivity
-constraints forbid the merging of points that are not adjacent on the swiss
+data. For instance, in the Swiss-roll example below, the connectivity
+constraints forbid the merging of points that are not adjacent on the Swiss
 roll, and thus avoid forming clusters that extend across overlapping folds of
 the roll.
 
@@ -721,11 +721,11 @@ the roll.
 
 .. centered:: |unstructured| |structured|
 
-These constraint are useful to impose a certain local structure, but they
-also make the algorithm faster, especially when the number of the samples
+These constraints are not only useful to impose a certain local structure, but
+they also make the algorithm faster, especially when the number of the samples
 is high.
 
-The connectivity constraints are imposed via an connectivity matrix: a
+The connectivity constraints are imposed via a connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
 matrix can be constructed from a-priori information: for instance, you
@@ -733,7 +733,7 @@ may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in :ref:`this example
-<sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
+<sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
@@ -746,23 +746,11 @@ enable only merging of neighboring pixels on an image, as in the
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
-    :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`).
     Single linkage is the most brittle linkage option with regard to this issue.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_002.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_003.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_004.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_003.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
 .. rubric:: Examples
@@ -771,14 +759,12 @@ enable only merging of neighboring pixels on an image, as in the
   clustering to split the image of coins in regions.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
-  of Ward algorithm on a swiss-roll, comparison of structured approaches
+  of Ward algorithm on a Swiss-roll, comparison of structured approaches
   versus unstructured approaches.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
   of dimensionality reduction with feature agglomeration based on Ward
   hierarchical clustering.
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 
 Varying the metric
@@ -1214,7 +1200,7 @@ The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
 
-This algorithm can be viewed as an instance or data reduction method,
+This algorithm can be viewed as an instance of a data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
 from the leaves of the CFT. This reduced data can be further processed by feeding
 it into a global clusterer. This global clusterer can be set by ``n_clusters``.
