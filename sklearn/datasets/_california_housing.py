@@ -6,7 +6,7 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
-This dataset contains the average house value as target variable
+This dataset contains the median house value as target variable
 and the following input variables (features): average income,
 housing average age, average rooms, average bedrooms, population,
 average occupation, latitude, and longitude in that order.
@@ -126,7 +126,7 @@ def fetch_california_housing(
             Each row corresponding to the 8 feature values in order.
             If ``as_frame`` is True, ``data`` is a pandas object.
         target : numpy array of shape (20640,)
-            Each value corresponds to the average
+            Each value corresponds to the median
             house value in units of 100,000.
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
@@ -150,7 +150,7 @@ def fetch_california_housing(
     Notes
     -----
 
-    This dataset consists of 20,640 samples and 9 features.
+    This dataset consists of 20,640 samples and 9 features. The target represents the median house value.
 
     Examples
     --------
