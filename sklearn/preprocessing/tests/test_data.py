@@ -11,10 +11,12 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics.pairwise import linear_kernel
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_predict, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     Binarizer,
@@ -2827,6 +2829,25 @@ def test_power_transformer_no_warnings():
 
     # Subset of data: Should not trigger overflow in power calculation.
     _test_no_warnings(x[:5].reshape(-1, 1))
+
+
+def test_power_transformer_features_names_no_warnings():
+    """Check that PowerTransformer operates without raising any warnings on feature names"""
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        
+        X, y = datasets.load_iris(return_X_y=True, as_frame=True)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+        pipeline = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            transformer=PowerTransformer().set_output(transform="pandas")
+        )
+        pipeline.fit(X_train, y_train)
+        y_test_pred = pipeline.predict(X_test)
+
+    assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+        str(w.message) for w in caught_warnings
+    )
 
 
 def test_yeojohnson_for_different_scipy_version():
