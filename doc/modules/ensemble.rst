@@ -797,6 +797,13 @@ the parameter ``loss``:
     examples than ``'log-loss'``; can only be used for binary
     classification.
 
+    For classification, available split criteria are:
+
+- ``gini``: Gini impurity.
+- ``entropy``: Information gain using Shannon entropy.
+- ``log_loss``: Minimizes the log loss, often providing better probability estimates.
+
+
 .. _gradient_boosting_shrinkage:
 
 Shrinkage via learning rate
@@ -977,6 +984,15 @@ predictions, some errors can cancel out. Random forests achieve a reduced
 variance by combining diverse trees, sometimes at the cost of a slight increase
 in bias. In practice the variance reduction is often significant hence yielding
 an overall better model.
+
+The quality of a split is evaluated using the ``criterion`` parameter.
+For regression, available options are:
+
+- ``squared_error``: variance reduction, equivalent to mean squared error.
+- ``absolute_error``: mean absolute error.
+- ``friedman_mse``: variance reduction with an improvement score, following Friedman’s approach.
+- ``poisson``: reduction in Poisson deviance, useful for count data.
+
 
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic

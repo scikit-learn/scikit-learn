@@ -1206,10 +1206,14 @@ class RandomForestClassifier(ForestClassifier):
            in 0.22.
 
     criterion : {"gini", "entropy", "log_loss"}, default="gini"
-        The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
-        Shannon information gain, see :ref:`tree_mathematical_formulation`.
         Note: This parameter is tree-specific.
+        The function to measure the quality of a split:
+        "gini": Gini impurity.
+        "entropy": Information gain (Shannon entropy).
+        "log_loss": Minimizes the log loss, often leading to more accurate probability estimates.
+
+
+
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1605,16 +1609,14 @@ class RandomForestRegressor(ForestRegressor):
 
     criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
             default="squared_error"
-        The function to measure the quality of a split. Supported criteria
-        are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
-        Training using "absolute_error" is significantly slower
-        than when using "squared_error".
+            The function to measure the quality of a split:
+            "squared_error": Mean squared error, variance reduction as used in
+            ordinary least squares.
+            "absolute_error": Mean absolute error, least absolute deviations.
+            "friedman_mse": Mean squared error with improvement score by Friedman,
+            used for potential split selection.
+            "poisson": Reduction in Poisson deviance, appropriate for modeling
+            count data.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
