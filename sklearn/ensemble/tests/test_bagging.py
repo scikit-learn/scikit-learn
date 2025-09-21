@@ -134,6 +134,7 @@ def test_sparse_classification(sparse_container, params, method):
         params_svm = dict(
             estimator=SVC(kernel="linear", decision_function_shape="ovr"),
             ensemble=False,
+            cv=3,
         )
 
     class CustomSVC(svm):
