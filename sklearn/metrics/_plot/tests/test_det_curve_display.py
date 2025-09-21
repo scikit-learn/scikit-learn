@@ -88,8 +88,8 @@ def test_det_curve_display(
         pos_label=pos_label,
     )
 
-    assert_allclose(disp.fpr, fpr, atol=1e-7)
-    assert_allclose(disp.fnr, fnr, atol=1e-7)
+    assert_allclose(disp.fpr[0], fpr, atol=1e-7)
+    assert_allclose(disp.fnr[0], fnr, atol=1e-7)
 
     assert disp.name == "LogisticRegression"
 
