@@ -458,23 +458,10 @@ class LabelPropagation(BaseLabelPropagation):
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=1)
-        if sparse.issparse(affinity_matrix):
-            # handle spmatrix (make 1D)
-            if sparse.isspmatrix(affinity_matrix):
-                normalizer = np.ravel(normalizer)
-            # common case: knn method gives row sum k for all rows but
-            # a user-kernel may have varied row sums so "else" handles that
-            if np.all(normalizer == normalizer[0]):
-                affinity_matrix.data /= normalizer[0]
-            else:
-                if affinity_matrix.format == "csr":
-                    repeats = np.diff(affinity_matrix.indptr)
-                    rows = np.repeat(np.arange(affinity_matrix.shape[0]), repeats)
-                else:  # CSC format
-                    rows = affinity_matrix.indices
-                affinity_matrix.data /= normalizer[rows]
-        else:  # Dense affinity_matrix
-            affinity_matrix /= normalizer[:, np.newaxis]
+        # handle spmatrix (make normalizer 1D)
+        if sparse.isspmatrix(affinity_matrix):
+            normalizer = np.ravel(normalizer)
+        affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
 
     def fit(self, X, y):
