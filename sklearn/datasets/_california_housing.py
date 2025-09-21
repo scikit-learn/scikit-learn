@@ -151,7 +151,6 @@ def fetch_california_housing(
     -----
 
     This dataset consists of 20,640 samples and 9 features.
-    The target represents the median house value.
 
     Examples
     --------
