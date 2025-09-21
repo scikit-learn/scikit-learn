@@ -51,7 +51,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         covariance estimator (with potential shrinkage).
         The object should have a fit method and a ``covariance_`` attribute
         like the estimators in :mod:`sklearn.covariance``.
-        if None the shrinkage parameter drives the estimate.
+        If None the shrinkage parameter drives the estimate.
 
         .. versionadded:: 0.24
 
@@ -460,7 +460,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
