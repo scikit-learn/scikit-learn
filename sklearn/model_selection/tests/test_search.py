@@ -1667,6 +1667,7 @@ def test_grid_search_with_multioutput_data():
                 )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
