@@ -712,3 +712,88 @@ def test_pandas_copy_on_write():
     with pd.option_context("mode.copy_on_write", True):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+def test_target_encoder_with_groups():
+    """Test TargetEncoder with groups parameter using GroupKFold."""
+    X = np.array([
+        ['NYC'], ['NYC'], ['LA'], ['LA'],          # Group 1
+        ['NYC'], ['LA'], ['Chicago'], ['Chicago'], # Group 2
+        ['NYC'], ['LA'], ['Chicago'], ['Miami']    # Group 3
+    ])
+    y = np.array([1, 1, 0, 0,
+                  1, 0, 1, 1,
+                  0, 1, 1, 1])
+    groups = np.array([1, 1, 1, 1,
+                       2, 2, 2, 2,
+                       3, 3, 3, 3])
+
+    # WITH groups → should use GroupKFold
+    enc_with_groups = TargetEncoder(cv=3, random_state=42)
+    X_enc_with = enc_with_groups.fit_transform(X, y, groups=groups)
+
+    # WITHOUT groups → should use StratifiedKFold
+    enc_without_groups = TargetEncoder(cv=3, random_state=42)
+    X_enc_without = enc_without_groups.fit_transform(X, y)
+
+    # Different strategies should lead to different encodings
+    assert not np.allclose(X_enc_with, X_enc_without)
+
+    # Shapes must match
+    assert X_enc_with.shape == X.shape
+    assert X_enc_without.shape == X.shape
+
+    # fit() also accepts groups
+    enc_fit = TargetEncoder(cv=3, random_state=42)
+    enc_fit.fit(X, y, groups=groups)
+    X_transformed = enc_fit.transform(X)
+    assert X_transformed.shape == X.shape
+
+
+def test_target_encoder_groups_continuous_target():
+    """TargetEncoder with groups for continuous targets."""
+    X = np.array([['A'], ['B'], ['A'], ['B']])
+    y = np.array([1.5, 2.3, 1.8, 2.1])
+    groups = np.array([1, 1, 2, 2])
+
+    enc = TargetEncoder(cv=2, random_state=42)
+    X_enc = enc.fit_transform(X, y, groups=groups)
+
+    assert X_enc.shape == X.shape
+    assert enc.target_type_ == "continuous"
+    assert enc.classes_ is None
+
+
+def test_target_encoder_groups_multiclass():
+    """TargetEncoder with groups for multiclass targets."""
+    X = np.array([['A'], ['B'], ['A'], ['B'], ['C'], ['C']])
+    y = np.array(['class1', 'class2', 'class1', 'class3', 'class2', 'class3'])
+    groups = np.array([1, 1, 2, 2, 3, 3])
+
+    enc = TargetEncoder(cv=3, random_state=42)
+    X_enc = enc.fit_transform(X, y, groups=groups)
+
+    n_classes = len(np.unique(y))
+    expected_shape = (X.shape[0], X.shape[1] * n_classes)
+    assert X_enc.shape == expected_shape
+    assert enc.target_type_ == "multiclass"
+    assert len(enc.classes_) == n_classes
+
+
+def test_target_encoder_cv_validation():
+    """Test validation of custom CV splitters with overlaps."""
+    from sklearn.preprocessing._target_encoder import _validate_cv_no_overlap
+
+    X = np.array([['A'], ['B'], ['A'], ['B']])
+    y = np.array([1, 0, 1, 0])
+
+    class BadCV:
+        def split(self, X, y, groups=None):
+            yield [1, 2, 3], [0, 1]  # val = {0,1}
+            yield [0, 2, 3], [0, 2]  # val = {0,2}, overlap on 0
+
+    bad_cv = BadCV()
+
+    with pytest.raises(ValueError, match="overlapping validation sets"):
+        _validate_cv_no_overlap(bad_cv, X, y)
+

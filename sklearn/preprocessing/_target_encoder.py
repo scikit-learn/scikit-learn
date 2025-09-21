@@ -6,6 +6,7 @@ from numbers import Integral, Real
 import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
+from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold
 from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
@@ -19,6 +20,52 @@ from sklearn.utils.validation import (
     check_consistent_length,
     check_is_fitted,
 )
+
+# Approved CV splitters that don't need overlap validation
+APPROVED_CV_SPLITTERS = (KFold, StratifiedKFold, GroupKFold)
+
+def _validate_cv_no_overlap(cv_splitter, X, y, groups=None):
+    """Validate that CV splits don't have overlapping validation sets.
+    Parameters
+    ----------
+   cv_splitter : CV splitter object
+        Cross-validation splitter to validate
+    X : array-like
+        Features
+    y : array-like
+        Target values
+    groups : array-like, optional
+             Group labels
+
+    Raises
+    ------
+    ValueError
+        If validation sets overlap between folds
+    """
+    n_samples = len(X)
+    all_val_indices = set()
+
+    # Get all validation indices across folds
+    for train_idx, val_idx in cv_splitter.split(X, y, groups):
+        val_set = set(val_idx)
+
+        # Check for overlap with previous validation sets
+        if all_val_indices.intersection(val_set):
+            raise ValueError(
+                "Cross-validation splitter produces overlapping validation "
+                "sets. TargetEncoder requires non-overlapping validation "
+                "folds to avoid data leakage."
+            )
+
+        all_val_indices.update(val_set)
+
+    # Ensure all samples are used exactly once in validation
+    if len(all_val_indices) != n_samples:
+        raise ValueError(
+            "Cross-validation splitter does not use all samples exactly "
+            "once in validation sets."
+        )
+
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -215,7 +262,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, groups=None):
         """Fit the :class:`TargetEncoder` to X and y.
 
         Parameters
@@ -226,6 +273,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
+        groups : array-like of shape (n_samples,), default=None
+                 Group labels for the samples used while splitting the dataset into
+                 train/test set. Only used in conjunction with GroupKFold when provided
+                 to avoid data leakage in grouped/clustered data.
+
         Returns
         -------
         self : object
@@ -235,7 +287,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y):
+    def fit_transform(self, X, y, groups=None):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
@@ -251,28 +303,34 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used to avoid data leakage in grouped or
+            clustered data.
+
         Returns
         -------
         X_trans : ndarray of shape (n_samples, n_features) or \
                     (n_samples, (n_features * n_classes))
             Transformed input.
         """
-        from sklearn.model_selection import (  # avoid circular import
-            KFold,
-            StratifiedKFold,
-        )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
         # not be well-specified.
-        if self.target_type_ == "continuous":
+        if groups is not None:
+            cv = GroupKFold(n_splits=self.cv)
+        elif self.target_type_ == "continuous":
             cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
         else:
             cv = StratifiedKFold(
                 self.cv, shuffle=self.shuffle, random_state=self.random_state
             )
+        # Only validate non-approved splitters to avoid overhead
+        if not isinstance(cv, APPROVED_CV_SPLITTERS):
+            _validate_cv_no_overlap(cv, X, y, groups)
 
         # If 'multiclass' multiply axis=1 by num classes else keep shape the same
         if self.target_type_ == "multiclass":
@@ -283,7 +341,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
-        for train_idx, test_idx in cv.split(X, y):
+        for train_idx, test_idx in cv.split(X, y, groups):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
