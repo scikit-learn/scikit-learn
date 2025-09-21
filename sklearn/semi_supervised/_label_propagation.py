@@ -461,7 +461,14 @@ class LabelPropagation(BaseLabelPropagation):
         # handle spmatrix (make normalizer 1D)
         if sparse.isspmatrix(affinity_matrix):
             normalizer = np.ravel(normalizer)
-        affinity_matrix /= normalizer[:, np.newaxis]
+        # Todo: when SciPy 1.12+ is min dependence, replace up to ---- with:
+        # affinity_matrix /= normalizer[:, np.newaxis]
+        if sparse.issparse(affinity_matrix):
+            inv_normalizer = sparse.diags(1.0 / normalizer)
+            affinity_matrix = inv_normalizer @ affinity_matrix
+        else:  # Dense affinity_matrix
+            affinity_matrix /= normalizer[:, np.newaxis]
+        # ----
         return affinity_matrix
 
     def fit(self, X, y):
