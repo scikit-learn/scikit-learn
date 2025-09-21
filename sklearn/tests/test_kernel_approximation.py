@@ -379,8 +379,8 @@ def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
         kernels_available = kernel_metrics()
         for kern in kernels_available:
             if (
-            kern != "laplacian"
-        ):  # Laplacian kernel not supported for non-numpy namespaces
+                kern != "laplacian"
+            ):  # Laplacian kernel not supported for non-numpy namespaces
                 trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
                 X_xp_transformed = trans.fit(X_xp).transform(X_xp)
                 assert X_xp_transformed.shape == (X_xp.shape[0], 2)
@@ -469,7 +469,9 @@ def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name)
 
         K = rbf_kernel(X_np, gamma=gamma)
 
-        assert_array_almost_equal(_convert_to_numpy(K, xp=xp), X_xp_transformed_np@X_xp_transformed_np.T)
+        assert_array_almost_equal(
+            _convert_to_numpy(K, xp=xp), X_xp_transformed_np @ X_xp_transformed_np.T
+        )
         assert np.all(np.isfinite(Y))
 
 
@@ -571,7 +573,10 @@ def test_nystroem_precomputed_kernel_array_api(array_namespace, device, dtype_na
         nystroem = Nystroem(kernel="precomputed", n_components=X_xp.shape[0])
         X_xp_transformed = nystroem.fit_transform(K)
         X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), _convert_to_numpy(K, xp=xp))
+        assert_array_almost_equal(
+            np.dot(X_xp_transformed_np, X_xp_transformed_np.T),
+            _convert_to_numpy(K, xp=xp),
+        )
 
         # if degree, gamma or coef0 is passed, we raise a ValueError
         msg = "Don't pass gamma, coef0 or degree to Nystroem"

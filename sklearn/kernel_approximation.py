@@ -19,14 +19,12 @@ from sklearn.base import (
 from sklearn.metrics.pairwise import (
     KERNEL_PARAMS,
     PAIRWISE_KERNEL_FUNCTIONS,
+    _find_floating_dtype_allow_sparse,
     pairwise_kernels,
-    _find_floating_dtype_allow_sparse, 
 )
 from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
-    _is_numpy_namespace,
-    get_namespace,
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
