@@ -1376,10 +1376,10 @@ def test_n_features_in():
     "cols, pattern, include, exclude",
     [
         (["col_int", "col_float"], None, np.number, None),
-        (["col_int", "col_float"], None, None, object),
+        (["col_int", "col_float"], None, None, [object, "string"]),
         (["col_int", "col_float"], None, [int, float], None),
-        (["col_str"], None, [object], None),
-        (["col_str"], None, object, None),
+        (["col_str"], None, [object, "string"], None),
+        (["col_float"], None, [float], None),
         (["col_float"], None, float, None),
         (["col_float"], "at$", [np.number], None),
         (["col_int"], None, [int], None),
@@ -1387,7 +1387,12 @@ def test_n_features_in():
         (["col_float", "col_str"], "float|str", None, None),
         (["col_str"], "^col_s", None, [int]),
         ([], "str$", float, None),
-        (["col_int", "col_float", "col_str"], None, [np.number, object], None),
+        (
+            ["col_int", "col_float", "col_str"],
+            None,
+            [np.number, object, "string"],
+            None,
+        ),
     ],
 )
 def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude):
@@ -1423,7 +1428,7 @@ def test_column_transformer_with_make_column_selector():
     )
     X_df["col_str"] = X_df["col_str"].astype("category")
 
-    cat_selector = make_column_selector(dtype_include=["category", object])
+    cat_selector = make_column_selector(dtype_include=["category", object, "string"])
     num_selector = make_column_selector(dtype_include=np.number)
 
     ohe = OneHotEncoder()
@@ -2596,6 +2601,9 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
         transformer.fit_transform(df)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.skipif(
     parse_version(joblib.__version__) < parse_version("1.3"),
     reason="requires joblib >= 1.3",
