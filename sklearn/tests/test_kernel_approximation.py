@@ -344,12 +344,9 @@ def test_nystroem_approximation():
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
-        if (
-            kern != "laplacian"
-        ):  # Laplacian kernel not supported for non-numpy namespaces
-            trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
-            X_transformed = trans.fit(X).transform(X)
-            assert X_transformed.shape == (X.shape[0], 2)
+        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        X_transformed = trans.fit(X).transform(X)
+        assert X_transformed.shape == (X.shape[0], 2)
 
 
 @pytest.mark.parametrize(
@@ -360,7 +357,7 @@ def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
     # some basic tests
     rnd = np.random.RandomState(0)
     X_np = rnd.uniform(size=(10, 4))
-    X_xp = xp.asarray(X_np)
+    X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
         # With n_components = n_samples this is exact
@@ -381,9 +378,12 @@ def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
         # test that available kernels fit and transform
         kernels_available = kernel_metrics()
         for kern in kernels_available:
-            trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
-            X_xp_transformed = trans.fit(X_xp).transform(X_xp)
-            assert X_xp_transformed.shape == (X_xp.shape[0], 2)
+            if (
+            kern != "laplacian"
+        ):  # Laplacian kernel not supported for non-numpy namespaces
+                trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+                X_xp_transformed = trans.fit(X_xp).transform(X_xp)
+                assert X_xp_transformed.shape == (X_xp.shape[0], 2)
 
 
 def test_nystroem_default_parameters():
@@ -413,7 +413,7 @@ def test_nystroem_default_parameters_array_api(array_namespace, device, dtype_na
     xp = _array_api_for_tests(array_namespace, device)
     rnd = np.random.RandomState(42)
     X_np = rnd.uniform(size=(10, 4))
-    X_xp = xp.asarray(X_np)
+    X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
         # rbf kernel should behave as gamma=None by default
@@ -423,7 +423,7 @@ def test_nystroem_default_parameters_array_api(array_namespace, device, dtype_na
         X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
         K = rbf_kernel(X_xp, gamma=None)
         K2 = np.dot(X_xp_transformed_np, X_xp_transformed_np.T)
-        assert_array_almost_equal(K, K2)
+        assert_allclose(_convert_to_numpy(K, xp=xp), K2)
 
         # chi2 kernel should behave as gamma=1 by default
         nystroem = Nystroem(kernel="chi2", n_components=10)
@@ -431,7 +431,7 @@ def test_nystroem_default_parameters_array_api(array_namespace, device, dtype_na
         X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
         K = chi2_kernel(X_xp, gamma=1)
         K2 = np.dot(X_xp_transformed_np, X_xp_transformed_np.T)
-        assert_array_almost_equal(K, K2)
+        assert_allclose(_convert_to_numpy(K, xp=xp), K2)
 
 
 def test_nystroem_singular_kernel():
@@ -459,7 +459,7 @@ def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name)
     rng = np.random.RandomState(0)
     X_np = rng.rand(10, 20)
     X_np = np.vstack([X_np] * 2)  # duplicate samples
-    X_xp = xp.asarray(X_np)
+    X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
         gamma = 100
@@ -469,7 +469,7 @@ def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name)
 
         K = rbf_kernel(X_np, gamma=gamma)
 
-        assert_array_almost_equal(K, np.dot(X_xp_transformed_np, X_xp_transformed_np.T))
+        assert_array_almost_equal(_convert_to_numpy(K, xp=xp), X_xp_transformed_np@X_xp_transformed_np.T)
         assert np.all(np.isfinite(Y))
 
 
@@ -494,7 +494,7 @@ def test_nystroem_poly_kernel_params_array_api(array_namespace, device, dtype_na
     # Non-regression: Nystroem should pass other parameters beside gamma.
     rnd = np.random.RandomState(37)
     X_np = rnd.uniform(size=(10, 4))
-    X_xp = xp.asarray(X_np)
+    X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
         K = polynomial_kernel(X_np, degree=3.1, coef0=0.1)
@@ -564,14 +564,14 @@ def test_nystroem_precomputed_kernel_array_api(array_namespace, device, dtype_na
     xp = _array_api_for_tests(array_namespace, device)
     rnd = np.random.RandomState(12)
     X_np = rnd.uniform(size=(10, 4))
-    X_xp = xp.asarray(X_np)
+    X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
         K = polynomial_kernel(X_xp, degree=2, coef0=0.1)
         nystroem = Nystroem(kernel="precomputed", n_components=X_xp.shape[0])
         X_xp_transformed = nystroem.fit_transform(K)
         X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), K)
+        assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), _convert_to_numpy(K, xp=xp))
 
         # if degree, gamma or coef0 is passed, we raise a ValueError
         msg = "Don't pass gamma, coef0 or degree to Nystroem"

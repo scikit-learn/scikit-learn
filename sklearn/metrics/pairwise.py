@@ -59,9 +59,6 @@ def _return_float_dtype(X, Y):
 
     if Y is None:
         Y_dtype = X.dtype
-    elif not issparse(Y) and not isinstance(Y, np.ndarray):
-        Y = xp.asarray(Y)
-        Y_dtype = Y.dtype
     else:
         Y_dtype = Y.dtype
 

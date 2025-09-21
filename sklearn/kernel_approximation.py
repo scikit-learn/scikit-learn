@@ -20,12 +20,14 @@ from sklearn.metrics.pairwise import (
     KERNEL_PARAMS,
     PAIRWISE_KERNEL_FUNCTIONS,
     pairwise_kernels,
+    _find_floating_dtype_allow_sparse, 
 )
 from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     get_namespace,
+    get_namespace_and_device,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
@@ -34,37 +36,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
-
-# Utility Functions
-def _return_float_dtype(X, Y):
-    """
-    1. If dtype of X and Y is float32, then dtype float32 is returned.
-    2. Else dtype float is returned.
-    """
-    if not sp.issparse(X) and not isinstance(X, np.ndarray):
-        X = np.asarray(X)
-    if Y is None:
-        Y_dtype = X.dtype
-    elif not sp.issparse(Y) and not isinstance(Y, np.ndarray):
-        Y = np.asarray(Y)
-        Y_dtype = Y.dtype
-    else:
-        Y_dtype = Y.dtype
-    if X.dtype == Y_dtype == np.float32:
-        dtype = np.float32
-    else:
-        dtype = float
-    return X, Y, dtype
-
-
-def _find_floating_dtype_allow_sparse(X, Y, xp=None):
-    """Find matching floating type, allowing for sparse input."""
-    if any([sp.issparse(X), sp.issparse(Y)]) or _is_numpy_namespace(xp):
-        X, Y, dtype_float = _return_float_dtype(X, Y)
-    else:
-        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
-    return X, Y, dtype_float
 
 
 class PolynomialCountSketch(
@@ -1048,7 +1019,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Returns the instance itself.
         """
 
-        xp, _ = get_namespace(X)
+        xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
@@ -1067,7 +1038,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             n_components = self.n_components
         n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
-        basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64)
+        basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64, device=device)
         if sp.issparse(X):
             basis = X[basis_inds]
         else:
@@ -1083,12 +1054,12 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         # sqrt of kernel matrix on basis vectors
         _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
-        basis_kernel = xp.asarray(basis_kernel, dtype=dtype)
+        basis_kernel = xp.asarray(basis_kernel, dtype=dtype, device=device)
         U, S, V = xp.linalg.svd(basis_kernel)
-        S = xp.asarray(S, dtype=dtype)
-        S = xp.maximum(S, xp.asarray(1e-12, dtype=dtype))
-        U = xp.asarray(U, dtype=dtype)
-        V = xp.asarray(V, dtype=dtype)
+        S = xp.asarray(S, dtype=dtype, device=device)
+        S = xp.maximum(S, xp.asarray(1e-12, dtype=dtype, device=device))
+        U = xp.asarray(U, dtype=dtype, device=device)
+        V = xp.asarray(V, dtype=dtype, device=device)
         self.normalization_ = xp.matmul(U / xp.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = basis_inds
@@ -1113,7 +1084,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         """
         check_is_fitted(self)
 
-        xp, _ = get_namespace(X)
+        xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
@@ -1126,7 +1097,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             **kernel_params,
         )
         dtype = _find_matching_floating_dtype(embedded, xp=xp)
-        embedded = xp.asarray(embedded, dtype=dtype)
+        embedded = xp.asarray(embedded, dtype=dtype, device=device)
         return xp.matmul(embedded, self.normalization_.T)
 
     def _get_kernel_params(self):
