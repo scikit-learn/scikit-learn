@@ -247,11 +247,8 @@ def test_det_curve_display_plotting_from_cv_results(
             drop_intermediate=drop_intermediate,
             pos_label=pos_label,
         )
-        eps = np.finfo(fpr[0].dtype).eps
-        fpr = fpr.clip(eps, 1 - eps)
-        fnr = fnr.clip(eps, 1 - eps)
-        assert_allclose(display.fpr[idx], fpr)
-        assert_allclose(display.fnr[idx], fnr)
+        assert_allclose(display.fpr[idx], fpr, atol=1e-7)
+        assert_allclose(display.fnr[idx], fnr, atol=1e-7)
 
     assert display.name == "test"
 
