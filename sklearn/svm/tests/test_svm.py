@@ -1057,6 +1057,7 @@ def test_linearsvc_verbose():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
@@ -1078,6 +1079,7 @@ def test_svc_clone_with_callable_kernel():
         random_state=0,
         decision_function_shape="ovr",
     )
+
     svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_, svm_builtin.dual_coef_)
@@ -1219,6 +1221,7 @@ def test_hasattr_predict_proba(global_random_seed):
         G.predict_proba(iris.data)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_decision_function_shape_two_class(global_random_seed):
     for n_classes in [2, 3]:
         X, y = make_blobs(centers=n_classes, random_state=global_random_seed)

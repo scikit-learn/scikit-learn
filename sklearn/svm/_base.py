@@ -221,7 +221,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         probability = self.probability
         if self._impl in ["c_svc", "nu_svc"]:
-            est_dep = "SVC" if self._impl == "c_scv" else "NuSVC"
+            if self._impl == "nu_scv":
+                est_dep = "NuSVC"
+            else:
+                est_dep = "SVC"
             if self.probability != "deprecated":
                 warnings.warn(
                     f"parameter `probability` will be deprecated in version 1.8, "

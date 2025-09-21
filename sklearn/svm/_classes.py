@@ -1140,7 +1140,7 @@ class NuSVC(BaseSVC):
         gamma="scale",
         coef0=0.0,
         shrinking=True,
-        probability=False,
+        probability="deprecated",
         tol=1e-3,
         cache_size=200,
         class_weight=None,
