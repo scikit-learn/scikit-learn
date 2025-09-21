@@ -586,8 +586,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.DetCurveDisplay`
             Object that stores computed values.
         """
-        fpr, fnr, name = self._validate_plot_params(ax=ax, name=name)
-        n_curves = len(fpr)
+        self.fpr, self.fnr, name = self._validate_plot_params(ax=ax, name=name)
+        n_curves = len(self.fpr)
         if not isinstance(curve_kwargs, list) and n_curves > 1:
             legend_metric = {"mean": None, "std": None}
         else:
@@ -606,13 +606,13 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         # sp.stats.norm.ppf(0.0) = -np.inf
         # sp.stats.norm.ppf(1.0) = np.inf
         # We therefore clip to eps and 1 - eps to not provide infinity to matplotlib.
-        eps = np.finfo(fpr[0].dtype).eps
+        eps = np.finfo(self.fpr[0].dtype).eps
         for idx in range(n_curves):
-            fpr[idx] = fpr[idx].clip(eps, 1 - eps)
-            fnr[idx] = fnr[idx].clip(eps, 1 - eps)
+            self.fpr[idx] = self.fpr[idx].clip(eps, 1 - eps)
+            self.fnr[idx] = self.fnr[idx].clip(eps, 1 - eps)
 
         self.line_ = []
-        for fpr_curve, fnr_curve, line_kw in zip(fpr, fnr, curve_kwargs):
+        for fpr_curve, fnr_curve, line_kw in zip(self.fpr, self.fnr, curve_kwargs):
             self.line_.extend(
                 self.ax_.plot(
                     sp.stats.norm.ppf(fpr_curve),
