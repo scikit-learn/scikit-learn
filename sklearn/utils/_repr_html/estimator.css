@@ -14,19 +14,20 @@
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
 
-  /* Specific color for light theme */
-  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
-  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
-  --sklearn-color-icon: #696969;
-
-  @media (prefers-color-scheme: dark) {
-    /* Redefinition of color scheme for dark theme */
-    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
-    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
-    --sklearn-color-icon: #878787;
-  }
+  /* Replace media query with light-dark() function */
+  --sklearn-color-text-on-default-background: light-dark(
+    black,
+    white
+  );
+  --sklearn-color-background: light-dark(
+    white,
+    #111
+  );
+  --sklearn-color-border-box: light-dark(
+    black,
+    white
+  );
+  --sklearn-color-icon: light-dark(#696969, #878787);
 }
 
 #$id {
@@ -75,7 +76,7 @@ div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
   /* draw centered vertical line to link estimators */
-  background-image: linear-gradient(var(--sklearn-color-line));
+  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
   background-size: 2px 100%;
   background-repeat: no-repeat;
   background-position: center center;
@@ -86,7 +87,7 @@ div.sk-item {
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
-  border-bottom: 2px solid var(--sklearn-color-line);
+  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
 }
 
@@ -243,29 +244,17 @@ clickable and can be expanded/collapsed.
   color: var(--sklearn-color-text-on-default-background);
 }
 
-/* Label colors when unfitted */
-#$id div.sk-label label.sk-toggleable__label {
+/* On hover, darken the color of the background */
+#$id div.sk-label:hover label.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
   border-bottom: .005em solid grey;
 }
 
-/* Label colors when  fitted */
-#$id div.sk-label.fitted label.sk-toggleable__label.fitted {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-/* On hover, darken the color of the backgroundq, unfitted*/
-#$id div.sk-label:hover label.sk-toggleable__label {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-unfitted-level-1);
-}
-
-/* On hover, darken the color of the background, fitted */
+/* Label box, darken color on hover, fitted */
 #$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-fitted-level-1);
+  background-color: var(--sklearn-color-fitted-level-2);
 }
 
 /* Estimator label */
