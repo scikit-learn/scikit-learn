@@ -2941,7 +2941,7 @@ def train_test_split(
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
     xp, _, device = get_namespace_and_device(arrays[0])
-    train, test = move_to(train, test, xp_ref=xp, device_ref=device)
+    train, test = move_to(train, test, xp_reference=xp, device_reference=device)
 
     return list(
         chain.from_iterable(

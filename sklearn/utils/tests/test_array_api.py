@@ -120,7 +120,7 @@ def test_move_to_array_api_conversions():
     array_np = numpy.asarray([1, 2, 3], device=None)
 
     array_1_out, array_2_out = move_to(
-        array_cupy, array_np, xp_ref=xp_torch, device_ref=device_torch
+        array_cupy, array_np, xp_reference=xp_torch, device_referenceerence=device_torch
     )
     for array in (array_1_out, array_2_out):
         assert get_namespace(array) == xp_torch
@@ -138,21 +138,27 @@ def test_move_to_sparse():
     numpy_array = numpy.array([1, 2, 3])
 
     # sparse to numpy
-    result1, result2 = move_to(sparse1, sparse2, xp_ref=xp_numpy, device_ref=None)
+    result1, result2 = move_to(
+        sparse1, sparse2, xp_reference=xp_numpy, device_reference=None
+    )
     assert result1 is sparse1
     assert result2 is sparse2
 
     # sparse and None to numpy
-    result1, result2 = move_to(sparse1, None, xp_ref=xp_numpy, device_ref=None)
+    result1, result2 = move_to(
+        sparse1, None, xp_reference=xp_numpy, device_reference=None
+    )
     assert result1 is sparse1
     assert result2 is None
 
     # sparse to non-Numpy
     msg = "Array inputs cannot contain both sparse arrays and non-NumPy arrays"
     with pytest.raises(TypeError, match=msg):
-        move_to(sparse1, numpy_array, xp_ref=xp_torch, device_ref=device_cpu)
+        move_to(
+            sparse1, numpy_array, xp_reference=xp_torch, device_reference=device_cpu
+        )
     with pytest.raises(TypeError, match=msg):
-        move_to(sparse1, None, xp_ref=xp_torch, device_ref=device_cpu)
+        move_to(sparse1, None, xp_reference=xp_torch, device_reference=device_cpu)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
