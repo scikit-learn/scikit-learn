@@ -160,7 +160,7 @@ def test_label_propagation_build_graph_normalized(constructor, Estimator, parame
 
     clf = Estimator(kernel=kernel_affinity_matrix).fit(X, labels)
     graph = clf._build_graph()
-    assert_allclose(graph.sum(axis=1), 1)  # normalized
+    assert_allclose(graph.sum(axis=1), 1)  # normalized rows
 
     if issparse(graph):
         graph = graph.toarray()
