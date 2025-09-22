@@ -133,22 +133,19 @@ a.param-doc-link::before {
     font-size: smaller;
     cursor: pointer;
     background: var(--sklearn-color-fitted-level-1);
+    text-align: left;
 }
 
-.features table {
-    display: block;
+.features-container {
+    max-width: 15em;
     max-height: 10em;
-    overflow-y: auto;
-    width: 100%;
-    text-align: left;
+    overflow: auto;
     padding: .5em;
-
 }
 
 .features summary {
   position: sticky;
   top: 0;
-  z-index: 1;
   margin: 0;
   padding: .5em;
   border: .1em solid grey;
@@ -156,7 +153,6 @@ a.param-doc-link::before {
 
 .features td {
   text-align: left;
-  max-width: 10em;
   padding: 0;
   white-space: nowrap;
 

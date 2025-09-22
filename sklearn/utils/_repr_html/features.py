@@ -8,11 +8,13 @@ def _features_html(features):
           <details>
             <summary>{total_features} features
             </summary>
-            <table>
-              <tbody>
-               {rows}
-              </tbody>
-            </table>
+            <div class="features-container">
+              <table>
+                <tbody>
+                  {rows}
+                </tbody>
+              </table>
+            </div>
           </details>
         </div>
         <br>
