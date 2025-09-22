@@ -19,12 +19,10 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_clusterer,
-    is_outlier_detector,
     is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
@@ -267,21 +265,6 @@ def test_get_params():
 
     with pytest.raises(ValueError):
         test.set_params(a__a=2)
-
-
-# TODO(1.8): Remove this test when the deprecation is removed
-def test_is_estimator_type_class():
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_classifier(SVC)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_regressor(SVR)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_clusterer(KMeans)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_outlier_detector(IsolationForest)
 
 
 @pytest.mark.parametrize(
