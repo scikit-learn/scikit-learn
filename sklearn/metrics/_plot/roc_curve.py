@@ -708,8 +708,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         See Also
         --------
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
-            RocCurveDisplay.from_estimator : ROC Curve visualization given an
-            estimator and some data.
         RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
             (ROC) curve given an estimator and some data.
         RocCurveDisplay.from_predictions : ROC Curve visualization given the
