@@ -254,11 +254,14 @@ def _get_feature_importances(
     elif not callable(getter):
         raise ValueError("`importance_getter` has to be a string or `callable`")
 
-    param_names = list(inspect.signature(getter).parameters.keys())
-    if "feature_indices" in param_names:
-        importances = getter(estimator, feature_indices)
-    else:
+    if isinstance(getter, attrgetter):
         importances = getter(estimator)
+    else:
+        param_names = list(inspect.signature(getter).parameters.keys())
+        if "feature_indices" in param_names:
+            importances = getter(estimator, feature_indices)
+        else:
+            importances = getter(estimator)
 
     if transform_func is None:
         return importances
