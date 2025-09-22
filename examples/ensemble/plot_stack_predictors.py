@@ -138,8 +138,10 @@ for ax, (name, y_pred) in zip(axes, preds.items()):
     ax.set_title(name)
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    ax.legend(loc="best", frameon=False)
+    ax.legend(loc="lower right")
 
+plt.suptitle("Base models predictions versus stacked predictions", y=0.95)
+plt.tight_layout()
 plt.show()
 
 # %%
@@ -187,7 +189,7 @@ for ax, (name, est) in zip(
         ax.plot([], [], " ", label=f"{name}: {score}")
     ax.legend(loc="upper left")
 
-plt.suptitle("Single predictors versus stacked predictors")
+plt.suptitle("Prediction errors of base versus stacked predictors", y=1)
 plt.tight_layout()
 plt.subplots_adjust(top=0.9)
 plt.show()
