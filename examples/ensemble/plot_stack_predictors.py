@@ -54,11 +54,12 @@ _ = df.plot.scatter(x="X", y="y")
 # It is sometimes not evident which model is more suited for a given task, as
 # different model families can achieve similar performance while exhibiting
 # different strengths and weaknesses. Stacking combines their outputs to exploit
-# these complementary behaviors and can correct systematic errors that no
-# single model can fix on its own. With appropriate regularization in the
-# `final_estimator`, the :class:`~sklearn.ensemble.StackingRegressor` often matches the strongest base
-# model, and can outperform it when base learners' errors are only partially
-# correlated, allowing the combination to reduce individual bias/variance.
+# these complementary behaviors and can correct systematic errors that no single
+# model can fix on its own. With appropriate regularization in the
+# `final_estimator`, the :class:`~sklearn.ensemble.StackingRegressor` often
+# matches the strongest base model, and can outperform it when base learners'
+# errors are only partially correlated, allowing the combination to reduce
+# individual bias/variance.
 #
 # Here, we combine 3 learners (linear and non-linear) and use the default
 # :class:`~sklearn.linear_model.RidgeCV` regressor to combine their outputs
