@@ -2256,6 +2256,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    precision_recall_curve: [check_array_api_binary_classification_metric],
     recall_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
