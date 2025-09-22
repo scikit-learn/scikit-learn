@@ -82,7 +82,6 @@ def test_check_classification_targets():
     with pytest.raises(ValueError, match=msg):
         check_classification_targets(y)
 
-
 def test_conditional_attrs_not_in_dir():
     # Test that __dir__ includes only relevant attributes. #28558
 
@@ -1005,3 +1004,8 @@ def test_multiclass_estimator_attribute_error():
         clf.partial_fit(iris.data, iris.target)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+def test_type_of_target_integer_regression():
+    # Regression targets that are integers but cast to float
+    y = np.array([100000, 120000, 130000, 140000], dtype=float)
+    assert type_of_target(y) == "continuous"

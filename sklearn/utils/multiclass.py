@@ -406,10 +406,17 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
+        n_unique = len(cached_unique(data))
+        n_samples = data.shape[0]
+
         if xp.any(data != xp.astype(data, int)):
             _assert_all_finite(data, input_name=input_name)
             return "continuous" + suffix
-
+        
+        elif n_samples > 20 and n_unique > 0.5 * n_samples:
+            # Too many unique integer-like floats → likely regression
+            return "continuous" + suffix
+        
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
