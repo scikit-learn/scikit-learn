@@ -2185,7 +2185,7 @@ of 0.0.
     -0.552
 
 
-.. dropdown:: **D2 Brier score**
+.. dropdown:: D2 Brier score
 
    The :func:`d2_brier_score` function implements the special case
    of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
