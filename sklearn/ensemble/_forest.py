@@ -1184,16 +1184,6 @@ class RandomForestClassifier(ForestClassifier):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
-    splitter : {"best", "random"}, default="best"
-    The strategy used to choose the split at each node in the decision trees:
-    - "best" : selects the best possible split among all features.
-    - "random" : selects the best split randomly among a subset of features.
-    
-    Using "random" can help reduce overfitting by introducing randomness
-    in tree growth, which may slightly decrease variance at the cost of
-    a small increase in bias.
-
-
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
@@ -1214,6 +1204,16 @@ class RandomForestClassifier(ForestClassifier):
         .. versionchanged:: 0.22
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
+
+    splitter : {"best", "random"}, default="best"
+    Strategy used to choose the split at each node:
+
+    - "best"  : selects the best possible split among all features.
+    - "random": selects the best split randomly among a subset of features.
+
+    Using "random" can help reduce overfitting by introducing randomness
+    in tree growth, which may slightly decrease variance at the cost of
+    a small increase in bias.
 
     criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
