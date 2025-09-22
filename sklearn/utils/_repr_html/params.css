@@ -133,7 +133,6 @@ a.param-doc-link::before {
     font-size: smaller;
     cursor: pointer;
     background: var(--sklearn-color-fitted-level-1);
-    text-align: left;
 }
 
 .features-container {
@@ -155,5 +154,4 @@ a.param-doc-link::before {
   text-align: left;
   padding: 0;
   white-space: nowrap;
-
 }

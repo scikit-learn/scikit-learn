@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import html
+
 
 def _features_html(features):
     FEATURES_TABLE_TEMPLATE = """
@@ -26,7 +28,8 @@ def _features_html(features):
     total_features = len(features)
     rows = []
     for feature in features:
-        rows.append(FEATURES_ROW_TEMPLATE.format(feature=feature))
+        escaped_feature = html.escape(feature)
+        rows.append(FEATURES_ROW_TEMPLATE.format(feature=escaped_feature))
     return FEATURES_TABLE_TEMPLATE.format(
         total_features=total_features, rows="".join(rows)
     )
