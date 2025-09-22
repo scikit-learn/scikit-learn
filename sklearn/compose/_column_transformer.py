@@ -1289,7 +1289,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         # Here we don't care about which columns are used for which
         # transformers, and whether or not a transformer is used at all, which
         # might happen if no columns are selected for that transformer. We
