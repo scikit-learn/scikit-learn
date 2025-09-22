@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import warnings
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
@@ -196,7 +197,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return input_features[self.get_support()]
 
 
-def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
+def _get_feature_importances(
+    estimator, getter, feature_indices=None, transform_func=None, norm_order=1
+):
     """
     Retrieve and aggregate (ndim > 1)  the feature importances
     from an estimator. Also optionally applies transformation.
@@ -214,6 +217,14 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     transform_func : {"norm", "square"}, default=None
         The transform to apply to the feature importances. By default (`None`)
         no transformation is applied.
+
+    feature_indices : ndarray of shape (n_features,), default=None
+        The indices of features from the full dataset whose importance are currently
+        evaluated. These are passed to `getter` when it can accept them which allows
+        using RFE with permutation importance, as shown in this documentation example:
+
+        #TODO: create and link here a documentation example showing how to use
+        # `permutation_importance` with RFE(CV).
 
     norm_order : int, default=1
         The norm order to apply when `transform_func="norm"`. Only applied
@@ -243,7 +254,11 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     elif not callable(getter):
         raise ValueError("`importance_getter` has to be a string or `callable`")
 
-    importances = getter(estimator)
+    param_names = list(inspect.signature(getter).parameters.keys())
+    if "feature_indices" in param_names:
+        importances = getter(estimator, feature_indices)
+    else:
+        importances = getter(estimator)
 
     if transform_func is None:
         return importances
