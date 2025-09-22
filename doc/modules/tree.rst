@@ -441,11 +441,16 @@ scikit-learn implementation does not support categorical variables for now.
 Mathematical formulation
 ========================
 
+Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
+:math:`y \in R^l`, a decision tree recursively partitions the feature space
+such that the samples with the same labels or similar target values are grouped
 together.
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector :math:`y \in R^l`, a decision tree recursively partitions the feature space such that the samples with the same labels or similar target values are grouped together.
+Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`n_m`
+samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a
+feature :math:`j` and threshold :math:`t_m`, partition the data into
+:math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets
 
-Let the data at node :math:`m` be represented by :math:`Q_m` with :math:`n_m` samples. For each candidate split :math:`\theta = (j, t_m)` consisting of a feature :math:`j` and threshold :math:`t_m`, partition the data into :math:`Q_m^{left}(\theta)` and :math:`Q_m^{right}(\theta)` subsets.
 
 **How candidate splits are selected:**
 
