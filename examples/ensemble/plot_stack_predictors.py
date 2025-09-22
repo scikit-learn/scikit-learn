@@ -14,7 +14,7 @@ fixed (optionally user-specified) weights,
 `final_estimator`.
 
 In this example, we illustrate the use case in which different regressors are
-stacked together and a final linear penalized regressor is used to output the
+stacked together and a final regularized linear regressor is used to output the
 prediction. We compare the performance of each individual regressor with the
 stacking strategy. Here, stacking slightly improves the overall performance.
 
@@ -55,8 +55,8 @@ _ = df.plot.scatter(x="X", y="y")
 # different model families can achieve similar performance while exhibiting
 # different strengths and weaknesses. Stacking combines their outputs to exploit
 # these complementary behaviors and can correct systematic errors that no
-# individual model fixes alone. With appropriate regularization in the
-# `final_estimator`, the `StackingRegressor` often matches the strongest base
+# single model can fix on its own. With appropriate regularization in the
+# `final_estimator`, the :class:`~sklearn.ensemble.StackingRegressor` often matches the strongest base
 # model, and can outperform it when base learners' errors are only partially
 # correlated, allowing the combination to reduce individual bias/variance.
 #
@@ -102,7 +102,7 @@ stacking_regressor
 #
 # We can directly plot the predictions. Indeed, the sudden drop is correctly
 # described by the :class:`~sklearn.ensemble.HistGradientBoostingRegressor`
-# model, but the spline model is smoother and less overfitting. The stacked
+# model (HGBT), but the spline model is smoother and less overfitting. The stacked
 # regressor then turns to be a smoother version of the HGBT.
 
 import matplotlib.pyplot as plt
@@ -156,7 +156,7 @@ axs = np.ravel(axs)
 for ax, (name, est) in zip(
     axs, estimators + [("Stacking Regressor", stacking_regressor)]
 ):
-    scorers = {"R2": "r2", "MAE": "neg_mean_absolute_error"}
+    scorers = {r"$R^2$": "r2", "MAE": "neg_mean_absolute_error"}
 
     start_time = time.time()
     scores = cross_validate(est, X, y, scoring=list(scorers.values()), n_jobs=-1)
@@ -165,7 +165,8 @@ for ax, (name, est) in zip(
     y_pred = cross_val_predict(est, X, y, n_jobs=-1)
     scores = {
         key: (
-            f"{np.abs(np.mean(scores[f'test_{value}'])):.2f} +- "
+            f"{np.abs(np.mean(scores[f'test_{value}'])):.2f}"
+            r" $\pm$ "
             f"{np.std(scores[f'test_{value}']):.2f}"
         )
         for key, value in scorers.items()
