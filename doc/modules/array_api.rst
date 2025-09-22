@@ -112,8 +112,8 @@ Estimators and other tools in scikit-learn that support Array API compatible inp
 Estimators
 ----------
 
-- :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`,
-  `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
+- :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
+  `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.Binarizer`
