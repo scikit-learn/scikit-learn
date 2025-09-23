@@ -136,7 +136,7 @@ a.param-doc-link::before {
 }
 
 .features-container {
-    max-width: 15em;
+    max-width: 30em;
     max-height: 10em;
     overflow: auto;
     padding: .5em;
