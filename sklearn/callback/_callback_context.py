@@ -71,10 +71,10 @@ from sklearn.callback import AutoPropagatedCallback
 #
 #             # Do something
 #
-#         subcontext.eval_on_fit_task_end(
-#             estimator=self,
-#             data={"X_train": X, "y_train": y},
-#         )
+#             subcontext.eval_on_fit_task_end(
+#                 estimator=self,
+#                 data={"X_train": X, "y_train": y},
+#             )
 #
 #     return self
 #
