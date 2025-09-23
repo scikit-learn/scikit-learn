@@ -192,24 +192,20 @@ cdef class DensePartitioner:
         cdef:
             intp_t p = self.start
             intp_t partition_end = self.end
-            intp_t[::1] samples = self.samples
-            float32_t[::1] feature_values = self.feature_values
+            intp_t* samples = &self.samples[0]
+            float32_t* feature_values = &self.feature_values[0]
             bint go_to_left
 
         while p < partition_end:
-            if isnan(feature_values[p]):
-                go_to_left = missing_go_to_left
-            else:
-                go_to_left = feature_values[p] <= current_threshold
+            go_to_left = (
+                missing_go_to_left if isnan(feature_values[p])
+                else feature_values[p] <= current_threshold
+            )
             if go_to_left:
                 p += 1
             else:
                 partition_end -= 1
-
-                feature_values[p], feature_values[partition_end] = (
-                    feature_values[partition_end], feature_values[p]
-                )
-                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                swap(feature_values, samples, p, partition_end)
 
         return partition_end
 
@@ -229,25 +225,21 @@ cdef class DensePartitioner:
             # Local invariance: start <= p <= partition_end <= end
             intp_t p = self.start
             intp_t partition_end = self.end - 1
-            intp_t[::1] samples = self.samples
-            intp_t tmp
-            const float32_t[:, :] X = self.X
+            intp_t* samples = &self.samples[0]
             float32_t current_value
             bint go_to_left
 
         while p < partition_end:
-            current_value = X[samples[p], best_feature]
-            if isnan(current_value):
-                go_to_left = best_missing_go_to_left
-            else:
-                go_to_left = current_value <= best_threshold
+            current_value = self.X[samples[p], best_feature]
+            go_to_left = (
+                best_missing_go_to_left if isnan(current_value)
+                else current_value <= best_threshold
+            )
             if go_to_left:
                 p += 1
             else:
-                tmp = samples[p]
-                samples[p] = samples[partition_end]
-                samples[partition_end] = tmp
                 partition_end -= 1
+                samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
 
 @final
