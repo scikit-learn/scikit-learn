@@ -474,7 +474,7 @@ class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
     >>> kf = KFold(n_splits=2)
-    >>> kf.get_n_splits(X)
+    >>> kf.get_n_splits()
     2
     >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
@@ -579,7 +579,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> groups = np.array([0, 0, 2, 2, 3, 3])
     >>> group_kfold = GroupKFold(n_splits=2)
-    >>> group_kfold.get_n_splits(X, y, groups)
+    >>> group_kfold.get_n_splits()
     2
     >>> print(group_kfold)
     GroupKFold(n_splits=2, random_state=None, shuffle=False)
@@ -730,7 +730,7 @@ class StratifiedKFold(_BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> skf = StratifiedKFold(n_splits=2)
-    >>> skf.get_n_splits(X, y)
+    >>> skf.get_n_splits()
     2
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
@@ -944,7 +944,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> y = np.array([0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
     >>> sgkf = StratifiedGroupKFold(n_splits=3)
-    >>> sgkf.get_n_splits(X, y)
+    >>> sgkf.get_n_splits()
     3
     >>> print(sgkf)
     StratifiedGroupKFold(n_splits=3, random_state=None, shuffle=False)
@@ -1340,9 +1340,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     >>> y = np.array([1, 2, 1, 2])
     >>> groups = np.array([1, 1, 2, 2])
     >>> logo = LeaveOneGroupOut()
-    >>> logo.get_n_splits(X, y, groups)
-    2
-    >>> logo.get_n_splits(groups=groups)  # 'groups' is always required
+    >>> logo.get_n_splits(groups=groups)
     2
     >>> print(logo)
     LeaveOneGroupOut()
@@ -1462,9 +1460,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3])
     >>> lpgo = LeavePGroupsOut(n_groups=2)
-    >>> lpgo.get_n_splits(X, y, groups)
-    3
-    >>> lpgo.get_n_splits(groups=groups)  # 'groups' is always required
+    >>> lpgo.get_n_splits(groups=groups)
     3
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
@@ -1647,17 +1643,16 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : object
+        X : object, default=None
             Always ignored, exists for compatibility.
             ``np.zeros(n_samples)`` may be used as a placeholder.
 
-        y : object
+        y : object, default=None
             Always ignored, exists for compatibility.
             ``np.zeros(n_samples)`` may be used as a placeholder.
 
         groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -1699,7 +1694,7 @@ class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
-    >>> rkf.get_n_splits(X, y)
+    >>> rkf.get_n_splits()
     4
     >>> print(rkf)
     RepeatedKFold(n_repeats=2, n_splits=2, random_state=2652124)
@@ -1772,7 +1767,7 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     >>> y = np.array([0, 0, 1, 1])
     >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
     ...     random_state=36851234)
-    >>> rskf.get_n_splits(X, y)
+    >>> rskf.get_n_splits()
     4
     >>> print(rskf)
     RepeatedStratifiedKFold(n_repeats=2, n_splits=2, random_state=36851234)
@@ -2016,7 +2011,7 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1, 2, 1, 2])
     >>> rs = ShuffleSplit(n_splits=5, test_size=.25, random_state=0)
-    >>> rs.get_n_splits(X)
+    >>> rs.get_n_splits()
     5
     >>> print(rs)
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
@@ -2277,7 +2272,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 0, 1, 1, 1])
     >>> sss = StratifiedShuffleSplit(n_splits=5, test_size=0.5, random_state=0)
-    >>> sss.get_n_splits(X, y)
+    >>> sss.get_n_splits()
     5
     >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
