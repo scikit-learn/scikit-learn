@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sklearn.callback._callback_context import CallbackContext, get_task_info_path
+from sklearn.callback._callback_context import CallbackContext, get_context_path
 from sklearn.callback.tests._utils import (
     Estimator,
     MetaEstimator,
@@ -93,21 +93,21 @@ def test_task_tree():
     """Check that the task tree is correctly built."""
     root = _make_task_tree(n_children=3, n_grandchildren=5)
 
-    assert root._parent is None
-    assert len(get_task_info_path(root.task_info)) == 1
+    assert root.parent is None
+    assert len(get_context_path(root)) == 1
     assert len(root._children_map) == 3
 
     for child in root._children_map.values():
-        assert child._parent is root
-        assert len(get_task_info_path(child.task_info)) == 2
+        assert child.parent is root
+        assert len(get_context_path(child)) == 2
         assert len(child._children_map) == 5
-        assert root._max_subtasks == 3
+        assert root.max_subtasks == 3
 
         for grandchild in child._children_map.values():
-            assert grandchild._parent is child
-            assert len(get_task_info_path(grandchild.task_info)) == 3
+            assert grandchild.parent is child
+            assert len(get_context_path(grandchild)) == 3
             assert len(grandchild._children_map) == 0
-            assert child._max_subtasks == 5
+            assert child.max_subtasks == 5
 
     # 1 root + 1 * 3 children + 1 * 3 * 5 grandchildren
     expected_n_nodes = np.sum(np.cumprod([1, 3, 5]))
@@ -115,8 +115,8 @@ def test_task_tree():
     assert actual_n_nodes == expected_n_nodes
 
     # None of the nodes should have been merged with another node
-    assert all(node._prev_estimator_name is None for node in root)
-    assert all(node._prev_task_name is None for node in root)
+    assert all(node.prev_estimator_name is None for node in root)
+    assert all(node.prev_task_name is None for node in root)
 
 
 def test_add_child():
@@ -129,7 +129,7 @@ def test_add_child():
     root._add_child(
         CallbackContext._from_estimator(estimator, task_name="child task", task_id=0)
     )
-    assert root._max_subtasks == 2
+    assert root.max_subtasks == 2
     assert len(root._children_map) == 1
 
     # root already has a child with id 0
@@ -175,11 +175,11 @@ def test_merge_with():
     inner_root = CallbackContext._from_estimator(estimator, task_name="root", task_id=0)
     inner_root._merge_with(outer_child)
 
-    assert inner_root._parent is outer_root
-    assert inner_root._task_id == outer_child._task_id
+    assert inner_root.parent is outer_root
+    assert inner_root.task_id == outer_child.task_id
     assert outer_child not in outer_root._children_map.values()
     assert inner_root in outer_root._children_map.values()
 
     # The name and estimator name of the tasks it was merged with are stored
-    assert inner_root._prev_task_name == outer_child._task_name
-    assert inner_root._prev_estimator_name == outer_child._estimator_name
+    assert inner_root.prev_task_name == outer_child.task_name
+    assert inner_root.prev_estimator_name == outer_child.estimator_name

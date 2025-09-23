@@ -17,7 +17,7 @@ class Callback(Protocol):
             The estimator calling this callback hook.
         """
 
-    def _on_fit_task_end(self, estimator, task_info, **kwargs):
+    def _on_fit_task_end(self, estimator, context, **kwargs):
         """Method called at the end of each task of the estimator.
 
         Parameters
@@ -26,10 +26,8 @@ class Callback(Protocol):
             The estimator calling this callback hook. It might differ from the estimator
             passed to the `_on_fit_begin` method for auto-propagated callbacks.
 
-        task_info : dict
-            Available information about the task.
-            See :meth:`~sklearn.callback.CallbackContext.task_info` for a detailed
-            description of the keys of this dictionary.
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
 
         **kwargs : dict
             Information about the state of the fitting process at this task. Possible
@@ -63,7 +61,7 @@ class Callback(Protocol):
             Whether or not to stop the current level of iterations at this task.
         """
 
-    def _on_fit_end(self, estimator, task_info):
+    def _on_fit_end(self, estimator, context):
         """Method called at the end of the fit method of the estimator.
 
         Parameters
@@ -71,12 +69,10 @@ class Callback(Protocol):
         estimator : estimator instance
             The estimator calling this callback hook.
 
-        task_info : dict
-            Available information about the task. Here it's the whole `fit` task.
-            See :meth:`~sklearn.callback.CallbackContext.task_info` for a detailed
-            description of the keys of this dictionary. This is usually the
-            root of the task tree of the estimator but it can be an intermediate node
-            if the estimator is a sub-estimator of a meta-estimator.
+        context : `sklearn.callback.CallbackContext`
+            Context of the corresponding task. This is usually the root context of the
+            estimator but it can be an intermediate context if the estimator is a
+            sub-estimator of a meta-estimator.
         """
 
 

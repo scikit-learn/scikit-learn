@@ -4,7 +4,7 @@
 from multiprocessing import Manager
 from threading import Thread
 
-from sklearn.callback._callback_context import get_task_info_path
+from sklearn.callback._callback_context import get_context_path
 from sklearn.utils._optional_dependencies import check_rich_support
 
 
@@ -29,11 +29,11 @@ class ProgressBar:
         self.progress_monitor = RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
-    def _on_fit_task_end(self, estimator, task_info, **kwargs):
-        self._queue.put(task_info)
+    def _on_fit_task_end(self, estimator, context, **kwargs):
+        self._queue.put(context)
 
-    def _on_fit_end(self, estimator, task_info):
-        self._queue.put(task_info)
+    def _on_fit_end(self, estimator, context):
+        self._queue.put(context)
         self._queue.put(None)
         self.progress_monitor.join()
 
@@ -89,37 +89,39 @@ class RichProgressMonitor(Thread):
         )
 
         # Holds the root of the tree of rich tasks (i.e. progress bars) that will be
-        # created dynamically as the computation tree of the estimator is traversed.
+        # created dynamically as the task tree of the estimator is traversed.
         self.root_rich_task = None
 
         with self.progress_ctx:
-            while task_info := self.queue.get():
-                task_info_path = get_task_info_path(task_info)
-                self._update_task_tree(task_info_path)
+            while context := self.queue.get():
+                context_path = get_context_path(context)
+                self._update_task_tree(context_path)
                 self._update_tasks()
                 self.progress_ctx.refresh()
 
-    def _update_task_tree(self, task_info_path):
+    def _update_task_tree(self, context_path):
         """Update the tree of rich tasks from the path of a new task.
 
         A new rich task is created for the task and all its ancestors if needed.
         """
         curr_rich_task, parent_rich_task = None, None
 
-        for task_info in task_info_path:
-            if task_info["parent_task_info"] is None:  # root node
+        for context in context_path:
+            if context.parent is None:  # root node
                 if self.root_rich_task is None:
                     self.root_rich_task = RichTask(
-                        task_info, progress_ctx=self.progress_ctx
+                        context, progress_ctx=self.progress_ctx
                     )
                 curr_rich_task = self.root_rich_task
-            elif task_info["task_id"] not in parent_rich_task.children:
+            elif context.task_id not in parent_rich_task.children:
                 curr_rich_task = RichTask(
-                    task_info, progress_ctx=self.progress_ctx, parent=parent_rich_task
+                    context,
+                    progress_ctx=self.progress_ctx,
+                    parent=parent_rich_task,
                 )
-                parent_rich_task.children[task_info["task_id"]] = curr_rich_task
+                parent_rich_task.children[context.task_id] = curr_rich_task
             else:  # task already exists
-                curr_rich_task = parent_rich_task.children[task_info["task_id"]]
+                curr_rich_task = parent_rich_task.children[context.task_id]
             parent_rich_task = curr_rich_task
 
         # Mark the deepest task as finished (this is the one corresponding to the
@@ -159,10 +161,8 @@ class RichTask:
 
     Parameters
     ----------
-    task_info : dict
-        Available information about the estimator task for which this rich task is
-        created. See :meth:`~sklearn.callback.CallbackContext.task_info` for a detailed
-        description of the keys of this dictionary.
+    context : `sklearn.callback.CallbackContext` instance
+        Context of the estimator task for which this rich task is created.
 
     progress_ctx : `rich.Progress` instance
         The progress context to which this task belongs.
@@ -183,34 +183,30 @@ class RichTask:
         For a leaf, it's an empty dictionary.
     """
 
-    def __init__(self, task_info, progress_ctx, parent=None):
+    def __init__(self, context, progress_ctx, parent=None):
         self.parent = parent
         self.children = {}
         self.finished = False
         self.depth = 0 if parent is None else parent.depth + 1
 
-        if task_info["max_subtasks"] != 0:
-            description = self._format_task_description(task_info)
+        if context.max_subtasks != 0:
+            description = self._format_task_description(context)
             self.task_id = progress_ctx.add_task(
-                description, total=task_info["max_subtasks"]
+                description, total=context.max_subtasks
             )
 
-    def _format_task_description(self, task_info):
+    def _format_task_description(self, context):
         """Return a formatted description for the task."""
         colors = ["bright_magenta", "cyan", "dark_orange"]
 
         indent = f"{'  ' * self.depth}"
         style = f"[{colors[(self.depth) % len(colors)]}]"
 
-        task_desc = f"{task_info['estimator_name']} - {task_info['task_name']}"
-        id_mark = (
-            f" #{task_info['task_id']}"
-            if task_info["parent_task_info"] is not None
-            else ""
-        )
+        task_desc = f"{context.estimator_name} - {context.task_name}"
+        id_mark = f" #{context.task_id}" if context.parent is not None else ""
         prev_task_desc = (
-            f"{task_info['prev_estimator_name']} - {task_info['prev_task_name']} | "
-            if task_info["prev_estimator_name"] is not None
+            f"{context.prev_estimator_name} - {context.prev_task_name} | "
+            if context.prev_estimator_name is not None
             else ""
         )
 
