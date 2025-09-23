@@ -1828,12 +1828,14 @@ def test_criterion_copy():
             assert_array_equal(n_classes, n_classes_)
 
         for name, typename in CRITERIA_REG.items():
-            criteria = DecisionTreeRegressor(criterion=name).criterion
+            args = (n_outputs, n_samples)
+            if name == "absolute_error" or name == "pinball":
+                args = (*args, 0.5)
+            criteria = typename(*args)
             result = copy_func(criteria).__reduce__()
-            typename_, (n_outputs_, n_samples_), _ = result
+            typename_, args_, _ = result
             assert typename == typename_
-            assert n_outputs == n_outputs_
-            assert n_samples == n_samples_
+            assert args == args_
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
@@ -2925,13 +2927,13 @@ def test_pinball_loss_precomputation_function(q, global_random_seed):
         y = rng.uniform(size=(n, 1))
         w = rng.rand(n)
         indices = np.arange(n)
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
+        pb_losses = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
         expected = compute_prefix_losses_naive(y, w)
-        assert np.allclose(abs_errors, expected)
+        assert np.allclose(pb_losses, expected)
 
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
+        pb_losses = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
         expected = compute_prefix_losses_naive(y[::-1], w[::-1])[::-1]
-        assert np.allclose(abs_errors, expected)
+        assert np.allclose(pb_losses, expected)
 
         x = rng.rand(n)
         indices = np.argsort(x)
@@ -2939,10 +2941,10 @@ def test_pinball_loss_precomputation_function(q, global_random_seed):
         y_sorted = y[indices]
         w_sorted = w[indices]
 
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
+        pb_losses = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
         expected = compute_prefix_losses_naive(y_sorted, w_sorted)
-        assert np.allclose(abs_errors, expected)
+        assert np.allclose(pb_losses, expected)
 
-        abs_errors = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
+        pb_losses = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
         expected = compute_prefix_losses_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
-        assert np.allclose(abs_errors, expected)
+        assert np.allclose(pb_losses, expected)

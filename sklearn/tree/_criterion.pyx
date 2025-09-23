@@ -1322,7 +1322,7 @@ def _py_precompute_pinball_losses(
         ys, sample_weight, sample_indices, above, below,
         k, start, end, q, losses, quantiles
     )
-    return np.asarray(losses), np.asarray(quantiles)
+    return np.asarray(losses)
 
 
 cdef class Pinball(Criterion):
@@ -1575,10 +1575,10 @@ cdef class Pinball(Criterion):
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
 
-    # those 2 methods are copied from the RegressionCriterion abstract class:
     def __reduce__(self):
-        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
+        return (type(self), (self.n_outputs, self.n_samples, self.alpha), self.__getstate__())
 
+    # this method is copied from the RegressionCriterion abstract class:
     cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
         """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
         if dest[0] < lower_bound:

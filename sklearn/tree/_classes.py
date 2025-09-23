@@ -389,7 +389,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     args = (*args, self.pinball_alpha)
                 if self.criterion == "absolute_error":
                     # FIXME: this is coupled with code at a much lower level
-                    # because of some inheritance shenanigans with __cinit__
+                    # because of the inheritance behavior of __cinit__
                     args = (*args, 0.5)
                 criterion = CRITERIA_REG[self.criterion](*args)
         else:
