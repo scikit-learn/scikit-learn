@@ -457,8 +457,8 @@ def test_importances(global_random_seed):
 
     for name, Tree in CLF_TREES.items():
         n_fail = 0
-        # for robustness: run 5 times, allow at most one failure
-        for i in range(5):
+        # for robustness: run 10 times, allow at most two failures
+        for i in range(10):
             clf = Tree(random_state=global_random_seed + i)
             clf.fit(X, y)
             importances = clf.feature_importances_
@@ -467,7 +467,7 @@ def test_importances(global_random_seed):
             # Note: the informative features are the first ones
             if set(top) != set(range(n_informative)):
                 n_fail += 1
-        assert n_fail <= 1, f"Failed with {name}"
+        assert n_fail <= 2, f"Failed with {name}"
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)  # dfs builder
