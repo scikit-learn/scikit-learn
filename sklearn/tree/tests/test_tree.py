@@ -459,7 +459,7 @@ def test_importances(global_random_seed):
         n_fail = 0
         # for robustness: run 5 times, allow at most one failure
         for i in range(5):
-            clf = Tree(random_state=global_random_seed)
+            clf = Tree(random_state=global_random_seed + i)
             clf.fit(X, y)
             importances = clf.feature_importances_
             assert importances.shape[0] == n_features, f"Failed with {name}"
