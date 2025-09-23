@@ -13,3 +13,17 @@ all priceless contributions.
 
 We abide by the principles of openness, respect, and consideration of others of
 the Python Software Foundation: https://www.python.org/psf/codeofconduct/
+
+# Low Quality and AI Generated Contributions Policy
+
+Due to the burden put on maintainers, users submitting multiple low quality pull
+requests, or AI generated comments, reviews, issues, or pull requests, where the
+user does not show a good understanding of what they are posting, might be banned
+from the organisation.
+
+For more context, you can check out this blog post on [
+The Cost of AI in Open Source Maintenance
+](https://adrin.info/the-cost-of-ai-in-open-source-maintenance.html).
+
+If this happens to you and you believe it's been a mistake, you can reach us on
+`coc@scikit-learn.org`.
