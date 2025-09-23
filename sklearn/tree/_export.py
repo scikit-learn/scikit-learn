@@ -908,9 +908,8 @@ def export_graphviz(
     'digraph Tree {...
     """
     if feature_names is not None:
-        for name in feature_names:
-            if not isinstance(name, str):
-                raise ValueError("All feature names must be strings.")
+        if any((not isinstance(name, str) for name in feature_names)):
+            raise ValueError("All feature names must be strings.")
         feature_names = check_array(
             feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
