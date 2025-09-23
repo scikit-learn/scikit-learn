@@ -14,6 +14,7 @@ from sklearn.utils._orthogonal_polynomial import (  # noqa: F401
     Jacobi,
     Laguerre,
     Legendre,
+    Polynomial,
 )
 from sklearn.utils._param_validation import Integral, Interval, Iterable, StrOptions
 from sklearn.utils.validation import (
@@ -22,6 +23,11 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
+
+# Build a registry of names → classes
+_POLYNOMIAL_REGISTRY = {
+    cls.__name__.lower(): cls for cls in Polynomial.__subclasses__()
+}
 
 
 class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
@@ -247,18 +253,28 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
                 f"input features, got {len(polynomials)} but "
                 f"expected {n_features}"
             )
-        self.polynomials_ = list()
-        for j, polynomial in enumerate(polynomials):
-            try:
-                terms = polynomial.split("_")
-                poly = eval(f"{terms[0].capitalize()}")
-                params = [float(param) for param in terms[1:]]
-                self.polynomials_.append(poly() if len(params) == 0 else poly(*params))
-            except Exception:
+        self.polynomials_ = []
+        for j, poly_str in enumerate(polynomials):
+            terms = poly_str.split("_")
+            key = terms[0].lower()
+            poly_cls = _POLYNOMIAL_REGISTRY.get(key)
+            if poly_cls is None:
                 raise ValueError(
                     f"could not interpret the polynomial at index {j} "
-                    f"as a valid polynomial, got '{polynomial}'"
+                    f"as a valid polynomial, got '{poly_str}'"
                 )
+
+            # parse parameters (if any)
+            if len(terms) > 1:
+                try:
+                    params = [float(param) for param in terms[1:]]
+                except ValueError:
+                    raise ValueError(f"invalid parameters for polynomial '{poly_str}'")
+                poly = poly_cls(*params)
+            else:
+                poly = poly_cls()
+
+            self.polynomials_.append(poly)
 
         # generate multiindex set
         if self.multiindices is None:  # no multiindices were provided
