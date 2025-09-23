@@ -48,9 +48,39 @@ from sklearn.callback import AutoPropagatedCallback
 # └── step 1 | estimator fit
 #     └── <insert estimator task tree here>
 #
-# Concretely, the tree structure is created dynamically and held by an object named
-# `CallbackContext`. There's a context for each task and the context is responsible for
-# calling the callback hooks for its task and creating contexts for the child tasks.
+# Concretely, the tree structure is created dynamically and abstracted in an object
+# named `CallbackContext`. There's a context for each task and the context is
+# responsible for calling the callback hooks for its task and creating contexts for
+# the child tasks.
+#
+# This `CallbackContext` is the object that has to be used in the implementation of an
+# estimator to support callbacks. A context is created at the beginning of fit and
+# then sub-contexts are created for each child task.
+#
+# class MyEstimator(CallbackSupportMixin, BaseEstimator):
+#     def __init__(self, max_iter):
+#         self.max_iter = max_iter
+#
+#     @_fit_context()
+#     def fit(self, X, y):
+#         callback_ctx = self.init_callback_context(max_subtasks=self.max_iter)
+#         callback_ctx.eval_on_fit_begin(estimator=self)
+#
+#         for i in range(self.max_iter):
+#             subcontext = callback_ctx.subcontext(task_id=i)
+#
+#             # Do something
+#
+#         subcontext.eval_on_fit_task_end(
+#             estimator=self,
+#             data={"X_train": X, "y_train": y},
+#         )
+#
+#     return self
+#
+#
+# It's also an object that is passed to the callback hooks to give them information
+# about the task being executed and its position in the task tree.
 
 
 class CallbackContext:
@@ -145,7 +175,7 @@ class CallbackContext:
 
         Parameters
         ----------
-        parent_context : CallbackContext instance
+        parent_context : `CallbackContext` instance
             The parent context of the new context.
 
         task_name : str

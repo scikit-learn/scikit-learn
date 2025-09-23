@@ -48,9 +48,6 @@ class CallbackSupportMixin:
         callback_fit_ctx : CallbackContext
             The callback context for the estimator.
         """
-        # We don't initialize the callback context during _set_callbacks but in fit
-        # because in the future we might want to have callbacks in predict/transform
-        # which would require their own context.
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self, task_name=task_name, task_id=0, max_subtasks=max_subtasks
         )

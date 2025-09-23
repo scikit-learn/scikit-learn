@@ -69,7 +69,7 @@ class Callback(Protocol):
         estimator : estimator instance
             The estimator calling this callback hook.
 
-        context : `sklearn.callback.CallbackContext`
+        context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task. This is usually the root context of the
             estimator but it can be an intermediate context if the estimator is a
             sub-estimator of a meta-estimator.
