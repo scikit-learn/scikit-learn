@@ -1,17 +1,15 @@
-# Author: Peter Prettenhofer
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
 from libc.string cimport memset
 
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
-
 from scipy.sparse import issparse
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t
+# Note: _tree uses cimport numpy, cnp.import_array, so we need to include
+# numpy headers in the build configuration of this extension
 from ..tree._tree cimport Node
 from ..tree._tree cimport Tree
 from ..tree._utils cimport safe_realloc
@@ -30,7 +28,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     double *value,
     double scale,
     Py_ssize_t k,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -79,7 +77,7 @@ def _predict_regression_tree_stages_sparse(
     object[:, :] estimators,
     object X,
     double scale,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ):
     """Predicts output for regression tree inplace and adds scaled value to ``out[i, k]``.
 
@@ -167,7 +165,7 @@ def predict_stages(
     object[:, :] estimators,
     object X,
     double scale,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ):
     """Add predictions of ``estimators`` to ``out``.
 
@@ -214,7 +212,7 @@ def predict_stage(
     int stage,
     object X,
     double scale,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ):
     """Add predictions of ``estimators[stage]`` to ``out``.
 
@@ -227,8 +225,8 @@ def predict_stage(
 
 
 def _random_sample_mask(
-    cnp.npy_intp n_total_samples,
-    cnp.npy_intp n_total_in_bag,
+    intp_t n_total_samples,
+    intp_t n_total_in_bag,
     random_state
 ):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
@@ -250,11 +248,11 @@ def _random_sample_mask(
         An ndarray where ``n_total_in_bag`` elements are set to ``True``
         the others are ``False``.
     """
-    cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
-    cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
+    cdef float64_t[::1] rand = random_state.uniform(size=n_total_samples)
+    cdef uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
 
-    cdef cnp.npy_intp n_bagged = 0
-    cdef cnp.npy_intp i = 0
+    cdef intp_t n_bagged = 0
+    cdef intp_t i = 0
 
     for i in range(n_total_samples):
         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):

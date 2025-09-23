@@ -14,7 +14,7 @@ In general, many learning algorithms such as linear models benefit from standard
 (see :ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py`).
 If some outliers are present in the set, robust scalers or other transformers can
 be more appropriate. The behaviors of the different scalers, transformers, and
-normalizers on a dataset containing marginal outliers is highlighted in
+normalizers on a dataset containing marginal outliers are highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
 
@@ -57,16 +57,16 @@ dataset::
   StandardScaler()
 
   >>> scaler.mean_
-  array([1. ..., 0. ..., 0.33...])
+  array([1., 0., 0.33])
 
   >>> scaler.scale_
-  array([0.81..., 0.81..., 1.24...])
+  array([0.81, 0.81, 1.24])
 
   >>> X_scaled = scaler.transform(X_train)
   >>> X_scaled
-  array([[ 0.  ..., -1.22...,  1.33...],
-         [ 1.22...,  0.  ..., -0.26...],
-         [-1.22...,  1.22..., -1.06...]])
+  array([[ 0.  , -1.22,  1.33 ],
+         [ 1.22,  0.  , -0.267],
+         [-1.22,  1.22, -1.06 ]])
 
 ..
         >>> import numpy as np
@@ -118,7 +118,7 @@ or so that the maximum absolute value of each feature is scaled to unit size.
 This can be achieved using :class:`MinMaxScaler` or :class:`MaxAbsScaler`,
 respectively.
 
-The motivation to use this scaling include robustness to very small
+The motivation to use this scaling includes robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
 
 Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
@@ -147,10 +147,10 @@ It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
   >>> min_max_scaler.scale_
-  array([0.5       , 0.5       , 0.33...])
+  array([0.5       , 0.5       , 0.33])
 
   >>> min_max_scaler.min_
-  array([0.        , 0.5       , 0.33...])
+  array([0.        , 0.5       , 0.33])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
 full formula is::
@@ -219,28 +219,22 @@ of the data is likely to not work very well. In these cases, you can use
 :class:`RobustScaler` as a drop-in replacement instead. It uses
 more robust estimates for the center and range of your data.
 
-|details-start|
-**References**
-|details-split|
 
-Further discussion on the importance of centering and scaling data is
-available on this FAQ: `Should I normalize/standardize/rescale the data?
-<http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
+.. dropdown:: References
 
-|details-end|
+  Further discussion on the importance of centering and scaling data is
+  available on this FAQ: `Should I normalize/standardize/rescale the data?
+  <http://www.faqs.org/faqs/ai-faq/neural-nets/part2/section-16.html>`_
 
-|details-start|
-**Scaling vs Whitening**
-|details-split|
+.. dropdown:: Scaling vs Whitening
 
-It is sometimes not enough to center and scale the features
-independently, since a downstream model can further make some assumption
-on the linear independence of the features.
+  It is sometimes not enough to center and scale the features
+  independently, since a downstream model can further make some assumption
+  on the linear independence of the features.
 
-To address this issue you can use :class:`~sklearn.decomposition.PCA` with
-``whiten=True`` to further remove the linear correlation across features.
+  To address this issue you can use :class:`~sklearn.decomposition.PCA` with
+  ``whiten=True`` to further remove the linear correlation across features.
 
-|details-end|
 
 .. _kernel_centering:
 
@@ -255,62 +249,58 @@ followed by the removal of the mean in that space. In other words,
 :class:`KernelCenterer` computes the centered Gram matrix associated to a
 positive semidefinite kernel :math:`K`.
 
-|details-start|
-**Mathematical formulation**
-|details-split|
+.. dropdown:: Mathematical formulation
 
-We can have a look at the mathematical formulation now that we have the
-intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
-computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`,
-during the `fit` step. :math:`K` is defined by
+  We can have a look at the mathematical formulation now that we have the
+  intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
+  computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`,
+  during the `fit` step. :math:`K` is defined by
 
-.. math::
-  K(X, X) = \phi(X) . \phi(X)^{T}
+  .. math::
+    K(X, X) = \phi(X) . \phi(X)^{T}
 
-:math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A
-centered kernel :math:`\tilde{K}` is defined as:
+  :math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A
+  centered kernel :math:`\tilde{K}` is defined as:
 
-.. math::
-  \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
+  .. math::
+    \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
 
-where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the
-Hilbert space.
+  where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the
+  Hilbert space.
 
-Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
-function :math:`\phi(\cdot)` and center the data in this new space. However,
-kernels are often used because they allows some algebra calculations that
-avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
-can implicitly center as shown in Appendix B in [Scholkopf1998]_:
+  Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
+  function :math:`\phi(\cdot)` and center the data in this new space. However,
+  kernels are often used because they allow some algebra calculations that
+  avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
+  can implicitly center as shown in Appendix B in [Scholkopf1998]_:
 
-.. math::
-  \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+  .. math::
+    \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
-:math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
-all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
-`transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
+  :math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
+  all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
+  `transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
 
-.. math::
-  K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
+  .. math::
+    K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
 
-:math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
-:math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
-centering :math:`K_{test}` is done as:
+  :math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
+  :math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
+  centering :math:`K_{test}` is done as:
 
-.. math::
-  \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+  .. math::
+    \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
 
-:math:`1'_{\text{n}_{samples}}` is a matrix of shape
-`(n_samples_test, n_samples)` where all entries are equal to
-:math:`\frac{1}{\text{n}_{samples}}`.
+  :math:`1'_{\text{n}_{samples}}` is a matrix of shape
+  `(n_samples_test, n_samples)` where all entries are equal to
+  :math:`\frac{1}{\text{n}_{samples}}`.
 
-.. topic:: References
+  .. rubric:: References
 
   .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
     `"Nonlinear component analysis as a kernel eigenvalue problem."
     <https://www.mlpack.org/papers/kpca.pdf>`_
     Neural computation 10.5 (1998): 1299-1319.
-
-|details-end|
 
 .. _preprocessing_transformer:
 
@@ -356,21 +346,21 @@ with values between 0 and 1::
   array([ 4.3,  5.1,  5.8,  6.5,  7.9])
 
 This feature corresponds to the sepal length in cm. Once the quantile
-transformation applied, those landmarks approach closely the percentiles
+transformation is applied, those landmarks approach closely the percentiles
 previously defined::
 
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +SKIP
-  array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
+  array([ 0.00 ,  0.24,  0.49,  0.73,  0.99 ])
 
-This can be confirmed on a independent testing set with similar remarks::
+This can be confirmed on an independent testing set with similar remarks::
 
   >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +SKIP
   array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +SKIP
-  array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
+  array([ 0.01,  0.25,  0.46,  0.60 ,  0.94])
 
 Mapping to a Gaussian distribution
 ----------------------------------
@@ -383,54 +373,46 @@ possible in order to stabilize variance and minimize skewness.
 :class:`PowerTransformer` currently provides two such power transformations,
 the Yeo-Johnson transform and the Box-Cox transform.
 
-|details-start|
-**Yeo-Johnson transform**
-|details-split|
+.. dropdown:: Yeo-Johnson transform
 
-.. math::
-    x_i^{(\lambda)} =
-    \begin{cases}
-     [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
-    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
-    -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
-     - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
-    \end{cases}
+  .. math::
+      x_i^{(\lambda)} =
+      \begin{cases}
+      [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
+      \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+      -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
+      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
+      \end{cases}
 
-|details-end|
+.. dropdown:: Box-Cox transform
 
-|details-start|
-**Box-Cox transform**
-|details-split|
+  .. math::
+      x_i^{(\lambda)} =
+      \begin{cases}
+      \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+      \ln{(x_i)} & \text{if } \lambda = 0,
+      \end{cases}
 
-.. math::
-    x_i^{(\lambda)} =
-    \begin{cases}
-    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
-    \ln{(x_i)} & \text{if } \lambda = 0,
-    \end{cases}
+  Box-Cox can only be applied to strictly positive data. In both methods, the
+  transformation is parameterized by :math:`\lambda`, which is determined through
+  maximum likelihood estimation. Here is an example of using Box-Cox to map
+  samples drawn from a lognormal distribution to a normal distribution::
 
+    >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
+    >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
+    >>> X_lognormal
+    array([[1.28, 1.18 , 0.84 ],
+           [0.94, 1.60 , 0.388],
+           [1.35, 0.217, 1.09 ]])
+    >>> pt.fit_transform(X_lognormal)
+    array([[ 0.49 ,  0.179, -0.156],
+           [-0.051,  0.589, -0.576],
+           [ 0.69 , -0.849,  0.101]])
 
-Box-Cox can only be applied to strictly positive data. In both methods, the
-transformation is parameterized by :math:`\lambda`, which is determined through
-maximum likelihood estimation. Here is an example of using Box-Cox to map
-samples drawn from a lognormal distribution to a normal distribution::
+  While the above example sets the `standardize` option to `False`,
+  :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
+  to the transformed output by default.
 
-  >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
-  >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
-  >>> X_lognormal
-  array([[1.28..., 1.18..., 0.84...],
-         [0.94..., 1.60..., 0.38...],
-         [1.35..., 0.21..., 1.09...]])
-  >>> pt.fit_transform(X_lognormal)
-  array([[ 0.49...,  0.17..., -0.15...],
-         [-0.05...,  0.58..., -0.57...],
-         [ 0.69..., -0.84...,  0.10...]])
-
-While the above example sets the `standardize` option to `False`,
-:class:`PowerTransformer` will apply zero-mean, unit-variance normalization
-to the transformed output by default.
-
-|details-end|
 
 Below are examples of Box-Cox and Yeo-Johnson applied to various probability
 distributions.  Note that when applied to certain distributions, the power
@@ -488,9 +470,9 @@ operation on a single array-like dataset, either using the ``l1``, ``l2``, or
   >>> X_normalized = preprocessing.normalize(X, norm='l2')
 
   >>> X_normalized
-  array([[ 0.40..., -0.40...,  0.81...],
-         [ 1.  ...,  0.  ...,  0.  ...],
-         [ 0.  ...,  0.70..., -0.70...]])
+  array([[ 0.408, -0.408,  0.812],
+         [ 1.   ,  0.   ,  0.   ],
+         [ 0.   ,  0.707, -0.707]])
 
 The ``preprocessing`` module further provides a utility class
 :class:`Normalizer` that implements the same operation using the
@@ -508,19 +490,18 @@ This class is hence suitable for use in the early steps of a
 The normalizer instance can then be used on sample vectors as any transformer::
 
   >>> normalizer.transform(X)
-  array([[ 0.40..., -0.40...,  0.81...],
-         [ 1.  ...,  0.  ...,  0.  ...],
-         [ 0.  ...,  0.70..., -0.70...]])
+  array([[ 0.408, -0.408,  0.812],
+         [ 1.   ,  0.   ,  0.   ],
+         [ 0.   ,  0.707, -0.707]])
 
   >>> normalizer.transform([[-1.,  1., 0.]])
-  array([[-0.70...,  0.70...,  0.  ...]])
+  array([[-0.707,  0.707,  0.]])
 
 
 Note: L2 normalization is also known as spatial sign preprocessing.
 
-|details-start|
-**Sparse input**
-|details-split|
+.. dropdown:: Sparse input
+
   :func:`normalize` and :class:`Normalizer` accept **both dense array-like
   and sparse matrices from scipy.sparse as input**.
 
@@ -529,12 +510,11 @@ Note: L2 normalization is also known as spatial sign preprocessing.
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
 
-|details-end|
-
 .. _preprocessing_categorical_features:
 
 Encoding categorical features
 =============================
+
 Often features are not given as continuous values but categorical.
 For example a person could have features ``["male", "female"]``,
 ``["from Europe", "from US", "from Asia"]``,
@@ -694,7 +674,7 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
            [0., 1., 0., 0., 1., 0., 0.]])
 
 In the transformed `X`, the first column is the encoding of the feature with
-categories "male"/"female", while the remaining 6 columns is the encoding of
+categories "male"/"female", while the remaining 6 columns are the encoding of
 the 2 features with respectively 3 categories each.
 
 When `handle_unknown='ignore'` and `drop` is not None, unknown categories will
@@ -721,42 +701,39 @@ not dropped::
     >>> drop_enc.inverse_transform(X_trans)
     array([['female', None, None]], dtype=object)
 
-|details-start|
-**Support of categorical features with missing values**
-|details-split|
+.. dropdown:: Support of categorical features with missing values
 
-:class:`OneHotEncoder` supports categorical features with missing values by
-considering the missing values as an additional category::
+  :class:`OneHotEncoder` supports categorical features with missing values by
+  considering the missing values as an additional category::
 
-    >>> X = [['male', 'Safari'],
-    ...      ['female', None],
-    ...      [np.nan, 'Firefox']]
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
-    >>> enc.categories_
-    [array(['female', 'male', nan], dtype=object),
-     array(['Firefox', 'Safari', None], dtype=object)]
-    >>> enc.transform(X).toarray()
-    array([[0., 1., 0., 0., 1., 0.],
-           [1., 0., 0., 0., 0., 1.],
-           [0., 0., 1., 1., 0., 0.]])
+      >>> X = [['male', 'Safari'],
+      ...      ['female', None],
+      ...      [np.nan, 'Firefox']]
+      >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
+      >>> enc.categories_
+      [array(['female', 'male', nan], dtype=object),
+      array(['Firefox', 'Safari', None], dtype=object)]
+      >>> enc.transform(X).toarray()
+      array([[0., 1., 0., 0., 1., 0.],
+            [1., 0., 0., 0., 0., 1.],
+            [0., 0., 1., 1., 0., 0.]])
 
-If a feature contains both `np.nan` and `None`, they will be considered
-separate categories::
+  If a feature contains both `np.nan` and `None`, they will be considered
+  separate categories::
 
-    >>> X = [['Safari'], [None], [np.nan], ['Firefox']]
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
-    >>> enc.categories_
-    [array(['Firefox', 'Safari', None, nan], dtype=object)]
-    >>> enc.transform(X).toarray()
-    array([[0., 1., 0., 0.],
-           [0., 0., 1., 0.],
-           [0., 0., 0., 1.],
-           [1., 0., 0., 0.]])
+      >>> X = [['Safari'], [None], [np.nan], ['Firefox']]
+      >>> enc = preprocessing.OneHotEncoder(handle_unknown='error').fit(X)
+      >>> enc.categories_
+      [array(['Firefox', 'Safari', None, nan], dtype=object)]
+      >>> enc.transform(X).toarray()
+      array([[0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+            [1., 0., 0., 0.]])
 
-See :ref:`dict_feature_extraction` for categorical features that are
-represented as a dict, not as scalars.
+  See :ref:`dict_feature_extraction` for categorical features that are
+  represented as a dict, not as scalars.
 
-|details-end|
 
 .. _encoder_infrequent_categories:
 
@@ -780,8 +757,8 @@ enable the gathering of infrequent categories are `min_frequency` and
    input feature. `max_categories` includes the feature that combines
    infrequent categories.
 
-In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
-'snake'` are considered infrequent::
+In the following example with :class:`OrdinalEncoder`, the categories `'dog'`
+and `'snake'` are considered infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T
@@ -818,7 +795,7 @@ and missing values are encoded as 4.
          [3.],
          [4.]])
 
-Similarity, :class:`OneHotEncoder` can be configured to group together infrequent
+Similarly, :class:`OneHotEncoder` can be configured to group together infrequent
 categories::
 
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
@@ -886,7 +863,7 @@ infrequent::
           [0., 0., 1.]])
 
 If there are infrequent categories with the same cardinality at the cutoff of
-`max_categories`, then then the first `max_categories` are taken based on lexicon
+`max_categories`, then the first `max_categories` are taken based on lexicon
 ordering. In the following example, "b", "c", and "d", have the same cardinality
 and with `max_categories=2`, "b" and "c" are infrequent because they have a higher
 lexicon order.
@@ -910,66 +887,55 @@ cardinality, where one-hot encoding would inflate the feature space making it
 more expensive for a downstream model to process. A classical example of high
 cardinality categories are location based such as zip code or region.
 
-|details-start|
-**Binary classification targets**
-|details-split|
+.. dropdown:: Binary classification targets
 
-For the binary classification target, the target encoding is given by:
+  For the binary classification target, the target encoding is given by:
 
-.. math::
-    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
+  .. math::
+      S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
-where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
-number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
-the number of observations with category :math:`i`, :math:`n_Y` is the number of
-observations with :math:`Y=1`, :math:`n` is the number of observations, and
-:math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
-factor is given by:
+  where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
+  number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
+  the number of observations with category :math:`i`, :math:`n_Y` is the number of
+  observations with :math:`Y=1`, :math:`n` is the number of observations, and
+  :math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
+  factor is given by:
 
-.. math::
-    \lambda_i = \frac{n_i}{m + n_i}
+  .. math::
+      \lambda_i = \frac{n_i}{m + n_i}
 
-where :math:`m` is a smoothing factor, which is controlled with the `smooth`
-parameter in :class:`TargetEncoder`. Large smoothing factors will put more
-weight on the global mean. When `smooth="auto"`, the smoothing factor is
-computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
-:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
-:math:`\tau^2` is the global variance of `y`.
+  where :math:`m` is a smoothing factor, which is controlled with the `smooth`
+  parameter in :class:`TargetEncoder`. Large smoothing factors will put more
+  weight on the global mean. When `smooth="auto"`, the smoothing factor is
+  computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
+  :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
+  :math:`\tau^2` is the global variance of `y`.
 
-|details-end|
+.. dropdown:: Multiclass classification targets
 
-|details-start|
-**Multiclass classification targets**
-|details-split|
+  For multiclass classification targets, the formulation is similar to binary
+  classification:
 
-For multiclass classification targets, the formulation is similar to binary
-classification:
+  .. math::
+      S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
 
-.. math::
-    S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
+  where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
+  :math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
+  :math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
+  :math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
+  number of observations, and :math:`\lambda_i` is a shrinkage factor for category
+  :math:`i`.
 
-where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
-:math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
-:math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
-:math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
-number of observations, and :math:`\lambda_i` is a shrinkage factor for category
-:math:`i`.
+.. dropdown:: Continuous targets
 
-|details-end|
+  For continuous targets, the formulation is similar to binary classification:
 
-|details-start|
-**Continuous targets**
-|details-split|
+  .. math::
+      S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
 
-For continuous targets, the formulation is similar to binary classification:
+  where :math:`L_i` is the set of observations with category :math:`i` and
+  :math:`n_i` is the number of observations with category :math:`i`.
 
-.. math::
-    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
-
-where :math:`L_i` is the set of observations with category :math:`i` and
-:math:`n_i` is the number of observations with category :math:`i`.
-
-|details-end|
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
@@ -1005,21 +971,21 @@ encoding learned in :meth:`~TargetEncoder.fit_transform`.
   that are not seen during `fit` are encoded with the target mean, i.e.
   `target_mean_`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
 
-.. topic:: References
+.. rubric:: References
 
-  .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
-     categorical attributes in classification and prediction problems"
-     SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
+.. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+    categorical attributes in classification and prediction problems"
+    SIGKDD Explor. Newsl. 3, 1 (July 2001), 27-32. <10.1145/507533.507538>`
 
-  .. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
-     encoding outperforms traditional methods in supervised machine learning with
-     high cardinality features" Comput Stat 37, 2671–2692 (2022)
-     <10.1007/s00180-022-01207-6>`
+.. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
+    encoding outperforms traditional methods in supervised machine learning with
+    high cardinality features" Comput Stat 37, 2671-2692 (2022)
+    <10.1007/s00180-022-01207-6>`
 
 .. _preprocessing_discretization:
 
@@ -1097,11 +1063,11 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
   ['infant', 'kid', 'teen', 'adult', 'senior citizen']
   Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
+* :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
 
 .. _preprocessing_binarization:
 
@@ -1294,23 +1260,20 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 ``encode='onehot-dense'`` and ``n_bins = n_knots - 1`` if
 ``knots = strategy``.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
-    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-    * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
-      Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
+  * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
+    Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
-    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
-      spline function procedures in R <10.1186/s12874-019-0666-3>`.
-      BMC Med Res Methodol 19, 46 (2019).
+  * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
+    spline function procedures in R <10.1186/s12874-019-0666-3>`.
+    BMC Med Res Methodol 19, 46 (2019).
 
-|details-end|
 
 .. _function_transformer:
 

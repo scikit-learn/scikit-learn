@@ -1,3 +1,32 @@
+.. raw:: html
+
+  <style>
+    /* h3 headings on this page are the questions; make them rubric-like */
+    h3 {
+      font-size: 1rem;
+      font-weight: bold;
+      padding-bottom: 0.2rem;
+      margin: 2rem 0 1.15rem 0;
+      border-bottom: 1px solid var(--pst-color-border);
+    }
+
+    /* Increase top margin for first question in each section */
+    h2 + section > h3 {
+      margin-top: 2.5rem;
+    }
+
+    /* Make the headerlinks a bit more visible */
+    h3 > a.headerlink {
+      font-size: 0.9rem;
+    }
+
+    /* Remove the backlink decoration on the titles */
+    h2 > a.toc-backref,
+    h3 > a.toc-backref {
+      text-decoration: none;
+    }
+  </style>
+
 .. _faq:
 
 ==========================
@@ -9,8 +38,9 @@ Frequently Asked Questions
 Here we try to give some answers to questions that regularly pop up on the mailing list.
 
 .. contents:: Table of Contents
-   :local:
-   :depth: 2
+  :local:
+  :depth: 2
+
 
 About the project
 -----------------
@@ -32,14 +62,21 @@ Apart from scikit-learn, another popular one is `scikit-image <https://scikit-im
 Do you support PyPy?
 ^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn is regularly tested and maintained to work with
-`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
-a built-in just-in-time compiler).
+Due to limited maintainer resources and small number of users, using
+scikit-learn with `PyPy <https://pypy.org/>`_ (an alternative Python
+implementation with a built-in just-in-time compiler) is not officially
+supported.
 
-Note however that this support is still considered experimental and specific
-components might behave slightly differently. Please refer to the test
-suite of the specific module of interest for more details.
+How can I obtain permission to use the images in scikit-learn for my work?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The images contained in the `scikit-learn repository
+<https://github.com/scikit-learn/scikit-learn>`_ and the images generated within
+the `scikit-learn documentation <https://scikit-learn.org/stable/index.html>`_
+can be used via the `BSD 3-Clause License
+<https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>`_ for
+your work. Citations of scikit-learn are highly encouraged and appreciated. See
+:ref:`citing scikit-learn <citing-scikit-learn>`.
 
 Implementation decisions
 ------------------------
@@ -100,7 +137,7 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adding GPU support by default would introduce heavy harware-specific software
+Adding GPU support by default would introduce heavy hardware-specific software
 dependencies and existing algorithms would need to be reimplemented. This would
 make it both harder for the average user to install scikit-learn and harder for
 the developers to maintain the code.
@@ -144,21 +181,33 @@ discussed in :ref:`preprocessing_categorical_features`.
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
-Why does scikit-learn not directly work with, for example, :class:`pandas.DataFrame`?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note that recently, :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` gained native support for
+categorical features through the option `categorical_features="from_dtype"`. This
+option relies on inferring which columns of the data are categorical based on the
+:class:`pandas.CategoricalDtype` and :class:`polars.datatypes.Categorical` dtypes.
 
-The homogeneous NumPy and SciPy data objects currently expected are most
-efficient to process for most operations. Extensive work would also be needed
-to support Pandas categorical types. Restricting input to homogeneous
-types therefore reduces maintenance cost and encourages usage of efficient
-data structures.
+Does scikit-learn work natively with various types of dataframes?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Note however that :class:`~sklearn.compose.ColumnTransformer` makes it
-convenient to handle heterogeneous pandas dataframes by mapping homogeneous subsets of
-dataframe columns selected by name or dtype to dedicated scikit-learn transformers.
-Therefore :class:`~sklearn.compose.ColumnTransformer` are often used in the first
-step of scikit-learn pipelines when dealing
-with heterogeneous dataframes (see :ref:`pipeline` for more details).
+Scikit-learn has limited support for :class:`pandas.DataFrame` and
+:class:`polars.DataFrame`. Scikit-learn estimators can accept both these dataframe types
+as input, and scikit-learn transformers can output dataframes using the `set_output`
+API. For more details, refer to
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`.
+
+However, the internal computations in scikit-learn estimators rely on numerical
+operations that are more efficiently performed on homogeneous data structures such as
+NumPy arrays or SciPy sparse matrices. As a result, most scikit-learn estimators will
+internally convert dataframe inputs into these homogeneous data structures. Similarly,
+dataframe outputs are generated from these homogeneous data structures.
+
+Also note that :class:`~sklearn.compose.ColumnTransformer` makes it convenient to handle
+heterogeneous pandas dataframes by mapping homogeneous subsets of dataframe columns
+selected by name or dtype to dedicated scikit-learn transformers. Therefore
+:class:`~sklearn.compose.ColumnTransformer` are often used in the first step of
+scikit-learn pipelines when dealing with heterogeneous dataframes (see :ref:`pipeline`
+for more details).
 
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 for an example of working with heterogeneous (e.g. categorical and numeric) data.
@@ -251,6 +300,33 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
+What does the "spam" label for issues or pull requests mean?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "spam" label is an indication for reviewers that the issue or
+pull request may not have received sufficient effort or preparation
+from the author for a productive review. The maintainers are using this label
+as a way to deal with the increase of low value PRs and issues.
+
+If an issue or PR was labeled as spam and simultaneously closed, the decision
+is final. A common reason for this happening is when people open a PR for an
+issue that is still under discussion. Please wait for the discussion to
+converge before opening a PR.
+
+If your issue or PR was labeled as spam and not closed the following steps
+can increase the chances of the label being removed:
+
+- follow the :ref:`contribution guidelines <contributing>` and use the provided
+  issue and pull request templates
+- improve the formatting and grammar of the text of the title and description of the issue/PR
+- improve the diff to remove noise and unrelated changes
+- improve the issue or pull request title to be more descriptive
+- self review your code, especially if :ref:`you used AI tools to generate it <automated_contributions_policy>`
+- refrain from opening PRs that paraphrase existing code or documentation
+  without actually improving the correctness, clarity or educational
+  value of the existing code or documentation.
+
+
 .. _new_algorithms_inclusion_criteria:
 
 What are the inclusion criteria for new algorithms?
@@ -311,14 +387,25 @@ long-term maintenance issues in open-source software, look at
 Using scikit-learn
 ------------------
 
+How do I get started with scikit-learn?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are new to scikit-learn, or looking to strengthen your understanding,
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+See our :ref:`External Resources, Videos and Talks page <external_resources>`
+for more details.
+
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**For general machine learning questions**, please use
-`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
-<https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+* General machine learning questions: use `Cross Validated
+  <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
+
+* scikit-learn usage questions: use `Stack Overflow
+  <https://stackoverflow.com/questions/tagged/scikit-learn>`_ with the
+  ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 Please make sure to include a minimal reproduction code snippet (ideally shorter
 than 10 lines) that highlights your problem on a toy dataset (for instance from
@@ -337,9 +424,6 @@ reproduction script.
 
 For bug reports or feature requests, please make use of the
 `issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
-There is also a `scikit-learn Gitter channel
-<https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found.
 
 .. warning::
   Please do not email any authors directly to ask for assistance, report bugs,
@@ -417,8 +501,8 @@ Note that the example above uses the third-party edit distance package
 `leven <https://pypi.org/project/leven/>`_. Similar tricks can be used,
 with some care, for tree kernels, graph kernels, etc.
 
-Why do I sometime get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do I sometimes get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Several scikit-learn tools such as :class:`~model_selection.GridSearchCV` and
 :class:`~model_selection.cross_val_score` rely internally on Python's
@@ -465,7 +549,7 @@ program. Insert the following instructions in your main script::
 
         # call scikit-learn utils with n_jobs > 1 here
 
-You can find more default on the new start methods in the `multiprocessing
+You can find more details on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
 .. _faq_mkl_threading:

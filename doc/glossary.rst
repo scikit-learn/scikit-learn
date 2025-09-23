@@ -66,6 +66,7 @@ General Concepts
         It excludes:
 
         * a :term:`sparse matrix`
+        * a sparse array
         * an iterator
         * a generator
 
@@ -197,7 +198,8 @@ General Concepts
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
         available for external use through
-        :func:`utils.estimator_checks.check_estimator`, with most of the
+        :func:`utils.estimator_checks.check_estimator` or
+        :func:`utils.estimator_checks.parametrize_with_checks`, with most of the
         implementation in ``sklearn/utils/estimator_checks.py``.
 
         Note: Some exceptions to the common testing regime are currently
@@ -285,7 +287,26 @@ General Concepts
         Note that in this case, the precision can be platform dependent.
         The `numeric` dtype refers to accepting both `integer` and `floating`.
 
-        TODO: Mention efficiency and precision issues; casting policy.
+        When it comes to choosing between 64-bit dtype (i.e. `np.float64` and
+        `np.int64`) and 32-bit dtype (i.e. `np.float32` and `np.int32`), it
+        boils down to a trade-off between efficiency and precision. The 64-bit
+        types offer more accurate results due to their lower floating-point
+        error, but demand more computational resources, resulting in slower
+        operations and increased memory usage. In contrast, 32-bit types
+        promise enhanced operation speed and reduced memory consumption, but
+        introduce a larger floating-point error. The efficiency improvements are
+        dependent on lower level optimization such as vectorization,
+        single instruction multiple dispatch (SIMD), or cache optimization but
+        crucially on the compatibility of the algorithm in use.
+
+        Specifically, the choice of precision should account for whether the
+        employed algorithm can effectively leverage `np.float32`. Some
+        algorithms, especially certain minimization methods, are exclusively
+        coded for `np.float64`, meaning that even if `np.float32` is passed, it
+        triggers an automatic conversion back to `np.float64`. This not only
+        negates the intended computational savings but also introduces
+        additional overhead, making operations with `np.float32` unexpectedly
+        slower and more memory-intensive due to this extra conversion step.
 
     duck typing
         We try to apply `duck typing
@@ -387,8 +408,7 @@ General Concepts
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
+        Estimator tags describe certain capabilities of an estimator.  This would
         enable some runtime behaviors based on estimator inspection, but it
         also allows each estimator to be tested for appropriate invariances
         while being excepted from other :term:`common tests`.
@@ -396,15 +416,6 @@ General Concepts
         Some aspects of estimator tags are currently determined through
         the :term:`duck typing` of methods like ``predict_proba`` and through
         some special attributes on estimator objects:
-
-        .. glossary::
-
-            ``_estimator_type``
-                This string-valued attribute identifies an estimator as being a
-                classifier, regressor, etc. It is set by mixins such as
-                :class:`base.ClassifierMixin`, but needs to be more explicitly
-                adopted on a :term:`meta-estimator`.  Its value should usually be
-                checked by way of a helper such as :func:`base.is_classifier`.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -496,7 +507,7 @@ General Concepts
 
     joblib
         A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
-        facilite simple parallelism and caching.  Joblib is oriented towards
+        facilitate simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`. See :ref:`parallelism` for more
         information.
@@ -690,6 +701,9 @@ General Concepts
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
         number of rows in a data array :term:`X`.
+        Note that this definition is standard in machine learning and deviates from
+        statistics where it means *a set of individuals or objects collected or
+        selected*.
 
     sample property
     sample properties
@@ -733,7 +747,7 @@ General Concepts
     sparse matrix
     sparse graph
         A representation of two-dimensional numeric data that is more memory
-        efficient the corresponding dense numpy array where almost all elements
+        efficient than the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
         several underlying sparse data representations, or *formats*.
         Some formats are more efficient than others for particular tasks, and
@@ -837,8 +851,8 @@ Class APIs and Estimator Types
         strategy over the binary classification problem.
 
         Classifiers must store a :term:`classes_` attribute after fitting,
-        and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their :term:`_estimator_type` attribute.
+        and inherit from :class:`base.ClassifierMixin`, which sets
+        their corresponding :term:`estimator tags` correctly.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
@@ -926,8 +940,11 @@ Class APIs and Estimator Types
         :class:`ensemble.BaggingClassifier`.
 
         In a meta-estimator's :term:`fit` method, any contained estimators
-        should be :term:`cloned` before they are fit (although FIXME: Pipeline
-        and FeatureUnion do not do this currently). An exception to this is
+        should be :term:`cloned` before they are fit. 
+        
+        .. FIXME: Pipeline and FeatureUnion do not do this currently
+        
+        An exception to this is
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
@@ -981,8 +998,8 @@ Class APIs and Estimator Types
         A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
         with :term:`continuous` output values.
 
-        Regressors usually inherit from :class:`base.RegressorMixin`, which
-        sets their :term:`_estimator_type` attribute.
+        Regressors inherit from :class:`base.RegressorMixin`, which sets their
+        :term:`estimator tags` correctly.
 
         A regressor can be distinguished from other estimators with
         :func:`~base.is_regressor`.
@@ -1174,7 +1191,7 @@ Target Types
         :term:`multiclass` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
-        XXX: For simplicity, we may not always support string class labels
+        Note: For simplicity, we may not always support string class labels
         for multiclass multioutput, and integer class labels should be used.
 
         :mod:`~sklearn.multioutput` provides estimators which estimate multi-output
@@ -1367,7 +1384,7 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
-        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+        Note: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
@@ -1576,8 +1593,7 @@ functions or non-estimator constructors.
         estimators: some, but not all, use it to mean a single epoch (i.e. a
         pass over every sample in the data).
 
-        FIXME perhaps we should have some common tests about the relationship
-        between ConvergenceWarning and max_iter.
+        .. FIXME: perhaps we should have some common tests about the relationship between ConvergenceWarning and max_iter.
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
@@ -1597,7 +1613,7 @@ functions or non-estimator constructors.
         for some algorithms, an improper distance metric (one that does not
         obey the triangle inequality, such as Cosine Distance) may be used.
 
-        XXX: hierarchical clustering uses ``affinity`` with this meaning.
+        Note: Hierarchical clustering uses ``affinity`` with this meaning.
 
         We also use *metric* to refer to :term:`evaluation metrics`, but avoid
         using this sense as a parameter name.
@@ -1682,9 +1698,15 @@ functions or non-estimator constructors.
         objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
-        Specifies the score function to be maximized (usually by :ref:`cross
-        validation <cross_validation>`), or -- in some cases -- multiple score
-        functions to be reported. The score function can be a string accepted
+        Depending on the object, can specify:
+
+        * the score function to be maximized (usually by
+          :ref:`cross validation <cross_validation>`),
+        * the multiple score functions to be reported,
+        * the score function to be used to check early stopping, or
+        * for visualization related objects, the score function to output or plot
+
+        The score function can be a string accepted
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
         confused with an :term:`evaluation metric`, as the latter have a more
         diverse API.  ``scoring`` may also be set to None, in which case the
@@ -1695,8 +1717,7 @@ functions or non-estimator constructors.
         either as a list of unique strings, a dictionary with names as keys and
         callables as values or a callable that returns a dictionary. Note that
         this does *not* specify which score function is to be maximized, and
-        another parameter such as ``refit`` maybe used for this purpose.
-
+        another parameter such as ``refit`` may be used for this purpose.
 
         The ``scoring`` parameter is validated and interpreted using
         :func:`metrics.check_scoring`.
@@ -1737,7 +1758,7 @@ functions or non-estimator constructors.
 
         Other models, usually using gradient-based solvers, have a different
         behavior. They all expose a ``max_iter`` parameter. The reported
-        ``n_iter_`` corresponds to the number of iteration done during the last
+        ``n_iter_`` corresponds to the number of iterations done during the last
         call to ``fit`` and will be at most ``max_iter``. Thus, we do not
         consider the state of the estimator since the initialization.
 
@@ -1779,7 +1800,7 @@ See concept :term:`attribute`.
         the number of output features and :term:`n_features` is the number of
         input features.
 
-        See also :term:`components_` which is a similar attribute for linear
+        See also :term:`coef_` which is a similar attribute for linear
         predictors.
 
     ``coef_``
@@ -1840,12 +1861,11 @@ See concept :term:`sample property`.
         the weight.  Weights may be specified as floats, so that sample weights
         are usually equivalent up to a constant positive scaling factor.
 
-        FIXME  Is this interpretation always the case in practice? We have no
-        common tests.
+        .. FIXME: Is this interpretation always the case in practice? We have no common tests.
 
         Some estimators, such as decision trees, support negative weights.
-        FIXME: This feature or its absence may not be tested or documented in
-        many estimators.
+        
+        .. FIXME: This feature or its absence may not be tested or documented in many estimators.
 
         This is not entirely the case where other parameters of the model
         consider the number of samples in a region, as with ``min_samples`` in

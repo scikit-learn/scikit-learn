@@ -4,7 +4,7 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.10
   - numpy
   - blas
   - scipy
@@ -17,7 +17,9 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - scikit-image
   - seaborn
   - memory_profiler
@@ -25,13 +27,18 @@ dependencies:
   - sphinx
   - sphinx-gallery
   - sphinx-copybutton
-  - numpydoc
+  - numpydoc<1.9.0
   - sphinx-prompt
   - plotly
   - polars
   - pooch
   - sphinxext-opengraph
+  - sphinx-remove-toctrees
+  - sphinx-design
+  - pydata-sphinx-theme
+  - towncrier
+  - jupyterlite-sphinx
+  - jupyterlite-pyodide-kernel
   - pip
   - pip:
-    - jupyterlite-sphinx
-    - jupyterlite-pyodide-kernel
+    - sphinxcontrib-sass

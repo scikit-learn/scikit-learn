@@ -1,27 +1,21 @@
-"""
-This module implements multioutput regression and classification.
+"""Multioutput regression and classification.
 
 The estimators provided in this module are meta-estimators: they require
 a base estimator to be provided in their constructor. The meta-estimator
 extends single output estimators to multioutput estimators.
 """
 
-# Author: Tim Head <betatim@gmail.com>
-# Author: Hugo Bowne-Anderson <hugobowne@gmail.com>
-# Author: Chris Rivera <chris.richard.rivera@gmail.com>
-# Author: Michael Williamson
-# Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -30,25 +24,33 @@ from .base import (
     clone,
     is_classifier,
 )
-from .model_selection import cross_val_predict
-from .utils import Bunch, _print_elapsed_time, check_random_state
-from .utils._param_validation import HasMethods, StrOptions
-from .utils.metadata_routing import (
+from sklearn.model_selection import cross_val_predict
+from sklearn.utils import Bunch, check_random_state, get_tags
+from sklearn.utils._param_validation import HasMethods, Hidden, StrOptions
+from sklearn.utils._response import _get_response_values
+from sklearn.utils._user_interface import _print_elapsed_time
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from .utils.metaestimators import available_if
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import Parallel, delayed
-from .utils.validation import _check_method_params, check_is_fitted, has_fit_parameter
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_method_params,
+    _check_response_method,
+    check_is_fitted,
+    has_fit_parameter,
+    validate_data,
+)
 
 __all__ = [
-    "MultiOutputRegressor",
-    "MultiOutputClassifier",
     "ClassifierChain",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
     "RegressorChain",
 ]
 
@@ -153,7 +155,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         first_time = not hasattr(self, "estimators_")
 
-        y = self._validate_data(X="no_validation", y=y, multi_output=True)
+        y = validate_data(self, X="no_validation", y=y, multi_output=True)
 
         if y.ndim == 1:
             raise ValueError(
@@ -237,7 +239,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement a fit method")
 
-        y = self._validate_data(X="no_validation", y=y, multi_output=True)
+        y = validate_data(self, X="no_validation", y=y, multi_output=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -307,8 +309,12 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return np.asarray(y).T
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -324,11 +330,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
-            .add(callee="partial_fit", caller="partial_fit")
-            .add(callee="fit", caller="fit"),
+            .add(caller="partial_fit", callee="partial_fit")
+            .add(caller="fit", callee="fit"),
         )
         return router
 
@@ -396,7 +402,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> X, y = load_linnerud(return_X_y=True)
     >>> regr = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
     >>> regr.predict(X[[0]])
-    array([[176..., 35..., 57...]])
+    array([[176, 35.1, 57.1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
@@ -608,9 +614,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # FIXME
-        return {"_skip_test": True}
+        tags._skip_test = True
+        return tags
 
 
 def _available_if_base_estimator_has(attr):
@@ -620,7 +628,7 @@ def _available_if_base_estimator_has(attr):
     """
 
     def _check(self):
-        return hasattr(self.base_estimator, attr) or all(
+        return hasattr(self._get_estimator(), attr) or all(
             hasattr(est, attr) for est in self.estimators_
         )
 
@@ -629,26 +637,104 @@ def _available_if_base_estimator_has(attr):
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "base_estimator": [HasMethods(["fit", "predict"])],
+        "base_estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+        ],
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            Hidden(None),
+        ],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
         "verbose": ["boolean"],
     }
 
+    # TODO(1.9): Remove base_estimator
     def __init__(
-        self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
+        self,
+        estimator=None,
+        *,
+        order=None,
+        cv=None,
+        random_state=None,
+        verbose=False,
+        base_estimator="deprecated",
     ):
+        self.estimator = estimator
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
         self.verbose = verbose
 
+    # TODO(1.9): This is a temporary getter method to validate input wrt deprecation.
+    # It was only included to avoid relying on the presence of self.estimator_
+    def _get_estimator(self):
+        """Get and validate estimator."""
+
+        if self.estimator is not None and (self.base_estimator != "deprecated"):
+            raise ValueError(
+                "Both `estimator` and `base_estimator` are provided. You should only"
+                " pass `estimator`. `base_estimator` as a parameter is deprecated in"
+                " version 1.7, and will be removed in version 1.9."
+            )
+
+        if self.base_estimator != "deprecated":
+            warning_msg = (
+                "`base_estimator` as an argument was deprecated in 1.7 and will be"
+                " removed in 1.9. Use `estimator` instead."
+            )
+            warnings.warn(warning_msg, FutureWarning)
+            return self.base_estimator
+        else:
+            return self.estimator
+
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
             return None
         return f"({estimator_idx} of {n_estimators}) {processing_msg}"
+
+    def _get_predictions(self, X, *, output_method):
+        """Get predictions for each model in the chain."""
+        check_is_fitted(self)
+        X = validate_data(self, X, accept_sparse=True, reset=False)
+        Y_output_chain = np.zeros((X.shape[0], len(self.estimators_)))
+        Y_feature_chain = np.zeros((X.shape[0], len(self.estimators_)))
+
+        # `RegressorChain` does not have a `chain_method_` parameter so we
+        # default to "predict"
+        chain_method = getattr(self, "chain_method_", "predict")
+        hstack = sp.hstack if sp.issparse(X) else np.hstack
+        for chain_idx, estimator in enumerate(self.estimators_):
+            previous_predictions = Y_feature_chain[:, :chain_idx]
+            # if `X` is a scipy sparse dok_array, we convert it to a sparse
+            # coo_array format before hstacking, it's faster; see
+            # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039:
+            if sp.issparse(X) and not sp.isspmatrix(X) and X.format == "dok":
+                X = sp.coo_array(X)
+            X_aug = hstack((X, previous_predictions))
+
+            feature_predictions, _ = _get_response_values(
+                estimator,
+                X_aug,
+                response_method=chain_method,
+            )
+            Y_feature_chain[:, chain_idx] = feature_predictions
+
+            output_predictions, _ = _get_response_values(
+                estimator,
+                X_aug,
+                response_method=output_method,
+            )
+            Y_output_chain[:, chain_idx] = output_predictions
+
+        inv_order = np.empty_like(self.order_)
+        inv_order[self.order_] = np.arange(len(self.order_))
+        Y_output = Y_output_chain[:, inv_order]
+
+        return Y_output
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -672,7 +758,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
@@ -687,7 +773,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
 
-        self.estimators_ = [clone(self.base_estimator) for _ in range(Y.shape[1])]
+        self.estimators_ = [clone(self._get_estimator()) for _ in range(Y.shape[1])]
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -698,7 +784,19 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 X_aug = np.hstack((X, Y_pred_chain))
 
         elif sp.issparse(X):
-            Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
+            # TODO: remove this condition check when the minimum supported scipy version
+            # doesn't support sparse matrices anymore
+            if not sp.isspmatrix(X):
+                # if `X` is a scipy sparse dok_array, we convert it to a sparse
+                # coo_array format before hstacking, it's faster; see
+                # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039:
+                if X.format == "dok":
+                    X = sp.coo_array(X)
+                # in case that `X` is a sparse array we create `Y_pred_chain` as a
+                # sparse array format:
+                Y_pred_chain = sp.coo_array((X.shape[0], Y.shape[1]))
+            else:
+                Y_pred_chain = sp.coo_matrix((X.shape[0], Y.shape[1]))
             X_aug = sp.hstack((X, Y_pred_chain), format="lil")
 
         else:
@@ -711,6 +809,16 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
+
+        if hasattr(self, "chain_method"):
+            chain_method = _check_response_method(
+                self._get_estimator(),
+                self.chain_method,
+            ).__name__
+            self.chain_method_ = chain_method
+        else:
+            # `RegressorChain` does not have a `chain_method` parameter
+            chain_method = "predict"
 
         for chain_idx, estimator in enumerate(self.estimators_):
             message = self._log_message(
@@ -729,8 +837,15 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self.base_estimator, X_aug[:, :col_idx], y=y, cv=self.cv
+                    self._get_estimator(),
+                    X_aug[:, :col_idx],
+                    y=y,
+                    cv=self.cv,
+                    method=chain_method,
                 )
+                # `predict_proba` output is 2D, we use only output for classes[-1]
+                if cv_result.ndim > 1:
+                    cv_result = cv_result[:, 1]
                 if sp.issparse(X_aug):
                     X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
                 else:
@@ -751,25 +866,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y_pred : array-like of shape (n_samples, n_classes)
             The predicted values.
         """
-        check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=True, reset=False)
-        Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
-        for chain_idx, estimator in enumerate(self.estimators_):
-            previous_predictions = Y_pred_chain[:, :chain_idx]
-            if sp.issparse(X):
-                if chain_idx == 0:
-                    X_aug = X
-                else:
-                    X_aug = sp.hstack((X, previous_predictions))
-            else:
-                X_aug = np.hstack((X, previous_predictions))
-            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
+        return self._get_predictions(X, output_method="predict")
 
-        inv_order = np.empty_like(self.order_)
-        inv_order[self.order_] = np.arange(len(self.order_))
-        Y_pred = Y_pred_chain[:, inv_order]
-
-        return Y_pred
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        return tags
 
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
@@ -790,7 +892,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Parameters
     ----------
-    base_estimator : estimator
+    estimator : estimator
         The base estimator from which the classifier chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -820,6 +922,19 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
+    chain_method : {'predict', 'predict_proba', 'predict_log_proba', \
+            'decision_function'} or list of such str's, default='predict'
+
+        Prediction method to be used by estimators in the chain for
+        the 'prediction' features of previous estimators in the chain.
+
+        - if `str`, name of the method;
+        - if a list of `str`, provides the method names in order of
+          preference. The method used corresponds to the first method in
+          the list that is implemented by `base_estimator`.
+
+        .. versionadded:: 1.5
+
     random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
         chain order.
@@ -834,6 +949,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
+    base_estimator : estimator, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.7
+            `base_estimator` is deprecated and will be removed in 1.9.
+            Use `estimator` instead.
+
     Attributes
     ----------
     classes_ : list
@@ -845,6 +967,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     order_ : list
         The order of labels in the classifier chain.
+
+    chain_method_ : str
+        Prediction method used by estimators in the chain for the prediction
+        features.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
@@ -888,10 +1014,43 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [1., 0., 0.],
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
-    array([[0.8387..., 0.9431..., 0.4576...],
-           [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0626...]])
+    array([[0.8387, 0.9431, 0.4576],
+           [0.8878, 0.3684, 0.2640],
+           [0.0321, 0.9935, 0.0626]])
     """
+
+    _parameter_constraints: dict = {
+        **_BaseChain._parameter_constraints,
+        "chain_method": [
+            list,
+            tuple,
+            StrOptions(
+                {"predict", "predict_proba", "predict_log_proba", "decision_function"}
+            ),
+        ],
+    }
+
+    # TODO(1.9): Remove base_estimator from __init__
+    def __init__(
+        self,
+        estimator=None,
+        *,
+        order=None,
+        cv=None,
+        chain_method="predict",
+        random_state=None,
+        verbose=False,
+        base_estimator="deprecated",
+    ):
+        super().__init__(
+            estimator,
+            order=order,
+            cv=cv,
+            random_state=random_state,
+            verbose=verbose,
+            base_estimator=base_estimator,
+        )
+        self.chain_method = chain_method
 
     @_fit_context(
         # ClassifierChain.base_estimator is not validated yet
@@ -941,22 +1100,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_prob : array-like of shape (n_samples, n_classes)
             The predicted probabilities.
         """
-        X = self._validate_data(X, accept_sparse=True, reset=False)
-        Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
-        Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
-        for chain_idx, estimator in enumerate(self.estimators_):
-            previous_predictions = Y_pred_chain[:, :chain_idx]
-            if sp.issparse(X):
-                X_aug = sp.hstack((X, previous_predictions))
-            else:
-                X_aug = np.hstack((X, previous_predictions))
-            Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
-            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        inv_order = np.empty_like(self.order_)
-        inv_order[self.order_] = np.arange(len(self.order_))
-        Y_prob = Y_prob_chain[:, inv_order]
-
-        return Y_prob
+        return self._get_predictions(X, output_method="predict_proba")
 
     def predict_log_proba(self, X):
         """Predict logarithm of probability estimates.
@@ -988,23 +1132,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             Returns the decision function of the sample for each model
             in the chain.
         """
-        X = self._validate_data(X, accept_sparse=True, reset=False)
-        Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
-        Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
-        for chain_idx, estimator in enumerate(self.estimators_):
-            previous_predictions = Y_pred_chain[:, :chain_idx]
-            if sp.issparse(X):
-                X_aug = sp.hstack((X, previous_predictions))
-            else:
-                X_aug = np.hstack((X, previous_predictions))
-            Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
-            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-
-        inv_order = np.empty_like(self.order_)
-        inv_order[self.order_] = np.arange(len(self.order_))
-        Y_decision = Y_decision_chain[:, inv_order]
-
-        return Y_decision
+        return self._get_predictions(X, output_method="decision_function")
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -1020,14 +1148,20 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+
+        router = MetadataRouter(owner=self).add(
+            estimator=self._get_estimator(),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
-    def _more_tags(self):
-        return {"_skip_test": True, "multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # FIXME
+        tags._skip_test = True
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        return tags
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
@@ -1043,7 +1177,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Parameters
     ----------
-    base_estimator : estimator
+    estimator : estimator
         The base estimator from which the regressor chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -1087,6 +1221,13 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
+    base_estimator : estimator, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.7
+            `base_estimator` is deprecated and will be removed in 1.9.
+            Use `estimator` instead.
+
     Attributes
     ----------
     estimators_ : list
@@ -1117,9 +1258,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     --------
     >>> from sklearn.multioutput import RegressorChain
     >>> from sklearn.linear_model import LogisticRegression
-    >>> logreg = LogisticRegression(solver='lbfgs',multi_class='multinomial')
+    >>> logreg = LogisticRegression(solver='lbfgs')
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
-    >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
     array([[0., 2.],
            [1., 1.],
@@ -1169,11 +1310,15 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+
+        router = MetadataRouter(owner=self).add(
+            estimator=self._get_estimator(),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        return tags

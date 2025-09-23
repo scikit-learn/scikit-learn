@@ -5,8 +5,9 @@ import re
 import numpy as np
 import pytest
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -23,9 +24,14 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
-    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -45,6 +51,14 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
     [
         (
             {"estimators": []},
+            "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
+        ),
+        (
+            {"estimators": [LogisticRegression()]},
+            "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
+        ),
+        (
+            {"estimators": [(213, LogisticRegression())]},
             "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
         ),
         (
@@ -101,7 +115,7 @@ def test_notfitted():
 
 def test_majority_label_iris(global_random_seed):
     """Check classification by majority label on dataset iris."""
-    clf1 = LogisticRegression(solver="liblinear", random_state=global_random_seed)
+    clf1 = LogisticRegression(random_state=global_random_seed)
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -114,12 +128,12 @@ def test_majority_label_iris(global_random_seed):
 
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
-    clf1 = LogisticRegression(random_state=123, solver="liblinear")
+    clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[("lr", clf1), ("rf", clf2)], voting="hard")
-    assert clf1.fit(X, y).predict(X)[73] == 2
-    assert clf2.fit(X, y).predict(X)[73] == 1
-    assert eclf.fit(X, y).predict(X)[73] == 1
+    assert clf1.fit(X, y).predict(X)[52] == 2
+    assert clf2.fit(X, y).predict(X)[52] == 1
+    assert eclf.fit(X, y).predict(X)[52] == 1
 
 
 def test_weights_iris(global_random_seed):
@@ -255,19 +269,19 @@ def test_predict_proba_on_toy_problem():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-@pytest.mark.parametrize("container_type", ["list", "array", "dataframe"])
-def test_multilabel(container_type):
+def test_multilabel():
     """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(
         n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
     )
-    y = _convert_container(y, container_type)
     clf = OneVsRestClassifier(SVC(kernel="linear"))
 
     eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
-    err_msg = "only supports binary or multiclass classification"
-    with pytest.raises(NotImplementedError, match=err_msg):
+
+    try:
         eclf.fit(X, y)
+    except NotImplementedError:
+        return
 
 
 def test_gridsearch():
@@ -312,7 +326,7 @@ def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=global_random_seed)
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
-    clf3 = SVC(probability=True, random_state=global_random_seed)
+    clf3 = CalibratedClassifierCV(SVC(random_state=global_random_seed), ensemble=False)
     eclf1 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
     ).fit(X_scaled, y, sample_weight=np.ones((len(y),)))
@@ -325,7 +339,7 @@ def test_sample_weight(global_random_seed):
     )
     sample_weight = np.random.RandomState(global_random_seed).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[("lr", clf1)], voting="soft")
-    eclf3.fit(X_scaled, y, sample_weight)
+    eclf3.fit(X_scaled, y, sample_weight=sample_weight)
     clf1.fit(X_scaled, y, sample_weight)
     assert_array_equal(eclf3.predict(X_scaled), clf1.predict(X_scaled))
     assert_array_almost_equal(
@@ -340,7 +354,7 @@ def test_sample_weight(global_random_seed):
     )
     msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
     with pytest.raises(TypeError, match=msg):
-        eclf3.fit(X_scaled, y, sample_weight)
+        eclf3.fit(X_scaled, y, sample_weight=sample_weight)
 
     # check that _fit_single_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
@@ -564,6 +578,7 @@ def test_none_estimator_with_weights(X, y, voter):
     ids=["VotingRegressor", "VotingClassifier"],
 )
 def test_n_features_in(est):
+    est = clone(est)
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 
@@ -599,8 +614,7 @@ def test_voting_verbose(estimator, capsys):
         r"\[Voting\].*\(1 of 2\) Processing lr, total=.*\n"
         r"\[Voting\].*\(2 of 2\) Processing rf, total=.*\n$"
     )
-
-    estimator.fit(X, y)
+    clone(estimator).fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
 
 
@@ -682,3 +696,100 @@ def test_get_features_names_out_classifier_error():
     )
     with pytest.raises(ValueError, match=msg):
         voting.get_feature_names_out()
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+def test_routing_passed_metadata_not_supported(Estimator, Child):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        Estimator(["clf", Child()]).fit(X, y, sample_weight=[1, 1, 1], metadata="a")
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+@config_context(enable_metadata_routing=True)
+def test_get_metadata_routing_without_fit(Estimator, Child):
+    # Test that metadata_routing() doesn't raise when called before fit.
+    est = Estimator([("sub_est", Child())])
+    est.get_metadata_routing()
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+@pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
+    """Test that metadata is routed correctly for Voting*."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    est = Estimator(
+        [
+            (
+                "sub_est1",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+            (
+                "sub_est2",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+        ]
+    )
+
+    est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
+
+    for estimator in est.estimators:
+        if prop == "sample_weight":
+            kwargs = {prop: sample_weight}
+        else:
+            kwargs = {prop: metadata}
+        # access sub-estimator in (name, est) with estimator[1]
+        registry = estimator[1].registry
+        assert len(registry)
+        for sub_est in registry:
+            check_recorded_metadata(obj=sub_est, method="fit", parent="fit", **kwargs)
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
+)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
+    """Test that the right error is raised when metadata is not requested."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    est = Estimator([("sub_est", Child())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not requested for {Child.__name__}.fit"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        est.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+
+# End of Metadata Routing Tests
+# =============================

@@ -1,6 +1,7 @@
 """
 Test the fastica algorithm.
 """
+
 import itertools
 import os
 import warnings
@@ -12,7 +13,7 @@ from scipy import stats
 from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose, ignore_warnings
 
 
 def center_and_norm(x, axis=-1):
@@ -31,10 +32,10 @@ def center_and_norm(x, axis=-1):
     x /= x.std(axis=0)
 
 
-def test_gs():
+def test_gs(global_random_seed):
     # Test gram schmidt orthonormalization
     # generate a random orthogonal  matrix
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
@@ -79,7 +80,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
         pytest.xfail(
             "FastICA instability with Ubuntu Atlas build with float32 "
             "global_dtype. For more details, see "
-            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
+            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"
         )
 
     # Test the FastICA algorithm on very simple data.
@@ -187,11 +188,11 @@ def test_fastica_nowhiten():
     assert hasattr(ica, "mixing_")
 
 
-def test_fastica_convergence_fail():
+def test_fastica_convergence_fail(global_random_seed):
     # Test the FastICA algorithm on very simple data
     # (see test_non_square_fastica).
     # Ensure a ConvergenceWarning raised if the tolerance is sufficiently low.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 1000
     # Generate two sources:
@@ -218,9 +219,9 @@ def test_fastica_convergence_fail():
 
 
 @pytest.mark.parametrize("add_noise", [True, False])
-def test_non_square_fastica(add_noise):
+def test_non_square_fastica(global_random_seed, add_noise):
     # Test the FastICA algorithm on very simple data.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 1000
     # Generate two sources:
@@ -366,17 +367,17 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
-        ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
+        ValueError, match=r"w_init has invalid shape.+should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
 
 
-def test_fastica_whiten_unit_variance():
+def test_fastica_whiten_unit_variance(global_random_seed):
     """Test unit variance of transformed data using FastICA algorithm.
 
     Bug #13056
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
     ica = FastICA(n_components=n_components, whiten="unit-variance", random_state=0)
@@ -447,5 +448,10 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     X = A @ A.T
     ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
     msg = "There are some small singular values"
+
     with pytest.warns(UserWarning, match=msg):
-        ica.fit(X)
+        with ignore_warnings(category=ConvergenceWarning):
+            # The FastICA solver may not converge for some data with specific
+            # random seeds but this happens after the whiten step so this is
+            # not want we want to test here.
+            ica.fit(X)

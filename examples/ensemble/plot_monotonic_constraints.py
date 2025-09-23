@@ -19,6 +19,10 @@ This example was inspired by the `XGBoost documentation
 <https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html>`_.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np

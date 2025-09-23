@@ -14,17 +14,18 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
-  - setuptools
-  - pytest-cov
+  - pip
+  - ninja
+  - meson-python
+  - pytest-cov<=6.3.0
   - coverage
   - ccache
-  - meson-python
-  - pip
-  - pytorch=1.13
+  - pytorch
   - pytorch-cpu
   - polars
   - pyarrow
-  - array-api-compat
+  - array-api-strict
+  - scipy-doctest

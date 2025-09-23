@@ -1,8 +1,7 @@
-"""Utilities for the neural network modules
-"""
+"""Utilities for the neural network modules"""
 
-# Author: Issam H. Laradji <issam.laradji@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy.special import expit as logistic_sigmoid
@@ -19,6 +18,17 @@ def inplace_identity(X):
         and `n_features` is the number of features.
     """
     # Nothing to do
+
+
+def inplace_exp(X):
+    """Compute the exponential inplace.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+    np.exp(X, out=X)
 
 
 def inplace_logistic(X):
@@ -69,6 +79,7 @@ def inplace_softmax(X):
 
 ACTIVATIONS = {
     "identity": inplace_identity,
+    "exp": inplace_exp,
     "tanh": inplace_tanh,
     "logistic": inplace_logistic,
     "relu": inplace_relu,
@@ -154,7 +165,7 @@ DERIVATIVES = {
 }
 
 
-def squared_loss(y_true, y_pred):
+def squared_loss(y_true, y_pred, sample_weight=None):
     """Compute the squared loss for regression.
 
     Parameters
@@ -165,15 +176,47 @@ def squared_loss(y_true, y_pred):
     y_pred : array-like or label indicator matrix
         Predicted values, as returned by a regression estimator.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
     Returns
     -------
     loss : float
         The degree to which the samples are correctly predicted.
     """
-    return ((y_true - y_pred) ** 2).mean() / 2
+    return (
+        0.5 * np.average((y_true - y_pred) ** 2, weights=sample_weight, axis=0).mean()
+    )
 
 
-def log_loss(y_true, y_prob):
+def poisson_loss(y_true, y_pred, sample_weight=None):
+    """Compute (half of the) Poisson deviance loss for regression.
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or label indicator matrix
+        Predicted values, as returned by a regression estimator.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        The degree to which the samples are correctly predicted.
+    """
+    # TODO: Decide what to do with the term `xlogy(y_true, y_true) - y_true`. For now,
+    # it is included. But the _loss module doesn't use it (for performance reasons) and
+    # only adds it as return of constant_to_optimal_zero (mainly for testing).
+    return np.average(
+        xlogy(y_true, y_true / y_pred) - y_true + y_pred, weights=sample_weight, axis=0
+    ).sum()
+
+
+def log_loss(y_true, y_prob, sample_weight=None):
     """Compute Logistic loss for classification.
 
     Parameters
@@ -184,6 +227,9 @@ def log_loss(y_true, y_prob):
     y_prob : array-like of float, shape = (n_samples, n_classes)
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
 
     Returns
     -------
@@ -198,10 +244,10 @@ def log_loss(y_true, y_prob):
     if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
-    return -xlogy(y_true, y_prob).sum() / y_prob.shape[0]
+    return -np.average(xlogy(y_true, y_prob), weights=sample_weight, axis=0).sum()
 
 
-def binary_log_loss(y_true, y_prob):
+def binary_log_loss(y_true, y_prob, sample_weight=None):
     """Compute binary logistic loss for classification.
 
     This is identical to log_loss in binary classification case,
@@ -216,6 +262,9 @@ def binary_log_loss(y_true, y_prob):
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
     Returns
     -------
     loss : float
@@ -223,14 +272,16 @@ def binary_log_loss(y_true, y_prob):
     """
     eps = np.finfo(y_prob.dtype).eps
     y_prob = np.clip(y_prob, eps, 1 - eps)
-    return (
-        -(xlogy(y_true, y_prob).sum() + xlogy(1 - y_true, 1 - y_prob).sum())
-        / y_prob.shape[0]
-    )
+    return -np.average(
+        xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob),
+        weights=sample_weight,
+        axis=0,
+    ).sum()
 
 
 LOSS_FUNCTIONS = {
     "squared_error": squared_loss,
+    "poisson": poisson_loss,
     "log_loss": log_loss,
     "binary_log_loss": binary_log_loss,
 }

@@ -1,30 +1,29 @@
-""" Dictionary learning.
-"""
-# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause
+"""Dictionary learning."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import sys
 import time
 from numbers import Integral, Real
-from warnings import warn
 
 import numpy as np
 from joblib import effective_n_jobs
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
-from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.extmath import randomized_svd, row_norms, svd_flip
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted
+from sklearn.linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from sklearn.utils import check_array, check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _randomized_svd, row_norms, svd_flip
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _check_positive_coding(method, positive):
@@ -147,6 +146,7 @@ def _sparse_encode_precomputed(
             alpha=alpha,
             fit_intercept=False,
             precompute=gram,
+            tol=1e-8,  # TODO: This parameter should be exposed.
             max_iter=max_iter,
             warm_start=True,
             positive=positive,
@@ -357,14 +357,11 @@ def sparse_encode(
            [ 0.,  1.,  1.,  0.,  0.]])
     """
     if check_input:
-        if algorithm == "lasso_cd":
-            dictionary = check_array(
-                dictionary, order="C", dtype=[np.float64, np.float32]
-            )
-            X = check_array(X, order="C", dtype=[np.float64, np.float32])
-        else:
-            dictionary = check_array(dictionary)
-            X = check_array(X)
+        order = "C" if algorithm == "lasso_cd" else None
+        dictionary = check_array(
+            dictionary, order=order, dtype=[np.float64, np.float32]
+        )
+        X = check_array(X, order=order, dtype=[np.float64, np.float32])
 
     if dictionary.shape[1] != X.shape[1]:
         raise ValueError(
@@ -422,7 +419,7 @@ def _sparse_encode(
             regularization = 1.0
 
     if gram is None and algorithm != "threshold":
-        gram = np.dot(dictionary, dictionary.T)
+        gram = np.dot(dictionary, dictionary.T).astype(X.dtype, copy=False)
 
     if cov is None and algorithm != "lasso_cd":
         copy_cov = False
@@ -664,6 +661,15 @@ def _dict_learning(
         return code, dictionary, errors
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "return_code": ["boolean"],
+        "method": [StrOptions({"cd", "lars"})],
+        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=False,
+)
 def dict_learning_online(
     X,
     n_components=2,
@@ -704,7 +710,7 @@ def dict_learning_online(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data matrix.
 
     n_components : int or None, default=2
@@ -719,10 +725,6 @@ def dict_learning_online(
         stopping independently of any early stopping criterion heuristics.
 
         .. versionadded:: 1.1
-
-        .. deprecated:: 1.4
-           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
-           Use the default value (i.e. `100`) instead.
 
     return_code : bool, default=True
         Whether to also return the code U or just the dictionary `V`.
@@ -838,7 +840,7 @@ def dict_learning_online(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.53...
+    np.float64(0.53)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -846,19 +848,8 @@ def dict_learning_online(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.05...
+    np.float64(0.053)
     """
-    # TODO(1.6): remove in 1.6
-    if max_iter is None:
-        warn(
-            (
-                "`max_iter=None` is deprecated in version 1.4 and will be removed in "
-                "version 1.6. Use the default value (i.e. `100`) instead."
-            ),
-            FutureWarning,
-        )
-        max_iter = 100
-
     transform_algorithm = "lasso_" + method
 
     est = MiniBatchDictionaryLearning(
@@ -1040,7 +1031,7 @@ def dict_learning(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.6...
+    np.float64(0.62)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1048,7 +1039,7 @@ def dict_learning(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.01...
+    np.float64(0.0192)
     """
     estimator = DictionaryLearning(
         n_components=n_components,
@@ -1101,7 +1092,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         if hasattr(self, "alpha") and self.transform_alpha is None:
             transform_alpha = self.alpha
@@ -1148,6 +1139,44 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         """
         check_is_fitted(self)
         return self._transform(X, self.components_)
+
+    def _inverse_transform(self, code, dictionary):
+        """Private method allowing to accommodate both DictionaryLearning and
+        SparseCoder."""
+        code = check_array(code)
+        # compute number of expected features in code
+        expected_n_components = dictionary.shape[0]
+        if self.split_sign:
+            expected_n_components += expected_n_components
+        if not code.shape[1] == expected_n_components:
+            raise ValueError(
+                "The number of components in the code is different from the "
+                "number of components in the dictionary."
+                f"Expected {expected_n_components}, got {code.shape[1]}."
+            )
+        if self.split_sign:
+            n_samples, n_features = code.shape
+            n_features //= 2
+            code = code[:, :n_features] - code[:, n_features:]
+
+        return code @ dictionary
+
+    def inverse_transform(self, X):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_components)
+            Data to be transformed back. Must have the same number of
+            components as the data used to train the model.
+
+        Returns
+        -------
+        X_original : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
+        check_is_fitted(self)
+        return self._inverse_transform(X, self.components_)
 
 
 class SparseCoder(_BaseSparseCoding, BaseEstimator):
@@ -1270,7 +1299,18 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            [ 0.,  1.,  1.,  0.,  0.]])
     """
 
-    _required_parameters = ["dictionary"]
+    _parameter_constraints: dict = {
+        "dictionary": ["array-like"],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "split_sign": ["boolean"],
+        "n_jobs": [Integral, None],
+        "positive_code": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -1295,16 +1335,17 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         )
         self.dictionary = dictionary
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validate the parameters of the estimator.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the parameters of the estimator and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
-        X : Ignored
-            Not used, present for API consistency by convention.
+        X : array-like of shape (n_samples, n_features)
+            Training data. Only used for input validation.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -1314,6 +1355,13 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        X = validate_data(self, X)
+        self.n_components_ = self.dictionary.shape[0]
+        if X.shape[1] != self.dictionary.shape[1]:
+            raise ValueError(
+                "Dictionary and X have different numbers of features:"
+                f"dictionary.shape: {self.dictionary.shape} X.shape{X.shape}"
+            )
         return self
 
     def transform(self, X, y=None):
@@ -1324,7 +1372,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -1338,21 +1386,27 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return super()._transform(X, self.dictionary)
 
-    def _more_tags(self):
-        return {
-            "requires_fit": False,
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def inverse_transform(self, X):
+        """Transform data back to its original space.
 
-    @property
-    def n_components_(self):
-        """Number of atoms."""
-        return self.dictionary.shape[0]
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_components)
+            Data to be transformed back. Must have the same number of
+            components as the data used to train the model.
 
-    @property
-    def n_features_in_(self):
-        """Number of features seen during `fit`."""
-        return self.dictionary.shape[1]
+        Returns
+        -------
+        X_original : ndarray of shape (n_samples, n_features)
+            Transformed data.
+        """
+        return self._inverse_transform(X, self.dictionary)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     @property
     def _n_features_out(self):
@@ -1522,7 +1576,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ----------
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/~fbach/mairal_icml09.pdf)
 
     Examples
     --------
@@ -1542,7 +1596,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.52...
+    np.float64(0.527)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1550,7 +1604,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.05...
+    np.float64(0.056)
     """
 
     _parameter_constraints: dict = {
@@ -1662,7 +1716,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         method = "lasso_" + self.fit_algorithm
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -1697,10 +1751,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1734,10 +1788,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         stopping independently of any early stopping criterion heuristics.
 
         .. versionadded:: 1.1
-
-        .. deprecated:: 1.4
-           `max_iter=None` is deprecated in 1.4 and will be removed in 1.6.
-           Use the default value (i.e. `1_000`) instead.
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
@@ -1887,7 +1937,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ----------
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/~fbach/mairal_icml09.pdf)
 
     Examples
     --------
@@ -1905,7 +1955,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0) > 0.5
-    True
+    np.True_
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1913,13 +1963,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.052...
+    np.float64(0.052)
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
     """
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left"), Hidden(None)],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "fit_algorithm": [StrOptions({"cd", "lars"})],
         "n_jobs": [None, Integral],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
@@ -2008,7 +2061,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self.dict_init
         else:
             # Init V with SVD of X
-            _, S, dictionary = randomized_svd(
+            _, S, dictionary = _randomized_svd(
                 X, self._n_components, random_state=random_state
             )
             dictionary = S[:, np.newaxis] * dictionary
@@ -2168,8 +2221,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", copy=False
+        X = validate_data(
+            self, X, dtype=[np.float64, np.float32], order="C", copy=False
         )
 
         self._check_params(X)
@@ -2195,19 +2248,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
-        # TODO(1.6): remove in 1.6
-        if self.max_iter is None:
-            warn(
-                (
-                    "`max_iter=None` is deprecated in version 1.4 and will be removed"
-                    " in version 1.6. Use the default value (i.e. `1_000`) instead."
-                ),
-                FutureWarning,
-            )
-            max_iter = 1_000
-        else:
-            max_iter = self.max_iter
-
         # Attributes to monitor the convergence
         self._ewa_cost = None
         self._ewa_cost_min = None
@@ -2216,7 +2256,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
         n_steps_per_iter = int(np.ceil(n_samples / self._batch_size))
-        n_steps = max_iter * n_steps_per_iter
+        n_steps = self.max_iter * n_steps_per_iter
 
         i = -1  # to allow max_iter = 0
 
@@ -2265,8 +2305,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", reset=not has_components
+        X = validate_data(
+            self, X, dtype=[np.float64, np.float32], order="C", reset=not has_components
         )
 
         if not has_components:
@@ -2295,7 +2335,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

@@ -1,6 +1,9 @@
+import inspect
+from collections import defaultdict
 from functools import partial
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.base import (
     BaseEstimator,
@@ -18,31 +21,35 @@ from sklearn.utils._metadata_requests import (
 )
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
+    MethodMapping,
     process_routing,
 )
 from sklearn.utils.multiclass import _check_partial_fit_first_call
 
 
-def record_metadata(obj, method, record_default=True, **kwargs):
-    """Utility function to store passed metadata to a method.
+def record_metadata(obj, record_default=True, **kwargs):
+    """Utility function to store passed metadata to a method of obj.
 
     If record_default is False, kwargs whose values are "default" are skipped.
     This is so that checks on keyword arguments whose default was not changed
     are skipped.
 
     """
+    stack = inspect.stack()
+    callee = stack[1].function
+    caller = stack[2].function
     if not hasattr(obj, "_records"):
-        obj._records = {}
+        obj._records = defaultdict(lambda: defaultdict(list))
     if not record_default:
         kwargs = {
             key: val
             for key, val in kwargs.items()
             if not isinstance(val, str) or (val != "default")
         }
-    obj._records[method] = kwargs
+    obj._records[callee][caller].append(kwargs)
 
 
-def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
+def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs):
     """Check whether the expected metadata is passed to the object's method.
 
     Parameters
@@ -50,21 +57,39 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
     obj : estimator object
         sub-estimator to check routed params for
     method : str
-        sub-estimator's method where metadata is routed to
+        sub-estimator's method where metadata is routed to, or otherwise in
+        the context of metadata routing referred to as 'callee'
+    parent : str
+        the parent method which should have called `method`, or otherwise in
+        the context of metadata routing referred to as 'caller'
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
-        of the original values.
+        of the original values
+    **kwargs : dict
+        passed metadata
     """
-    records = getattr(obj, "_records", dict()).get(method, dict())
-    assert set(kwargs.keys()) == set(records.keys())
-    for key, value in kwargs.items():
-        recorded_value = records[key]
-        # The following condition is used to check for any specified parameters
-        # being a subset of the original values
-        if key in split_params and recorded_value is not None:
-            assert np.isin(recorded_value, value).all()
-        else:
-            assert recorded_value is value
+    all_records = (
+        getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
+    )
+    for record in all_records:
+        # first check that the names of the metadata passed are the same as
+        # expected. The names are stored as keys in `record`.
+        assert set(kwargs.keys()) == set(record.keys()), (
+            f"Expected {kwargs.keys()} vs {record.keys()}"
+        )
+        for key, value in kwargs.items():
+            recorded_value = record[key]
+            # The following condition is used to check for any specified parameters
+            # being a subset of the original values
+            if key in split_params and recorded_value is not None:
+                assert np.isin(recorded_value, value).all()
+            else:
+                if isinstance(recorded_value, np.ndarray):
+                    assert_array_equal(recorded_value, value)
+                else:
+                    assert recorded_value is value, (
+                        f"Expected {recorded_value} vs {value}. Method: {method}"
+                    )
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
@@ -142,7 +167,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self
 
@@ -151,18 +176,21 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self
 
-    def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
+    def predict(self, X, y=None, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X),))
 
-        # when needed, uncomment the implementation
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
 
 
 class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
@@ -173,6 +201,7 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y):
         self.classes_ = np.unique(y)
+        self.coef_ = np.ones_like(X)
         return self
 
     def partial_fit(self, X, y, classes=None):
@@ -182,7 +211,21 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self.predict(X)
 
     def predict(self, X):
-        return np.ones(len(X))
+        y_pred = np.empty(shape=(len(X),))
+        y_pred[: len(X) // 2] = 0
+        y_pred[len(X) // 2 :] = 1
+        return y_pred
+
+    def predict_proba(self, X):
+        # dummy probabilities to support predict_proba
+        y_proba = np.empty(shape=(len(X), len(self.classes_)), dtype=np.float32)
+        # each row sums up to 1.0:
+        y_proba[:] = np.random.dirichlet(alpha=np.ones(len(self.classes_)), size=len(X))
+        return y_proba
+
+    def predict_log_proba(self, X):
+        # dummy probabilities to support predict_log_proba
+        return self.predict_proba(X)
 
 
 class NonConsumingRegressor(RegressorMixin, BaseEstimator):
@@ -225,7 +268,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         _check_partial_fit_first_call(self, classes)
         return self
@@ -235,40 +278,91 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
+
         self.classes_ = np.unique(y)
+        self.coef_ = np.ones_like(X)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X),))
+        y_score = np.empty(shape=(len(X),), dtype="int8")
+        y_score[len(X) // 2 :] = 0
+        y_score[: len(X) // 2] = 1
+        return y_score
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # uncomment when needed
-        # record_metadata_not_default(
-        #     self, "predict_proba", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.asarray([[0.0, 1.0]] * len(X))
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        y_proba = np.empty(shape=(len(X), len(self.classes_)), dtype=np.float32)
+        # each row sums up to 1.0:
+        y_proba[:] = np.random.dirichlet(alpha=np.ones(len(self.classes_)), size=len(X))
+        return y_proba
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # uncomment when needed
-        # record_metadata_not_default(
-        #     self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X), 2))
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return self.predict_proba(X)
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X),))
+        y_score = np.empty(shape=(len(X),))
+        y_score[len(X) // 2 :] = 0
+        y_score[: len(X) // 2] = 1
+        return y_score
+
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
+
+
+class ConsumingClassifierWithoutPredictProba(ConsumingClassifier):
+    """ConsumingClassifier without a predict_proba method, but with predict_log_proba.
+
+    Used to mimic dynamic method selection such as in the `_parallel_predict_proba()`
+    function called by `BaggingClassifier`.
+    """
+
+    @property
+    def predict_proba(self):
+        raise AttributeError("This estimator does not support predict_proba")
+
+
+class ConsumingClassifierWithoutPredictLogProba(ConsumingClassifier):
+    """ConsumingClassifier without a predict_log_proba method, but with predict_proba.
+
+    Used to mimic dynamic method selection such as in
+    `BaggingClassifier.predict_log_proba()`.
+    """
+
+    @property
+    def predict_log_proba(self):
+        raise AttributeError("This estimator does not support predict_log_proba")
+
+
+class ConsumingClassifierWithOnlyPredict(ConsumingClassifier):
+    """ConsumingClassifier with only a predict method.
+
+    Used to mimic dynamic method selection such as in
+    `BaggingClassifier.predict_log_proba()`.
+    """
+
+    @property
+    def predict_proba(self):
+        raise AttributeError("This estimator does not support predict_proba")
+
+    @property
+    def predict_log_proba(self):
+        raise AttributeError("This estimator does not support predict_log_proba")
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
@@ -286,37 +380,59 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
     def __init__(self, registry=None):
         self.registry = registry
 
-    def fit(self, X, y=None, sample_weight=None, metadata=None):
+    def fit(self, X, y=None, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
+        self.fitted_ = True
         return self
 
-    def transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
-            self, "transform", sample_weight=sample_weight, metadata=metadata
+    def transform(self, X, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
         )
-        return X
+        return X + 1
 
-    def fit_transform(self, X, y, sample_weight=None, metadata=None):
+    def fit_transform(self, X, y, sample_weight="default", metadata="default"):
         # implementing ``fit_transform`` is necessary since
         # ``TransformerMixin.fit_transform`` doesn't route any metadata to
         # ``transform``, while here we want ``transform`` to receive
         # ``sample_weight`` and ``metadata``.
-        record_metadata(
-            self, "fit_transform", sample_weight=sample_weight, metadata=metadata
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self.fit(X, y, sample_weight=sample_weight, metadata=metadata).transform(
             X, sample_weight=sample_weight, metadata=metadata
         )
 
     def inverse_transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
-            self, "inverse_transform", sample_weight=sample_weight, metadata=metadata
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
         )
+        return X - 1
+
+
+class ConsumingNoFitTransformTransformer(BaseEstimator):
+    """A metadata consuming transformer that doesn't inherit from
+    TransformerMixin, and thus doesn't implement `fit_transform`. Note that
+    TransformerMixin's `fit_transform` doesn't route metadata to `transform`."""
+
+    def __init__(self, registry=None):
+        self.registry = registry
+
+    def fit(self, X, y=None, sample_weight=None, metadata=None):
+        if self.registry is not None:
+            self.registry.append(self)
+
+        record_metadata(self, sample_weight=sample_weight, metadata=metadata)
+
+        return self
+
+    def transform(self, X, sample_weight=None, metadata=None):
+        record_metadata(self, sample_weight=sample_weight, metadata=metadata)
         return X
 
 
@@ -331,13 +447,13 @@ class ConsumingScorer(_Scorer):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "score", **kwargs)
+        record_metadata_not_default(self, **kwargs)
 
         sample_weight = kwargs.get("sample_weight", None)
         return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
 
 
-class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
+class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
     def __init__(self, registry=None):
         self.registry = registry
 
@@ -345,7 +461,7 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "split", groups=groups, metadata=metadata)
+        record_metadata_not_default(self, groups=groups, metadata=metadata)
 
         split_index = len(X) // 2
         train_indices = list(range(0, split_index))
@@ -375,8 +491,9 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.estimator, method_mapping="one-to-one"
+        router = MetadataRouter(owner=self).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
@@ -392,7 +509,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight)
+        record_metadata(self, sample_weight=sample_weight)
         params = process_routing(self, "fit", sample_weight=sample_weight, **fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
@@ -403,9 +520,14 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict"),
+            )
         )
         return router
 
@@ -421,16 +543,19 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight)
+        record_metadata(self, sample_weight=sample_weight)
         params = process_routing(self, "fit", sample_weight=sample_weight, **kwargs)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
-            .add(estimator=self.estimator, method_mapping="fit")
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
         )
         return router
 
@@ -451,6 +576,9 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
-        return MetadataRouter(owner=self.__class__.__name__).add(
-            transformer=self.transformer, method_mapping="one-to-one"
+        return MetadataRouter(owner=self).add(
+            transformer=self.transformer,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="transform", callee="transform"),
         )

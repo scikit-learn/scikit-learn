@@ -1,7 +1,7 @@
-"""
-The :mod:`sklearn.utils.discovery` module includes utilities to discover
-objects (i.e. estimators, displays, functions) from the `sklearn` package.
-"""
+"""Utilities to discover scikit-learn objects."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
 import pkgutil
@@ -71,15 +71,14 @@ def all_estimators(type_filter=None):
       <class 'sklearn.ensemble._weight_boosting.AdaBoostClassifier'>)]
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ..base import (
+    from sklearn.base import (
         BaseEstimator,
         ClassifierMixin,
         ClusterMixin,
         RegressorMixin,
         TransformerMixin,
     )
-    from . import IS_PYPY
-    from ._testing import ignore_warnings
+    from sklearn.utils._testing import ignore_warnings
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -105,15 +104,6 @@ def all_estimators(type_filter=None):
             classes = [
                 (name, est_cls) for name, est_cls in classes if not name.startswith("_")
             ]
-
-            # TODO: Remove when FeatureHasher is implemented in PYPY
-            # Skips FeatureHasher for PYPY
-            if IS_PYPY and "feature_extraction" in module_name:
-                classes = [
-                    (name, est_cls)
-                    for name, est_cls in classes
-                    if name == "FeatureHasher"
-                ]
 
             all_classes.extend(classes)
 
@@ -151,7 +141,7 @@ def all_estimators(type_filter=None):
                 "Parameter type_filter must be 'classifier', "
                 "'regressor', 'transformer', 'cluster' or "
                 "None, got"
-                f" {repr(type_filter)}."
+                f" {type_filter!r}."
             )
 
     # drop duplicates, sort for reproducibility
@@ -177,7 +167,7 @@ def all_displays():
     ('CalibrationDisplay', <class 'sklearn.calibration.CalibrationDisplay'>)
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ._testing import ignore_warnings
+    from sklearn.utils._testing import ignore_warnings
 
     all_classes = []
     root = str(Path(__file__).parent.parent)  # sklearn package
@@ -235,7 +225,7 @@ def all_functions():
     'accuracy_score'
     """
     # lazy import to avoid circular imports from sklearn.base
-    from ._testing import ignore_warnings
+    from sklearn.utils._testing import ignore_warnings
 
     all_functions = []
     root = str(Path(__file__).parent.parent)  # sklearn package

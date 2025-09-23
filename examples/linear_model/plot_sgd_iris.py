@@ -9,6 +9,9 @@ are represented by the dashed lines.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -52,13 +55,12 @@ plt.axis("tight")
 
 # Plot also the training points
 for i, color in zip(clf.classes_, colors):
-    idx = np.where(y == i)
+    idx = (y == i).nonzero()
     plt.scatter(
         X[idx, 0],
         X[idx, 1],
         c=color,
         label=iris.target_names[i],
-        cmap=plt.cm.Paired,
         edgecolor="black",
         s=20,
     )

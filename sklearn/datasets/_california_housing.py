@@ -6,7 +6,7 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
-This dataset contains the average house value as target variable
+This dataset contains the median house value as target variable
 and the following input variables (features): average income,
 housing average age, average rooms, average bedrooms, population,
 average occupation, latitude, and longitude in that order.
@@ -15,30 +15,32 @@ References
 ----------
 
 Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
-Statistics and Probability Letters, 33 (1997) 291-297.
+Statistics and Probability Letters, 33:291-297, 1997.
 
 """
-# Authors: Peter Prettenhofer
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 import tarfile
-from os import PathLike, makedirs, remove
+from numbers import Integral, Real
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
 import numpy as np
 
-from ..utils import Bunch
-from ..utils._param_validation import validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -57,11 +59,19 @@ logger = logging.getLogger(__name__)
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the California housing dataset (regression).
 
@@ -97,6 +107,16 @@ def fetch_california_housing(
 
         .. versionadded:: 0.23
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -106,7 +126,7 @@ def fetch_california_housing(
             Each row corresponding to the 8 feature values in order.
             If ``as_frame`` is True, ``data`` is a pandas object.
         target : numpy array of shape (20640,)
-            Each value corresponds to the average
+            Each value corresponds to the median
             house value in units of 100,000.
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
@@ -142,8 +162,6 @@ def fetch_california_housing(
     ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup']
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
 
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
@@ -154,7 +172,12 @@ def fetch_california_housing(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
         )
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
+        archive_path = _fetch_remote(
+            ARCHIVE,
+            dirname=data_home,
+            n_retries=n_retries,
+            delay=delay,
+        )
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(

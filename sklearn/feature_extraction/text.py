@@ -1,15 +1,7 @@
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Robert Layton <robertlayton@gmail.com>
-#          Jochen Wersdörfer <jochen@wersdoerfer.de>
-#          Roman Sinayev <roman.sinayev@gmail.com>
-#
-# License: BSD 3 clause
-"""
-The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
-build feature vectors from text documents.
-"""
+"""Utilities to build feature vectors from text documents."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import re
@@ -24,19 +16,30 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..exceptions import NotFittedError
-from ..preprocessing import normalize
-from ..utils import _IS_32BIT
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted
-from ._hash import FeatureHasher
-from ._stop_words import ENGLISH_STOP_WORDS
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.feature_extraction._hash import FeatureHasher
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
+from sklearn.preprocessing import normalize
+from sklearn.utils import metadata_routing
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
+    FLOAT_DTYPES,
+    check_array,
+    check_is_fitted,
+    validate_data,
+)
 
 __all__ = [
-    "HashingVectorizer",
-    "CountVectorizer",
     "ENGLISH_STOP_WORDS",
+    "CountVectorizer",
+    "HashingVectorizer",
     "TfidfTransformer",
     "TfidfVectorizer",
     "strip_accents_ascii",
@@ -409,8 +412,7 @@ class _VectorizerMixin:
                     "Your stop_words may be inconsistent with "
                     "your preprocessing. Tokenizing the stop "
                     "words generated tokens %r not in "
-                    "stop_words."
-                    % sorted(inconsistent)
+                    "stop_words." % sorted(inconsistent)
                 )
             return not inconsistent
         except Exception:
@@ -516,8 +518,7 @@ class _VectorizerMixin:
         if min_n > max_m:
             raise ValueError(
                 "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary."
-                % str(self.ngram_range)
+                "lower boundary larger than the upper boundary." % str(self.ngram_range)
             )
 
     def _warn_for_unused_params(self):
@@ -604,6 +605,10 @@ class HashingVectorizer(
 
     For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
+    For an example of document clustering and comparison with
+    :class:`~sklearn.feature_extraction.text.TfidfVectorizer`, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -914,8 +919,12 @@ class HashingVectorizer(
             alternate_sign=self.alternate_sign,
         )
 
-    def _more_tags(self):
-        return {"X_types": ["string"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        tags.requires_fit = False
+        return tags
 
 
 def _document_frequency(X):
@@ -1081,15 +1090,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         True if a fixed vocabulary of term to indices mapping
         is provided by the user.
 
-    stop_words_ : set
-        Terms that were ignored because they either:
-
-          - occurred in too many documents (`max_df`)
-          - occurred in too few documents (`min_df`)
-          - were cut off by feature selection (`max_features`).
-
-        This is only available if no vocabulary was given.
-
     See Also
     --------
     HashingVectorizer : Convert a collection of text documents to a
@@ -1097,12 +1097,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     TfidfVectorizer : Convert a collection of raw documents to a matrix
         of TF-IDF features.
-
-    Notes
-    -----
-    The ``stop_words_`` attribute can get large and increase the model size
-    when pickling. This attribute is provided only for introspection and can
-    be safely removed using delattr or set to None before pickling.
 
     Examples
     --------
@@ -1135,6 +1129,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [1 0 0 1 0 0 0 0 1 1 0 1 0]
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
+
+    # raw_documents should not be in the routing mechanism. It should have been
+    # called X in the first place.
+    __metadata_request__fit = {"raw_documents": metadata_routing.UNUSED}
+    __metadata_request__transform = {"raw_documents": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
@@ -1242,19 +1241,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             mask = new_mask
 
         new_indices = np.cumsum(mask) - 1  # maps old indices to new
-        removed_terms = set()
         for term, old_index in list(vocabulary.items()):
             if mask[old_index]:
                 vocabulary[term] = new_indices[old_index]
             else:
                 del vocabulary[term]
-                removed_terms.add(term)
         kept_indices = np.where(mask)[0]
         if len(kept_indices) == 0:
             raise ValueError(
                 "After pruning, no terms remain. Try a lower min_df or a higher max_df."
             )
-        return X[:, kept_indices], removed_terms
+        return X[:, kept_indices]
 
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False"""
@@ -1399,7 +1396,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 raise ValueError("max_df corresponds to < documents than min_df")
             if max_features is not None:
                 X = self._sort_features(X, vocabulary)
-            X, self.stop_words_ = self._limit_features(
+            X = self._limit_features(
                 X, vocabulary, max_doc_count, min_doc_count, max_features
             )
             if max_features is None:
@@ -1446,7 +1443,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X_inv : list of arrays of shape (n_samples,)
+        X_original : list of arrays of shape (n_samples,)
             List of arrays of terms.
         """
         self._check_vocabulary()
@@ -1488,8 +1485,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             dtype=object,
         )
 
-    def _more_tags(self):
-        return {"X_types": ["string"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _make_int_array():
@@ -1661,8 +1661,8 @@ class TfidfTransformer(
         # large sparse data is not supported for 32bit platforms because
         # _document_frequency uses np.bincount which works on arrays of
         # dtype NPY_INTP which is int32 for 32bit platforms. See #20923
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
         )
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
@@ -1679,8 +1679,13 @@ class TfidfTransformer(
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
+            # Force the dtype of `idf_` to be the same as `df`. In NumPy < 2, the dtype
+            # was depending on the value of `n_samples`.
+            self.idf_ = np.full_like(df, fill_value=n_samples, dtype=dtype)
+            self.idf_ /= df
             # `np.log` preserves the dtype of `df` and thus `dtype`.
-            self.idf_ = np.log(n_samples / df) + 1.0
+            np.log(self.idf_, out=self.idf_)
+            self.idf_ += 1.0
 
         return self
 
@@ -1702,7 +1707,8 @@ class TfidfTransformer(
             Tf-idf-weighted document-term matrix.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -1726,13 +1732,13 @@ class TfidfTransformer(
 
         return X
 
-    def _more_tags(self):
-        return {
-            "X_types": ["2darray", "sparse"],
-            # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
-            # accepted it.
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
+        # accepted it.
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1741,13 +1747,7 @@ class TfidfVectorizer(CountVectorizer):
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
 
-    For an example of usage, see
-    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
-
-    For an efficiency comparison of the different feature extractors, see
-    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
-
-    Read more in the :ref:`User Guide <text_feature_extraction>`.
+    Read more in the :ref:`User Guide <tfidf>`.
 
     Parameters
     ----------
@@ -1913,27 +1913,12 @@ class TfidfVectorizer(CountVectorizer):
         The inverse document frequency (IDF) vector; only defined
         if ``use_idf`` is True.
 
-    stop_words_ : set
-        Terms that were ignored because they either:
-
-          - occurred in too many documents (`max_df`)
-          - occurred in too few documents (`min_df`)
-          - were cut off by feature selection (`max_features`).
-
-        This is only available if no vocabulary was given.
-
     See Also
     --------
     CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
 
     TfidfTransformer : Performs the TF-IDF transformation from a provided
         matrix of counts.
-
-    Notes
-    -----
-    The ``stop_words_`` attribute can get large and increase the model size
-    when pickling. This attribute is provided only for introspection and can
-    be safely removed using delattr or set to None before pickling.
 
     Examples
     --------
@@ -2143,5 +2128,9 @@ class TfidfVectorizer(CountVectorizer):
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
-    def _more_tags(self):
-        return {"X_types": ["string"], "_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        tags._skip_test = True
+        return tags

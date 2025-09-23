@@ -1,19 +1,19 @@
 # Fast inner loop for DBSCAN.
-# Author: Lars Buitinck
-# License: 3-clause BSD
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libcpp.vector cimport vector
-cimport numpy as cnp
 
-cnp.import_array()
+from ..utils._typedefs cimport uint8_t, intp_t
 
 
-def dbscan_inner(const cnp.uint8_t[::1] is_core,
+def dbscan_inner(const uint8_t[::1] is_core,
                  object[:] neighborhoods,
-                 cnp.npy_intp[::1] labels):
-    cdef cnp.npy_intp i, label_num = 0, v
-    cdef cnp.npy_intp[:] neighb
-    cdef vector[cnp.npy_intp] stack
+                 intp_t[::1] labels):
+    cdef intp_t i, label_num = 0, v
+    cdef intp_t[:] neighb
+    cdef vector[intp_t] stack
 
     for i in range(labels.shape[0]):
         if labels[i] != -1 or not is_core[i]:

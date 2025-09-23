@@ -6,9 +6,11 @@ Evaluation of outlier detection estimators
 This example compares two outlier detection algorithms, namely
 :ref:`local_outlier_factor` (LOF) and :ref:`isolation_forest` (IForest), on
 real-world datasets available in :class:`sklearn.datasets`. The goal is to show
-that different algorithms perform well on different datasets.
+that different algorithms perform well on different datasets and contrast their
+training speed and sensitivity to hyperparameters.
 
-The algorithms are trained in an outlier detection context:
+The algorithms are trained (without labels) on the whole dataset assumed to
+contain outliers.
 
 1. The ROC curves are computed using knowledge of the ground-truth labels
 and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
@@ -16,9 +18,8 @@ and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 2. The performance is assessed in terms of the ROC-AUC.
 """
 
-# Author: Pharuj Rajborirug <pharuj.ra@kmitl.ac.th>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preprocessing and model training
@@ -87,12 +88,12 @@ def fit_predict(estimator, X):
     tic = perf_counter()
     if estimator[-1].__class__.__name__ == "LocalOutlierFactor":
         estimator.fit(X)
-        y_pred = estimator[-1].negative_outlier_factor_
+        y_score = estimator[-1].negative_outlier_factor_
     else:  # "IsolationForest"
-        y_pred = estimator.fit(X).decision_function(X)
+        y_score = estimator.fit(X).decision_function(X)
     toc = perf_counter()
     print(f"Duration for {model_name}: {toc - tic:.2f} s")
-    return y_pred
+    return y_score
 
 
 # %%
@@ -137,7 +138,7 @@ print(f"{n_samples} datapoints with {y.sum()} anomalies ({anomaly_frac:.02%})")
 
 # %%
 y_true = {}
-y_pred = {"LOF": {}, "IForest": {}}
+y_score = {"LOF": {}, "IForest": {}}
 model_names = ["LOF", "IForest"]
 cat_columns = ["protocol_type", "service", "flag"]
 
@@ -149,7 +150,7 @@ for model_name in model_names:
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
         iforest_kw={"random_state": 42},
     )
-    y_pred[model_name]["KDDCup99 - SA"] = fit_predict(model, X)
+    y_score[model_name]["KDDCup99 - SA"] = fit_predict(model, X)
 
 # %%
 # Forest covertypes dataset
@@ -184,7 +185,7 @@ for model_name in model_names:
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
         iforest_kw={"random_state": 42},
     )
-    y_pred[model_name]["forestcover"] = fit_predict(model, X)
+    y_score[model_name]["forestcover"] = fit_predict(model, X)
 
 # %%
 # Ames Housing dataset
@@ -241,7 +242,7 @@ for model_name in model_names:
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
         iforest_kw={"random_state": 42},
     )
-    y_pred[model_name]["ames_housing"] = fit_predict(model, X)
+    y_score[model_name]["ames_housing"] = fit_predict(model, X)
 
 # %%
 # Cardiotocography dataset
@@ -270,7 +271,7 @@ for model_name in model_names:
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
         iforest_kw={"random_state": 42},
     )
-    y_pred[model_name]["cardiotocography"] = fit_predict(model, X)
+    y_score[model_name]["cardiotocography"] = fit_predict(model, X)
 
 # %%
 # Plot and interpret results
@@ -298,7 +299,7 @@ for ax, dataset_name in zip(axs.ravel(), datasets_names):
     for model_idx, model_name in enumerate(model_names):
         display = RocCurveDisplay.from_predictions(
             y_true[dataset_name],
-            y_pred[model_name][dataset_name],
+            y_score[model_name][dataset_name],
             pos_label=pos_label,
             name=model_name,
             ax=ax,
@@ -313,6 +314,12 @@ _ = plt.tight_layout(pad=2.0)  # spacing between subplots
 # similarly in terms of ROC AUC for the forestcover and cardiotocography
 # datasets. The score for IForest is slightly better for the SA dataset and LOF
 # performs considerably better on the Ames housing dataset than IForest.
+#
+# Recall however that Isolation Forest tends to train much faster than LOF on
+# datasets with a large number of samples. LOF needs to compute pairwise
+# distances to find nearest neighbors, which has a quadratic complexity with respect
+# to the number of observations. This can make this method prohibitive on large
+# datasets.
 #
 # Ablation study
 # ==============
@@ -339,17 +346,16 @@ fig, ax = plt.subplots()
 for model_idx, (linestyle, n_neighbors) in enumerate(zip(linestyles, n_neighbors_list)):
     model.set_params(localoutlierfactor__n_neighbors=n_neighbors)
     model.fit(X)
-    y_pred = model[-1].negative_outlier_factor_
+    y_score = model[-1].negative_outlier_factor_
     display = RocCurveDisplay.from_predictions(
         y,
-        y_pred,
+        y_score,
         pos_label=pos_label,
         name=f"n_neighbors = {n_neighbors}",
         ax=ax,
         plot_chance_level=(model_idx == len(n_neighbors_list) - 1),
         chance_level_kw={"linestyle": (0, (1, 10))},
-        linestyle=linestyle,
-        linewidth=2,
+        curve_kwargs=dict(linestyle=linestyle, linewidth=2),
     )
 _ = ax.set_title("RobustScaler with varying n_neighbors\non forestcover dataset")
 
@@ -379,17 +385,16 @@ for model_idx, (linestyle, preprocessor) in enumerate(
 ):
     model = make_pipeline(preprocessor, lof)
     model.fit(X)
-    y_pred = model[-1].negative_outlier_factor_
+    y_score = model[-1].negative_outlier_factor_
     display = RocCurveDisplay.from_predictions(
         y,
-        y_pred,
+        y_score,
         pos_label=pos_label,
         name=str(preprocessor).split("(")[0],
         ax=ax,
         plot_chance_level=(model_idx == len(preprocessor_list) - 1),
         chance_level_kw={"linestyle": (0, (1, 10))},
-        linestyle=linestyle,
-        linewidth=2,
+        curve_kwargs=dict(linestyle=linestyle, linewidth=2),
     )
 _ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover dataset")
 
@@ -431,17 +436,16 @@ for model_idx, (linestyle, preprocessor) in enumerate(
 ):
     model = make_pipeline(preprocessor, lof)
     model.fit(X)
-    y_pred = model[-1].negative_outlier_factor_
+    y_score = model[-1].negative_outlier_factor_
     display = RocCurveDisplay.from_predictions(
         y,
-        y_pred,
+        y_score,
         pos_label=pos_label,
         name=str(preprocessor).split("(")[0],
         ax=ax,
         plot_chance_level=(model_idx == len(preprocessor_list) - 1),
         chance_level_kw={"linestyle": (0, (1, 10))},
-        linestyle=linestyle,
-        linewidth=2,
+        curve_kwargs=dict(linestyle=linestyle, linewidth=2),
     )
 ax.set_title(
     "Fixed n_neighbors with varying preprocessing\non cardiotocography dataset"

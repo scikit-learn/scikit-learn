@@ -1,9 +1,7 @@
 # mutual reachability distance computations
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -62,8 +60,8 @@ def mutual_reachability_graph(
         `CSR` format.
 
     min_samples : int, default=5
-        The number of points in a neighbourhood for a point to be considered
-        a core point.
+        The parameter `k` used to calculate the distance between a point
+        `x_p` and its k-th nearest neighbor.
 
     max_distance : float, default=0.0
         The distance which `np.inf` is replaced with. When the true mutual-
@@ -124,7 +122,7 @@ def _dense_mutual_reachability_graph(
     """
     cdef:
         intp_t i, j, n_samples = distance_matrix.shape[0]
-        floating mutual_reachibility_distance
+        floating mutual_reachability_distance
         floating[::1] core_distances
 
     # We assume that the distance matrix is symmetric. We choose to sort every
@@ -141,12 +139,12 @@ def _dense_mutual_reachability_graph(
         # _openmp_effective_n_threads
         for i in range(n_samples):
             for j in range(n_samples):
-                mutual_reachibility_distance = max(
+                mutual_reachability_distance = max(
                     core_distances[i],
                     core_distances[j],
                     distance_matrix[i, j],
                 )
-                distance_matrix[i, j] = mutual_reachibility_distance
+                distance_matrix[i, j] = mutual_reachability_distance
 
 
 def _sparse_mutual_reachability_graph(
@@ -179,7 +177,7 @@ def _sparse_mutual_reachability_graph(
     """
     cdef:
         integral i, col_ind, row_ind
-        floating mutual_reachibility_distance
+        floating mutual_reachability_distance
         floating[:] core_distances
         floating[:] row_data
 
@@ -203,10 +201,10 @@ def _sparse_mutual_reachability_graph(
         for row_ind in range(n_samples):
             for i in range(indptr[row_ind], indptr[row_ind + 1]):
                 col_ind = indices[i]
-                mutual_reachibility_distance = max(
+                mutual_reachability_distance = max(
                     core_distances[row_ind], core_distances[col_ind], data[i]
                 )
-                if isfinite(mutual_reachibility_distance):
-                    data[i] = mutual_reachibility_distance
+                if isfinite(mutual_reachability_distance):
+                    data[i] = mutual_reachability_distance
                 elif max_distance > 0:
                     data[i] = max_distance

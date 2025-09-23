@@ -80,17 +80,21 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
     if isinstance(dense_svm, svm.OneClassSVM):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
-        assert_array_almost_equal(
-            dense_svm.predict_proba(X_test_dense),
-            sparse_svm.predict_proba(X_test),
-            decimal=4,
-        )
+        if hasattr(dense_svm, "predict_proba"):
+            assert_array_almost_equal(
+                dense_svm.predict_proba(X_test_dense),
+                sparse_svm.predict_proba(X_test),
+                decimal=4,
+            )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.issparse(X_test):
         with pytest.raises(ValueError, match=msg):
             dense_svm.predict(X_test)
 
 
+# XXX: probability=True is not thread-safe:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 @skip_if_32bit
 @pytest.mark.parametrize(
     "X_train, y_train, X_test",
@@ -125,6 +129,7 @@ def test_unsorted_indices(csr_container):
     X, y = load_digits(return_X_y=True)
     X_test = csr_container(X[50:100])
     X, y = X[:50], y[:50]
+    tols = dict(rtol=1e-12, atol=1e-14)
 
     X_sparse = csr_container(X)
     coef_dense = (
@@ -135,7 +140,7 @@ def test_unsorted_indices(csr_container):
     )
     coef_sorted = sparse_svc.coef_
     # make sure dense and sparse SVM give the same result
-    assert_allclose(coef_dense, coef_sorted.toarray())
+    assert_allclose(coef_dense, coef_sorted.toarray(), **tols)
 
     # reverse each row's indices
     def scramble_indices(X):
@@ -158,9 +163,11 @@ def test_unsorted_indices(csr_container):
     )
     coef_unsorted = unsorted_svc.coef_
     # make sure unsorted indices give same result
-    assert_allclose(coef_unsorted.toarray(), coef_sorted.toarray())
+    assert_allclose(coef_unsorted.toarray(), coef_sorted.toarray(), **tols)
     assert_allclose(
-        sparse_svc.predict_proba(X_test_unsorted), sparse_svc.predict_proba(X_test)
+        sparse_svc.predict_proba(X_test_unsorted),
+        sparse_svc.predict_proba(X_test),
+        **tols,
     )
 
 
@@ -242,8 +249,8 @@ def test_linearsvc(lil_container, dok_container):
     X_sp = lil_container(X)
     X2_sp = dok_container(X2)
 
-    clf = svm.LinearSVC(dual="auto", random_state=0).fit(X, Y)
-    sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(X_sp, Y)
+    clf = svm.LinearSVC(random_state=0).fit(X, Y)
+    sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
 
     assert sp_clf.fit_intercept
 
@@ -264,8 +271,8 @@ def test_linearsvc_iris(csr_container):
     # Test the sparse LinearSVC with the iris dataset
     iris_data_sp = csr_container(iris.data)
 
-    sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(iris_data_sp, iris.target)
-    clf = svm.LinearSVC(dual="auto", random_state=0).fit(iris.data, iris.target)
+    sp_clf = svm.LinearSVC(random_state=0).fit(iris_data_sp, iris.target)
+    clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
 
     assert clf.fit_intercept == sp_clf.fit_intercept
 
@@ -295,7 +302,7 @@ def test_weight(csr_container):
     X_ = csr_container(X_)
     for clf in (
         linear_model.LogisticRegression(),
-        svm.LinearSVC(dual="auto", random_state=0),
+        svm.LinearSVC(random_state=0),
         svm.SVC(),
     ):
         clf.set_params(class_weight={0: 5})
@@ -483,6 +490,9 @@ def test_timeout(lil_container):
         sp.fit(lil_container(X), Y)
 
 
+# XXX: probability=True is not thread-safe:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     with ignore_warnings(category=ConvergenceWarning):

@@ -17,8 +17,10 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - setuptools
-  - pytest-cov
+  - pip
+  - ninja
+  - meson-python
+  - pytest-cov<=6.3.0
   - coverage
   - ccache
   - compilers

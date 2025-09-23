@@ -1,4 +1,5 @@
 """Test loaders for common functionality."""
+
 import inspect
 import os
 
@@ -10,7 +11,7 @@ import sklearn.datasets
 
 def is_pillow_installed():
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         return True
     except ImportError:
@@ -39,7 +40,7 @@ FETCH_PYTEST_MARKERS = {
 
 def check_pandas_dependency_message(fetch_func):
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
 
         pytest.skip("This test requires pandas to not be installed")
     except ImportError:

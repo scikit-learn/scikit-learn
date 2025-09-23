@@ -1,9 +1,7 @@
-"""Orthogonal matching pursuit algorithms
-"""
+"""Orthogonal matching pursuit algorithms"""
 
-# Author: Vlad Niculae
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import sqrt
@@ -13,19 +11,20 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, as_float_array, check_array
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.metadata_routing import (
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, _pre_fit
+from sklearn.model_selection import check_cv
+from sklearn.utils import Bunch, as_float_array, check_array
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.parallel import Parallel, delayed
-from ._base import LinearModel, _pre_fit
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import FLOAT_DTYPES, validate_data
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -388,6 +387,17 @@ def orthogonal_mp(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import orthogonal_mp
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> coef = orthogonal_mp(X, y)
+    >>> coef.shape
+    (100,)
+    >>> X[:1,] @ coef
+    array([-78.68])
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -555,6 +565,17 @@ def orthogonal_mp_gram(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.linear_model import orthogonal_mp_gram
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> coef = orthogonal_mp_gram(X.T @ X, X.T @ y)
+    >>> coef.shape
+    (100,)
+    >>> X[:1,] @ coef
+    array([-78.68])
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -629,8 +650,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Parameters
     ----------
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
-        default) this value is set to 10% of n_features.
+        Desired number of non-zero entries in the solution. Ignored if `tol` is set.
+        When `None` and `tol` is also `None`, this value is either set to 10% of
+        `n_features` or 1, whichever is greater.
 
     tol : float, default=None
         Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -643,8 +665,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
-        :term:`n_samples` is very large. Note that if you already have such
-        matrices, you can pass them directly to the fit method.
+        :term:`n_samples` is very large.
 
     Attributes
     ----------
@@ -657,9 +678,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : int or array-like
         Number of active features across every target.
 
-    n_nonzero_coefs_ : int
-        The number of non-zero coefficients in the solution. If
-        `n_nonzero_coefs` is None and `tol` is None this value is either set
+    n_nonzero_coefs_ : int or None
+        The number of non-zero coefficients in the solution or `None` when `tol` is
+        set. If `n_nonzero_coefs` is None and `tol` is None this value is either set
         to 10% of `n_features` or 1, whichever is greater.
 
     n_features_in_ : int
@@ -705,9 +726,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuit().fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {
@@ -747,11 +768,19 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
+        X, y = validate_data(
+            self, X, y, multi_output=True, y_numeric=True, dtype=FLOAT_DTYPES
+        )
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
-            X, y, None, self.precompute, self.fit_intercept, copy=True
+            X,
+            y,
+            None,
+            self.precompute,
+            self.fit_intercept,
+            copy=True,
+            check_gram=False,
         )
 
         if y.ndim == 1:
@@ -761,6 +790,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             # default for n_nonzero_coefs is 0.1 * n_features
             # but at least one.
             self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        elif self.tol is not None:
+            self.n_nonzero_coefs_ = None
         else:
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
 
@@ -970,11 +1001,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     ...                        noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991
     >>> reg.n_nonzero_coefs_
-    10
+    np.int64(10)
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.3854])
     """
 
     _parameter_constraints: dict = {
@@ -1032,8 +1063,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         """
         _raise_for_params(fit_params, self, "fit")
 
-        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
-        X = as_float_array(X, copy=False, force_all_finite=False)
+        X, y = validate_data(self, X, y, y_numeric=True, ensure_min_features=2)
+        X = as_float_array(X, copy=False, ensure_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
@@ -1090,8 +1121,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             routing information.
         """
 
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=self.cv,
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router

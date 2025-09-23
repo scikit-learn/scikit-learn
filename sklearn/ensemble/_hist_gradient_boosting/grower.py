@@ -4,7 +4,9 @@ This module contains the TreeGrower class.
 TreeGrower builds a regression tree fitting a Newton-Raphson step, based on
 the gradients and hessians of the training data.
 """
-# Author: Nicolas Hug
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 from heapq import heappop, heappush
@@ -12,21 +14,18 @@ from timeit import default_timer as time
 
 import numpy as np
 
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-
-from ._bitset import set_raw_bitset_from_binned_bitset
-from .common import (
+from sklearn.ensemble._hist_gradient_boosting._bitset import (
+    set_raw_bitset_from_binned_bitset,
+)
+from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
     X_BITSET_INNER_DTYPE,
-    Y_DTYPE,
     MonotonicConstraint,
 )
-from .histogram import HistogramBuilder
-from .predictor import TreePredictor
-from .splitting import Splitter
-from .utils import sum_parallel
-
-EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
+from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
+from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 
 class TreeNode:
@@ -41,6 +40,10 @@ class TreeNode:
         The depth of the node, i.e. its distance from the root.
     sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
+    partition_start : int
+        start position of the node's sample_indices in splitter.partition.
+    partition_stop : int
+        stop position of the node's sample_indices in splitter.partition.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
     sum_hessians : float
@@ -81,23 +84,17 @@ class TreeNode:
     children_upper_bound : float
     """
 
-    split_info = None
-    left_child = None
-    right_child = None
-    histograms = None
-
-    # start and stop indices of the node in the splitter.partition
-    # array. Concretely,
-    # self.sample_indices = view(self.splitter.partition[start:stop])
-    # Please see the comments about splitter.partition and
-    # splitter.split_indices for more info about this design.
-    # These 2 attributes are only used in _update_raw_prediction, because we
-    # need to iterate over the leaves and I don't know how to efficiently
-    # store the sample_indices views because they're all of different sizes.
-    partition_start = 0
-    partition_stop = 0
-
-    def __init__(self, depth, sample_indices, sum_gradients, sum_hessians, value=None):
+    def __init__(
+        self,
+        *,
+        depth,
+        sample_indices,
+        partition_start,
+        partition_stop,
+        sum_gradients,
+        sum_hessians,
+        value=None,
+    ):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
@@ -108,6 +105,20 @@ class TreeNode:
         self.allowed_features = None
         self.interaction_cst_indices = None
         self.set_children_bounds(float("-inf"), float("+inf"))
+        self.split_info = None
+        self.left_child = None
+        self.right_child = None
+        self.histograms = None
+        # start and stop indices of the node in the splitter.partition
+        # array. Concretely,
+        # self.sample_indices = view(self.splitter.partition[start:stop])
+        # Please see the comments about splitter.partition and
+        # splitter.split_indices for more info about this design.
+        # These 2 attributes are only used in _update_raw_prediction, because we
+        # need to iterate over the leaves and I don't know how to efficiently
+        # store the sample_indices views because they're all of different sizes.
+        self.partition_start = partition_start
+        self.partition_stop = partition_stop
 
     def set_children_bounds(self, lower, upper):
         """Set children values bounds to respect monotonic constraints."""
@@ -192,7 +203,8 @@ class TreeGrower:
     interaction_cst : list of sets of integers, default=None
         List of interaction constraints.
     l2_regularization : float, default=0.
-        The L2 regularization parameter.
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     feature_fraction_per_split : float, default=1
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
@@ -341,7 +353,7 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
-        self._intilialize_root(gradients, hessians, hessians_are_constant)
+        self._initialize_root()
         self.n_nodes = 1
 
     def _validate_parameters(
@@ -389,25 +401,47 @@ class TreeGrower:
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
-    def _intilialize_root(self, gradients, hessians, hessians_are_constant):
+    def _initialize_root(self):
         """Initialize root node and finalize it if needed."""
+        tic = time()
+        if self.interaction_cst is not None:
+            allowed_features = set().union(*self.interaction_cst)
+            allowed_features = np.fromiter(
+                allowed_features, dtype=np.uint32, count=len(allowed_features)
+            )
+            arbitrary_feature = allowed_features[0]
+        else:
+            allowed_features = None
+            arbitrary_feature = 0
+
+        # TreeNode init needs the total sum of gradients and hessians. Therefore, we
+        # first compute the histograms and then compute the total grad/hess on an
+        # arbitrary feature histogram. This way we replace a loop over n_samples by a
+        # loop over n_bins.
+        histograms = self.histogram_builder.compute_histograms_brute(
+            self.splitter.partition,  # =self.root.sample_indices
+            allowed_features,
+        )
+        self.total_compute_hist_time += time() - tic
+
+        tic = time()
         n_samples = self.X_binned.shape[0]
         depth = 0
-        sum_gradients = sum_parallel(gradients, self.n_threads)
+        histogram_array = np.asarray(histograms[arbitrary_feature])
+        sum_gradients = histogram_array["sum_gradients"].sum()
         if self.histogram_builder.hessians_are_constant:
-            sum_hessians = hessians[0] * n_samples
+            sum_hessians = self.histogram_builder.hessians[0] * n_samples
         else:
-            sum_hessians = sum_parallel(hessians, self.n_threads)
+            sum_hessians = histogram_array["sum_hessians"].sum()
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
+            partition_start=0,
+            partition_stop=n_samples,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
             value=0,
         )
-
-        self.root.partition_start = 0
-        self.root.partition_stop = n_samples
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
@@ -419,18 +453,10 @@ class TreeGrower:
 
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
-            allowed_features = set().union(*self.interaction_cst)
-            self.root.allowed_features = np.fromiter(
-                allowed_features, dtype=np.uint32, count=len(allowed_features)
-            )
+            self.root.allowed_features = allowed_features
 
-        tic = time()
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices, self.root.allowed_features
-        )
-        self.total_compute_hist_time += time() - tic
+        self.root.histograms = histograms
 
-        tic = time()
         self._compute_best_split_and_push(self.root)
         self.total_find_split_time += time() - tic
 
@@ -485,28 +511,26 @@ class TreeGrower:
         n_leaf_nodes += 2
 
         left_child_node = TreeNode(
-            depth,
-            sample_indices_left,
-            node.split_info.sum_gradient_left,
-            node.split_info.sum_hessian_left,
+            depth=depth,
+            sample_indices=sample_indices_left,
+            partition_start=node.partition_start,
+            partition_stop=node.partition_start + right_child_pos,
+            sum_gradients=node.split_info.sum_gradient_left,
+            sum_hessians=node.split_info.sum_hessian_left,
             value=node.split_info.value_left,
         )
         right_child_node = TreeNode(
-            depth,
-            sample_indices_right,
-            node.split_info.sum_gradient_right,
-            node.split_info.sum_hessian_right,
+            depth=depth,
+            sample_indices=sample_indices_right,
+            partition_start=left_child_node.partition_stop,
+            partition_stop=node.partition_stop,
+            sum_gradients=node.split_info.sum_gradient_right,
+            sum_hessians=node.split_info.sum_hessian_right,
             value=node.split_info.value_right,
         )
 
         node.right_child = right_child_node
         node.left_child = left_child_node
-
-        # set start and stop indices
-        left_child_node.partition_start = node.partition_start
-        left_child_node.partition_stop = node.partition_start + right_child_pos
-        right_child_node.partition_start = left_child_node.partition_stop
-        right_child_node.partition_stop = node.partition_stop
 
         # set interaction constraints (the indices of the constraints sets)
         if self.interaction_cst is not None:

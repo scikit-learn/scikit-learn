@@ -2,10 +2,9 @@
 Various bayesian regression
 """
 
-# Authors: V. Michel, F. Pedregosa, A. Gramfort
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from math import log
 from numbers import Integral, Real
 
@@ -13,56 +12,12 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
 
-from ..base import RegressorMixin, _fit_context
-from ..utils import _safe_indexing
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.extmath import fast_logdet
-from ..utils.validation import _check_sample_weight
-from ._base import LinearModel, _preprocess_data, _rescale_data
-
-
-# TODO(1.5) Remove
-def _deprecate_n_iter(n_iter, max_iter):
-    """Deprecates n_iter in favour of max_iter. Checks if the n_iter has been
-    used instead of max_iter and generates a deprecation warning if True.
-
-    Parameters
-    ----------
-    n_iter : int,
-        Value of n_iter attribute passed by the estimator.
-
-    max_iter : int, default=None
-        Value of max_iter attribute passed by the estimator.
-        If `None`, it corresponds to `max_iter=300`.
-
-    Returns
-    -------
-    max_iter : int,
-        Value of max_iter which shall further be used by the estimator.
-
-    Notes
-    -----
-    This function should be completely removed in 1.5.
-    """
-    if n_iter != "deprecated":
-        if max_iter is not None:
-            raise ValueError(
-                "Both `n_iter` and `max_iter` attributes were set. Attribute"
-                " `n_iter` was deprecated in version 1.3 and will be removed in"
-                " 1.5. To avoid this error, only set the `max_iter` attribute."
-            )
-        warnings.warn(
-            (
-                "'n_iter' was renamed to 'max_iter' in version 1.3 and "
-                "will be removed in 1.5"
-            ),
-            FutureWarning,
-        )
-        max_iter = n_iter
-    elif max_iter is None:
-        max_iter = 300
-    return max_iter
-
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, _preprocess_data
+from sklearn.utils import _safe_indexing
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 ###############################################################################
 # BayesianRidge regression
@@ -76,13 +31,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
     lambda (precision of the weights) and alpha (precision of the noise).
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
+    For an intuitive visualization of how the sinusoid is approximated by
+    a polynomial using different pairs of initial values, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`.
 
     Parameters
     ----------
-    max_iter : int, default=None
+    max_iter : int, default=300
         Maximum number of iterations over the complete dataset before
-        stopping independently of any early stopping criterion. If `None`, it
-        corresponds to `max_iter=300`.
+        stopping independently of any early stopping criterion.
 
         .. versionchanged:: 1.3
 
@@ -109,13 +66,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
@@ -133,13 +90,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     verbose : bool, default=False
         Verbose mode when fitting the model.
-
-    n_iter : int
-        Maximum number of iterations. Should be greater than or equal to 1.
-
-        .. deprecated:: 1.3
-           `n_iter` is deprecated in 1.3 and will be removed in 1.5. Use
-           `max_iter` instead.
 
     Attributes
     ----------
@@ -220,7 +170,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     """
 
     _parameter_constraints: dict = {
-        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="neither")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],
         "alpha_2": [Interval(Real, 0, None, closed="left")],
@@ -232,16 +182,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
-        "n_iter": [
-            Interval(Integral, 1, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
     }
 
     def __init__(
         self,
         *,
-        max_iter=None,  # TODO(1.5): Set to 300
+        max_iter=300,
         tol=1.0e-3,
         alpha_1=1.0e-6,
         alpha_2=1.0e-6,
@@ -253,7 +199,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         fit_intercept=True,
         copy_X=True,
         verbose=False,
-        n_iter="deprecated",  # TODO(1.5): Remove
     ):
         self.max_iter = max_iter
         self.tol = tol
@@ -267,7 +212,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.verbose = verbose
-        self.n_iter = n_iter
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
@@ -291,38 +235,45 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        max_iter = _deprecate_n_iter(self.n_iter, self.max_iter)
-
-        X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[np.float64, np.float32],
+            force_writeable=True,
+            y_numeric=True,
+        )
         dtype = X.dtype
+        n_samples, n_features = X.shape
 
+        sw_sum = n_samples
+        y_var = y.var()
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=dtype)
+            sw_sum = sample_weight.sum()
+            y_mean = np.average(y, weights=sample_weight)
+            y_var = np.average((y - y_mean) ** 2, weights=sample_weight)
 
-        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
-        )
-
-        if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
-            X, y, _ = _rescale_data(X, y, sample_weight)
+            rescale_with_sw=True,
+        )
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
-        n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
         eps = np.finfo(np.float64).eps
-        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
-        # is zero
+        # Add `eps` in the denominator to omit division by zero
         alpha_ = self.alpha_init
         lambda_ = self.lambda_init
         if alpha_ is None:
-            alpha_ = 1.0 / (np.var(y) + eps)
+            alpha_ = 1.0 / (y_var + eps)
         if lambda_ is None:
             lambda_ = 1.0
 
@@ -340,27 +291,45 @@ class BayesianRidge(RegressorMixin, LinearModel):
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
-        U, S, Vh = linalg.svd(X, full_matrices=False)
+        # Let M, N = n_samples, n_features and K = min(M, N).
+        # The posterior covariance matrix needs Vh_full: (N, N).
+        # The full SVD is only required when n_samples < n_features.
+        # When n_samples < n_features, K=M and full_matrices=True
+        # U: (M, M), S: M, Vh_full: (N, N), Vh: (M, N)
+        # When n_samples > n_features, K=N and full_matrices=False
+        # U: (M, N), S: N, Vh_full: (N, N), Vh: (N, N)
+        U, S, Vh_full = linalg.svd(X, full_matrices=(n_samples < n_features))
+        K = len(S)
         eigen_vals_ = S**2
+        eigen_vals_full = np.zeros(n_features, dtype=dtype)
+        eigen_vals_full[0:K] = eigen_vals_
+        Vh = Vh_full[0:K, :]
 
         # Convergence loop of the bayesian ridge regression
-        for iter_ in range(max_iter):
+        for iter_ in range(self.max_iter):
             # update posterior mean coef_ based on alpha_ and lambda_ and
-            # compute corresponding rmse
-            coef_, rmse_ = self._update_coef_(
+            # compute corresponding sse (sum of squared errors)
+            coef_, sse_ = self._update_coef_(
                 X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
             )
             if self.compute_score:
                 # compute the log marginal likelihood
                 s = self._log_marginal_likelihood(
-                    n_samples, n_features, eigen_vals_, alpha_, lambda_, coef_, rmse_
+                    n_samples,
+                    n_features,
+                    sw_sum,
+                    eigen_vals_,
+                    alpha_,
+                    lambda_,
+                    coef_,
+                    sse_,
                 )
                 self.scores_.append(s)
 
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
             lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_**2) + 2 * lambda_2)
-            alpha_ = (n_samples - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
+            alpha_ = (sw_sum - gamma_ + 2 * alpha_1) / (sse_ + 2 * alpha_2)
 
             # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
@@ -375,22 +344,28 @@ class BayesianRidge(RegressorMixin, LinearModel):
         # log marginal likelihood and posterior covariance
         self.alpha_ = alpha_
         self.lambda_ = lambda_
-        self.coef_, rmse_ = self._update_coef_(
+        self.coef_, sse_ = self._update_coef_(
             X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
         )
         if self.compute_score:
             # compute the log marginal likelihood
             s = self._log_marginal_likelihood(
-                n_samples, n_features, eigen_vals_, alpha_, lambda_, coef_, rmse_
+                n_samples,
+                n_features,
+                sw_sum,
+                eigen_vals_,
+                alpha_,
+                lambda_,
+                coef_,
+                sse_,
             )
             self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
 
-        # posterior covariance is given by 1/alpha_ * scaled_sigma_
-        scaled_sigma_ = np.dot(
-            Vh.T, Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis]
+        # posterior covariance
+        self.sigma_ = np.dot(
+            Vh_full.T, Vh_full / (alpha_ * eigen_vals_full + lambda_)[:, np.newaxis]
         )
-        self.sigma_ = (1.0 / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
 
@@ -429,7 +404,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     def _update_coef_(
         self, X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
     ):
-        """Update posterior mean and compute corresponding rmse.
+        """Update posterior mean and compute corresponding sse (sum of squared errors).
 
         Posterior mean is given by coef_ = scaled_sigma_ * X.T * y where
         scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
@@ -445,12 +420,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
                 [X.T, U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T, y]
             )
 
-        rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+        # Note: we do not need to explicitly use the weights in this sum because
+        # y and X were preprocessed by _rescale_data to handle the weights.
+        sse_ = np.sum((y - np.dot(X, coef_)) ** 2)
 
-        return coef_, rmse_
+        return coef_, sse_
 
     def _log_marginal_likelihood(
-        self, n_samples, n_features, eigen_vals, alpha_, lambda_, coef, rmse
+        self, n_samples, n_features, sw_sum, eigen_vals, alpha_, lambda_, coef, sse
     ):
         """Log marginal likelihood."""
         alpha_1 = self.alpha_1
@@ -472,11 +449,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         score += alpha_1 * log(alpha_) - alpha_2 * alpha_
         score += 0.5 * (
             n_features * log(lambda_)
-            + n_samples * log(alpha_)
-            - alpha_ * rmse
+            + sw_sum * log(alpha_)
+            - alpha_ * sse
             - lambda_ * np.sum(coef**2)
             + logdet_sigma
-            - n_samples * log(2 * np.pi)
+            - sw_sum * log(2 * np.pi)
         )
 
         return score
@@ -499,8 +476,8 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    max_iter : int, default=None
-        Maximum number of iterations. If `None`, it corresponds to `max_iter=300`.
+    max_iter : int, default=300
+        Maximum number of iterations.
 
         .. versionchanged:: 1.3
 
@@ -540,13 +517,6 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     verbose : bool, default=False
         Verbose mode when fitting the model.
-
-    n_iter : int
-        Maximum number of iterations.
-
-        .. deprecated:: 1.3
-           `n_iter` is deprecated in 1.3 and will be removed in 1.5. Use
-           `max_iter` instead.
 
     Attributes
     ----------
@@ -596,11 +566,6 @@ class ARDRegression(RegressorMixin, LinearModel):
     --------
     BayesianRidge : Bayesian ridge regression.
 
-    Notes
-    -----
-    For an example, see :ref:`examples/linear_model/plot_ard.py
-    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
-
     References
     ----------
     D. J. C. MacKay, Bayesian nonlinear modeling for the prediction
@@ -622,10 +587,16 @@ class ARDRegression(RegressorMixin, LinearModel):
     ARDRegression()
     >>> clf.predict([[1, 1]])
     array([1.])
+
+    -   :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` demonstrates ARD
+        Regression.
+    -   :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+        showcases ARD Regression alongside Lasso and Elastic-Net for sparse,
+        correlated signals, in the presence of noise.
     """
 
     _parameter_constraints: dict = {
-        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "alpha_1": [Interval(Real, 0, None, closed="left")],
         "alpha_2": [Interval(Real, 0, None, closed="left")],
@@ -636,16 +607,12 @@ class ARDRegression(RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
-        "n_iter": [
-            Interval(Integral, 1, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
     }
 
     def __init__(
         self,
         *,
-        max_iter=None,  # TODO(1.5): Set to 300
+        max_iter=300,
         tol=1.0e-3,
         alpha_1=1.0e-6,
         alpha_2=1.0e-6,
@@ -656,7 +623,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         fit_intercept=True,
         copy_X=True,
         verbose=False,
-        n_iter="deprecated",  # TODO(1.5): Remove
     ):
         self.max_iter = max_iter
         self.tol = tol
@@ -669,7 +635,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.threshold_lambda = threshold_lambda
         self.copy_X = copy_X
         self.verbose = verbose
-        self.n_iter = n_iter
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -690,17 +655,21 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
-        max_iter = _deprecate_n_iter(self.n_iter, self.max_iter)
-
-        X, y = self._validate_data(
-            X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[np.float64, np.float32],
+            force_writeable=True,
+            y_numeric=True,
+            ensure_min_samples=2,
         )
         dtype = X.dtype
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features, dtype=dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 
@@ -739,19 +708,17 @@ class ARDRegression(RegressorMixin, LinearModel):
             else self._update_sigma_woodbury
         )
         # Iterative procedure of ARDRegression
-        for iter_ in range(max_iter):
+        for iter_ in range(self.max_iter):
             sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
             coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
             # Update alpha and lambda
-            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+            sse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = 1.0 - lambda_[keep_lambda] * np.diag(sigma_)
             lambda_[keep_lambda] = (gamma_ + 2.0 * lambda_1) / (
                 (coef_[keep_lambda]) ** 2 + 2.0 * lambda_2
             )
-            alpha_ = (n_samples - gamma_.sum() + 2.0 * alpha_1) / (
-                rmse_ + 2.0 * alpha_2
-            )
+            alpha_ = (n_samples - gamma_.sum() + 2.0 * alpha_1) / (sse_ + 2.0 * alpha_2)
 
             # Prune the weights with a precision over a threshold
             keep_lambda = lambda_ < self.threshold_lambda
@@ -766,7 +733,7 @@ class ARDRegression(RegressorMixin, LinearModel):
                     + n_samples * log(alpha_)
                     + np.sum(np.log(lambda_))
                 )
-                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_**2).sum())
+                s -= 0.5 * (alpha_ * sse_ + (lambda_ * coef_**2).sum())
                 self.scores_.append(s)
 
             # Check for convergence

@@ -35,9 +35,10 @@ from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_devian
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import _IS_32BIT, shuffle
+from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
 
@@ -159,7 +160,7 @@ def test_early_stopping_classification(
     X, y = data
 
     gb = HistGradientBoostingClassifier(
-        verbose=1,  # just for coverage
+        verbose=2,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
@@ -567,7 +568,9 @@ def test_missing_values_minmax_imputation():
         # Pre-bin the data to ensure a deterministic handling by the 2
         # strategies and also make it easier to insert np.nan in a structured
         # way:
-        X = KBinsDiscretizer(n_bins=42, encode="ordinal").fit_transform(X)
+        X = KBinsDiscretizer(
+            n_bins=42, encode="ordinal", quantile_method="averaged_inverted_cdf"
+        ).fit_transform(X)
 
         # First feature has missing values completely at random:
         rnd_mask = rng.rand(X.shape[0]) > 0.9
@@ -1447,6 +1450,100 @@ def test_unknown_category_that_are_negative():
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
 
 
+@pytest.mark.parametrize(
+    ("GradientBoosting", "make_X_y"),
+    [
+        (HistGradientBoostingClassifier, make_classification),
+        (HistGradientBoostingRegressor, make_regression),
+    ],
+)
+@pytest.mark.parametrize("sample_weight", [False, True])
+def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
+    """Test that passing X_val, y_val in fit is same as validation fraction."""
+    rng = np.random.RandomState(42)
+    n_samples = 100
+    X, y = make_X_y(n_samples=n_samples, random_state=rng)
+    if sample_weight:
+        sample_weight = np.abs(rng.normal(size=n_samples))
+        data = (X, y, sample_weight)
+    else:
+        sample_weight = None
+        data = (X, y)
+    rng_seed = global_random_seed
+
+    # Fit with validation fraction and early stopping.
+    m1 = GradientBoosting(
+        early_stopping=True,
+        validation_fraction=0.5,
+        random_state=rng_seed,
+    )
+    m1.fit(X, y, sample_weight)
+
+    # Do train-test split ourselves.
+    rng = check_random_state(rng_seed)
+    # We do the same as in the fit method.
+    stratify = y if isinstance(m1, HistGradientBoostingClassifier) else None
+    random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+    X_train, X_val, y_train, y_val, *sw = train_test_split(
+        *data,
+        test_size=0.5,
+        stratify=stratify,
+        random_state=random_seed,
+    )
+    if sample_weight is not None:
+        sample_weight_train = sw[0]
+        sample_weight_val = sw[1]
+    else:
+        sample_weight_train = None
+        sample_weight_val = None
+    m2 = GradientBoosting(
+        early_stopping=True,
+        random_state=rng_seed,
+    )
+    m2.fit(
+        X_train,
+        y_train,
+        sample_weight=sample_weight_train,
+        X_val=X_val,
+        y_val=y_val,
+        sample_weight_val=sample_weight_val,
+    )
+
+    assert_allclose(m2.n_iter_, m1.n_iter_)
+    assert_allclose(m2.predict(X), m1.predict(X))
+
+
+def test_X_val_raises_missing_y_val():
+    """Test that an error is raised if X_val given but y_val None."""
+    X, y = make_classification(n_samples=4)
+    X, X_val = X[:2], X[2:]
+    y, y_val = y[:2], y[2:]
+    with pytest.raises(
+        ValueError,
+        match="X_val is provided, but y_val was not provided",
+    ):
+        HistGradientBoostingClassifier().fit(X, y, X_val=X_val)
+    with pytest.raises(
+        ValueError,
+        match="y_val is provided, but X_val was not provided",
+    ):
+        HistGradientBoostingClassifier().fit(X, y, y_val=y_val)
+
+
+def test_X_val_raises_with_early_stopping_false():
+    """Test that an error is raised if X_val given but early_stopping is False."""
+    X, y = make_regression(n_samples=4)
+    X, X_val = X[:2], X[2:]
+    y, y_val = y[:2], y[2:]
+    with pytest.raises(
+        ValueError,
+        match="X_val and y_val are passed to fit while at the same time",
+    ):
+        HistGradientBoostingRegressor(early_stopping=False).fit(
+            X, y, X_val=X_val, y_val=y_val
+        )
+
+
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
@@ -1566,26 +1663,6 @@ def test_categorical_different_order_same_model(dataframe_lib):
     assert len(hist_a_b._predictors) == len(hist_b_a._predictors)
     for predictor_1, predictor_2 in zip(hist_a_b._predictors, hist_b_a._predictors):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
-
-
-# TODO(1.6): Remove warning and change default in 1.6
-def test_categorical_features_warn():
-    """Raise warning when there are categorical features in the input DataFrame.
-
-    This is not tested for polars because polars categories must always be
-    strings and strings can only be handled as categories. Therefore the
-    situation in which a categorical column is currently being treated as
-    numbers and in the future will be treated as categories cannot occur with
-    polars.
-    """
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
-    y = [0, 1, 0]
-    hist = HistGradientBoostingClassifier(random_state=0)
-
-    msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
-    with pytest.warns(FutureWarning, match=msg):
-        hist.fit(X, y)
 
 
 def get_different_bitness_node_ndarray(node_ndarray):

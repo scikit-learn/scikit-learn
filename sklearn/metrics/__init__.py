@@ -1,11 +1,10 @@
-"""
-The :mod:`sklearn.metrics` module includes score functions, performance metrics
-and pairwise metrics and distance computations.
-"""
+"""Score functions, performance metrics, pairwise metrics and distance computations."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from . import cluster
-from ._classification import (
+from sklearn.metrics import cluster
+from sklearn.metrics._classification import (
     accuracy_score,
     balanced_accuracy_score,
     brier_score_loss,
@@ -13,6 +12,8 @@ from ._classification import (
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    d2_brier_score,
+    d2_log_loss_score,
     f1_score,
     fbeta_score,
     hamming_loss,
@@ -26,13 +27,13 @@ from ._classification import (
     recall_score,
     zero_one_loss,
 )
-from ._dist_metrics import DistanceMetric
-from ._plot.confusion_matrix import ConfusionMatrixDisplay
-from ._plot.det_curve import DetCurveDisplay
-from ._plot.precision_recall_curve import PrecisionRecallDisplay
-from ._plot.regression import PredictionErrorDisplay
-from ._plot.roc_curve import RocCurveDisplay
-from ._ranking import (
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics._plot.confusion_matrix import ConfusionMatrixDisplay
+from sklearn.metrics._plot.det_curve import DetCurveDisplay
+from sklearn.metrics._plot.precision_recall_curve import PrecisionRecallDisplay
+from sklearn.metrics._plot.regression import PredictionErrorDisplay
+from sklearn.metrics._plot.roc_curve import RocCurveDisplay
+from sklearn.metrics._ranking import (
     auc,
     average_precision_score,
     coverage_error,
@@ -46,7 +47,7 @@ from ._ranking import (
     roc_curve,
     top_k_accuracy_score,
 )
-from ._regression import (
+from sklearn.metrics._regression import (
     d2_absolute_error_score,
     d2_pinball_score,
     d2_tweedie_score,
@@ -65,8 +66,13 @@ from ._regression import (
     root_mean_squared_error,
     root_mean_squared_log_error,
 )
-from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
-from .cluster import (
+from sklearn.metrics._scorer import (
+    check_scoring,
+    get_scorer,
+    get_scorer_names,
+    make_scorer,
+)
+from sklearn.metrics.cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
     calinski_harabasz_score,
@@ -84,7 +90,7 @@ from .cluster import (
     silhouette_score,
     v_measure_score,
 )
-from .pairwise import (
+from sklearn.metrics.pairwise import (
     euclidean_distances,
     nan_euclidean_distances,
     pairwise_distances,
@@ -95,12 +101,19 @@ from .pairwise import (
 )
 
 __all__ = [
+    "ConfusionMatrixDisplay",
+    "DetCurveDisplay",
+    "DistanceMetric",
+    "PrecisionRecallDisplay",
+    "PredictionErrorDisplay",
+    "RocCurveDisplay",
     "accuracy_score",
     "adjusted_mutual_info_score",
     "adjusted_rand_score",
     "auc",
     "average_precision_score",
     "balanced_accuracy_score",
+    "brier_score_loss",
     "calinski_harabasz_score",
     "check_scoring",
     "class_likelihood_ratios",
@@ -108,24 +121,24 @@ __all__ = [
     "cluster",
     "cohen_kappa_score",
     "completeness_score",
-    "ConfusionMatrixDisplay",
     "confusion_matrix",
     "consensus_score",
     "coverage_error",
-    "d2_tweedie_score",
     "d2_absolute_error_score",
+    "d2_brier_score",
+    "d2_log_loss_score",
     "d2_pinball_score",
-    "dcg_score",
+    "d2_tweedie_score",
     "davies_bouldin_score",
-    "DetCurveDisplay",
+    "dcg_score",
     "det_curve",
-    "DistanceMetric",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",
     "fbeta_score",
     "fowlkes_mallows_score",
     "get_scorer",
+    "get_scorer_names",
     "hamming_loss",
     "hinge_loss",
     "homogeneity_completeness_v_measure",
@@ -135,20 +148,20 @@ __all__ = [
     "label_ranking_loss",
     "log_loss",
     "make_scorer",
-    "nan_euclidean_distances",
     "matthews_corrcoef",
     "max_error",
     "mean_absolute_error",
-    "mean_squared_error",
-    "mean_squared_log_error",
+    "mean_absolute_percentage_error",
+    "mean_gamma_deviance",
     "mean_pinball_loss",
     "mean_poisson_deviance",
-    "mean_gamma_deviance",
+    "mean_squared_error",
+    "mean_squared_log_error",
     "mean_tweedie_deviance",
     "median_absolute_error",
-    "mean_absolute_percentage_error",
     "multilabel_confusion_matrix",
     "mutual_info_score",
+    "nan_euclidean_distances",
     "ndcg_score",
     "normalized_mutual_info_score",
     "pair_confusion_matrix",
@@ -157,24 +170,19 @@ __all__ = [
     "pairwise_distances_argmin_min",
     "pairwise_distances_chunked",
     "pairwise_kernels",
-    "PrecisionRecallDisplay",
     "precision_recall_curve",
     "precision_recall_fscore_support",
     "precision_score",
-    "PredictionErrorDisplay",
     "r2_score",
     "rand_score",
     "recall_score",
-    "RocCurveDisplay",
     "roc_auc_score",
     "roc_curve",
-    "root_mean_squared_log_error",
     "root_mean_squared_error",
-    "get_scorer_names",
+    "root_mean_squared_log_error",
     "silhouette_samples",
     "silhouette_score",
     "top_k_accuracy_score",
     "v_measure_score",
     "zero_one_loss",
-    "brier_score_loss",
 ]

@@ -1,0 +1,2 @@
+- Refactored :meth:`dir` in :class:`BaseEstimator` to recognize condition check in :meth:`available_if`.
+  By :user:`John Hendricks <j-hendricks>` and :user:`Miguel Parece <MiguelParece>`.

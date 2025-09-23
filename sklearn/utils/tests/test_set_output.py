@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils._set_output import (
     ADAPTERS_MANAGER,
     ContainerAdapterProtocol,
+    _get_adapter_from_container,
     _get_output_config,
     _safe_set_output,
     _SetOutputMixin,
@@ -24,11 +25,18 @@ def test_pandas_adapter():
     pd = pytest.importorskip("pandas")
     X_np = np.asarray([[1, 0, 3], [0, 0, 1]])
     columns = np.asarray(["f0", "f1", "f2"], dtype=object)
-    index = np.asarray([0, 1])
+    index = np.asarray([1, 2])
     X_df_orig = pd.DataFrame([[1, 2], [1, 3]], index=index)
+    X_ser_orig = pd.Series([2, 3], index=index)
 
     adapter = ADAPTERS_MANAGER.adapters["pandas"]
     X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
+    assert isinstance(X_container, pd.DataFrame)
+    assert_array_equal(X_container.columns, columns)
+    assert_array_equal(X_container.index, index)
+
+    # use original index when the original is a series
+    X_container = adapter.create_container(X_np, X_ser_orig, columns=lambda: columns)
     assert isinstance(X_container, pd.DataFrame)
     assert_array_equal(X_container.columns, columns)
     assert_array_equal(X_container.index, index)
@@ -335,7 +343,7 @@ def test_set_output_mro():
 
     class Base(_SetOutputMixin):
         def transform(self, X):
-            return "Base"  # noqa
+            return "Base"
 
     class A(Base):
         pass
@@ -450,3 +458,14 @@ def test_check_library_installed(monkeypatch):
     msg = "Setting output container to 'pandas' requires"
     with pytest.raises(ImportError, match=msg):
         check_library_installed("pandas")
+
+
+def test_get_adapter_from_container():
+    """Check the behavior fo `_get_adapter_from_container`."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+    adapter = _get_adapter_from_container(X)
+    assert adapter.container_lib == "pandas"
+    err_msg = "The container does not have a registered adapter in scikit-learn."
+    with pytest.raises(ValueError, match=err_msg):
+        _get_adapter_from_container(X.to_numpy())

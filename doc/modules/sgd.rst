@@ -18,8 +18,8 @@ recently in the context of large-scale learning.
 SGD has been successfully applied to large-scale and sparse machine
 learning problems often encountered in text classification and natural
 language processing.  Given that the data is sparse, the classifiers
-in this module easily scale to problems with more than 10^5 training
-examples and more than 10^5 features.
+in this module easily scale to problems with more than :math:`10^5` training
+examples and more than :math:`10^5` features.
 
 Strictly speaking, SGD is merely an optimization technique and does not
 correspond to a specific family of machine learning models. It is only a
@@ -71,7 +71,7 @@ penalties for classification. Below is the decision boundary of a
 
 As other classifiers, SGD has to be fitted with two arrays: an array `X`
 of shape (n_samples, n_features) holding the training samples, and an
-array y of shape (n_samples,) holding the target values (class labels)
+array `y` of shape (n_samples,) holding the target values (class labels)
 for the training samples::
 
     >>> from sklearn.linear_model import SGDClassifier
@@ -91,12 +91,12 @@ SGD fits a linear model to the training data. The ``coef_`` attribute holds
 the model parameters::
 
     >>> clf.coef_
-    array([[9.9..., 9.9...]])
+    array([[9.9, 9.9]])
 
 The ``intercept_`` attribute holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_
-    array([-9.9...])
+    array([-9.9])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter ``fit_intercept``.
@@ -106,7 +106,7 @@ the coefficients and the input sample, plus the intercept) is given by
 :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
-    array([29.6...])
+    array([29.6])
 
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
@@ -114,16 +114,16 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
 * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
 * ``loss="modified_huber"``: smoothed hinge loss,
 * ``loss="log_loss"``: logistic regression,
-* and all regression losses below. In this case the target is encoded as -1
-  or 1, and the problem is treated as a regression problem. The predicted
-  class then correspond to the sign of the predicted target.
+* and all regression losses below. In this case the target is encoded as :math:`-1`
+  or :math:`1`, and the problem is treated as a regression problem. The predicted
+  class then corresponds to the sign of the predicted target.
 
 Please refer to the :ref:`mathematical section below
 <sgd_mathematical_formulation>` for formulas.
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models (i.e. with more zero
-coefficients), even when L2 penalty is used.
+coefficients), even when :math:`L_2` penalty is used.
 
 Using ``loss="log_loss"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
@@ -131,21 +131,21 @@ Using ``loss="log_loss"`` or ``loss="modified_huber"`` enables the
 
     >>> clf = SGDClassifier(loss="log_loss", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]]) # doctest: +SKIP
-    array([[0.00..., 0.99...]])
+    array([[0.00, 0.99]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
 
-* ``penalty="l2"``: L2 norm penalty on ``coef_``.
-* ``penalty="l1"``: L1 norm penalty on ``coef_``.
-* ``penalty="elasticnet"``: Convex combination of L2 and L1;
+* ``penalty="l2"``: :math:`L_2` norm penalty on ``coef_``.
+* ``penalty="l1"``: :math:`L_1` norm penalty on ``coef_``.
+* ``penalty="elasticnet"``: Convex combination of :math:`L_2` and :math:`L_1`;
   ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
-The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
+The default setting is ``penalty="l2"``. The :math:`L_1` penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net [#5]_ solves
-some deficiencies of the L1 penalty in the presence of highly correlated
+some deficiencies of the :math:`L_1` penalty in the presence of highly correlated
 attributes. The parameter ``l1_ratio`` controls the convex combination
-of L1 and L2 penalty.
+of :math:`L_1` and :math:`L_2` penalty.
 
 :class:`SGDClassifier` supports multi-class classification by combining
 multiple binary classifiers in a "one versus all" (OVA) scheme. For each
@@ -164,8 +164,8 @@ the decision surface induced by the three classifiers.
 
 In the case of multi-class classification ``coef_`` is a two-dimensional
 array of shape (n_classes, n_features) and ``intercept_`` is a
-one-dimensional array of shape (n_classes,). The i-th row of ``coef_`` holds
-the weight vector of the OVA classifier for the i-th class; classes are
+one-dimensional array of shape (n_classes,). The :math:`i`-th row of ``coef_`` holds
+the weight vector of the OVA classifier for the :math:`i`-th class; classes are
 indexed in ascending order (see attribute ``classes_``).
 Note that, in principle, since they allow to create a probability model,
 ``loss="log_loss"`` and ``loss="modified_huber"`` are more suitable for
@@ -189,14 +189,13 @@ For classification with a logistic loss, another variant of SGD with an
 averaging strategy is available with Stochastic Average Gradient (SAG)
 algorithm, available as a solver in :class:`LogisticRegression`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`,
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
- - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
-   (See the Note in the example)
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
+- :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+  (See the Note in the example)
 
 Regression
 ==========
@@ -228,9 +227,13 @@ description above in the classification section).
 :class:`SGDRegressor` also supports averaged SGD [#4]_ (here again, see
 description above in the classification section).
 
-For regression with a squared loss and a l2 penalty, another variant of
+For regression with a squared loss and a :math:`L_2` penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
 Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
+
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`
 
 .. _sgd_online_one_class_svm:
 
@@ -246,50 +249,50 @@ solution of a kernelized One-Class SVM, implemented in
 samples. Note that the complexity of a kernelized One-Class SVM is at best
 quadratic in the number of samples.
 :class:`sklearn.linear_model.SGDOneClassSVM` is thus well suited for datasets
-with a large number of training samples (> 10,000) for which the SGD
+with a large number of training samples (over 10,000) for which the SGD
 variant can be several orders of magnitude faster.
 
-|details-start|
-**Mathematical details**
-|details-split|
+.. dropdown:: Mathematical details
 
-Its implementation is based on the implementation of the stochastic
-gradient descent. Indeed, the original optimization problem of the One-Class
-SVM is given by
+  Its implementation is based on the implementation of the stochastic
+  gradient descent. Indeed, the original optimization problem of the One-Class
+  SVM is given by
 
-.. math::
+  .. math::
 
-  \begin{aligned}
-  \min_{w, \rho, \xi} & \quad \frac{1}{2}\Vert w \Vert^2 - \rho + \frac{1}{\nu n} \sum_{i=1}^n \xi_i \\
-  \text{s.t.} & \quad \langle w, x_i \rangle \geq \rho - \xi_i \quad 1 \leq i \leq n \\
-  & \quad \xi_i \geq 0 \quad 1 \leq i \leq n
-  \end{aligned}
+    \begin{aligned}
+    \min_{w, \rho, \xi} & \quad \frac{1}{2}\Vert w \Vert^2 - \rho + \frac{1}{\nu n} \sum_{i=1}^n \xi_i \\
+    \text{s.t.} & \quad \langle w, x_i \rangle \geq \rho - \xi_i \quad 1 \leq i \leq n \\
+    & \quad \xi_i \geq 0 \quad 1 \leq i \leq n
+    \end{aligned}
 
-where :math:`\nu \in (0, 1]` is the user-specified parameter controlling the
-proportion of outliers and the proportion of support vectors. Getting rid of
-the slack variables :math:`\xi_i` this problem is equivalent to
+  where :math:`\nu \in (0, 1]` is the user-specified parameter controlling the
+  proportion of outliers and the proportion of support vectors. Getting rid of
+  the slack variables :math:`\xi_i` this problem is equivalent to
 
-.. math::
+  .. math::
 
-  \min_{w, \rho} \frac{1}{2}\Vert w \Vert^2 - \rho + \frac{1}{\nu n} \sum_{i=1}^n \max(0, \rho - \langle w, x_i \rangle) \, .
+    \min_{w, \rho} \frac{1}{2}\Vert w \Vert^2 - \rho + \frac{1}{\nu n} \sum_{i=1}^n \max(0, \rho - \langle w, x_i \rangle) \, .
 
-Multiplying by the constant :math:`\nu` and introducing the intercept
-:math:`b = 1 - \rho` we obtain the following equivalent optimization problem
+  Multiplying by the constant :math:`\nu` and introducing the intercept
+  :math:`b = 1 - \rho` we obtain the following equivalent optimization problem
 
-.. math::
+  .. math::
 
-  \min_{w, b} \frac{\nu}{2}\Vert w \Vert^2 + b\nu + \frac{1}{n} \sum_{i=1}^n \max(0, 1 - (\langle w, x_i \rangle + b)) \, .
+    \min_{w, b} \frac{\nu}{2}\Vert w \Vert^2 + b\nu + \frac{1}{n} \sum_{i=1}^n \max(0, 1 - (\langle w, x_i \rangle + b)) \, .
 
-This is similar to the optimization problems studied in section
-:ref:`sgd_mathematical_formulation` with :math:`y_i = 1, 1 \leq i \leq n` and
-:math:`\alpha = \nu/2`, :math:`L` being the hinge loss function and :math:`R`
-being the L2 norm. We just need to add the term :math:`b\nu` in the
-optimization loop.
-
-|details-end|
+  This is similar to the optimization problems studied in section
+  :ref:`sgd_mathematical_formulation` with :math:`y_i = 1, 1 \leq i \leq n` and
+  :math:`\alpha = \nu/2`, :math:`L` being the hinge loss function and :math:`R`
+  being the :math:`L_2` norm. We just need to add the term :math:`b\nu` in the
+  optimization loop.
 
 As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
 supports averaged SGD. Averaging can be enabled by setting ``average=True``.
+
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
 
 Stochastic Gradient Descent for sparse data
 ===========================================
@@ -305,16 +308,17 @@ efficiency, however, use the CSR
 matrix format as defined in `scipy.sparse.csr_matrix
 <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- - :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+- :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 Complexity
 ==========
 
 The major advantage of SGD is its efficiency, which is basically
-linear in the number of training examples. If X is a matrix of size (n, p)
-training has a cost of :math:`O(k n \bar p)`, where k is the number
+linear in the number of training examples. If :math:`X` is a matrix of size
+:math:`n \times p` (with :math:`n` samples and :math:`p` features),
+training has a cost of :math:`O(k n \bar p)`, where :math:`k` is the number
 of iterations (epochs) and :math:`\bar p` is the average number of
 non-zero attributes per sample.
 
@@ -339,16 +343,18 @@ criteria to stop the algorithm when a given level of convergence is reached:
 In both cases, the criterion is evaluated once by epoch, and the algorithm stops
 when the criterion does not improve ``n_iter_no_change`` times in a row. The
 improvement is evaluated with absolute tolerance ``tol``, and the algorithm
-stops in any case after a maximum number of iteration ``max_iter``.
+stops in any case after a maximum number of iterations ``max_iter``.
 
+See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+example of the effects of early stopping.
 
 Tips on Practical Use
 =====================
 
 * Stochastic Gradient Descent is sensitive to feature scaling, so it
   is highly recommended to scale your data. For example, scale each
-  attribute on the input vector X to [0,1] or [-1,+1], or standardize
-  it to have mean 0 and variance 1. Note that the *same* scaling must be
+  attribute on the input vector :math:`X` to :math:`[0,1]` or :math:`[-1,1]`, or standardize
+  it to have mean :math:`0` and variance :math:`1`. Note that the *same* scaling must be
   applied to the test vector to obtain meaningful results. This can be easily
   done using :class:`~sklearn.preprocessing.StandardScaler`::
 
@@ -374,22 +380,22 @@ Tips on Practical Use
   range ``10.0**-np.arange(1,7)``.
 
 * Empirically, we found that SGD converges after observing
-  approximately 10^6 training samples. Thus, a reasonable first guess
+  approximately :math:`10^6` training samples. Thus, a reasonable first guess
   for the number of iterations is ``max_iter = np.ceil(10**6 / n)``,
   where ``n`` is the size of the training set.
 
 * If you apply SGD to features extracted using PCA we found that
   it is often wise to scale the feature values by some constant `c`
-  such that the average L2 norm of the training data equals one.
+  such that the average :math:`L_2` norm of the training data equals one.
 
 * We found that Averaged SGD works best with a larger number of features
-  and a higher eta0.
+  and a higher `eta0`.
 
-.. topic:: References:
+.. rubric:: References
 
- * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
-   Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
-   of the Trade 1998.
+* `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
+  Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
+  of the Trade 1998.
 
 .. _sgd_mathematical_formulation:
 
@@ -399,9 +405,10 @@ Mathematical formulation
 We describe here the mathematical details of the SGD procedure. A good
 overview with convergence rates can be found in [#6]_.
 
-Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathcal{R}` (:math:`y_i \in
-{-1, 1}` for classification), our goal is to learn a linear scoring function
+Given a set of training examples :math:`\{(x_1, y_1), \ldots, (x_n, y_n)\}` where
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathbf{R}`
+(:math:`y_i \in \{-1, 1\}` for classification),
+our goal is to learn a linear scoring function
 :math:`f(x) = w^T x + b` with model parameters :math:`w \in \mathbf{R}^m` and
 intercept :math:`b \in \mathbf{R}`. In order to make predictions for binary
 classification, we simply look at the sign of :math:`f(x)`. To find the model
@@ -416,32 +423,28 @@ where :math:`L` is a loss function that measures model (mis)fit and
 complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
 the regularization strength.
 
-|details-start|
-**Loss functions details**
-|details-split|
+.. dropdown:: Loss functions details
 
-Different choices for :math:`L` entail different classifiers or regressors:
+  Different choices for :math:`L` entail different classifiers or regressors:
 
-- Hinge (soft-margin): equivalent to Support Vector Classification.
-  :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))`.
-- Perceptron:
-  :math:`L(y_i, f(x_i)) = \max(0, - y_i f(x_i))`.
-- Modified Huber:
-  :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
-  -1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
-- Log Loss: equivalent to Logistic Regression.
-  :math:`L(y_i, f(x_i)) = \log(1 + \exp (-y_i f(x_i)))`.
-- Squared Error: Linear regression (Ridge or Lasso depending on
-  :math:`R`).
-  :math:`L(y_i, f(x_i)) = \frac{1}{2}(y_i - f(x_i))^2`.
-- Huber: less sensitive to outliers than least-squares. It is equivalent to
-  least squares when :math:`|y_i - f(x_i)| \leq \varepsilon`, and
-  :math:`L(y_i, f(x_i)) = \varepsilon |y_i - f(x_i)| - \frac{1}{2}
-  \varepsilon^2` otherwise.
-- Epsilon-Insensitive: (soft-margin) equivalent to Support Vector Regression.
-  :math:`L(y_i, f(x_i)) = \max(0, |y_i - f(x_i)| - \varepsilon)`.
-
-|details-end|
+  - Hinge (soft-margin): equivalent to Support Vector Classification.
+    :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))`.
+  - Perceptron:
+    :math:`L(y_i, f(x_i)) = \max(0, - y_i f(x_i))`.
+  - Modified Huber:
+    :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
+    -1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
+  - Log Loss: equivalent to Logistic Regression.
+    :math:`L(y_i, f(x_i)) = \log(1 + \exp (-y_i f(x_i)))`.
+  - Squared Error: Linear regression (Ridge or Lasso depending on
+    :math:`R`).
+    :math:`L(y_i, f(x_i)) = \frac{1}{2}(y_i - f(x_i))^2`.
+  - Huber: less sensitive to outliers than least-squares. It is equivalent to
+    least squares when :math:`|y_i - f(x_i)| \leq \varepsilon`, and
+    :math:`L(y_i, f(x_i)) = \varepsilon |y_i - f(x_i)| - \frac{1}{2}
+    \varepsilon^2` otherwise.
+  - Epsilon-Insensitive: (soft-margin) equivalent to Support Vector Regression.
+    :math:`L(y_i, f(x_i)) = \max(0, |y_i - f(x_i)| - \varepsilon)`.
 
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
@@ -454,11 +457,11 @@ misclassification error (Zero-one loss) as shown in the Figure below.
 Popular choices for the regularization term :math:`R` (the `penalty`
 parameter) include:
 
-- L2 norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
-- L1 norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
+- :math:`L_2` norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
+- :math:`L_1` norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
   solutions.
 - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{j=1}^{n} w_j^2 +
-  (1-\rho) \sum_{j=1}^{m} |w_j|`, a convex combination of L2 and L1, where
+  (1-\rho) \sum_{j=1}^{m} |w_j|`, a convex combination of :math:`L_2` and :math:`L_1`, where
   :math:`\rho` is given by ``1 - l1_ratio``.
 
 The Figure below shows the contours of the different regularization terms
@@ -502,8 +505,8 @@ is given by
 where :math:`t` is the time step (there are a total of `n_samples * n_iter`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
-size of the weights (this assuming that the norm of the training samples is
-approx. 1). The exact definition can be found in ``_init_t`` in `BaseSGD`.
+size of the weights (this assumes that the norm of the training samples is
+approximately 1). The exact definition can be found in ``_init_t`` in `BaseSGD`.
 
 
 For regression the default learning rate schedule is inverse scaling
@@ -511,10 +514,10 @@ For regression the default learning rate schedule is inverse scaling
 
 .. math::
 
-    \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
+    \eta^{(t)} = \frac{\eta_0}{t^{power\_t}}
 
-where :math:`eta_0` and :math:`power\_t` are hyperparameters chosen by the
-user via ``eta0`` and ``power_t``, resp.
+where :math:`\eta_0` and :math:`power\_t` are hyperparameters chosen by the
+user via ``eta0`` and ``power_t``, respectively.
 
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
@@ -522,7 +525,7 @@ to specify the learning rate.
 For an adaptively decreasing learning rate, use ``learning_rate='adaptive'``
 and use ``eta0`` to specify the starting learning rate. When the stopping
 criterion is reached, the learning rate is divided by 5, and the algorithm
-does not stop. The algorithm stops when the learning rate goes below 1e-6.
+does not stop. The algorithm stops when the learning rate goes below `1e-6`.
 
 The model parameters can be accessed through the ``coef_`` and
 ``intercept_`` attributes: ``coef_`` holds the weights :math:`w` and
@@ -542,7 +545,7 @@ The implementation of SGD is influenced by the `Stochastic Gradient SVM` of
 [#1]_.
 Similar to SvmSGD,
 the weight vector is represented as the product of a scalar and a vector
-which allows an efficient weight update in the case of L2 regularization.
+which allows an efficient weight update in the case of :math:`L_2` regularization.
 In the case of sparse input `X`, the intercept is updated with a
 smaller learning rate (multiplied by 0.01) to account for the fact that
 it is updated more frequently. Training examples are picked up sequentially
@@ -550,35 +553,32 @@ and the learning rate is lowered after each observed example. We adopted the
 learning rate schedule from [#2]_.
 For multi-class classification, a "one versus all" approach is used.
 We use the truncated gradient algorithm proposed in [#3]_
-for L1 regularization (and the Elastic Net).
+for :math:`L_1` regularization (and the Elastic Net).
 The code is written in Cython.
 
-.. topic:: References:
+.. rubric:: References
 
-   .. [#1] `"Stochastic Gradient Descent"
-       <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+.. [#1] `"Stochastic Gradient Descent"
+  <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
-   .. [#2] :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
-      <10.1145/1273496.1273598>`
-      S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
+.. [#2] :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
+  <10.1145/1273496.1273598>`
+  S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
-   .. [#3] `"Stochastic gradient descent training for l1-regularized
-      log-linear models with cumulative penalty"
-      <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
-      Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
-      '09.
+.. [#3] `"Stochastic gradient descent training for l1-regularized
+  log-linear models with cumulative penalty"
+  <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
+  Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL'09.
 
-   .. [#4] :arxiv:`"Towards Optimal One Pass Large Scale Learning with
-      Averaged Stochastic Gradient Descent"
-      <1107.2490v2>`
-      Xu, Wei (2011)
+.. [#4] :arxiv:`"Towards Optimal One Pass Large Scale Learning with
+  Averaged Stochastic Gradient Descent"
+  <1107.2490v2>`. Xu, Wei (2011)
 
-   .. [#5] :doi:`"Regularization and variable selection via the elastic net"
-      <10.1111/j.1467-9868.2005.00503.x>`
-      H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
-      67 (2), 301-320.
+.. [#5] :doi:`"Regularization and variable selection via the elastic net"
+  <10.1111/j.1467-9868.2005.00503.x>`
+  H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
+  67 (2), 301-320.
 
-   .. [#6] :doi:`"Solving large scale linear prediction problems using stochastic
-      gradient descent algorithms"
-      <10.1145/1015330.1015332>`
-      T. Zhang - In Proceedings of ICML '04.
+.. [#6] :doi:`"Solving large scale linear prediction problems using stochastic
+  gradient descent algorithms" <10.1145/1015330.1015332>`
+  T. Zhang - In Proceedings of ICML '04.

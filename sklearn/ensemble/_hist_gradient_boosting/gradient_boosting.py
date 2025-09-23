@@ -1,9 +1,9 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
-import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -12,7 +12,7 @@ from time import time
 
 import numpy as np
 
-from ..._loss.loss import (
+from sklearn._loss.loss import (
     _LOSSES,
     BaseLoss,
     HalfBinomialLoss,
@@ -21,23 +21,30 @@ from ..._loss.loss import (
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
 )
-from ...compose import ColumnTransformer
-from ...metrics import check_scoring
-from ...metrics._scorer import _SCORERS
-from ...model_selection import train_test_split
-from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import check_random_state, compute_sample_weight, is_scalar_nan, resample
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
-from ...utils.multiclass import check_classification_targets
-from ...utils.validation import (
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
+    _update_raw_predictions,
+)
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE, X_DTYPE, Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import _SCORERS
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
+from sklearn.utils import check_random_state, compute_sample_weight, resample
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
@@ -45,11 +52,8 @@ from ...utils.validation import (
     check_array,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
-from ._gradient_boosting import _update_raw_predictions
-from .binning import _BinMapper
-from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
-from .grower import TreeGrower
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -163,12 +167,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_bins": [Interval(Integral, 2, 255, closed="both")],
-        "categorical_features": [
-            "array-like",
-            StrOptions({"from_dtype"}),
-            Hidden(StrOptions({"warn"})),
-            None,
-        ],
+        "categorical_features": ["array-like", StrOptions({"from_dtype"}), None],
         "warm_start": ["boolean"],
         "early_stopping": [StrOptions({"auto"}), "boolean"],
         "scoring": [str, callable, None],
@@ -261,10 +260,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         # If there is a preprocessor, we let the preprocessor handle the validation.
         # Otherwise, we validate the data ourselves.
-        check_X_kwargs = dict(dtype=[X_DTYPE], force_all_finite=False)
+        check_X_kwargs = dict(dtype=[X_DTYPE], ensure_all_finite=False)
         if not reset:
             if self._preprocessor is None:
-                return self._validate_data(X, reset=False, **check_X_kwargs)
+                return validate_data(self, X, reset=False, **check_X_kwargs)
             return self._preprocessor.transform(X)
 
         # At this point, reset is False, which runs during `fit`.
@@ -274,7 +273,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._preprocessor = None
             self._is_categorical_remapped = None
 
-            X = self._validate_data(X, **check_X_kwargs)
+            X = validate_data(self, X, **check_X_kwargs)
             return X, None
 
         n_features = X.shape[1]
@@ -375,7 +374,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if _is_pandas_df(X):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(X.dtypes == "category")
-            X_has_categorical_columns = categorical_columns_mask.any()
         elif hasattr(X, "__dataframe__"):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
@@ -384,29 +382,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for c in X.__dataframe__().get_columns()
                 ]
             )
-            X_has_categorical_columns = categorical_columns_mask.any()
         else:
             X_is_dataframe = False
             categorical_columns_mask = None
-            X_has_categorical_columns = False
 
-        # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
-        if (
-            isinstance(self.categorical_features, str)
-            and self.categorical_features == "warn"
-        ):
-            if X_has_categorical_columns:
-                warnings.warn(
-                    (
-                        "The categorical_features parameter will change to 'from_dtype'"
-                        " in v1.6. The 'from_dtype' option automatically treats"
-                        " categorical dtypes in a DataFrame as categorical features."
-                    ),
-                    FutureWarning,
-                )
-            categorical_features = None
-        else:
-            categorical_features = self.categorical_features
+        categorical_features = self.categorical_features
 
         categorical_by_dtype = (
             isinstance(categorical_features, str)
@@ -443,8 +423,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
 
         n_features = X.shape[1]
-        # At this point `_validate_data` was not called yet because we want to use the
-        # dtypes are used to discover the categorical features. Thus `feature_names_in_`
+        # At this point `validate_data` was not called yet because we use the original
+        # dtypes to discover the categorical features. Thus `feature_names_in_`
         # is not defined yet.
         feature_names_in_ = getattr(X, "columns", None)
 
@@ -530,7 +510,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return constraints
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(
+        self,
+        X,
+        y,
+        sample_weight=None,
+        *,
+        X_val=None,
+        y_val=None,
+        sample_weight_val=None,
+    ):
         """Fit the gradient boosting model.
 
         Parameters
@@ -545,6 +534,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Weights of training data.
 
             .. versionadded:: 0.23
+
+        X_val : array-like of shape (n_val, n_features)
+            Additional sample of features for validation used in early stopping.
+            In a `Pipeline`, `X_val` can be transformed the same way as `X` with
+            `Pipeline(..., transform_input=["X_val"])`.
+
+            .. versionadded:: 1.7
+
+        y_val : array-like of shape (n_samples,)
+            Additional sample of target values for validation used in early stopping.
+
+            .. versionadded:: 1.7
+
+        sample_weight_val : array-like of shape (n_samples,) default=None
+            Additional weights for validation used in early stopping.
+
+            .. versionadded:: 1.7
 
         Returns
         -------
@@ -570,6 +576,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         sample_weight = self._finalize_sample_weight(sample_weight, y)
 
+        validation_data_provided = X_val is not None or y_val is not None
+        if validation_data_provided:
+            if y_val is None:
+                raise ValueError("X_val is provided, but y_val was not provided.")
+            if X_val is None:
+                raise ValueError("y_val is provided, but X_val was not provided.")
+            X_val = self._preprocess_X(X_val, reset=False)
+            y_val = _check_y(y_val, estimator=self)
+            y_val = self._encode_y_val(y_val)
+            check_consistent_length(X_val, y_val)
+            if sample_weight_val is not None:
+                sample_weight_val = _check_sample_weight(
+                    sample_weight_val, X_val, dtype=np.float64
+                )
+            if self.early_stopping is False:
+                raise ValueError(
+                    "X_val and y_val are passed to fit while at the same time "
+                    "early_stopping is False. When passing X_val and y_val to fit,"
+                    "early_stopping should be set to either 'auto' or True."
+                )
+
+        # Note: At this point, we could delete self._label_encoder if it exists.
+        # But we don't to keep the code even simpler.
+
         rng = check_random_state(self.random_state)
 
         # When warm starting, we want to reuse the same seed that was used
@@ -582,6 +612,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
+        # _preprocess_X places the categorical features at the beginning,
+        # change the order of monotonic_cst accordingly
+        if self.is_categorical_ is not None:
+            monotonic_cst_remapped = np.concatenate(
+                (
+                    monotonic_cst[self.is_categorical_],
+                    monotonic_cst[~self.is_categorical_],
+                )
+            )
+        else:
+            monotonic_cst_remapped = monotonic_cst
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -609,13 +650,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._loss = self.loss
 
         if self.early_stopping == "auto":
-            self.do_early_stopping_ = n_samples > 10000
+            self.do_early_stopping_ = n_samples > 10_000
         else:
             self.do_early_stopping_ = self.early_stopping
 
         # create validation data if needed
-        self._use_validation_data = self.validation_fraction is not None
-        if self.do_early_stopping_ and self._use_validation_data:
+        self._use_validation_data = (
+            self.validation_fraction is not None or validation_data_provided
+        )
+        if (
+            self.do_early_stopping_
+            and self._use_validation_data
+            and not validation_data_provided
+        ):
             # stratify for classification
             # instead of checking predict_proba, loss.n_classes >= 2 would also work
             stratify = y if hasattr(self._loss, "predict_proba") else None
@@ -653,7 +700,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
         else:
             X_train, y_train, sample_weight_train = X, y, sample_weight
-            X_val = y_val = sample_weight_val = None
+            if not validation_data_provided:
+                X_val = y_val = sample_weight_val = None
 
         # Bin the data
         # For ease of use of the API, the user-facing GBDT classes accept the
@@ -778,7 +826,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
 
                     # If the scorer is a predefined string, then we optimize
-                    # the evaluation by re-using the incrementally updated raw
+                    # the evaluation by reusing the incrementally updated raw
                     # predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
@@ -845,7 +893,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
-            if self.verbose:
+            if self.verbose >= 2:
                 iteration_start_time = time()
                 print(
                     "[{}/{}] ".format(iteration + 1, self.max_iter), end="", flush=True
@@ -894,7 +942,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self._is_categorical_remapped,
-                    monotonic_cst=monotonic_cst,
+                    monotonic_cst=monotonic_cst_remapped,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -956,7 +1004,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 else:
                     # If the scorer is a predefined string, then we optimize the
-                    # evaluation by re-using the incrementally computed raw predictions.
+                    # evaluation by reusing the incrementally computed raw predictions.
                     if scoring_is_predefined_string:
                         raw_predictions_small_train = raw_predictions[
                             indices_small_train
@@ -975,7 +1023,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         raw_predictions_val=raw_predictions_val,
                     )
 
-            if self.verbose:
+            if self.verbose >= 2:
                 self._print_iteration_stats(iteration_start_time)
 
             # maybe we could also early stop if all the trees are stumps?
@@ -1397,8 +1445,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return averaged_predictions
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
     @abstractmethod
     def _get_loss(self, sample_weight):
@@ -1406,7 +1456,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @abstractmethod
     def _encode_y(self, y=None):
-        pass
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def _encode_y_val(self, y=None):
+        pass  # pragma: no cover
 
     @property
     def n_iter_(self):
@@ -1429,6 +1483,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     assigned to the left or right child consequently. If no missing values
     were encountered for a given feature during training, then samples with
     missing values are mapped to whichever child has the most samples.
+    See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a
+    usecase example of this feature.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -1480,7 +1536,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     max_features : float, default=1.0
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
@@ -1498,7 +1555,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default='from_dtype'
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1518,7 +1575,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         converted to floating point numbers. This means that categorical values
         of 1.0 and 1 are treated as the same category.
 
-        Read more in the :ref:`User Guide <categorical_support_gbdt>`.
+        Read more in the :ref:`User Guide <categorical_support_gbdt>` and
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
         .. versionadded:: 0.24
 
@@ -1526,8 +1584,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.4
-           Added `"from_dtype"` option. The default will change to `"from_dtype"` in
-           v1.6.
+           Added `"from_dtype"` option.
+
+        .. versionchanged:: 1.6
+           The default value changed from `None` to `"from_dtype"`.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1566,6 +1626,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
+        See :ref:`this example<ice-vs-pdp>` on how to use `interaction_cst`.
+
         .. versionadded:: 1.2
 
     warm_start : bool, default=False
@@ -1575,21 +1637,28 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         See :term:`the Glossary <warm_start>`.
     early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
-        10000. If True, early stopping is enabled, otherwise early stopping is
-        disabled.
+        10000 or if `X_val` and `y_val` are passed to `fit`. If True, early stopping
+        is enabled, otherwise early stopping is disabled.
 
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring parameter to use for early stopping. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer is used. If
-        ``scoring='loss'``, early stopping is checked w.r.t the loss value.
-        Only used if early stopping is performed.
+        Scoring method to use for early stopping. Only used if `early_stopping`
+        is enabled. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the :ref:`coefficient of determination <r2_score>`
+          (:math:`R^2`) is used.
+        - 'loss': early stopping is checked w.r.t the loss value.
+
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if early stopping is performed.
+        the training data.
+        The value is ignored if either early stopping is not performed, e.g.
+        `early_stopping=False`, or if `X_val` and `y_val` are passed to fit.
     n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
@@ -1602,7 +1671,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         iterations to be considered an improvement upon the reference score.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
-        fitting process.
+        fitting process. ``1`` prints only summary info, ``2`` prints info per
+        iteration.
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
@@ -1699,7 +1769,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         l2_regularization=0.0,
         max_features=1.0,
         max_bins=255,
-        categorical_features="warn",
+        categorical_features="from_dtype",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -1711,7 +1781,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         verbose=0,
         random_state=None,
     ):
-        super(HistGradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
@@ -1790,6 +1860,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 )
         return y
 
+    def _encode_y_val(self, y=None):
+        return self._encode_y(y)
+
     def _get_loss(self, sample_weight):
         if self.loss == "quantile":
             return _LOSSES[self.loss](
@@ -1856,7 +1929,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     max_features : float, default=1.0
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
@@ -1874,7 +1948,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
     categorical_features : array-like of {bool, int, str} of shape (n_features) \
-            or shape (n_categorical_features,), default=None
+            or shape (n_categorical_features,), default='from_dtype'
         Indicates the categorical features.
 
         - None : no feature will be considered categorical.
@@ -1902,8 +1976,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
            Added support for feature names.
 
         .. versionchanged:: 1.4
-           Added `"from_dtype"` option. The default will change to `"from_dtype"` in
-           v1.6.
+           Added `"from_dtype"` option.
+
+        .. versionchanged:: 1.6
+           The default value changed from `None` to `"from_dtype"`.
 
     monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
@@ -1944,6 +2020,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
+        See :ref:`this example<ice-vs-pdp>` on how to use `interaction_cst`.
+
         .. versionadded:: 1.2
 
     warm_start : bool, default=False
@@ -1953,21 +2031,27 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         See :term:`the Glossary <warm_start>`.
     early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
-        10000. If True, early stopping is enabled, otherwise early stopping is
-        disabled.
+        10000 or if `X_val` and `y_val` are passed to `fit`. If True, early stopping
+        is enabled, otherwise early stopping is disabled.
 
         .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
-        Scoring parameter to use for early stopping. It can be a single
-        string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer
-        is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if early stopping is performed.
+        Scoring method to use for early stopping. Only used if `early_stopping`
+        is enabled. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: :ref:`accuracy <accuracy_score>` is used.
+        - 'loss': early stopping is checked w.r.t the loss value.
+
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if early stopping is performed.
+        the training data.
+        The value is ignored if either early stopping is not performed, e.g.
+        `early_stopping=False`, or if `X_val` and `y_val` are passed to fit.
     n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
@@ -1980,7 +2064,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         considered an improvement upon the reference score.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
-        fitting process.
+        fitting process. ``1`` prints only summary info, ``2`` prints info per
+        iteration.
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
@@ -2077,7 +2162,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         l2_regularization=0.0,
         max_features=1.0,
         max_bins=255,
-        categorical_features="warn",
+        categorical_features="from_dtype",
         monotonic_cst=None,
         interaction_cst=None,
         warm_start=False,
@@ -2090,7 +2175,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         random_state=None,
         class_weight=None,
     ):
-        super(HistGradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss,
             learning_rate=learning_rate,
             max_iter=max_iter,
@@ -2169,7 +2254,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         """
         for raw_predictions in self._staged_raw_predict(X):
             if raw_predictions.shape[1] == 1:
-                # np.argmax([0, 0]) is 0, not 1, therefor "> 0" not ">= 0"
+                # np.argmax([0, 0]) is 0, not 1, therefore "> 0" not ">= 0"
                 encoded_classes = (raw_predictions.ravel() > 0).astype(int)
             else:
                 encoded_classes = np.argmax(raw_predictions, axis=1)
@@ -2257,19 +2342,26 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             yield staged_decision
 
     def _encode_y(self, y):
+        """Create self._label_encoder and encode y correspondingly."""
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_
         check_classification_targets(y)
 
-        label_encoder = LabelEncoder()
-        encoded_y = label_encoder.fit_transform(y)
-        self.classes_ = label_encoder.classes_
+        # We need to store the label encoder in case y_val needs to be label encoded,
+        # too.
+        self._label_encoder = LabelEncoder()
+        encoded_y = self._label_encoder.fit_transform(y)
+        self.classes_ = self._label_encoder.classes_
         n_classes = self.classes_.shape[0]
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
         self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
+
+    def _encode_y_val(self, y):
+        encoded_y = self._label_encoder.transform(y)
+        return encoded_y.astype(Y_DTYPE, copy=False)
 
     def _get_loss(self, sample_weight):
         # At this point self.loss == "log_loss"

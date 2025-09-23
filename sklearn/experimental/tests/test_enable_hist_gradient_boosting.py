@@ -4,8 +4,8 @@ import textwrap
 
 import pytest
 
-from sklearn.utils import _IS_WASM
 from sklearn.utils._testing import assert_run_python_script_without_output
+from sklearn.utils.fixes import _IS_WASM
 
 
 @pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")

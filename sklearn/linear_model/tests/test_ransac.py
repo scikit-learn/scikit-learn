@@ -220,20 +220,18 @@ def test_ransac_exceed_max_skips():
 
 
 def test_ransac_warn_exceed_max_skips():
-    global cause_skip
-    cause_skip = False
+    class IsDataValid:
+        def __init__(self):
+            self.call_counter = 0
 
-    def is_data_valid(X, y):
-        global cause_skip
-        if not cause_skip:
-            cause_skip = True
-            return True
-        else:
-            return False
+        def __call__(self, X, y):
+            result = self.call_counter == 0
+            self.call_counter += 1
+            return result
 
     estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        estimator, is_data_valid=is_data_valid, max_skips=3, max_trials=5
+        estimator, is_data_valid=IsDataValid(), max_skips=3, max_trials=5
     )
     warning_message = (
         "RANSAC found a valid consensus set but exited "
@@ -461,7 +459,7 @@ def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
     n_samples = y.shape[0]
     weights = np.ones(n_samples)
-    ransac_estimator.fit(X, y, weights)
+    ransac_estimator.fit(X, y, sample_weight=weights)
     # sanity check
     assert ransac_estimator.inlier_mask_.shape[0] == n_samples
 
@@ -498,7 +496,7 @@ def test_ransac_fit_sample_weight():
     sample_weight = np.append(sample_weight, outlier_weight)
     X_ = np.append(X_, outlier_X, axis=0)
     y_ = np.append(y_, outlier_y)
-    ransac_estimator.fit(X_, y_, sample_weight)
+    ransac_estimator.fit(X_, y_, sample_weight=sample_weight)
 
     assert_allclose(ransac_estimator.estimator_.coef_, ref_coef_)
 
@@ -509,7 +507,7 @@ def test_ransac_fit_sample_weight():
 
     err_msg = f"{estimator.__class__.__name__} does not support sample_weight."
     with pytest.raises(ValueError, match=err_msg):
-        ransac_estimator.fit(X, y, weights)
+        ransac_estimator.fit(X, y, sample_weight=weights)
 
 
 def test_ransac_final_model_fit_sample_weight():
@@ -517,7 +515,7 @@ def test_ransac_final_model_fit_sample_weight():
     rng = check_random_state(42)
     sample_weight = rng.randint(1, 4, size=y.shape[0])
     sample_weight = sample_weight / sample_weight.sum()
-    ransac = RANSACRegressor(estimator=LinearRegression(), random_state=0)
+    ransac = RANSACRegressor(random_state=0)
     ransac.fit(X, y, sample_weight=sample_weight)
 
     final_model = LinearRegression()

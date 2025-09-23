@@ -1,15 +1,19 @@
-"""Transformers for missing value imputation"""
+"""Transformers for missing value imputation."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import typing
 
-from ._base import MissingIndicator, SimpleImputer
-from ._knn import KNNImputer
+from sklearn.impute._base import MissingIndicator, SimpleImputer
+from sklearn.impute._knn import KNNImputer
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
-    from ._iterative import IterativeImputer  # noqa
+    from sklearn.impute._iterative import IterativeImputer  # noqa: F401
 
-__all__ = ["MissingIndicator", "SimpleImputer", "KNNImputer"]
+__all__ = ["KNNImputer", "MissingIndicator", "SimpleImputer"]
 
 
 # TODO: remove this check once the estimator is no longer experimental.

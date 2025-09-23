@@ -39,6 +39,9 @@ number of Gaussian components instead of a continuous noisy sine curve.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 
 import matplotlib as mpl

@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _toy_datasets:
 
 Toy datasets

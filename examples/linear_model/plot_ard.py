@@ -5,8 +5,8 @@ Comparing Linear Bayesian Regressors
 
 This example compares two different bayesian regressors:
 
- - a :ref:`automatic_relevance_determination`
- - a :ref:`bayesian_ridge_regression`
+- a :ref:`automatic_relevance_determination`
+- a :ref:`bayesian_ridge_regression`
 
 In the first part, we use an :ref:`ordinary_least_squares` (OLS) model as a
 baseline for comparing the models' coefficients with respect to the true
@@ -19,7 +19,8 @@ non-linear relationship between `X` and `y`.
 
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Models robustness to recover the ground truth weights

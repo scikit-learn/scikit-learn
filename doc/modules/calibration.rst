@@ -74,10 +74,14 @@ by showing the number of samples in each predicted probability bin.
 
 .. currentmodule:: sklearn.linear_model
 
-:class:`LogisticRegression` returns well calibrated predictions by default as it has a
+:class:`LogisticRegression` is more likely to return well calibrated predictions by itself as it has a
 canonical link function for its loss, i.e. the logit-link for the :ref:`log_loss`.
-This leads to the so-called **balance property**, see [8]_ and
-:ref:`Logistic_regression`.
+In the unpenalized case, this leads to the so-called **balance property**, see [8]_ and :ref:`Logistic_regression`.
+In the plot above, data is generated according to a linear mechanism, which is
+consistent with the :class:`LogisticRegression` model (the model is 'well specified'),
+and the value of the regularization parameter `C` is tuned to be
+appropriate (neither too strong nor too low). As a consequence, this model returns
+accurate predictions from its `predict_proba` method.
 In contrast to that, the other shown models return biased probabilities; with
 different biases per model.
 
@@ -99,7 +103,7 @@ difficulty making predictions near 0 and 1 because variance in the
 underlying base models will bias predictions that should be near zero or one
 away from these values. Because predictions are restricted to the interval
 [0,1], errors caused by variance tend to be one-sided near zero and one. For
-example, if a model should predict p = 0 for a case, the only way bagging
+example, if a model should predict :math:`p = 0` for a case, the only way bagging
 can achieve this is if all bagged trees predict zero. If we add noise to the
 trees that bagging is averaging over, this noise will cause some trees to
 predict values larger than 0 for this case, thus moving the average
@@ -142,21 +146,35 @@ Usage
 The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
 :class:`CalibratedClassifierCV` uses a cross-validation approach to ensure
-unbiased data is always used to fit the calibrator. The data is split into k
+unbiased data is always used to fit the calibrator. The data is split into :math:`k`
 `(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
 (default), the following procedure is repeated independently for each
-cross-validation split: a clone of `base_estimator` is first trained on the
-train subset. Then its predictions on the test subset are used to fit a
-calibrator (either a sigmoid or isotonic regressor). This results in an
-ensemble of k `(classifier, calibrator)` couples where each calibrator maps
+cross-validation split:
+
+1. a clone of `base_estimator` is trained on the train subset
+2. the trained `base_estimator` makes predictions on the test subset
+3. the predictions are used to fit a calibrator (either a sigmoid or isotonic
+   regressor) (when the data is multiclass, a calibrator is fit for every class)
+
+This results in an
+ensemble of :math:`k` `(classifier, calibrator)` couples where each calibrator maps
 the output of its corresponding classifier into [0, 1]. Each couple is exposed
 in the `calibrated_classifiers_` attribute, where each entry is a calibrated
 classifier with a :term:`predict_proba` method that outputs calibrated
 probabilities. The output of :term:`predict_proba` for the main
 :class:`CalibratedClassifierCV` instance corresponds to the average of the
-predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
+predicted probabilities of the :math:`k` estimators in the `calibrated_classifiers_`
 list. The output of :term:`predict` is the class that has the highest
 probability.
+
+It is important to choose `cv` carefully when using `ensemble=True`.
+All classes should be present in both train and test subsets for every split.
+When a class is absent in the train subset, the predicted probability for that
+class will default to 0 for the `(classifier, calibrator)` couple of that split.
+This skews the :term:`predict_proba` as it averages across all couples.
+When a class is absent in the test subset, the calibrator for that class
+(within the `(classifier, calibrator)` couple of that split) is
+fit on data with no positive class. This results in ineffective calibration.
 
 When `ensemble=False`, cross-validation is used to obtain 'unbiased'
 predictions for all the data, via
@@ -175,11 +193,11 @@ The main advantage of using `ensemble=False` is computational: it reduces the
 overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
-Alternatively an already fitted classifier can be calibrated by setting
-`cv="prefit"`. In this case, the data is not split and all of it is used to
-fit the regressor. It is up to the user to
-make sure that the data used for fitting the classifier is disjoint from the
-data used for fitting the regressor.
+Alternatively an already fitted classifier can be calibrated by using a
+:class:`~sklearn.frozen.FrozenEstimator` as
+``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+It is up to the user to make sure that the data used for fitting the classifier
+is disjoint from the data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two regression techniques
 for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
@@ -226,12 +244,12 @@ subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
 :math:`f_i \geq f_j`. :math:`y_i` is the true
 label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
 calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
-This method is more general when compared to 'sigmoid' as the only restriction
+This method is more general when compared to `'sigmoid'` as the only restriction
 is that the mapping function is monotonically increasing. It is thus more
 powerful as it can correct any monotonic distortion of the un-calibrated model.
 However, it is more prone to overfitting, especially on small datasets [6]_.
 
-Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
+Overall, `'isotonic'` will perform as well as or better than `'sigmoid'` when
 there is enough data (greater than ~ 1000 samples) to avoid overfitting [3]_.
 
 .. note:: Impact on ranking metrics like AUC
@@ -258,51 +276,84 @@ probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
-.. topic:: Examples:
+On the other hand, temperature scaling naturally supports multiclass
+predictions by working with logits and finally applying the softmax function.
 
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
-   * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+Temperature Scaling
+^^^^^^^^^^^^^^^^^^^
 
-.. topic:: References:
+For a multi-class classification problem with :math:`n` classes, temperature scaling
+[9]_, `method="temperature"`, produces class probabilities by modifying the softmax
+function with a temperature parameter :math:`T`:
 
-    .. [1] Allan H. Murphy (1973).
-           :doi:`"A New Vector Partition of the Probability Score"
-           <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
-           Journal of Applied Meteorology and Climatology
+.. math::
+       \mathrm{softmax}\left(\frac{z}{T}\right) \,,
 
-    .. [2] `On the combination of forecast probabilities for
-           consecutive precipitation periods.
-           <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
-           Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
+where, for a given sample, :math:`z` is the vector of logits for each class as predicted
+by the estimator to be calibrated. In terms of scikit-learn's API, this corresponds to
+the output of :term:`decision_function` or to the logarithm of :term:`predict_proba`.
+Probabilities are converted to logits by first adding a tiny positive constant to avoid
+numerical issues with logarithm of zero, and then applying the natural logarithm.
 
-    .. [3] `Predicting Good Probabilities with Supervised Learning
-           <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+The parameter :math:`T` is learned by minimizing :func:`~sklearn.metrics.log_loss`,
+i.e. cross-entropy loss, on a hold-out (calibration) set. Note that :math:`T` does not
+affect the location of the maximum in the softmax output. Therefore, temperature scaling
+does not alter the accuracy of the calibrating estimator.
+
+The main advantage of temperature scaling over other calibration methods is that it
+provides a natural way to obtain (better) calibrated multi-class probabilities with
+just one free parameter in contrast to using a "One-vs-Rest" scheme that adds more
+parameters for each single class.
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+
+.. rubric:: References
+
+.. [1] Allan H. Murphy (1973).
+       :doi:`"A New Vector Partition of the Probability Score"
+       <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
+       Journal of Applied Meteorology and Climatology
+
+.. [2] `On the combination of forecast probabilities for
+       consecutive precipitation periods.
+       <https://doi.org/10.1175/1520-0434(1990)005%3C0640:OTCOFP%3E2.0.CO;2>`_
+       Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
+
+.. [3] `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       A. Niculescu-Mizil & R. Caruana, ICML 2005
 
 
-    .. [4] `Probabilistic Outputs for Support Vector Machines and Comparisons
-           to Regularized Likelihood Methods.
-           <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
-           J. Platt, (1999)
+.. [4] `Probabilistic Outputs for Support Vector Machines and Comparisons
+       to Regularized Likelihood Methods.
+       <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
+       J. Platt, (1999)
 
-    .. [5] `Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates.
-           <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
-           B. Zadrozny & C. Elkan, (KDD 2002)
+.. [5] `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates.
+       <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
+       B. Zadrozny & C. Elkan, (KDD 2002)
 
-    .. [6] `Predicting accurate probabilities with a ranking loss.
-           <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
-           Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
-           Proc Int Conf Mach Learn. 2012;2012:703-710
+.. [6] `Predicting accurate probabilities with a ranking loss.
+       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
+       Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
+       Proc Int Conf Mach Learn. 2012;2012:703-710
 
-    .. [7] `Beyond sigmoids: How to obtain well-calibrated probabilities from
-           binary classifiers with beta calibration
-           <https://projecteuclid.org/euclid.ejs/1513306867>`_
-           Kull, M., Silva Filho, T. M., & Flach, P. (2017).
+.. [7] `Beyond sigmoids: How to obtain well-calibrated probabilities from
+       binary classifiers with beta calibration
+       <https://projecteuclid.org/euclid.ejs/1513306867>`_
+       Kull, M., Silva Filho, T. M., & Flach, P. (2017).
 
-    .. [8] Mario V. Wüthrich, Michael Merz (2023).
-           :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
-           <10.1007/978-3-031-12409-9>`
-           Springer Actuarial
+.. [8] Mario V. Wüthrich, Michael Merz (2023).
+       :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
+       <10.1007/978-3-031-12409-9>`
+       Springer Actuarial
+
+.. [9] `On Calibration of Modern Neural Networks
+       <https://proceedings.mlr.press/v70/guo17a/guo17a.pdf>`_,
+       C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.

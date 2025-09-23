@@ -5,24 +5,12 @@ import pytest
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
-from sklearn.preprocessing._function_transformer import _get_adapter_from_container
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
-
-
-def test_get_adapter_from_container():
-    """Check the behavior fo `_get_adapter_from_container`."""
-    pd = pytest.importorskip("pandas")
-    X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
-    adapter = _get_adapter_from_container(X)
-    assert adapter.container_lib == "pandas"
-    err_msg = "The container does not have a registered adapter in scikit-learn."
-    with pytest.raises(ValueError, match=err_msg):
-        _get_adapter_from_container(X.to_numpy())
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -48,13 +36,13 @@ def test_delegate_to_func():
     )
 
     # The function should only have received X.
-    assert args_store == [
-        X
-    ], "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    assert args_store == [X], (
+        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    )
 
-    assert (
-        not kwargs_store
-    ), "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    assert not kwargs_store, (
+        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    )
 
     # reset the argument stores.
     args_store[:] = []
@@ -68,13 +56,13 @@ def test_delegate_to_func():
     )
 
     # The function should have received X
-    assert args_store == [
-        X
-    ], "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    assert args_store == [X], (
+        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    )
 
-    assert (
-        not kwargs_store
-    ), "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    assert not kwargs_store, (
+        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    )
 
 
 def test_np_log():

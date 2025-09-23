@@ -8,6 +8,9 @@ We train such a classifier on the iris dataset and observe the difference of the
 decision boundary obtained with regards to the parameter `weights`.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Load the data
 # -------------

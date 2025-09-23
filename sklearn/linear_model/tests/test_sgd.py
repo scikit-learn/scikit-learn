@@ -1,4 +1,5 @@
 import pickle
+import warnings
 from unittest.mock import Mock
 
 import joblib
@@ -20,12 +21,12 @@ from sklearn.model_selection import (
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
+from sklearn.utils import get_tags
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 
 
@@ -266,6 +267,17 @@ def test_input_format(klass):
         clf.fit(X, Y_)
 
 
+@pytest.mark.parametrize("lr", ["pa1", "pa2"])
+@pytest.mark.parametrize(
+    ["est", "loss"], [(SGDClassifier, "squared_hinge"), (SGDRegressor, "squared_error")]
+)
+def test_learning_rate_PA_raises(lr, est, loss):
+    """Test that SGD raises with forbidden loss for passive-aggressive algo."""
+    est = est(loss=loss, learning_rate=lr)
+    with pytest.raises(ValueError):
+        est.fit(X, Y)
+
+
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
@@ -360,7 +372,7 @@ def test_late_onset_averaging_reached(klass):
         shuffle=False,
     )
     clf2 = klass(
-        average=0,
+        average=False,
         learning_rate="constant",
         loss="squared_error",
         eta0=eta0,
@@ -484,6 +496,56 @@ def test_not_enough_sample_for_early_stopping(klass):
     clf = klass(early_stopping=True, validation_fraction=0.99)
     with pytest.raises(ValueError):
         clf.fit(X3, Y3)
+
+
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])
+@pytest.mark.parametrize("l1_ratio", [0, 0.7, 1])
+def test_sgd_l1_ratio_not_used(Estimator, l1_ratio):
+    """Check that l1_ratio is not used when penalty is not 'elasticnet'"""
+    clf1 = Estimator(penalty="l1", l1_ratio=None, random_state=0).fit(X, Y)
+    clf2 = Estimator(penalty="l1", l1_ratio=l1_ratio, random_state=0).fit(X, Y)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+)
+def test_sgd_failing_penalty_validation(Estimator):
+    clf = Estimator(penalty="elasticnet", l1_ratio=None)
+    with pytest.raises(
+        ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
+    ):
+        clf.fit(X, Y)
+
+
+# TODO(1.10): remove this test
+@pytest.mark.parametrize(
+    "klass",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_power_t_limits(klass):
+    """Check that a warning is raised when `power_t` is negative."""
+
+    # Check that negative values of `power_t` raise a warning
+    clf = klass(power_t=-1.0)
+    with pytest.warns(
+        FutureWarning, match="Negative values for `power_t` are deprecated"
+    ):
+        clf.fit(X, Y)
+
+    # Check that values of 'power_t in range [0, inf) do not raise a warning
+    with warnings.catch_warnings(record=True) as w:
+        clf = klass(power_t=0.5)
+        clf.fit(X, Y)
+    assert len(w) == 0
 
 
 ###############################################################################
@@ -1365,7 +1427,6 @@ def test_elasticnet_convergence(klass):
             assert_almost_equal(cd.coef_, sgd.coef_, decimal=2, err_msg=err_msg)
 
 
-@ignore_warnings
 @pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
 def test_partial_fit(klass):
     third = X.shape[0] // 3
@@ -1546,7 +1607,12 @@ def test_late_onset_averaging_reached_oneclass(klass):
     )
     # 1 pass over the training set with no averaging
     clf2 = klass(
-        average=0, learning_rate="constant", eta0=eta0, nu=nu, max_iter=1, shuffle=False
+        average=False,
+        learning_rate="constant",
+        eta0=eta0,
+        nu=nu,
+        max_iter=1,
+        shuffle=False,
     )
 
     clf1.fit(X)
@@ -1907,56 +1973,6 @@ def test_gradient_squared_hinge():
     _test_loss_common(loss, cases)
 
 
-def test_loss_log():
-    # Test Log (logistic loss)
-    loss = sgd_fast.Log()
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (1.0, 1.0, np.log(1.0 + np.exp(-1.0)), -1.0 / (np.exp(1.0) + 1.0)),
-        (1.0, -1.0, np.log(1.0 + np.exp(1.0)), 1.0 / (np.exp(-1.0) + 1.0)),
-        (-1.0, -1.0, np.log(1.0 + np.exp(-1.0)), 1.0 / (np.exp(1.0) + 1.0)),
-        (-1.0, 1.0, np.log(1.0 + np.exp(1.0)), -1.0 / (np.exp(-1.0) + 1.0)),
-        (0.0, 1.0, np.log(2), -0.5),
-        (0.0, -1.0, np.log(2), 0.5),
-        (17.9, -1.0, 17.9, 1.0),
-        (-17.9, 1.0, 17.9, -1.0),
-    ]
-    _test_loss_common(loss, cases)
-    assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.py_loss(18.1, 1.0), np.exp(-18.1), 16)
-    assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
-    assert_almost_equal(loss.py_loss(-18.1, 1.0), 18.1, 16)
-
-
-def test_loss_squared_loss():
-    # Test SquaredLoss
-    loss = sgd_fast.SquaredLoss()
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (0.0, 0.0, 0.0, 0.0),
-        (1.0, 1.0, 0.0, 0.0),
-        (1.0, 0.0, 0.5, 1.0),
-        (0.5, -1.0, 1.125, 1.5),
-        (-2.5, 2.0, 10.125, -4.5),
-    ]
-    _test_loss_common(loss, cases)
-
-
-def test_loss_huber():
-    # Test Huber
-    loss = sgd_fast.Huber(0.1)
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (0.0, 0.0, 0.0, 0.0),
-        (0.1, 0.0, 0.005, 0.1),
-        (0.0, 0.1, 0.005, -0.1),
-        (3.95, 4.0, 0.00125, -0.05),
-        (5.0, 2.0, 0.295, 0.1),
-        (-1.0, 5.0, 0.595, -0.1),
-    ]
-    _test_loss_common(loss, cases)
-
-
 def test_loss_modified_huber():
     # (p, y, expected_loss, expected_dloss)
     loss = sgd_fast.ModifiedHuber()
@@ -2211,14 +2227,10 @@ def test_sgd_numerical_consistency(SGDEstimator):
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
 
 
-# TODO(1.6): remove
-@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
-def test_loss_attribute_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `loss_function_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
+def test_sgd_one_class_svm_estimator_type():
+    """Check that SGDOneClassSVM has the correct estimator type.
 
-    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
-        est.loss_function_
+    Non-regression test for if the mixin was not on the left.
+    """
+    sgd_ocsvm = SGDOneClassSVM()
+    assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"

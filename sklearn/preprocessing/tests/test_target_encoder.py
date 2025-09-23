@@ -561,9 +561,9 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     # using smoothing.
     y = rng.normal(size=1000)
     n_categories = 30
-    X = KBinsDiscretizer(n_bins=n_categories, encode="ordinal").fit_transform(
-        y.reshape(-1, 1)
-    )
+    X = KBinsDiscretizer(
+        n_bins=n_categories, quantile_method="averaged_inverted_cdf", encode="ordinal"
+    ).fit_transform(y.reshape(-1, 1))
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=global_random_seed
@@ -586,8 +586,6 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     assert_allclose(X_test_encoded, X_test_permuted_encoded)
 
 
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear

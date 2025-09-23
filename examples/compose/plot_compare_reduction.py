@@ -20,9 +20,8 @@ fitting of a transformer is costly.
 
 """
 
-# Authors: Robert McGibbon
-#          Joel Nothman
-#          Guillaume Lemaitre
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Illustration of ``Pipeline`` and ``GridSearchCV``
@@ -93,7 +92,8 @@ plt.show()
 
 # %%
 # Caching transformers within a ``Pipeline``
-###############################################################################
+# ##########################################
+#
 # It is sometimes worthwhile storing the state of a specific transformer
 # since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
 # such situations. Therefore, we use the argument ``memory`` to enable caching.

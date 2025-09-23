@@ -24,6 +24,9 @@ setup_ccache() {
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
         ccache -M 256M
+
+        # Zeroing statistics so that ccache statistics are shown only for this build
+        ccache -z
     fi
 }
 
@@ -31,26 +34,20 @@ pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
-             libatlas3-base libatlas-base-dev python3-virtualenv ccache
+             libatlas3-base libatlas-base-dev python3-venv ccache
 
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
-                python3-matplotlib libatlas3-base libatlas-base-dev \
-                python3-virtualenv python3-pandas ccache git
-
-    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
-        # need compilers
-        apt-get -yq update
-        apt-get -yq install build-essential
+                python3-matplotlib libopenblas-dev \
+                python3-venv python3-pandas ccache git
     fi
-
 }
 
 check_packages_dev_version() {
     for package in $@; do
         package_version=$(python -c "import $package; print($package.__version__)")
-        if ! [[ $package_version =~ "dev" ]]; then
+        if [[ $package_version =~ ^[.0-9]+$ ]]; then
             echo "$package is not a development version: $package_version"
             exit 1
         fi
@@ -59,54 +56,35 @@ check_packages_dev_version() {
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        # Install/update conda with the libmamba solver because the legacy
-        # solver can be slow at installing a specific version of conda-lock.
-        conda install -n base conda conda-libmamba-solver -y
-        conda config --set solver libmamba
-        conda install -c conda-forge "$(get_dep conda-lock min)" -y
-        conda-lock install --name $VIRTUALENV $LOCK_FILE
-        source activate $VIRTUALENV
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
+        activate_environment
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
-        python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-        source $VIRTUALENV/bin/activate
+        python3 -m venv --system-site-packages $VIRTUALENV
+        activate_environment
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        python -m venv $VIRTUALENV
-        source $VIRTUALENV/bin/activate
-        pip install -r "${LOCK_FILE}"
     fi
 
+    # Install additional packages on top of the lock-file in specific cases
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy pandas"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+        dev_packages="numpy scipy pandas Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
 
         check_packages_dev_version $dev_packages
 
-        echo "Installing Cython from latest sources"
-        pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        apt-get -yq update
-        apt-get install -yq ccache
-
     fi
 }
 
 scikit_learn_install() {
     setup_ccache
     show_installed_libraries
-
-    # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-    # workers with 2 cores when building the compiled extensions of scikit-learn.
-    export SKLEARN_BUILD_PARALLEL=3
 
     if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
@@ -118,6 +96,11 @@ scikit_learn_install() {
         # brings in openmp so that you end up having the omp.h include inside
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
+        brew uninstall --ignore-dependencies --force libomp
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
@@ -126,21 +109,24 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    if [[ "$BUILD_WITH_MESON" == "true" ]]; then
-        make dev-meson
-    # TODO use a specific variable for this rather than using a particular build ...
-    elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
-        pip install --verbose --editable .
+        pip install --verbose .
     else
+        if [[ "$UNAMESTR" == "MINGW64"* ]]; then
+           # Needed on Windows CI to compile with Visual Studio compiler
+           # otherwise Meson detects a MINGW64 platform and use MINGW64
+           # toolchain
+           ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
-        python setup.py develop
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
-    ccache -s
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
 main() {

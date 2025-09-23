@@ -137,7 +137,7 @@ API changes summary
   from ``sklearn`` instead, which was introduced in 0.9.
 
 - In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
-  with it's order reversed, in order to keep it consistent with the order
+  with its order reversed, in order to keep it consistent with the order
   of the returned ``fpr`` and ``tpr``.
 
 - In `hmm` objects, like `hmm.GaussianHMM`,
@@ -185,8 +185,8 @@ API changes summary
   :meth:`~ensemble.GradientBoostingClassifier.staged_predict`.
 
 - `svm.sparse.SVC` and other sparse SVM classes are now deprecated.
-  The all classes in the :ref:`svm` module now automatically select the
-  sparse or dense representation base on the input.
+  All classes in the :ref:`svm` module now automatically select the
+  sparse or dense representation based on the input.
 
 - All clustering algorithms now interpret the array ``X`` given to ``fit`` as
   input data, in particular :class:`~cluster.SpectralClustering` and
@@ -611,7 +611,7 @@ version 0.9:
   ``cross_val_score`` (i.e. uses the mean score across the folds.)
 
 - Cross Validation generators now use integer indices (``indices=True``)
-  by default instead of boolean masks. This make it more intuitive to
+  by default instead of boolean masks. This makes it more intuitive to
   use with sparse matrix data.
 
 - The functions used for sparse coding, ``sparse_encode`` and
@@ -930,7 +930,7 @@ enhancements and bug fixes.
 Changelog
 ---------
 
-Several new modules where introduced during this release:
+Several new modules were introduced during this release:
 
 - New :ref:`hierarchical_clustering` module by Vincent Michel,
   `Bertrand Thirion`_, `Alexandre Gramfort`_ and `Gael Varoquaux`_.
@@ -1026,7 +1026,7 @@ after the 0.6 release. This release is marked by the speed
 improvements in existing algorithms like k-Nearest Neighbors and
 K-Means algorithm and by the inclusion of an efficient algorithm for
 computing the Ridge Generalized Cross Validation solution. Unlike the
-preceding release, no new modules where added to this release.
+preceding release, no new modules were added to this release.
 
 Changelog
 ---------
@@ -1124,7 +1124,7 @@ Changelog
 ---------
 
 - New `stochastic gradient
-  <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
+  <https://scikit-learn.org/stable/modules/sgd.html>`_ descent
   module by Peter Prettenhofer. The module comes with complete
   documentation and examples.
 
@@ -1153,7 +1153,6 @@ Changelog
   datasets was created. These include:
   :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
   :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
-  :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
   :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
   others.
 
@@ -1256,9 +1255,9 @@ Documentation
 - Improved documentation for many modules, now separating
   narrative documentation from the class reference. As an example,
   see `documentation for the SVM module
-  <http://scikit-learn.org/stable/modules/svm.html>`_ and the
+  <https://scikit-learn.org/stable/modules/svm.html>`_ and the
   complete `class reference
-  <http://scikit-learn.org/stable/modules/classes.html>`_.
+  <https://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 -----
@@ -1280,7 +1279,7 @@ Examples
   :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here
-  <http://scikit-learn.org/stable/auto_examples/index.html>`_
+  <https://scikit-learn.org/stable/auto_examples/index.html>`_
   the full list of examples.
 
 

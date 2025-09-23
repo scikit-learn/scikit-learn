@@ -25,7 +25,6 @@ from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
     OrthogonalMatchingPursuit,
-    PassiveAggressiveClassifier,
     Ridge,
     SGDClassifier,
     SGDRegressor,
@@ -196,6 +195,9 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
@@ -337,7 +339,7 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(dual="auto", random_state=0)
+    svc = LinearSVC(random_state=0)
     multi_class_svc = OneVsRestClassifier(svc)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
@@ -368,9 +370,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(
-        LogisticRegression(solver="liblinear", random_state=seed)
-    )
+    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
 
     clf.fit(X, Y)
 
@@ -378,20 +378,20 @@ def test_multiclass_multioutput_estimator_predict_proba():
     y_actual = [
         np.array(
             [
-                [0.23481764, 0.76518236],
-                [0.67196072, 0.32803928],
-                [0.54681448, 0.45318552],
-                [0.34883923, 0.65116077],
-                [0.73687069, 0.26312931],
+                [0.31525135, 0.68474865],
+                [0.81004803, 0.18995197],
+                [0.65664086, 0.34335914],
+                [0.38584929, 0.61415071],
+                [0.83234285, 0.16765715],
             ]
         ),
         np.array(
             [
-                [0.5171785, 0.23878628, 0.24403522],
-                [0.22141451, 0.64102704, 0.13755846],
-                [0.16751315, 0.18256843, 0.64991843],
-                [0.27357372, 0.55201592, 0.17441036],
-                [0.65745193, 0.26062899, 0.08191907],
+                [0.65759215, 0.20976588, 0.13264197],
+                [0.14996984, 0.82591444, 0.02411571],
+                [0.13111876, 0.13294966, 0.73593158],
+                [0.24663053, 0.65860244, 0.09476703],
+                [0.81458885, 0.1728158, 0.01259535],
             ]
         ),
     ]
@@ -442,7 +442,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(dual="auto", random_state=0))
+    moc = MultiOutputClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -478,7 +478,7 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
 
     # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC(dual="auto"))
+    moc = MultiOutputClassifier(LinearSVC())
     assert not hasattr(moc, "predict_proba")
 
     outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
@@ -508,11 +508,14 @@ def generate_multilabel_dataset_with_correlations():
     return X, Y_multi
 
 
-def test_classifier_chain_fit_and_predict_with_linear_svc():
+@pytest.mark.parametrize("chain_method", ["predict", "decision_function"])
+def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LinearSVC(dual="auto"))
-    classifier_chain.fit(X, Y)
+    classifier_chain = ClassifierChain(
+        LinearSVC(),
+        chain_method=chain_method,
+    ).fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
     assert Y_pred.shape == Y.shape
@@ -530,12 +533,10 @@ def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = csr_container(X)
 
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X_sparse, Y)
+    classifier_chain = ClassifierChain(LogisticRegression()).fit(X_sparse, Y)
     Y_pred_sparse = classifier_chain.predict(X_sparse)
 
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
+    classifier_chain = ClassifierChain(LogisticRegression()).fit(X, Y)
     Y_pred_dense = classifier_chain.predict(X)
 
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
@@ -564,26 +565,41 @@ def test_classifier_chain_vs_independent_models():
     )
 
 
+@pytest.mark.parametrize(
+    "chain_method",
+    ["predict", "predict_proba", "predict_log_proba", "decision_function"],
+)
 @pytest.mark.parametrize("response_method", ["predict_proba", "predict_log_proba"])
-def test_base_chain_fit_and_predict(response_method):
-    # Fit base chain and verify predict performance
+def test_classifier_chain_fit_and_predict(chain_method, response_method):
+    # Fit classifier chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    chains = [RegressorChain(Ridge()), ClassifierChain(LogisticRegression())]
-    for chain in chains:
-        chain.fit(X, Y)
-        Y_pred = chain.predict(X)
-        assert Y_pred.shape == Y.shape
-        assert [c.coef_.size for c in chain.estimators_] == list(
-            range(X.shape[1], X.shape[1] + Y.shape[1])
-        )
+    chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+    chain.fit(X, Y)
+    Y_pred = chain.predict(X)
+    assert Y_pred.shape == Y.shape
+    assert [c.coef_.size for c in chain.estimators_] == list(
+        range(X.shape[1], X.shape[1] + Y.shape[1])
+    )
 
-    Y_prob = getattr(chains[1], response_method)(X)
+    Y_prob = getattr(chain, response_method)(X)
     if response_method == "predict_log_proba":
         Y_prob = np.exp(Y_prob)
     Y_binary = Y_prob >= 0.5
     assert_array_equal(Y_binary, Y_pred)
 
-    assert isinstance(chains[1], ClassifierMixin)
+    assert isinstance(chain, ClassifierMixin)
+
+
+def test_regressor_chain_fit_and_predict():
+    # Fit regressor chain and verify Y and estimator coefficients shape
+    X, Y = generate_multilabel_dataset_with_correlations()
+    chain = RegressorChain(Ridge())
+    chain.fit(X, Y)
+    Y_pred = chain.predict(X)
+    assert Y_pred.shape == Y.shape
+    assert [c.coef_.size for c in chain.estimators_] == list(
+        range(X.shape[1], X.shape[1] + Y.shape[1])
+    )
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -619,24 +635,37 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-def test_base_chain_crossval_fit_and_predict():
+@pytest.mark.parametrize(
+    "chain_type, chain_method",
+    [
+        ("classifier", "predict"),
+        ("classifier", "predict_proba"),
+        ("classifier", "predict_log_proba"),
+        ("classifier", "decision_function"),
+        ("regressor", ""),
+    ],
+)
+def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     # Fit chain with cross_val_predict and verify predict
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
 
-    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
-        chain.fit(X, Y)
-        chain_cv = clone(chain).set_params(cv=3)
-        chain_cv.fit(X, Y)
-        Y_pred_cv = chain_cv.predict(X)
-        Y_pred = chain.predict(X)
+    if chain_type == "classifier":
+        chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+    else:
+        chain = RegressorChain(Ridge())
+    chain.fit(X, Y)
+    chain_cv = clone(chain).set_params(cv=3)
+    chain_cv.fit(X, Y)
+    Y_pred_cv = chain_cv.predict(X)
+    Y_pred = chain.predict(X)
 
-        assert Y_pred_cv.shape == Y_pred.shape
-        assert not np.all(Y_pred == Y_pred_cv)
-        if isinstance(chain, ClassifierChain):
-            assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
-        else:
-            assert mean_squared_error(Y, Y_pred_cv) < 0.25
+    assert Y_pred_cv.shape == Y_pred.shape
+    assert not np.all(Y_pred == Y_pred_cv)
+    if isinstance(chain, ClassifierChain):
+        assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
+    else:
+        assert mean_squared_error(Y, Y_pred_cv) < 0.25
 
 
 @pytest.mark.parametrize(
@@ -650,7 +679,7 @@ def test_base_chain_crossval_fit_and_predict():
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
@@ -669,7 +698,6 @@ class DummyClassifierWithFitParams(DummyClassifier):
         return super().fit(X, y, sample_weight)
 
 
-@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
 @pytest.mark.parametrize(
     "estimator, dataset",
     [
@@ -684,6 +712,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
     ],
 )
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    estimator = clone(estimator)  # Avoid side effects from shared instances
     X, y = dataset
     some_param = np.zeros_like(X)
     estimator.fit(X, y, some_param=some_param)
@@ -737,7 +766,9 @@ def test_classifier_chain_tuple_order(order_type):
     y = [[3, 2], [2, 3], [3, 2]]
     order = order_type([1, 0])
 
-    chain = ClassifierChain(RandomForestClassifier(), order=order)
+    chain = ClassifierChain(
+        RandomForestClassifier(n_estimators=2, random_state=0), order=order
+    )
 
     chain.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -821,7 +852,7 @@ def test_fit_params_no_routing(Cls, method):
     underlying classifier.
     """
     X, y = make_classification(n_samples=50)
-    clf = Cls(PassiveAggressiveClassifier())
+    clf = Cls(SGDClassifier())
 
     with pytest.raises(ValueError, match="is only supported if"):
         getattr(clf, method)(X, y, test=1)
@@ -834,3 +865,19 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+# TODO(1.9):  remove when deprecated `base_estimator` is removed
+@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
+def test_base_estimator_deprecation(Estimator):
+    """Check that we warn about the deprecation of `base_estimator`."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([[1, 0], [0, 1]])
+
+    estimator = LogisticRegression()
+
+    with pytest.warns(FutureWarning):
+        Estimator(base_estimator=estimator).fit(X, y)
+
+    with pytest.raises(ValueError):
+        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)

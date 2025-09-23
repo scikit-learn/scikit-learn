@@ -34,6 +34,9 @@ kernel and its parameters.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 
 from sklearn import datasets, svm
@@ -50,7 +53,7 @@ y = iris.target
 C = 1.0  # SVM regularization parameter
 models = (
     svm.SVC(kernel="linear", C=C),
-    svm.LinearSVC(C=C, max_iter=10000, dual="auto"),
+    svm.LinearSVC(C=C, max_iter=10000),
     svm.SVC(kernel="rbf", gamma=0.7, C=C),
     svm.SVC(kernel="poly", degree=3, gamma="auto", C=C),
 )

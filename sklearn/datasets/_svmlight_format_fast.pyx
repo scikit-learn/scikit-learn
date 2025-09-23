@@ -1,9 +1,7 @@
 # Optimized inner loop of load_svmlight_file.
 #
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 from cpython cimport array
@@ -80,8 +78,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         if n_features and features[0].startswith(qid_prefix):
             _, value = features[0].split(COLON, 1)
             if query_id:
-                query.resize(len(query) + 1)
-                query[len(query) - 1] = np.int64(value)
+                query = np.append(query, np.int64(value))
             features.pop(0)
             n_features -= 1
 
