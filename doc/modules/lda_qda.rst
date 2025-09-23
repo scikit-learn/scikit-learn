@@ -62,7 +62,7 @@ Mathematical formulation of the LDA and QDA classifiers
 Both LDA and QDA can be derived from simple probabilistic models which model
 the class conditional distribution of the data :math:`P(X|y=k)` for each class
 :math:`k`. Predictions can then be obtained by using Bayes' rule, for each
-training sample :math:`x \in \mathcal{R}^d`:
+training sample :math:`x \in \mathbb{R}^d`:
 
 .. math::
     P(y=k | x) = \frac{P(x | y=k) P(y=k)}{P(x)} = \frac{P(x | y=k) P(y = k)}{ \sum_{l} P(x | y=l) \cdot P(y=l)}
@@ -135,7 +135,7 @@ Mathematical formulation of LDA dimensionality reduction
 ========================================================
 
 First note that the K means :math:`\mu_k` are vectors in
-:math:`\mathcal{R}^d`, and they lie in an affine subspace :math:`H` of
+:math:`\mathbb{R}^d`, and they lie in an affine subspace :math:`H` of
 dimension at most :math:`K - 1` (2 points lie on a line, 3 points lie on a
 plane, etc.).
 
