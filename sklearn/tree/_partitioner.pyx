@@ -224,7 +224,7 @@ cdef class DensePartitioner:
         cdef:
             # Local invariance: start <= p <= partition_end <= end
             intp_t p = self.start
-            intp_t partition_end = self.end - 1
+            intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
             float32_t current_value
             bint go_to_left
