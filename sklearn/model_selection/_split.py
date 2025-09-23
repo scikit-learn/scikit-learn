@@ -412,7 +412,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             yield train, test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator.
+        """Returns the number of splitting iterations as set with the `n_splits` param
+        when instantiating the cross-validator.
 
         Parameters
         ----------
@@ -1639,17 +1640,16 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
                 yield train_index, test_index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator.
+        """Returns the number of splitting iterations as set with the `n_splits` param
+        when instantiating the cross-validator.
 
         Parameters
         ----------
         X : object, default=None
             Always ignored, exists for compatibility.
-            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         y : object, default=None
             Always ignored, exists for compatibility.
-            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         groups : array-like of shape (n_samples,), default=None
             Always ignored, exists for compatibility.
@@ -1941,7 +1941,8 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
             yield ind_train, ind_test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator.
+        """Returns the number of splitting iterations as set with the `n_splits` param
+        when instantiating the cross-validator.
 
         Parameters
         ----------
