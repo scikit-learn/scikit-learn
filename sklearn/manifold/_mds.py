@@ -179,7 +179,7 @@ def _smacof_single(
             sum_squared_distances = (distances.ravel() ** 2).sum()
             if ((old_stress - stress) / (sum_squared_distances / 2)) < eps:
                 if verbose:  # pragma: no cover
-                    print("Convergence criterion reached.")
+                    print(f"Convergence criterion reached (iteration {it}).")
                 break
         old_stress = stress
 
