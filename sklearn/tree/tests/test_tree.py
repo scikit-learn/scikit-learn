@@ -457,7 +457,8 @@ def test_importances(global_random_seed):
 
     for name, Tree in CLF_TREES.items():
         n_fail = 0
-        for _ in range(5):
+        # for robustness: run 5 times, allow at most one failure
+        for i in range(5):
             clf = Tree(random_state=global_random_seed)
             clf.fit(X, y)
             importances = clf.feature_importances_
