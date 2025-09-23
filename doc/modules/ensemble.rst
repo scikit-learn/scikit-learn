@@ -969,6 +969,13 @@ best split is found through an exhaustive search of the feature values of
 either all input features or a random subset of size ``max_features``.
 (See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
+In scikit-learn, the underlying decision trees used in
+:class:`RandomForestClassifier` and :class:`RandomForestRegressor`
+always use the ``splitter="best"`` strategy. This means that all possible
+split thresholds are evaluated at each node, unlike in standalone
+decision trees where both ``splitter="best"`` and ``splitter="random"``
+are available.
+
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high
 variance and tend to overfit. The injected randomness in forests yield decision
