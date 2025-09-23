@@ -1,3 +1,3 @@
 :class:`impute.SimpleImputer` now supports boolean data types for 
 NumPy arrays and pandas DataFrames. 
-By :user:`[Ritvi Alagusankar] <ritvi-alaguankar>`.
+By :user:`Ritvi Alagusankar <ritvi-alaguankar>`.
