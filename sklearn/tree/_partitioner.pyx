@@ -157,9 +157,10 @@ cdef class DensePartitioner:
         """
         Compute the next p_prev and p for iterating over feature values.
 
-        TODO:
         - if self.missing_on_the_left: go over the p in [start + n_missing + 1, end[
         - else: go over the p in [start, end_non_missing]
+            when p=end_non_missing, this means all non-missing values go to the left
+            and all missing to the right
         """
         cdef intp_t end_non_missing = (
             self.end if self.missing_on_the_left
@@ -247,8 +248,6 @@ cdef class DensePartitioner:
                 samples[p] = samples[partition_end]
                 samples[partition_end] = tmp
                 partition_end -= 1
-
-        # we could assert that p <= best_pos <= p + 1
 
 
 @final
