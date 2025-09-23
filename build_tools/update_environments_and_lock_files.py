@@ -400,7 +400,7 @@ build_metadata_list = [
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "rich", "pyamg"]
+            common_dependencies, ["pandas", "rich", "pyamg"]
         )
         + ["pip", "ccache"],
         "package_constraints": {
