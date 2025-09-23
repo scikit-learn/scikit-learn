@@ -19,30 +19,30 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import logger
 
-from ..base import clone, is_classifier
-from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
-from ..metrics import check_scoring, get_scorer_names
-from ..metrics._scorer import _MultimetricScorer
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch, _safe_indexing, check_random_state, indexable
-from ..utils._array_api import device, get_namespace
-from ..utils._param_validation import (
+from sklearn.base import clone, is_classifier
+from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics._scorer import _MultimetricScorer
+from sklearn.model_selection._split import check_cv
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
+from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.metadata_routing import (
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import _safe_split
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_method_params, _num_samples
-from ._split import check_cv
+from sklearn.utils.metaestimators import _safe_split
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _check_method_params, _num_samples
 
 __all__ = [
     "cross_val_predict",
@@ -312,9 +312,6 @@ def cross_validate(
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_validate
-    >>> from sklearn.metrics import make_scorer
-    >>> from sklearn.metrics import confusion_matrix
-    >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
@@ -1162,6 +1159,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
+
+    For a detailed example of using ``cross_val_predict`` to visualize
+    prediction errors, please see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)

@@ -19,14 +19,13 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_clusterer,
-    is_outlier_detector,
     is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
@@ -268,21 +267,6 @@ def test_get_params():
         test.set_params(a__a=2)
 
 
-# TODO(1.8): Remove this test when the deprecation is removed
-def test_is_estimator_type_class():
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_classifier(SVC)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_regressor(SVR)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_clusterer(KMeans)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_outlier_detector(IsolationForest)
-
-
 @pytest.mark.parametrize(
     "estimator, expected_result",
     [
@@ -393,6 +377,7 @@ def test_set_params_updates_valid_params():
     ],
 )
 def test_score_sample_weight(tree, dataset):
+    tree = clone(tree)  # avoid side effects from previous tests.
     rng = np.random.RandomState(0)
     # check that the score with and without sample weights are different
     X, y = dataset
@@ -559,6 +544,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
+# The test modifies global state by changing the the TreeNoVersion class
+@pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
     tree = TreeNoVersion().fit(iris.data, iris.target)
@@ -1000,3 +987,81 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
+
+
+def make_estimator_with_param(default_value):
+    class DynamicEstimator(BaseEstimator):
+        def __init__(self, param=default_value):
+            self.param = param
+
+    return DynamicEstimator
+
+
+@pytest.mark.parametrize(
+    "default_value, test_value",
+    [
+        ((), (1,)),
+        ((), [1]),
+        ((), np.array([1])),
+        ((1, 2), (3, 4)),
+        ((1, 2), [3, 4]),
+        ((1, 2), np.array([3, 4])),
+        (None, 1),
+        (None, []),
+        (None, lambda x: x),
+        (np.nan, 1.0),
+        (np.nan, np.array([np.nan])),
+        ("abc", "def"),
+        ("abc", ["abc"]),
+        (True, False),
+        (1, 2),
+        (1, [1]),
+        (1, np.array([1])),
+        (1.0, 2.0),
+        (1.0, [1.0]),
+        (1.0, np.array([1.0])),
+        ([1, 2], [3]),
+        (np.array([1]), [2, 3]),
+        (None, KFold()),
+        (None, get_scorer("accuracy")),
+    ],
+)
+def test_param_is_non_default(default_value, test_value):
+    """Check that we detect non-default parameters with various types.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
+    estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
+@pytest.mark.parametrize(
+    "default_value, test_value",
+    [
+        (None, None),
+        ((), ()),
+        ((), []),
+        ((), np.array([])),
+        ((1, 2, 3), (1, 2, 3)),
+        ((1, 2, 3), [1, 2, 3]),
+        ((1, 2, 3), np.array([1, 2, 3])),
+        (np.nan, np.nan),
+        ("abc", "abc"),
+        (True, True),
+        (1, 1),
+        (1.0, 1.0),
+        (2, 2.0),
+    ],
+)
+def test_param_is_default(default_value, test_value):
+    """Check that we detect the default parameters and values in an array-like will
+    be reported as default as well.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
+    estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" not in non_default

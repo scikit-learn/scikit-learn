@@ -13,17 +13,17 @@ from collections import defaultdict
 
 import numpy as np
 
-from . import __version__
-from ._config import config_context, get_config
-from .exceptions import InconsistentVersionWarning
-from .utils._metadata_requests import _MetadataRequester, _routing_enabled
-from .utils._missing import is_scalar_nan
-from .utils._param_validation import validate_parameter_constraints
-from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
-from .utils._repr_html.estimator import estimator_html_repr
-from .utils._repr_html.params import ParamsDict
-from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
+from sklearn import __version__
+from sklearn._config import config_context, get_config
+from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import validate_parameter_constraints
+from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.params import ParamsDict
+from sklearn.utils._set_output import _SetOutputMixin
+from sklearn.utils._tags import (
     ClassifierTags,
     RegressorTags,
     Tags,
@@ -31,8 +31,8 @@ from .utils._tags import (
     TransformerTags,
     get_tags,
 )
-from .utils.fixes import _IS_32BIT
-from .utils.validation import (
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
     _is_fitted,
@@ -197,6 +197,13 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     array([3, 3, 3])
     """
 
+    def __dir__(self):
+        # Filters conditional methods that should be hidden based
+        # on the `available_if` decorator
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     _html_repr = estimator_html_repr
 
     @classmethod
@@ -254,7 +261,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             out[key] = value
         return out
 
-    def _get_params_html(self, deep=True):
+    def _get_params_html(self, deep=True, doc_link=""):
         """
         Get parameters for this estimator with a specific HTML representation.
 
@@ -263,6 +270,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
+        doc_link : str
+            URL to the estimator documentation.
+            Used for linking to the estimator's parameters documentation
+            available in HTML displays.
 
         Returns
         -------
@@ -292,12 +304,14 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 init_default_params[param_name]
             ):
                 return True
-
-            if param_value != init_default_params[param_name] and not (
+            if not np.array_equal(
+                param_value, init_default_params[param_name]
+            ) and not (
                 is_scalar_nan(init_default_params[param_name])
                 and is_scalar_nan(param_value)
             ):
                 return True
+
             return False
 
         # reorder the parameters from `self.get_params` using the `__init__`
@@ -310,7 +324,12 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             [name for name, value in ordered_out.items() if is_non_default(name, value)]
         )
 
-        return ParamsDict(ordered_out, non_default=non_default_ls)
+        return ParamsDict(
+            params=ordered_out,
+            non_default=non_default_ls,
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
@@ -364,7 +383,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         # characters to render. We pass it as an optional parameter to ease
         # the tests.
 
-        from .utils._pprint import _EstimatorPrettyPrinter
+        from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
@@ -507,9 +526,6 @@ class ClassifierMixin:
     0.66...
     """
 
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "classifier"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
@@ -541,7 +557,7 @@ class ClassifierMixin:
         score : float
             Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
-        from .metrics import accuracy_score
+        from sklearn.metrics import accuracy_score
 
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
@@ -579,9 +595,6 @@ class RegressorMixin:
     >>> estimator.score(X, y)
     0.0
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "regressor"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -631,7 +644,7 @@ class RegressorMixin:
         :class:`~sklearn.multioutput.MultiOutputRegressor`).
         """
 
-        from .metrics import r2_score
+        from sklearn.metrics import r2_score
 
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
@@ -655,9 +668,6 @@ class ClusterMixin:
     >>> MyClusterer().fit_predict(X)
     array([1, 1, 1])
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "clusterer"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -852,6 +862,7 @@ class TransformerMixin(_SetOutputMixin):
 
         **fit_params : dict
             Additional fit parameters.
+            Pass only if the estimator accepts additional params in its `fit` method.
 
         Returns
         -------
@@ -1009,9 +1020,6 @@ class DensityMixin:
     True
     """
 
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "DensityEstimator"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "density_estimator"
@@ -1058,9 +1066,6 @@ class OutlierMixin:
     >>> estimator.fit_predict(X)
     array([1., 1., 1.])
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "outlier_detector"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1199,15 +1204,6 @@ def is_classifier(estimator):
     >>> is_classifier(kmeans)
     False
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "classifier"
-
     return get_tags(estimator).estimator_type == "classifier"
 
 
@@ -1239,15 +1235,6 @@ def is_regressor(estimator):
     >>> is_regressor(kmeans)
     False
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "regressor"
-
     return get_tags(estimator).estimator_type == "regressor"
 
 
@@ -1281,15 +1268,6 @@ def is_clusterer(estimator):
     >>> is_clusterer(kmeans)
     True
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "clusterer"
-
     return get_tags(estimator).estimator_type == "clusterer"
 
 
@@ -1306,15 +1284,6 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "outlier_detector"
-
     return get_tags(estimator).estimator_type == "outlier_detector"
 
 

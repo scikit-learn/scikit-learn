@@ -105,6 +105,14 @@ from sklearn.utils.validation import (
 )
 
 
+def _mark_thread_unsafe_if_pytest_imported(f):
+    pytest = sys.modules.get("pytest")
+    if pytest is not None:
+        return pytest.mark.thread_unsafe(f)
+    else:
+        return f
+
+
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
 
@@ -630,6 +638,7 @@ def test_mutable_default_params():
         check_parameters_default_constructible("Mutable", HasMutableParameters())
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_set_params():
     """Check set_params doesn't fail and sets the right values."""
     # check that values returned by get_params match set_params
@@ -799,6 +808,10 @@ def test_check_estimator_not_fail_fast():
     assert any(item["status"] == "passed" for item in check_results)
 
 
+# Some estimator checks rely on warnings in deep functions calls. This is not
+# automatically detected by pytest-run-parallel shallow AST inspection, so we
+# need to mark the test function as thread-unsafe.
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -958,6 +971,9 @@ def test_check_no_attributes_set_in_init():
         # making sure our __metadata_request__* class attributes are okay!
         __metadata_request__fit = {"foo": True}
 
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
     msg = (
         "Estimator estimator_name should not set any"
         " attribute apart from parameters during init."
@@ -991,6 +1007,10 @@ def test_check_no_attributes_set_in_init():
         )
 
 
+# Some estimator checks rely on warnings in deep functions calls. This is not
+# automatically detected by pytest-run-parallel shallow AST inspection, so we
+# need to mark the test function as thread-unsafe.
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
     # kernel or metric
@@ -1291,6 +1311,7 @@ def test_check_class_weight_balanced_linear_classifier():
         )
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_all_estimators_all_public():
     # all_estimator should not fail when pytest is not installed and return
     # only public estimators
@@ -1308,6 +1329,62 @@ if __name__ == "__main__":
     run_tests_without_pytest()
 
 
+def test_estimator_checks_generator_strict_none():
+    # Check that no "strict" mark is included in the generated checks
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    # If we don't pass strict, it should not appear in the xfail mark either
+    # This way the behaviour configured in pytest.ini takes precedence.
+    checks = estimator_checks_generator(
+        est,
+        legacy=True,
+        expected_failed_checks=expected_to_fail,
+        mark="xfail",
+    )
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    marked_checks = [c for c in checks if hasattr(c, "marks")]
+    # make sure we have some checks with marks
+    assert len(marked_checks) > 0
+
+    for parameter_set in marked_checks:
+        first_mark = parameter_set.marks[0]
+        assert "strict" not in first_mark.kwargs
+
+
+def test_estimator_checks_generator_strict_xfail_tests():
+    # Make sure that the checks generator marks tests that are expected to fail
+    # as strict xfail
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    checks = estimator_checks_generator(
+        est,
+        legacy=True,
+        expected_failed_checks=expected_to_fail,
+        mark="xfail",
+        xfail_strict=True,
+    )
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    strict_xfailed_checks = []
+
+    # xfail'ed checks are wrapped in a ParameterSet, so below we extract
+    # the things we need via a bit of a crutch: len()
+    marked_checks = [c for c in checks if hasattr(c, "marks")]
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+
+    for parameter_set in marked_checks:
+        _, check = parameter_set.values
+        first_mark = parameter_set.marks[0]
+        if first_mark.kwargs["strict"]:
+            strict_xfailed_checks.append(_check_name(check))
+
+    # all checks expected to fail are marked as strict xfail
+    assert set(expected_to_fail.keys()) == set(strict_xfailed_checks)
+
+
+@_mark_thread_unsafe_if_pytest_imported  # Some checks use warnings.
 def test_estimator_checks_generator_skipping_tests():
     # Make sure the checks generator skips tests that are expected to fail
     est = next(_construct_instances(NuSVC))
@@ -1328,6 +1405,7 @@ def test_estimator_checks_generator_skipping_tests():
     assert set(expected_to_fail.keys()) <= set(skipped_checks)
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_xfail_count_with_no_fast_fail():
     """Test that the right number of xfail warnings are raised when on_fail is "warn".
 
@@ -1436,6 +1514,27 @@ def test_check_requires_y_none():
 
     # no warnings are raised
     assert not [r.message for r in record]
+
+    # Make an estimator that throws the wrong error to make sure we catch it
+    class EstimatorWithWrongError(BaseEstimator):
+        def fit(self, X, y):
+            try:
+                X, y = check_X_y(X, y)
+            except ValueError as ve:
+                # This assertion is just to make sure we are catching the value error
+                # that comes from wrong y (=None) and not some other value error
+                assert str(ve) == (
+                    "estimator requires y to be passed, but the target y is None"
+                )
+                # Override the error message force fail
+                raise ValueError("This is the wrong message that raises error")
+
+    err_msg = (
+        "Your estimator raised a ValueError, but with the incorrect or "
+        "incomplete error message to be considered a graceful fail."
+    )
+    with raises(ValueError, match=err_msg):
+        check_requires_y_none("estimator", EstimatorWithWrongError())
 
 
 def test_non_deterministic_estimator_skip_tests():
@@ -1612,6 +1711,7 @@ def test_check_classifier_not_supporting_multiclass():
 
 
 # Test that set_output doesn't make the tests to fail.
+@_mark_thread_unsafe_if_pytest_imported
 def test_estimator_with_set_output():
     # Doing this since pytest is not available for this file.
     for lib in ["pandas", "polars"]:
@@ -1621,7 +1721,15 @@ def test_estimator_with_set_output():
             raise SkipTest(f"Library {lib} is not installed")
 
         estimator = StandardScaler().set_output(transform=lib)
-        check_estimator(estimator)
+        check_estimator(
+            estimator=estimator,
+            expected_failed_checks={
+                "check_array_api_input": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                )
+            },
+        )
 
 
 def test_estimator_checks_generator():

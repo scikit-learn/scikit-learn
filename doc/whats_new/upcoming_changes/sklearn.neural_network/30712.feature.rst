@@ -1,3 +1,0 @@
-- Added parameter for `loss` in :class:`neural_network.MLPRegressor` with options
-  `"squared_error"` (default) and `"poisson"` (new).
-  By :user:`Christian Lorentzen <lorentzenchr>`

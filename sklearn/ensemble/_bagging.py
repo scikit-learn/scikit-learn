@@ -12,19 +12,15 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import ClassifierMixin, RegressorMixin, _fit_context
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import (
-    Bunch,
-    _safe_indexing,
-    check_random_state,
-    column_or_1d,
-)
-from ..utils._mask import indices_to_mask
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, column_or_1d
+from sklearn.utils._mask import indices_to_mask
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
@@ -32,11 +28,11 @@ from ..utils.metadata_routing import (
     get_routing_for_object,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     _estimator_has,
@@ -44,7 +40,6 @@ from ..utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 
@@ -72,6 +67,7 @@ def _generate_bagging_indices(
     n_samples,
     max_features,
     max_samples,
+    sample_weight,
 ):
     """Randomly draw feature and sample indices."""
     # Get valid random state
@@ -81,11 +77,29 @@ def _generate_bagging_indices(
     feature_indices = _generate_indices(
         random_state, bootstrap_features, n_features, max_features
     )
-    sample_indices = _generate_indices(
-        random_state, bootstrap_samples, n_samples, max_samples
-    )
+    if sample_weight is None:
+        sample_indices = _generate_indices(
+            random_state, bootstrap_samples, n_samples, max_samples
+        )
+    else:
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        sample_indices = random_state.choice(
+            n_samples,
+            max_samples,
+            replace=bootstrap_samples,
+            p=normalized_sample_weight,
+        )
 
     return feature_indices, sample_indices
+
+
+def _consumes_sample_weight(estimator):
+    if _routing_enabled():
+        request_or_router = get_routing_for_object(estimator)
+        consumes_sample_weight = request_or_router.consumes("fit", ("sample_weight",))
+    else:
+        consumes_sample_weight = has_fit_parameter(estimator, "sample_weight")
+    return consumes_sample_weight
 
 
 def _parallel_build_estimators(
@@ -93,6 +107,7 @@ def _parallel_build_estimators(
     ensemble,
     X,
     y,
+    sample_weight,
     seeds,
     total_n_estimators,
     verbose,
@@ -108,21 +123,11 @@ def _parallel_build_estimators(
     bootstrap_features = ensemble.bootstrap_features
     has_check_input = has_fit_parameter(ensemble.estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
+    consumes_sample_weight = _consumes_sample_weight(ensemble.estimator_)
 
     # Build estimators
     estimators = []
     estimators_features = []
-
-    # TODO: (slep6) remove if condition for unrouted sample_weight when metadata
-    # routing can't be disabled.
-    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
-    if not _routing_enabled() and (
-        not support_sample_weight and fit_params.get("sample_weight") is not None
-    ):
-        raise ValueError(
-            "The base estimator doesn't support sample weight, but sample_weight is "
-            "passed to the fit method."
-        )
 
     for i in range(n_estimators):
         if verbose > 1:
@@ -139,7 +144,8 @@ def _parallel_build_estimators(
         else:
             estimator_fit = estimator.fit
 
-        # Draw random feature, sample indices
+        # Draw random feature, sample indices (using normalized sample_weight
+        # as probabilities if provided).
         features, indices = _generate_bagging_indices(
             random_state,
             bootstrap_features,
@@ -148,45 +154,22 @@ def _parallel_build_estimators(
             n_samples,
             max_features,
             max_samples,
+            sample_weight,
         )
 
         fit_params_ = fit_params.copy()
 
-        # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
-        # routing can't be disabled.
-        # 1. If routing is enabled, we will check if the routing supports sample
-        # weight and use it if it does.
-        # 2. If routing is not enabled, we will check if the base
-        # estimator supports sample_weight and use it if it does.
-
         # Note: Row sampling can be achieved either through setting sample_weight or
-        # by indexing. The former is more efficient. Therefore, use this method
+        # by indexing. The former is more memory efficient. Therefore, use this method
         # if possible, otherwise use indexing.
-        if _routing_enabled():
-            request_or_router = get_routing_for_object(ensemble.estimator_)
-            consumes_sample_weight = request_or_router.consumes(
-                "fit", ("sample_weight",)
-            )
-        else:
-            consumes_sample_weight = support_sample_weight
         if consumes_sample_weight:
-            # Draw sub samples, using sample weights, and then fit
-            curr_sample_weight = _check_sample_weight(
-                fit_params_.pop("sample_weight", None), X
-            ).copy()
-
-            if bootstrap:
-                sample_counts = np.bincount(indices, minlength=n_samples)
-                curr_sample_weight *= sample_counts
-            else:
-                not_indices_mask = ~indices_to_mask(indices, n_samples)
-                curr_sample_weight[not_indices_mask] = 0
-
-            fit_params_["sample_weight"] = curr_sample_weight
+            # Row sampling by setting sample_weight
+            indices_as_sample_weight = np.bincount(indices, minlength=n_samples)
+            fit_params_["sample_weight"] = indices_as_sample_weight
             X_ = X[:, features] if requires_feature_indexing else X
             estimator_fit(X_, y, **fit_params_)
         else:
-            # cannot use sample_weight, so use indexing
+            # Row sampling by indexing
             y_ = _safe_indexing(y, indices)
             X_ = _safe_indexing(X, indices)
             fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
@@ -354,9 +337,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             regression).
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
+            Sample weights. If None, then samples are equally weighted. Used as
+            probabilities to sample the training set. Note that the expected
+            frequency semantics for the `sample_weight` parameter are only
+            fulfilled when sampling with replacement `bootstrap=True`.
+
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
@@ -385,6 +370,15 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             ensure_all_finite=False,
             multi_output=True,
         )
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+
+            if not self.bootstrap:
+                warn(
+                    f"When fitting {self.__class__.__name__} with sample_weight "
+                    f"it is recommended to use bootstrap=True, got {self.bootstrap}."
+                )
 
         return self._fit(
             X,
@@ -435,8 +429,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
 
         **fit_params : dict, default=None
             Parameters to pass to the :term:`fit` method of the underlying
@@ -457,18 +449,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Check parameters
         self._validate_estimator(self._get_estimator())
 
-        if sample_weight is not None:
-            fit_params["sample_weight"] = sample_weight
-
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch()
             routed_params.estimator = Bunch(fit=fit_params)
-            if "sample_weight" in fit_params:
-                routed_params.estimator.fit["sample_weight"] = fit_params[
-                    "sample_weight"
-                ]
 
         if max_depth is not None:
             self.estimator_.max_depth = max_depth
@@ -476,11 +461,26 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_samples
         if max_samples is None:
             max_samples = self.max_samples
-        elif not isinstance(max_samples, numbers.Integral):
-            max_samples = int(max_samples * X.shape[0])
 
-        if max_samples > X.shape[0]:
-            raise ValueError("max_samples must be <= n_samples")
+        if not isinstance(max_samples, numbers.Integral):
+            if sample_weight is None:
+                max_samples = max(int(max_samples * X.shape[0]), 1)
+            else:
+                sw_sum = np.sum(sample_weight)
+                if sw_sum <= 1:
+                    raise ValueError(
+                        f"The total sum of sample weights is {sw_sum}, which prevents "
+                        "resampling with a fractional value for max_samples="
+                        f"{max_samples}. Either pass max_samples as an integer or "
+                        "use a larger sample_weight."
+                    )
+                max_samples = max(int(max_samples * sw_sum), 1)
+
+        if not self.bootstrap and max_samples > X.shape[0]:
+            raise ValueError(
+                f"Effective max_samples={max_samples} must be <= n_samples="
+                f"{X.shape[0]} to be able to sample without replacement."
+            )
 
         # Store validated integer row sampling value
         self._max_samples = max_samples
@@ -498,6 +498,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Store validated integer feature sampling value
         self._max_features = max_features
+
+        # Store sample_weight (needed in _get_estimators_indices). Note that
+        # we intentionally do not materialize `sample_weight=None` as an array
+        # of ones to avoid unnecessarily cluttering trained estimator pickles.
+        self._sample_weight = sample_weight
 
         # Other checks
         if not self.bootstrap and self.oob_score:
@@ -552,6 +557,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self,
                 X,
                 y,
+                sample_weight,
                 seeds[starts[i] : starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose,
@@ -596,6 +602,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self._n_samples,
                 self._max_features,
                 self._max_samples,
+                self._sample_weight,
             )
 
             yield feature_indices, sample_indices
@@ -629,7 +636,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
 
         method_mapping = MethodMapping()
         method_mapping.add(caller="fit", callee="fit").add(
@@ -726,7 +733,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         replacement by default, see `bootstrap` for more details).
 
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples
+          or `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -737,8 +745,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
     bootstrap : bool, default=True
-        Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        Whether samples are drawn with replacement. If False, sampling without
+        replacement is performed. If fitting with `sample_weight`, it is
+        strongly recommended to choose True, as only drawing with replacement
+        will ensure the expected frequency semantics of `sample_weight`.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
@@ -1245,8 +1255,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
     bootstrap : bool, default=True
-        Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        Whether samples are drawn with replacement. If False, sampling without
+        replacement is performed. If fitting with `sample_weight`, it is
+        strongly recommended to choose True, as only drawing with replacement
+        will ensure the expected frequency semantics of `sample_weight`.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
