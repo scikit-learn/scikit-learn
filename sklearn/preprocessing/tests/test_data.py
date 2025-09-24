@@ -2850,7 +2850,7 @@ def test_power_transformer_features_names_no_warnings():
 
     assert isinstance(X_test, pd.DataFrame), (
         "X is not a pandas DataFrame"
-    )  # required for linting
+    )  # required only for linting
     assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
         str(w.message) for w in caught_warnings
     )
