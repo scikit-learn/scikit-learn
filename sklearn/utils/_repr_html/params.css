@@ -128,29 +128,36 @@ a.param-doc-link::before {
     cursor: pointer;
 }
 
-.features {
+#$id .features {
+    /*all: unset; */
     font-family: monospace;
     font-size: smaller;
     cursor: pointer;
-    background: var(--sklearn-color-fitted-level-1);
+    background: var(--sklearn-color-fitted-level-0);
+    border: 1px dotted var(--sklearn-color-border-box);
+    border-radius: .5em;
 }
 
-.features-container {
+#$id .features-container {
+    /*all: unset; */
     max-width: 30em;
     max-height: 10em;
     overflow: auto;
     padding: .5em;
 }
 
-.features summary {
+#$id .features summary {
+  /*all: unset; */
   position: sticky;
   top: 0;
   margin: 0;
-  padding: .5em;
+  padding-top: .25em;
+  padding-bottom: .25em;
   border: .1em solid grey;
 }
 
-.features td {
+#$id .features td {
+  /*all: unset; */
   text-align: left;
   padding: 0;
   white-space: nowrap;
