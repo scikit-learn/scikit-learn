@@ -36,7 +36,7 @@ from sklearn.ensemble._base import BaseEnsemble
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import _safe_indexing, check_random_state
-from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.metadata_routing import (
     _raise_for_unsupported_routing,
@@ -379,13 +379,6 @@ class AdaBoostClassifier(
         a trade-off between the `learning_rate` and `n_estimators` parameters.
         Values must be in the range `(0.0, inf)`.
 
-    algorithm : {'SAMME'}, default='SAMME'
-        Use the SAMME discrete boosting algorithm.
-
-        .. deprecated:: 1.6
-            `algorithm` is deprecated and will be removed in version 1.8. This
-            estimator only implements the 'SAMME' algorithm.
-
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `estimator` at each
         boosting iteration.
@@ -487,10 +480,8 @@ class AdaBoostClassifier(
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
 
-    # TODO(1.8): remove "algorithm" entry
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
-        "algorithm": [StrOptions({"SAMME"}), Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -499,7 +490,6 @@ class AdaBoostClassifier(
         *,
         n_estimators=50,
         learning_rate=1.0,
-        algorithm="deprecated",
         random_state=None,
     ):
         super().__init__(
@@ -509,18 +499,9 @@ class AdaBoostClassifier(
             random_state=random_state,
         )
 
-        self.algorithm = algorithm
-
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
-
-        if self.algorithm != "deprecated":
-            warnings.warn(
-                "The parameter 'algorithm' is deprecated in 1.6 and has no effect. "
-                "It will be removed in version 1.8.",
-                FutureWarning,
-            )
 
         if not has_fit_parameter(self.estimator_, "sample_weight"):
             raise ValueError(
