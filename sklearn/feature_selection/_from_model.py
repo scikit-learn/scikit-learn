@@ -308,7 +308,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def _check_max_features(self, X):
         if self.max_features is not None:
-            n_features = _num_features(X)
 
             if callable(self.max_features):
                 max_features = self.max_features(X)
