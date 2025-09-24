@@ -241,11 +241,6 @@ class SimpleImputer(_BaseImputer):
 
         .. versionadded:: 1.2
 
-        .. versionchanged:: 1.6
-            Currently, when `keep_empty_feature=False` and `strategy="constant"`,
-            empty features are not dropped. This behaviour will change in version
-            1.8. Set `keep_empty_feature=True` to preserve this behaviour.
-
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -481,22 +476,15 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
-            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
-            # for empty features to drop them later.
-            if not self.keep_empty_features and any(
-                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
-            ):
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
-
             # for constant strategy, self.statistics_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
+
+            if not self.keep_empty_features:
+                for i in range(missing_mask.shape[1]):
+                    if all(missing_mask[:, i].data):
+                        statistics[i] = np.nan
+
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i] : X.indptr[i + 1]]
@@ -584,20 +572,16 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
-            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
-            # for empty features to drop them later.
-            if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
-
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
-            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+            statistics = np.full(X.shape[1], fill_value, dtype=X.dtype)
+
+            if not self.keep_empty_features:
+                for i in range(masked_X.shape[1]):
+                    if ma.getmask(masked_X[:, i]).all():
+                        statistics[i] = np.nan
+
+            return statistics
 
         # Custom
         elif isinstance(strategy, Callable):
@@ -635,7 +619,7 @@ class SimpleImputer(_BaseImputer):
         missing_mask = _get_mask(X, self.missing_values)
 
         # Decide whether to keep missing features
-        if self.strategy == "constant" or self.keep_empty_features:
+        if self.keep_empty_features:
             valid_statistics = statistics
             valid_statistics_indexes = None
         else:
