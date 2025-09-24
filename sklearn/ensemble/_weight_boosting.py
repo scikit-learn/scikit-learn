@@ -480,9 +480,7 @@ class AdaBoostClassifier(
     refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
 
-    _parameter_constraints: dict = {
-        **BaseWeightBoosting._parameter_constraints,
-    }
+    _parameter_constraints: dict = {**BaseWeightBoosting._parameter_constraints}
 
     def __init__(
         self,
