@@ -33,6 +33,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     indexing_dtype,
     np_compat,
+    supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -165,10 +166,10 @@ def test_average(
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
-        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
-        # https://github.com/numpy/numpy/issues/26850
-        assert device(array_in) == device(result)
+        if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+            # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+            # https://github.com/numpy/numpy/issues/26850
+            assert device(array_in) == device(result)
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
@@ -717,7 +718,7 @@ def test_median(namespace, device, dtype_name, axis):
         result_xp = _median(X_xp, axis=axis)
 
         if xp.__name__ != "array_api_strict":
-            # We covert array-api-strict arrays to numpy arrays as `median` is not
+            # We convert array-api-strict arrays to numpy arrays as `median` is not
             # part of the Array API spec
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
@@ -777,3 +778,20 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
         res_xp_2 = _logsumexp(array_xp_2, axis=axis)
         res_xp_2 = _convert_to_numpy(res_xp_2, xp)
         assert_allclose(res_np_2, res_xp_2, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    ("namespace", "device_", "expected_types"),
+    [
+        ("numpy", None, ("float64", "float32", "float16")),
+        ("array_api_strict", None, ("float64", "float32")),
+        ("torch", "cpu", ("float64", "float32", "float16")),
+        ("torch", "cuda", ("float64", "float32", "float16")),
+        ("torch", "mps", ("float32", "float16")),
+    ],
+)
+def test_supported_float_types(namespace, device_, expected_types):
+    xp = _array_api_for_tests(namespace, device_)
+    float_types = supported_float_dtypes(xp, device=device_)
+    expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
+    assert float_types == expected

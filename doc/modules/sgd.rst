@@ -405,7 +405,7 @@ Mathematical formulation
 We describe here the mathematical details of the SGD procedure. A good
 overview with convergence rates can be found in [#6]_.
 
-Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
+Given a set of training examples :math:`\{(x_1, y_1), \ldots, (x_n, y_n)\}` where
 :math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathbf{R}`
 (:math:`y_i \in \{-1, 1\}` for classification),
 our goal is to learn a linear scoring function

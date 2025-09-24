@@ -22,7 +22,7 @@ Multi-layer Perceptron
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
 a function :math:`f: R^m \rightarrow R^o` by training on a dataset,
 where :math:`m` is the number of dimensions for input and :math:`o` is the
-number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
+number of dimensions for output. Given a set of features :math:`X = \{x_1, x_2, ..., x_m\}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
 classification or regression. It is different from logistic regression, in that
 between the input and the output layer, there can be one or more non-linear
@@ -78,7 +78,7 @@ Classification
 ==============
 
 Class :class:`MLPClassifier` implements a multi-layer perceptron (MLP) algorithm
-that trains using `Backpropagation <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_.
+that trains using `Backpropagation <http://ufldl.stanford.edu/tutorial/supervised/MultiLayerNeuralNetworks/#backpropagation_algorithm>`_.
 
 MLP trains on two arrays: array X of size (n_samples, n_features), which holds
 the training samples represented as floating point feature vectors; and array
@@ -194,8 +194,8 @@ loss function with respect to a parameter that needs adaptation, i.e.
 
 .. math::
 
-    w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w}
-    + \frac{\partial Loss}{\partial w})
+    w \leftarrow w - \eta \left[\alpha \frac{\partial R(w)}{\partial w}
+    + \frac{\partial Loss}{\partial w}\right]
 
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space search.  :math:`Loss` is the loss function used
@@ -233,7 +233,7 @@ training.
 
 .. dropdown:: Mathematical formulation
 
-  Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
+  Given a set of training examples :math:`\{(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)\}`
   where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
   layer one hidden neuron MLP learns the function :math:`f(x) = W_2 g(W_1^T x + b_1) + b_2`
   where :math:`W_1 \in \mathbf{R}^m` and :math:`W_2, b_1, b_2 \in \mathbf{R}` are

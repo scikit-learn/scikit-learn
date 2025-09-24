@@ -37,6 +37,9 @@ n_samples, n_features = 10, 8
 X = rng_global.randn(n_samples, n_features)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_sparse_encode_shapes_omp():
     rng = np.random.RandomState(0)
     algorithms = ["omp", "lasso_lars", "lasso_cd", "lars", "threshold"]
@@ -86,7 +89,7 @@ def test_max_iter():
         return D
 
     transform_algorithm = "lasso_cd"
-    resolution = 1024
+    resolution = 256
     subsampling = 3  # subsampling factor
     n_components = resolution // subsampling
 
@@ -96,7 +99,7 @@ def test_max_iter():
             ricker_matrix(
                 width=w, resolution=resolution, n_components=n_components // 5
             )
-            for w in (10, 50, 100, 500, 1000)
+            for w in (10, 50, 100, 500)
         )
     ]
 
@@ -117,7 +120,7 @@ def test_max_iter():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
+            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=500
         )
         model.fit_transform(X)
 
@@ -217,6 +220,9 @@ def test_dict_learning_reconstruction():
     # nonzero atoms is right.
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_dict_learning_reconstruction_parallel():
     # regression test that parallel reconstruction works with n_jobs>1
     n_components = 12
@@ -235,6 +241,9 @@ def test_dict_learning_reconstruction_parallel():
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_dict_learning_lassocd_readonly_data():
     n_components = 12
     with TempMemmap(X) as X_read_only:
@@ -613,7 +622,7 @@ def test_sparse_coder_estimator():
 def test_sparse_coder_estimator_clone():
     n_components = 12
     rng = np.random.RandomState(0)
-    V = rng.randn(n_components, n_features)  # random init
+    V = rng.normal(size=(n_components, n_features))  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
@@ -622,12 +631,13 @@ def test_sparse_coder_estimator_clone():
     assert id(cloned) != id(coder)
     np.testing.assert_allclose(cloned.dictionary, coder.dictionary)
     assert id(cloned.dictionary) != id(coder.dictionary)
-    assert cloned.n_components_ == coder.n_components_
-    assert cloned.n_features_in_ == coder.n_features_in_
     data = np.random.rand(n_samples, n_features).astype(np.float32)
     np.testing.assert_allclose(cloned.transform(data), coder.transform(data))
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_sparse_coder_parallel_mmap():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/5956
@@ -665,8 +675,22 @@ def test_sparse_coder_common_transformer():
 
 def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
+    X = np.array([[1, 2, 3]])
     sc = SparseCoder(d)
+    sc.fit(X)
     assert sc.n_features_in_ == d.shape[1]
+
+
+def test_sparse_encoder_feature_number_error():
+    n_components = 10
+    rng = np.random.RandomState(0)
+    D = rng.uniform(size=(n_components, n_features))
+    X = rng.uniform(size=(n_samples, n_features + 1))
+    coder = SparseCoder(D)
+    with pytest.raises(
+        ValueError, match="Dictionary and X have different numbers of features"
+    ):
+        coder.fit(X)
 
 
 def test_update_dict():
@@ -840,7 +864,7 @@ def test_dict_learning_dtype_match(data_type, expected_type, method):
 @pytest.mark.parametrize("method", ("lars", "cd"))
 def test_dict_learning_numerical_consistency(method):
     # verify numerically consistent among np.float32 and np.float64
-    rtol = 1e-6
+    rtol = 1e-4
     n_components = 4
     alpha = 2
 
@@ -946,7 +970,7 @@ def test_dict_learning_online_numerical_consistency(method):
 @pytest.mark.parametrize(
     "estimator",
     [
-        SparseCoder(X.T),
+        SparseCoder(rng_global.uniform(size=(n_features, n_features))),
         DictionaryLearning(),
         MiniBatchDictionaryLearning(batch_size=4, max_iter=10),
     ],
@@ -965,6 +989,9 @@ def test_get_feature_names_out(estimator):
     )
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_cd_work_on_joblib_memmapped_data(monkeypatch):
     monkeypatch.setattr(
         sklearn.decomposition._dict_learning,

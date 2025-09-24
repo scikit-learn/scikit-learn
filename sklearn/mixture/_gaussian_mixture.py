@@ -6,19 +6,19 @@ import math
 
 import numpy as np
 
-from .._config import get_config
-from ..externals import array_api_extra as xpx
-from ..utils import check_array
-from ..utils._array_api import (
+from sklearn._config import get_config
+from sklearn.externals import array_api_extra as xpx
+from sklearn.mixture._base import BaseMixture, _check_shape
+from sklearn.utils import check_array
+from sklearn.utils._array_api import (
     _add_to_diagonal,
     _cholesky,
     _linalg_solve,
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import StrOptions
-from ..utils.extmath import row_norms
-from ._base import BaseMixture, _check_shape
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.extmath import row_norms
 
 ###############################################################################
 # Gaussian mixture shape checkers used by the GaussianMixture class
@@ -992,3 +992,10 @@ class GaussianMixture(BaseMixture):
             The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = (
+            self.init_params in ["random", "random_from_data"] and not self.warm_start
+        )
+        return tags

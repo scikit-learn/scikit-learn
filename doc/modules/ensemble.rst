@@ -922,7 +922,7 @@ based on permutation of the features.
    Annals of Statistics, 29, 1189-1232.
 
 .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-   <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+   <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=48caac2f65bce47f6d27400ae4f60d8395cec2f3>`_.
    Computational Statistics & Data Analysis, 38, 367-378.
 
 .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
@@ -965,7 +965,7 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the features values of
+best split is found through an exhaustive search of the feature values of
 either all input features or a random subset of size ``max_features``.
 (See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 

@@ -2,21 +2,20 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-import warnings
-
 import numpy as np
 
-from ...utils import _safe_indexing
-from ...utils._plotting import (
+from sklearn.metrics._ranking import auc, roc_curve
+from sklearn.utils import _safe_indexing
+from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
     _deprecate_estimator_name,
+    _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
-from ...utils._response import _get_response_values_binary
-from .._ranking import auc, roc_curve
+from sklearn.utils._response import _get_response_values_binary
 
 
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -62,18 +61,17 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Name for labeling legend entries. The number of legend entries is determined
         by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
         To label each curve, provide a list of strings. To avoid labeling
-        individual curves that have the same appearance, this cannot be used in
+        individual curves that have the same appearance, a list cannot be used in
         conjunction with `curve_kwargs` being a dictionary or None. If a
         string is provided, it will be used to either label the single legend entry
         or if there are multiple legend entries, label each individual curve with
-        the same name. If still `None`, no name is shown in the legend.
+        the same name. If `None`, no name is shown in the legend.
 
         .. versionadded:: 1.7
 
     pos_label : int, float, bool or str, default=None
-        The class considered as the positive class when computing the roc auc
-        metrics. By default, `estimators.classes_[1]` is considered
-        as the positive class.
+        The class considered the positive class when ROC AUC metrics computed.
+        If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 0.24
 
@@ -111,6 +109,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         (ROC) curve given an estimator and some data.
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
+    RocCurveDisplay.from_cv_results : Plot multi-fold ROC curves given
+        cross-validation results.
     roc_auc_score : Compute the area under the ROC curve.
 
     Examples
@@ -186,7 +186,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Name for labeling legend entries. The number of legend entries
             is determined by `curve_kwargs`, and is not affected by `name`.
             To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, this cannot be used in
+            individual curves that have the same appearance, a list cannot be used in
             conjunction with `curve_kwargs` being a dictionary or None. If a
             string is provided, it will be used to either label the single legend entry
             or if there are multiple legend entries, label each individual curve with
@@ -408,6 +408,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
         RocCurveDisplay.from_predictions : ROC Curve visualization given the
             probabilities of scores of a classifier.
+        RocCurveDisplay.from_cv_results : Plot multi-fold ROC curves given
+            cross-validation results.
         roc_auc_score : Compute the area under the ROC curve.
 
         Examples
@@ -559,6 +561,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
         RocCurveDisplay.from_estimator : ROC Curve visualization given an
             estimator and some data.
+        RocCurveDisplay.from_cv_results : Plot multi-fold ROC curves given
+            cross-validation results.
         roc_auc_score : Compute the area under the ROC curve.
 
         Examples
@@ -577,24 +581,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        # TODO(1.9): remove after the end of the deprecation period of `y_pred`
-        if y_score is not None and not (
-            isinstance(y_pred, str) and y_pred == "deprecated"
-        ):
-            raise ValueError(
-                "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
-                " only as `y_pred` is deprecated in 1.7 and will be removed in 1.9."
-            )
-        if not (isinstance(y_pred, str) and y_pred == "deprecated"):
-            warnings.warn(
-                (
-                    "y_pred is deprecated in 1.7 and will be removed in 1.9. "
-                    "Please use `y_score` instead."
-                ),
-                FutureWarning,
-            )
-            y_score = y_pred
-
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.7")
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
@@ -688,7 +675,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Name for labeling legend entries. The number of legend entries
             is determined by `curve_kwargs`, and is not affected by `name`.
             To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, this cannot be used in
+            individual curves that have the same appearance, a list cannot be used in
             conjunction with `curve_kwargs` being a dictionary or None. If a
             string is provided, it will be used to either label the single legend entry
             or if there are multiple legend entries, label each individual curve with
@@ -721,8 +708,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         See Also
         --------
         roc_curve : Compute Receiver operating characteristic (ROC) curve.
-            RocCurveDisplay.from_estimator : ROC Curve visualization given an
-            estimator and some data.
+        RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+            (ROC) curve given an estimator and some data.
         RocCurveDisplay.from_predictions : ROC Curve visualization given the
             probabilities of scores of a classifier.
         roc_auc_score : Compute the area under the ROC curve.

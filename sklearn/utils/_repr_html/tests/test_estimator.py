@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering, Birch
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris
@@ -99,12 +99,12 @@ def test_get_visual_block_pipeline():
     est_html_info = _get_visual_block(pipe)
     assert est_html_info.kind == "serial"
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
-    assert est_html_info.names == [
+    assert est_html_info.names == (
         "imputer: SimpleImputer",
         "do_nothing: passthrough",
         "do_nothing_more: passthrough",
         "classifier: LogisticRegression",
-    ]
+    )
     assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 
@@ -415,6 +415,7 @@ def test_estimator_html_repr_unfitted_vs_fitted():
     ],
 )
 def test_estimator_html_repr_fitted_icon(estimator):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     """Check that we are showing the fitted status icon only once."""
     pattern = '<span class="sk-estimator-doc-link ">i<span>Not fitted</span></span>'
     assert estimator_html_repr(estimator).count(pattern) == 1
