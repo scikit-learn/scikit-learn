@@ -24,18 +24,20 @@ from sklearn.utils.validation import (
 # Approved CV splitters that don't need overlap validation
 APPROVED_CV_SPLITTERS = (KFold, StratifiedKFold, GroupKFold)
 
+
 def _validate_cv_no_overlap(cv_splitter, X, y, groups=None):
     """Validate that CV splits don't have overlapping validation sets.
+
     Parameters
     ----------
-   cv_splitter : CV splitter object
+    cv_splitter : CV splitter object
         Cross-validation splitter to validate
     X : array-like
         Features
     y : array-like
         Target values
     groups : array-like, optional
-             Group labels
+        Group labels
 
     Raises
     ------
@@ -44,28 +46,32 @@ def _validate_cv_no_overlap(cv_splitter, X, y, groups=None):
     """
     n_samples = len(X)
     all_val_indices = set()
+    total_val_count = 0
 
     # Get all validation indices across folds
     for train_idx, val_idx in cv_splitter.split(X, y, groups):
-        val_set = set(val_idx)
+        val_count = len(val_idx)
+        total_val_count += val_count
 
-        # Check for overlap with previous validation sets
-        if all_val_indices.intersection(val_set):
+        # Add to union and check size increase
+        prev_size = len(all_val_indices)
+        all_val_indices.update(val_idx)
+        new_size = len(all_val_indices)
+
+        # If union size didn't increase by val_count, there was overlap
+        if new_size - prev_size != val_count:
             raise ValueError(
                 "Cross-validation splitter produces overlapping validation "
                 "sets. TargetEncoder requires non-overlapping validation "
                 "folds to avoid data leakage."
             )
 
-        all_val_indices.update(val_set)
-
     # Ensure all samples are used exactly once in validation
-    if len(all_val_indices) != n_samples:
+    if len(all_val_indices) != n_samples or total_val_count != n_samples:
         raise ValueError(
             "Cross-validation splitter does not use all samples exactly "
             "once in validation sets."
         )
-
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):

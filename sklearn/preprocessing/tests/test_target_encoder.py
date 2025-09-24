@@ -716,17 +716,24 @@ def test_pandas_copy_on_write():
 
 def test_target_encoder_with_groups():
     """Test TargetEncoder with groups parameter using GroupKFold."""
-    X = np.array([
-        ['NYC'], ['NYC'], ['LA'], ['LA'],          # Group 1
-        ['NYC'], ['LA'], ['Chicago'], ['Chicago'], # Group 2
-        ['NYC'], ['LA'], ['Chicago'], ['Miami']    # Group 3
-    ])
-    y = np.array([1, 1, 0, 0,
-                  1, 0, 1, 1,
-                  0, 1, 1, 1])
-    groups = np.array([1, 1, 1, 1,
-                       2, 2, 2, 2,
-                       3, 3, 3, 3])
+    X = np.array(
+        [
+            ["NYC"],
+            ["NYC"],
+            ["LA"],
+            ["LA"],  # Group 1
+            ["NYC"],
+            ["LA"],
+            ["Chicago"],
+            ["Chicago"],  # Group 2
+            ["NYC"],
+            ["LA"],
+            ["Chicago"],
+            ["Miami"],  # Group 3
+        ]
+    )
+    y = np.array([1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1])
+    groups = np.array([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
 
     # WITH groups → should use GroupKFold
     enc_with_groups = TargetEncoder(cv=3, random_state=42)
@@ -752,7 +759,7 @@ def test_target_encoder_with_groups():
 
 def test_target_encoder_groups_continuous_target():
     """TargetEncoder with groups for continuous targets."""
-    X = np.array([['A'], ['B'], ['A'], ['B']])
+    X = np.array([["A"], ["B"], ["A"], ["B"]])
     y = np.array([1.5, 2.3, 1.8, 2.1])
     groups = np.array([1, 1, 2, 2])
 
@@ -766,8 +773,8 @@ def test_target_encoder_groups_continuous_target():
 
 def test_target_encoder_groups_multiclass():
     """TargetEncoder with groups for multiclass targets."""
-    X = np.array([['A'], ['B'], ['A'], ['B'], ['C'], ['C']])
-    y = np.array(['class1', 'class2', 'class1', 'class3', 'class2', 'class3'])
+    X = np.array([["A"], ["B"], ["A"], ["B"], ["C"], ["C"]])
+    y = np.array(["class1", "class2", "class1", "class3", "class2", "class3"])
     groups = np.array([1, 1, 2, 2, 3, 3])
 
     enc = TargetEncoder(cv=3, random_state=42)
@@ -784,7 +791,7 @@ def test_target_encoder_cv_validation():
     """Test validation of custom CV splitters with overlaps."""
     from sklearn.preprocessing._target_encoder import _validate_cv_no_overlap
 
-    X = np.array([['A'], ['B'], ['A'], ['B']])
+    X = np.array([["A"], ["B"], ["A"], ["B"]])
     y = np.array([1, 0, 1, 0])
 
     class BadCV:
@@ -796,4 +803,3 @@ def test_target_encoder_cv_validation():
 
     with pytest.raises(ValueError, match="overlapping validation sets"):
         _validate_cv_no_overlap(bad_cv, X, y)
-
