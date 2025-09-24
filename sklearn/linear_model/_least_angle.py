@@ -2179,8 +2179,7 @@ class LassoLarsIC(LassoLars):
     >>> print(reg.coef_)
     [ 0.  -1.11]
 
-    For a visual example of using LassoLarsIC for model selection
-    with BIC, see
+    For a detailed example of using this class, see
     :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
