@@ -133,9 +133,13 @@ a.param-doc-link::before {
     font-family: monospace;
     font-size: smaller;
     cursor: pointer;
-    background: var(--sklearn-color-fitted-level-0);
+    background-color: var(--sklearn-color-fitted-level-0);
     border: 1px dotted var(--sklearn-color-border-box);
     border-radius: .5em;
+}
+
+#$id .features:checked {
+    background-color: var(--sklearn-color-fitted-level-2);
 }
 
 #$id .features-container {
@@ -144,6 +148,7 @@ a.param-doc-link::before {
     max-height: 10em;
     overflow: auto;
     padding: .5em;
+    background-color: var(--sklearn-color-fitted-level-0);
 }
 
 #$id .features summary {
@@ -154,7 +159,9 @@ a.param-doc-link::before {
   padding-top: .25em;
   padding-bottom: .25em;
   border: .1em solid grey;
+  border: none;
 }
+
 
 #$id .features td {
   /*all: unset; */
