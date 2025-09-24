@@ -17,6 +17,7 @@ from sklearn.calibration import (
     calibration_curve,
 )
 from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
@@ -1247,12 +1248,12 @@ def test_temperature_scaling_array_api_compliance(array_namespace, device_, dtyp
     X_cal_xp = xp.asarray(X_cal, device=device_)
     y_cal_xp = xp.asarray(y_cal, device=device_)
 
-    clf = LogisticRegression(penalty=None, tol=1e-8, max_iter=200, random_state=0)
+    clf = LinearDiscriminantAnalysis()
     clf.fit(X_train, y_train)
 
     with config_context(array_api_dispatch=True):
         cal_clf_xp = CalibratedClassifierCV(
-            FrozenEstimator(clf), cv=3, method="temperature", ensemble=False
+            FrozenEstimator(clf), cv=3, method="temperature", ensemble=True
         ).fit(X_cal_xp, y_cal_xp)
 
     cal_clf_np = CalibratedClassifierCV(

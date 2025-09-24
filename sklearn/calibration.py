@@ -29,7 +29,6 @@ from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _half_multinomial_loss,
     _is_numpy_namespace,
     _max_precision_float_dtype,
@@ -348,17 +347,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self : object
             Returns an instance of self.
         """
-        xp, _, xp_device = get_namespace_and_device(X, y, sample_weight)
-        # Currently only the TemperatureScaling method supports the array API.
-        # Since CalibratedClassifierCV uses another estimator within and also
-        # uses cv methods, we convert all arrays to numpy to ensure that they
-        # can continue to work correctly. We only convert back to the
-        # respective array API when applying the TemperatureScaling method.
-        if not _is_numpy_namespace(xp=xp):
-            X = _convert_to_numpy(X, xp=xp)
-            y = _convert_to_numpy(y, xp=xp)
-            if sample_weight is not None:
-                sample_weight = _convert_to_numpy(sample_weight, xp=xp)
         check_classification_targets(y)
         X, y = indexable(X, y)
         estimator = self._get_estimator()
@@ -402,6 +390,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
+        xp, _, xp_device = get_namespace_and_device(X, y)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -410,7 +399,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             n_folds = self.cv.n_splits
         else:
             n_folds = None
-        if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
+        if n_folds and xp.any(xp.unique_counts(y)[1] < n_folds):
             raise ValueError(
                 f"Requesting {n_folds}-fold "
                 "cross-validation but provided less than "
