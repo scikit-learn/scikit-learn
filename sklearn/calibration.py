@@ -31,7 +31,8 @@ from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexab
 from sklearn.utils._array_api import (
     _half_multinomial_loss,
     _is_numpy_namespace,
-    _max_precision_float_dtype,
+    ensure_common_namespace_device,
+    get_namespace,
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import (
@@ -390,7 +391,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        xp, _, xp_device = get_namespace_and_device(X, y)
+        xp, is_array_api_compliant = get_namespace(X)
+        if is_array_api_compliant:
+            y = label_encoder_.transform(y=y)
+            y = ensure_common_namespace_device(X, y)[0]
+            if sample_weight:
+                sample_weight = ensure_common_namespace_device(X, sample_weight)[0]
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -426,7 +432,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     method=self.method,
                     classes=self.classes_,
                     xp=xp,
-                    xp_device=xp_device,
                     sample_weight=sample_weight,
                     fit_params=routed_params.estimator.fit,
                 )
@@ -476,7 +481,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 self.classes_,
                 self.method,
                 xp=xp,
-                xp_device=xp_device,
                 sample_weight=sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
@@ -576,7 +580,6 @@ def _fit_classifier_calibrator_pair(
     method,
     classes,
     xp,
-    xp_device,
     sample_weight=None,
     fit_params=None,
 ):
@@ -649,15 +652,12 @@ def _fit_classifier_calibrator_pair(
         classes,
         method,
         xp=xp,
-        xp_device=xp_device,
         sample_weight=sw_test,
     )
     return calibrated_classifier
 
 
-def _fit_calibrator(
-    clf, predictions, y, classes, method, xp, xp_device, sample_weight=None
-):
+def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
@@ -704,9 +704,6 @@ def _fit_calibrator(
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        max_float_dtype = _max_precision_float_dtype(xp, xp_device)
-        predictions = xp.asarray(predictions, dtype=max_float_dtype, device=xp_device)
-        y = xp.asarray(y, device=xp_device)
         if len(classes) == 2 and predictions.shape[-1] == 1:
             response_method_name = _check_response_method(
                 clf,
@@ -1083,7 +1080,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
-            sample_weight = xp.asarray(sample_weight, device=xp_device)
 
         halfmulti_loss = HalfMultinomialLoss(
             sample_weight=sample_weight, n_classes=logits.shape[1]

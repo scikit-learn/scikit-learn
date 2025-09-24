@@ -1253,7 +1253,7 @@ def test_temperature_scaling_array_api_compliance(array_namespace, device_, dtyp
 
     with config_context(array_api_dispatch=True):
         cal_clf_xp = CalibratedClassifierCV(
-            FrozenEstimator(clf), cv=3, method="temperature", ensemble=True
+            FrozenEstimator(clf), cv=3, method="temperature", ensemble=False
         ).fit(X_cal_xp, y_cal_xp)
 
     cal_clf_np = CalibratedClassifierCV(
