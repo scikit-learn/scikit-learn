@@ -21,7 +21,6 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import (
     _check_feature_names,
     _estimator_has,
-    _num_features,
     check_is_fitted,
     check_scalar,
 )
