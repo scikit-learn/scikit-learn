@@ -3073,8 +3073,14 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The projected data.
         """
         check_is_fitted(self)
-        X = self._check_inputs(
-            X, in_fit=False, accept_sparse_negative=True, copy=self.copy
+        X = check_array(
+            X,
+            ensure_2d=True,
+            accept_sparse="csc",
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_writeable=True,
+            ensure_all_finite="allow-nan"
         )
 
         return self._transform(X, inverse=True)
