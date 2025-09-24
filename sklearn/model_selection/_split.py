@@ -2340,7 +2340,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         n_classes = classes.shape[0]
 
         if np.min(class_counts) < 2:
-            too_few_classes = classes[class_counts < 2]
+            too_few_classes = classes[class_counts < 2].tolist()
             raise ValueError(
                 "The least populated classes in y have only 1"
                 " member, which is too few. The minimum"
