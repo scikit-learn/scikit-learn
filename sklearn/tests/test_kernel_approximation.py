@@ -356,7 +356,7 @@ def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
     # some basic tests
     rnd = np.random.RandomState(0)
-    X_np = rnd.uniform(size=(10, 4))
+    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
@@ -412,7 +412,7 @@ def test_nystroem_default_parameters():
 def test_nystroem_default_parameters_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
     rnd = np.random.RandomState(42)
-    X_np = rnd.uniform(size=(10, 4))
+    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
@@ -457,7 +457,7 @@ def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name)
     xp = _array_api_for_tests(array_namespace, device)
     # test that nystroem works with singular kernel matrix
     rng = np.random.RandomState(0)
-    X_np = rng.rand(10, 20)
+    X_np = rng.rand(10, 20).astype(dtype_name)
     X_np = np.vstack([X_np] * 2)  # duplicate samples
     X_xp = xp.asarray(X_np, device=device)
 
@@ -495,7 +495,7 @@ def test_nystroem_poly_kernel_params_array_api(array_namespace, device, dtype_na
     xp = _array_api_for_tests(array_namespace, device)
     # Non-regression: Nystroem should pass other parameters beside gamma.
     rnd = np.random.RandomState(37)
-    X_np = rnd.uniform(size=(10, 4))
+    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
@@ -565,7 +565,7 @@ def test_nystroem_precomputed_kernel_array_api(array_namespace, device, dtype_na
     # PR - 14706
     xp = _array_api_for_tests(array_namespace, device)
     rnd = np.random.RandomState(12)
-    X_np = rnd.uniform(size=(10, 4))
+    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
