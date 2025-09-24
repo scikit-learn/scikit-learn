@@ -3080,7 +3080,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             copy=self.copy,
             dtype=FLOAT_DTYPES,
             force_writeable=True,
-            ensure_all_finite="allow-nan"
+            ensure_all_finite="allow-nan",
         )
 
         return self._transform(X, inverse=True)
