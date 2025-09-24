@@ -2856,6 +2856,31 @@ def test_power_transformer_features_names_no_warnings():
     )
 
 
+def test_quantile_transformer_features_names_no_warnings():
+    """Check that QuantileTransformer does not raise any warnings on feature names"""
+    pd = pytest.importorskip("pandas")
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+
+        X, y = datasets.load_iris(return_X_y=True, as_frame=True)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.25, random_state=42
+        )
+        pipeline = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            transformer=QuantileTransformer().set_output(transform="pandas"),
+        )
+        pipeline.fit(X_train, y_train)
+        y_test_pred = pipeline.predict(X_test)
+
+    assert isinstance(X_test, pd.DataFrame), (
+        "X is not a pandas DataFrame"
+    )  # required for linting
+    assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+        str(w.message) for w in caught_warnings
+    )
+
+
 def test_yeojohnson_for_different_scipy_version():
     """Check that the results are consistent across different SciPy versions."""
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
