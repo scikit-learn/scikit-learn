@@ -1258,6 +1258,18 @@ def test_only_constant_features():
         assert est.tree_.max_depth == 0
 
 
+def test_almost_constant_feature():
+    random_state = check_random_state(0)
+    X = random_state.rand(10, 20)
+    X[:, 0] *= 1e-7  # almost constant feature
+    y = random_state.randint(0, 2, (10,))
+    for _, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(random_state=0)
+        est.fit(X, y)
+        # the almost constant feature should not be used
+        assert est.feature_importances_[0] == 0
+
+
 def test_behaviour_constant_feature_after_splits():
     X = np.transpose(
         np.vstack(([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]], np.zeros((4, 11))))
