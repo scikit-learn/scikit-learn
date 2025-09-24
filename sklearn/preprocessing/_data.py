@@ -3083,6 +3083,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             ensure_all_finite="allow-nan",
         )
 
+        if not X.shape[1] == len(self.lambdas_):
+            raise ValueError(
+                f"X has {X.shape[1]} features, but QuantileTransformer "
+                f"is expecting {len(self.lambdas_)} features as input."
+            )
+
         return self._transform(X, inverse=True)
 
     def __sklearn_tags__(self):
