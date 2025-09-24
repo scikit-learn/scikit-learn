@@ -1,4 +1,6 @@
-- :class:`preprocessing.PowerTransformer` now uses check_array for inverse_transform, instead of _check_input.
+- :class:`preprocessing.PowerTransformer` and class:`preprocessing.QuantileTransformer` now use
+  check_array for inverse_transform, instead of _check_input.
   This fixes the following UserWarning:
   X has feature names, but PowerTransformer was fitted without feature names.
+  X has feature names, but QuantileTransformer was fitted without feature names.
   By :user:`Thibault <ThibaultDECO>`
