@@ -53,7 +53,7 @@ y.value_counts().sort_index()
 #
 # We compare the following strategies:
 #
-# * :class:~sklearn.tree.DecisionTreeClassifier can handle multiclass
+# * :class:`~sklearn.tree.DecisionTreeClassifier` can handle multiclass
 #   classification without needing any special adjustments. It works by breaking
 #   down the training data into smaller subsets and focusing on the most common
 #   class in each subset. By repeating this process, the model can accurately

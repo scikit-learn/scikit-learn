@@ -42,15 +42,24 @@ BOOL_METRICS = [
     "dice",
     "rogerstanimoto",
     "russellrao",
-    "sokalmichener",
     "sokalsneath",
 ]
+DEPRECATED_METRICS = []
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    BOOL_METRICS += ["sokalmichener"]
+if sp_base_version >= parse_version("1.15"):
+    DEPRECATED_METRICS.append("sokalmichener")
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     BOOL_METRICS += ["kulsinski"]
+if sp_base_version >= parse_version("1.9"):
+    DEPRECATED_METRICS.append("kulsinski")
 if sp_base_version < parse_version("1.9"):
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     BOOL_METRICS += ["matching"]
+if sp_base_version >= parse_version("1.0"):
+    DEPRECATED_METRICS.append("matching")
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -837,7 +846,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
 
             intp_t i1, i2
             intp_t x1_start, x1_end
-            {{INPUT_DTYPE_t}} * x2_data
+            const {{INPUT_DTYPE_t}} * x2_data
 
         with nogil:
             # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
@@ -901,7 +910,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             {{INPUT_DTYPE_t}}[:, ::1] Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
 
             intp_t i1, i2
-            {{INPUT_DTYPE_t}} * x1_data
+            const {{INPUT_DTYPE_t}} * x1_data
 
             intp_t x2_start, x2_end
 

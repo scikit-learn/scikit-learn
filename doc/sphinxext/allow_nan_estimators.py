@@ -24,18 +24,18 @@ class AllowNanEstimators(Directive):
                 # sub-estimator.
                 est = next(_construct_instances(est_class))
 
-            if est.__sklearn_tags__().input_tags.allow_nan:
-                module_name = ".".join(est_class.__module__.split(".")[:2])
-                class_title = f"{est_class.__name__}"
-                class_url = f"./generated/{module_name}.{class_title}.html"
-                item = nodes.list_item()
-                para = nodes.paragraph()
-                para += nodes.reference(
-                    class_title, text=class_title, internal=False, refuri=class_url
-                )
-                exists = True
-                item += para
-                lst += item
+                if est.__sklearn_tags__().input_tags.allow_nan:
+                    module_name = ".".join(est_class.__module__.split(".")[:2])
+                    class_title = f"{est_class.__name__}"
+                    class_url = f"./generated/{module_name}.{class_title}.html"
+                    item = nodes.list_item()
+                    para = nodes.paragraph()
+                    para += nodes.reference(
+                        class_title, text=class_title, internal=False, refuri=class_url
+                    )
+                    exists = True
+                    item += para
+                    lst += item
         intro += lst
         return [intro] if exists else None
 

@@ -17,6 +17,7 @@ import sklearn
 from sklearn.cluster import KMeans
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
+from sklearn.datasets._samples_generator import make_blobs
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
@@ -29,18 +30,29 @@ from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_covariances_tied,
     _estimate_gaussian_parameters,
 )
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    device,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.extmath import fast_logdet
 
 COVARIANCE_TYPE = ["full", "tied", "diag", "spherical"]
 
 
-def generate_data(n_samples, n_features, weights, means, precisions, covariance_type):
+def generate_data(
+    n_samples, n_features, weights, means, precisions, covariance_type, dtype=np.float64
+):
     rng = np.random.RandomState(0)
 
     X = []
@@ -49,44 +61,61 @@ def generate_data(n_samples, n_features, weights, means, precisions, covariance_
             X.append(
                 rng.multivariate_normal(
                     m, c * np.eye(n_features), int(np.round(w * n_samples))
-                )
+                ).astype(dtype)
             )
     if covariance_type == "diag":
         for _, (w, m, c) in enumerate(zip(weights, means, precisions["diag"])):
             X.append(
-                rng.multivariate_normal(m, np.diag(c), int(np.round(w * n_samples)))
+                rng.multivariate_normal(
+                    m, np.diag(c), int(np.round(w * n_samples))
+                ).astype(dtype)
             )
     if covariance_type == "tied":
         for _, (w, m) in enumerate(zip(weights, means)):
             X.append(
                 rng.multivariate_normal(
                     m, precisions["tied"], int(np.round(w * n_samples))
-                )
+                ).astype(dtype)
             )
     if covariance_type == "full":
         for _, (w, m, c) in enumerate(zip(weights, means, precisions["full"])):
-            X.append(rng.multivariate_normal(m, c, int(np.round(w * n_samples))))
+            X.append(
+                rng.multivariate_normal(m, c, int(np.round(w * n_samples))).astype(
+                    dtype
+                )
+            )
 
     X = np.vstack(X)
     return X
 
 
 class RandomData:
-    def __init__(self, rng, n_samples=200, n_components=2, n_features=2, scale=50):
+    def __init__(
+        self,
+        rng,
+        n_samples=200,
+        n_components=2,
+        n_features=2,
+        scale=50,
+        dtype=np.float64,
+    ):
         self.n_samples = n_samples
         self.n_components = n_components
         self.n_features = n_features
 
-        self.weights = rng.rand(n_components)
-        self.weights = self.weights / self.weights.sum()
-        self.means = rng.rand(n_components, n_features) * scale
+        self.weights = rng.rand(n_components).astype(dtype)
+        self.weights = self.weights.astype(dtype) / self.weights.sum()
+        self.means = rng.rand(n_components, n_features).astype(dtype) * scale
         self.covariances = {
-            "spherical": 0.5 + rng.rand(n_components),
-            "diag": (0.5 + rng.rand(n_components, n_features)) ** 2,
-            "tied": make_spd_matrix(n_features, random_state=rng),
+            "spherical": 0.5 + rng.rand(n_components).astype(dtype),
+            "diag": (0.5 + rng.rand(n_components, n_features).astype(dtype)) ** 2,
+            "tied": make_spd_matrix(n_features, random_state=rng).astype(dtype),
             "full": (
-                make_spd_matrix(n_features, random_state=rng, n_samples=n_components)
-                * 0.5
+                make_spd_matrix(
+                    n_features,
+                    random_state=rng,
+                    n_samples=n_components,
+                ).astype(dtype) * 0.5
             ),
         }
         self.precisions = {
@@ -109,6 +138,7 @@ class RandomData:
                         self.means,
                         self.covariances,
                         covar_type,
+                        dtype=dtype,
                     )
                     for covar_type in COVARIANCE_TYPE
                 ],
@@ -163,7 +193,7 @@ def test_check_weights():
     g.weights_init = weights_bad_shape
     msg = re.escape(
         "The parameter 'weights' should have the shape of "
-        f"({n_components},), but got {str(weights_bad_shape.shape)}"
+        f"({n_components},), but got {weights_bad_shape.shape}"
     )
     with pytest.raises(ValueError, match=msg):
         g.fit(X)
@@ -374,31 +404,33 @@ def test_suffstat_sk_diag():
     assert_almost_equal(covars_pred_diag, 1.0 / precs_chol_pred**2)
 
 
-def test_gaussian_suffstat_sk_spherical():
+def test_gaussian_suffstat_sk_spherical(global_dtype):
     # computing spherical covariance equals to the variance of one-dimension
     # data after flattening, n_components=1
     rng = np.random.RandomState(0)
     n_samples, n_features = 500, 2
 
-    X = rng.rand(n_samples, n_features)
+    X = rng.rand(n_samples, n_features).astype(global_dtype)
     X = X - X.mean()
-    resp = np.ones((n_samples, 1))
-    nk = np.array([n_samples])
+    resp = np.ones((n_samples, 1), dtype=global_dtype)
+    nk = np.array([n_samples], dtype=global_dtype)
     xk = X.mean()
     covars_pred_spherical = _estimate_gaussian_covariances_spherical(resp, X, nk, xk, 0)
     covars_pred_spherical2 = np.dot(X.flatten().T, X.flatten()) / (
         n_features * n_samples
     )
     assert_almost_equal(covars_pred_spherical, covars_pred_spherical2)
+    assert covars_pred_spherical.dtype == global_dtype
 
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_spherical, "spherical")
     assert_almost_equal(covars_pred_spherical, 1.0 / precs_chol_pred**2)
+    assert precs_chol_pred.dtype == global_dtype
 
 
-def test_compute_log_det_cholesky():
+def test_compute_log_det_cholesky(global_dtype):
     n_features = 2
-    rand_data = RandomData(np.random.RandomState(0))
+    rand_data = RandomData(np.random.RandomState(0), dtype=global_dtype)
 
     for covar_type in COVARIANCE_TYPE:
         covariance = rand_data.covariances[covar_type]
@@ -413,12 +445,14 @@ def test_compute_log_det_cholesky():
             predected_det = covariance**n_features
 
         # We compute the cholesky decomposition of the covariance matrix
+        assert covariance.dtype == global_dtype
         expected_det = _compute_log_det_cholesky(
             _compute_precision_cholesky(covariance, covar_type),
             covar_type,
             n_features=n_features,
         )
         assert_array_almost_equal(expected_det, -0.5 * np.log(predected_det))
+        assert expected_det.dtype == global_dtype
 
 
 def _naive_lmvnpdf_diag(X, means, covars):
@@ -546,9 +580,9 @@ def test_gaussian_mixture_predict_predict_proba():
         (4, 300, 1e-1),  # loose convergence
     ],
 )
-def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
+def test_gaussian_mixture_fit_predict(seed, max_iter, tol, global_dtype):
     rng = np.random.RandomState(seed)
-    rand_data = RandomData(rng)
+    rand_data = RandomData(rng, dtype=global_dtype)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         Y = rand_data.Y
@@ -569,6 +603,9 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
         Y_pred2 = g.fit_predict(X)
         assert_array_equal(Y_pred1, Y_pred2)
         assert adjusted_rand_score(Y, Y_pred2) > 0.95
+        assert g.means_.dtype == global_dtype
+        assert g.weights_.dtype == global_dtype
+        assert g.precisions_.dtype == global_dtype
 
 
 def test_gaussian_mixture_fit_predict_n_init():
@@ -580,10 +617,10 @@ def test_gaussian_mixture_fit_predict_n_init():
     assert_array_equal(y_pred1, y_pred2)
 
 
-def test_gaussian_mixture_fit():
+def test_gaussian_mixture_fit(global_dtype):
     # recover the ground truth
     rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
+    rand_data = RandomData(rng, dtype=global_dtype)
     n_features = rand_data.n_features
     n_components = rand_data.n_components
 
@@ -631,6 +668,10 @@ def test_gaussian_mixture_fit():
             ecov.covariance_ = prec_test[h]
             # the accuracy depends on the number of data and randomness, rng
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
+
+        assert g.means_.dtype == global_dtype
+        assert g.covariances_.dtype == global_dtype
+        assert g.precisions_.dtype == global_dtype
 
 
 def test_gaussian_mixture_fit_best_params():
@@ -899,12 +940,13 @@ def test_convergence_detected_with_warm_start():
         assert max_iter >= gmm.n_iter_
 
 
-def test_score():
+def test_score(global_dtype):
     covar_type = "full"
     rng = np.random.RandomState(0)
-    rand_data = RandomData(rng, scale=7)
+    rand_data = RandomData(rng, scale=7, dtype=global_dtype)
     n_components = rand_data.n_components
     X = rand_data.X[covar_type]
+    assert X.dtype == global_dtype
 
     # Check the error message if we don't call fit
     gmm1 = GaussianMixture(
@@ -926,9 +968,14 @@ def test_score():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
         gmm1.fit(X)
+
+    assert gmm1.means_.dtype == global_dtype
+    assert gmm1.covariances_.dtype == global_dtype
+
     gmm_score = gmm1.score(X)
     gmm_score_proba = gmm1.score_samples(X).mean()
     assert_almost_equal(gmm_score, gmm_score_proba)
+    assert gmm_score_proba.dtype == global_dtype
 
     # Check if the score increase
     gmm2 = GaussianMixture(
@@ -1025,7 +1072,7 @@ def test_regularisation():
                 "Fitting the mixture model failed because some components have"
                 " ill-defined empirical covariance (for instance caused by "
                 "singleton or collapsed samples). Try to decrease the number "
-                "of components, or increase reg_covar."
+                "of components, increase reg_covar, or scale the input data."
             )
             with pytest.raises(ValueError, match=msg):
                 gmm.fit(X)
@@ -1033,27 +1080,29 @@ def test_regularisation():
             gmm.set_params(reg_covar=1e-6).fit(X)
 
 
-def test_property():
+@pytest.mark.parametrize("covar_type", COVARIANCE_TYPE)
+def test_fitted_precision_covariance_concistency(covar_type, global_dtype):
     rng = np.random.RandomState(0)
-    rand_data = RandomData(rng, scale=7)
+    rand_data = RandomData(rng, scale=7, dtype=global_dtype)
     n_components = rand_data.n_components
 
-    for covar_type in COVARIANCE_TYPE:
-        X = rand_data.X[covar_type]
-        gmm = GaussianMixture(
-            n_components=n_components,
-            covariance_type=covar_type,
-            random_state=rng,
-            n_init=5,
-        )
-        gmm.fit(X)
-        if covar_type == "full":
-            for prec, covar in zip(gmm.precisions_, gmm.covariances_):
-                assert_array_almost_equal(linalg.inv(prec), covar)
-        elif covar_type == "tied":
-            assert_array_almost_equal(linalg.inv(gmm.precisions_), gmm.covariances_)
-        else:
-            assert_array_almost_equal(gmm.precisions_, 1.0 / gmm.covariances_)
+    X = rand_data.X[covar_type]
+    gmm = GaussianMixture(
+        n_components=n_components,
+        covariance_type=covar_type,
+        random_state=rng,
+        n_init=5,
+    )
+    gmm.fit(X)
+    assert gmm.precisions_.dtype == global_dtype
+    assert gmm.covariances_.dtype == global_dtype
+    if covar_type == "full":
+        for prec, covar in zip(gmm.precisions_, gmm.covariances_):
+            assert_array_almost_equal(linalg.inv(prec), covar)
+    elif covar_type == "tied":
+        assert_array_almost_equal(linalg.inv(gmm.precisions_), gmm.covariances_)
+    else:
+        assert_array_almost_equal(gmm.precisions_, 1.0 / gmm.covariances_)
 
 
 def test_sample():
@@ -1198,6 +1247,7 @@ def test_gaussian_mixture_setting_best_params():
         "precisions_cholesky_",
         "n_iter_",
         "lower_bound_",
+        "lower_bounds_",
     ]:
         assert hasattr(gmm, attr)
 
@@ -1225,10 +1275,10 @@ def test_init_means_not_duplicated(init_params, global_random_seed):
 @pytest.mark.parametrize(
     "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
 )
-def test_means_for_all_inits(init_params, global_random_seed):
+def test_means_for_all_inits(init_params, global_random_seed, global_dtype):
     # Check fitted means properties for all initializations
     rng = np.random.RandomState(global_random_seed)
-    rand_data = RandomData(rng, scale=5)
+    rand_data = RandomData(rng, scale=5, dtype=global_dtype)
     n_components = rand_data.n_components
     X = rand_data.X["full"]
 
@@ -1241,6 +1291,9 @@ def test_means_for_all_inits(init_params, global_random_seed):
     assert np.all(X.min(axis=0) <= gmm.means_)
     assert np.all(gmm.means_ <= X.max(axis=0))
     assert gmm.converged_
+    assert gmm.means_.dtype == global_dtype
+    assert gmm.covariances_.dtype == global_dtype
+    assert gmm.weights_.dtype == global_dtype
 
 
 def test_max_iter_zero():
@@ -1263,7 +1316,7 @@ def test_max_iter_zero():
     assert_allclose(gmm.means_, means_init)
 
 
-def test_gaussian_mixture_precisions_init_diag():
+def test_gaussian_mixture_precisions_init_diag(global_dtype):
     """Check that we properly initialize `precision_cholesky_` when we manually
     provide the precision matrix.
 
@@ -1282,7 +1335,7 @@ def test_gaussian_mixture_precisions_init_diag():
     shifted_gaussian = rng.randn(n_samples, 2) + np.array([20, 20])
     C = np.array([[0.0, -0.7], [3.5, 0.7]])
     stretched_gaussian = np.dot(rng.randn(n_samples, 2), C)
-    X = np.vstack([shifted_gaussian, stretched_gaussian])
+    X = np.vstack([shifted_gaussian, stretched_gaussian]).astype(global_dtype)
 
     # common parameters to check the consistency of precision initialization
     n_components, covariance_type, reg_covar, random_state = 2, "diag", 1e-6, 0
@@ -1291,7 +1344,7 @@ def test_gaussian_mixture_precisions_init_diag():
     # - run KMeans to have an initial guess
     # - estimate the covariance
     # - compute the precision matrix from the estimated covariance
-    resp = np.zeros((X.shape[0], n_components))
+    resp = np.zeros((X.shape[0], n_components)).astype(global_dtype)
     label = (
         KMeans(n_clusters=n_components, n_init=1, random_state=random_state)
         .fit(X)
@@ -1301,6 +1354,7 @@ def test_gaussian_mixture_precisions_init_diag():
     _, _, covariance = _estimate_gaussian_parameters(
         X, resp, reg_covar=reg_covar, covariance_type=covariance_type
     )
+    assert covariance.dtype == global_dtype
     precisions_init = 1 / covariance
 
     gm_with_init = GaussianMixture(
@@ -1310,6 +1364,9 @@ def test_gaussian_mixture_precisions_init_diag():
         precisions_init=precisions_init,
         random_state=random_state,
     ).fit(X)
+    assert gm_with_init.means_.dtype == global_dtype
+    assert gm_with_init.covariances_.dtype == global_dtype
+    assert gm_with_init.precisions_cholesky_.dtype == global_dtype
 
     gm_without_init = GaussianMixture(
         n_components=n_components,
@@ -1317,6 +1374,9 @@ def test_gaussian_mixture_precisions_init_diag():
         reg_covar=reg_covar,
         random_state=random_state,
     ).fit(X)
+    assert gm_without_init.means_.dtype == global_dtype
+    assert gm_without_init.covariances_.dtype == global_dtype
+    assert gm_without_init.precisions_cholesky_.dtype == global_dtype
 
     assert gm_without_init.n_iter_ == gm_with_init.n_iter_
     assert_allclose(
@@ -1324,11 +1384,11 @@ def test_gaussian_mixture_precisions_init_diag():
     )
 
 
-def _generate_data(seed, n_samples, n_features, n_components):
+def _generate_data(seed, n_samples, n_features, n_components, dtype=np.float64):
     """Randomly generate samples and responsibilities."""
     rs = np.random.RandomState(seed)
-    X = rs.random_sample((n_samples, n_features))
-    resp = rs.random_sample((n_samples, n_components))
+    X = rs.random_sample((n_samples, n_features)).astype(dtype)
+    resp = rs.random_sample((n_samples, n_components)).astype(dtype)
     resp /= resp.sum(axis=1)[:, np.newaxis]
     return X, resp
 
@@ -1355,7 +1415,9 @@ def _calculate_precisions(X, resp, covariance_type):
 
 
 @pytest.mark.parametrize("covariance_type", COVARIANCE_TYPE)
-def test_gaussian_mixture_precisions_init(covariance_type, global_random_seed):
+def test_gaussian_mixture_precisions_init(
+    covariance_type, global_random_seed, global_dtype
+):
     """Non-regression test for #26415."""
 
     X, resp = _generate_data(
@@ -1363,11 +1425,15 @@ def test_gaussian_mixture_precisions_init(covariance_type, global_random_seed):
         n_samples=100,
         n_features=3,
         n_components=4,
+        dtype=global_dtype,
     )
 
     precisions_init, desired_precisions_cholesky = _calculate_precisions(
         X, resp, covariance_type
     )
+    assert precisions_init.dtype == global_dtype
+    assert desired_precisions_cholesky.dtype == global_dtype
+
     gmm = GaussianMixture(
         covariance_type=covariance_type, precisions_init=precisions_init
     )
@@ -1416,3 +1482,161 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
     # The initial gaussian parameters are not estimated. They are estimated for every
     # m_step.
     assert mock.call_count == gm.n_iter_
+
+
+@pytest.mark.parametrize("init_params", ["random", "random_from_data"])
+@pytest.mark.parametrize("covariance_type", ["full", "tied", "diag", "spherical"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("use_gmm_array_constructor_arguments", [False, True])
+def test_gaussian_mixture_array_api_compliance(
+    init_params,
+    covariance_type,
+    array_namespace,
+    device_,
+    dtype,
+    use_gmm_array_constructor_arguments,
+):
+    """Test that array api works in GaussianMixture.fit()."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    X = rand_data.X[covariance_type]
+    X = X.astype(dtype)
+
+    if use_gmm_array_constructor_arguments:
+        additional_kwargs = {
+            "means_init": rand_data.means.astype(dtype),
+            "precisions_init": rand_data.precisions[covariance_type].astype(dtype),
+            "weights_init": rand_data.weights.astype(dtype),
+        }
+    else:
+        additional_kwargs = {}
+
+    gmm = GaussianMixture(
+        n_components=rand_data.n_components,
+        covariance_type=covariance_type,
+        random_state=0,
+        init_params=init_params,
+        **additional_kwargs,
+    )
+    gmm.fit(X)
+
+    X_xp = xp.asarray(X, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        gmm_xp = sklearn.clone(gmm)
+        for param_name, param_value in additional_kwargs.items():
+            arg_xp = xp.asarray(param_value, device=device_)
+            setattr(gmm_xp, param_name, arg_xp)
+
+        gmm_xp.fit(X_xp)
+
+        assert get_namespace(gmm_xp.means_)[0] == xp
+        assert get_namespace(gmm_xp.covariances_)[0] == xp
+        assert device(gmm_xp.means_) == device(X_xp)
+        assert device(gmm_xp.covariances_) == device(X_xp)
+
+        predict_xp = gmm_xp.predict(X_xp)
+        predict_proba_xp = gmm_xp.predict_proba(X_xp)
+        score_samples_xp = gmm_xp.score_samples(X_xp)
+        score_xp = gmm_xp.score(X_xp)
+        aic_xp = gmm_xp.aic(X_xp)
+        bic_xp = gmm_xp.bic(X_xp)
+        sample_X_xp, sample_y_xp = gmm_xp.sample(10)
+
+        results = [
+            predict_xp,
+            predict_proba_xp,
+            score_samples_xp,
+            sample_X_xp,
+            sample_y_xp,
+        ]
+        for result in results:
+            assert get_namespace(result)[0] == xp
+            assert device(result) == device(X_xp)
+
+        for score in [score_xp, aic_xp, bic_xp]:
+            assert isinstance(score, float)
+
+    # Define specific rtol to make tests pass
+    default_rtol = 1e-4 if dtype == "float32" else 1e-7
+    increased_atol = 5e-4 if dtype == "float32" else 0
+    increased_rtol = 1e-3 if dtype == "float32" else 1e-7
+
+    # Check fitted attributes
+    assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
+    assert_allclose(gmm.weights_, _convert_to_numpy(gmm_xp.weights_, xp=xp))
+    assert_allclose(
+        gmm.covariances_,
+        _convert_to_numpy(gmm_xp.covariances_, xp=xp),
+        atol=increased_atol,
+        rtol=increased_rtol,
+    )
+    assert_allclose(
+        gmm.precisions_cholesky_,
+        _convert_to_numpy(gmm_xp.precisions_cholesky_, xp=xp),
+        atol=increased_atol,
+        rtol=increased_rtol,
+    )
+    assert_allclose(
+        gmm.precisions_,
+        _convert_to_numpy(gmm_xp.precisions_, xp=xp),
+        atol=increased_atol,
+        rtol=increased_rtol,
+    )
+
+    # Check methods
+    assert (
+        adjusted_rand_score(gmm.predict(X), _convert_to_numpy(predict_xp, xp=xp)) > 0.95
+    )
+    assert_allclose(
+        gmm.predict_proba(X),
+        _convert_to_numpy(predict_proba_xp, xp=xp),
+        rtol=increased_rtol,
+        atol=increased_atol,
+    )
+    assert_allclose(
+        gmm.score_samples(X),
+        _convert_to_numpy(score_samples_xp, xp=xp),
+        rtol=increased_rtol,
+    )
+    # comparing Python float so need explicit rtol when X has dtype float32
+    assert_allclose(gmm.score(X), score_xp, rtol=default_rtol)
+    assert_allclose(gmm.aic(X), aic_xp, rtol=default_rtol)
+    assert_allclose(gmm.bic(X), bic_xp, rtol=default_rtol)
+    sample_X, sample_y = gmm.sample(10)
+    # generated samples are float64 so need explicit rtol when X has dtype float32
+    assert_allclose(sample_X, _convert_to_numpy(sample_X_xp, xp=xp), rtol=default_rtol)
+    assert_allclose(sample_y, _convert_to_numpy(sample_y_xp, xp=xp))
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_gaussian_mixture_raises_where_array_api_not_implemented(
+    init_params, array_namespace, device_, dtype
+):
+    X, _ = make_blobs(
+        n_samples=100,
+        n_features=2,
+        centers=3,
+    )
+    gmm = GaussianMixture(
+        n_components=3, covariance_type="diag", init_params=init_params
+    )
+
+    with sklearn.config_context(array_api_dispatch=True):
+        with pytest.raises(
+            NotImplementedError,
+            match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
+        ):
+            gmm.fit(X)

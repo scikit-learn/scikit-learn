@@ -4,18 +4,24 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import Bunch, safe_mask
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
+from sklearn.utils import Bunch, get_tags, safe_mask
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -23,26 +29,7 @@ __all__ = ["SelfTrainingClassifier"]
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check
-    the unfitted `estimator`. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
-
-
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -171,8 +158,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     SelfTrainingClassifier(...)
     """
 
-    _estimator_type = "classifier"
-
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
@@ -232,8 +217,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         # TODO(1.8) remove
         elif self.estimator is None and self.base_estimator == "deprecated":
             raise ValueError(
-                "You must pass an estimator to SelfTrainingClassifier."
-                " Use `estimator`."
+                "You must pass an estimator to SelfTrainingClassifier. Use `estimator`."
             )
         elif self.estimator is not None and self.base_estimator != "deprecated":
             raise ValueError(
@@ -617,7 +601,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=(
@@ -632,3 +616,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             ),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO(1.8): remove the condition check together with base_estimator
+        if self.estimator is not None:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

@@ -25,14 +25,12 @@ We adopted the following release schedule:
 - Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been taken
   care of.
 
+- Make sure that the minimum supported versions of our dependencies have been bumped, see
+  :ref:`bumping_dependencies_guideline` for details.
+
 - For major/minor final releases, make sure that a *Release Highlights* page has been
   done as a runnable example and check that its HTML rendering looks correct. It should
   be linked from the what's new file for the new version of scikit-learn.
-
-- Ensure that the changelog and commits correspond, and that the changelog is reasonably
-  well curated. In particular, make sure that the changelog entries are labeled and
-  ordered within each section. The order of the labels should be `|MajorFeature|`,
-  `|Feature|`, `|Efficiency|`, `|Enhancement|`, `|Fix|`, and `|API|`.
 
 .. rubric:: Permissions
 
@@ -87,38 +85,9 @@ Reference Steps
         git push --set-upstream upstream {{ version_short }}.X
     {% endif %}
 
-    - Create a PR from the `main` branch targeting the `{{ version_short }}.X` branch.
-      Copy the following release checklist to the description of this PR to track the
-      progress.
-
-      .. code-block:: markdown
-
-        * [ ] Update news and what's new date in main branch
-        * [ ] Backport news and what's new date in release branch
-        {%- if key == "rc" %}
-        * [ ] Update the sklearn dev0 version in main branch
-        {%- endif %}
-        * [ ] Set the version number in the release branch
-        * [ ] Check that the wheels for the release can be built successfully
-        * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
-        * [ ] Upload the wheels and source tarball to https://test.pypi.org
-        * [ ] Create tag on the main repo
-        * [ ] Confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock
-              and wait for merge
-        * [ ] Upload the wheels and source tarball to PyPI
-        {%- if key != "rc" %}
-        * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
-        {%- endif %}
-        * [ ] Announce on mailing list and on Twitter, and LinkedIn
-        {%- if key == "final" %}
-        * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
-        {%- endif %}
-        {%- if key != "rc" %}
-        * [ ] Update SECURITY.md in main branch
-        {%- endif %}
-
     {% if key != "rc" %}
-    - Rebase this PR from the `{{ version_short }}.X` branch:
+    - Create a new branch from the `main` branch, then start an interactive rebase from
+      `{{ version_short }}.X` to select the commits that need to be backported:
 
       .. prompt:: bash
 
@@ -131,9 +100,9 @@ Reference Steps
       - Do not remove lines but drop commit by replacing `pick` with `drop`.
       - Commits to pick for a bug-fix release are *generally* prefixed with `FIX`, `CI`,
         and `DOC`. They should at least include all the commits of the merged PRs that
-        were milestoned for this release and/or documented as such in the changelog.
+        were milestoned for this release.
       - Commits to `drop` for a bug-fix release are *generally* prefixed with `FEAT`,
-        `MAINT`, `ENH`, and `API`. Reasons for not including them is to prevent change
+        `MAINT`, `ENH`, and `API`. Reasons for not including them are to prevent change
         of behavior (which should only happen in major/minor releases).
       - After having dropped or picked commits, **do not exit** but paste the content of
         the `git-rebase-todo` message in the PR. This file is located at
@@ -142,46 +111,110 @@ Reference Steps
         necessary.
     {% endif %}
 
+    - Create a PR targeting the `{{ version_short }}.X` branch.
+      Copy the following release checklist to the description of this PR to track the
+      progress.
+
+      .. code-block:: markdown
+
+        {% if key == "rc" -%}
+        * [ ] Update the sklearn dev0 version in main branch
+        {%- endif %}
+        * [ ] Set the version number in the release branch
+        {%- if key == "rc" %}
+        * [ ] Set an upper bound on build dependencies in the release branch
+        {%- endif %}
+        * [ ] Generate the changelog in the release branch
+        * [ ] Check that the wheels for the release can be built successfully
+        * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
+        * [ ] Upload the wheels and source tarball to https://test.pypi.org
+        * [ ] Create tag on the main repo
+        * [ ] Confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock
+              and wait for merge
+        * [ ] Upload the wheels and source tarball to PyPI
+        {%- if key != "rc" %}
+        * [ ] Update news and what's new date in main branch
+        * [ ] Backport news and what's new date in release branch
+        {%- endif %}
+        {%- if key == "final" %}
+        * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
+        {%- endif %}
+        {%- if key != "rc" %}
+        * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
+        {%- endif %}
+        * [ ] Announce on mailing list and on social media platforms (LinkedIn, Bluesky, etc.)
+        {%- if key != "rc" %}
+        * [ ] Update SECURITY.md in main branch
+        {%- endif %}
+
     {% if key == "rc" %}
-    - Create a PR from `main` and targeting `main` to increment the dev0 `__version__`
-      variable in `sklearn/__init__.py`. This means while we are in the release
-      candidate period, the latest stable is two version behind the `main` branch,
-      instead of one. In this PR targeting `main`, you should also include a new what's
-      new file under the `doc/whats_new/` directory so PRs that target the next version
-      can contribute their changelog entries to this file in parallel to the release
-      process.
+    - Create a PR from `main` and targeting `main` to prepare for the next version. In
+      this PR you need to:
+
+      - Increment the dev0 `__version__` variable in `sklearn/__init__.py`. This means
+        that while we are in the release candidate period, the latest stable is two
+        versions behind the `main` branch, instead of one.
+
+      - Include a new what's new file under the `doc/whats_new/` directory. Don't forget
+        to add an entry for this new file in `doc/whats_new.rst`.
+
+      - Change the what's new file to the newly created one in the `filename` field of
+        the `tool.towncrier` section in `pyproject.toml`.
     {% endif %}
 
     - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
 
-    {% if key != "rc" %}
-    - In the `main` branch, edit the corresponding file in the `doc/whats_new` directory
-      to update the release date
-      {%- if key == "final" %}, link the release highlights example,{% endif %}
-      and add the list of contributor names. Suppose that the tag of the last release in
-      the previous major/minor version is `{{ previous_tag }}`, then you can use the
-      following command to retrieve the list of contributor names:
+    {% if key == "rc" %}
+    - Still in the release branch, set or update the upper bound on the build
+      dependencies in the `[build-system]` section of `pyproject.toml`. The goal is to
+      prevent future backward incompatible releases of the dependencies to break the
+      build in the maintenance branch.
+
+      The upper bounds should match the latest already-released minor versions of the
+      dependencies and should allow future micro (bug-fix) versions. For instance, if
+      numpy 2.2.5 is the most recent version, its upper bound should be set to <2.3.0.
+    {% endif %}
+
+    - In the release branch, generate the changelog for the incoming version, i.e.,
+      `doc/whats_new/{{ version_short }}.rst`.
+      {%- if key == "rc" %}
+      During the RC period we want to keep the fragments when we generate the changelog
+      because we'll generate it again for the final release, including the changes that
+      may happen in between:
 
       .. prompt:: bash
 
-        git shortlog -s {{ previous_tag }}.. |
-          cut -f2- |
-          sort --ignore-case |
-          tr "\n" ";" |
-          sed "s/;/, /g;s/, $//" |
-          fold -s
+        towncrier build --keep --version {{ version_short }}.0
 
-      Then cherry-pick it in the release branch.
+      {%- else %}
+      For a non RC release, push a commit where you:
 
-    - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
-      in the landing page, along with the month of the release.
-      {%- if key == "final" %}
-      Do not forget to remove old entries (two years or three releases ago) and update
-      the "On-going development" entry.
+      - Generate the changelog, not keeping the fragments.
+
+        .. prompt:: bash
+
+          towncrier build --version {{ version_full }}
+
+      {% if key == "final" -%}
+      - Link the release highlights example.
+      {% endif -%}
+
+      - Add the list of contributor names. Suppose that the tag of the last release in
+        the previous major/minor version is `{{ previous_tag }}`, then you can use the
+        following command to retrieve the list of contributor names:
+
+        .. prompt:: bash
+
+          git shortlog -s {{ previous_tag }}.. |
+            cut -f2- |
+            sort --ignore-case |
+            tr "\n" ";" |
+            sed "s/;/, /g;s/, $//" |
+            fold -s
+
+      Then create a PR targeting the `main` branch and cherry-pick this commit there.
       {%- endif %}
-      Then cherry-pick it in the release branch.
-    {% endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
       `workflow runs of the wheel builder
@@ -217,7 +250,7 @@ Reference Steps
 
         In addition if on merging, the last commit, containing the `[cd build]` marker,
         is empty, the CD jobs won't be triggered. In this case, you can directly push
-        a commit with the marker in the `{{ version_short }}.X` to trigger them.
+        a commit with the marker in the `{{ version_short }}.X` branch to trigger them.
 
     - If the steps above went fine, proceed **with caution** to create a new tag for the
       release. This should be done only when you are almost certain that the release is
@@ -229,9 +262,21 @@ Reference Steps
         git tag -a {{ version_full }}  # in the {{ version_short }}.X branch
         git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
 
+      .. warning::
+
+        Don't use the github interface for publishing the release as a way to create the
+        tag because it will automatically send notifications to all users that follow
+        the repo even though the website isn't updated and wheels aren't uploaded yet.
+
     - Confirm that the bot has detected the tag on the conda-forge feedstock repository
       https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
       release, targeting the `{% if key == "rc" %}rc{% else %}main{% endif %}` branch.
+
+      {%- if key == "rc" %}
+      Make sure to update the PR such that it will be synchronized with the `main`
+      branch. In particular, backport migrations that may have been added since the last
+      release.
+      {% endif %}
 
     - Trigger the `PyPI publishing workflow
       <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_
@@ -250,7 +295,7 @@ Reference Steps
           rm -r dist
           python -m pip install -U wheelhouse_uploader twine
           python -m wheelhouse_uploader fetch \
-            --version 0.99.0rc1 --local-folder dist scikit-learn \
+            --version {{ version_full }} --local-folder dist scikit-learn \
             https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
         These commands will download all the binary packages accumulated in the `staging
@@ -272,6 +317,16 @@ Reference Steps
 
           twine upload dist/*
 
+    {% if key != "rc" %}
+    - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
+      in the landing page, along with the month of the release.
+      {%- if key == "final" %}
+      Do not forget to remove old entries (two years or three releases ago) and update
+      the "On-going development" entry.
+      {%- endif %}
+      Then cherry-pick it in the release branch.
+    {% endif %}
+
     {% if key == "final" %}
     - Update the symlink for `stable` and the `latestStable` variable in
       `versionwarning.js` in https://github.com/scikit-learn/scikit-learn.github.io.
@@ -292,6 +347,13 @@ Reference Steps
     {% endif %}
 
     {% if key != "rc" %}
+    - Publish the release at https://github.com/scikit-learn/scikit-learn/releases and
+      announce it on the mailing list and social networks. Remember to add a link to the
+      changelog in the release note. Ideally, only perform this step once the package
+      is available both on PyPI and conda-forge and once the website is up to date.
+    {% endif %}
+
+    {% if key != "rc" %}
     - Update `SECURITY.md` to reflect the latest supported version `{{ version_full }}`.
     {% endif %}
   {% endfor %}
@@ -307,6 +369,35 @@ following script and enter the token when prompted:
 
   cd build_tools
   make authors  # Enter the token when prompted
+
+.. _bumping_dependencies_guideline:
+
+Guideline for bumping minimum versions of our dependencies
+----------------------------------------------------------
+
+- **minimum Python version**: at the time of a minor scikit-learn release (`X.Y.0`),
+  we drop the Python version with an initial release date of more than 4 years
+  ago. In other words, our minimum Python version is between 3 and 4 years old.
+- **compiled dependencies** (numpy, scipy, as well as compiled optional
+  dependencies (pandas, matplotlib, pyamg, pillow, ...): we take the oldest minor
+  release (`X.Y.0`) that has wheels for our minimum Python version. In practice
+  this means that our minimum supported version is around 3 years old, maybe a
+  bit less.
+- **pure Python dependencies** (joblib, threadpoolctl): at the time of the
+  scikit-learn release our minimum supported version is the most recent minor
+  release (`X.Y.0`) that is at least 2 years old.
+- we may decide to be less conservative than this guideline in some edge cases.
+  These edge cases include: a security bugfix in one of our dependencies or a
+  critical bugfix in one of our dependencies makes it too costly to support it in
+  terms of maintenance.
+
+`maint_tools/bump-dependencies-versions.py` implements these rules and can be
+used to give the new minimum dependency versions. It takes as input the
+expected scikit-learn release date, for example:
+
+.. code:: bash
+
+    python maint_tools/bump-dependencies-versions.py 2025-12-01
 
 Merging Pull Requests
 ---------------------

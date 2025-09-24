@@ -108,6 +108,16 @@ from the data itself, without the use of predetermined classifications.
 * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
   dimensionality reduction on a toy "S-curve" dataset.
 
+* See :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` for an example of
+  using manifold learning to map the stock market structure based on historical stock
+  prices.
+
+* See :ref:`sphx_glr_auto_examples_manifold_plot_manifold_sphere.py` for an example of
+  manifold learning techniques applied to a spherical data-set.
+
+* See :ref:`sphx_glr_auto_examples_manifold_plot_swissroll.py` for an example of using
+  manifold learning techniques on a Swiss Roll dataset.
+
 The manifold learning implementations available in scikit-learn are
 summarized below
 
@@ -264,7 +274,7 @@ It requires ``n_neighbors > n_components``.
 .. rubric:: References
 
 * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
-  <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
+  <https://papers.nips.cc/paper_files/paper/2006/file/fb2606a5068901da92473666256e6e5b-Paper.pdf>`_
   Zhang, Z. & Wang, J.
 
 
@@ -289,24 +299,24 @@ It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
 .. dropdown:: Complexity
 
-The HLLE algorithm comprises three stages:
+  The HLLE algorithm comprises three stages:
 
-1. **Nearest Neighbors Search**.  Same as standard LLE
+  1. **Nearest Neighbors Search**.  Same as standard LLE
 
-2. **Weight Matrix Construction**. Approximately
-   :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
-   cost to that of standard LLE.  The second term comes from a QR
-   decomposition of the local hessian estimator.
+  2. **Weight Matrix Construction**. Approximately
+     :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
+     cost to that of standard LLE.  The second term comes from a QR
+     decomposition of the local hessian estimator.
 
-3. **Partial Eigenvalue Decomposition**. Same as standard LLE.
+  3. **Partial Eigenvalue Decomposition**. Same as standard LLE.
 
-The overall complexity of standard HLLE is
-:math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
+  The overall complexity of standard HLLE is
+  :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
 
-* :math:`N` : number of training data points
-* :math:`D` : input dimension
-* :math:`k` : number of nearest neighbors
-* :math:`d` : output dimension
+  * :math:`N` : number of training data points
+  * :math:`D` : input dimension
+  * :math:`k` : number of nearest neighbors
+  * :math:`d` : output dimension
 
 .. rubric:: References
 
@@ -356,8 +366,8 @@ function :func:`spectral_embedding` or its object-oriented counterpart
 
 * `"Laplacian Eigenmaps for Dimensionality Reduction
   and Data Representation"
-  <https://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
-  M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
+  <https://www2.imm.dtu.dk/projects/manifold/Papers/Laplacian.pdf>`_
+  M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396.
 
 
 Local Tangent Space Alignment
@@ -410,78 +420,117 @@ Multi-dimensional Scaling (MDS)
 ===============================
 
 `Multidimensional scaling <https://en.wikipedia.org/wiki/Multidimensional_scaling>`_
-(:class:`MDS`) seeks a low-dimensional
-representation of the data in which the distances respect well the
+(:class:`MDS` and :class:`ClassicalMDS`) seeks a low-dimensional
+representation of the data in which the distances approximate the
 distances in the original high-dimensional space.
 
-In general, :class:`MDS` is a technique used for analyzing similarity or
-dissimilarity data. It attempts to model similarity or dissimilarity data as
-distances in a geometric spaces. The data can be ratings of similarity between
+In general, MDS is a technique used for analyzing
+dissimilarity data. It attempts to model dissimilarities as
+distances in a Euclidean space. The data can be ratings of dissimilarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
 
-There exists two types of MDS algorithm: metric and non metric. In
-scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
-similarity matrix arises from a metric (and thus respects the triangular
-inequality), the distances between output two points are then set to be as
-close as possible to the similarity or dissimilarity data. In the non-metric
-version, the algorithms will try to preserve the order of the distances, and
+There exist three types of MDS algorithm: metric, non-metric, and classical. In
+scikit-learn, the class :class:`MDS` implements metric and non-metric MDS,
+while :class:`ClassicalMDS` implements classical MDS. In metric MDS,
+the distances in the embedding space are set as
+close as possible to the dissimilarity data. In the non-metric
+version, the algorithm will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
-space and the similarities/dissimilarities.
+space and the input dissimilarities. Finally, classical MDS is close to PCA
+and, instead of approximating distances, approximates pairwise scalar products,
+which is an easier optimization problem with an analytic solution
+in terms of eigendecomposition.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
+.. |MMDS_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
+    :target: ../auto_examples/manifold/plot_lle_digits.html
+    :scale: 50
 
+.. |NMDS_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_011.png
+    :target: ../auto_examples/manifold/plot_lle_digits.html
+    :scale: 50
 
-Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
-:math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
-the similarities chosen in some optimal ways. The objective, called the
-stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
+.. centered:: |MMDS_img| |NMDS_img|
+
+Let :math:`\delta_{ij}` be the dissimilarity matrix between the
+:math:`n` input points (possibly arising as some pairwise distances
+:math:`d_{ij}(X)` between the coordinates :math:`X` of the input points).
+Disparities :math:`\hat{d}_{ij} = f(\delta_{ij})` are some transformation of
+the dissimilarities. The MDS objective, called the raw stress, is then
+defined by :math:`\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2`,
+where :math:`d_{ij}(Z)` are the pairwise distances between the
+coordinates :math:`Z` of the embedded points.
 
 
 .. dropdown:: Metric MDS
 
-  The simplest metric :class:`MDS` model, called *absolute MDS*, disparities are defined by
-  :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
-  should then correspond exactly to the distance between point :math:`i` and
-  :math:`j` in the embedding point.
+  In the metric :class:`MDS` model (sometimes also called *absolute MDS*),
+  disparities are simply equal to the input dissimilarities
+  :math:`\hat{d}_{ij} = \delta_{ij}`.
 
-  Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
+.. dropdown:: Non-metric MDS
 
-.. dropdown:: Nonmetric MDS
+  Non-metric :class:`MDS` focuses on the ordination of the data. If
+  :math:`\delta_{ij} > \delta_{kl}`, then the embedding
+  seeks to enforce :math:`d_{ij}(Z) > d_{kl}(Z)`. A simple algorithm
+  to enforce proper ordination is to use an
+  isotonic regression of :math:`d_{ij}(Z)` on :math:`\delta_{ij}`, yielding
+  disparities :math:`\hat{d}_{ij}` that are a monotonic transformation
+  of dissimilarities :math:`\delta_{ij}` and hence having the same ordering.
+  This is done repeatedly after every step of the optimization algorithm.
+  In order to avoid the trivial solution where all embedding points are
+  overlapping, the disparities :math:`\hat{d}_{ij}` are normalized.
 
-  Non metric :class:`MDS` focuses on the ordination of the data. If
-  :math:`S_{ij} > S_{jk}`, then the embedding should enforce :math:`d_{ij} <
-  d_{jk}`. For this reason, we discuss it in terms of dissimilarities
-  (:math:`\delta_{ij}`) instead of similarities (:math:`S_{ij}`). Note that
-  dissimilarities can easily be obtained from similarities through a simple
-  transform, e.g. :math:`\delta_{ij}=c_1-c_2 S_{ij}` for some real constants
-  :math:`c_1, c_2`. A simple algorithm to enforce proper ordination is to use a
-  monotonic regression of :math:`d_{ij}` on :math:`\delta_{ij}`, yielding
-  disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
-
-  A trivial solution to this problem is to set all the points on the origin. In
-  order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized. Note
-  that since we only care about relative ordering, our objective should be
+  Note that since we only care about relative ordering, our objective should be
   invariant to simple translation and scaling, however the stress used in metric
-  MDS is sensitive to scaling. To address this, non-metric MDS may use a
-  normalized stress, known as Stress-1 defined as
+  MDS is sensitive to scaling. To address this, non-metric MDS returns
+  normalized stress, also known as Stress-1, defined as
 
   .. math::
-      \sqrt{\frac{\sum_{i < j} (d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j} d_{ij}^2}}.
+      \sqrt{\frac{\sum_{i < j} (\hat{d}_{ij} - d_{ij}(Z))^2}{\sum_{i < j}
+      d_{ij}(Z)^2}}.
 
-  The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`,
-  however it is only compatible with the non-metric MDS problem and will be ignored
-  in the metric case.
+  Normalized Stress-1 is returned if `normalized_stress=True`.
 
   .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
     :target: ../auto_examples/manifold/plot_mds.html
     :align: center
     :scale: 60
 
+Classical MDS, also known as
+*principal coordinates analysis (PCoA)* or *Torgerson's scaling*, is implemented
+in the separate :class:`ClassicalMDS` class. Classical MDS replaces the stress
+loss function with a different loss function called *strain*, which has an
+exact solution in terms of eigendecomposition of the double-centered matrix
+of squared dissimilarities. If the dissimilarity matrix consists of the pairwise
+Euclidean distances between some vectors, then classical MDS is equivalent
+to PCA applied to this set of vectors.
+
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_012.png
+   :target: ../auto_examples/manifold/plot_lle_digits.html
+   :align: center
+   :scale: 50
+
+
+Formally, the loss function of classical MDS (strain) is given by
+
+.. math::
+    \sqrt{\frac{\sum_{i,j} (b_{ij} - z_i^\top z_j)^2}{\sum_{i,j}
+    b_{ij}^2}},
+
+where :math:`z_i` are embedding vectors and :math:`b_{ij}` are the elements
+of the double-centered matrix of squared dissimilarities: :math:`B = -C\Delta C/2`
+with :math:`\Delta` being the matrix of squared input dissimilarities
+:math:`\delta^2_{ij}` and :math:`C=I-J/n` is the centering matrix
+(identity matrix minus a matrix of all ones divided by :math:`n`).
+This can be minimized exactly using the eigendecomposition of :math:`B`.
+
+
 .. rubric:: References
+
+* `"More on Multidimensional Scaling and Unfolding in R: smacof Version 2"
+  <https://www.jstatsoft.org/article/view/v102i10>`_
+  Mair P, Groenen P., de Leeuw J. Journal of Statistical Software (2022)
 
 * `"Modern Multidimensional Scaling - Theory and Applications"
   <https://www.springer.com/fr/book/9780387251509>`_
@@ -536,7 +585,7 @@ The disadvantages to using t-SNE are roughly:
   initializing points with PCA (using `init='pca'`).
 
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_013.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_015.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -609,13 +658,13 @@ The disadvantages to using t-SNE are roughly:
     parameterized with the angle parameter, therefore the angle parameter is
     unused when method="exact"
   * Barnes-Hut is significantly more scalable. Barnes-Hut can be used to embed
-    hundred of thousands of data points while the exact method can handle
+    hundreds of thousands of data points while the exact method can handle
     thousands of samples before becoming computationally intractable
 
   For visualization purpose (which is the main use case of t-SNE), using the
   Barnes-Hut method is strongly recommended. The exact t-SNE method is useful
-  for checking the theoretically properties of the embedding possibly in higher
-  dimensional space but limit to small datasets due to computational constraints.
+  for checking the theoretical properties of the embedding possibly in higher
+  dimensional space but limited to small datasets due to computational constraints.
 
   Also note that the digits labels roughly match the natural grouping found by
   t-SNE while the linear 2D projection of the PCA model yields a representation
@@ -677,5 +726,5 @@ Tips on practical use
 .. seealso::
 
    :ref:`random_trees_embedding` can also be useful to derive non-linear
-   representations of feature space, also it does not perform
+   representations of feature space, but it does not perform
    dimensionality reduction.

@@ -13,9 +13,9 @@ consisting of formats such as text and image.
 .. note::
 
    Feature extraction is very different from :ref:`feature_selection`:
-   the former consists in transforming arbitrary data, such as text or
+   the former consists of transforming arbitrary data, such as text or
    images, into numerical features usable for machine learning. The latter
-   is a machine learning technique applied on these features.
+   is a machine learning technique applied to these features.
 
 .. _dict_feature_extraction:
 
@@ -59,7 +59,7 @@ is a traditional numerical feature::
 :class:`DictVectorizer` accepts multiple string values for one
 feature, like, e.g., multiple categories for a movie.
 
-Assume a database classifies each movie using some categories (not mandatories)
+Assume a database classifies each movie using some categories (not mandatory)
 and its year of release.
 
     >>> movie_entry = [{'category': ['thriller', 'drama'], 'year': 2003},
@@ -158,7 +158,7 @@ feature selectors that expect non-negative inputs.
 (like Python's ``dict`` and its variants in the ``collections`` module),
 ``(feature, value)`` pairs, or strings,
 depending on the constructor parameter ``input_type``.
-Mapping are treated as lists of ``(feature, value)`` pairs,
+Mappings are treated as lists of ``(feature, value)`` pairs,
 while single strings have an implicit value of 1,
 so ``['feat1', 'feat2', 'feat3']`` is interpreted as
 ``[('feat1', 1), ('feat2', 1), ('feat3', 1)]``.
@@ -245,7 +245,7 @@ The Bag of Words representation
 -------------------------------
 
 Text Analysis is a major application field for machine learning
-algorithms. However the raw data, a sequence of symbols cannot be fed
+algorithms. However the raw data, a sequence of symbols, cannot be fed
 directly to the algorithms themselves as most of them expect numerical
 feature vectors with a fixed size rather than the raw text documents
 with variable length.
@@ -400,7 +400,7 @@ Using stop words
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
-removed to avoid them being construed as signal for prediction.  Sometimes,
+removed to avoid them being construed as informative for prediction. Sometimes,
 however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
@@ -583,7 +583,7 @@ Again please see the :ref:`reference documentation
   attribute::
 
     >>> transformer.idf_
-    array([1. ..., 2.25..., 1.84...])
+    array([1., 2.25, 1.84])
 
   As tf-idf is very often used for text features, there is also another
   class called :class:`TfidfVectorizer` that combines all the options of
@@ -608,6 +608,21 @@ Again please see the :ref:`reference documentation
   feature extractor with a classifier:
 
   * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`:
+  Feature encoding using a Tf-idf-weighted document-term sparse matrix.
+
+* :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`: Efficiency
+  comparison of the different feature extractors.
+
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+  and comparison with :class:`HashingVectorizer`.
+
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`:
+  Tuning hyperparamters of :class:`TfidfVectorizer` as part of a pipeline.
 
 
 Decoding text files
@@ -792,9 +807,9 @@ problems which are currently outside of the scope of scikit-learn.
 Vectorizing a large text corpus with the hashing trick
 ------------------------------------------------------
 
-The above vectorization scheme is simple but the fact that it holds an **in-
-memory mapping from the string tokens to the integer feature indices** (the
-``vocabulary_`` attribute) causes several **problems when dealing with large
+The above vectorization scheme is simple but the fact that it holds an
+**in-memory mapping from the string tokens to the integer feature indices**
+(the ``vocabulary_`` attribute) causes several **problems when dealing with large
 datasets**:
 
 - the larger the corpus, the larger the vocabulary will grow and hence the
@@ -813,7 +828,7 @@ datasets**:
 - it is not easily possible to split the vectorization work into concurrent sub
   tasks as the ``vocabulary_`` attribute would have to be a shared state with a
   fine grained synchronization barrier: the mapping from token string to
-  feature index is dependent on ordering of the first occurrence of each token
+  feature index is dependent on the ordering of the first occurrence of each token
   hence would have to be shared, potentially harming the concurrent workers'
   performance to the point of making them slower than the sequential variant.
 
@@ -822,7 +837,7 @@ It is possible to overcome those limitations by combining the "hashing trick"
 :class:`~sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.
 
-This combination is implementing in :class:`HashingVectorizer`,
+This combination is implemented in :class:`HashingVectorizer`,
 a transformer class that is mostly API compatible with :class:`CountVectorizer`.
 :class:`HashingVectorizer` is stateless,
 meaning that you don't have to call ``fit`` on it::
@@ -846,7 +861,7 @@ text classification tasks.
 
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
-``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
+``Perceptron``, ``SGDClassifier``) but it does for
 algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc.).
 
@@ -1041,10 +1056,12 @@ implemented as a scikit-learn transformer, so it can be used in pipelines. See::
     >>> patches.shape
     (45, 2, 2, 3)
 
+.. _connectivity_graph_image:
+
 Connectivity graph of an image
 -------------------------------
 
-Several estimators in the scikit-learn can use connectivity information between
+Several estimators in scikit-learn can use connectivity information between
 features or samples. For instance Ward clustering
 (:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
 of an image, thus forming contiguous patches:
@@ -1058,8 +1075,8 @@ For this purpose, the estimators use a 'connectivity' matrix, giving
 which samples are connected.
 
 The function :func:`img_to_graph` returns such a matrix from a 2D or 3D
-image. Similarly, :func:`grid_to_graph` build a connectivity matrix for
-images given the shape of these image.
+image. Similarly, :func:`grid_to_graph` builds a connectivity matrix for
+images given the shape of these images.
 
 These matrices can be used to impose connectivity in estimators that use
 connectivity information, such as Ward clustering

@@ -52,6 +52,90 @@ def test_graphviz_toy():
         'headlabel="False"] ;\n'
         "}"
     )
+    assert contents1 == contents2
+
+    # Test with feature_names
+    contents1 = export_graphviz(
+        clf, feature_names=["feature0", "feature1"], out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with feature_names (escaped)
+    contents1 = export_graphviz(
+        clf, feature_names=['feature"0"', 'feature"1"'], out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="feature\\"0\\" <= 0.0\\n'
+        "gini = 0.5\\nsamples = 6\\n"
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with class_names
+    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = yes"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'class = yes"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        'class = no"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with class_names (escaped)
+    contents1 = export_graphviz(clf, class_names=['"yes"', '"no"'], out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = \\"yes\\""] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'class = \\"yes\\""] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        'class = \\"no\\""] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
 
     assert contents1 == contents2
 
@@ -288,6 +372,11 @@ def test_graphviz_errors():
     message = "Length of feature_names, 3 does not match number of features, 2"
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
+
+    # Check error when feature_names contains non-string elements
+    message = "All feature names must be strings."
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", 1])
 
     # Check error when argument is not an estimator
     message = "is not an estimator instance"

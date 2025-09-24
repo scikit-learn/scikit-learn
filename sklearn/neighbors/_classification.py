@@ -8,24 +8,28 @@ from numbers import Integral
 
 import numpy as np
 
-from sklearn.neighbors._base import _check_precomputed
-
-from ..base import ClassifierMixin, _fit_context
-from ..metrics._pairwise_distances_reduction import (
+from sklearn.base import ClassifierMixin, _fit_context
+from sklearn.metrics._pairwise_distances_reduction import (
     ArgKminClassMode,
     RadiusNeighborsClassMode,
 )
-from ..utils._param_validation import StrOptions
-from ..utils.arrayfuncs import _all_with_any_reduction_axis_1
-from ..utils.extmath import weighted_mode
-from ..utils.fixes import _mode
-from ..utils.validation import (
+from sklearn.neighbors._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _check_precomputed,
+    _get_weights,
+)
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
+from sklearn.utils.extmath import weighted_mode
+from sklearn.utils.fixes import _mode
+from sklearn.utils.validation import (
     _is_arraylike,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
 def _adjusted_metric(metric, metric_kwargs, p=None):
@@ -182,7 +186,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[0.666... 0.333...]]
+    [[0.666 0.333]]
     """
 
     _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
@@ -244,8 +248,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -281,7 +287,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             classes_ = [self.classes_]
 
         n_outputs = len(classes_)
-        n_queries = _num_samples(X)
+        n_queries = _num_samples(self._fit_X if X is None else X)
         weights = _get_weights(neigh_dist, self.weights)
         if weights is not None and _all_with_any_reduction_axis_1(weights, value=0):
             raise ValueError(
@@ -311,8 +317,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -355,7 +363,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     # on many combination of datasets.
                     # Hence, we choose to enforce it here.
                     # For more information, see:
-                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
+                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342
                     # TODO: adapt the heuristic for `strategy="auto"` for
                     # `ArgKminClassMode` and use `strategy="auto"`.
                     strategy="parallel_on_X",
@@ -375,7 +383,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-        n_queries = _num_samples(X)
+        n_queries = _num_samples(self._fit_X if X is None else X)
 
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
@@ -408,9 +416,43 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         return probabilities
 
+    # This function is defined here only to modify the parent docstring
+    # and add information about X=None
+    def score(self, X, y, sample_weight=None):
+        """
+        Return the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), or None
+            Test samples. If `None`, predictions for all indexed points are
+            used; in this case, points are not considered their own
+            neighbors. This means that `knn.fit(X, y).score(None, y)`
+            implicitly performs a leave-one-out cross-validation procedure
+            and is equivalent to `cross_val_score(knn, X, y, cv=LeaveOneOut())`
+            but typically much faster.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            True labels for `X`.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
+        """
+        return super().score(X, y, sample_weight)
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
+        tags.input_tags.pairwise = self.metric == "precomputed"
         return tags
 
 
@@ -684,8 +726,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -726,8 +770,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -737,7 +783,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             by lexicographic order.
         """
         check_is_fitted(self, "_fit_method")
-        n_queries = _num_samples(X)
+        n_queries = _num_samples(self._fit_X if X is None else X)
 
         metric, metric_kwargs = _adjusted_metric(
             metric=self.metric, metric_kwargs=self.metric_params, p=self.p
@@ -765,7 +811,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 # on many combination of datasets.
                 # Hence, we choose to enforce it here.
                 # For more information, see:
-                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471  # noqa
+                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471
             )
             return probabilities
 
@@ -837,6 +883,39 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             probabilities = probabilities[0]
 
         return probabilities
+
+    # This function is defined here only to modify the parent docstring
+    # and add information about X=None
+    def score(self, X, y, sample_weight=None):
+        """
+        Return the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), or None
+            Test samples. If `None`, predictions for all indexed points are
+            used; in this case, points are not considered their own
+            neighbors. This means that `knn.fit(X, y).score(None, y)`
+            implicitly performs a leave-one-out cross-validation procedure
+            and is equivalent to `cross_val_score(knn, X, y, cv=LeaveOneOut())`
+            but typically much faster.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            True labels for `X`.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
+        """
+        return super().score(X, y, sample_weight)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

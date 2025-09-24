@@ -69,9 +69,9 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 import inspect
 import pprint
 
-from .._config import get_config
-from ..base import BaseEstimator
-from ._missing import is_scalar_nan
+from sklearn._config import get_config
+from sklearn.base import BaseEstimator
+from sklearn.utils._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):
@@ -347,7 +347,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
     # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
-    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore
+    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore[attr-defined]
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 

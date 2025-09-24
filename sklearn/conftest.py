@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import builtins
+import faulthandler
 import platform
 import sys
 from contextlib import suppress
@@ -15,7 +16,6 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
-from sklearn import config_context, set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -37,6 +37,19 @@ from sklearn.utils.fixes import (
     sp_version,
 )
 
+try:
+    import pytest_run_parallel  # noqa:F401
+
+    PARALLEL_RUN_AVAILABLE = True
+except ImportError:
+    PARALLEL_RUN_AVAILABLE = False
+
+
+try:
+    from scipy_doctest.conftest import dt_config
+except ModuleNotFoundError:
+    dt_config = None
+
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
         f"Your version of pytest is too old. Got version {pytest.__version__}, you"
@@ -44,13 +57,6 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
-
-
-@pytest.fixture
-def enable_slep006():
-    """Enable SLEP006 for all tests."""
-    with config_context(enable_metadata_routing=True):
-        yield
 
 
 def raccoon_face_or_skip():
@@ -61,7 +67,7 @@ def raccoon_face_or_skip():
             raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
 
         try:
-            import pooch  # noqa
+            import pooch  # noqa: F401
         except ImportError:
             raise SkipTest("test requires pooch to be installed")
 
@@ -187,14 +193,14 @@ def pytest_collection_modifyitems(config, items):
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "
-                    "https://github.com/scikit-learn/scikit-learn/issues/17797"  # noqa
+                    "https://github.com/scikit-learn/scikit-learn/issues/17797"
                 )
             )
             item.add_marker(marker)
 
     skip_doctests = False
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         skip_doctests = True
         reason = "matplotlib is required to run the doctests"
@@ -239,7 +245,7 @@ def pytest_collection_modifyitems(config, items):
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         pillow_installed = True
     except ImportError:
@@ -319,6 +325,11 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("global_random_seed", random_seeds)
 
 
+def pytest_addoption(parser, pluginmanager):
+    if not PARALLEL_RUN_AVAILABLE:
+        parser.addini("thread_unsafe_fixtures", "list of stuff")
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -343,6 +354,30 @@ def pytest_configure(config):
         for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
 
+    faulthandler_timeout = int(environ.get("SKLEARN_FAULTHANDLER_TIMEOUT", "0"))
+    if faulthandler_timeout > 0:
+        faulthandler.enable()
+        faulthandler.dump_traceback_later(faulthandler_timeout, exit=True)
+
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line(
+            "markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line(
+            "markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+
 
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
@@ -357,9 +392,7 @@ def hide_available_pandas(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", mocked_import)
 
 
-@pytest.fixture
-def print_changed_only_false():
-    """Set `print_changed_only` to False for the duration of the test."""
-    set_config(print_changed_only=False)
-    yield
-    set_config(print_changed_only=True)  # reset to default
+if dt_config is not None:
+    # Strict mode to differentiate between 3.14 and np.float64(3.14)
+    dt_config.strict_check = True
+    # dt_config.rtol = 0.01

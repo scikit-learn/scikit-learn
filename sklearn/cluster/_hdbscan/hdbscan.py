@@ -6,13 +6,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Steve Astels <sastels@gmail.com>
-#          John Healy <jchealy@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
-
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
@@ -45,25 +38,29 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin, _fit_context
-from ...metrics import pairwise_distances
-from ...metrics._dist_metrics import DistanceMetric
-from ...metrics.pairwise import _VALID_METRICS
-from ...neighbors import BallTree, KDTree, NearestNeighbors
-from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import (
-    _allclose_dense_sparse,
-    _assert_all_finite,
-    validate_data,
-)
-from ._linkage import (
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._hdbscan._linkage import (
     MST_edge_dtype,
     make_single_linkage,
     mst_from_data_matrix,
     mst_from_mutual_reachability,
 )
-from ._reachability import mutual_reachability_graph
-from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
+from sklearn.cluster._hdbscan._reachability import mutual_reachability_graph
+from sklearn.cluster._hdbscan._tree import (
+    HIERARCHY_dtype,
+    labelling_at_cut,
+    tree_to_labels,
+)
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 
 FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
@@ -134,7 +131,7 @@ def _brute_mst(mutual_reachability, min_samples):
     if n_components > 1:
         raise ValueError(
             f"Sparse mutual reachability matrix has {n_components} connected"
-            " components. HDBSCAN cannot be perfomed on a disconnected graph. Ensure"
+            " components. HDBSCAN cannot be performed on a disconnected graph. Ensure"
             " that the sparse distance matrix has only one connected component."
         )
 
@@ -434,10 +431,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
 
-    For an example of how to use HDBSCAN, as well as a comparison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the :ref:`plotting demo
-    <sphx_glr_auto_examples_cluster_plot_hdbscan.py>`.
-
     .. versionadded:: 1.3
 
     Parameters
@@ -492,14 +485,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
 
-        .. deprecated:: 1.4
-           The `'kdtree'` option was deprecated in version 1.4,
-           and will be renamed to `'kd_tree'` in 1.6.
-
-        .. deprecated:: 1.4
-           The `'balltree'` option was deprecated in version 1.4,
-           and will be renamed to `'ball_tree'` in 1.6.
-
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
         a KDTree or a BallTree are used as core-distance algorithms. A large
@@ -548,6 +533,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         made, guaranteeing that the original data will be unchanged.
         Currently, it only applies when `metric="precomputed"`, when passing
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
+
+        .. versionchanged:: 1.10
+            The default value for `copy` will change from `False` to `True`
+            in version 1.10.
 
     Attributes
     ----------
@@ -628,21 +617,24 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     .. [4] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and
        Sander, J. Density-Based Clustering Validation.
-       <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
+       <https://epubs.siam.org/doi/pdf/10.1137/1.9781611973440.96>`_
 
     .. [5] :arxiv:`Malzer, C., & Baum, M. "A Hybrid Approach To Hierarchical
        Density-based Cluster Selection."<1911.02282>`.
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20)
+    >>> hdb = HDBSCAN(copy=True, min_cluster_size=20)
     >>> hdb.fit(X)
-    HDBSCAN(min_cluster_size=20)
-    >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1])
+    HDBSCAN(copy=True, min_cluster_size=20)
+    >>> hdb.labels_.shape == (X.shape[0],)
+    True
+    >>> np.unique(hdb.labels_).tolist()
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7]
     """
 
     _parameter_constraints = {
@@ -661,19 +653,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-        # TODO(1.6): Remove "kdtree" and "balltree"  option
-        "algorithm": [
-            StrOptions(
-                {"auto", "brute", "kd_tree", "ball_tree", "kdtree", "balltree"},
-                deprecated={"kdtree", "balltree"},
-            ),
-        ],
+        "algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean"],
+        "copy": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 
     def __init__(
@@ -691,7 +677,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        copy=False,
+        copy="warn",
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -730,6 +716,18 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        # TODO(1.10): remove "warn" option
+        # and leave copy to its default value where applicable in examples and doctests.
+        if self.copy == "warn":
+            warn(
+                "The default value of `copy` will change from False to True in 1.10."
+                " Explicitly set a value for `copy` to silence this warning.",
+                FutureWarning,
+            )
+            _copy = False
+        else:
+            _copy = self.copy
+
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
@@ -806,30 +804,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f" samples in X ({X.shape[0]})"
             )
 
-        # TODO(1.6): Remove
-        if self.algorithm == "kdtree":
-            warn(
-                (
-                    "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-                    " to'kd_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='kd_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "kd_tree"
-
-        # TODO(1.6): Remove
-        if self.algorithm == "balltree":
-            warn(
-                (
-                    "`algorithm='balltree'`has been deprecated in 1.4 and will be"
-                    " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='ball_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "ball_tree"
-
         mst_func = None
         kwargs = dict(
             X=X,
@@ -862,7 +836,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = _copy
             elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -875,7 +849,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = self.copy
+                kwargs["copy"] = _copy
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
@@ -1041,5 +1015,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.input_tags.allow_nan = self.metric != "precomputed"
         return tags
