@@ -1,6 +1,6 @@
-- :class:`~sklearn.compose.ColumnTransformer` now raises a clear error
-  when input :class:`pandas.DataFrame` objects have integer column names.
-  Integer names are ambiguous, as they can be interpreted both as
-  column positions and as column labels. Users should cast column names
-  to strings, e.g. ``df.columns = df.columns.astype(str)``.
-  (:issue:`30983` by :user:`Tunahanyrd`)
+- Using pandas DataFrames with integer column names in
+  :class:`~sklearn.compose.ColumnTransformer` now issues a
+  :class:`FutureWarning`. Integer column names are ambiguous because
+  scikit-learn interprets integers as column positions. Please cast
+  column names to strings (e.g. ``df.columns = df.columns.astype(str)``).
+  In a future release, this will raise an error.
