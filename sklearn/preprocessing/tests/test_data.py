@@ -2875,7 +2875,7 @@ def test_transformer_features_names_no_warnings(TransformerClass):
             transformer=transformer.set_output(transform="pandas"),
         )
         pipeline.fit(X_train, y_train)
-        y_test_pred = pipeline.predict(X_test)
+        pipeline.predict(X_test)
 
     assert isinstance(X_test, pd.DataFrame), (
         "X is not a pandas DataFrame"
