@@ -11,7 +11,7 @@ def _features_html(features):
             <summary>{total_features} features
             </summary>
             <div class="features-container">
-              <table>
+              <table = "features-table">
                 <tbody>
                   {rows}
                 </tbody>

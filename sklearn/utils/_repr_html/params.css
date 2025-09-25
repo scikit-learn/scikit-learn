@@ -129,7 +129,6 @@ a.param-doc-link::before {
 }
 
 #$id .features {
-    /* all: unset; */
     font-family: monospace;
     font-size: smaller;
     cursor: pointer;
@@ -147,7 +146,8 @@ a.param-doc-link::before {
     border-radius: 0 0 .5em .5em;
 }
 
-#$id .features-container table {
+
+#$id .features-table table {
     width: 95%;
 }
 
@@ -160,6 +160,7 @@ a.param-doc-link::before {
 
 #$id .features td {
   text-align: left;
+  font-size: smaller;
   padding: 0;
   white-space: nowrap;
   color: var(--sklearn-color-text);
