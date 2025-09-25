@@ -1,10 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import re
 import warnings
 
-import inspect
 import numpy as np
 import numpy.linalg as la
 import pytest
