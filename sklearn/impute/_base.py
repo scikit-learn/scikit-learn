@@ -408,7 +408,7 @@ class SimpleImputer(_BaseImputer):
                     "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
-                fill_value_dtype = self.statistics_.dtype
+                fill_value_dtype = self._fill_dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
                     f"cannot be cast to the input data that is {X.dtype!r}. "
@@ -456,6 +456,8 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
+        self._fill_dtype = X.dtype
+
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(
                 X, self.strategy, self.missing_values, fill_value
@@ -477,7 +479,7 @@ class SimpleImputer(_BaseImputer):
 
         if strategy == "constant":
             # for constant strategy, self.statistics_ is used to store
-            # fill_value in each column
+            # fill_value in each column, or np.nan for columns to drop
             statistics.fill(fill_value)
 
             if not self.keep_empty_features:
@@ -573,8 +575,8 @@ class SimpleImputer(_BaseImputer):
         # Constant
         elif strategy == "constant":
             # for constant strategy, self.statistcs_ is used to store
-            # fill_value in each column
-            statistics = np.full(X.shape[1], fill_value, dtype=X.dtype)
+            # fill_value in each column, or np.nan for columns to drop
+            statistics = np.full(X.shape[1], fill_value, dtype=np.object_)
 
             if not self.keep_empty_features:
                 for i in range(masked_X.shape[1]):
@@ -620,13 +622,15 @@ class SimpleImputer(_BaseImputer):
 
         # Decide whether to keep missing features
         if self.keep_empty_features:
-            valid_statistics = statistics
+            valid_statistics = statistics.astype(self._fill_dtype, copy=False)
             valid_statistics_indexes = None
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
             valid_mask = np.logical_not(invalid_mask)
-            valid_statistics = statistics[valid_mask]
+            valid_statistics = statistics[valid_mask].astype(
+                self._fill_dtype, copy=False
+            )
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
@@ -660,7 +664,7 @@ class SimpleImputer(_BaseImputer):
                     np.arange(len(X.indptr) - 1, dtype=int), np.diff(X.indptr)
                 )[mask]
 
-                X.data[mask] = valid_statistics[indexes].astype(X.dtype, copy=False)
+                X.data[mask] = valid_statistics[indexes]
         else:
             # use mask computed before eliminating invalid mask
             if valid_statistics_indexes is None:
