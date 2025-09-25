@@ -2851,8 +2851,9 @@ def test_transformer_features_names_no_warnings(TransformerClass):
         warnings.filterwarnings(
             "ignore",
             message = (
-                "The provided functions or transformer are not strictly inverse of each other. "
-                "If you are sure you want to proceed regardless, set 'check_inverse=False'"
+                "The provided functions or transformer are not strictly"
+                " inverse of each other. If you are sure you want to proceed"
+                " regardless, set 'check_inverse=False'"
             ),
             category=UserWarning,
             )
