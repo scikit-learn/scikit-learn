@@ -12,7 +12,7 @@ import pytest
 from scipy.sparse import issparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -2749,10 +2749,19 @@ def test_learning_curve_exploit_incremental_learning_routing():
 def test_cross_val_predict_array_api_compliance(
     estimator, cv, namespace, device_, dtype_name
 ):
+    """Test that `cross_val_predict` functions correctly with the array API
+    with both a classifier and a regressor."""
+
     xp = _array_api_for_tests(namespace, device_)
-    X, y = make_classification(
-        n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
-    )
+    if is_classifier(estimator):
+        X, y = make_classification(
+            n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
+        )
+    else:
+        X, y = make_regression(
+            n_samples=1000, n_features=5, n_informative=3, random_state=42
+        )
+
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device_)
