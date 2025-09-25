@@ -138,12 +138,14 @@ a.param-doc-link::before {
 }
 
 #$id .features-container {
-    max-width: 30em;
+    max-width: 15em;
     max-height: 10em;
     overflow: auto;
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
     border-radius: 0 0 .5em .5em;
+    display: flex;
+    justify-content: space-between;
 }
 
 
@@ -178,6 +180,15 @@ a.param-doc-link::before {
   border-radius: .5em;
 }
 
+
 .features-container .copy-paste-icon {
-  float: right;
+    width: 12px;
+    height: 12px;
+    background-size: 12px 12px;
+    background-color: var(--sklearn-color-fitted-level-0);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    right: 0em;
+    z-index: 1;
 }

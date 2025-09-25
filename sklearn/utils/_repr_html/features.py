@@ -10,13 +10,12 @@ def _features_html(features):
           <details>
             <summary>{total_features} features </summary>
             <div class="features-container">
-              <i class="copy-paste-icon">
-              </i>
               <table = "features-table">
                 <tbody>
                   {rows}
                 </tbody>
               </table>
+              <i class="copy-paste-icon"></i>
             </div>
           </details>
         </div>
