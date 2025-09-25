@@ -139,7 +139,6 @@ a.param-doc-link::before {
 }
 
 #$id .features-container {
-    /*all: unset; */
     max-width: 30em;
     max-height: 10em;
     overflow: auto;
@@ -149,7 +148,6 @@ a.param-doc-link::before {
 }
 
 #$id .features summary {
-  /*all: unset; */
   position: sticky;
   top: 0;
   margin-left: .5em;
@@ -159,7 +157,6 @@ a.param-doc-link::before {
 
 
 #$id .features td {
-  /*all: unset; */
   text-align: left;
   padding: 0;
   white-space: nowrap;
