@@ -608,18 +608,22 @@ node or the right node. Hence all missing values always end up in the same node
 
 During prediction, the treatment of missing-values is the following:
 
-- By default when predicting, the samples with missing values are classified
-  with the class used in the split found during training::
+- Missing values follow the path determined for missing values at training time::
 
-    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
     >>> import numpy as np
 
     >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
-    >>> y = [0, 0, 1, 1]
+    >>> y = [0, 0, 1, 0]
 
     >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
     >>> tree.predict(X)
-    array([0, 0, 1, 1])
+    array([0, 0, 1, 0])
+
+    >>> y = [0, 0, 1, 1.4]
+    >>> tree = DecisionTreeRegressor(random_state=0, max_depth=1).fit(X, y)
+    >>> tree.predict(X)
+    array([0. , 0. , 1.2, 1.2])
 
 - If no missing values are seen during training for a given feature, then during
   prediction missing values are mapped to the child with the most samples::
