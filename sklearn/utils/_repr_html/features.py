@@ -8,9 +8,10 @@ def _features_html(features):
     FEATURES_TABLE_TEMPLATE = """
         <div class="features">
           <details>
-            <summary>{total_features} features
-            </summary>
+            <summary>{total_features} features </summary>
             <div class="features-container">
+              <i class="copy-paste-icon">
+              </i>
               <table = "features-table">
                 <tbody>
                   {rows}
@@ -30,6 +31,7 @@ def _features_html(features):
     for feature in features:
         escaped_feature = html.escape(feature)
         rows.append(FEATURES_ROW_TEMPLATE.format(feature=escaped_feature))
+
     return FEATURES_TABLE_TEMPLATE.format(
         total_features=total_features, rows="".join(rows)
     )

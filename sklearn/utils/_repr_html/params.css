@@ -177,3 +177,7 @@ a.param-doc-link::before {
   background-color: var(--sklearn-color-fitted-level-2);
   border-radius: .5em;
 }
+
+.features-container .copy-paste-icon {
+  float: right;
+}
