@@ -140,7 +140,7 @@ for ax, (name, y_pred) in zip(axes, preds.items()):
     ax.set_ylabel("y")
     ax.legend(loc="lower right")
 
-plt.suptitle("Base models predictions versus stacked predictions", y=0.95)
+plt.suptitle("Base Models Predictions versus Stacked Predictions", y=1)
 plt.tight_layout()
 plt.show()
 
@@ -189,7 +189,7 @@ for ax, (name, est) in zip(
         ax.plot([], [], " ", label=f"{name}: {score}")
     ax.legend(loc="upper left")
 
-plt.suptitle("Prediction errors of base versus stacked predictors", y=1)
+plt.suptitle("Prediction Errors of Base versus Stacked Predictors", y=1)
 plt.tight_layout()
 plt.subplots_adjust(top=0.9)
 plt.show()
@@ -206,14 +206,13 @@ stacking_regressor.fit(X, y)
 stacking_regressor.final_estimator_.coef_
 
 # %%
-# We see that in this case, the HGBT model is somewhat dominant, with the spline
+# We see that in this case, the HGBT model dominates, with the spline
 # ridge also contributing meaningfully. The plain linear model does not add
-# useful signal once those two are in place; with
+# useful signal once those two are included; with
 # :class:`~sklearn.linear_model.RidgeCV` as the `final_estimator`, it is not
-# dropped but gets a tiny negative weight that acts as a small correction to
-# counter its residual bias.
+# dropped, but receives a small negative weight to correct its residual bias.
 #
-# If we switch to :class:`~sklearn.linear_model.LassoCV` as the
+# If we use :class:`~sklearn.linear_model.LassoCV` as the
 # `final_estimator`, that small, unhelpful contribution is set exactly to zero,
 # yielding a simpler blend of the spline ridge and HGBT models.
 
