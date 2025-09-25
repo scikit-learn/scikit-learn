@@ -150,6 +150,7 @@ the corresponding solver is chosen.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
 
 Classification
 --------------
@@ -233,24 +234,23 @@ Cross-Validation.
 Lasso
 =====
 
-The :class:`Lasso` is a linear model that estimates sparse coefficients.
+The :class:`Lasso` is a linear model that estimates sparse coefficients, i.e., it is
+able to set coefficients exactly to zero.
 It is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
 features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
-Under certain conditions, it can recover the exact set of non-zero
-coefficients (see
+Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
 Mathematically, it consists of a linear model with an added regularization term.
 The objective function to minimize is:
 
-.. math::  \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
-The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha ||w||_1` added, where
-:math:`\alpha` is a constant and :math:`||w||_1` is the :math:`\ell_1`-norm of
-the coefficient vector.
+The lasso estimate thus solves the least-squares with added penalty
+:math:`\alpha ||w||_1`, where :math:`\alpha` is a constant and :math:`||w||_1` is the
+:math:`\ell_1`-norm of the coefficient vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -271,6 +271,7 @@ computes the coefficients along the full path of possible values.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
 * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -281,17 +282,87 @@ computes the coefficients along the full path of possible values.
 
 .. dropdown:: References
 
-  The following two references explain the iterations
-  used in the coordinate descent solver of scikit-learn, as well as
-  the duality gap computation used for convergence control.
+  The following references explain the origin of the Lasso as well as properties
+  of the Lasso problem and the duality gap computation used for convergence control.
 
-  * "Regularization Path For Generalized linear Models by Coordinate Descent",
-    Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-    <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
+  * :doi:`Robert Tibshirani. (1996) Regression Shrinkage and Selection Via the Lasso.
+    J. R. Stat. Soc. Ser. B Stat. Methodol., 58(1):267-288
+    <10.1111/j.2517-6161.1996.tb02080.x>`
   * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
     S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
     in IEEE Journal of Selected Topics in Signal Processing, 2007
     (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+
+.. _coordinate_descent:
+
+Coordinate Descent with Gap Safe Screening Rules
+------------------------------------------------
+
+Coordinate descent (CD) is a strategy to solve a minimization problem that considers a
+single feature :math:`j` at a time. This way, the optimization problem is reduced to a
+1-dimensional problem which is easier to solve:
+
+.. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2 ^ 2 + \alpha |w_j|}
+
+with index :math:`-j` meaning all features but :math:`j`. The solution is
+
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+
+with the soft-thresholding function
+:math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
+Note that the soft-thresholding function is exactly zero whenever
+:math:`\alpha \geq |z|`.
+The CD solver then loops over the features either in a cycle, picking one feature after
+the other in the order given by `X` (`selection="cyclic"`), or by randomly picking
+features (`selection="random"`).
+It stops if the duality gap is smaller than the provided tolerance `tol`.
+
+.. dropdown:: Mathematical details
+
+  The duality gap :math:`G(w, v)` is an upper bound of the difference between the
+  current primal objective function of the Lasso, :math:`P(w)`, and its minimum
+  :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
+  :math:`G(w, v) = P(w) - D(v)` with dual objective function
+
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
+
+  subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
+  called strong duality).
+  With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
+  dual scaling
+
+  .. math::
+    c = \begin{cases}
+      1, & ||X^Tr||_{\infty} \leq n_{\text{samples}}\alpha, \\
+      \frac{n_{\text{samples}}\alpha}{||X^Tr||_{\infty}}, & \text{otherwise}
+    \end{cases}
+
+  the stopping criterion is
+
+  .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} < G(w, cr)\,.
+
+A clever method to speedup the coordinate descent algorithm is to screen features such
+that at optimum :math:`w_j = 0`. Gap safe screening rules are such a
+tool. Anywhere during the optimization algorithm, they can tell which feature we can
+safely exclude, i.e., set to zero with certainty.
+
+.. dropdown:: References
+
+  The first reference explains the coordinate descent solver used in scikit-learn, the
+  others treat gap safe screening rules.
+
+  * :doi:`Friedman, Hastie & Tibshirani. (2010).
+    Regularization Path For Generalized linear Models by Coordinate Descent.
+    J Stat Softw 33(1), 1-22 <10.18637/jss.v033.i01>`
+  * :arxiv:`O. Fercoq, A. Gramfort, J. Salmon. (2015).
+    Mind the duality gap: safer rules for the Lasso.
+    Proceedings of Machine Learning Research 37:333-342, 2015.
+    <1505.03410>`
+  * :arxiv:`E. Ndiaye, O. Fercoq, A. Gramfort, J. Salmon. (2017).
+    Gap Safe Screening Rules for Sparsity Enforcing Penalties.
+    Journal of Machine Learning Research 18(128):1-33, 2017.
+    <1611.05780>`
 
 Setting regularization parameter
 --------------------------------
@@ -696,7 +767,7 @@ previously chosen dictionary elements.
 
   * `Matching pursuits with time-frequency dictionaries
     <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+    S. G. Mallat, Z. Zhang, 1993.
 
 .. _bayesian_regression:
 
@@ -737,11 +808,14 @@ The disadvantages of Bayesian regression include:
 
 .. dropdown:: References
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+  * A good introduction to Bayesian methods is given in `C. Bishop: Pattern
+    Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`__.
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+  * Original Algorithm is detailed in the book `Bayesian learning for neural
+    networks
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=db869fa192a3222ae4f2d766674a378e47013b1b>`__
+    by Radford M. Neal.
 
 .. _bayesian_ridge_regression:
 
@@ -1335,10 +1409,10 @@ You can refer to the dedicated :ref:`sgd` documentation section for more details
 .. _perceptron:
 
 Perceptron
-==========
+----------
 
 The :class:`Perceptron` is another simple classification algorithm suitable for
-large scale learning. By default:
+large scale learning and derives from SGD. By default:
 
 - It does not require a learning rate.
 
@@ -1358,18 +1432,19 @@ for more details.
 .. _passive_aggressive:
 
 Passive Aggressive Algorithms
-=============================
+-----------------------------
 
-The passive-aggressive algorithms are a family of algorithms for large-scale
-learning. They are similar to the Perceptron in that they do not require a
-learning rate. However, contrary to the Perceptron, they include a
-regularization parameter ``C``.
+The passive-aggressive (PA) algorithms are another family of 2 algorithms (PA-I and
+PA-II) for large-scale online learning that derive from SGD. They are similar to the
+Perceptron in that they do not require a learning rate. However, contrary to the
+Perceptron, they include a regularization parameter ``eta0`` (:math:`C` in the
+reference paper).
 
-For classification, :class:`PassiveAggressiveClassifier` can be used with
-``loss='hinge'`` (PA-I) or ``loss='squared_hinge'`` (PA-II).  For regression,
-:class:`PassiveAggressiveRegressor` can be used with
-``loss='epsilon_insensitive'`` (PA-I) or
-``loss='squared_epsilon_insensitive'`` (PA-II).
+For classification,
+:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0)` can
+be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
+:class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
+eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
