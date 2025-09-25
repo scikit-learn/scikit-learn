@@ -2835,17 +2835,21 @@ def test_power_transformer_no_warnings():
 
 
 transformers_with_inverse = list(
-    {cls
-     for cls in globals().values()
-     if inspect.isclass(cls) and hasattr(cls, "inverse_transform")}
+    {
+        cls
+        for cls in globals().values()
+        if inspect.isclass(cls) and hasattr(cls, "inverse_transform")
+    }
 )
 special_init_params = {
-    KBinsDiscretizer: dict(encode='onehot-dense', strategy='uniform', subsample =None),
+    KBinsDiscretizer: dict(encode="onehot-dense", strategy="uniform", subsample=None),
     OneHotEncoder: dict(sparse_output=False),
     FunctionTransformer: dict(
         func=lambda X: pytest.importorskip("pandas").DataFrame(X)
     ),
 }
+
+
 @pytest.mark.parametrize("TransformerClass", transformers_with_inverse)
 def test_transformer_features_names_no_warnings(TransformerClass):
     """Check that transformers do not raise any warnings on feature names"""
