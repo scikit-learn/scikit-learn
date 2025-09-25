@@ -118,16 +118,16 @@ for i in range(cv.n_splits):
 # Using `permutation_importance` to select features
 # -------------------------------------------------
 # Under the hood, `RFECV` uses importance scores derived from the coefficients of the
-# linear model we used to choose which feature to eliminate. We show here how to use
+# linear model we used, to choose which feature to eliminate. We show here how to use
 # `permutation_importance` as an alternative way to measure the importance of features.
-# For that, we need to feed the `importance_getter` parameter of RFECV a callable
-# that accepts a fitted model and an array containing the indices of the features that
-# have not been eliminated yet.
+# For that, we use a callable in the `importance_getter` parameter of RFECV.
+# This callable accepts a fitted model and an array containing the indices of the
+# features that have not been eliminated yet.
 
 # %%
 from sklearn.inspection import permutation_importance
 
-# Permutation importance need test data to produce reliable importance measures.
+# Permutation importance needs test data to produce reliable importance measures.
 X_test, y_test = make_classification(
     n_samples=500,
     n_features=n_features,
@@ -141,8 +141,8 @@ X_test, y_test = make_classification(
 )
 
 
-# Use `feature_indices` to extract the features that have not been eliminated yet from
-# test set.
+# Use `feature_indices` to extract from the test set the features that have not been
+# eliminated yet.
 def permutation_importance_getter(model, feature_indices, X_test, y_test, random_state):
     return permutation_importance(
         model,
