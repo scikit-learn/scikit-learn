@@ -21,7 +21,7 @@ requests, or AI generated comments, reviews, issues, or pull requests, where the
 user does not show a good understanding of what they are posting, might be banned
 from the organisation. Some examples of poor etiquette are:
 
-- Opening a PR for issues where they are not triaged yet and the "triage" label is not
+- Opening a PR for issues which are not yet triaged and the "triage" label is not
   removed;
 - Claiming to work on many issues at the same time;
 - Claiming issues or opening pull requests where another person has already
