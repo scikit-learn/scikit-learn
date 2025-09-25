@@ -758,8 +758,8 @@ def test_results_per_cv_in_rfecv(global_random_seed):
 
 def test_rfe_with_permutation_importance(global_random_seed):
     """
-    Ensure that using permutation_importance as a importance_getter returns the right
-    amount of features.
+    Ensure that using permutation_importance as a importance_getter returns the amount
+    features set with `n_features_to_select`.
     """
     X, y = make_friedman1(n_samples=100, n_features=7, random_state=global_random_seed)
 
@@ -789,3 +789,40 @@ def test_rfe_with_permutation_importance(global_random_seed):
     ).fit(X_train, y_train)
 
     assert rfe.n_features_ == 5
+
+
+def test_rfecv_with_permutation_importance(global_random_seed):
+    """
+    Ensure that using permutation_importance as a importance_getter in `RFECV` returns
+    exactly the five informative features of `make_friedman1`.
+    """
+    X, y = make_friedman1(
+        n_samples=1_000, n_features=7, random_state=global_random_seed
+    )
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.5, random_state=global_random_seed
+    )
+
+    reg = RandomForestRegressor(random_state=global_random_seed, n_estimators=15)
+
+    def permutation_importance_getter(
+        model, feature_indices, X_test, y_test, global_random_seed
+    ):
+        return permutation_importance(
+            model,
+            X_test[:, feature_indices],
+            y_test,
+            n_repeats=2,
+            random_state=global_random_seed,
+        ).importances_mean
+
+    rfe = RFECV(
+        estimator=reg,
+        importance_getter=lambda model, feature_indices: permutation_importance_getter(
+            model, feature_indices, X_test, y_test, global_random_seed
+        ),
+    ).fit(X_train, y_train)
+
+    assert rfe.n_features_ == 5
+    assert_array_equal(rfe.support_, np.array(([True] * 5) + ([False] * 2)))
