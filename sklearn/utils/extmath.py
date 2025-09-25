@@ -520,11 +520,12 @@ def randomized_svd(
       <0909.4061>`
       Halko, et al. (2009)
 
-    .. [2] A randomized algorithm for the decomposition of matrices
-      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+    .. [2] `"A randomized algorithm for the decomposition of matrices"
+      <https://doi.org/10.1016/j.acha.2010.02.003>`_
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert (2011)
 
-    .. [3] An implementation of a randomized algorithm for principal component
-      analysis A. Szlam et al. 2014
+    .. [3] :arxiv:`"An implementation of a randomized algorithm for principal
+      component analysis" <1412.3510>` A. Szlam et al. (2014)
 
     Examples
     --------

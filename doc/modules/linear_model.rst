@@ -298,7 +298,7 @@ computes the coefficients along the full path of possible values.
 Coordinate Descent with Gap Safe Screening Rules
 ------------------------------------------------
 
-Coordinate descent (CD) is a strategy so solve a minimization problem that considers a
+Coordinate descent (CD) is a strategy to solve a minimization problem that considers a
 single feature :math:`j` at a time. This way, the optimization problem is reduced to a
 1-dimensional problem which is easier to solve:
 

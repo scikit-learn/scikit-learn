@@ -940,10 +940,10 @@ Class APIs and Estimator Types
         :class:`ensemble.BaggingClassifier`.
 
         In a meta-estimator's :term:`fit` method, any contained estimators
-        should be :term:`cloned` before they are fit. 
-        
+        should be :term:`cloned` before they are fit.
+
         .. FIXME: Pipeline and FeatureUnion do not do this currently
-        
+
         An exception to this is
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
@@ -1341,7 +1341,7 @@ Methods
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
         elements one would get if iterating through the return value of
-        :term:`split` given the same parameters.  Takes the same parameters as
+        :term:`split` given the same parameters. Takes the same parameters as
         split.
 
     ``get_params``
@@ -1864,7 +1864,7 @@ See concept :term:`sample property`.
         .. FIXME: Is this interpretation always the case in practice? We have no common tests.
 
         Some estimators, such as decision trees, support negative weights.
-        
+
         .. FIXME: This feature or its absence may not be tested or documented in many estimators.
 
         This is not entirely the case where other parameters of the model

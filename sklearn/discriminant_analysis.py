@@ -51,7 +51,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         covariance estimator (with potential shrinkage).
         The object should have a fit method and a ``covariance_`` attribute
         like the estimators in :mod:`sklearn.covariance``.
-        if None the shrinkage parameter drives the estimate.
+        If None the shrinkage parameter drives the estimate.
 
         .. versionadded:: 0.24
 
@@ -460,7 +460,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
@@ -576,7 +576,7 @@ class LinearDiscriminantAnalysis(
         else:
             svd = scipy.linalg.svd
 
-        n_samples, n_features = X.shape
+        n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
         self.means_ = _class_means(X, y)
@@ -601,7 +601,7 @@ class LinearDiscriminantAnalysis(
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, Vt = svd(X, full_matrices=False)
+        _, S, Vt = svd(X, full_matrices=False)
 
         rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
@@ -661,7 +661,7 @@ class LinearDiscriminantAnalysis(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
-        n_samples, _ = X.shape
+        n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
 
         if n_samples == n_classes:
@@ -684,7 +684,7 @@ class LinearDiscriminantAnalysis(
 
         # Maximum number of components no matter what n_components is
         # specified:
-        max_components = min(n_classes - 1, X.shape[1])
+        max_components = min(n_classes - 1, n_features)
 
         if self.n_components is None:
             self._max_components = max_components
@@ -749,7 +749,6 @@ class LinearDiscriminantAnalysis(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
-        xp, _ = get_namespace(X)
         X = validate_data(self, X, reset=False)
 
         if self.solver == "svd":
@@ -773,7 +772,7 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
-        xp, is_array_api_compliant = get_namespace(X)
+        xp, _ = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
             proba = _expit(decision, xp)

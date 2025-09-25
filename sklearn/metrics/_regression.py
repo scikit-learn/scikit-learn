@@ -26,7 +26,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._array_api import _xlogy as xlogy
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
@@ -921,8 +921,8 @@ def median_absolute_error(
     if sample_weight is None:
         output_errors = _median(xp.abs(y_pred - y_true), axis=0)
     else:
-        output_errors = _averaged_weighted_percentile(
-            xp.abs(y_pred - y_true), sample_weight=sample_weight
+        output_errors = _weighted_percentile(
+            xp.abs(y_pred - y_true), sample_weight=sample_weight, average=True
         )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -1750,6 +1750,14 @@ def d2_pinball_score(
     This metric is not well-defined for a single point and will return a NaN
     value if n_samples is less than two.
 
+    This metric is not a built-in :ref:`string name scorer
+    <scoring_string_names>` to use along with tools such as
+    :class:`~sklearn.model_selection.GridSearchCV` or
+    :class:`~sklearn.model_selection.RandomizedSearchCV`.
+    Instead, you can :ref:`create a scorer object <scoring_adapt_metric>` using
+    :func:`~sklearn.metrics.make_scorer`, with any desired parameter settings.
+    See the `Examples` section for details.
+
      References
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
@@ -1772,6 +1780,24 @@ def d2_pinball_score(
     -1.045...
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
+
+    Creating a scorer object with :func:`~sklearn.metrics.make_scorer`:
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import make_scorer
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.linear_model import QuantileRegressor
+    >>> X = np.array([[1], [2], [3], [4]])
+    >>> y = np.array([2.5, 0.0, 2, 8])
+    >>> pinball_95_scorer = make_scorer(d2_pinball_score, alpha=0.95)
+    >>> grid = GridSearchCV(
+    ...     QuantileRegressor(quantile=0.95),
+    ...     param_grid={"fit_intercept": [True, False]},
+    ...     scoring=pinball_95_scorer,
+    ...     cv=2,
+    ... ).fit(X, y)
+    >>> grid.best_params_
+    {'fit_intercept': True}
     """
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
         y_true, y_pred, sample_weight, multioutput
