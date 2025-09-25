@@ -601,10 +601,12 @@ The criterion supported when there are missing values are
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
 handle missing-values in the data.
 
-For each potential threshold on the non-missing data, the splitter will evaluate
-the split with all the missing values going to the left node or the right node.
+During training, for each potential threshold on the non-missing data,
+the splitter will evaluate the split with all the missing values going to the left
+node or the right node. Hence all missing values always end up in the same node
+(sometimes with only missing values).
 
-Decisions are made as follows:
+During prediction, the treatment of missing-values is the following:
 
 - By default when predicting, the samples with missing values are classified
   with the class used in the split found during training::
@@ -618,23 +620,6 @@ Decisions are made as follows:
     >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
     >>> tree.predict(X)
     array([0, 0, 1, 1])
-
-- If the criterion evaluation is the same for both nodes,
-  then the tie for missing value at predict time is broken by going to the
-  right node. The splitter also checks the split where all the missing
-  values go to one child and non-missing values go to the other::
-
-    >>> from sklearn.tree import DecisionTreeClassifier
-    >>> import numpy as np
-
-    >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
-    >>> y = [0, 0, 1, 1]
-
-    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
-
-    >>> X_test = np.array([np.nan]).reshape(-1, 1)
-    >>> tree.predict(X_test)
-    array([1])
 
 - If no missing values are seen during training for a given feature, then during
   prediction missing values are mapped to the child with the most samples::
