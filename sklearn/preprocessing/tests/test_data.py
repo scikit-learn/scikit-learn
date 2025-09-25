@@ -2834,12 +2834,13 @@ def test_power_transformer_no_warnings():
     _test_no_warnings(x[:5].reshape(-1, 1))
 
 
-transformers_with_inverse = list(
+transformers_with_inverse = sorted(
     {
         cls
         for cls in globals().values()
         if inspect.isclass(cls) and hasattr(cls, "inverse_transform")
-    }
+    },
+    key=lambda c: c.__name__,
 )
 special_init_params = {
     KBinsDiscretizer: dict(encode="onehot-dense", strategy="uniform", subsample=None),
