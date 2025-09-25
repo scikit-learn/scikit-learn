@@ -2831,11 +2831,30 @@ def test_power_transformer_no_warnings():
     _test_no_warnings(x[:5].reshape(-1, 1))
 
 
-def test_power_transformer_features_names_no_warnings():
-    """Check that PowerTransformer does not raise any warnings on feature names"""
+transformers_with_inverse = list({cls for cls in globals().values() if inspect.isclass(cls) and hasattr(cls, "inverse_transform")})
+special_init_params = {
+    KBinsDiscretizer: dict(encode='onehot-dense', strategy='uniform', subsample =None),
+    OneHotEncoder: dict(sparse_output=False),
+    FunctionTransformer: dict(func=lambda X: pytest.importorskip("pandas").DataFrame(X)),
+}
+@pytest.mark.parametrize("TransformerClass", transformers_with_inverse)
+def test_transformer_features_names_no_warnings(TransformerClass):
+    """Check that transformers do not raise any warnings on feature names"""
     pd = pytest.importorskip("pandas")
+    params = special_init_params.get(TransformerClass, {})
+    transformer = TransformerClass(**params)
+    if not hasattr(transformer, "set_output"):
+        pytest.skip(f"{TransformerClass.__name__} does not support set_output")
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.simplefilter("always")
+        warnings.filterwarnings(
+            "ignore",
+            message = (
+                "The provided functions or transformer are not strictly inverse of each other. "
+                "If you are sure you want to proceed regardless, set 'check_inverse=False'"
+            ),
+            category=UserWarning,
+            )
 
         X, y = datasets.load_iris(return_X_y=True, as_frame=True)
         X_train, X_test, y_train, y_test = train_test_split(
@@ -2843,32 +2862,7 @@ def test_power_transformer_features_names_no_warnings():
         )
         pipeline = TransformedTargetRegressor(
             regressor=LinearRegression(),
-            transformer=PowerTransformer().set_output(transform="pandas"),
-        )
-        pipeline.fit(X_train, y_train)
-        y_test_pred = pipeline.predict(X_test)
-
-    assert isinstance(X_test, pd.DataFrame), (
-        "X is not a pandas DataFrame"
-    )  # required only for linting
-    assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
-        str(w.message) for w in caught_warnings
-    )
-
-
-def test_quantile_transformer_features_names_no_warnings():
-    """Check that QuantileTransformer does not raise any warnings on feature names"""
-    pd = pytest.importorskip("pandas")
-    with warnings.catch_warnings(record=True) as caught_warnings:
-        warnings.simplefilter("always")
-
-        X, y = datasets.load_iris(return_X_y=True, as_frame=True)
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.25, random_state=42
-        )
-        pipeline = TransformedTargetRegressor(
-            regressor=LinearRegression(),
-            transformer=QuantileTransformer().set_output(transform="pandas"),
+            transformer=transformer.set_output(transform="pandas"),
         )
         pipeline.fit(X_train, y_train)
         y_test_pred = pipeline.predict(X_test)
