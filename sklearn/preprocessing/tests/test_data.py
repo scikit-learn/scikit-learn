@@ -2847,6 +2847,7 @@ transformers_with_inverse = sorted(
     key=lambda c: c.__name__,
 )
 special_init_params = {
+    QuantileTransformer: dict(n_quantiles=100),
     KBinsDiscretizer: dict(encode="onehot-dense", strategy="uniform", subsample=None),
     OneHotEncoder: dict(sparse_output=False),
     FunctionTransformer: dict(
