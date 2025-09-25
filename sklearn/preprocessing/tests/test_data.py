@@ -1,9 +1,9 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import re
 import warnings
-import inspect
 
 import numpy as np
 import numpy.linalg as la
@@ -21,17 +21,17 @@ from sklearn.model_selection import cross_val_predict, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     Binarizer,
+    KBinsDiscretizer,
+    FunctionTransformer,
     KernelCenterer,
     MaxAbsScaler,
     MinMaxScaler,
     Normalizer,
+    OneHotEncoder,
     PowerTransformer,
     QuantileTransformer,
     RobustScaler,
     StandardScaler,
-    KBinsDiscretizer,
-    OneHotEncoder,
-    FunctionTransformer,
     add_dummy_feature,
     maxabs_scale,
     minmax_scale,
