@@ -379,7 +379,8 @@ cdef inline int node_split_best(
             # All values for this feature are missing, or
             end_non_missing == start or
             # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-            feature_values[end_non_missing - 1] <= feature_values[start] + FEATURE_THRESHOLD
+            (feature_values[end_non_missing - 1] <= feature_values[start] + FEATURE_THRESHOLD and 
+             end_non_missing == end)
         ):
             # We consider this feature constant in this case.
             # Since finding a split among constant feature is not valuable,
