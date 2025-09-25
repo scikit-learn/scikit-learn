@@ -825,7 +825,7 @@ def test_early_stopping_stratified():
         ValueError,
         match=(
             r"The least populated classes in y have only 1 member.*Classes with "
-            r"too few members are: \[1.0\]"
+            r"too few members are: \['True'\]"
         ),
     ):
         mlp.fit(X, y)
