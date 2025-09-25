@@ -66,11 +66,11 @@ y = Sobol(X[:, 0], X[:, 1])
 # %%
 # Let's approximate the polynomial using an 8th order Polynomial Chaos
 # expansion.
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 
 distribution = uniform()
 degree = 8
-pce = PolynomialChaosRegressor(distribution, degree=degree)
+pce = PolynomialChaosExpansion(distribution, degree=degree)
 
 # %%
 # Next, we perform the Polynomial Chaos regression by fitting the model to the
@@ -111,7 +111,7 @@ noise = 20 * 0.01  # 1% noise
 y_noisy = y + noise * np.random.randn(*y.shape)
 
 # %%
-# Let's fit our :class:`~sklearn.polynomial_chaos.PolynomialChaosRegressor` to
+# Let's fit our :class:`~sklearn.polynomial_chaos.PolynomialChaosExpansion` to
 # the noisy data instead.
 pce.fit(X, y_noisy)
 
@@ -162,12 +162,12 @@ pce.main_sens()
 
 # %%
 # See also
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_ishigami.py` for
 #     a global sensitivity analysis of the Ishigami function, a
 #     well-known test problem.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_sobol_g.py` for
 #     an example of how to adaptively construct the multiindex set in the
 #     Polynomial Chaos expansion to compute sensitivity indices.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection_g.py`
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_feature_selection_g.py`
 #     for an example of how to use pruning to remove small basis terms from
 #     the expansion.

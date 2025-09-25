@@ -44,8 +44,7 @@ array([[ 1.        ,  0.        , -0.5       , -0.        ],
        [ 1.        ,  1.        ,  1.        ,  1.        ]])
 """
 
-# import statements
-from abc import ABC, abstractmethod  # for abstract classes
+from abc import ABC, abstractmethod
 from math import factorial
 
 import numpy as np
@@ -61,8 +60,8 @@ from sklearn.utils.validation import check_array, column_or_1d
 class Polynomial(ABC):
     """An abstract base class for polynomials."""
 
-    def __init__(self):
-        pass
+    def __init__(self, normalize: bool = False):
+        self.normalize = normalize
 
     def vandermonde(self, points, degree):
         r"""Returns the generalized Vandermonde matrix associated with this
@@ -92,18 +91,25 @@ class Polynomial(ABC):
         V : array-like of shape (`n_points`, `degree + 1`)
             The generalized Vandermonde matrix.
         """
-        # check points
+        # Check points
         try:
             points = column_or_1d(points)
         except ValueError:
             raise ValueError("could not interpret points as 1d array")
 
-        # check degree
+        # Check degree
         if not isinstance(degree, Integral) or degree < 0:
             raise ValueError(f"degree must be a non-negative int, got '{degree}'")
 
-        # compute Vandermonde matrix
-        return self._vandermonde(points, degree)
+        # Compute orthogonal Vandermonde
+        V = self._vandermonde(points, degree)
+
+        # Normalize columns if requested
+        if self.normalize:
+            for j in range(degree + 1):
+                V[:, j] /= self.norm(j)
+
+        return V
 
     @abstractmethod
     def _vandermonde(self, points, degree):
@@ -111,7 +117,7 @@ class Polynomial(ABC):
 
     # This is an alternative construction method that returns an instance of an
     # orthogonal polynomial, given a `scipy.stats` distribution. This method is
-    # used, for example, in Polynomial Chaos expansions: for a given
+    # used, for example, in Polynomial Chaos Expansions: for a given
     # distribution, we want to find the corresponding orthogonal polynomial
     # type. An alternative implementation would be to use an if/else or or
     # match/case to find the corresponding polynomial type. Instead, this
@@ -152,18 +158,18 @@ class Polynomial(ABC):
         polynomial, if the concrete class implements the `_distribution`
         method.
         """
-        # check distribution
+        # Check distribution
         if not hasattr(distribution, "dist"):
             raise ValueError(
                 "this distribution does not have a 'dist' attribute and "
                 "cannot be interpreted as a 'scipy.stats' frozen distribution"
             )
 
-        # match subclass
+        # Match subclass
         name = distribution.dist.name
         for polynomial in Polynomial.__subclasses__():
             if name == polynomial._distribution():
-                # find the shape parameters of this distribution ...
+                # Find the shape parameters of this distribution ...
                 shape, _, _ = distribution.dist._parse_args(
                     *distribution.args, **distribution.kwds
                 )
@@ -174,7 +180,7 @@ class Polynomial(ABC):
                     return polynomial()
         raise ValueError(f"no polynomial type matches distribution {name}'")
 
-    # returns the `scipy.stats` distribution name
+    # Returns the `scipy.stats` distribution name
     @staticmethod
     @abstractmethod
     def _distribution():
@@ -196,20 +202,20 @@ class Polynomial(ABC):
         distribution : scipy.stats frozen distribution
             The distribution of the features.
         """
-        # check distribution
+        # Check distribution
         if not hasattr(distribution, "dist"):
             raise ValueError(
                 "this distribution does not have a 'dist' attribute and "
                 "cannot be interpreted as a 'scipy.stats' frozen distribution"
             )
 
-        # check features
+        # Check features
         try:
             X = check_array(X, ensure_2d=False)
         except ValueError:
             raise ValueError("could not interpret feature matrix as 2d array")
 
-        # scale features
+        # Scale features
         if distribution.dist.name != self._distribution():
             raise ValueError(
                 "this orthogonal polynomial can only scale features "
@@ -236,13 +242,14 @@ class Polynomial(ABC):
         norm : float
             The norm of the orthogonal polynomial of the given degree.
         """
-        # check degree
+        # Check degree
         if not isinstance(degree, Integral) or degree < 0:
             raise ValueError(f"degree must be a non-negative int, got '{degree}'")
 
-        # compute norm
+        # Compute norm
         return np.sqrt(self._norm_squared(degree))
 
+    @abstractmethod
     def _norm_squared(self, degree):
         """This method must be overridden by concrete classes."""
 
@@ -267,8 +274,10 @@ class Hermite(Polynomial):
 class Jacobi(Polynomial):
     """A class representing Jacobi polynomials."""
 
-    def __init__(self, alpha=None, beta=None, shape_params=None):
-        # get alpha and beta from shape parameters, if provided
+    def __init__(self, alpha=None, beta=None, shape_params=None, normalize=False):
+        super().__init__(normalize=normalize)
+
+        # Get alpha and beta from shape parameters, if provided
         if shape_params is not None:
             if alpha is not None or beta is not None:
                 raise ValueError(
@@ -280,19 +289,19 @@ class Jacobi(Polynomial):
                     "from distribution shape parameters, got "
                     f"{len(shape_params)}"
                 )
-            # for a `Beta(alpha, beta)` distribution, the associated Jacobi
+            # For a `Beta(alpha, beta)` distribution, the associated Jacobi
             # polynomial has parameters `beta - 1` and `alpha - 1`
             alpha = shape_params[1] - 1
             beta = shape_params[0] - 1
 
-        # set alpha
+        # Set alpha
         if not isinstance(alpha, Real):
             raise ValueError(f"alpha must be float or int, got '{type(alpha)}'")
         if not (alpha > 0):
             raise ValueError(f"alpha must be > 0, got '{alpha}'")
         self.alpha = alpha
 
-        # set beta
+        # Set beta
         if not isinstance(beta, Real):
             raise ValueError(f"beta must be float or int, got '{type(beta)}'")
         if not (beta > 0):
@@ -318,7 +327,7 @@ class Jacobi(Polynomial):
         return 2 * X - 1
 
     def _norm_squared(self, degree):
-        # the alpha and beta here are parameters for the Jacobi polynomial
+        # The alpha and beta here are parameters for the Jacobi polynomial
         term1 = 1.0 / (2 * degree + self.alpha + self.beta + 1)
         term2 = (
             gamma(self.alpha + self.beta + 2)

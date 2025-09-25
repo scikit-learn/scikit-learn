@@ -54,10 +54,10 @@ y = y + eta
 # orthogonal polynomials are the Legendre polynomials. We construct the
 # Polynomial Chaos surrogate for an increasing maximum degree of the orthogonal
 # polynomials.
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 
 degrees = range(1, 21)
-pces = [PolynomialChaosRegressor(distribution, degree=k) for k in degrees]
+pces = [PolynomialChaosExpansion(distribution, degree=k) for k in degrees]
 
 # %%
 # Next, we fit the Polynomial Chaos expansions to the available data :math:`(X,
@@ -172,5 +172,5 @@ plt.show()
 # See also
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_index_sets.py` for an
 #     example with more than one feature.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py`
 #     for an example with more details on how to avoid overfitting.

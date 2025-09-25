@@ -1,12 +1,12 @@
 .. _polynomial_chaos:
 
 ===========================
-Polynomial Chaos expansions
+Polynomial Chaos Expansions
 ===========================
 
 .. currentmodule:: sklearn.polynomial_chaos
 
-The **Polynomial Chaos Expansion (PCE)** is a supervised learning method
+The **Polynomial Chaos Expansion (PCE)** (PCE) is a supervised learning method
 commonly used in uncertainty quantification (UQ) to represent and propagate
 uncertainties in mathematical models.
 
@@ -33,20 +33,20 @@ The disadvantages of Polynomial Chaos expansions include:
       of input features exceeds a few dozens.
 
 
-.. _pcr:
+.. _pce:
 
-Polynomial Chaos Regression (PCR)
-=================================
+Polynomial Chaos Expansion (PCE)
+================================
 
 .. currentmodule:: sklearn.polynomial_chaos
 
-The :class:`PolynomialChaosRegressor` implements the Polynomial Chaos method for
-regression purposes. Given the assumed probability distributions for each
-feature, PCR will transform the input features into
+The :class:`PolynomialChaosExpansion` implements the Polynomial Chaos method.
+Given the assumed probability distributions for each feature, the PCE will
+transform the input features into
 :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures`, where the type of
 orthogonal polynomial for each feature depends on the given input distribution.
-The coefficients in the PC expansion are then computed by solving a linear
-regression problem.
+The coefficients in the PC expansion are then computed by solving a least
+squares problem.
 
 .. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_simple_1d_001.png
    :target: ../auto_examples/polynomial_chaos/plot_simple_1d.html
@@ -91,7 +91,7 @@ for the input features:
 
 After the transformation into
 :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures`, the coefficients of
-the Polynomial Chaos expansion are found by solving a linear regression problem.
+the Polynomial Chaos expansion are found by solving a least squares problem.
 
 In real-world problems, the number of uncertain inputs (i.e., the number of
 input features, or the dimension of the polynomial basis) and the required
@@ -103,7 +103,7 @@ to solve to obtain the Polynomial Chaos coefficients can be underdetermined
 the problem may be required to find a good Polynomial Chaos surrogate. We can
 take advantage of the various linear models, such as
 :class:`~sklearn.linear_model.LassoCV`, by specifying the `estimator` argument in
-the :class:`PolynomialChaosRegressor`.
+the :class:`PolynomialChaosExpansion`.
 
 For more details and a technical description of Polynomial Chaos expansions, we
 refer to, e.g., [Sudret2008]_.
@@ -150,7 +150,7 @@ Usage tips
   +--------------------------+-----+-----+-----+------+------+------+-------+-------+-------+--------+
 
 * Fitting a Polynomial Chaos model with ordinary least squares requires
-  solving a regression problem of size :math:`n \times P` where :math:`n` is
+  solving a least squares problem of size :math:`n \times P` where :math:`n` is
   the number of training samples and :math:`P` is the number of basis terms.
   The cost depends on the regime:
 
@@ -178,14 +178,14 @@ Usage tips
 
 * When the output data is noisy, as is the case in almost all real-world
   problems, use regularization to avoid overfitting. See also
-  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`.
+  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py`.
 
 * When using a sparse estimator such as :class:`~sklearn.linear_model.LassoCV` or
   :class:`~sklearn.linear_model.ElasticNetCV`, many of the basis terms might be
   small, meaning that they can be removed from the expansion without impacting
   the prediction accuracy. This can be done by pruning the basis terms using,
   for example, :class:`~sklearn.feature_selection.SelectFromModel`. See also
-  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection.py`.
+  :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_feature_selection.py`.
 
 Polynomial Chaos examples
 =========================
@@ -194,10 +194,10 @@ Polynomial Chaos examples
 
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_simple_1d.py`
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_index_sets.py`
-   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py`
-   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py`
-   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`
-   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection.py`
+   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_ishigami.py`
+   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_sobol_g.py`
+   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py`
+   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_feature_selection.py`
 
 Simple one-dimensional model
 ----------------------------
@@ -242,7 +242,7 @@ combination by minimizing the root mean squared error.
 Global sensitivity analysis of the Ishigami function
 ----------------------------------------------------
 
-This example illustrates how to use Polynomial Chaos regression to perform a
+This example illustrates how to use a Polynomial Chaos expansion to perform a
 Global Sensitivity Analysis of the Ishigami function. The Ishigami function is a
 well-known test problem in uncertainty quantification and sensitivity analysis
 that exhibits strong nonlinearity and nonmonotonicity [Saltelli2000]_. The
@@ -254,14 +254,14 @@ approach to perform Global Sensitivity Analysis, and demonstrate how the
 sensitivity indices computed from the polynomial expansion are far superior in
 terms of accuracy compared to the classic, sampling-based approach.
 
-.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_ishigami_004.png
-   :target: ../auto_examples/polynomial_chaos/plot_pcr_ishigami.html
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pce_ishigami_004.png
+   :target: ../auto_examples/polynomial_chaos/plot_pce_ishigami.html
    :align: center
 
 Adaptive basis construction for the Sobol :math:`G` function
 ------------------------------------------------------------
 
-This example illustrates how to use Polynomial Chaos regression with adaptive
+This example illustrates how to use Polynomial Chaos Expansions with adaptive
 basis growth to perform a Global Sensitivity Analysis of the Sobol function. The
 Sobol function (also known as the :math:`G` function, because it was denoted as
 such in the original paper by Sobol), is another well-known test problem in
@@ -274,28 +274,28 @@ higher-order accurate Polynomial Chaos surrogates. We then discuss the adaptive
 basis construction approach from [Gerstner2003]_., that somewhat alleviates this
 issue.
 
-.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_sobol_g_001.png
-   :target: ../auto_examples/polynomial_chaos/plot_pcr_sobol_g.html
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pce_sobol_g_001.png
+   :target: ../auto_examples/polynomial_chaos/plot_pce_sobol_g.html
    :align: center
 
 Polynomial Chaos expansions with noisy measurements
 ---------------------------------------------------
 
-This example illustrates how to use Polynomial Chaos regression with noisy data,
+This example illustrates how to use Polynomial Chaos Expansions with noisy data,
 using a model taken from [Storlie2009]_. We demonstrate the challenges faced
 when constructing accurate surrogate models when only noisy model evaluations
 are available. By using regularization, we are still able to construct a
 reasonably accurate Polynomial Chaos surrogate model, as illustrated by the
 parity plot shown in the figure below.
 
-.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_noisy_data_004.png
-   :target: ../auto_examples/polynomial_chaos/plot_pcr_noisy_data.html
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pce_noisy_data_004.png
+   :target: ../auto_examples/polynomial_chaos/plot_pce_noisy_data.html
    :align: center
 
-Pruning basis terms in Polynomial Chaos regression
+Pruning basis terms in Polynomial Chaos Expansions
 --------------------------------------------------
 
-This example illustrates how to use Polynomial Chaos regression with basis
+This example illustrates how to use a Polynomial Chaos Expansion with basis
 pruning. By default, a Polynomial Chaos expansion of degree :math:`k` includes
 all multivariate polynomial terms up to that degree, which can lead to large
 models with many small terms. Using a feature selection method like
@@ -303,8 +303,8 @@ models with many small terms. Using a feature selection method like
 away irrelevant polynomial terms during fitting. This results in a sparse and
 more interpretable expansion that can be faster to evaluate during prediction.
 
-.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_feature_selection_001.png
-   :target: ../auto_examples/polynomial_chaos/plot_pcr_feature_selection.html
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pce_feature_selection_001.png
+   :target: ../auto_examples/polynomial_chaos/plot_pce_feature_selection.html
    :align: center
 
 References

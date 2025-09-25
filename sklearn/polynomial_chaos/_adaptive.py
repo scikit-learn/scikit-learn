@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """Adaptive strategies for Polynomial Chaos Expansions.
 
 # Authors: The scikit-learn developers
@@ -24,7 +27,7 @@ provided as `GerstnerGriebel`, which implements the basis growth strategy by
 Gerstner & Griebel, originally targeting sparse grids, outlined in their 2020
 paper.
 
-The main method is `propose`. Given a `PolynomialChaosRegression`, this method
+The main method is `propose`. Given a `PolynomialChaosExpansion`, this method
 proposes a new set of multiindices, to be used as the basis terms in the next
 Polynomial Chaos fitting procedure.
 
@@ -32,8 +35,7 @@ New incremental basis strategies can easily be added by inheriting from the
 abstract `BasisIncrementStrategy` class and overriding the `propose` method.
 """
 
-# import statements
-from abc import ABC, abstractmethod  # for abstract classes
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -52,8 +54,8 @@ class BasisIncrementStrategy(ABC):
 
         Parameters
         ----------
-        pce : PolynomialChaosRegressor
-            The current Polynomial Chaos regressor
+        pce : PolynomialChaosExpansion
+            The current Polynomial Chaos Expansion
 
         Returns
         -------
@@ -104,16 +106,16 @@ class GerstnerGriebel(BasisIncrementStrategy):
     """
 
     def propose(self, pce):
-        # interpret multiindices as list of lists for convenience
+        # Interpret multiindices as list of lists for convenience
         multiindices = pce.multiindices_.tolist()
 
-        # split in active and old set if this is the first time this
+        # Split in active and old set if this is the first time this
         # method is called
         if not hasattr(self, "active"):
             self.active = list()
             self.old = list()
             for index in multiindices:
-                # check if all forward neighbors are in the set
+                # Check if all forward neighbors are in the set
                 is_old = True
                 for d in range(pce.n_features_in_):
                     index_to_test = index.copy()
@@ -121,13 +123,13 @@ class GerstnerGriebel(BasisIncrementStrategy):
                     if index_to_test not in multiindices:
                         is_old = False
                         break
-                # if so, add multiindex to the old set
+                # If so, add multiindex to the old set
                 if is_old:
                     self.old.append(index)
                 else:  # otherwise, add to active set
                     self.active.append(index)
 
-        # find the multiindex with the maximum variance contribution
+        # Find the multiindex with the maximum variance contribution
         max_contribution = 0
         best_index = self.active[0]
         for index in self.active:
@@ -139,16 +141,16 @@ class GerstnerGriebel(BasisIncrementStrategy):
                 max_contribution = contribution
                 best_index = index
 
-        # move that index from active to old
+        # Move that index from active to old
         self.old.append(best_index)
         self.active.remove(best_index)
 
-        # add all forward neighbors that are admissible in the old set to the
+        # Add all forward neighbors that are admissible in the old set to the
         # active set
         for d in range(pce.n_features_in_):
             new_index = best_index.copy()
             new_index[d] += 1
-            # if not new_index in self.active:
+            # If not new_index in self.active:
             valid = True
             for j in range(pce.n_features_in_):
                 backward_index = new_index.copy()
@@ -161,5 +163,5 @@ class GerstnerGriebel(BasisIncrementStrategy):
             if valid:
                 self.active.append(new_index)
 
-        # return new multiindex set
+        # Return new multiindex set
         return (*self.old, *self.active)

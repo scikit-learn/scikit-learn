@@ -3,7 +3,7 @@ r"""
 Global sensitivity analysis of the Ishigami function
 ===============================================================================
 
-This example illustrates how to use Polynomial Chaos regression to perform a
+This example illustrates how to use a Polynomial Chaos Expansion to perform a
 Global Sensitivity Analysis of the Ishigami function. The Ishigami function is
 a well-known test problem in uncertainty quantification and sensitivity
 analysis [Saltelli2000]_. It is defined as
@@ -64,9 +64,9 @@ X = DataFrame(data=X, columns=("$x_1$", "$x_2$", "$x_3$"))
 # where :math:`d` is the dimension (i.e., the number of input features), and
 # :math:`k` is the degree of the polynomial. In our case, we have :math:`d = 3`
 # and :math:`k = 9`, so there are :math:`P = 220` basis terms.
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 
-pce = PolynomialChaosRegressor(distribution, degree=9)
+pce = PolynomialChaosExpansion(distribution, degree=9)
 pce.fit(X, y)
 
 # %%
@@ -198,7 +198,7 @@ for degree in range(3, 12):
     n = 3 * factorial(3 + degree) // (6 * factorial(degree))
     X = distribution.rvs((n, 3))
     y = ishigami(X)
-    pce = PolynomialChaosRegressor(distribution, degree=degree)
+    pce = PolynomialChaosExpansion(distribution, degree=degree)
     pce.fit(X, y)
     total_sens.append(pce.total_sens())
     n_samples.append(n)
@@ -294,8 +294,8 @@ if scipy_has_sobol_indices:
 
 # %%
 # See also
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_sobol_g.py` for
 #     an example of how to adaptively construct the multiindex set in the
 #     Polynomial Chaos expansion to compute sensitivity indices.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py` for
 #     an example of how to use sparse estimators to deal with noisy measurements.

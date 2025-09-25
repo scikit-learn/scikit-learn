@@ -63,9 +63,9 @@ y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
 # where :math:`d` is the dimension (i.e., the number of input features), and
 # :math:`k` is the degree of the polynomial. In our case, we have :math:`d = 4`
 # and :math:`k = 2`, so there are :math:`P = 15` basis terms.
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 
-pce = PolynomialChaosRegressor(distribution)
+pce = PolynomialChaosExpansion(distribution)
 pce.fit(X, y)
 
 # %%
@@ -133,7 +133,7 @@ DataFrame(N, columns=["# basis terms"]).rename_axis(index="degree")
 # prior for regularization, as implemented in the Lasso method.
 from sklearn.linear_model import LassoCV
 
-pce = PolynomialChaosRegressor(distribution, degree=1)
+pce = PolynomialChaosExpansion(distribution, degree=1)
 pce.fit(X, y)
 errors = [np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S)]
 iters = [1]
@@ -141,7 +141,7 @@ estimator = LassoCV(
     fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
 )
 for i in range(10, 35, 5):
-    pce = PolynomialChaosRegressor(distribution, degree=1, estimator=estimator)
+    pce = PolynomialChaosExpansion(distribution, degree=1, estimator=estimator)
     pce.fit(X, y, max_iter=i)
     errors.append(np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S))
     iters.append(i)
@@ -158,11 +158,11 @@ _ = plt.title("Convergence of adaptive basis construction")
 
 # %%
 # See also
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_ishigami.py` for
 #     a global sensitivity analysis of the Ishigami function, another
 #     well-known test problem.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py` for
 #     an example of how to use sparse estimators to deal with noisy measurements.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_feature_selection_g.py`
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_feature_selection_g.py`
 #     for an example of how to use pruning to remove small basis terms from
 #     the expansion.

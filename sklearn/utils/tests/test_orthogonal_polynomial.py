@@ -1,11 +1,10 @@
-# import statements
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 import pytest
-
-# import distributions
 from scipy.stats import beta, expon, maxwell, norm, uniform
 
-# sklearn imports
 from sklearn.utils import check_random_state
 from sklearn.utils._orthogonal_polynomial import (
     Hermite,
@@ -16,7 +15,7 @@ from sklearn.utils._orthogonal_polynomial import (
 )
 
 
-# check constructors
+# Check constructors
 @pytest.mark.parametrize(
     "polynomial, nargs, error_type",
     [
@@ -28,16 +27,16 @@ from sklearn.utils._orthogonal_polynomial import (
 )
 def test_constructors(polynomial, nargs, error_type):
     (
-        # pass
+        # Pass
         polynomial(*[1] * nargs) if nargs > 0 else polynomial()
     )
 
-    # constructor with arguments throws error
+    # Constructor with arguments throws error
     with pytest.raises(error_type):
         polynomial(1)
 
 
-# check vandermonde matrices
+# Check vandermonde matrices
 @pytest.mark.parametrize(
     "polynomial, points, degree, expected",
     [
@@ -68,16 +67,16 @@ def test_constructors(polynomial, nargs, error_type):
     ],
 )
 def test_vandermonde(polynomial, points, degree, expected):
-    # generate vandermonde matrices
+    # Generate vandermonde matrices
     V = polynomial.vandermonde(points, degree)
 
-    # check
+    # Check
     assert np.all(V == expected)
 
 
-# check vandermonde points
+# Check vandermonde points
 def test_vandermonde_points():
-    # non-numeric input throws error
+    # Non-numeric input throws error
     with pytest.raises(ValueError):
         Legendre().vandermonde("wololo", 2)
 
@@ -86,25 +85,25 @@ def test_vandermonde_points():
         points = np.array([[-1, 0, 1], [-0.5, 0, 0.5]])
         Legendre().vandermonde(points, 2)
 
-    # passes
+    # Passes
     Legendre().vandermonde((-1 / 3, 2 / 5, 7 / 8), 2)
 
 
-# check vandermonde degree
+# Check vandermonde degree
 def test_vandermonde_degree():
-    # non-integer degree throws error
+    # Non-integer degree throws error
     with pytest.raises(ValueError, match="wololo"):
         Legendre().vandermonde([-1, 0, 1], "wololo")
 
-    # degree < 0 throws error
+    # Degree < 0 throws error
     with pytest.raises(ValueError, match="-1"):
         Legendre().vandermonde([-1, 0, 1], -1)
 
-    # degree = 0 passes
+    # Degree = 0 passes
     Legendre().vandermonde([-1, 0, 1], 0)
 
 
-# test lookup from distribution
+# Test lookup from distribution
 @pytest.mark.parametrize(
     "distribution, polynomial_type",
     [
@@ -115,19 +114,19 @@ def test_vandermonde_degree():
     ],
 )
 def test_from_distribution(distribution, polynomial_type):
-    # unfrozen distribution type throws error
+    # Unfrozen distribution type throws error
     with pytest.raises(ValueError, match="dist"):
         Polynomial.from_distribution(uniform)
 
-    # unknown distribution type throws error
+    # Unknown distribution type throws error
     with pytest.raises(ValueError, match="type"):
         Polynomial.from_distribution(maxwell())
 
-    # passes
+    # Passes
     assert isinstance(Polynomial.from_distribution(distribution), polynomial_type)
 
 
-# test scale features from distribution
+# Test scale features from distribution
 @pytest.mark.parametrize(
     "distribution, mean, std",
     [
@@ -138,7 +137,7 @@ def test_from_distribution(distribution, polynomial_type):
     ],
 )
 def test_scale_features_from_distribution(distribution, mean, std):
-    # passes
+    # Passes
     n = 100_000
     random_state = check_random_state(17)
     X_1d = distribution.rvs((n, 1), random_state=random_state)
@@ -151,7 +150,7 @@ def test_scale_features_from_distribution(distribution, mean, std):
     assert abs(X_2d_trans.mean() - mean) < 0.01
     assert abs(X_2d_trans.std() - std) < 0.01
 
-    # unfrozen distribution type throws error
+    # Unfrozen distribution type throws error
     with pytest.raises(ValueError, match="dist"):
         polynomial.scale_features_from_distribution(X_1d, uniform)
 
@@ -160,12 +159,12 @@ def test_scale_features_from_distribution(distribution, mean, std):
         X_3d = distribution.rvs((n, 2, 2), random_state=random_state)
         polynomial.scale_features_from_distribution(X_3d, distribution)
 
-    # unmatched distribution type
+    # Unmatched distribution type
     with pytest.raises(ValueError, match="maxwell"):
         polynomial.scale_features_from_distribution(maxwell.rvs((n, 1)), maxwell())
 
 
-# test norm
+# Test norm
 @pytest.mark.parametrize(
     "polynomial, norm",
     [
@@ -176,19 +175,19 @@ def test_scale_features_from_distribution(distribution, mean, std):
     ],
 )
 def test_norm(polynomial, norm):
-    # non-integer degree throws error
+    # Non-integer degree throws error
     with pytest.raises(ValueError, match="wololo"):
         polynomial.norm("wololo")
 
-    # degree < 0 throws error
+    # Degree < 0 throws error
     with pytest.raises(ValueError, match="degree"):
         polynomial.norm(-1)
 
-    # test degree 2
+    # Test degree 2
     assert abs(polynomial.norm(2) - norm) < 1e-15
 
 
-# compare analytical norm to numerically computed values
+# Compare analytical norm to numerically computed values
 @pytest.mark.parametrize(
     "distribution, polynomial, tolerance",
     [
@@ -212,44 +211,44 @@ def test_norm_numerically(distribution, polynomial, tolerance):
         assert abs(normsq - np.mean(V[:, j] ** 2)) / normsq < tolerance
 
 
-# special test for Jacobi
+# Special test for Jacobi
 def test_jacobi():
-    # negative alpha raises error
+    # Negative alpha raises error
     with pytest.raises(ValueError, match="alpha"):
         Jacobi(0, 1)
 
-    # negative beta raises error
+    # Negative beta raises error
     with pytest.raises(ValueError, match="beta"):
         Jacobi(1, 0)
 
-    # negative alpha raises error
+    # Negative alpha raises error
     with pytest.raises(ValueError, match="alpha"):
         Jacobi(shape_params=(2, 1))
 
-    # negative beta raises error
+    # Negative beta raises error
     with pytest.raises(ValueError, match="beta"):
         Jacobi(shape_params=(1, 2))
 
-    # wrong number of shape parameters throws error
+    # Wrong number of shape parameters throws error
     with pytest.raises(ValueError, match="2 parameters"):
         Jacobi(shape_params=(2,))
 
-    # wrong argument type for alpha throws error
+    # Wrong argument type for alpha throws error
     with pytest.raises(ValueError, match="float or int"):
         Jacobi("a", 1)
 
-    # wrong argument type for beta throws error
+    # Wrong argument type for beta throws error
     with pytest.raises(ValueError, match="float or int"):
         Jacobi(1, "a")
 
-    # specifying alpha, beta and shape parameters throws error
+    # Specifying alpha, beta and shape parameters throws error
     with pytest.raises(ValueError, match="both"):
         Jacobi(0.5, 0.5, shape_params=(2, 1))
 
 
-# test print method
+# Test print method
 def test_print():
-    # default
+    # Default
     polynomial = Legendre()
     assert "Legendre" in str(polynomial)
 

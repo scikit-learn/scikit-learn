@@ -288,7 +288,7 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
     "FrozenEstimator",  # this estimator cannot be tested like others.
     "IterativeImputer",
     "OneVsOneClassifier",  # input validation can't be avoided
-    "PolynomialChaosRegressor",  # needs validation
+    "PolynomialChaosExpansion",  # needs validation
     "RANSACRegressor",
     "RFE",
     "RFECV",

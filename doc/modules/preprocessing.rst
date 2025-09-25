@@ -1286,7 +1286,7 @@ This transformer is an extension of the :class:`PolynomialFeatures` transformer
 outlined above. Instead of considering simple powers of the features, this
 transformer uses orthogonal polynomials to transform the features. Orthogonal
 polynomial features are used implicitly in
-:class:`~sklearn.polynomial_chaos.PolynomialChaosRegressor`\ s.
+:class:`~sklearn.polynomial_chaos.PolynomialChaosExpansion`\ s.
 
 Consider the sequence of *Legendre* orthogonal polynomials
 

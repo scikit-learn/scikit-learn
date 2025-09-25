@@ -1,21 +1,13 @@
-"""Preprocessing tools based on orthogonal polynomial features."""
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# import statements
+"""Preprocessing tools based on orthogonal polynomial features."""
+
 import numpy as np
 
-# sklearn imports
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._multiindexset import MultiIndexSet
-from sklearn.utils._orthogonal_polynomial import (  # noqa: F401
-    Hermite,
-    Jacobi,
-    Laguerre,
-    Legendre,
-    Polynomial,
-)
+from sklearn.utils._orthogonal_polynomial import Polynomial
 from sklearn.utils._param_validation import Integral, Interval, Iterable, StrOptions
 from sklearn.utils.validation import (
     _check_feature_names_in,
@@ -24,10 +16,9 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-# Build a registry of names → classes
-_POLYNOMIAL_REGISTRY = {
-    cls.__name__.lower(): cls for cls in Polynomial.__subclasses__()
-}
+
+def _get_polynomial_registry():
+    return {cls.__name__.lower(): cls for cls in Polynomial.__subclasses__()}
 
 
 class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
@@ -127,7 +118,7 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
     :class:`~sklearn.preprocessing.PolynomialFeatures`: Transformer that uses a
         (non-orthogonal) monomial basis instead of an orthogonal polynomial
         basis.
-    :class:`~sklearn.polynomial_chaos.PolynomialChaosRegressor`: Estimator that
+    :class:`~sklearn.polynomial_chaos.PolynomialChaosExpansion`: Estimator that
         transforms a given set of input features into orthogonal polynomial
         features and fits the coefficients against a given data set.
 
@@ -239,10 +230,10 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
             Fitted transformer.
         """
 
-        # check input data
+        # Check input data
         _, n_features = validate_data(self, X).shape
 
-        # check polynomial
+        # Check polynomial
         polynomials = self.polynomial
         if isinstance(polynomials, str):
             polynomials = [polynomials] * n_features
@@ -257,14 +248,14 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
         for j, poly_str in enumerate(polynomials):
             terms = poly_str.split("_")
             key = terms[0].lower()
-            poly_cls = _POLYNOMIAL_REGISTRY.get(key)
+            poly_cls = _get_polynomial_registry().get(key)
             if poly_cls is None:
                 raise ValueError(
                     f"could not interpret the polynomial at index {j} "
                     f"as a valid polynomial, got '{poly_str}'"
                 )
 
-            # parse parameters (if any)
+            # Parse parameters (if any)
             if len(terms) > 1:
                 try:
                     params = [float(param) for param in terms[1:]]
@@ -276,30 +267,30 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
 
             self.polynomials_.append(poly)
 
-        # generate multiindex set
-        if self.multiindices is None:  # no multiindices were provided
+        # Generate multiindex set
+        if self.multiindices is None:  # No multiindices were provided
             m_type = MultiIndexSet.from_string(self.truncation)
             m = m_type(n_features, self.degree, weights=self.weights)
             self.multiindices_ = np.vstack(list(m.indices()))
-        else:  # a set of custom multiindices was provided
+        else:  # A set of custom multiindices was provided
             self.multiindices_ = check_array(list(self.multiindices), dtype="int64")
 
-        # get maximum required polynomial degree for each feature
+        # Get maximum required polynomial degree for each feature
         self.maximum_degrees_ = np.amax(self.multiindices_, axis=0)
 
-        # set number of output features
+        # Set number of output features
         self.n_output_features_ = self.multiindices_.shape[0]
 
-        # compute the norms of each orthogonal polynomial
+        # Compute the norms of each orthogonal polynomial
         # NOTE: This is useful for global sensitivity analysis using Polynomial
-        # Chaos regression, which requires access to the norms of the
+        # Chaos Expansions, which requires access to the norms of the
         # orthogonal polynomials in the basis.
         self.norms_ = np.ones(self.n_output_features_)
         for j, index in enumerate(self.multiindices_):
             for dim in range(n_features):
                 self.norms_[j] *= self.polynomials_[dim].norm(index[dim])
 
-        # by convention, fit returns self
+        # By convention, fit returns self
         return self
 
     def transform(self, X):
@@ -318,19 +309,19 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
             input features.
         """
 
-        # check if fit has been called
+        # Check if fit has been called
         check_is_fitted(self)
         X = validate_data(self, X, reset=False, accept_sparse=False, ensure_2d=True)
         n_samples, n_features = X.shape
 
-        # compute the 1d polynomial features
+        # Compute the 1d polynomial features
         polynomial_features = list()
         for j, polynomial in enumerate(self.polynomials_):
             polynomial_features.append(
                 polynomial.vandermonde(X[:, j], self.maximum_degrees_[j])
             )
 
-        # compose output features by multiplying 1d polynomial features
+        # Compose output features by multiplying 1d polynomial features
         X_trans = np.ones((n_samples, self.n_output_features_))
         for j, index in enumerate(self.multiindices_):
             for dim in range(n_features):

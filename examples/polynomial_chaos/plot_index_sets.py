@@ -1,9 +1,9 @@
 r"""
 ===============================================================================
-Polynomial Chaos regression
+Polynomial Chaos Expansion
 ===============================================================================
 
-This example illustrates how to use Polynomial Chaos regression for a simple
+This example illustrates how to fit a Polynomial Chaos Expansion for a simple
 polynomial model given in [Saltelli2000]_. The model is defined as
 
 .. math::
@@ -53,13 +53,13 @@ y = np.prod((3 * X**2 + 1) / 2, axis=1)
 
 # %%
 # Next, we fit a Polynomial Chaos surrogate to the available data.
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 
-pce = PolynomialChaosRegressor(distribution, degree=degree)
+pce = PolynomialChaosExpansion(distribution, degree=degree)
 pce.fit(X, y)
 
 # %%
-# After the Polynomial Chaos expansion is fitted, we can visualize the terms
+# After the Polynomial Chaos Expansion is fitted, we can visualize the terms
 # in the basis, as well as the value of the coefficient associated with that
 # basis term. The function below can be used to visualize the polynomial basis
 # terms in two dimensions.
@@ -123,7 +123,7 @@ truncations = [
 ]
 _, axes = plt.subplots(2, 2)
 for ax, truncation in zip(axes.ravel(), truncations):
-    pce = PolynomialChaosRegressor(distribution, degree=6, truncation=truncation)
+    pce = PolynomialChaosExpansion(distribution, degree=6, truncation=truncation)
     pce.fit(X, y)
     plot_coefficients(pce, ax, s=100)
     ax.set_title(truncation.capitalize().replace("_", " "))
@@ -149,7 +149,7 @@ param_grid = [
     }
 ]
 pceCV = GridSearchCV(
-    PolynomialChaosRegressor(distribution),
+    PolynomialChaosExpansion(distribution),
     param_grid,
     scoring="neg_root_mean_squared_error",
 )
@@ -164,6 +164,6 @@ pceCV.best_params_
 
 # %%
 # See also
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_ishigami.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_ishigami.py` for
 #     an example of how to extract information about the sensitivity of the
 #     model output to the input features.

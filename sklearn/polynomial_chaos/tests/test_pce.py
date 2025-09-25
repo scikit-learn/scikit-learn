@@ -1,4 +1,6 @@
-# import statements
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import product
 from math import prod
 
@@ -7,7 +9,6 @@ import pytest
 from numpy.polynomial.legendre import legroots
 from scipy.stats import beta, expon, norm, uniform
 
-# sklearn imports
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_friedman1
 from sklearn.feature_selection import SelectFromModel
@@ -19,7 +20,7 @@ from sklearn.linear_model import (
 )
 from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 from sklearn.utils import check_random_state
 
 
@@ -33,7 +34,7 @@ def test_exact_coefficients():
         + 1.74 * 0.5 * (3 * X[:, 0] ** 2 - 1)
         + X[:, 1] * 0.5 * (3 * X[:, 0] ** 2 - 1)
     )
-    pce = PolynomialChaosRegressor(distribution, degree=3, scale_outputs=False)
+    pce = PolynomialChaosExpansion(distribution, degree=3, scale_outputs=False)
     pce.fit(X, y)
     assert np.linalg.norm(y - pce.predict(X)) < 1e-12
     for multiindex, coef in zip(pce.multiindices_, pce.coef_):
@@ -51,7 +52,7 @@ def test_exact_coefficients():
 def test_1d_fit():
     X = np.atleast_2d([1.0, 3.0, 5.0, 6.0, 7.0, 8.0]).T
     y = (X * np.sin(X)).ravel()
-    pce = PolynomialChaosRegressor(degree=5)
+    pce = PolynomialChaosExpansion(degree=5)
     pce.fit(X, y)
     y_fit = pce.predict(X)
     assert np.linalg.norm(y - y_fit) < 1e-12
@@ -59,66 +60,66 @@ def test_1d_fit():
 
 # Test fitting with distributions
 def test_fit_distributions():
-    # generate data
+    # Generate data
     random_state = check_random_state(17)
     X = uniform().rvs((28, 2), random_state=random_state)
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
 
-    # only 1 distribution is given
-    pce = PolynomialChaosRegressor(uniform(), degree=6)
+    # Only 1 distribution is given
+    pce = PolynomialChaosExpansion(uniform(), degree=6)
     pce.fit(X, y)
     y_fit = pce.predict(X)
     assert np.linalg.norm(y - y_fit) < 1e-12
 
-    # multiple distributions are given
-    pce = PolynomialChaosRegressor((uniform(), uniform()), degree=6)
+    # Multiple distributions are given
+    pce = PolynomialChaosExpansion((uniform(), uniform()), degree=6)
     pce.fit(X, y)
     y_fit = pce.predict(X)
     assert np.linalg.norm(y - y_fit) < 1e-12
 
-    # unmatched number of distributions throws error
+    # Unmatched number of distributions throws error
     with pytest.raises(ValueError, match="number of distributions"):
-        pce = PolynomialChaosRegressor((uniform(),))
+        pce = PolynomialChaosExpansion((uniform(),))
         pce.fit(X, y)
 
-    # unmatched distribution type throws error
+    # Unmatched distribution type throws error
     with pytest.raises(ValueError, match="'dist'"):
-        pce = PolynomialChaosRegressor(False)
+        pce = PolynomialChaosExpansion(False)
         pce.fit(X, y)
 
-    # unmatched distribution types throws error
+    # Unmatched distribution types throws error
     with pytest.raises(ValueError, match="frozen distribution"):
-        pce = PolynomialChaosRegressor((uniform(), uniform))
+        pce = PolynomialChaosExpansion((uniform(), uniform))
         pce.fit(X, y)
 
 
 # Test fit with estimators
 def test_fit_estimators():
-    # generate data
+    # Generate data
     random_state = check_random_state(17)
     X = uniform().rvs((28, 2), random_state=random_state)
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
 
-    # passes
-    pce = PolynomialChaosRegressor(
+    # Passes
+    pce = PolynomialChaosExpansion(
         (uniform(), uniform()), degree=12, estimator=LassoCV(fit_intercept=False)
     )
     pce.fit(X, y)
     y_fit = pce.predict(X)
     assert np.linalg.norm(y - y_fit) / np.linalg.norm(y) < 5e-3
 
-    # check for fit_intercept
+    # Check for fit_intercept
     with pytest.raises(ValueError, match="fit_intercept"):
-        pce = PolynomialChaosRegressor(
+        pce = PolynomialChaosExpansion(
             (uniform(), uniform()),
             degree=12,
             estimator=LassoCV(fit_intercept=True),
         )
         pce.fit(X, y)
 
-    # unknown estimator type raises error
+    # Unknown estimator type raises error
     with pytest.raises(ValueError, match="fit"):
-        pce = PolynomialChaosRegressor(
+        pce = PolynomialChaosExpansion(
             (uniform(), uniform()), degree=12, estimator=False
         )
         pce.fit(X, y)
@@ -143,7 +144,7 @@ def test_estimators_with_noise(estimator):
         + X[:, 1] * 0.5 * (3 * X[:, 0] ** 2 - 1)
     )
     y += 0.1 * random_state.randn(len(y))
-    pce = PolynomialChaosRegressor(
+    pce = PolynomialChaosExpansion(
         distribution, degree=3, scale_outputs=False, estimator=estimator
     )
     pce.fit(X, y)
@@ -152,9 +153,9 @@ def test_estimators_with_noise(estimator):
 
 # Test input checking for fit
 def test_fit_inputs():
-    # only 1 data point throws an error
+    # Only 1 data point throws an error
     with pytest.raises(ValueError, match="more than 1 sample"):
-        pce = PolynomialChaosRegressor()
+        pce = PolynomialChaosExpansion()
         pce.fit(np.atleast_2d([1]), [1])
 
 
@@ -166,7 +167,7 @@ def test_no_variation():
     y1 = (x1 * np.sin(x1)).ravel()
     y2 = (np.cos(x2) + 1).ravel()
     Y = np.vstack([y1, y2]).T
-    pce = PolynomialChaosRegressor(degree=5)
+    pce = PolynomialChaosExpansion(degree=5)
     pce.fit(X, Y)
     y_fit = pce.predict(X)
     assert np.linalg.norm(Y - y_fit) < 1e-12
@@ -198,13 +199,12 @@ def test_grid_search():
         }
     ]
     pceCV = GridSearchCV(
-        PolynomialChaosRegressor(distribution),
+        PolynomialChaosExpansion(distribution),
         param_grid,
         scoring="neg_root_mean_squared_error",
     )
     pceCV.fit(X, y)
     assert pceCV.best_params_["degree"] < 4
-    # assert pceCV.best_params_["truncation"] == "total_degree"
 
 
 # Test grid search 1 polynomial
@@ -221,7 +221,7 @@ def test_grid_search_1_polynomial():
     estimator = LassoCV(
         fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
     )
-    pce = PolynomialChaosRegressor(
+    pce = PolynomialChaosExpansion(
         distribution, estimator=estimator, scale_outputs=False
     )
     pceCV = GridSearchCV(pce, param_grid, cv=KFold(n_splits=5))
@@ -234,7 +234,7 @@ def test_grid_search_1_polynomial():
     assert np.argmax(pceCV.best_estimator_.total_sens()) == 3
 
 
-# test predict inputs
+# Test predict inputs
 def test_predict_inputs():
     random_state = check_random_state(123)
     distribution = uniform(loc=-1, scale=2)
@@ -244,7 +244,7 @@ def test_predict_inputs():
         + 1.74 * 0.5 * (3 * X[:, 0] ** 2 - 1)
         + X[:, 1] * 0.5 * (3 * X[:, 0] ** 2 - 1)
     )
-    pce = PolynomialChaosRegressor(distribution, degree=3, scale_outputs=False)
+    pce = PolynomialChaosExpansion(distribution, degree=3, scale_outputs=False)
     pce.fit(X, y)
     with pytest.raises(ValueError, match="expecting 2 features"):
         pce.predict(X[:, 0].reshape(-1, 1))
@@ -254,7 +254,7 @@ def test_predict_inputs():
 def test_main_sensitivity():
     random_state = check_random_state(17)
     distribution = uniform(0, 1)
-    pce = PolynomialChaosRegressor(distribution, degree=4)
+    pce = PolynomialChaosExpansion(distribution, degree=4)
     X = distribution.rvs((60, 1), random_state=random_state)
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
     pce.fit(X, y)
@@ -269,7 +269,7 @@ def test_friedman1():
     estimator = LassoCV(
         fit_intercept=False, alphas=np.logspace(-12, 2, 25), max_iter=100000
     )
-    pce = PolynomialChaosRegressor(
+    pce = PolynomialChaosExpansion(
         uniform(-1, 2), degree=5, estimator=estimator, scale_outputs=False
     )
     pce.fit(X, y)
@@ -290,7 +290,7 @@ def test_mean_and_var(distribution, mean, var):
     random_state = check_random_state(17)
     X = distribution.rvs((2, 1), random_state=random_state)
     y = X.ravel()
-    pce = PolynomialChaosRegressor(distribution, degree=1, scale_outputs=False)
+    pce = PolynomialChaosExpansion(distribution, degree=1, scale_outputs=False)
     pce.fit(X, y)
     assert abs(pce.mean() - mean) < 1e-12
     assert abs(pce.var() - var) < 1e-12
@@ -300,7 +300,7 @@ def test_mean_and_var(distribution, mean, var):
 def test_zero_mean():
     random_state = check_random_state(17)
     distribution = uniform(0, 1)
-    pce = PolynomialChaosRegressor(distribution, degree=2, scale_outputs=False)
+    pce = PolynomialChaosExpansion(distribution, degree=2, scale_outputs=False)
     X = distribution.rvs((60, 1), random_state=random_state)
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
     pce.fit(X, y)
@@ -318,7 +318,7 @@ def test_pandas():
     X = distribution.rvs((116, 3), random_state=random_state)
     X = pd.DataFrame(data=X, columns=[f"feature{j}" for j in range(3)])
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
-    pce = PolynomialChaosRegressor(distribution, degree=6)
+    pce = PolynomialChaosExpansion(distribution, degree=6)
     pce.fit(X, y)
 
     assert abs(pce.joint_sens("feature0") - 25 / 91) < 1e-12
@@ -334,7 +334,7 @@ def test_joint_sens_inputs():
     X = distribution.rvs((116, 3), random_state=random_state)
     X_named = pd.DataFrame(data=X, columns=[f"feature{j}" for j in range(3)])
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
-    pce = PolynomialChaosRegressor(distribution, degree=6)
+    pce = PolynomialChaosExpansion(distribution, degree=6)
     pce.fit(X_named, y)
 
     with pytest.raises(ValueError, match="all string"):
@@ -360,7 +360,7 @@ def test_multi_output_fit():
     y1 = (X * np.sin(X)).ravel()
     y2 = (X * np.cos(X)).ravel()
     Y = np.vstack([y1, y2]).T
-    pce = PolynomialChaosRegressor(degree=5)
+    pce = PolynomialChaosExpansion(degree=5)
     pce.fit(X, Y)
     y_fit = pce.predict(X)
     assert np.linalg.norm(Y - y_fit) < 1e-12
@@ -372,7 +372,7 @@ def test_multi_output_statistics():
     y1 = (X * np.sin(X)).ravel()
     y2 = (X * np.cos(X)).ravel()
     Y = np.vstack([y1, y2]).T
-    pce = PolynomialChaosRegressor(degree=2)
+    pce = PolynomialChaosExpansion(degree=2)
 
     for j, y in enumerate([y1, y2]):
         assert np.sum(pce.fit(X, Y).mean()[j] - pce.fit(X, y).mean()) < 1e-12
@@ -391,11 +391,11 @@ def test_estimator_multioutput():
     Y = np.vstack([y1, y2]).T
 
     with pytest.raises(ValueError, match="fit_intercept=False"):
-        pce = PolynomialChaosRegressor(estimator=LassoCV())
+        pce = PolynomialChaosExpansion(estimator=LassoCV())
         pce.fit(X, y1)
 
     with pytest.raises(ValueError, match="fit_intercept=False"):
-        pce = PolynomialChaosRegressor(estimator=MultiOutputRegressor(LassoCV()))
+        pce = PolynomialChaosExpansion(estimator=MultiOutputRegressor(LassoCV()))
         pce.fit(X, Y)
 
     class DummyEstimator(BaseEstimator):
@@ -403,16 +403,17 @@ def test_estimator_multioutput():
             self.coef_ = 0
 
     with pytest.warns(UserWarning, match="fit_intercept=False"):
-        pce = PolynomialChaosRegressor(estimator=DummyEstimator())
+        pce = PolynomialChaosExpansion(estimator=DummyEstimator())
         pce.fit(X, Y)
 
     class DumbDummyEstimator(BaseEstimator):
         def fit(self, X, y):
             pass
 
-    with pytest.raises(ValueError, match="'coef_'"):
-        pce = PolynomialChaosRegressor(estimator=DumbDummyEstimator())
-        pce.fit(X, Y)
+    with pytest.warns(UserWarning, match="fit_intercept=False"):
+        with pytest.raises(ValueError, match="'coef_'"):
+            pce = PolynomialChaosExpansion(estimator=DumbDummyEstimator())
+            pce.fit(X, Y)
 
 
 # Test feature selector
@@ -422,7 +423,7 @@ def test_feature_selector_valid():
     X = distribution.rvs((100, 2), random_state=random_state)
     y = X[:, 0] * X[:, 1]
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    pce = PolynomialChaosRegressor(
+    pce = PolynomialChaosExpansion(
         distribution=[distribution] * 2,
         degree=3,
         estimator=LinearRegression(fit_intercept=False),
@@ -448,7 +449,7 @@ def test_feature_selector():
             pass
 
     with pytest.raises(ValueError, match="fit and transform"):
-        pce = PolynomialChaosRegressor(feature_selector=DummyFeatureSelector())
+        pce = PolynomialChaosExpansion(feature_selector=DummyFeatureSelector())
         pce.fit(X, y)
 
 
@@ -463,11 +464,11 @@ def test_feature_selector():
 def get_samples(degree, dimension, tol=12):
     c = [0] * (degree + 2)
     c[-1] = 1
-    roots = np.round(legroots(c), tol)  # round roots themselves
+    roots = np.round(legroots(c), tol)  # Round roots themselves
     samples = list(product(*[roots for _ in range(dimension)]))
     samples.sort(
         key=lambda x: (round(np.linalg.norm(x), tol),) + tuple(np.round(x, tol))
-    )  # sort first by norm, then lexicographically
+    )  # Sort first by norm, then lexicographically
     return np.vstack(samples)
 
 
@@ -485,7 +486,7 @@ def get_samples(degree, dimension, tol=12):
     ],
 )
 def test_polynomial_model_exact(indices, SU):
-    pce = PolynomialChaosRegressor(uniform(0, 1), degree=6)
+    pce = PolynomialChaosExpansion(uniform(0, 1), degree=6)
     X = (get_samples(6, 3)[:116, :] + 1) / 2
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
     pce.fit(X, y)
@@ -493,12 +494,13 @@ def test_polynomial_model_exact(indices, SU):
     assert abs(pce.joint_sens(*indices) - SU) < 1e-12
 
 
-# Example 1 from Sudret (2008) - blind solution Note: exact values of
-# sensitivity indices reported in the paper do not agree for orders 3 and 4.
-# The values obtained with the sklearn implementation do satisfy the reported
-# relative errors, so we compare to those instead. A possible reason could be
-# that the sample point selection algorithm described in the paper does not
-# lead to unique sample points (a lot of points have the same 'norm').
+# Example 1 from Sudret (2008) - blind solution
+# NOTE: exact values of sensitivity indices reported in the paper do not agree
+# for orders 3 and 4. The values obtained with the sklearn implementation do
+# satisfy the reported relative errors, so we compare to those instead. A
+# possible reason could be that the sample point selection algorithm described
+# in the paper does not lead to unique sample points (a lot of points have the
+# same 'norm').
 @pytest.mark.parametrize(
     "degree, N, relative_error",
     [
@@ -508,7 +510,7 @@ def test_polynomial_model_exact(indices, SU):
     ],
 )
 def test_polynomial_model(degree, N, relative_error):
-    pce = PolynomialChaosRegressor(uniform(0, 1), degree=degree)
+    pce = PolynomialChaosExpansion(uniform(0, 1), degree=degree)
     X = (get_samples(degree, 3)[:N, :] + 1) / 2
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
     pce.fit(X, y)
@@ -523,7 +525,7 @@ def test_polynomial_model(degree, N, relative_error):
 
 
 # Example 2 from Sudret (2008)
-# Note: values from Table 2 in the paper
+# NOTE: values from Table 2 in the paper
 @pytest.mark.parametrize(
     "degree, N, main, total",
     [
@@ -557,7 +559,7 @@ def test_ishigami(degree, N, main, total):
     a = 7
     b = 0.1
     dimension = 3
-    pce = PolynomialChaosRegressor(uniform(-np.pi, 2 * np.pi), degree=degree)
+    pce = PolynomialChaosExpansion(uniform(-np.pi, 2 * np.pi), degree=degree)
     X = np.pi * get_samples(degree, dimension)[:N, :]
     y = np.sin(X[:, 0]) + a * np.sin(X[:, 1]) ** 2 + b * X[:, 2] ** 4 * np.sin(X[:, 0])
     pce.fit(X, y)
@@ -574,13 +576,13 @@ def test_ishigami_analytically():
 
 
 # Example 3 from Sudret (2008)
-# Note: values from Table 3 in the paper
+# NOTE: values from Table 3 in the paper
 def test_sobol_order_2():
     a = np.array([1, 2, 5, 10, 20, 50, 100, 500])
     dimension = len(a)
     degree = 2
     N = 72
-    pce = PolynomialChaosRegressor(uniform(), degree=degree)
+    pce = PolynomialChaosExpansion(uniform(), degree=degree)
     X = (get_samples(degree, dimension)[:N, :] + 1) / 2
     y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
     pce.fit(X, y)
@@ -599,9 +601,9 @@ def test_sobol_order_2():
 
 
 # Example 3 from Sudret (2008)
-# Note: values from Table 4 in the paper
+# NOTE: values from Table 4 in the paper
 # I can exactly reproduce the values from the table for order 5, but not for
-# order 3 and order 7. See remark for Example 1 above.
+# Order 3 and order 7. See remark for Example 1 above.
 @pytest.mark.parametrize(
     "degree, N, main, total, tol",
     [
@@ -664,7 +666,7 @@ def test_sobol_order_2():
 def test_sobol(degree, N, main, total, tol):
     a = np.array([1, 2, 5, 10, 20, 50, 100, 500])
     dimension = 4
-    pce = PolynomialChaosRegressor(uniform(), degree=degree)
+    pce = PolynomialChaosExpansion(uniform(), degree=degree)
     X = (get_samples(degree, dimension)[:N, :] + 1) / 2
     X2 = np.hstack([X, 1 / 2 * np.ones_like(X)])
     y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X2.T))

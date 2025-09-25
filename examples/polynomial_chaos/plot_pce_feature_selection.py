@@ -1,9 +1,9 @@
 """
 ===============================================================================
-Pruning basis terms in Polynomial Chaos regression
+Pruning basis terms in Polynomial Chaos Expansions
 ===============================================================================
 
-This example illustrates how to use Polynomial Chaos regression with basis
+This example illustrates how to use Polynomial Chaos Expansions with basis
 pruning during fitting. The pruning is performed using a feature selection
 method, which discards irrelevant polynomial terms from the expansion. This
 can lead to more interpretable models and reduces computational cost during
@@ -47,9 +47,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # %%
 # We first fit a Polynomial Chaos expansion of degree 5 without pruning.
 from sklearn.linear_model import LinearRegression
-from sklearn.polynomial_chaos import PolynomialChaosRegressor
+from sklearn.polynomial_chaos import PolynomialChaosExpansion
 
-pce = PolynomialChaosRegressor(
+pce = PolynomialChaosExpansion(
     distribution=distribution, degree=5, estimator=LinearRegression(fit_intercept=False)
 )
 pce.fit(X_train, y_train)
@@ -79,7 +79,7 @@ plt.show()
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 
-pruned_pce = PolynomialChaosRegressor(
+pruned_pce = PolynomialChaosExpansion(
     distribution=distribution,
     degree=5,
     estimator=LinearRegression(fit_intercept=False),
@@ -146,7 +146,7 @@ plt.show()
 
 # %%
 # See also
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy.py` for
 #     an example on handling noisy outputs.
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_sobol_g.py` for
 #     an example of adaptive construction of multiindex sets.

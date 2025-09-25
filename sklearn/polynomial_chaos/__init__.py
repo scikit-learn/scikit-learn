@@ -1,10 +1,8 @@
-"""
-The :mod:`sklearn.pce` module implements Polynomial Chaos regression
-"""
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.polynomial_chaos._pcr import PolynomialChaosRegressor
+"""The :mod:`sklearn.pce` module implements Polynomial Chaos Expansions"""
 
-__all__ = ["PolynomialChaosRegressor"]
+from sklearn.polynomial_chaos._pce import PolynomialChaosExpansion
+
+__all__ = ["PolynomialChaosExpansion"]
