@@ -68,11 +68,11 @@ class _UnsupportedGroupCVMixin:
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -231,11 +231,11 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -328,11 +328,11 @@ class LeavePOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -417,14 +417,14 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -863,8 +863,8 @@ class StratifiedKFold(_BaseKFold):
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -1238,11 +1238,11 @@ class TimeSeriesSplit(_BaseKFold):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : array-like of shape (n_samples,)
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -1382,13 +1382,13 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : array-like of shape (n_samples,)
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1513,13 +1513,13 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : array-like of shape (n_samples,)
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1645,14 +1645,14 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : object, default=None
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object, default=None
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         groups : array-like of shape (n_samples,), default=None
-            Always ignored, exists for compatibility.
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -1825,8 +1825,8 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -1946,14 +1946,14 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -2400,8 +2400,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -2554,14 +2554,14 @@ class PredefinedSplit(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -2608,14 +2608,14 @@ class PredefinedSplit(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -2636,14 +2636,14 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -2657,14 +2657,14 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------

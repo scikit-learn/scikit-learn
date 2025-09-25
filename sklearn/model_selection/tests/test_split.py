@@ -1017,6 +1017,9 @@ def test_group_shuffle_split():
         # Make sure the repr works
         repr(slo)
 
+        # Test that the length is correct
+        assert slo.get_n_splits(X, y, groups=groups_i) == n_splits
+
         l_unique = np.unique(groups_i)
         l = np.asarray(groups_i)
 
