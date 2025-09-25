@@ -9,7 +9,6 @@ import numpy as np
 import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
-
 from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.compose import TransformedTargetRegressor
@@ -21,8 +20,8 @@ from sklearn.model_selection import cross_val_predict, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     Binarizer,
-    KBinsDiscretizer,
     FunctionTransformer,
+    KBinsDiscretizer,
     KernelCenterer,
     MaxAbsScaler,
     MinMaxScaler,
