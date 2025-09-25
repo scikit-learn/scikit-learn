@@ -2858,13 +2858,13 @@ def test_transformer_features_names_no_warnings(TransformerClass):
         warnings.simplefilter("always")
         warnings.filterwarnings(
             "ignore",
-            message = (
+            message=(
                 "The provided functions or transformer are not strictly"
                 " inverse of each other. If you are sure you want to proceed"
                 " regardless, set 'check_inverse=False'"
             ),
             category=UserWarning,
-            )
+        )
 
         X, y = datasets.load_iris(return_X_y=True, as_frame=True)
         X_train, X_test, y_train, y_test = train_test_split(
