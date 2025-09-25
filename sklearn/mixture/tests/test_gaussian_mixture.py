@@ -115,7 +115,8 @@ class RandomData:
                     n_features,
                     random_state=rng,
                     n_samples=n_components,
-                ).astype(dtype) * 0.5
+                ).astype(dtype)
+                * 0.5
             ),
         }
         self.precisions = {

@@ -566,9 +566,7 @@ def test_make_sparse_uncorrelated():
 def test_make_spd_matrix(global_random_seed, n_samples):
     n_dim = 5
     X = make_spd_matrix(
-        n_dim=n_dim,
-        random_state=global_random_seed,
-        n_samples=n_samples
+        n_dim=n_dim, random_state=global_random_seed, n_samples=n_samples
     )
 
     if n_samples == 1:
