@@ -147,14 +147,16 @@ a.param-doc-link::before {
     border-radius: 0 0 .5em .5em;
 }
 
+#$id .features-container table {
+    width: 100%;
+}
+
 #$id .features summary {
   position: sticky;
   top: 0;
-  margin-left: .5em;
-  padding: .25em .5em .25em 0;
+  padding: .25em .5em;
   border: none;
 }
-
 
 #$id .features td {
   text-align: left;
@@ -162,4 +164,15 @@ a.param-doc-link::before {
   white-space: nowrap;
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#$id .features summary::marker {
+  font-size: 0.8em;
+  color: var(--sklearn-color-icon);
+}
+
+#$id .features summary:hover {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+  border-radius: .5em;
 }
