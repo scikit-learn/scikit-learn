@@ -113,3 +113,78 @@ for i in range(cv.n_splits):
 # In the five folds, the selected features are consistent. This is good news,
 # it means that the selection is stable across folds, and it confirms that
 # these features are the most informative ones.
+
+# %%
+# Using `permutation_importance` to select features
+# -------------------------------------------------
+# Under the hood, `RFECV` uses importance scores derived from the coefficients of the
+# linear model we used to choose which feature to eliminate. We show here how to use
+# `permutation_importance` as an alternative way to measure the importance of features.
+# For that, we need to feed the `importance_getter` parameter of RFECV a callable
+# that accepts a fitted model and an array containing the indices of the features that
+# have not been eliminated yet.
+
+# %%
+from sklearn.inspection import permutation_importance
+
+# Permutation importance need test data to produce reliable importance measures.
+X_test, y_test = make_classification(
+    n_samples=500,
+    n_features=n_features,
+    n_informative=3,
+    n_redundant=2,
+    n_repeated=0,
+    n_classes=8,
+    n_clusters_per_class=1,
+    class_sep=0.8,
+    random_state=0,
+)
+
+
+# Use `feature_indices` to extract the features that have not been eliminated yet from
+# test set.
+def permutation_importance_getter(model, feature_indices, X_test, y_test, random_state):
+    return permutation_importance(
+        model,
+        X_test[:, feature_indices],
+        y_test,
+        random_state=random_state,
+    ).importances_mean
+
+
+rfecv = RFECV(
+    estimator=clf,
+    step=1,
+    cv=cv,
+    scoring="accuracy",
+    min_features_to_select=min_features_to_select,
+    n_jobs=2,
+    importance_getter=lambda model, feature_indices: permutation_importance_getter(
+        model, feature_indices, X_test, y_test, random_state=0
+    ),
+)
+rfecv.fit(X, y)
+
+print(f"Optimal number of features: {rfecv.n_features_}")
+
+# %%
+data = {
+    key: value
+    for key, value in rfecv.cv_results_.items()
+    if key in ["n_features", "mean_test_score", "std_test_score"]
+}
+cv_results = pd.DataFrame(data)
+plt.figure()
+plt.xlabel("Number of features selected")
+plt.ylabel("Mean test accuracy")
+plt.errorbar(
+    x=cv_results["n_features"],
+    y=cv_results["mean_test_score"],
+    yerr=cv_results["std_test_score"],
+)
+plt.title("Recursive Feature Elimination \nwith correlated features")
+plt.show()
+
+# %%
+# We see that we obtain very similar results with this model agnostic feature importance
+# method.

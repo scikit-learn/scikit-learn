@@ -770,14 +770,14 @@ def test_rfe_with_permutation_importance(global_random_seed):
     reg = RandomForestRegressor(random_state=global_random_seed, n_estimators=2)
 
     def permutation_importance_getter(
-        model, feature_indices, X_test, y_test, global_random_seed
+        model, feature_indices, X_test, y_test, random_state
     ):
         return permutation_importance(
             model,
             X_test[:, feature_indices],
             y_test,
             n_repeats=2,
-            random_state=global_random_seed,
+            random_state=random_state,
         ).importances_mean
 
     rfe = RFE(
@@ -807,22 +807,22 @@ def test_rfecv_with_permutation_importance(global_random_seed):
     reg = RandomForestRegressor(random_state=global_random_seed, n_estimators=15)
 
     def permutation_importance_getter(
-        model, feature_indices, X_test, y_test, global_random_seed
+        model, feature_indices, X_test, y_test, random_state
     ):
         return permutation_importance(
             model,
             X_test[:, feature_indices],
             y_test,
             n_repeats=2,
-            random_state=global_random_seed,
+            random_state=random_state,
         ).importances_mean
 
-    rfe = RFECV(
+    rfecv = RFECV(
         estimator=reg,
         importance_getter=lambda model, feature_indices: permutation_importance_getter(
             model, feature_indices, X_test, y_test, global_random_seed
         ),
     ).fit(X_train, y_train)
 
-    assert rfe.n_features_ == 5
-    assert_array_equal(rfe.support_, np.array(([True] * 5) + ([False] * 2)))
+    assert rfecv.n_features_ == 5
+    assert_array_equal(rfecv.support_, np.array(([True] * 5) + ([False] * 2)))

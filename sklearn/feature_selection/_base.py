@@ -220,11 +220,7 @@ def _get_feature_importances(
 
     feature_indices : ndarray of shape (n_features,), default=None
         The indices of features from the full dataset whose importance are currently
-        evaluated. These are passed to `getter` when it can accept them which allows
-        using RFE with permutation importance, as shown in this documentation example:
-
-        #TODO: create and link here a documentation example showing how to use
-        # `permutation_importance` with RFE(CV).
+        evaluated. These are passed to `getter` when it can accept them.
 
     norm_order : int, default=1
         The norm order to apply when `transform_func="norm"`. Only applied
