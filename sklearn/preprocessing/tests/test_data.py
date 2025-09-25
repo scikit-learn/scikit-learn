@@ -2838,7 +2838,11 @@ transformers_with_inverse = sorted(
     {
         cls
         for cls in globals().values()
-        if inspect.isclass(cls) and hasattr(cls, "inverse_transform")
+        if (
+            inspect.isclass(cls)
+            and hasattr(cls, "inverse_transform")
+            and cls.__module__.startswith("sklearn.preprocessing")
+        )
     },
     key=lambda c: c.__name__,
 )
