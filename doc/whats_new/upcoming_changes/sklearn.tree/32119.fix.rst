@@ -1,0 +1,4 @@
+- Fix calculation of nodes impurity in :class:`tree.DecisionTreeRegressor`
+  and :class:`ensemble.RandomForestRegressor` when missing values are
+  present
+  By :user:`Arthur Lacote <cakedev0>`
