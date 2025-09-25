@@ -448,8 +448,8 @@ def test_stacking_classifier_stratify_default():
         (
             StackingRegressor(
                 estimators=[
-                    ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
+                    ("first", Ridge(alpha=1.0)),
+                    ("second", Ridge(alpha=1e-6)),
                 ],
                 final_estimator=LinearRegression(),
                 cv=KFold(shuffle=True, random_state=42),
@@ -472,6 +472,7 @@ def test_stacking_with_sample_weight(stacker, X, y):
         X, y, total_sample_weight, random_state=42
     )
 
+    stacker = clone(stacker)
     with ignore_warnings(category=ConvergenceWarning):
         stacker.fit(X_train, y_train)
     y_pred_no_weight = stacker.predict(X_test)
@@ -846,7 +847,7 @@ def test_get_feature_names_out(
     stacker, feature_names, X, y, expected_names, passthrough
 ):
     """Check get_feature_names_out works for stacking."""
-
+    stacker = clone(stacker)
     stacker.set_params(passthrough=passthrough)
     stacker.fit(scale(X), y)
 

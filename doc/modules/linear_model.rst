@@ -150,6 +150,7 @@ the corresponding solver is chosen.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
 
 Classification
 --------------
@@ -270,6 +271,7 @@ computes the coefficients along the full path of possible values.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
 * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -296,7 +298,7 @@ computes the coefficients along the full path of possible values.
 Coordinate Descent with Gap Safe Screening Rules
 ------------------------------------------------
 
-Coordinate descent (CD) is a strategy so solve a minimization problem that considers a
+Coordinate descent (CD) is a strategy to solve a minimization problem that considers a
 single feature :math:`j` at a time. This way, the optimization problem is reduced to a
 1-dimensional problem which is easier to solve:
 
@@ -319,12 +321,14 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
   The duality gap :math:`G(w, v)` is an upper bound of the difference between the
   current primal objective function of the Lasso, :math:`P(w)`, and its minimum
-  :math:`P(w^\star)`, i.e. :math:`G(w, v) \leq P(w) - P(w^\star)`. It is given by
+  :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
   .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
+  called strong duality).
   With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
   dual scaling
 
@@ -763,7 +767,7 @@ previously chosen dictionary elements.
 
   * `Matching pursuits with time-frequency dictionaries
     <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
-    S. G. Mallat, Z. Zhang,
+    S. G. Mallat, Z. Zhang, 1993.
 
 .. _bayesian_regression:
 
@@ -804,11 +808,14 @@ The disadvantages of Bayesian regression include:
 
 .. dropdown:: References
 
-  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
-    Recognition and Machine learning
+  * A good introduction to Bayesian methods is given in `C. Bishop: Pattern
+    Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`__.
 
-  * Original Algorithm is detailed in the  book `Bayesian learning for neural
-    networks` by Radford M. Neal
+  * Original Algorithm is detailed in the book `Bayesian learning for neural
+    networks
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=db869fa192a3222ae4f2d766674a378e47013b1b>`__
+    by Radford M. Neal.
 
 .. _bayesian_ridge_regression:
 
@@ -1430,13 +1437,14 @@ Passive Aggressive Algorithms
 The passive-aggressive (PA) algorithms are another family of 2 algorithms (PA-I and
 PA-II) for large-scale online learning that derive from SGD. They are similar to the
 Perceptron in that they do not require a learning rate. However, contrary to the
-Perceptron, they include a regularization parameter ``PA_C``.
+Perceptron, they include a regularization parameter ``eta0`` (:math:`C` in the
+reference paper).
 
 For classification,
-:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", PA_C=1.0)` can
+:class:`SGDClassifier(loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0)` can
 be used for PA-I or with ``learning_rate="pa2"`` for PA-II. For regression,
 :class:`SGDRegressor(loss="epsilon_insensitive", penalty=None, learning_rate="pa1",
-PA_C=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
+eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 

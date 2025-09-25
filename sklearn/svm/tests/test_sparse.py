@@ -490,6 +490,9 @@ def test_timeout(lil_container):
         sp.fit(lil_container(X), Y)
 
 
+# XXX: probability=True is not thread-safe:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+@pytest.mark.thread_unsafe
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     with ignore_warnings(category=ConvergenceWarning):

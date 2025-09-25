@@ -159,6 +159,7 @@ def test_as_float_array():
     "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
 )
 def test_as_float_array_nan(X):
+    X = X.copy()
     X[5, 0] = np.nan
     X[6, 1] = np.nan
     X_converted = as_float_array(X, ensure_all_finite="allow-nan")
