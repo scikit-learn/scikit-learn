@@ -120,7 +120,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         For example, give `regressor_.coef_` in case of
         :class:`~sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
+        :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
@@ -128,8 +128,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         `feature_indices` which stores the index of the features in the full dataset
         that have not been eliminated yet.
 
-        `feature_indices` allows RFE to be used with permutation importance, as
-        shown on RFECV at the end of
+        `feature_indices` allows `RFE` to be used with permutation importance, as
+        shown on `RFECV` at the end of
         :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
 
         .. versionadded:: 0.24
@@ -657,7 +657,7 @@ class RFECV(RFE):
         `feature_indices` which stores the index of the features in the full dataset
         that have not been eliminated yet.
 
-        `feature_indices` allows RFECV to be used with permutation importance, as
+        `feature_indices` allows `RFECV` to be used with permutation importance, as
         shown at the end of
         :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
 
