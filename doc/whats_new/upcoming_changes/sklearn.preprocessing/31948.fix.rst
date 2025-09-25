@@ -1,6 +1,5 @@
-- :class:`preprocessing.PowerTransformer` and :class:`preprocessing.QuantileTransformer` now use
-  check_array for inverse_transform, instead of _check_input.
-  This fixes the following UserWarning:
-  X has feature names, but PowerTransformer was fitted without feature names.
-  X has feature names, but QuantileTransformer was fitted without feature names.
+- :class:`~sklearn.preprocessing.PowerTransformer` and
+  :class:`~sklearn.preprocessing.QuantileTransformer` now don't raise a warning in
+  `inverse_transform` related to feature names if `fit` is called using data with
+  feature names.
   By :user:`Thibault <ThibaultDECO>`
