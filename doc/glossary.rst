@@ -1341,7 +1341,8 @@ Methods
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
         elements one would get if iterating through the return value of
-        :term:`split` given the same parameters.
+        :term:`split` given the same parameters. Takes the same parameters as
+        split.
 
     ``get_params``
         Gets all :term:`parameters`, and their values, that can be set using
