@@ -129,17 +129,13 @@ a.param-doc-link::before {
 }
 
 #$id .features {
-    /*all: unset; */
+    /* all: unset; */
     font-family: monospace;
     font-size: smaller;
     cursor: pointer;
-    background-color: var(--sklearn-color-fitted-level-0);
+    background-color: var(--sklearn-color-fitted-level-1);
     border: 1px dotted var(--sklearn-color-border-box);
     border-radius: .5em;
-}
-
-#$id .features:checked {
-    background-color: var(--sklearn-color-fitted-level-2);
 }
 
 #$id .features-container {
@@ -149,16 +145,15 @@ a.param-doc-link::before {
     overflow: auto;
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
+    border-radius: 0 0 .5em .5em;
 }
 
 #$id .features summary {
   /*all: unset; */
   position: sticky;
   top: 0;
-  margin: 0;
-  padding-top: .25em;
-  padding-bottom: .25em;
-  border: .1em solid grey;
+  margin-left: .5em;
+  padding: .25em .5em .25em 0;
   border: none;
 }
 
@@ -168,4 +163,6 @@ a.param-doc-link::before {
   text-align: left;
   padding: 0;
   white-space: nowrap;
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-0);
 }
