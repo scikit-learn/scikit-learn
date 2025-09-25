@@ -3,6 +3,7 @@
 
 import re
 import warnings
+import inspect
 
 import numpy as np
 import numpy.linalg as la
