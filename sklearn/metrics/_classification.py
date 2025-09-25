@@ -595,9 +595,7 @@ def confusion_matrix(
             UserWarning,
         )
 
-    return xp.asarray(
-        cm, dtype=_max_precision_float_dtype(xp, device=device_), device=device_
-    )
+    return xp.asarray(cm, device=device_)
 
 
 @validate_params(
