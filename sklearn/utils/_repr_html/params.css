@@ -141,6 +141,7 @@ a.param-doc-link::before {
     max-width: 15em;
     max-height: 10em;
     overflow: auto;
+    scrollbar-width: thin;
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
     border-radius: 0 0 .5em .5em;
@@ -182,13 +183,24 @@ a.param-doc-link::before {
 
 
 .features-container .copy-paste-icon {
-    width: 12px;
-    height: 12px;
-    background-size: 12px 12px;
+    width: 1em;
+    height: 1em;
+    background-size: 1em 1em;
     background-color: var(--sklearn-color-fitted-level-0);
+    background-position: center;
+    padding: .5em;
+    border: 1px solid grey;
+    border-radius: .25em;
+    box-shadow: .2em .2em grey;
     flex-shrink: 0;
     position: sticky;
     top: 0;
     right: 0em;
     z-index: 1;
+    transition: transform 500ms ease;
+}
+
+.features-container .copy-paste-icon:hover {
+    box-shadow: .2em .2em black;
+    transform: scale(1.25);
 }
