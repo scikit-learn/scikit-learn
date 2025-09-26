@@ -12,7 +12,6 @@
 
 import json
 import os
-import platform
 import re
 import sys
 import warnings
@@ -58,6 +57,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "numpydoc",
+    "sphinx.ext.linkcode",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
@@ -77,10 +77,6 @@ extensions = [
     "override_pst_pagetoc",
     "sphinx_issues",
 ]
-
-# Exclude sphinx.ext.linkcode on native Windows
-if platform.system() != "Windows":
-    extensions.append("sphinx.ext.linkcode")
 
 # Specify how to identify the prompt when copying code snippets
 copybutton_prompt_text = r">>> |\.\.\. "
