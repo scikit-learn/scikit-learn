@@ -24,8 +24,8 @@ up" on issues that others reported and that are relevant to you. It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star it in GitHub to say "I use it".
 
-Note that communications on all channels should respect our `Code of Conduct
-<https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
+Note that communications on all channels should respect our
+[Code of Conduct](./CODE_OF_CONDUCT.md).
 
 Quick links
 -----------
