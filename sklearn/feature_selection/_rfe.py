@@ -124,9 +124,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
-        return importance for each feature. When it accepts it, the callable is passed
-        `feature_indices` which stores the index of the features in the full dataset
-        that have not yet been eliminated in previous iterations.
+        return importance for each feature. When the callable also accepts
+        `feature_indices` in its signature, it will be passed the index of the features
+        of the full dataset that remain after elimination in previous iterations.
 
         `feature_indices` allows `RFE` to be used with permutation importance, as
         shown on `RFECV` at the end of
@@ -657,9 +657,9 @@ class RFECV(RFE):
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
-        return importance for each feature. When it accepts it, the callable is passed
-        `feature_indices` which stores the index of the features in the full dataset
-        that have not yet been eliminated in previous iterations.
+        return importance for each feature. When the callable also accepts
+        `feature_indices` in its signature, it will be passed the index of the features
+        of the full dataset that remain after elimination in previous iterations.
 
         `feature_indices` allows `RFE` to be used with permutation importance, as
         shown on `RFECV` at the end of

@@ -1,6 +1,6 @@
 - :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
   now support the use of :func:`permutation_importance` as an :attr:`importance_getter`.
-  When a callable, and when it can accept it, the :attr:`importance_getter` is passed
+  When a callable, and when possible, the :attr:`importance_getter` is passed
   :attr:`feature_indices` along with the fitted estimator.
   The attribute :attr:`feature_indices` stores the index of the features from the full dataset
   that have not been eliminated yet.

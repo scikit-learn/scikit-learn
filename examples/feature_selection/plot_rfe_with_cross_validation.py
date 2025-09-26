@@ -21,12 +21,13 @@ number of features selected with cross-validation.
 # features are non-informative as they are drawn at random.
 
 from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
 
 n_features = 15
 feat_names = [f"feature_{i}" for i in range(15)]
 
 X, y = make_classification(
-    n_samples=500,
+    n_samples=1_000,
     n_features=n_features,
     n_informative=3,
     n_redundant=2,
@@ -35,6 +36,9 @@ X, y = make_classification(
     n_clusters_per_class=1,
     class_sep=0.8,
     random_state=0,
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=0.5, shuffle=False, random_state=0
 )
 
 # %%
@@ -60,7 +64,7 @@ rfecv = RFECV(
     min_features_to_select=min_features_to_select,
     n_jobs=2,
 )
-rfecv.fit(X, y)
+rfecv.fit(X_train, y_train)
 
 print(f"Optimal number of features: {rfecv.n_features_}")
 
@@ -117,28 +121,17 @@ for i in range(cv.n_splits):
 # %%
 # Using `permutation_importance` to select features
 # -------------------------------------------------
-# Under the hood, `RFECV` uses importance scores derived from the coefficients of the
-# linear model we used, to choose which feature to eliminate. We show here how to use
-# `permutation_importance` as an alternative way to measure the importance of features.
-# For that, we use a callable in the `importance_getter` parameter of RFECV.
+# The `importance_getter` parameter in RFE and RFECV uses by default the `coef_` (e.g.
+# in linear models) or the `feature_importances_` attributes of an estimator to derive
+# feature importance. These importance measures are used to choose which features to
+# eliminate first.
+#
+# We show here how to use a callable to compute the `permutation_importance` instead.
 # This callable accepts a fitted model and an array containing the indices of the
-# features that have not been eliminated yet.
+# features that remain after elimination.
 
 # %%
 from sklearn.inspection import permutation_importance
-
-# Permutation importance needs test data to produce reliable importance measures.
-X_test, y_test = make_classification(
-    n_samples=500,
-    n_features=n_features,
-    n_informative=3,
-    n_redundant=2,
-    n_repeated=0,
-    n_classes=8,
-    n_clusters_per_class=1,
-    class_sep=0.8,
-    random_state=1,
-)
 
 
 # Use `feature_indices` to extract from the test set the features that have not been
