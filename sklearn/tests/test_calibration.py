@@ -48,6 +48,8 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
@@ -1242,25 +1244,33 @@ def test_temperature_scaling_array_api_compliance(array_namespace, device_, dtyp
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
     X_train = X_train.astype(dtype_name)
     y_train = y_train.astype(dtype_name)
+    X_train_xp = xp.asarray(X_train, device=device_)
+    y_train_xp = xp.asarray(y_train, device=device_)
 
     X_cal = X_cal.astype(dtype_name)
     y_cal = y_cal.astype(dtype_name)
     X_cal_xp = xp.asarray(X_cal, device=device_)
     y_cal_xp = xp.asarray(y_cal, device=device_)
 
-    clf = LinearDiscriminantAnalysis()
-    clf.fit(X_train, y_train)
-
     with config_context(array_api_dispatch=True):
+        clf_xp = LinearDiscriminantAnalysis()
+        clf_xp.fit(X_train_xp, y_train_xp)
         cal_clf_xp = CalibratedClassifierCV(
-            FrozenEstimator(clf), cv=3, method="temperature", ensemble=False
+            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=False
         ).fit(X_cal_xp, y_cal_xp)
 
+    clf_np = LinearDiscriminantAnalysis()
+    clf_np.fit(X_train, y_train)
     cal_clf_np = CalibratedClassifierCV(
-        FrozenEstimator(clf), cv=3, method="temperature", ensemble=False
+        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=False
     ).fit(X_cal, y_cal)
 
     calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
     calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-    rtol = 1e-3 if device_ == "mps" else 1e-10
-    assert np.isclose(calibrator_xp.beta_, calibrator_np.beta_, rtol=rtol)
+    rtol = 1e-3 if device_ == "mps" else 1e-8
+    assert np.isclose(
+        _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+        calibrator_np.beta_,
+        rtol=rtol,
+        atol=_atol_for_type(dtype_name),
+    )

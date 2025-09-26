@@ -452,7 +452,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            if len(self.classes_) == 2:
+            if self.classes_.shape[0] == 2:
                 # Ensure shape (n_samples, 1) in the binary case
                 if method_name == "predict_proba":
                     # Select the probability column of the positive class
@@ -704,7 +704,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if len(classes) == 2 and predictions.shape[-1] == 1:
+        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
             response_method_name = _check_response_method(
                 clf,
                 ["decision_function", "predict_proba"],
@@ -1139,7 +1139,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 f"{log_beta_minimizer.message}"
             )
 
-        self.beta_ = np.exp(log_beta_minimizer.x)
+        self.beta_ = xp.exp(
+            xp.asarray(log_beta_minimizer.x, dtype=dtype_, device=xp_device)
+        )
 
         return self
 

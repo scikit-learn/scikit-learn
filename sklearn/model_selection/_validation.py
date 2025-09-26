@@ -26,7 +26,11 @@ from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
-from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    device,
+    get_namespace,
+)
 from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
@@ -1214,8 +1218,9 @@ def cross_val_predict(
         method in ["decision_function", "predict_proba", "predict_log_proba"]
         and y is not None
     )
+    xp, is_array_api = get_namespace(X)
     if encode:
-        y = np.asarray(y)
+        y = xp.asarray(y)
         if y.ndim == 1:
             le = LabelEncoder()
             y = le.fit_transform(y)
@@ -1258,12 +1263,13 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        xp, _ = get_namespace(X)
         inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
         predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):
         return [p[inv_test_indices] for p in predictions]
+    elif is_array_api:
+        return xp.take(predictions, inv_test_indices, axis=0)
     else:
         return predictions[inv_test_indices]
 
@@ -1337,7 +1343,10 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
             ]
         else:
             # A 2D y array should be a binary label indicator matrix
-            n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
+            xp, _ = get_namespace(X, y)
+            n_classes = (
+                len(set(_convert_to_numpy(y, xp=xp))) if y.ndim == 1 else y.shape[1]
+            )
             predictions = _enforce_prediction_order(
                 estimator.classes_, predictions, n_classes, method
             )
@@ -1357,7 +1366,9 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
     (a subset of the classes in the full training set)
     and `n_classes` is the number of classes in the full training set.
     """
-    if n_classes != len(classes):
+    xp, _ = get_namespace(predictions, classes)
+    classes_length = classes.shape[0]
+    if n_classes != classes_length:
         recommendation = (
             "To fix this, use a cross-validation "
             "technique resulting in properly "
@@ -1367,11 +1378,11 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             "Number of classes in training fold ({}) does "
             "not match total number of classes ({}). "
             "Results may not be appropriate for your use case. "
-            "{}".format(len(classes), n_classes, recommendation),
+            "{}".format(classes_length, n_classes, recommendation),
             RuntimeWarning,
         )
         if method == "decision_function":
-            if predictions.ndim == 2 and predictions.shape[1] != len(classes):
+            if predictions.ndim == 2 and predictions.shape[1] != classes_length:
                 # This handles the case when the shape of predictions
                 # does not match the number of classes used to train
                 # it with. This case is found when sklearn.svm.SVC is
@@ -1381,26 +1392,28 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                     "number of classes ({}) in fold. "
                     "Irregular decision_function outputs "
                     "are not currently supported by "
-                    "cross_val_predict".format(predictions.shape, method, len(classes))
+                    "cross_val_predict".format(
+                        predictions.shape, method, classes_length
+                    )
                 )
-            if len(classes) <= 2:
+            if classes_length <= 2:
                 # In this special case, `predictions` contains a 1D array.
                 raise ValueError(
                     "Only {} class/es in training fold, but {} "
                     "in overall dataset. This "
                     "is not supported for decision_function "
                     "with imbalanced folds. {}".format(
-                        len(classes), n_classes, recommendation
+                        classes_length, n_classes, recommendation
                     )
                 )
 
-        float_min = np.finfo(predictions.dtype).min
+        float_min = xp.finfo(predictions.dtype).min
         default_values = {
             "decision_function": float_min,
             "predict_log_proba": float_min,
             "predict_proba": 0,
         }
-        predictions_for_all_classes = np.full(
+        predictions_for_all_classes = xp.full(
             (_num_samples(predictions), n_classes),
             default_values[method],
             dtype=predictions.dtype,
