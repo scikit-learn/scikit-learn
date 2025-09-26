@@ -1,6 +1,6 @@
 {
   // More info about Features: https://containers.dev/features
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
   "features": {},
 
   "onCreateCommand": ".devcontainer/setup.sh",
