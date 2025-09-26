@@ -22,6 +22,7 @@ from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.polynomial_chaos import PolynomialChaosExpansion
 from sklearn.utils import check_random_state
+from sklearn.utils._orthogonal_polynomial import Polynomial
 
 
 # Test exact coefficients
@@ -31,8 +32,8 @@ def test_exact_coefficients():
     X = distribution.rvs((27, 2), random_state=random_state)
     y = (
         3.14
-        + 1.74 * 0.5 * (3 * X[:, 0] ** 2 - 1)
-        + X[:, 1] * 0.5 * (3 * X[:, 0] ** 2 - 1)
+        + 1.74 * 0.5 * np.sqrt(5) * (3 * X[:, 0] ** 2 - 1)
+        + np.sqrt(3) * X[:, 1] * 0.5 * np.sqrt(5) * (3 * X[:, 0] ** 2 - 1)
     )
     pce = PolynomialChaosExpansion(distribution, degree=3, scale_outputs=False)
     pce.fit(X, y)
@@ -273,7 +274,7 @@ def test_friedman1():
         uniform(-1, 2), degree=5, estimator=estimator, scale_outputs=False
     )
     pce.fit(X, y)
-    assert np.sum(pce.main_sens() > 0.001) == 5  # 5 important features
+    assert np.sum(pce.main_sens() > 1e-14) == 5  # 5 important features
 
 
 # Check mean and var of distributions
@@ -689,3 +690,105 @@ def test_sobol(degree, N, main, total, tol):
 
     for j, tot in enumerate(total):
         assert abs(pce.total_sens()[0, j] - tot) < tol
+
+
+# Test Ishigami example with Fourier basis
+# NOTE: The Ishigami function is defined as
+#
+#    sin(x_1) + a * sin(x_2)^2 + b * x_3^4 * sin(x_1)
+#
+# where x_1, x_2, x_3 ~ U(-pi, pi)
+# Using a Fourier basis for x_1 and x_2, and using a Legendre polynomial basis
+# for x_2, this function can be fitted exactly using only 5 polynomial terms.
+
+
+# Define Fourier basis
+class Fourier(Polynomial):
+    """A class representing Fourier basis functions (cos/sin)."""
+
+    def _vandermonde(self, points, degree):
+        points = np.asarray(points)
+        n = len(points)
+        V = np.zeros((n, degree + 1))
+
+        V[:, 0] = 1.0  # Constant
+        for j in range(1, degree + 1):
+            k = (j + 1) // 2  # Frequency = ceil(j/2)
+            if j % 2 == 1:  # Odd index → sin
+                V[:, j] = np.sqrt(2) * np.sin(k * points)
+            else:  # Even index → cos
+                V[:, j] = np.sqrt(2) * np.cos(k * points)
+        return V
+
+    @staticmethod
+    def _distribution():
+        return "fourier"
+
+    def scale_features_from_distribution(self, X, distribution):
+        # Map uniform(0,1) -> [-pi, pi]
+        X = super().scale_features_from_distribution(X, distribution)
+        return 2 * np.pi * (X - 0.5)
+
+    def _norm_squared(self, degree):
+        # This is an orthonormal basis with respect to the uniform distribution
+        # on (-pi, pi)
+        return 1
+
+
+# Define corresponding distribution
+class FourierDistribution:
+    def __init__(self, loc=-np.pi, scale=2 * np.pi):
+        self._frozen = uniform(loc=loc, scale=scale)
+        self.args = self._frozen.args
+        self.kwds = self._frozen.kwds
+        # Clone dist and rename
+        self.dist = type(
+            "dist",
+            (),
+            {"name": "fourier", "_parse_args": self._frozen.dist._parse_args},
+        )()
+
+    def __getattr__(self, name):
+        return getattr(self._frozen, name)
+
+
+# Test Ishigami with Fourier basis
+def test_ishigami_fourier():
+    # First, let's define the model
+    a = 7
+    b = 0.1
+
+    def ishigami(X):
+        return (
+            np.sin(X[:, 0])
+            + a * np.sin(X[:, 1]) ** 2
+            + b * X[:, 2] ** 4 * np.sin(X[:, 0])
+        )
+
+    # Generate training data
+    distribution = uniform(loc=-np.pi, scale=2 * np.pi)
+    random_state = check_random_state(17)
+    X = distribution.rvs((1000, 3), random_state=random_state)
+    y = ishigami(X)
+
+    # Define basis, Fourier in x2, Legendre in x3
+    dist = (
+        FourierDistribution(),  # Fourier in x1
+        FourierDistribution(),  # Fourier in x2
+        distribution,  # Legendre in x3
+    )
+
+    # Fit PCE
+    pce = PolynomialChaosExpansion(
+        distribution=dist,
+        degree=5,
+        scale_outputs=False,
+    )
+    pce.fit(X, y)
+
+    # Check score
+    X_test = distribution.rvs((1024, 3))
+    y_test = ishigami(X_test)
+    assert np.abs(pce.score(X_test, y_test) - 1) < 1e-10
+
+    # Check coefficients

@@ -367,6 +367,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
             basis = OrthogonalPolynomialFeatures(
                 self.degree,
                 [str(polynomial) for polynomial in self.polynomials_],
+                normalize=True,
                 truncation=self.truncation,
                 weights=self.weights,
                 multiindices=self.multiindices_,
@@ -522,9 +523,8 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         for j, index in enumerate(self.multiindices_):
             if np.sum(index != 0) == len(idcs) and all(i > 0 for i in index[idcs]):
                 joint_sens += (
-                    self.output_std_**2
-                    * np.atleast_2d(self.coef_)[:, j] ** 2
-                    * self.norms_[j] ** 2
+                    self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
+                    # * self.norms_[j] ** 2
                 )
 
         return np.divide(joint_sens.T, self.var()).T
@@ -591,9 +591,8 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
                 if index[i] == 0:
                     continue
                 total_sens[:, i] += (
-                    self.output_std_**2
-                    * np.atleast_2d(self.coef_)[:, j] ** 2
-                    * self.norms_[j] ** 2
+                    self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
+                    # * self.norms_[j] ** 2
                 )
         return np.divide(total_sens.T, self.var()).T
 
@@ -651,8 +650,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         for j, index in enumerate(self.multiindices_):
             if np.any(index > 0):
                 var += (
-                    self.output_std_**2
-                    * np.atleast_2d(self.coef_)[:, j] ** 2
-                    * self.norms_[j] ** 2
+                    self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
+                    # * self.norms_[j] ** 2
                 )
         return var

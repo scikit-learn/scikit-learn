@@ -40,6 +40,7 @@ def test_constructors(polynomial, nargs, error_type):
 @pytest.mark.parametrize(
     "polynomial, points, degree, expected",
     [
+        # Orthogonal polynomials
         (
             Hermite(),
             [-2, 0, 2],
@@ -64,6 +65,49 @@ def test_constructors(polynomial, nargs, error_type):
             2,
             np.array([[1, -1, 1], [1, 0, -0.5], [1, 1, 1]]),
         ),
+        # Orthonormal polynomials
+        (
+            Hermite(normalize=True),
+            [-2, 0, 2],
+            2,
+            np.array(
+                [
+                    [1.0, -2.0, 3.0 / np.sqrt(2)],
+                    [1.0, 0.0, -1.0 / np.sqrt(2)],
+                    [1.0, 2.0, 3.0 / np.sqrt(2)],
+                ]
+            ),
+        ),
+        (
+            Jacobi(2, 2, normalize=True),
+            [-1, 0, 1],
+            2,
+            np.array(
+                [
+                    [1, -np.sqrt(7), np.sqrt(27)],
+                    [1, 0, -np.sqrt(3 / 4)],
+                    [1, np.sqrt(7), np.sqrt(27)],
+                ]
+            ),
+        ),
+        (
+            Laguerre(normalize=True),
+            [0, 1, 2],
+            2,
+            np.array([[1, 1, 1], [1, 0, -0.5], [1, -1, -1]]),
+        ),
+        (
+            Legendre(normalize=True),
+            [-1, 0, 1],
+            2,
+            np.array(
+                [
+                    [1, -np.sqrt(3), np.sqrt(5)],
+                    [1, 0, -np.sqrt(5) / 2],
+                    [1, np.sqrt(3), np.sqrt(5)],
+                ]
+            ),
+        ),
     ],
 )
 def test_vandermonde(polynomial, points, degree, expected):
@@ -71,7 +115,7 @@ def test_vandermonde(polynomial, points, degree, expected):
     V = polynomial.vandermonde(points, degree)
 
     # Check
-    assert np.all(V == expected)
+    assert np.all(np.abs(V - expected) < 1e-15)
 
 
 # Check vandermonde points

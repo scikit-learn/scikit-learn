@@ -54,13 +54,20 @@ from numpy.polynomial.legendre import legvander
 from scipy.special import eval_jacobi, gamma
 
 from sklearn.utils._param_validation import Integral, Real
-from sklearn.utils.validation import check_array, column_or_1d
+from sklearn.utils.validation import check_array, check_scalar, column_or_1d
 
 
 class Polynomial(ABC):
-    """An abstract base class for polynomials."""
+    """An abstract base class for polynomials.
+
+    Parameters
+    ----------
+    normalize : bool
+        If True, return an orthonormal polynomial.
+    """
 
     def __init__(self, normalize: bool = False):
+        check_scalar(normalize, "normalize", bool)
         self.normalize = normalize
 
     def vandermonde(self, points, degree):
@@ -107,7 +114,7 @@ class Polynomial(ABC):
         # Normalize columns if requested
         if self.normalize:
             for j in range(degree + 1):
-                V[:, j] /= self.norm(j)
+                V[:, j] /= np.sqrt(self._norm_squared(j))
 
         return V
 
@@ -247,7 +254,7 @@ class Polynomial(ABC):
             raise ValueError(f"degree must be a non-negative int, got '{degree}'")
 
         # Compute norm
-        return np.sqrt(self._norm_squared(degree))
+        return 1.0 if self.normalize else np.sqrt(self._norm_squared(degree))
 
     @abstractmethod
     def _norm_squared(self, degree):

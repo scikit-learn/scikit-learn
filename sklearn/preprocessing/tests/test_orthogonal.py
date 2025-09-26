@@ -1,13 +1,14 @@
-# import statements
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 import pytest
 
-# sklearn imports
 from sklearn.preprocessing import OrthogonalPolynomialFeatures
 from sklearn.utils._multiindexset import TotalDegree
 
 
-# check fit_transform
+# Check fit_transform
 def test_fit_transform():
     X = np.linspace(0, 1, num=6).reshape(3, 2)
     poly = OrthogonalPolynomialFeatures()
@@ -22,7 +23,7 @@ def test_fit_transform():
     assert np.linalg.norm(X_trans - X_exact) < 1e-15
 
 
-# check fit_transform with different polynomial types
+# Check fit_transform with different polynomial types
 def test_fit_transform_hybrid():
     X = np.linspace(0, 1, num=6).reshape(3, 2)
     poly = OrthogonalPolynomialFeatures(polynomial=("Legendre", "Hermite"))
@@ -37,34 +38,34 @@ def test_fit_transform_hybrid():
     assert np.linalg.norm(X_trans - X_exact) < 1e-15
 
 
-# check polynomial argument
+# Check polynomial argument
 def test_fit_polynomial():
-    # unmatched number of input features and number of polynomials throws error
+    # Unmatched number of input features and number of polynomials throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=9).reshape(3, 3)
         poly = OrthogonalPolynomialFeatures(polynomial=("Legendre", "Hermite"))
         poly.fit_transform(X)
 
-    # unknown polynomial type throws error
+    # Unknown polynomial type throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=6).reshape(3, 2)
         poly = OrthogonalPolynomialFeatures(polynomial="ab")
         poly.fit_transform(X)
 
-    # unknown polynomial type throws error
+    # Unknown polynomial type throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=6).reshape(3, 2)
         poly = OrthogonalPolynomialFeatures(polynomial=3)
         poly.fit_transform(X)
 
-    # unknown polynomial type throws error
+    # Unknown polynomial type throws error
     with pytest.raises(ValueError, match="polynomial"):
         X = np.linspace(0, 1, num=6).reshape(3, 2)
         poly = OrthogonalPolynomialFeatures(polynomial=("Legendre", 3))
         poly.fit_transform(X)
 
 
-# check degree / truncation specification
+# Check degree / truncation specification
 @pytest.mark.parametrize(
     "truncation, n_terms",
     [
@@ -82,7 +83,7 @@ def test_fit_predefined_multiindex_set_shape(truncation, n_terms):
     assert X_trans.shape[1] == n_terms
 
 
-# check degree / truncation / weights specification
+# Check degree / truncation / weights specification
 @pytest.mark.parametrize(
     "truncation, n_terms",
     [
@@ -100,7 +101,7 @@ def test_fit_predefined_multiindex_set_shape_weighted(truncation, n_terms):
     assert X_trans.shape[1] == n_terms
 
 
-# check custom multiindices
+# Check custom multiindices
 @pytest.mark.parametrize(
     "multiindices",
     [
@@ -117,7 +118,7 @@ def test_fit_custom_multiindices(multiindices):
     assert X_trans.shape[1] == 15
 
 
-# check transform
+# Check transform
 def test_transform():
     with pytest.raises(ValueError, match="fit"):
         X = np.linspace(0, 1, num=6).reshape(3, 2)
@@ -125,26 +126,26 @@ def test_transform():
         poly.transform(X)
 
 
-# check feature names
+# Check feature names
 def test_feature_names():
     X = np.linspace(0, 1, num=6).reshape(3, 2)
     poly = OrthogonalPolynomialFeatures()
 
-    # unfitted throws error
+    # Unfitted throws error
     with pytest.raises(ValueError, match="fit"):
         poly.get_feature_names_out(X)
 
-    # passes
+    # Passes
     poly.fit_transform(X)
 
-    # check output features
+    # Check output features
     names = poly.get_feature_names_out()
     assert len(names) == 6
     for name in names:
         assert "Legendre" in name
         assert "x0" in name
 
-    # check output features with custom input feature names
+    # Check output features with custom input feature names
     names = poly.get_feature_names_out(input_features=("a", "b"))
     assert len(names) == 6
     for name in names:
@@ -152,6 +153,21 @@ def test_feature_names():
         assert "a" in name
         assert "b" in name
 
-    # check invalid number of input features
+    # Check invalid number of input features
     with pytest.raises(ValueError, match="features"):
         poly.get_feature_names_out(input_features=("a", "b", "c"))
+
+
+# Check normalize
+def check_normalize():
+    poly = OrthogonalPolynomialFeatures(2, "Legendre", normalize=True)
+    X_trans = poly.fit_transform(np.array([-1, 0, 1]).reshape(-1, 1))
+
+    X_exact = np.array(
+        [
+            [1.0, -np.sqrt(3), np.sqrt(5)],
+            [1.0, 0, -np.sqrt(5) / 2],
+            [1.0, np.sqrt(3), np.sqrt(5)],
+        ]
+    )
+    assert np.linalg.norm(X_trans - X_exact) < 1e-15

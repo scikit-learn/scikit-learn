@@ -59,6 +59,9 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
         columns in `multiindices` (when the latter is provided). The default is
         `'Legendre'`.
 
+    normalize : bool
+        If `True`, use orthonormal polynomials. The default is `False`.
+
     truncation : {'full_tensor', 'total_degree', 'hyperbolic_cross', \
         'Zaremba_cross'}, default='total_degree'
         The truncation rule that should be used to determine the shape of the
@@ -148,6 +151,7 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "degree": [Interval(Integral, 0, None, closed="left")],
         "polynomial": [str, "array-like"],
+        "normalize": ["boolean"],
         "truncation": [
             StrOptions(
                 {
@@ -167,12 +171,14 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
         degree=2,
         polynomial="Legendre",
         *,
+        normalize=False,
         truncation="total_degree",
         weights=None,
         multiindices=None,
     ):
         self.degree = degree
         self.polynomial = polynomial
+        self.normalize = normalize
         self.truncation = truncation
         self.weights = weights
         self.multiindices = multiindices
@@ -238,12 +244,19 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
         if isinstance(polynomials, str):
             polynomials = [polynomials] * n_features
         polynomials = list(polynomials)
+        for idx, polynomial in enumerate(polynomials):
+            if type(polynomial) is not str:
+                raise ValueError(
+                    f"the polynomial at position {idx} must be a 'str'",
+                    f", got '{type(polynomial)}'.",
+                )
         if not len(polynomials) == n_features:
             raise ValueError(
                 "the number of polynomials does not match the number of "
                 f"input features, got {len(polynomials)} but "
                 f"expected {n_features}"
             )
+        poly_kwargs = {"normalize": True} if self.normalize else {}
         self.polynomials_ = []
         for j, poly_str in enumerate(polynomials):
             terms = poly_str.split("_")
@@ -261,9 +274,9 @@ class OrthogonalPolynomialFeatures(TransformerMixin, BaseEstimator):
                     params = [float(param) for param in terms[1:]]
                 except ValueError:
                     raise ValueError(f"invalid parameters for polynomial '{poly_str}'")
-                poly = poly_cls(*params)
+                poly = poly_cls(*params, **poly_kwargs)
             else:
-                poly = poly_cls()
+                poly = poly_cls(**poly_kwargs)
 
             self.polynomials_.append(poly)
 

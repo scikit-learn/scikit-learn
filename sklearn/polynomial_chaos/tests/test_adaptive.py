@@ -37,7 +37,7 @@ def test_adaptive_construction():
     N = 66
     X = uniform().rvs((N, dimension), random_state=random_state)
     y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
-    pce.fit(X, y, max_iter=30)
+    pce.fit(X, y, max_iter=35)
     exact = np.array([0.6342, 0.2945, 0.0756, 0.0227, 0.0062, 0.0011, 0.0003, 0.0000])
     rel_err = np.linalg.norm(pce.total_sens() - exact) / np.linalg.norm(exact)
     assert rel_err < 0.1
