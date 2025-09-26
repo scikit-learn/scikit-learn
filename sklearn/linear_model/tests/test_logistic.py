@@ -2329,7 +2329,8 @@ def test_liblinear_with_large_values():
 
     msg = (
         "Using the 'liblinear' solver while X contains a maximum "
-        "value>1e30 results in a frozen fit. Please choose another solver."
+        "value > 1e30 results in a frozen fit. Please choose another "
+        "solver or rescale the input X."
     )
     with pytest.raises(ValueError, match=msg):
         LogisticRegression(solver="liblinear").fit(X, y)

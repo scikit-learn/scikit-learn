@@ -1298,8 +1298,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             if np.max(X) > 1e30:
                 raise ValueError(
                     "Using the 'liblinear' solver while X contains a maximum "
-                    "value > 1e30 results in a frozen fit. Please choose another solver "
-                    "or rescale the input X."
+                    "value > 1e30 results in a frozen fit. Please choose another "
+                    "solver or rescale the input X."
                 )
             if len(self.classes_) > 2:
                 warnings.warn(
