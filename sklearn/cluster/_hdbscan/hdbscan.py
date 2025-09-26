@@ -617,7 +617,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     .. [4] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and
        Sander, J. Density-Based Clustering Validation.
-       <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
+       <https://epubs.siam.org/doi/pdf/10.1137/1.9781611973440.96>`_
 
     .. [5] :arxiv:`Malzer, C., & Baum, M. "A Hybrid Approach To Hierarchical
        Density-based Cluster Selection."<1911.02282>`.
