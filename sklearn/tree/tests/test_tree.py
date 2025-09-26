@@ -1623,6 +1623,7 @@ def test_decision_path_hardcoded():
 
     # 2nd example (toy dataset)
     # was failing before the fix in PR
+    # https://github.com/scikit-learn/scikit-learn/pull/32280
     X = [0, np.nan, np.nan, 2, 3]
     y = [0, 0, 0, 1, 1]
     X = np.array(X).reshape(-1, 1)
