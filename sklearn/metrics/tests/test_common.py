@@ -1956,10 +1956,17 @@ def check_array_api_metric(
         numpy_as_array_works = False
 
     if numpy_as_array_works:
-        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        def _check_metric_matches(xp_val, np_val):
-            assert_allclose(xp_val, np_val, atol=_atol_for_type(dtype_name))
+        def _check_metric_matches(metric_a, metric_b, convert_a=False):
+            if convert_a:
+                metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
+            assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
+
+        def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
+            for metric_a_val, metric_b_val in zip(metric_a, metric_b):
+                _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
+
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
         # Handle cases where multiple return values are not of the same shape,
         # e.g. precision_recall_curve:
@@ -1967,11 +1974,6 @@ def check_array_api_metric(
             isinstance(metric_np, tuple)
             and len(set([metric_val.shape for metric_val in metric_np])) > 1
         ):
-
-            def _check_each_metric_matches(metric_a, metric_b):
-                for metric_a_val, metric_b_val in zip(metric_a, metric_b):
-                    _check_metric_matches(metric_a_val, metric_b_val)
-
             _check_each_metric_matches(metric_xp, metric_np)
 
             metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
@@ -1992,19 +1994,11 @@ def check_array_api_metric(
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        def _check_metric_matches(xp_val, np_val):
-            assert_allclose(
-                _convert_to_numpy(xp.asarray(xp_val), xp),
-                np_val,
-                atol=_atol_for_type(dtype_name),
-            )
-
         # Handle cases where there are multiple return values, e.g. roc_curve:
         if isinstance(metric_xp, tuple):
-            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
-                _check_metric_matches(metric_xp_val, metric_np_val)
+            _check_each_metric_matches(metric_xp, metric_np, convert_a=True)
         else:
-            _check_metric_matches(metric_xp, metric_np)
+            _check_metric_matches(metric_xp, metric_np, convert_a=True)
 
 
 def check_array_api_binary_classification_metric(
