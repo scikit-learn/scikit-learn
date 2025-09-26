@@ -185,6 +185,7 @@ Metrics
 Tools
 -----
 
+- :func:`model_selection.cross_val_predict`
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`
 
