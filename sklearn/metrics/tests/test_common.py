@@ -1957,23 +1957,37 @@ def check_array_api_metric(
 
     if numpy_as_array_works:
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
-        assert_allclose(
-            metric_xp,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
-        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
-        assert_allclose(
-            metric_xp_mixed_1,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
-        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
-        assert_allclose(
-            metric_xp_mixed_2,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
+
+        def _check_metric_matches(xp_val, np_val):
+            assert_allclose(xp_val, np_val, atol=_atol_for_type(dtype_name))
+
+        # Handle cases where multiple return values are not of the same shape,
+        # e.g. precision_recall_curve:
+        if (
+            isinstance(metric_np, tuple)
+            and len(set([metric_val.shape for metric_val in metric_np])) > 1
+        ):
+
+            def _check_each_metric_matches(metric_a, metric_b):
+                for metric_a_val, metric_b_val in zip(metric_a, metric_b):
+                    _check_metric_matches(metric_a_val, metric_b_val)
+
+            _check_each_metric_matches(metric_xp, metric_np)
+
+            metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+            _check_each_metric_matches(metric_xp_mixed_1, metric_np)
+
+            metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+            _check_each_metric_matches(metric_xp_mixed_2, metric_np)
+
+        else:
+            _check_metric_matches(metric_xp, metric_np)
+
+            metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+            _check_metric_matches(metric_xp_mixed_1, metric_np)
+
+            metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+            _check_metric_matches(metric_xp_mixed_2, metric_np)
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
