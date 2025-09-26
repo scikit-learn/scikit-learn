@@ -15,7 +15,11 @@ def _features_html(features):
                   {rows}
                 </tbody>
               </table>
-              <i class="copy-paste-icon"></i>
+              <i class="copy-paste-icon"
+                  onclick="copyRowsToClipboard
+                  (this.parentElement.querySelector('tbody').innerText.trim())"
+              >
+              </i>
             </div>
           </details>
         </div>

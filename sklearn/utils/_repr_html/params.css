@@ -182,7 +182,7 @@ a.param-doc-link::before {
 }
 
 
-.features-container .copy-paste-icon {
+#$id .features-container .copy-paste-icon {
     width: 1em;
     height: 1em;
     background-size: 1em 1em;
@@ -200,7 +200,7 @@ a.param-doc-link::before {
     transition: transform 500ms ease;
 }
 
-.features-container .copy-paste-icon:hover {
+#$id .features-container .copy-paste-icon:hover {
     box-shadow: .2em .2em black;
     transform: scale(1.25);
 }

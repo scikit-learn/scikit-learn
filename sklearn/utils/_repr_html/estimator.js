@@ -41,3 +41,13 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 
     element.setAttribute('title', fullParamName);
 });
+
+
+async function copyRowsToClipboard(text) {
+  const type = "text/plain";
+  const clipboardItemData = {
+    [type]: text,
+  };
+  const clipboardItem = new ClipboardItem(clipboardItemData);
+  await navigator.clipboard.write([clipboardItem]);
+}
