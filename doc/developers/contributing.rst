@@ -51,9 +51,9 @@ See :ref:`new_contributors` to get started.
     issues, organizing and teaching tutorials, working on the website,
     improving the documentation, are all priceless contributions.
 
-    We abide by the principles of openness, respect, and consideration of
-    others of the Python Software Foundation:
-    https://www.python.org/psf/codeofconduct/
+    Communications on all channels should respect our `Code of Conduct
+    <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
+
 
 
 In case you experience issues using this package, do not hesitate to submit a
