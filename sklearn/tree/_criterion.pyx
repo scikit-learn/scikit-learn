@@ -3,7 +3,7 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, INFINITY
+from libc.math cimport INFINITY
 
 import numpy as np
 cimport numpy as cnp
@@ -1282,10 +1282,10 @@ cdef void precompute_absolute_errors(
             below.push(top_val, top_weight)
 
         # Current median
-        if above.total_weight > half_weight + 1e-5 * fabs(half_weight):
-            median = above.top()
-        else:  # above and below weight are almost exactly equals
+        if above.total_weight == half_weight:
             median = (above.top() + below.top()) / 2.
+        else:
+            median = above.top()
         medians[j] = median
         abs_errors[j] += (
             (below.total_weight - above.total_weight) * median
@@ -1316,7 +1316,7 @@ def _py_precompute_absolute_errors(
         ys, sample_weight, sample_indices, above, below,
         k, start, end, abs_errors, medians
     )
-    return np.asarray(abs_errors)
+    return np.asarray(abs_errors), np.asarray(medians)
 
 
 cdef class MAE(Criterion):

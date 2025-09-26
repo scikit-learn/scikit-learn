@@ -64,6 +64,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -2896,45 +2897,60 @@ def test_absolute_errors_precomputation_function(global_random_seed):
     it can be safely removed.
     """
 
-    def compute_prefix_abs_errors_naive(y: np.ndarray, w: np.ndarray):
-        y = y.ravel()
-        return np.array([compute_abs_error(y[:i], w[:i]) for i in range(1, y.size + 1)])
+    def compute_prefix_abs_errors_naive(y, w):
+        y = y.ravel().copy()
+        medians = [
+            _weighted_percentile(y[:i], w[:i], 50, average=True)
+            for i in range(1, y.size + 1)
+        ]
+        errors = [
+            (np.abs(y[:i] - m) * w[:i]).sum()
+            for i, m in zip(range(1, y.size + 1), medians)
+        ]
+        return np.array(errors), np.array(medians)
 
-    def compute_abs_error(y: np.ndarray, w: np.ndarray):
-        # 1) compute the weighted median
-        # i.e. once ordered by y, search for i such that:
-        # sum(w[:i]) <= 1/2  and sum(w[i+1:]) <= 1/2
-        sorter = np.argsort(y)
-        wc = np.cumsum(w[sorter])
-        idx = np.searchsorted(wc, wc[-1] / 2)
-        median = y[sorter[idx]]
-        # 2) compute the AE
-        return (np.abs(y - median) * w).sum()
+    def assert_same_results(y, w, indices, reverse=False):
+        args = (n - 1, -1) if reverse else (0, n)
+        abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args)
+        y_sorted = y[indices]
+        w_sorted = w[indices]
+        if reverse:
+            y_sorted = y_sorted[::-1]
+            w_sorted = w_sorted[::-1]
+        abs_errors_, medians_ = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
+        if reverse:
+            abs_errors_ = abs_errors_[::-1]
+            medians_ = medians_[::-1]
+        assert_allclose(abs_errors, abs_errors_)
+        assert_allclose(medians, medians_)
 
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.default_rng(global_random_seed)
 
     for n in [3, 5, 10, 20, 50, 100]:
         y = rng.uniform(size=(n, 1))
         w = rng.rand(n)
+        w *= np.pow(10, rng.uniform(-5, 5))
         indices = np.arange(n)
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, 0, n)
-        expected = compute_prefix_abs_errors_naive(y, w)
-        assert np.allclose(abs_errors, expected)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, np.ones(n), indices)
+        assert_same_results(y, w, indices, reverse=True)
+        indices = rng.permutation(n)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, w, indices, reverse=True)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, n - 1, -1)
-        expected = compute_prefix_abs_errors_naive(y[::-1], w[::-1])[::-1]
-        assert np.allclose(abs_errors, expected)
 
-        x = rng.rand(n)
-        indices = np.argsort(x)
-        w[:] = 1
-        y_sorted = y[indices]
-        w_sorted = w[indices]
+def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+    rng = np.random.default_rng(global_random_seed)
+    n = int(1e5)
+    data = rng.lognormal(size=n)
+    # Large number of zeros and otherwise continuous weights:
+    weights = rng.integers(0, 3, size=n) * rng.uniform(0, 1, size=n)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, 0, n)
-        expected = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
-        assert np.allclose(abs_errors, expected)
+    tree_leaf_weighted_median = (
+        DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+        .fit(np.ones(shape=(data.shape[0], 1)), data, sample_weight=weights)
+        .tree_.value.ravel()[0]
+    )
+    weighted_median = _weighted_percentile(data, weights, 50, average=True)
 
-        abs_errors = _py_precompute_absolute_errors(y, w, indices, n - 1, -1)
-        expected = compute_prefix_abs_errors_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
-        assert np.allclose(abs_errors, expected)
+    assert_allclose(tree_leaf_weighted_median, weighted_median)
