@@ -2320,7 +2320,8 @@ def test_large_sparse_matrix(solver, global_random_seed, csr_container):
 
 
 def test_liblinear_with_large_values():
-    # Liblinear raises error when data size is more than 1e100.
+    # Liblinear freezes when X.max() ~ 1e100, see issue #7486.
+    # We preemptively raise an error when X.max() > 1e30.
 
     # generate sparse matrix with int64 indices
     X = np.array([0, 1e100]).reshape(-1, 1)
