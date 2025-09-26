@@ -2929,7 +2929,7 @@ def test_absolute_errors_precomputation_function(global_random_seed):
     for n in [3, 5, 10, 20, 50, 100]:
         y = rng.uniform(size=(n, 1))
         w = rng.random(n)
-        w *= np.pow(10, rng.uniform(-5, 5))
+        w *= 10.0 ** rng.uniform(-5, 5)
         indices = np.arange(n)
         assert_same_results(y, w, indices)
         assert_same_results(y, np.ones(n), indices)
