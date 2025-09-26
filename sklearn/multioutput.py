@@ -42,6 +42,7 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_response_method,
+    _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
@@ -514,7 +515,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    def fit(self, X, Y, sample_weight=None, **fit_params):
+    @_deprecate_positional_args(version="1.9")
+    def fit(self, X, y=None, *, sample_weight=None, Y=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -522,13 +524,19 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        Y : array-like of shape (n_samples, n_classes)
+        y : array-like of shape (n_samples, n_classes)
             The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If `None`, then samples are equally weighted.
             Only supported if the underlying classifier supports sample
             weights.
+
+        Y : array-like of shape (n_samples, n_classes)
+            The target values.
+
+            .. deprecated:: 1.7
+               `Y` is deprecated in 1.7 and will be removed in 1.9. Use `y` instead.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
@@ -540,7 +548,18 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().fit(X, Y, sample_weight=sample_weight, **fit_params)
+        if Y is not None:
+            warnings.warn(
+                "`Y` was renamed to `y` in 1.7 and will be removed in 1.9",
+                FutureWarning,
+            )
+            if y is not None:
+                raise ValueError(
+                    "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+                )
+            y = Y
+
+        super().fit(X, y, sample_weight=sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
@@ -616,8 +635,10 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # FIXME
-        tags._skip_test = True
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        tags.target_tags.two_d_labels = True
         return tags
 
 
