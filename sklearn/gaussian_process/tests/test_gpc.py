@@ -16,6 +16,7 @@ from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
     RBF,
     CompoundKernel,
+    Product,
     WhiteKernel,
 )
 from sklearn.gaussian_process.kernels import (
@@ -48,7 +49,9 @@ kernels = [
     RBF(length_scale=0.1),
     fixed_kernel,
     RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-    C(1.0, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+    Product(
+        C(1.0, (1e-2, 1e2)), RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
+    ),
 ]
 non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
@@ -129,11 +132,14 @@ def test_lml_gradient(kernel):
     length_scales = np.logspace(0, 2, 100)
 
     def evaluate_grad_at_length_scales(length_scales):
-        result = np.zeros_like(length_scales)
-        for i, length_scale in enumerate(length_scales):
-            kernel.length_scale = length_scale
-            if kernel not in non_fixed_kernels[2:]:
-                result[i] = (
+        length_scale_param_name = next(
+            name for name in kernel.get_params() if name.endswith("length_scale")
+        )
+        result = []
+        for i, length_scale in enumerate(length_scales.flatten()):
+            kernel.set_params(**{length_scale_param_name: length_scale})
+            if type(kernel) != Product:
+                result.append(
                     gpc.log_marginal_likelihood(kernel.theta)
                     if len(kernel.theta) == 1
                     else [
@@ -141,22 +147,31 @@ def test_lml_gradient(kernel):
                     ]
                 )
             else:
-                result[i] = gpc.log_marginal_likelihood(kernel.theta)
-        return result
+                result.append(gpc.log_marginal_likelihood(kernel.theta))
+        if length_scales.ndim == 1:
+            return np.stack(result)
+        elif length_scales.ndim == 2:
+            return np.stack(result).reshape(
+                length_scales.shape[0], length_scales.shape[1]
+            )
 
-    lml_gradient = np.zeros_like(length_scales)
-
+    lml_gradient = []
+    length_scale_param_name = next(
+        name for name in kernel.get_params() if name.endswith("length_scale")
+    )
     for i, length_scale in enumerate(length_scales):
-        kernel.length_scale = length_scale
-        lml_gradient[i] = gpc.log_marginal_likelihood(kernel.theta, eval_gradient=True)[
-            1
-        ][0]
+        kernel.set_params(**{length_scale_param_name: length_scale})
+        lml_gradient.append(
+            gpc.log_marginal_likelihood(kernel.theta, eval_gradient=True)[1][0]
+        )
 
     lml_gradient_approx = derivative(
-        evaluate_grad_at_length_scales, length_scales, maxiter=20
+        evaluate_grad_at_length_scales,
+        length_scales,
+        maxiter=20,
     ).df
-
-    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+    print(lml_gradient_approx.shape, np.stack(lml_gradient).shape)
+    assert_almost_equal(np.stack(lml_gradient), lml_gradient_approx, 3)
 
 
 def test_random_starts(global_random_seed):

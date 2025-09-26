@@ -19,6 +19,8 @@ from sklearn.gaussian_process.kernels import (
     RBF,
     DotProduct,
     ExpSineSquared,
+    Product,
+    Sum,
     WhiteKernel,
 )
 from sklearn.gaussian_process.kernels import (
@@ -163,11 +165,14 @@ def test_lml_gradient(kernel):
     length_scales = np.logspace(-3, 3, 100)
 
     def evaluate_grad_at_length_scales(length_scales):
-        result = np.zeros_like(length_scales)
-        for i, length_scale in enumerate(length_scales):
-            kernel.length_scale = length_scale
-            if kernel not in non_fixed_kernels[2:]:
-                result[i] = (
+        result = []
+        length_scale_param_name = next(
+            name for name in kernel.get_params() if name.endswith("length_scale")
+        )
+        for i, length_scale in enumerate(length_scales.flatten()):
+            kernel.set_params(**{length_scale_param_name: length_scale})
+            if type(kernel) not in [Sum, Product]:
+                result.append(
                     gpr.log_marginal_likelihood(kernel.theta)
                     if len(kernel.theta) == 1
                     else [
@@ -175,22 +180,28 @@ def test_lml_gradient(kernel):
                     ]
                 )
             else:
-                result[i] = gpr.log_marginal_likelihood(kernel.theta)
-        return result
+                result.append(gpr.log_marginal_likelihood(kernel.theta))
+        if length_scales.ndim == 1:
+            return np.stack(result)
+        elif length_scales.ndim == 2:
+            return np.stack(result).reshape(
+                length_scales.shape[0], length_scales.shape[1]
+            )
 
-    lml_gradient = np.zeros_like(length_scales)
-
+    lml_gradient = []
+    length_scale_param_name = next(
+        name for name in kernel.get_params() if name.endswith("length_scale")
+    )
     for i, length_scale in enumerate(length_scales):
-        kernel.length_scale = length_scale
-        lml_gradient[i] = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)[
-            1
-        ][0]
+        kernel.set_params(**{length_scale_param_name: length_scale})
+        lml_gradient.append(
+            gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)[1][0]
+        )
 
     lml_gradient_approx = derivative(
         evaluate_grad_at_length_scales, length_scales, maxiter=20
     ).df
-
-    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+    assert_almost_equal(np.stack(lml_gradient), lml_gradient_approx, 3)
 
 
 @pytest.mark.parametrize("kernel", kernels)
