@@ -32,6 +32,7 @@ classifiers=[
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -97,10 +98,10 @@ maintenance = ["conda-lock==3.0.1"]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "meson-python>=0.16.0",
+    "meson-python>=0.17.1",
     "Cython>=3.1.2",
     "numpy>=2",
-    "scipy>=1.8.0",
+    "scipy>=1.10.0",
 ]
 
 [tool.pytest.ini_options]
