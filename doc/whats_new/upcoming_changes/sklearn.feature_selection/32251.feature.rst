@@ -5,5 +5,5 @@
   The attribute :attr:`feature_indices` stores the index of the features from the full dataset
   that have not been eliminated yet.
   This allows methods that need a test set, like :func:`permutation_importance`, to know which
-  features of to use in their predictions.
+  features to use in their predictions.
   By :user:`Gaétan de Castellane <GaetandeCast>`.
