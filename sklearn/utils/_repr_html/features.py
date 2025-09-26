@@ -23,7 +23,6 @@ def _features_html(features):
             </div>
           </details>
         </div>
-        <br>
     """
 
     FEATURES_ROW_TEMPLATE = """
