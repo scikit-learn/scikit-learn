@@ -10,7 +10,7 @@ def _features_html(features):
           <details>
             <summary>{total_features} features </summary>
             <div class="features-container">
-              <table = "features-table">
+              <table class="features-table">
                 <tbody>
                   {rows}
                 </tbody>
