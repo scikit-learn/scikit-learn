@@ -582,7 +582,7 @@ Commit Message Marker  Action Taken by CI
 [cd build]             CD is run (wheels and source distribution are built)
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
-[free-threaded]        Build & test with CPython 3.13 free-threaded
+[free-threaded]        Build & test with CPython 3.14 free-threaded
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
