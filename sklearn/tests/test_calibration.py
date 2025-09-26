@@ -48,7 +48,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
@@ -1223,13 +1222,21 @@ def test_error_less_class_samples_than_folds():
     CalibratedClassifierCV(cv=3).fit(X, y)
 
 
+@pytest.mark.parametrize("ensemble", [True, False])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-def test_temperature_scaling_array_api_compliance(array_namespace, device_, dtype_name):
-    """Check temperature scaling calibration"""
+def test_temperature_scaling_array_api_compliance(
+    ensemble, array_namespace, device_, dtype_name
+):
+    """Check that `CalibratedClassifierCV` with temperature scaling is compatible
+    with the array API"""
+
+    # TODO: Also ensure that `CalibratedClassifierCV` works appropriately with
+    #  the array API when `y` is an ndarray of strings. In this regard
+    #  `LinearDiscriminantAnalysis` will also need modifications.
     xp = _array_api_for_tests(array_namespace, device_)
     X, y = make_classification(
         n_samples=1000,
@@ -1256,21 +1263,20 @@ def test_temperature_scaling_array_api_compliance(array_namespace, device_, dtyp
         clf_xp = LinearDiscriminantAnalysis()
         clf_xp.fit(X_train_xp, y_train_xp)
         cal_clf_xp = CalibratedClassifierCV(
-            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=False
+            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
         ).fit(X_cal_xp, y_cal_xp)
 
     clf_np = LinearDiscriminantAnalysis()
     clf_np.fit(X_train, y_train)
     cal_clf_np = CalibratedClassifierCV(
-        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=False
+        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
     ).fit(X_cal, y_cal)
 
     calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
     calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-    rtol = 1e-3 if device_ == "mps" else 1e-8
+    rtol = 1e-3 if dtype_name == "float32" else 1e-8
     assert np.isclose(
         _convert_to_numpy(calibrator_xp.beta_, xp=xp),
         calibrator_np.beta_,
         rtol=rtol,
-        atol=_atol_for_type(dtype_name),
     )

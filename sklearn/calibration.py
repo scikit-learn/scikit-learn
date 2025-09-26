@@ -391,8 +391,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        xp, is_array_api_compliant = get_namespace(X)
-        if is_array_api_compliant:
+        xp, is_array_api = get_namespace(X)
+        if is_array_api:
             y = label_encoder_.transform(y=y)
             y = ensure_common_namespace_device(X, y)[0]
             if sample_weight:
