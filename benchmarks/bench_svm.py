@@ -1,164 +1,170 @@
 """
-To run this, you'll need to have installed.
+=======================================================================
+Benchmark: Comparing Python Wrappers for libsvm
+=======================================================================
 
-  * pymvpa
-  * libsvm and it's python bindings
-  * scikit-learn (of course)
+This script benchmarks the performance of three different Python wrappers for
+the popular SVM implementation, libsvm:
 
-Does two benchmarks
+1.  scikit-learn (sklearn.svm.SVC)
+2.  The official SWIG-based bindings included with libsvm (svmutil)
+3.  PyMVPA's wrapper (mvpa.clfs.svm)
 
-First, we fix a training set, increase the number of
-samples to classify and plot number of classified samples as a
-function of time.
+Two benchmarks are performed:
+----------------------------
+1.  **Varying Samples:** The number of features is fixed, and we plot the
+    execution time as the number of training samples increases.
 
-In the second benchmark, we increase the number of dimensions of the
-training set, classify a sample and plot the time taken as a function
-of the number of dimensions.
+2.  **Varying Dimensions:** The number of samples is fixed, and we plot the
+    execution time as the number of features (dimensions) increases.
+
+Requirements:
+-------------
+  * numpy
+  * matplotlib
+  * scikit-learn
+  * libsvm (with its Python bindings)
+  * pymvpa2
 """
+import time
 import numpy as np
-import pylab as pl
-import gc
-from datetime import datetime
+import matplotlib.pyplot as plt
 
-# to store the results
-scikit_results = []
-svm_results = []
-mvpa_results = []
+# --- Check for Dependencies ---
+try:
+    from sklearn.svm import SVC
+except ImportError:
+    print("Error: scikit-learn is not installed. Please run 'pip install scikit-learn'")
+    exit()
 
-mu_second = 0.0 + 10**6 # number of microseconds in a second
-
-
-def bench_scikit(X, Y):
-    """
-    bench with scikit-learn bindings on libsvm
-    """
-    import scikits.learn
-    from scikits.learn.svm import SVC
-
-    gc.collect()
-
-    # start time
-    tstart = datetime.now()
-    clf = SVC(kernel='rbf')
-    clf.fit(X, Y).predict(X)
-    delta = (datetime.now() - tstart)
-    # stop time
-
-    scikit_results.append(delta.seconds + delta.microseconds/mu_second)
-
-
-def bench_svm(X, Y):
-    """
-    bench with swig-generated wrappers that come with libsvm
-    """
-
+try:
     import svmutil
+except ImportError:
+    print("Error: libsvm python bindings are not found.")
+    print("Please install libsvm and ensure the 'svmutil.py' is in your PYTHONPATH.")
+    exit()
 
-    X1 = X.tolist()
-    Y1 = Y.tolist()
+try:
+    from mvpa2.datasets import Dataset
+    from mvpa2.clfs import svm as mvpa_svm
+except ImportError:
+    print("Error: PyMVPA is not installed. Please run 'pip install pymvpa2'")
+    exit()
 
-    gc.collect()
 
-    # start time
-    tstart = datetime.now()
-    problem = svmutil.svm_problem(Y1, X1)
-    param = svmutil.svm_parameter()
-    param.svm_type=0
-    param.kernel_type=2
+# ==============================================================================
+# Benchmarking Functions
+# ==============================================================================
+
+def benchmark_sklearn(X: np.ndarray, y: np.ndarray) -> float:
+    """Benchmarks scikit-learn's SVC."""
+    t_start = time.perf_counter()
+    clf = SVC(kernel='rbf', gamma='auto')
+    clf.fit(X, y).predict(X)
+    return time.perf_counter() - t_start
+
+def benchmark_libsvm(X: np.ndarray, y: np.ndarray) -> float:
+    """Benchmarks the official libsvm python bindings."""
+    # libsvm requires lists instead of numpy arrays
+    X_list = X.tolist()
+    y_list = y.tolist()
+
+    t_start = time.perf_counter()
+    problem = svmutil.svm_problem(y_list, X_list)
+    # Parameters for an RBF kernel C-SVC
+    param = svmutil.svm_parameter('-s 0 -t 2 -q')
     model = svmutil.svm_train(problem, param)
-    svmutil.svm_predict([0]*len(X1), X1, model)
-    delta = (datetime.now() - tstart)
-    # stop time
-    svm_results.append(delta.seconds + delta.microseconds/mu_second)
+    svmutil.svm_predict(y_list, X_list, model)
+    return time.perf_counter() - t_start
+
+def benchmark_pymvpa(X: np.ndarray, y: np.ndarray) -> float:
+    """Benchmarks PyMVPA's libsvm wrapper."""
+    t_start = time.perf_counter()
+    dataset = Dataset(samples=X, labels=y)
+    clf = mvpa_svm.RbfCSVMC(C=1.0)
+    clf.train(dataset)
+    clf.predict(X)
+    return time.perf_counter() - t_start
 
 
-def bench_pymvpa(X, Y):
+# ==============================================================================
+# Plotting Function
+# ==============================================================================
+
+def plot_results(ax, x_values, results: dict, title: str, xlabel: str):
     """
-    bench with pymvpa (by default uses a custom swig-generated wrapper
-    around libsvm)
+    Helper function to plot the benchmark results on a given axis.
     """
-    from mvpa.datasets import Dataset
-    from mvpa.clfs import svm
+    ax.set_title(title, fontsize=14)
+    ax.plot(x_values, results['PyMVPA'], 'g-o', label='PyMVPA')
+    ax.plot(x_values, results['libsvm'], 'r-s', label='libsvm (Official)')
+    ax.plot(x_values, results['scikit-learn'], 'b-^', label='scikit-learn')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel('Time (seconds)')
+    ax.legend()
+    ax.grid(True)
 
-    gc.collect()
 
-    # start time
-    tstart = datetime.now()
-    data = Dataset(samples=X, labels=Y)
-    clf = svm.RbfCSVMC(C=1.)
-    clf.train(data)
-    Z = clf.predict(X)
-    delta = (datetime.now() - tstart)
+# ==============================================================================
+# Main Benchmark Drivers
+# ==============================================================================
 
-    # stop time
-    mvpa_results.append(delta.seconds + delta.microseconds/mu_second)
+def run_benchmark_by_samples(ax, n_iterations=5, start_samples=200, step=100, dim=200):
+    """Runs benchmark with a varying number of samples."""
+    print("\n--- Starting Benchmark 1: Varying Number of Samples ---")
+    results = {'scikit-learn': [], 'libsvm': [], 'PyMVPA': []}
+    sample_sizes = []
+
+    for i in range(n_iterations):
+        n_samples = start_samples + i * step
+        sample_sizes.append(n_samples)
+        print(f"Iteration {i+1}/{n_iterations}: Processing {n_samples} samples...")
+
+        X = np.random.randn(n_samples, dim)
+        y = (np.random.randn(n_samples) * 10).astype(int)
+
+        results['scikit-learn'].append(benchmark_sklearn(X, y))
+        results['libsvm'].append(benchmark_libsvm(X, y))
+        results['PyMVPA'].append(benchmark_pymvpa(X, y))
+
+    plot_results(ax, sample_sizes, results,
+                 'SVM Performance vs. Number of Samples',
+                 'Number of Samples to Train and Classify')
+
+def run_benchmark_by_dimensions(ax, n_iterations=10, n_samples=100, start_dim=100, step=500):
+    """Runs benchmark with a varying number of dimensions."""
+    print("\n--- Starting Benchmark 2: Varying Number of Dimensions ---")
+    print("Warning: This may take a long time.")
+    results = {'scikit-learn': [], 'libsvm': [], 'PyMVPA': []}
+    dimensions = []
+
+    for i in range(n_iterations):
+        dim = start_dim + i * step
+        dimensions.append(dim)
+        print(f"Iteration {i+1}/{n_iterations}: Processing {dim} dimensions...")
+
+        X = np.random.randn(n_samples, dim)
+        y = (np.random.randn(n_samples) * 10).astype(int)
+
+        results['scikit-learn'].append(benchmark_sklearn(X, y))
+        results['libsvm'].append(benchmark_libsvm(X, y))
+        results['PyMVPA'].append(benchmark_pymvpa(X, y))
+
+    plot_results(ax, dimensions, results,
+                 'SVM Performance in High Dimensional Spaces',
+                 'Number of Dimensions')
+
 
 if __name__ == '__main__':
+    print(__doc__)
 
-    n = 5
-    step = 100
-    n_samples = 200
-    dim = 200
-    for i in range(n):
-        print '============================================'
-        print 'Entering iteration %s of %s' % (i, n)
-        print '============================================'
-        n_samples += step
-        X = np.random.randn(n_samples, dim)
-        Y = np.random.randn(n_samples)
-        bench_scikit(X, Y)
-        bench_pymvpa(X, Y)
-        bench_svm(X, Y)
+    # Create a figure with two subplots (one for each benchmark)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
 
-    import pylab as pl
-    xx = range(0, n*step, step)
-    pl.figure(1)
-    pl.subplot(211)
-    pl.title('SVM with varying number of samples')
-    pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
-    pl.plot(xx, svm_results, 'r-', label='libsvm (ctypes binding)')
-    pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
-    pl.legend()
-    pl.xlabel('number of samples to classify')
-    pl.ylabel('time (in microseconds)')
+    # Run the benchmarks
+    run_benchmark_by_samples(ax1)
+    run_benchmark_by_dimensions(ax2)
 
-
-    # now do a bench where the number of points is fixed
-    # and the variable is the number of dimensions
-    from scikits.learn.datasets.samples_generator import friedman, \
-                                                         sparse_uncorrelated
-
-    scikit_results = []
-    svm_results = []
-    mvpa_results = []
-    n = 10
-    step = 500
-    start_dim = 100
-
-    print '============================================'
-    print 'Warning: this is going to take a looong time'
-    print '============================================'
-
-    dim = start_dim
-    for i in range(0, n):
-        print '============================================'
-        print 'Entering iteration %s of %s' % (i, n)
-        print '============================================'
-        dim += step
-        X, Y = np.random.randn(100, dim), np.random.randn(100)
-        Y = (10*Y).astype(np.int)
-        bench_scikit(X, Y)
-        bench_svm(X, Y)
-        bench_pymvpa(X, Y)
-
-    xx = np.arange(start_dim, start_dim+n*step, step)
-    pl.subplot(212)
-    pl.title('Classification in high dimensional spaces')
-    pl.plot(xx, mvpa_results, 'g-', label='pymvpa')
-    pl.plot(xx, svm_results, 'r-', label='libsvm (ctypes binding)')
-    pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
-    pl.legend()
-    pl.xlabel('number of dimensions')
-    pl.ylabel('time (in seconds)')
-    pl.axis('tight')
-    pl.show()
+    # Show the final plot
+    fig.tight_layout(pad=3.0)
+    plt.show()
