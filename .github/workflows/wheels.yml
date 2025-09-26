@@ -75,7 +75,13 @@ jobs:
           - os: windows-latest
             python: 313t
             platform_id: win_amd64
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
+          - os: windows-latest
+            python: 314
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 314t
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -98,9 +104,17 @@ jobs:
             python: 313t
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
+          - os: ubuntu-latest
+            python: 314
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 314t
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
-          # # Linux 64 bit manylinux2014
+          # Linux 64 bit manylinux2014
           - os: ubuntu-24.04-arm
             python: 310
             platform_id: manylinux_aarch64
@@ -115,6 +129,19 @@ jobs:
             manylinux_image: manylinux2014
           - os: ubuntu-24.04-arm
             python: 313
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 313t
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+            cibw_enable: cpython-freethreading
+          - os: ubuntu-24.04-arm
+            python: 314
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04-arm
+            python: 314t
             platform_id: manylinux_aarch64
             manylinux_image: manylinux2014
 
@@ -134,7 +161,13 @@ jobs:
           - os: macos-13
             python: 313t
             platform_id: macosx_x86_64
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
+          - os: macos-13
+            python: 314
+            platform_id: macosx_x86_64
+          - os: macos-13
+            python: 314t
+            platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-14
@@ -152,7 +185,13 @@ jobs:
           - os: macos-14
             python: 313t
             platform_id: macosx_arm64
-            free_threaded_support: True
+            cibw_enable: cpython-freethreading
+          - os: macos-14
+            python: 314
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 314t
+            platform_id: macosx_arm64
 
     steps:
       - name: Checkout scikit-learn
@@ -165,11 +204,12 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v3
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
+        with:
+          miniforge-version: latest
 
       - name: Build and test wheels
         env:
-          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
-          CIBW_FREE_THREADED_SUPPORT: ${{ matrix.free_threaded_support }}
+          CIBW_ENABLE: ${{ matrix.cibw_enable }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
@@ -182,9 +222,9 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
-          CIBW_TEST_REQUIRES: pytest pandas
+          # TODO Put back pandas when there is a pandas release with Python 3.14 wheels
+          CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }}
           # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
           # does not make sense because it would install dependencies in the host
           # rather than inside the Docker image

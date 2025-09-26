@@ -13,7 +13,7 @@ from sklearn import config_context
 from sklearn.datasets import make_blobs
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from sklearn.manifold import (  # type: ignore
+from sklearn.manifold import (  # type: ignore[attr-defined]
     TSNE,
     _barnes_hut_tsne,
 )
@@ -51,7 +51,7 @@ X_2d_grid = np.hstack(
 )
 
 
-def test_gradient_descent_stops():
+def test_gradient_descent_stops(capsys):
     # Test stopping conditions of gradient descent.
     class ObjectiveSmallGradient:
         def __init__(self):
@@ -65,76 +65,55 @@ def test_gradient_descent_stops():
         return 0.0, np.ones(1)
 
     # Gradient norm
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(),
-            np.zeros(1),
-            0,
-            max_iter=100,
-            n_iter_without_progress=100,
-            momentum=0.0,
-            learning_rate=0.0,
-            min_gain=0.0,
-            min_grad_norm=1e-5,
-            verbose=2,
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    _, error, it = _gradient_descent(
+        ObjectiveSmallGradient(),
+        np.zeros(1),
+        0,
+        max_iter=100,
+        n_iter_without_progress=100,
+        momentum=0.0,
+        learning_rate=0.0,
+        min_gain=0.0,
+        min_grad_norm=1e-5,
+        verbose=2,
+    )
     assert error == 1.0
     assert it == 0
-    assert "gradient norm" in out
+    assert "gradient norm" in capsys.readouterr().out
 
     # Maximum number of iterations without improvement
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            flat_function,
-            np.zeros(1),
-            0,
-            max_iter=100,
-            n_iter_without_progress=10,
-            momentum=0.0,
-            learning_rate=0.0,
-            min_gain=0.0,
-            min_grad_norm=0.0,
-            verbose=2,
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    _, error, it = _gradient_descent(
+        flat_function,
+        np.zeros(1),
+        0,
+        max_iter=100,
+        n_iter_without_progress=10,
+        momentum=0.0,
+        learning_rate=0.0,
+        min_gain=0.0,
+        min_grad_norm=0.0,
+        verbose=2,
+    )
     assert error == 0.0
     assert it == 11
-    assert "did not make any progress" in out
+    assert "did not make any progress" in capsys.readouterr().out
 
     # Maximum number of iterations
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(),
-            np.zeros(1),
-            0,
-            max_iter=11,
-            n_iter_without_progress=100,
-            momentum=0.0,
-            learning_rate=0.0,
-            min_gain=0.0,
-            min_grad_norm=0.0,
-            verbose=2,
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    _, error, it = _gradient_descent(
+        ObjectiveSmallGradient(),
+        np.zeros(1),
+        0,
+        max_iter=11,
+        n_iter_without_progress=100,
+        momentum=0.0,
+        learning_rate=0.0,
+        min_gain=0.0,
+        min_grad_norm=0.0,
+        verbose=2,
+    )
     assert error == 0.0
     assert it == 10
-    assert "Iteration 10" in out
+    assert "Iteration 10" in capsys.readouterr().out
 
 
 def test_binary_search():
@@ -681,6 +660,7 @@ def _run_answer_test(
     assert_array_almost_equal(grad_bh, grad_output, decimal=4)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbose():
     # Verbose options write to stdout.
     random_state = check_random_state(0)
@@ -810,7 +790,7 @@ def test_barnes_hut_angle():
 
 
 @skip_if_32bit
-def test_n_iter_without_progress():
+def test_n_iter_without_progress(capsys):
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
     X = random_state.randn(100, 10)
@@ -826,37 +806,24 @@ def test_n_iter_without_progress():
         )
         tsne._N_ITER_CHECK = 1
         tsne._EXPLORATION_MAX_ITER = 0
-
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        try:
-            tsne.fit_transform(X)
-        finally:
-            out = sys.stdout.getvalue()
-            sys.stdout.close()
-            sys.stdout = old_stdout
+        tsne.fit_transform(X)
 
         # The output needs to contain the value of n_iter_without_progress
-        assert "did not make any progress during the last -1 episodes. Finished." in out
+        assert (
+            "did not make any progress during the last -1 episodes. Finished."
+            in capsys.readouterr().out
+        )
 
 
-def test_min_grad_norm():
+def test_min_grad_norm(capsys):
     # Make sure that the parameter min_grad_norm is used correctly
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     min_grad_norm = 0.002
     tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2, random_state=0, method="exact")
 
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        tsne.fit_transform(X)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
-    lines_out = out.split("\n")
+    tsne.fit_transform(X)
+    lines_out = capsys.readouterr().out.split("\n")
 
     # extract the gradient norm from the verbose output
     gradient_norm_values = []
@@ -883,7 +850,7 @@ def test_min_grad_norm():
     assert n_smaller_gradient_norms <= 1
 
 
-def test_accessible_kl_divergence():
+def test_accessible_kl_divergence(capsys):
     # Ensures that the accessible kl_divergence matches the computed value
     random_state = check_random_state(0)
     X = random_state.randn(50, 2)
@@ -895,18 +862,10 @@ def test_accessible_kl_divergence():
         max_iter=500,
     )
 
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        tsne.fit_transform(X)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
+    tsne.fit_transform(X)
     # The output needs to contain the accessible kl_divergence as the error at
     # the last iteration
-    for line in out.split("\n")[::-1]:
+    for line in capsys.readouterr().out.split("\n")[::-1]:
         if "Iteration" in line:
             _, _, error = line.partition("error = ")
             if error:
@@ -1185,25 +1144,3 @@ def test_tsne_works_with_pandas_output():
     with config_context(transform_output="pandas"):
         arr = np.arange(35 * 4).reshape(35, 4)
         TSNE(n_components=2).fit_transform(arr)
-
-
-# TODO(1.7): remove
-def test_tnse_n_iter_deprecated():
-    """Check `n_iter` parameter deprecated."""
-    random_state = check_random_state(0)
-    X = random_state.randn(40, 100)
-    tsne = TSNE(n_iter=250)
-    msg = "'n_iter' was renamed to 'max_iter'"
-    with pytest.warns(FutureWarning, match=msg):
-        tsne.fit_transform(X)
-
-
-# TODO(1.7): remove
-def test_tnse_n_iter_max_iter_both_set():
-    """Check error raised when `n_iter` and `max_iter` both set."""
-    random_state = check_random_state(0)
-    X = random_state.randn(40, 100)
-    tsne = TSNE(n_iter=250, max_iter=500)
-    msg = "Both 'n_iter' and 'max_iter' attributes were set"
-    with pytest.raises(ValueError, match=msg):
-        tsne.fit_transform(X)

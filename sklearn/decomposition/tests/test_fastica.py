@@ -32,10 +32,10 @@ def center_and_norm(x, axis=-1):
     x /= x.std(axis=0)
 
 
-def test_gs():
+def test_gs(global_random_seed):
     # Test gram schmidt orthonormalization
     # generate a random orthogonal  matrix
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
@@ -188,11 +188,11 @@ def test_fastica_nowhiten():
     assert hasattr(ica, "mixing_")
 
 
-def test_fastica_convergence_fail():
+def test_fastica_convergence_fail(global_random_seed):
     # Test the FastICA algorithm on very simple data
     # (see test_non_square_fastica).
     # Ensure a ConvergenceWarning raised if the tolerance is sufficiently low.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 1000
     # Generate two sources:
@@ -219,9 +219,9 @@ def test_fastica_convergence_fail():
 
 
 @pytest.mark.parametrize("add_noise", [True, False])
-def test_non_square_fastica(add_noise):
+def test_non_square_fastica(global_random_seed, add_noise):
     # Test the FastICA algorithm on very simple data.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 1000
     # Generate two sources:
@@ -372,12 +372,12 @@ def test_fastica_errors():
         fastica(X, w_init=w_init)
 
 
-def test_fastica_whiten_unit_variance():
+def test_fastica_whiten_unit_variance(global_random_seed):
     """Test unit variance of transformed data using FastICA algorithm.
 
     Bug #13056
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
     ica = FastICA(n_components=n_components, whiten="unit-variance", random_state=0)

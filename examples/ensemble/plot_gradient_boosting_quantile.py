@@ -241,10 +241,11 @@ coverage_fraction(
 # cross-validation on the pinball loss with alpha=0.05:
 
 # %%
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.metrics import make_scorer
 from pprint import pprint
+
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import HalvingRandomSearchCV
 
 param_grid = dict(
     learning_rate=[0.05, 0.1, 0.2],
@@ -297,8 +298,8 @@ pprint(search_95p.best_params_)
 
 # %%
 # The result shows that the hyper-parameters for the 95th percentile regressor
-# identified by the search procedure are roughly in the same range as the hand-
-# tuned hyper-parameters for the median regressor and the hyper-parameters
+# identified by the search procedure are roughly in the same range as the hand-tuned
+# hyper-parameters for the median regressor and the hyper-parameters
 # identified by the search procedure for the 5th percentile regressor. However,
 # the hyper-parameter searches did lead to an improved 90% confidence interval
 # that is comprised by the predictions of those two tuned quantile regressors.

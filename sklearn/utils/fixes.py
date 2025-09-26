@@ -14,14 +14,15 @@ import numpy as np
 import scipy
 import scipy.sparse.linalg
 import scipy.stats
+from scipy import optimize
 
 try:
     import pandas as pd
 except ImportError:
     pd = None
 
-from ..externals._packaging.version import parse as parse_version
-from .parallel import _get_threadpool_controller
+from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.utils.parallel import _get_threadpool_controller
 
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
@@ -43,7 +44,7 @@ DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
 # Remove when minimum scipy version is 1.11.0
 try:
-    from scipy.sparse import sparray  # noqa
+    from scipy.sparse import sparray  # noqa: F401
 
     SPARRAY_PRESENT = True
 except ImportError:
@@ -78,6 +79,38 @@ else:
         if "atol" not in kwargs:
             kwargs["atol"] = "legacy"
         return scipy.sparse.linalg.cg(A, b, **kwargs)
+
+
+# TODO : remove this when required minimum version of scipy >= 1.9.0
+def _yeojohnson_lambda(_neg_log_likelihood, x):
+    """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
+
+    This function provides a compatibility workaround for versions of SciPy
+    older than 1.9.0, where `scipy.stats.yeojohnson` did not return
+    the estimated lambda directly.
+
+    Parameters
+    ----------
+    _neg_log_likelihood : callable
+        A function that computes the negative log-likelihood of the Yeo-Johnson
+        transformation for a given lambda. Used only for SciPy versions < 1.9.0.
+
+    x : array-like
+        Input data to estimate the Yeo-Johnson transformation parameter.
+
+    Returns
+    -------
+    lmbda : float
+        The estimated lambda parameter for the Yeo-Johnson transformation.
+    """
+    min_scipy_version = "1.9.0"
+
+    if sp_version < parse_version(min_scipy_version):
+        # choosing bracket -2, 2 like for boxcox
+        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+    _, lmbda = scipy.stats.yeojohnson(x, lmbda=None)
+    return lmbda
 
 
 # TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
@@ -182,7 +215,10 @@ else:
 if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+    from numpy import (  # noqa: F401
+        ComplexWarning,
+        VisibleDeprecationWarning,
+    )
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -252,7 +288,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     type that can hold the data in the arrays.
 
     This function returns `np.int64` if it either required by `maxval` or based on the
-    largest precision of the dtype of the arrays passed as argument, or by the their
+    largest precision of the dtype of the arrays passed as argument, or by their
     contents (when `check_contents is True`). If none of the condition requires
     `np.int64` then this function returns `np.int32`.
 
@@ -318,17 +354,30 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
+    from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:
-    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
+    from scipy.sparse.csgraph import (
+        laplacian,  # noqa: F401  # pragma: no cover
+    )
+
+
+# TODO: Remove when Python min version >= 3.12.
+def tarfile_extractall(tarfile, path):
+    try:
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
+        tarfile.extractall(path, filter="data")
+    except TypeError:
+        tarfile.extractall(path)
 
 
 def _in_unstable_openblas_configuration():
     """Return True if in an unstable configuration for OpenBLAS"""
 
     # Import libraries which might load OpenBLAS.
-    import numpy  # noqa
-    import scipy  # noqa
+    import numpy  # noqa: F401
+    import scipy  # noqa: F401
 
     modules_info = _get_threadpool_controller().info()
 
@@ -337,7 +386,7 @@ def _in_unstable_openblas_configuration():
         return False
 
     # OpenBLAS 0.3.16 fixed instability for arm64, see:
-    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
+    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58
     openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
         if info["internal_api"] != "openblas":
@@ -354,3 +403,25 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version. In scipy 1.15,
+# the internal info details (via 'iprint' and 'disp' options) were dropped,
+# following the LBFGS rewrite from Fortran to C, see
+# https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035. For
+# scipy 1.15, 'iprint' and 'disp' have no effect and for scipy >= 1.16 a
+# DeprecationWarning is emitted.
+def _get_additional_lbfgs_options_dict(key, value):
+    return {} if sp_version >= parse_version("1.15") else {key: value}
+
+
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
+PYARROW_VERSION_BELOW_17 = False
+try:
+    import pyarrow
+
+    pyarrow_version = parse_version(pyarrow.__version__)
+    if pyarrow_version < parse_version("17.0.0"):
+        PYARROW_VERSION_BELOW_17 = True
+except ModuleNotFoundError:  # pragma: no cover
+    pass

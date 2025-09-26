@@ -1,46 +1,31 @@
 from __future__ import annotations
 
-__all__ = [
-    "ndarray",
-    "Device",
-    "Dtype",
-]
+__all__ = ["Array", "DType", "Device"]
+_all_ignore = ["cp"]
 
-import sys
-from typing import (
-    Union,
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING
 
-from cupy import (
-    ndarray,
-    dtype,
-    int8,
-    int16,
-    int32,
-    int64,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    float32,
-    float64,
-)
-
+import cupy as cp
+from cupy import ndarray as Array
 from cupy.cuda.device import Device
 
-if TYPE_CHECKING or sys.version_info >= (3, 9):
-    Dtype = dtype[Union[
-        int8,
-        int16,
-        int32,
-        int64,
-        uint8,
-        uint16,
-        uint32,
-        uint64,
-        float32,
-        float64,
-    ]]
+if TYPE_CHECKING:
+    # NumPy 1.x on Python 3.10 fails to parse np.dtype[]
+    DType = cp.dtype[
+        cp.intp
+        | cp.int8
+        | cp.int16
+        | cp.int32
+        | cp.int64
+        | cp.uint8
+        | cp.uint16
+        | cp.uint32
+        | cp.uint64
+        | cp.float32
+        | cp.float64
+        | cp.complex64
+        | cp.complex128
+        | cp.bool_
+    ]
 else:
-    Dtype = dtype
+    DType = cp.dtype

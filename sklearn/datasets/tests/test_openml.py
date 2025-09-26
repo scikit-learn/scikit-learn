@@ -105,9 +105,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_shared(url, has_gzip_header, expected_prefix, suffix):
-        assert url.startswith(
-            expected_prefix
-        ), f"{expected_prefix!r} does not match {url!r}"
+        assert url.startswith(expected_prefix), (
+            f"{expected_prefix!r} does not match {url!r}"
+        )
 
         data_file_name = _file_name(url, suffix)
         data_file_path = resources.files(data_module) / data_file_name
@@ -141,7 +141,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         # For simplicity the mock filenames don't contain the filename, i.e.
         # the last part of the data description url after the last /.
         # For example for id_1, data description download url is:
-        # gunzip -c sklearn/datasets/tests/data/openml/id_1/api-v1-jd-1.json.gz | grep '"url" # noqa: E501
+        # gunzip -c sklearn/datasets/tests/data/openml/id_1/api-v1-jd-1.json.gz | grep '"url"  # noqa: E501
         # "https:\/\/www.openml.org\/data\/v1\/download\/1\/anneal.arff"
         # but the mock filename does not contain anneal.arff and is:
         # sklearn/datasets/tests/data/openml/id_1/data-v1-dl-1.arff.gz.
@@ -156,9 +156,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         )
 
     def _mock_urlopen_data_list(url, has_gzip_header):
-        assert url.startswith(
-            url_prefix_data_list
-        ), f"{url_prefix_data_list!r} does not match {url!r}"
+        assert url.startswith(url_prefix_data_list), (
+            f"{url_prefix_data_list!r} does not match {url!r}"
+        )
 
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name
@@ -1540,9 +1540,11 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
             f" {invalid_openml_url}. Retrying..."
         ),
     ) as record:
-        with pytest.raises(HTTPError, match="Simulated network error"):
+        with pytest.raises(HTTPError, match="Simulated network error") as exc_info:
             _open_openml_url(invalid_openml_url, None, delay=0)
         assert len(record) == 3
+        # Avoid a ResourceWarning on Python 3.14 and later.
+        exc_info.value.close()
 
 
 ###############################################################################
