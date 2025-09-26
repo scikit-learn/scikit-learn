@@ -94,6 +94,25 @@ def test_fit_distributions():
         pce.fit(X, y)
 
 
+# Test fitting without distribution
+def test_no_distribution():
+    X = np.linspace(-np.pi, np.pi, num=11)
+    y = (X * np.sin(X)).ravel()
+
+    # Fit PCE when specifying a distribution
+    pce = PolynomialChaosExpansion(
+        degree=5, distribution=uniform(loc=-np.pi, scale=2 * np.pi)
+    )
+    pce.fit(X, y)
+
+    # Fit PCE without specifying a distribution
+    pce_no_dist = PolynomialChaosExpansion(degree=5)
+    pce_no_dist.fit(X, y)
+
+    # Coefficients must be the same!
+    assert np.allclose(pce.coef_, pce_no_dist.coef_)
+
+
 # Test fit with estimators
 def test_fit_estimators():
     # Generate data
