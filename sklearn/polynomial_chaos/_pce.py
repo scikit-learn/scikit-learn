@@ -205,7 +205,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         self.scale_outputs = scale_outputs
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, strategy="gerstner_griebel", max_iter=1):
+    def fit(self, X, y, strategy="gerstner_griebel", n_iter=1):
         """Fit Polynomial Chaos Expansion model.
 
         Parameters
@@ -225,7 +225,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
             term to select the multiindices that are suitable for further
             refinement.
 
-        max_iter : int
+        n_iter : int
             Maximum number of iterations with the adaptive algorithm. The
             default is `1`, meaning that the basis will not be incremented.
 
@@ -247,7 +247,9 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         if self.distribution is None:
             data_min = np.amin(X, axis=0)
             data_max = np.amax(X, axis=0)
-            self.distributions_ = [uniform(a, b) for a, b in zip(data_min, data_max)]
+            self.distributions_ = [
+                uniform(loc=a, scale=b - a) for a, b in zip(data_min, data_max)
+            ]
         elif hasattr(self.distribution, "dist"):
             self.distributions_ = [self.distribution] * self.n_features_in_
         elif isinstance(self.distribution, Iterable):
@@ -362,7 +364,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         self.strategy_ = BasisIncrementStrategy.from_string(strategy)
 
         # Adaptive basis growth
-        for iter in range(max_iter):
+        for iter in range(n_iter):
             # Create orthogonal polynomial basis transformer
             basis = OrthogonalPolynomialFeatures(
                 self.degree,
@@ -386,13 +388,11 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
 
             # Convenient access to multiindices and norms
             self.multiindices_ = self.pipeline_["basis"].multiindices_
-            self.norms_ = self.pipeline_["basis"].norms_
 
             if feature_selector is not None:
                 # After fitting, feature_selector has support mask
                 support = self.pipeline_["feature_selector"].get_support()
                 self.multiindices_ = self.multiindices_[support]
-                self.norms_ = self.norms_[support]
 
             # Convenient access to coefficients
             if hasattr(self.pipeline_["estimator"], "coef_"):
@@ -413,7 +413,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
                 )
 
             # Do not update multiindices in last iteration
-            if iter < max_iter - 1:
+            if iter < n_iter - 1:
                 self.multiindices_ = self.strategy_.propose(self)
 
         # By convention, fit returns itself
@@ -522,10 +522,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         joint_sens = np.zeros(self.n_outputs_)
         for j, index in enumerate(self.multiindices_):
             if np.sum(index != 0) == len(idcs) and all(i > 0 for i in index[idcs]):
-                joint_sens += (
-                    self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
-                    # * self.norms_[j] ** 2
-                )
+                joint_sens += self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
 
         return np.divide(joint_sens.T, self.var()).T
 
@@ -592,7 +589,6 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
                     continue
                 total_sens[:, i] += (
                     self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
-                    # * self.norms_[j] ** 2
                 )
         return np.divide(total_sens.T, self.var()).T
 
@@ -649,8 +645,5 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         var = 0
         for j, index in enumerate(self.multiindices_):
             if np.any(index > 0):
-                var += (
-                    self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
-                    # * self.norms_[j] ** 2
-                )
+                var += self.output_std_**2 * np.atleast_2d(self.coef_)[:, j] ** 2
         return var
