@@ -792,3 +792,25 @@ def test_ishigami_fourier():
     assert np.abs(pce.score(X_test, y_test) - 1) < 1e-10
 
     # Check coefficients
+    a = 7.0
+    b = 0.1
+    c0 = 1.0 / 5.0
+    c2 = 4.0 / 7.0
+    c4 = 8.0 / 35.0
+    exact = [
+        a / 2.0,  # (0, 0, 0)
+        (1.0 + b * np.pi**4 * c0) / np.sqrt(2),  # (1, 0, 0)
+        -a / (2.0 * np.sqrt(2)),  # (0, 4, 0)
+        b * np.pi**4 * c2 / (np.sqrt(2) * np.sqrt(5)),  # (1, 0, 2)
+        b * np.pi**4 * c4 / (3.0 * np.sqrt(2)),  # (1, 0, 4)
+    ]
+    idcs = np.array([0, 1, 18, 37, 53])
+
+    # Check expected indices
+    atol = 1e-14
+    assert np.allclose(pce.coef_[idcs], exact, atol=atol)
+
+    # Check all *other* indices are small
+    mask = np.ones_like(pce.coef_, dtype=bool)
+    mask[idcs] = False
+    assert np.all(np.abs(pce.coef_[mask]) < atol)
