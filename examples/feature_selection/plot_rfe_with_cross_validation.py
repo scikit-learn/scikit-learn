@@ -137,7 +137,7 @@ X_test, y_test = make_classification(
     n_classes=8,
     n_clusters_per_class=1,
     class_sep=0.8,
-    random_state=0,
+    random_state=1,
 )
 
 
@@ -148,6 +148,8 @@ def permutation_importance_getter(model, feature_indices, X_test, y_test, random
         model,
         X_test[:, feature_indices],
         y_test,
+        n_repeats=10,
+        n_jobs=2,
         random_state=random_state,
     ).importances_mean
 
