@@ -822,7 +822,7 @@ def nunique(x: Array, /, *, xp: ModuleType | None = None) -> Array:
 
     # xp does not have unique_counts; O(n*logn) complexity
     x = xp.reshape(x, (-1,))
-    x = xp.sort(x)
+    x = xp.sort(x, stable=False)
     mask = x != xp.roll(x, -1)
     default_int = default_dtype(xp, "integral", device=_compat.device(x))
     return xp.maximum(
