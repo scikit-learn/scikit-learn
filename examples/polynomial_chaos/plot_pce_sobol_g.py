@@ -142,7 +142,7 @@ estimator = LassoCV(
 )
 for i in range(10, 35, 5):
     pce = PolynomialChaosExpansion(distribution, degree=1, estimator=estimator)
-    pce.fit(X, y, max_iter=i)
+    pce.fit(X, y, n_iter=i)
     errors.append(np.linalg.norm(pce.main_sens() - S) / np.linalg.norm(S))
     iters.append(i)
 
