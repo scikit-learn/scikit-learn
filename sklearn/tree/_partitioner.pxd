@@ -10,7 +10,8 @@ from ._splitter cimport SplitRecord
 
 
 # Mitigate precision differences between 32 bit and 64 bit
-cdef float32_t FEATURE_THRESHOLD = 1e-7
+# Note: Has to be initialized in pyx file, not in the pxd file
+cdef float32_t FEATURE_THRESHOLD
 
 
 # We provide here the abstract interface for a Partitioner that would be
