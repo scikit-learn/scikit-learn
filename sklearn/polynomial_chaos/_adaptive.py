@@ -140,9 +140,7 @@ class GerstnerGriebel(BasisIncrementStrategy):
         best_index = self.active[0]
         for index in self.active:
             j = multiindices.index(index)
-            contribution = (
-                np.amax(np.atleast_2d(pce.coef_)[:, j]) ** 2 * pce.norms_[j] ** 2
-            )
+            contribution = np.amax(np.atleast_2d(pce.coef_)[:, j]) ** 2
             if contribution > max_contribution:
                 max_contribution = contribution
                 best_index = index
