@@ -1,0 +1,4 @@
+- Added correction to :class:`covariance.MinCovDet` to adjust for
+  consistency at the normal distribution. This reduces the bias present
+  when applying this method to data that is normally distributed.
+  By :user:`Daniel Herrera-Esposito <dherrera1911>`
