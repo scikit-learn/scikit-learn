@@ -170,7 +170,7 @@ def test_lml_gradient(kernel):
         length_scales,
         maxiter=20,
     ).df
-    print(lml_gradient_approx.shape, np.stack(lml_gradient).shape)
+
     assert_almost_equal(np.stack(lml_gradient), lml_gradient_approx, 3)
 
 
