@@ -131,9 +131,9 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "Metric MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, eps=1e-6),
+    "Metric MDS embedding": MDS(n_components=2, n_init=1, init="classical_mds"),
     "Non-metric MDS embedding": MDS(
-        n_components=2, n_init=1, max_iter=120, eps=1e-6, metric=False
+        n_components=2, n_init=1, init="classical_mds", metric_mds=False
     ),
     "Classical MDS embedding": ClassicalMDS(n_components=2),
     "Random Trees embedding": make_pipeline(
