@@ -630,10 +630,3 @@ def test_adaboost_decision_function(global_random_seed):
 
     for y_score in clf.staged_decision_function(X):
         assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
-
-
-# TODO(1.8): remove
-def test_deprecated_algorithm():
-    adaboost_clf = AdaBoostClassifier(n_estimators=1, algorithm="SAMME")
-    with pytest.warns(FutureWarning, match="The parameter 'algorithm' is deprecated"):
-        adaboost_clf.fit(X, y_class)
