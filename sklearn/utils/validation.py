@@ -1951,23 +1951,21 @@ def check_scalar(
             "is inconsistent."
         )
 
-    comparison_operator = (
-        operator.lt if include_boundaries in ("left", "both") else operator.le
-    )
-    if min_val is not None and comparison_operator(x, min_val):
-        raise ValueError(
-            f"{name} == {x}, must be"
-            f" {'>=' if include_boundaries in ('left', 'both') else '>'} {min_val}."
-        )
+    include_left = include_boundaries in ("left", "both")
+    include_right = include_boundaries in ("right", "both")
+    left_comparison_operator = operator.lt if include_left else operator.le
+    right_comparison_operator = operator.gt if include_right else operator.ge
 
-    comparison_operator = (
-        operator.gt if include_boundaries in ("right", "both") else operator.ge
-    )
-    if max_val is not None and comparison_operator(x, max_val):
-        raise ValueError(
-            f"{name} == {x}, must be"
-            f" {'<=' if include_boundaries in ('right', 'both') else '<'} {max_val}."
-        )
+    if (min_val is not None and left_comparison_operator(x, min_val)) or (
+        max_val is not None and right_comparison_operator(x, max_val)
+    ):
+        left_bound = "[" if include_left and min_val is not None else "("
+        right_bound = "]" if include_right and max_val is not None else ")"
+        min_val_str = "-inf" if min_val is None else min_val
+        max_val_str = "inf" if max_val is None else max_val
+
+        range_str = f"{left_bound}{min_val_str}, {max_val_str}{right_bound}"
+        raise ValueError(f"{name} == {x}, must be in the range {range_str}.")
 
     return x
 
