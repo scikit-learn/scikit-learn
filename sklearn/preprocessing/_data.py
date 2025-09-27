@@ -137,7 +137,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         "X": ["array-like", "sparse matrix"],
         "axis": [Options(Integral, {0, 1})],
         "with_mean": ["boolean"],
-        "with_std": ["boolean"],
+        "with_std": ["boolean", Options(int, {1, 2})],
         "copy": ["boolean"],
     },
     prefer_skip_nested_validation=True,
@@ -145,7 +145,10 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
 
-    Center to the mean and component wise scale to unit variance.
+    Center to the mean and scale each feature to unit variance if
+    `with_std` is True or 1. If `with_std` is 2, scale the data so
+    that each feature has a variance of 0.25 (i.e., standard
+    deviation of 0.5).
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
@@ -162,9 +165,12 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     with_mean : bool, default=True
         If True, center the data before scaling.
 
-    with_std : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : bool, 1 or 2, default=True
+        If True or 1, scale the data to unit variance (i.e.,
+        standard deviation equal to 1).
+        If 2, scale the data so that the standard deviation is 0.5.
+        Scaling with a factor of 2 can improve the interpretability of
+        linear model coefficients [Gelman2008].
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
@@ -218,6 +224,12 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
 
+    References
+    ----------
+    .. [Gelman2008] Gelman, A. (2008).
+       "Scaling regression inputs by dividing by two standard deviations."
+       Statistics in medicine, 27(15), 2865-2873.
+
     Examples
     --------
     >>> from sklearn.preprocessing import scale
@@ -239,6 +251,10 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         ensure_all_finite="allow-nan",
         input_name="X",
     )
+
+    # converts False into 0, True into 1
+    scale_factor = int(with_std)
+
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -249,16 +265,17 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError(
                 "Can only scale sparse matrix on axis=0,  got axis=%d" % axis
             )
-        if with_std:
+        if scale_factor > 0:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
-            inplace_column_scale(X, 1 / np.sqrt(var))
+            scaled_sd = scale_factor * np.sqrt(var)
+            inplace_column_scale(X, 1 / scaled_sd)
     else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)
-        if with_std:
-            scale_ = np.nanstd(X, axis)
+        if scale_factor > 0:
+            scale_ = scale_factor * np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -745,11 +762,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     .. code-block:: text
 
-        z = (x - u) / s
+        z = (x - u) / (w * s)
 
-    where `u` is the mean of the training samples or zero if `with_mean=False`,
-    and `s` is the standard deviation of the training samples or one if
-    `with_std=False`.
+    where `u` is the mean of the training samples if `with_mean=True`,
+    and 0 otherwise;
+    `s` is the standard deviation of the training samples; and
+    `w` is the value of `with_std`, with True treated as 1. If
+    `with_std=False`, the denominator simplifies to 1.
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
@@ -794,18 +813,22 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : bool, default=True
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : bool, 1 or 2, default=True
+        If True or 1, scale the data to unit variance (i.e.,
+        standard deviation equal to 1).
+        If 2, scale the data so that the standard deviation is 0.5.
+        Scaling with a factor of 2 can improve the interpretability of
+        linear model coefficients [Gelman2008].
 
     Attributes
     ----------
     scale_ : ndarray of shape (n_features,) or None
         Per feature relative scaling of the data to achieve zero mean and unit
-        variance. Generally this is calculated using `np.sqrt(var_)`. If a
-        variance is zero, we can't achieve unit variance, and the data is left
-        as-is, giving a scaling factor of 1. `scale_` is equal to `None`
-        when `with_std=False`.
+        variance (or 0.25 variance if `with_std=2`). Generally this is
+        calculated using `with_std * np.sqrt(var_)`. If a variance is zero,
+        we can't achieve unit variance, and the data is left as-is, giving
+        a scaling factor of 1. `scale_` is equal to `None` when
+        `with_std=False`.
 
         .. versionadded:: 0.17
            *scale_*
@@ -855,6 +878,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
 
+    References
+    ----------
+    .. [Gelman2008] Gelman, A. (2008).
+       "Scaling regression inputs by dividing by two standard deviations."
+       Statistics in medicine, 27(15), 2865-2873.
+
     Examples
     --------
     >>> from sklearn.preprocessing import StandardScaler
@@ -876,7 +905,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "copy": ["boolean"],
         "with_mean": ["boolean"],
-        "with_std": ["boolean"],
+        "with_std": ["boolean", Options(int, {1, 2})],
     }
 
     def __init__(self, *, copy=True, with_mean=True, with_std=True):
@@ -972,6 +1001,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
+        scale_factor = int(self.with_std)
+
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
@@ -1066,7 +1097,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 self.var_, self.mean_, self.n_samples_seen_
             )
             self.scale_ = _handle_zeros_in_scale(
-                xp.sqrt(self.var_), copy=False, constant_mask=constant_mask
+                scale_factor * xp.sqrt(self.var_),
+                copy=False,
+                constant_mask=constant_mask,
             )
         else:
             self.scale_ = None
