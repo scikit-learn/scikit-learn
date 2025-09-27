@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
@@ -16,6 +17,7 @@ from sklearn.calibration import (
     calibration_curve,
 )
 from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
@@ -45,9 +47,15 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1212,3 +1220,70 @@ def test_error_less_class_samples_than_folds():
     y = ["a"] * 10 + ["b"] * 10
 
     CalibratedClassifierCV(cv=3).fit(X, y)
+
+
+@pytest.mark.parametrize("ensemble", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_temperature_scaling_array_api_compliance(
+    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Check that `CalibratedClassifierCV` with temperature scaling is compatible
+    with the array API"""
+
+    # TODO: Also ensure that `CalibratedClassifierCV` works appropriately with
+    #  the array API when `y` is an ndarray of strings. In this regard
+    #  `LinearDiscriminantAnalysis` will also need modifications.
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_classification(
+        n_samples=1000,
+        n_features=10,
+        n_informative=10,
+        n_redundant=0,
+        n_classes=5,
+        n_clusters_per_class=1,
+        class_sep=2.0,
+        random_state=42,
+    )
+    X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
+
+    X_train = X_train.astype(dtype_name)
+    y_train = y_train.astype(dtype_name)
+    X_train_xp = xp.asarray(X_train, device=device_)
+    y_train_xp = xp.asarray(y_train, device=device_)
+
+    X_cal = X_cal.astype(dtype_name)
+    y_cal = y_cal.astype(dtype_name)
+    X_cal_xp = xp.asarray(X_cal, device=device_)
+    y_cal_xp = xp.asarray(y_cal, device=device_)
+
+    if use_sample_weight:
+        sample_weight = np.ones_like(y_cal)
+        sample_weight[1::2] = 2
+    else:
+        sample_weight = None
+    with config_context(array_api_dispatch=True):
+        clf_xp = LinearDiscriminantAnalysis()
+        clf_xp.fit(X_train_xp, y_train_xp)
+        cal_clf_xp = CalibratedClassifierCV(
+            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
+        ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
+
+    clf_np = LinearDiscriminantAnalysis()
+    clf_np.fit(X_train, y_train)
+    cal_clf_np = CalibratedClassifierCV(
+        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
+    ).fit(X_cal, y_cal, sample_weight=sample_weight)
+
+    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+    calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
+    rtol = 1e-3 if dtype_name == "float32" else 1e-7
+    assert np.isclose(
+        _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+        calibrator_np.beta_,
+        rtol=rtol,
+    )

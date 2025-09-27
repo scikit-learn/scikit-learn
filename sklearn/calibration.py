@@ -21,12 +21,20 @@ from sklearn.base import (
     _fit_context,
     clone,
 )
+from sklearn.externals import array_api_extra as xpx
 from sklearn.frozen import FrozenEstimator
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
 from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils._array_api import (
+    _half_multinomial_loss,
+    _is_numpy_namespace,
+    ensure_common_namespace_device,
+    get_namespace,
+    get_namespace_and_device,
+)
 from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
@@ -383,6 +391,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
+        xp, is_array_api = get_namespace(X)
+        if is_array_api:
+            if type(y[0]) == np.str_:
+                y = label_encoder_.transform(y=y)
+            y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -391,7 +404,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             n_folds = self.cv.n_splits
         else:
             n_folds = None
-        if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
+        if n_folds and xp.any(xp.unique_counts(y)[1] < n_folds):
             raise ValueError(
                 f"Requesting {n_folds}-fold "
                 "cross-validation but provided less than "
@@ -417,6 +430,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     test=test,
                     method=self.method,
                     classes=self.classes_,
+                    xp=xp,
                     sample_weight=sample_weight,
                     fit_params=routed_params.estimator.fit,
                 )
@@ -437,7 +451,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            if len(self.classes_) == 2:
+            if self.classes_.shape[0] == 2:
                 # Ensure shape (n_samples, 1) in the binary case
                 if method_name == "predict_proba":
                     # Select the probability column of the positive class
@@ -465,7 +479,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 y,
                 self.classes_,
                 self.method,
-                sample_weight,
+                xp=xp,
+                sample_weight=sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -563,6 +578,7 @@ def _fit_classifier_calibrator_pair(
     test,
     method,
     classes,
+    xp,
     sample_weight=None,
     fit_params=None,
 ):
@@ -629,12 +645,18 @@ def _fit_classifier_calibrator_pair(
     else:
         sw_test = None
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y_test, classes, method, sample_weight=sw_test
+        estimator,
+        predictions,
+        y_test,
+        classes,
+        method,
+        xp=xp,
+        sample_weight=sw_test,
     )
     return calibrated_classifier
 
 
-def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
@@ -667,12 +689,12 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     -------
     pipeline : _CalibratedClassifier instance
     """
-    Y = label_binarize(y, classes=classes)
-    label_encoder = LabelEncoder().fit(classes)
-    pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
 
     if method in ("isotonic", "sigmoid"):
+        Y = label_binarize(y, classes=classes)
+        label_encoder = LabelEncoder().fit(classes)
+        pos_class_indices = label_encoder.transform(clf.classes_)
         for class_idx, this_pred in zip(pos_class_indices, predictions.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
@@ -681,13 +703,13 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if len(classes) == 2 and predictions.shape[-1] == 1:
+        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
             response_method_name = _check_response_method(
                 clf,
                 ["decision_function", "predict_proba"],
             ).__name__
             if response_method_name == "predict_proba":
-                predictions = np.hstack([1 - predictions, predictions])
+                predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
@@ -898,7 +920,7 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_to_logits(decision_values, eps=1e-12):
+def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
@@ -926,25 +948,31 @@ def _convert_to_logits(decision_values, eps=1e-12):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
+    xp, _, device_ = get_namespace_and_device(decision_values, xp=xp)
     decision_values = check_array(
-        decision_values, dtype=[np.float64, np.float32], ensure_2d=False
+        decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
     )
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
         # Check if it is the output of predict_proba
-        entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
-        row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
+        entries_zero_to_one = xp.all((decision_values >= 0) & (decision_values <= 1))
+        row_sums_to_one = xp.all(
+            xpx.isclose(
+                xp.sum(decision_values, axis=1),
+                xp.asarray(1.0, device=device_, dtype=decision_values.dtype),
+            )
+        )
 
         if entries_zero_to_one and row_sums_to_one:
-            logits = np.log(decision_values + eps)
+            logits = xp.log(decision_values + eps)
         else:
             logits = decision_values
 
     elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        logits = np.hstack([-decision_values, decision_values])
+        logits = xp.concat([-decision_values, decision_values], axis=1)
 
     elif decision_values.ndim == 1:
-        decision_values = decision_values.reshape(-1, 1)
-        logits = np.hstack([-decision_values, decision_values])
+        decision_values = xp.reshape(decision_values, (-1, 1))
+        logits = xp.concat([-decision_values, decision_values], axis=1)
 
     return logits
 
@@ -1041,9 +1069,10 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        xp, _, xp_device = get_namespace_and_device(X, y)
         X, y = indexable(X, y)
         check_consistent_length(X, y)
-        logits = _convert_to_logits(X)  # guarantees np.float64 or np.float32
+        logits = _convert_to_logits(X)  # guarantees xp.float64 or xp.float32
 
         dtype_ = logits.dtype
         labels = column_or_1d(y, dtype=dtype_)
@@ -1051,9 +1080,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
 
-        halfmulti_loss = HalfMultinomialLoss(
-            sample_weight=sample_weight, n_classes=logits.shape[1]
-        )
+        halfmulti_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
 
         def log_loss(log_beta=0.0):
             """Compute the log loss as a parameter of the inverse temperature
@@ -1083,14 +1110,26 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             #   - NumPy 2+:  result.dtype is float64
             #
             #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
-            raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
-            return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
+            if _is_numpy_namespace(xp):
+                raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
+                return halfmulti_loss(
+                    y_true=labels,
+                    raw_prediction=raw_prediction,
+                    sample_weight=sample_weight,
+                )
 
+            log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
+            raw_prediction = xp.exp(log_beta) * logits
+            return _half_multinomial_loss(
+                y=labels, pred=raw_prediction, sample_weight=sample_weight, xp=xp
+            )
+
+        xatol = 64 * xp.finfo(dtype_).eps
         log_beta_minimizer = minimize_scalar(
             log_loss,
             bounds=(-10.0, 10.0),
             options={
-                "xatol": 64 * np.finfo(float).eps,
+                "xatol": xatol,
             },
         )
 
@@ -1101,7 +1140,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 f"{log_beta_minimizer.message}"
             )
 
-        self.beta_ = np.exp(log_beta_minimizer.x)
+        self.beta_ = xp.exp(
+            xp.asarray(log_beta_minimizer.x, dtype=dtype_, device=xp_device)
+        )
 
         return self
 
