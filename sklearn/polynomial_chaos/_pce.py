@@ -457,9 +457,13 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
                     " attribute"
                 )
 
-            # Do not update multiindices in last iteration
-            if iter < n_iter - 1:
-                self.multiindices_ = self.strategy_.propose(self)
+            # Check convergence
+            if strategy.converged():
+                break
+            else:
+                # Do not update multiindices in last iteration
+                if iter < n_iter - 1:
+                    self.multiindices_ = self.strategy_.propose(self)
 
         # By convention, fit returns itself
         return self

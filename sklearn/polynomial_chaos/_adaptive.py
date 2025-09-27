@@ -45,7 +45,7 @@ class BasisIncrementStrategy(ABC):
     strategies."""
 
     def __init__(self):
-        pass
+        self._converged = False
 
     @abstractmethod
     def propose(self, pce):
@@ -62,6 +62,12 @@ class BasisIncrementStrategy(ABC):
         multiindices : array-like of shape (`n_terms`, `dimension`)
             The proposed multiindices.
         """
+
+    def converged(self):
+        """Return True if the strategy has no further admissible multiindices
+        to add, or if enrichment stalls based on the chosen criterion.
+        Subclasses can override this behavior."""
+        return self._converged
 
     @staticmethod
     def from_string(name):
