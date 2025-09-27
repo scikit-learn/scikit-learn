@@ -1074,8 +1074,8 @@ def precision_recall_curve(
     # reverse the outputs so recall is decreasing
     sl = slice(None, None, -1)
     return (
-        xp.concat((precision[sl], xp.asarray([1], device=device))),
-        np.concat((recall[sl], xp.asarray([0], device=device))),
+        xp.concat((precision[sl], xp.asarray([1.0], device=device))),
+        xp.concat((recall[sl], xp.asarray([0.0], device=device))),
         thresholds[sl],
     )
 
