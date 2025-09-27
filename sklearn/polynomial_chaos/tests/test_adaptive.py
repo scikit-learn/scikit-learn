@@ -37,7 +37,7 @@ def test_adaptive_construction():
     N = 66
     X = uniform().rvs((N, dimension), random_state=random_state)
     y = prod((abs(4 * X_j - 2) + a_j) / (1 + a_j) for a_j, X_j in zip(a, X.T))
-    pce.fit(X, y, max_iter=35)
+    pce.fit(X, y, n_iter=35)
     exact = np.array([0.6342, 0.2945, 0.0756, 0.0227, 0.0062, 0.0011, 0.0003, 0.0000])
     rel_err = np.linalg.norm(pce.total_sens() - exact) / np.linalg.norm(exact)
     assert rel_err < 0.1
@@ -50,7 +50,7 @@ def test_old_active_split():
     pce = PolynomialChaosExpansion(distribution, degree=1)
     X = distribution.rvs((66, 1), random_state=random_state)
     y = np.prod((3 * X**2 + 1) / 2, axis=1)
-    pce.fit(X, y, max_iter=2)
+    pce.fit(X, y, n_iter=2)
     assert not np.any(pce.strategy_.old[0])  # (0, 0, ..., 0) is in old set
 
 
@@ -61,6 +61,6 @@ def test_adaptive_construction_with_multioutput():
     y2 = (X * np.cos(X)).ravel()
     Y = np.vstack([y1, y2]).T
     pce = PolynomialChaosExpansion(degree=1)
-    pce.fit(X, Y, max_iter=10)
+    pce.fit(X, Y, n_iter=10)
     y_fit = pce.predict(X)
     assert np.linalg.norm(Y - y_fit) < 1e-12

@@ -96,7 +96,7 @@ def test_fit_distributions():
 
 # Test fitting without distribution
 def test_no_distribution():
-    X = np.linspace(-np.pi, np.pi, num=11)
+    X = np.linspace(-np.pi, np.pi, num=11).reshape(-1, 1)
     y = (X * np.sin(X)).ravel()
 
     # Fit PCE when specifying a distribution
@@ -326,7 +326,6 @@ def test_zero_mean():
     pce.fit(X, y)
     pce.coef_ = pce.coef_[1:]
     pce.multiindices_ = pce.multiindices_[1:]
-    pce.norms_ = pce.norms_[1:]
     assert pce.mean() == 0
 
 

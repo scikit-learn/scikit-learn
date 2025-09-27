@@ -232,7 +232,9 @@ class Polynomial(ABC):
         _, loc, scale = distribution.dist._parse_args(
             *distribution.args, **distribution.kwds
         )
-        return (X - loc) / scale
+        if scale != 0:
+            return (X - loc) / scale
+        return X
 
     # Not an abstract static method because polynomials may be parametrized
     # (e.g. Jacobi polynomials)
