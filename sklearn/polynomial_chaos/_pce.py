@@ -120,9 +120,28 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         has feature names that are all strings.
 
     multiindices_ : array-like of shape (n_terms, n_features_in_)
-        An array with the combinations of input features and polynomial degrees
-        that constitute the Polynomial Chaos basis. Every row in this array
-        contains a single multiindex.
+        The set of multiindices that defines the basis of the Polynomial Chaos
+        Expansion. Each row is a multiindex, i.e. a vector of non-negative
+        integers where the entry in column `j` gives the polynomial degree
+        of the `j`th input variable in that basis term.
+
+        For example, with two input features and `degree=2` using the
+        `'total_degree'` truncation rule, the resulting multiindices are:
+
+            [[0, 0],   # constant term
+             [1, 0],   # first feature to degree 1
+             [0, 1],   # second feature to degree 1
+             [2, 0],   # first feature to degree 2
+             [1, 1],   # interaction term
+             [0, 2]]   # second feature to degree 2
+
+        The number of rows equals the number of basis terms n_terms_.
+        This array can be used to map fitted coefficients in
+        :attr:`PolynomialChaosExpansion.coef_` back to specific polynomial
+        degrees of the input features.
+
+        See also
+        :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_index_sets.py`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -137,17 +156,35 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         The standard deviation of the output (when `scale_outputs = True`).
 
     pipeline_ : sklearn.pipeline.Pipeline
-        The pipeline constructed during :term:`fit`. The pipeline has the
-        following steps:
-        - `"basis_transformer"`: an \
-            :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures` \
-            transformer
-        - `"feature_selector"`: a \
-            :ref:`User Guide <univariate_feature_selection>` \
-            meta-transformer such as \
-            :class:`~sklearn.feature_selection.SelectFromModel` (only when \
-            `feature_selector` is not `None`)
-        - `"estimator"`: a :class:`~sklearn.linear_model.LinearModel`
+        The fitted pipeline assembled during :term:`fit`. It combines three
+        possible steps:
+
+        - **"basis_transformer"**:
+        an :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures`
+        transformer that maps the original input features into an orthogonal
+        polynomial basis, according to the specified degree, truncation rule,
+        and input distributions.
+
+        - **"feature_selector"** (optional):
+        a meta-transformer such as
+        :class:`~sklearn.feature_selection.SelectFromModel`. This step prunes
+        near-zero basis terms (e.g. when using sparsity-promoting estimators)
+        to reduce model size and improve prediction efficiency. Only defined
+        when `feature_selector` is not `None`. See also
+        :ref:`User Guide <univariate_feature_selection>`.
+
+        - **"estimator"**:
+        a :class:`~sklearn.linear_model.LinearModel` (by default
+        :class:`~sklearn.linear_model.LinearRegression`) that fits the
+        coefficients of the polynomial chaos expansion.
+
+        The pipeline follows the standard scikit-learn API, so it can be combined
+        with other meta-estimators such as
+        :class:`~sklearn.model_selection.GridSearchCV` or
+        :class:`~sklearn.model_selection.cross_val_score`.
+
+        See also
+        :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_hyperparameter_tuning.py`.
 
     polynomials_ : array-like of shape (n_features_in_,)
         The orthogonal polynomial associated with each input feature.

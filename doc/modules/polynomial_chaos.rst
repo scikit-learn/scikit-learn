@@ -307,6 +307,21 @@ more interpretable expansion that can be faster to evaluate during prediction.
    :target: ../auto_examples/polynomial_chaos/plot_pce_feature_selection.html
    :align: center
 
+Hyperparameter tuning in Polynomial Chaos Expansions
+----------------------------------------------------
+
+This example illustrates how to tune the hyperparameters of a Polynomial Chaos
+Expansion using :class:`~sklearn.model_selection.GridSearchCV`. The choice of
+polynomial degree is critical: too low a degree leads to underfitting, while
+too high a degree may cause overfitting, especially in the presence of noisy
+data. By evaluating different degrees through cross-validation, we can
+automatically identify a polynomial basis that balances the bias-variance
+trade-off.
+
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pce_hyperparameter_tuning_001.png
+   :target: ../auto_examples/polynomial_chaos/plot_pce_hyperparameter_tuning.html
+   :align: center
+
 References
 ----------
 

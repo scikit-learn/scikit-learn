@@ -171,3 +171,7 @@ pce.main_sens()
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_feature_selection_g.py`
 #     for an example of how to use pruning to remove small basis terms from
 #     the expansion.
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_hyperparameter_tuning.py`
+#     for an example of how to to use
+#     :class:`~sklearn.model_selection.GridSearchCV` to tune the hyperparameters of a
+#     Polynomial Chaos Expansion (PCE)
