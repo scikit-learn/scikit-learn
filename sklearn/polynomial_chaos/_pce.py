@@ -108,7 +108,8 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    coef_ : array-like of length (n_terms,)
+    coef_ : array-like of length (n_terms,) if n_features_in_ == 1, \
+        array-like of shape (n_output_features_, n_terms_) otherwise
         The coefficients of this Polynomial Chaos expansion.
 
     distributions_ : array-like of length (n_terms,)
