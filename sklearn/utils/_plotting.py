@@ -147,12 +147,17 @@ class _BinaryClassifierCurveDisplayMixin:
         name : list of str or None
             Name for labeling legend entries.
 
-        legend_metric : dict
-            Dictionary with "mean" and "std" keys, or "metric" key of metric
-            values for each curve. If None, "label" will not contain metric values.
+        legend_metric : dict or None
+            One of:
+
+            * Dictionary with "mean" and "std" keys, to obtain one legend label
+              for all curves. If the values are None, no metric information is
+              included in the label.
+            * Dictionary with "metric" key, to obtain a legend label for each curve.
+              If values are None, no metric information is included in the label.
 
         legend_metric_name : str
-            Name of the summary value provided in `legend_metrics`.
+            Name of the summary value provided in `legend_metrics`. If
 
         curve_kwargs : dict or list of dict or None
             Dictionary with keywords passed to the matplotlib's `plot` function
