@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import re
 import warnings
 
@@ -8,20 +9,24 @@ import numpy as np
 import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
-
 from sklearn import config_context, datasets
 from sklearn.base import clone
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics.pairwise import linear_kernel
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_predict, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     Binarizer,
+    FunctionTransformer,
+    KBinsDiscretizer,
     KernelCenterer,
     MaxAbsScaler,
     MinMaxScaler,
     Normalizer,
+    OneHotEncoder,
     PowerTransformer,
     QuantileTransformer,
     RobustScaler,
@@ -2827,6 +2832,67 @@ def test_power_transformer_no_warnings():
 
     # Subset of data: Should not trigger overflow in power calculation.
     _test_no_warnings(x[:5].reshape(-1, 1))
+
+
+transformers_with_inverse = sorted(
+    {
+        cls
+        for cls in globals().values()
+        if (
+            inspect.isclass(cls)
+            and hasattr(cls, "inverse_transform")
+            and cls.__module__.startswith("sklearn.preprocessing")
+        )
+    },
+    key=lambda c: c.__name__,
+)
+special_init_params = {
+    QuantileTransformer: dict(n_quantiles=100),
+    KBinsDiscretizer: dict(encode="onehot-dense", strategy="uniform", subsample=None),
+    OneHotEncoder: dict(sparse_output=False),
+    FunctionTransformer: dict(
+        func=lambda X: pytest.importorskip("pandas").DataFrame(X)
+    ),
+}
+
+
+@pytest.mark.parametrize("TransformerClass", transformers_with_inverse)
+def test_transformer_features_names_no_warnings(TransformerClass):
+    """Check that transformers do not raise any warnings on feature names"""
+    pd = pytest.importorskip("pandas")
+    params = special_init_params.get(TransformerClass, {})
+    transformer = TransformerClass(**params)
+    if not hasattr(transformer, "set_output"):
+        pytest.skip(f"{TransformerClass.__name__} does not support set_output")
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                "The provided functions or transformer are not strictly"
+                " inverse of each other. If you are sure you want to proceed"
+                " regardless, set 'check_inverse=False'"
+            ),
+            category=UserWarning,
+        )
+
+        X, y = datasets.load_iris(return_X_y=True, as_frame=True)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.25, random_state=42
+        )
+        pipeline = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            transformer=transformer.set_output(transform="pandas"),
+        )
+        pipeline.fit(X_train, y_train)
+        pipeline.predict(X_test)
+
+    assert isinstance(X_test, pd.DataFrame), (
+        "X is not a pandas DataFrame"
+    )  # required for linting
+    assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+        str(w.message) for w in caught_warnings
+    )
 
 
 def test_yeojohnson_for_different_scipy_version():
