@@ -1955,17 +1955,16 @@ def check_array_api_metric(
         # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
+    def _check_metric_matches(metric_a, metric_b, convert_a=False):
+        if convert_a:
+            metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
+        assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
+
+    def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
+        for metric_a_val, metric_b_val in zip(metric_a, metric_b):
+            _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
+
     if numpy_as_array_works:
-
-        def _check_metric_matches(metric_a, metric_b, convert_a=False):
-            if convert_a:
-                metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
-            assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
-
-        def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
-            for metric_a_val, metric_b_val in zip(metric_a, metric_b):
-                _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
-
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
         # Handle cases where multiple return values are not of the same shape,
