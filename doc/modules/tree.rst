@@ -482,6 +482,27 @@ until a stopping condition is reached, for instance some examples include
 
 * the impurity decrease for this split is smaller than `min_impurity_decrease`
 
+Friedman MSE criterion
+This is a special criterion because instead of minimizing impurity (above)
+The Friedman MSE criterion aims to maximize the improvement :math:`G(Q_m, \theta)`, which is defined as:
+
+.. math::
+   
+   G(Q_m, \theta) = \frac{n_m^{\text{left}} \cdot n_m^{\text{right}}}{n_m} \left( \overline{y}_m^{\text{left}} - \overline{y}_m^{\text{right}} \right)^2
+
+where 
+
+.. math:: 
+   
+   \overline{y}_m^{\text{left}}, \overline{y}_m^{\text{right}} \right
+
+is the weighted residuals of the left and right child, respectively
+
+In practice, Friedman MSE tends to favor splits that yield more balanced and informative partitions, especially when sample weights vary.
+Consequently, it directly aligns with the gradient boosting objective by maximizing squared-error loss drops
+
+
+
 
 Classification criteria
 -----------------------
