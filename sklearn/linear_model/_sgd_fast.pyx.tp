@@ -422,8 +422,10 @@ def _plain_sgd{{name_suffix}}(
     cdef double update = 0.0
     cdef double intercept_update = 0.0
     cdef double sumloss = 0.0
+    cdef double cur_loss_val = 0.0
     cdef double score = 0.0
-    cdef double best_loss = INFINITY
+    cdef double objective_sum = 0.0
+    cdef double best_objective = INFINITY
     cdef double best_score = -INFINITY
     cdef {{c_type}} y = 0.0
     cdef {{c_type}} sample_weight
@@ -465,6 +467,7 @@ def _plain_sgd{{name_suffix}}(
     with nogil:
         for epoch in range(max_iter):
             sumloss = 0
+            objective_sum = 0
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
@@ -486,7 +489,23 @@ def _plain_sgd{{name_suffix}}(
                     eta = eta0 / pow(t, power_t)
 
                 if verbose or not early_stopping:
-                    sumloss += loss.cy_loss(y, p)
+                    cur_loss_val = loss.cy_loss(y, p)
+                    sumloss += cur_loss_val
+                    objective_sum += cur_loss_val
+                    # for PA1/PA2 (passive/aggressive model, online algorithm) use only the loss
+                    if learning_rate != PA1 and learning_rate != PA2:
+                        # sum up all the terms in the optimization objective function 
+                        # (i.e. also include regularization in addition to the loss)
+                        # Note: for the L2 term SGD optimizes 0.5 * L2**2, due to using
+                        # weight decay that's why the 0.5 coefficient is required
+                        if penalty_type > 0: # if regularization is enabled
+                            objective_sum += alpha * (
+                                (1 - l1_ratio) * 0.5 * w.norm() ** 2 +
+                                l1_ratio * w.l1norm()
+                            )
+                        if one_class:  # specific to One-Class SVM
+                            # nu is alpha * 2 (alpha is set as nu / 2 by the caller)
+                            objective_sum += intercept * (alpha * 2)
 
                 if y > 0.0:
                     class_weight = weight_pos
@@ -552,16 +571,6 @@ def _plain_sgd{{name_suffix}}(
                 t += 1
                 count += 1
 
-            # report epoch information
-            if verbose > 0:
-                with gil:
-                    print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
-                          "Avg. loss: %f"
-                          % (w.norm(), np.nonzero(weights)[0].shape[0],
-                             intercept, count, sumloss / train_count))
-                    print("Total training time: %.2f seconds."
-                          % (time() - t_start))
-
             # floating-point under-/overflow check.
             if (not isfinite(intercept) or any_nonfinite(weights)):
                 infinity = True
@@ -571,6 +580,14 @@ def _plain_sgd{{name_suffix}}(
             if early_stopping:
                 with gil:
                     score = validation_score_cb(weights.base, intercept)
+                    if verbose > 0:  # report epoch information
+                        print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
+                            "Avg. loss: %f, Objective: %f, Validation score: %f"
+                            % (w.norm(), np.nonzero(weights)[0].shape[0],
+                                intercept, count, sumloss / train_count,
+                                objective_sum / train_count, score))
+                        print("Total training time: %.2f seconds."
+                            % (time() - t_start))
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
@@ -579,12 +596,25 @@ def _plain_sgd{{name_suffix}}(
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                if tol > -INFINITY and sumloss > best_loss - tol * train_count:
+                if verbose > 0:  # report epoch information
+                    with gil:
+                        print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
+                            "Avg. loss: %f, Objective: %f"
+                            % (w.norm(), np.nonzero(weights)[0].shape[0],
+                                intercept, count, sumloss / train_count,
+                                objective_sum / train_count))
+                        print("Total training time: %.2f seconds."
+                            % (time() - t_start))
+                # true objective = objective_sum / number of samples
+                if (
+                    tol > -INFINITY
+                    and objective_sum / train_count > best_objective - tol
+                ):
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
-                if sumloss < best_loss:
-                    best_loss = sumloss
+                if objective_sum / train_count < best_objective:
+                    best_objective = objective_sum / train_count
 
             # if there is no improvement several times in a row
             if no_improvement_count >= n_iter_no_change:
