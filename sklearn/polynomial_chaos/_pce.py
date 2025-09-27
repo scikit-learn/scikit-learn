@@ -130,9 +130,6 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs seen during :term:`fit`.
 
-    norms_ : array-like of shape (n_terms,)
-        The norm of each polynomial basis terms.
-
     output_mean_ : array-like of shape (n_outputs_,)
         The mean of the output (when `scale_outputs = True`).
 
