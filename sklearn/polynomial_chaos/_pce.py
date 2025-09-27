@@ -458,7 +458,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
                 )
 
             # Check convergence
-            if strategy.converged():
+            if self.strategy_.converged():
                 break
             else:
                 # Do not update multiindices in last iteration

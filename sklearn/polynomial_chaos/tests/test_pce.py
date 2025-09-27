@@ -197,7 +197,7 @@ def test_no_variation():
 def test_grid_search():
     random_state = check_random_state(123)
     distribution = uniform(loc=-1, scale=2)
-    X = distribution.rvs((27, 2), random_state=random_state)
+    X = distribution.rvs((132, 2), random_state=random_state)
     y = (
         3.14
         + 1.74 * 0.5 * (3 * X[:, 0] ** 2 - 1)
