@@ -140,10 +140,20 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
         The standard deviation of the output (when `scale_outputs = True`).
 
     pipeline_ : sklearn.pipeline.Pipeline
-        The pipeline used during :term:`fit`.
+        The pipeline constructed during :term:`fit`. The pipeline has the
+        following steps:
+        - `"basis_transformer"`: an \
+            :class:`~sklearn.preprocessing.OrthogonalPolynomialFeatures` \
+            transformer
+        - `"feature_selector"`: a \
+            :ref:`User Guide <univariate_feature_selection>` \
+            meta-transformer such as \
+            :class:`~sklearn.feature_selection.SelectFromModel` (only when \
+            `feature_selector` is not `None`)
+        - `"estimator"`: a :class:`~sklearn.linear_model.LinearModel`
 
     polynomials_ : array-like of shape (n_features_in_,)
-        The orthogonal polynomial types for each input.
+        The orthogonal polynomial associated with each input feature.
 
     strategy_ : skleanr.polynomial_chaos.BasisIncrementStrategy
         The adaptive basis growth strategy used during :term:`fit`.
@@ -377,7 +387,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
             )
 
             # Build pipeline
-            steps = [("basis", basis)]
+            steps = [("basis_transformer", basis)]
             if feature_selector is not None:
                 steps.append(("feature_selector", feature_selector))
             steps.append(("estimator", estimator))
@@ -388,7 +398,7 @@ class PolynomialChaosExpansion(RegressorMixin, BaseEstimator):
             self.pipeline_.fit(X_scaled, y)
 
             # Convenient access to multiindices and norms
-            self.multiindices_ = self.pipeline_["basis"].multiindices_
+            self.multiindices_ = self.pipeline_["basis_transformer"].multiindices_
 
             if feature_selector is not None:
                 # After fitting, feature_selector has support mask
