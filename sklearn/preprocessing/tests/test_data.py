@@ -2774,24 +2774,24 @@ def test_standard_scaler_with_std(with_std, with_mean):
         assert scaler.scale_ is None
     else:
         expected_scale = with_std * 10
-        assert_allclose(scaler.scale_, [expected_scale, expected_scale], atol=1)
+        assert_allclose(scaler.scale_, [expected_scale, expected_scale], rtol=0.05)
 
     # test transformed data
     if with_mean:
-        assert_allclose(X_scaled.mean(axis=0), [0, 0], atol=1)
+        assert_almost_equal(X_scaled.mean(axis=0), [0, 0])
     elif with_std:
         expected_scale = with_std * 10
         assert_allclose(
-            X_scaled.mean(axis=0), [-7 / expected_scale, -7 / expected_scale], atol=1
+            X_scaled.mean(axis=0), [-7 / expected_scale, -7 / expected_scale], atol=0.1
         )
     else:  # no mean and no std
         assert_allclose(X_scaled.mean(axis=0), [-7, -7], atol=1)
 
     if with_std:
         inv_std = 1 / with_std
-        assert_allclose(X_scaled.std(axis=0), [inv_std, inv_std], atol=1)
+        assert_almost_equal(X_scaled.std(axis=0), [inv_std, inv_std])
     else:
-        assert_allclose(X_scaled.std(axis=0), [10, 10], atol=1)
+        assert_allclose(X_scaled.std(axis=0), [10, 10], rtol=0.05)
 
 
 @pytest.mark.parametrize("with_std", [False, True, 1, 2])
@@ -2809,7 +2809,7 @@ def test_standard_scaler_with_std_sparse(with_std):
         assert scaler.scale_ is None
     else:
         expected_scale = with_std * 10
-        assert_allclose(scaler.scale_, [expected_scale, expected_scale], atol=1)
+        assert_allclose(scaler.scale_, [expected_scale, expected_scale], rtol=0.05)
 
     if with_std:
         expected = dense / expected_scale
@@ -2818,7 +2818,7 @@ def test_standard_scaler_with_std_sparse(with_std):
 
     # convert back to dense to assert
     X_scaled_dense = X_scaled.toarray()
-    assert_allclose(X_scaled_dense.std(axis=0), expected.std(axis=0), atol=0.5)
+    assert_allclose(X_scaled_dense.std(axis=0), expected.std(axis=0), rtol=0.05)
 
 
 @pytest.mark.parametrize("with_std", [False, True, 1, 2])
