@@ -170,7 +170,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         standard deviation equal to 1).
         If 2, scale the data so that the standard deviation is 0.5.
         Scaling with a factor of 2 can improve the interpretability of
-        linear model coefficients [Gelman2008].
+        linear model coefficients by allowing comparison between 
+        binary, discrete and continuous classes of data [Gelman2008].
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
