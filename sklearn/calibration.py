@@ -393,10 +393,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         xp, is_array_api = get_namespace(X)
         if is_array_api:
-            y = label_encoder_.transform(y=y)
-            y = ensure_common_namespace_device(X, y)[0]
-            if sample_weight is not None:
-                sample_weight = ensure_common_namespace_device(X, sample_weight)[0]
+            if type(y[0]) == np.str_:
+                y = label_encoder_.transform(y=y)
+            y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
