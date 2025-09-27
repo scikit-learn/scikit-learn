@@ -2213,7 +2213,10 @@ def test_sgd_error_on_zero_validation_weight():
         early_stopping=True, validation_fraction=validation_fraction, random_state=0
     )
 
-    error_message = "Sample weights must contain at least one non-zero number."
+    error_message = (
+        "The sample weights for validation set are all zero, consider using a"
+        " different random state."
+    )
     with pytest.raises(ValueError, match=error_message):
         clf.fit(X, Y, sample_weight=sample_weight)
 

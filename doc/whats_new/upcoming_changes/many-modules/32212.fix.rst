@@ -1,0 +1,4 @@
+Raise ValueError when `sample_weight` contains only zero values to prevent ineffective
+sampling during fitting. This change applies to all estimators that support the
+parameter `sample_weight`.
+By :user:`John Hendricks <j-hendricks>`
