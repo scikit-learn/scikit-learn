@@ -299,3 +299,6 @@ if scipy_has_sobol_indices:
 #     Polynomial Chaos expansion to compute sensitivity indices.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py` for
 #     an example of how to use sparse estimators to deal with noisy measurements.
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_ishigami_fourier.py` for
+#     an example on how to define a custom basis that can exactly represent the
+#     Ishigami function with only 5 non-zero terms in the expansion.

@@ -146,7 +146,7 @@ plt.show()
 
 # %%
 # See also
-#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy.py` for
+#   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_noisy_data.py` for
 #     an example on handling noisy outputs.
 #   * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pce_sobol_g.py` for
 #     an example of adaptive construction of multiindex sets.

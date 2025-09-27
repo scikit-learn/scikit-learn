@@ -322,6 +322,17 @@ trade-off.
    :target: ../auto_examples/polynomial_chaos/plot_pce_hyperparameter_tuning.html
    :align: center
 
+Exact sparse representation of the Ishigami function
+----------------------------------------------------
+
+This example illustrates how to use a Polynomial Chaos Expansion with a mixed
+Fourier-Legendre basis to recover the sparse structure of the Ishigami
+function. The first two inputs are represented with Fourier polynomials and the
+third input with Legendre polynomials. In this basis, the Ishigami function can
+be expressed with only five nonzero coefficients. A sparse regression method
+(:class:`~sklearn.linear_model.LassoLarsCV`) automatically identifies these
+active terms among a large candidate set.
+
 References
 ----------
 
