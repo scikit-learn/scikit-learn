@@ -9,6 +9,7 @@ from sklearn.experimental import (
     enable_halving_search_cv,  # noqa: F401
     enable_iterative_imputer,  # noqa: F401
 )
+from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.discovery import all_displays, all_estimators, all_functions
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
@@ -26,7 +27,9 @@ def get_all_methods():
             if name.startswith("_"):
                 continue
             method_obj = getattr(Klass, name)
-            if hasattr(method_obj, "__call__") or isinstance(method_obj, property):
+            if (
+                hasattr(method_obj, "__call__") or isinstance(method_obj, property)
+            ) and not _is_deprecated(method_obj):
                 methods.append(name)
         methods.append(None)
 
