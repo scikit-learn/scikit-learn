@@ -799,22 +799,32 @@ def test_supported_float_types(namespace, device_, expected_types):
     assert float_types == expected
 
 
+@pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
-def test_half_multinomial_loss(namespace, device_, dtype_name):
+def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name):
     n_samples = 5
     n_classes = 3
-    y = numpy.random.randint(0, n_classes, n_samples).astype(dtype_name)
-    pred = numpy.random.rand(n_samples, n_classes).astype(dtype_name)
+    rng = numpy.random.RandomState(42)
+    y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
+    pred = rng.rand(n_samples, n_classes).astype(dtype_name)
     xp = _array_api_for_tests(namespace, device_)
     y_xp = xp.asarray(y, device=device_)
     pred_xp = xp.asarray(pred, device=device_)
+    if use_sample_weight:
+        sample_weight = numpy.ones_like(y)
+        sample_weight[1::2] = 2
+        sample_weight_xp = xp.asarray(sample_weight, device=device_)
+    else:
+        sample_weight, sample_weight_xp = None, None
 
-    np_loss = HalfMultinomialLoss(sample_weight=None, n_classes=n_classes)(
-        y_true=y, raw_prediction=pred
+    np_loss = HalfMultinomialLoss(n_classes=n_classes)(
+        y_true=y, raw_prediction=pred, sample_weight=sample_weight
     )
     with config_context(array_api_dispatch=True):
-        xp_loss = _half_multinomial_loss(y=y_xp, pred=pred_xp, xp=xp)
+        xp_loss = _half_multinomial_loss(
+            y=y_xp, pred=pred_xp, sample_weight=sample_weight_xp, xp=xp
+        )
 
     assert numpy.isclose(np_loss, xp_loss)

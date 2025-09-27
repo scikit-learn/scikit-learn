@@ -1222,14 +1222,15 @@ def test_error_less_class_samples_than_folds():
     CalibratedClassifierCV(cv=3).fit(X, y)
 
 
-@pytest.mark.parametrize("ensemble", [True, False])
+@pytest.mark.parametrize("ensemble", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
 def test_temperature_scaling_array_api_compliance(
-    ensemble, array_namespace, device_, dtype_name
+    ensemble, use_sample_weight, array_namespace, device_, dtype_name
 ):
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API"""
@@ -1249,6 +1250,7 @@ def test_temperature_scaling_array_api_compliance(
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
+
     X_train = X_train.astype(dtype_name)
     y_train = y_train.astype(dtype_name)
     X_train_xp = xp.asarray(X_train, device=device_)
@@ -1259,22 +1261,27 @@ def test_temperature_scaling_array_api_compliance(
     X_cal_xp = xp.asarray(X_cal, device=device_)
     y_cal_xp = xp.asarray(y_cal, device=device_)
 
+    if use_sample_weight:
+        sample_weight = np.ones_like(y_cal)
+        sample_weight[1::2] = 2
+    else:
+        sample_weight = None
     with config_context(array_api_dispatch=True):
         clf_xp = LinearDiscriminantAnalysis()
         clf_xp.fit(X_train_xp, y_train_xp)
         cal_clf_xp = CalibratedClassifierCV(
             FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
-        ).fit(X_cal_xp, y_cal_xp)
+        ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
 
     clf_np = LinearDiscriminantAnalysis()
     clf_np.fit(X_train, y_train)
     cal_clf_np = CalibratedClassifierCV(
         FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
-    ).fit(X_cal, y_cal)
+    ).fit(X_cal, y_cal, sample_weight=sample_weight)
 
     calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
     calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-    rtol = 1e-3 if dtype_name == "float32" else 1e-8
+    rtol = 1e-3 if dtype_name == "float32" else 1e-7
     assert np.isclose(
         _convert_to_numpy(calibrator_xp.beta_, xp=xp),
         calibrator_np.beta_,

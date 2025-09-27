@@ -395,7 +395,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if is_array_api:
             y = label_encoder_.transform(y=y)
             y = ensure_common_namespace_device(X, y)[0]
-            if sample_weight:
+            if sample_weight is not None:
                 sample_weight = ensure_common_namespace_device(X, sample_weight)[0]
         # Check that each cross-validation fold can have at least one
         # example per class
@@ -1081,9 +1081,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
 
-        halfmulti_loss = HalfMultinomialLoss(
-            sample_weight=sample_weight, n_classes=logits.shape[1]
-        )
+        halfmulti_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
 
         def log_loss(log_beta=0.0):
             """Compute the log loss as a parameter of the inverse temperature
@@ -1115,7 +1113,11 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
             if _is_numpy_namespace(xp):
                 raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
-                return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
+                return halfmulti_loss(
+                    y_true=labels,
+                    raw_prediction=raw_prediction,
+                    sample_weight=sample_weight,
+                )
 
             log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
             raw_prediction = xp.exp(log_beta) * logits
