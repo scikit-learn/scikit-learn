@@ -1072,11 +1072,10 @@ def precision_recall_curve(
         recall = tps / tps[-1]
 
     # reverse the outputs so recall is decreasing
-    sl = slice(None, None, -1)
     return (
-        xp.concat((precision[sl], xp.asarray([1.0], device=device))),
-        xp.concat((recall[sl], xp.asarray([0.0], device=device))),
-        thresholds[sl],
+        xp.concat((xp.flip(precision), xp.asarray([1.0], device=device))),
+        xp.concat((xp.flip(recall), xp.asarray([0.0], device=device))),
+        xp.flip(thresholds),
     )
 
 
