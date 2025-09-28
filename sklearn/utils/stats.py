@@ -7,42 +7,6 @@ from sklearn.utils._array_api import (
 )
 
 
-def _weighted_percentile_inner(x, w, target_sums, out, average, xp):
-    if x.size == 1:
-        out[:] = x
-        return
-    i = x.size // 2
-    partitioner = xp.argpartition(x, i)
-    w_left = w[partitioner[:i]]
-    sum_left = xp.sum(w_left)
-    j = xp.searchsorted(target_sums, sum_left)
-    target_sums[j:] -= sum_left
-    x_left = None
-    if j > 0:
-        # some quantiles are to be found on the left side of the partition
-        x_left = x[partitioner[:i]]
-        _weighted_percentile_inner(
-            x_left, w_left, target_sums[:j], out[:j], average, xp
-        )
-    if j >= target_sums.size:
-        return
-    idx_0 = xp.searchsorted(target_sums[j:], 0, side="right")
-    if idx_0 > 0:
-        # some quantiles are precisely at the index of the partition
-        x_left = x[partitioner[:i]] if x_left is None else x_left
-        out[j : j + idx_0] = (
-            (x_left.max() + x[partitioner[i:]].min()) / 2 if average else x_left.max()
-        )
-        j += idx_0
-    if j < target_sums.size:
-        # some quantiles are to be found on the right side of the partition
-        x_right = x[partitioner[i:]]
-        w_right = w[partitioner[i:]]
-        _weighted_percentile_inner(
-            x_right, w_right, target_sums[j:], out[j:], average, xp
-        )
-
-
 def _weighted_percentile(
     array, sample_weight, percentile_rank=50, average=False, xp=None
 ):
@@ -189,3 +153,39 @@ def _weighted_percentile(
         result = result[..., 0]
 
     return result[0] if n_dim == 1 else result
+
+
+def _weighted_percentile_inner(x, w, target_sums, out, average, xp):
+    if x.size == 1:
+        out[:] = x
+        return
+    i = x.size // 2
+    partitioner = xp.argpartition(x, i)
+    w_left = w[partitioner[:i]]
+    sum_left = xp.sum(w_left)
+    j = xp.searchsorted(target_sums, sum_left)
+    target_sums[j:] -= sum_left
+    x_left = None
+    if j > 0:
+        # some quantiles are to be found on the left side of the partition
+        x_left = x[partitioner[:i]]
+        _weighted_percentile_inner(
+            x_left, w_left, target_sums[:j], out[:j], average, xp
+        )
+    if j >= target_sums.size:
+        return
+    idx_0 = xp.searchsorted(target_sums[j:], 0, side="right")
+    if idx_0 > 0:
+        # some quantiles are precisely at the index of the partition
+        x_left = x[partitioner[:i]] if x_left is None else x_left
+        out[j : j + idx_0] = (
+            (x_left.max() + x[partitioner[i:]].min()) / 2 if average else x_left.max()
+        )
+        j += idx_0
+    if j < target_sums.size:
+        # some quantiles are to be found on the right side of the partition
+        x_right = x[partitioner[i:]]
+        w_right = w[partitioner[i:]]
+        _weighted_percentile_inner(
+            x_right, w_right, target_sums[j:], out[j:], average, xp
+        )
