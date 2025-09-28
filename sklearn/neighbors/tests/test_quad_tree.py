@@ -84,7 +84,10 @@ def test_qt_insert_duplicate(n_dimensions):
     rng = check_random_state(0)
 
     X = rng.random_sample((10, n_dimensions))
+    # create some duplicates
     Xd = np.r_[X, X[:5]]
+    # add slight noise: duplicate detection should tolerate tiny numerical differences
+    Xd += 1e-8 * (rng.rand(*Xd.shape) - 0.5)
     tree = _QuadTree(n_dimensions=n_dimensions, verbose=0)
     tree.build_tree(Xd)
 
