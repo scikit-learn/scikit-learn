@@ -85,9 +85,9 @@ def _weighted_percentile(
         If `array` is 2D and `percentile_rank` is scalar, returns a 1D array
             of shape `(array.shape[1],)`
         If `array` is 1D and `percentile_rank` is 1D, returns a 1D array
-            of shape `(percentile_rank,)`
+            of shape `(percentile_rank.shape[0],)`
         If `array` is 2D and `percentile_rank` is 1D, returns a 2D array
-            of shape `(array.shape[1], percentile_rank.size)`
+            of shape `(array.shape[1], percentile_rank.shape[0])`
     """
     xp, _, device = get_namespace_and_device(array)
     # `sample_weight` should follow `array` for dtypes
@@ -122,7 +122,7 @@ def _weighted_percentile(
         # Ignore NaN values by masking them out
         mask_nnan = ~xp.isnan(x)
         x = x[mask_nnan]
-        if len(x) == 0:
+        if x.shape[0] == 0:
             # If all values are NaN, return NaN for this feature
             result[feature_idx, ...] = xp.nan
             continue
