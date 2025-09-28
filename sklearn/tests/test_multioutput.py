@@ -189,10 +189,21 @@ y1 = iris.target
 y2 = shuffle(y1, random_state=1)
 y3 = shuffle(y1, random_state=2)
 y = np.column_stack((y1, y2, y3))
+
 n_samples, n_features = X.shape
 n_outputs = y.shape[1]
 n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
+
+# TODO: change to multiclass once ClassifierChain supports multiclass-multioutput:
+# https://github.com/scikit-learn/scikit-learn/issues/9245
+X_bin_cls, y1_bin_cls = make_classification(n_classes=2, random_state=0)
+y2_bin_cls = shuffle(y1_bin_cls, random_state=1)
+y3_bin_cls = shuffle(y1_bin_cls, random_state=2)
+y_bin_cls = np.column_stack((y1_bin_cls, y2_bin_cls, y3_bin_cls))
+
+n_outputs_bin_cls = y_bin_cls.shape[1]
+classes_bin_cls = list(map(np.unique, (y1_bin_cls, y2_bin_cls, y3_bin_cls)))
 
 
 # TODO: remove mark once loky bug is fixed:
@@ -552,9 +563,9 @@ def test_classifier_chain_raises_error_when_multioutput_multiclass():
     X = np.hstack(Xs)
     Y = np.transpose(ys)
 
-    err_msg = "Chaining does not currently support multioutput-multiclass. See User"
+    err_msg = "Chaining does not currently support multiclass-multioutput. See User"
     " Guide section on multiclass and multioutput algorithms for estimators that"
-    " support multioutput-multiclass."
+    " support multiclass-multioutput."
 
     with pytest.raises(ValueError, match=err_msg):
         ClassifierChain(LogisticRegression()).fit(X, Y)
@@ -687,13 +698,26 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
 
 
 @pytest.mark.parametrize(
-    "estimator",
+    "estimator, X, y, n_outputs, classes",
     [
-        RandomForestClassifier(n_estimators=2),
-        MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
+        (RandomForestClassifier(n_estimators=2), X, y, n_outputs, classes),
+        (
+            (MultiOutputClassifier(RandomForestClassifier(n_estimators=2))),
+            X,
+            y,
+            n_outputs,
+            classes,
+        ),
+        (
+            ClassifierChain(RandomForestClassifier(n_estimators=2)),
+            X_bin_cls,
+            y_bin_cls,
+            n_outputs_bin_cls,
+            classes_bin_cls,
+        ),
     ],
 )
-def test_multi_output_classes_(estimator):
+def test_multi_output_classes_(estimator, X, y, n_outputs, classes):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
     estimator = clone(estimator).fit(X, y)
