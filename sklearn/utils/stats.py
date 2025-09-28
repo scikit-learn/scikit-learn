@@ -107,30 +107,28 @@ def _weighted_percentile(
     n_dim_percentile = percentile_rank.ndim
     if n_dim_percentile == 0:
         percentile_rank = xp.reshape(percentile_rank, (1,))
+    if xp.any(percentile_rank[1:] < percentile_rank[:-1]):
+        raise ValueError("percentile_rank must be non-decreasing")
+
     q = percentile_rank / 100
     n_percentiles = percentile_rank.shape[0]
-
-    # Sort quantiles for efficient processing in __weighted_percentile_inner
-    q_sorter = xp.argsort(q, stable=False)
     result = xp.empty((n_features, n_percentiles), dtype=floating_dtype)
-    sorted_q = q[q_sorter]
-    result_sorted = xp.empty((n_percentiles,), dtype=floating_dtype)
 
     # Compute weighted percentiles for each feature (column)
     for feature_idx in range(n_features):
         x = array[..., feature_idx]
         # Ignore NaN values by masking them out
-        mask_nnan = ~xp.isnan(x)
-        x = x[mask_nnan]
+        mask_not_nan = ~xp.isnan(x)
+        x = x[mask_not_nan]
         if x.shape[0] == 0:
             # If all values are NaN, return NaN for this feature
             result[feature_idx, ...] = xp.nan
             continue
         # Select weights for non-NaN values
         w = (
-            sample_weight[mask_nnan, feature_idx]
+            sample_weight[..., feature_idx][mask_not_nan]
             if sample_weight.ndim == 2
-            else sample_weight[mask_nnan]
+            else sample_weight[mask_not_nan]
         )
         # Ignore zero weights
         mask_nz = w != 0
@@ -154,14 +152,12 @@ def _weighted_percentile(
         _weighted_percentile_inner(
             x,
             w,
-            target_sums=weights_sum * sorted_q,
-            out=result_sorted,
+            target_sums=weights_sum * q,
+            out=result[feature_idx, ...],
             average=average,
             w_sorted=w_sorted,
             xp=xp,
         )
-        # Store results in original quantile order
-        result[feature_idx, q_sorter] = result_sorted
 
     if n_dim_percentile == 0:
         result = result[..., 0]
@@ -195,7 +191,9 @@ def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
         )
     if j >= target_sums.shape[0]:
         return
-    idx_0 = xp.searchsorted(target_sums[j:], 0, side="right")
+    zero = xp.sum(target_sums[:0])
+    # ^ array API needs an array as argument for searchsorted
+    idx_0 = xp.searchsorted(target_sums[j:], zero, side="right")
     if idx_0 > 0:
         # some quantiles are precisely at the index of the partition
         x_left = x[partitioner[:i]] if x_left is None else x_left
