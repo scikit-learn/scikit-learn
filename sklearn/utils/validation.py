@@ -746,6 +746,52 @@ def _is_extension_array_dtype(array):
     return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
 
 
+def _validate_array_chunked(array, chunk_size, ensure_all_finite, ensure_non_negative, 
+                           input_name, estimator_name):
+    """Validate array in chunks to reduce memory usage for large arrays.
+    
+    Parameters
+    ----------
+    array : array-like
+        The array to validate.
+    chunk_size : int
+        Size of chunks to process.
+    ensure_all_finite : bool or 'allow-nan'
+        Whether to check for finite values.
+    ensure_non_negative : bool
+        Whether to check for non-negative values.
+    input_name : str
+        Name of the input for error messages.
+    estimator_name : str
+        Name of the estimator for error messages.
+    """
+    if chunk_size is None or chunk_size <= 0:
+        return
+    
+    n_samples = array.shape[0]
+    if n_samples <= chunk_size:
+        return
+    
+    # Validate in chunks
+    for start_idx in range(0, n_samples, chunk_size):
+        end_idx = min(start_idx + chunk_size, n_samples)
+        chunk = array[start_idx:end_idx]
+        
+        if ensure_all_finite:
+            _assert_all_finite(
+                chunk,
+                input_name=input_name,
+                estimator_name=estimator_name,
+                allow_nan=ensure_all_finite == "allow-nan",
+            )
+        
+        if ensure_non_negative:
+            whom = input_name
+            if estimator_name:
+                whom += f" in {estimator_name}"
+            check_non_negative(chunk, whom)
+
+
 def check_array(
     array,
     accept_sparse=False,
@@ -764,6 +810,7 @@ def check_array(
     ensure_min_features=1,
     estimator=None,
     input_name="",
+    chunk_size=None,
 ):
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -878,6 +925,15 @@ def check_array(
         documentation.
 
         .. versionadded:: 1.1.0
+
+    chunk_size : int or None, default=None
+        If provided, enables memory-efficient validation for large arrays by
+        processing data in chunks. This is particularly useful for very large
+        datasets that might cause memory issues during validation. When set,
+        finite value checks and non-negative checks are performed in chunks
+        of the specified size. If None, the entire array is processed at once.
+
+        .. versionadded:: 1.7
 
     Returns
     -------
@@ -1117,12 +1173,18 @@ def check_array(
             )
 
         if ensure_all_finite:
-            _assert_all_finite(
-                array,
-                input_name=input_name,
-                estimator_name=estimator_name,
-                allow_nan=ensure_all_finite == "allow-nan",
-            )
+            if chunk_size is not None and not sp.issparse(array):
+                _validate_array_chunked(
+                    array, chunk_size, ensure_all_finite, False,
+                    input_name, estimator_name
+                )
+            else:
+                _assert_all_finite(
+                    array,
+                    input_name=input_name,
+                    estimator_name=estimator_name,
+                    allow_nan=ensure_all_finite == "allow-nan",
+                )
 
         if copy:
             if _is_numpy_namespace(xp):
@@ -1156,10 +1218,16 @@ def check_array(
             )
 
     if ensure_non_negative:
-        whom = input_name
-        if estimator_name:
-            whom += f" in {estimator_name}"
-        check_non_negative(array, whom)
+        if chunk_size is not None and not sp.issparse(array):
+            _validate_array_chunked(
+                array, chunk_size, False, ensure_non_negative,
+                input_name, estimator_name
+            )
+        else:
+            whom = input_name
+            if estimator_name:
+                whom += f" in {estimator_name}"
+            check_non_negative(array, whom)
 
     if force_writeable:
         # By default, array.copy() creates a C-ordered copy. We set order=K to
@@ -1232,6 +1300,7 @@ def check_X_y(
     ensure_min_features=1,
     y_numeric=False,
     estimator=None,
+    chunk_size=None,
 ):
     """Input validation for standard estimators.
 
@@ -1348,6 +1417,15 @@ def check_X_y(
     estimator : str or estimator instance, default=None
         If passed, include the name of the estimator in warning messages.
 
+    chunk_size : int or None, default=None
+        If provided, enables memory-efficient validation for large arrays by
+        processing data in chunks. This is particularly useful for very large
+        datasets that might cause memory issues during validation. When set,
+        finite value checks and non-negative checks are performed in chunks
+        of the specified size. If None, the entire array is processed at once.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
     X_converted : object
@@ -1395,6 +1473,7 @@ def check_X_y(
         ensure_min_features=ensure_min_features,
         estimator=estimator,
         input_name="X",
+        chunk_size=chunk_size,
     )
 
     y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator)

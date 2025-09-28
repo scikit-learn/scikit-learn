@@ -2443,3 +2443,65 @@ def test_force_all_finite_rename_warning():
 def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
     with pytest.raises(ValueError, match=expected_error_message):
         check_array(X, estimator=estimator)
+
+
+def test_check_array_chunked_validation():
+    """Test the new chunked validation functionality."""
+    # Test with a moderately large array
+    X = np.random.rand(1000, 50)
+    
+    # Test that chunked validation produces the same result as standard validation
+    X_standard = check_array(X, ensure_all_finite=True, ensure_non_negative=True)
+    X_chunked = check_array(X, ensure_all_finite=True, ensure_non_negative=True, chunk_size=100)
+    
+    np.testing.assert_array_equal(X_standard, X_chunked)
+    
+    # Test with negative values (should raise error in both cases)
+    X_neg = X.copy()
+    X_neg[0, 0] = -1.0
+    
+    with pytest.raises(ValueError, match="Input X contains negative values"):
+        check_array(X_neg, ensure_non_negative=True, chunk_size=100)
+    
+    # Test with infinite values (should raise error in both cases)
+    X_inf = X.copy()
+    X_inf[0, 0] = np.inf
+    
+    with pytest.raises(ValueError, match="Input X contains infinity"):
+        check_array(X_inf, ensure_all_finite=True, chunk_size=100)
+    
+    # Test that chunk_size=None works the same as not specifying it
+    X_none = check_array(X, ensure_all_finite=True, chunk_size=None)
+    np.testing.assert_array_equal(X_standard, X_none)
+    
+    # Test with small array (should not use chunking)
+    X_small = np.random.rand(10, 5)
+    X_small_standard = check_array(X_small, ensure_all_finite=True)
+    X_small_chunked = check_array(X_small, ensure_all_finite=True, chunk_size=100)
+    np.testing.assert_array_equal(X_small_standard, X_small_chunked)
+    
+    # Test with sparse matrix (should not use chunking)
+    X_sparse = sp.csr_matrix(X)
+    X_sparse_standard = check_array(X_sparse, accept_sparse=True)
+    X_sparse_chunked = check_array(X_sparse, accept_sparse=True, chunk_size=100)
+    np.testing.assert_array_equal(X_sparse_standard.toarray(), X_sparse_chunked.toarray())
+
+
+def test_check_X_y_chunked_validation():
+    """Test chunked validation with check_X_y."""
+    X = np.random.rand(1000, 50)
+    y = np.random.randint(0, 2, size=1000)
+    
+    # Test that chunked validation produces the same result as standard validation
+    X_standard, y_standard = check_X_y(X, y, ensure_all_finite=True)
+    X_chunked, y_chunked = check_X_y(X, y, ensure_all_finite=True, chunk_size=100)
+    
+    np.testing.assert_array_equal(X_standard, X_chunked)
+    np.testing.assert_array_equal(y_standard, y_chunked)
+    
+    # Test with negative values in X
+    X_neg = X.copy()
+    X_neg[0, 0] = -1.0
+    
+    with pytest.raises(ValueError, match="Input X contains negative values"):
+        check_X_y(X_neg, y, ensure_non_negative=True, chunk_size=100)
