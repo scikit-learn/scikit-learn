@@ -628,11 +628,18 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             self.class_weight, classes=self.classes_, y=y
         )
 
-        # Skip check that validation weights are not all zero by assigning
-        # `allow_all_zero_weights` to True. This assignment allows
-        # `_make_validation_split` to provide a more informative error.
+        # Skip check that validation weights are not all zero when `early_stopping` is
+        # set to True as `_make_validation_split` will raise a more informative error.
+        if self.early_stopping:
+            allow_all_zero_weights = True
+        else:
+            allow_all_zero_weights = False
+
         sample_weight = _check_sample_weight(
-            sample_weight, X, dtype=X.dtype, allow_all_zero_weights=True
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            allow_all_zero_weights=allow_all_zero_weights,
         )
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
