@@ -18,9 +18,6 @@ from libc.string cimport memcpy
 import numpy as np
 from scipy.sparse import issparse
 
-# Mitigate precision differences between 32 bit and 64 bit
-FEATURE_THRESHOLD = 1e-7
-
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
 cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
