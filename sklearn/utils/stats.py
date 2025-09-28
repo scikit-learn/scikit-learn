@@ -62,9 +62,9 @@ def _weighted_percentile(
         Weights for each value in `array`. Must be same shape as `array` or of shape
         `(array.shape[0],)`.
 
-    percentile_rank: int or float, default=50
-        The probability level of the percentile to compute, in percent. Must be between
-        0 and 100.
+    percentile_rank: scalar or 1D array, default=50
+        The probability level(s) of the percentile(s) to compute, in percent. Must be
+        between 0 and 100. If a 1D array, computes multiple percentiles.
 
     average : bool, default=False
         If `True`, uses the "averaged_inverted_cdf" quantile method, otherwise
@@ -79,8 +79,15 @@ def _weighted_percentile(
 
     Returns
     -------
-    percentile : scalar or 0D array if `array` 1D (or 0D), array if `array` 2D
-        Weighted percentile at the requested probability level.
+    percentile : scalar, 1D array, or 2D array
+        Weighted percentile at the requested probability level(s).
+        If `array` is 1D and `percentile_rank` is scalar, returns a scalar.
+        If `array` is 2D and `percentile_rank` is scalar, returns a 1D array
+            of shape `(array.shape[1],)`
+        If `array` is 1D and `percentile_rank` is 1D, returns a 1D array
+            of shape `(percentile_rank,)`
+        If `array` is 2D and `percentile_rank` is 1D, returns a 2D array
+            of shape `(array.shape[1], percentile_rank.size)`
     """
     xp, _, device = get_namespace_and_device(array)
     # `sample_weight` should follow `array` for dtypes
