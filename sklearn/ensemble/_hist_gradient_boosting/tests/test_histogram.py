@@ -2,12 +2,14 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_memoryview
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
     HISTOGRAM_DTYPE,
     X_BINNED_DTYPE,
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import (
+    HistogramBuilder,
     _build_histogram,
     _build_histogram_naive,
     _build_histogram_no_hessian,
@@ -15,6 +17,7 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import (
     _build_histogram_root_no_hessian,
     _subtract_histograms,
 )
+from sklearn.ensemble._hist_gradient_boosting.splitting import SplitInfo
 
 
 @pytest.mark.parametrize("build_func", [_build_histogram_naive, _build_histogram])
@@ -237,3 +240,89 @@ def test_hist_subtraction(constant_hessian):
     for key in ("count", "sum_hessians", "sum_gradients"):
         assert_allclose(hist_left[key], hist_left_sub[key], rtol=1e-6)
         assert_allclose(hist_right[key], hist_right_sub[key], rtol=1e-6)
+
+
+@pytest.mark.parametrize("is_categorical", [False, True])
+def test_compute_histogram_single_feature_from_parent(is_categorical):
+    """Test _compute_histogram_single_feature_from_parent."""
+    n_bins = 4
+    X_binned = np.array([0, 1, 2, 3, 0, 1, 2, 3], dtype=X_BINNED_DTYPE)[:, None]
+    gradients = np.array([-2, -1, 1, 2, -2, -1, 1, 2], dtype=G_H_DTYPE)
+    hessians = np.array([-4, -2, 1, 2, -4, -2, 1, 2], dtype=G_H_DTYPE)
+    # Only bins 0 and 1 go to (child) histogram.
+    sample_indices = np.array([0, 1, 4, 5]).astype(np.uint32)
+    left_cat_bitset = np.zeros(shape=(8,), dtype=np.uint32)
+    set_bitset_memoryview(left_cat_bitset, 0)
+    set_bitset_memoryview(left_cat_bitset, 1)
+    assert left_cat_bitset[0] == 3  # 2**0 + 2**1 for bins 0 and 1
+
+    histogram_builder = HistogramBuilder(
+        X_binned,
+        n_bins,
+        gradients,
+        hessians,
+        hessians_are_constant=False,
+        n_threads=1,
+    )
+    split_info = SplitInfo(
+        gain=1,  # irrelevant for now
+        feature_idx=0,
+        bin_idx=1,
+        missing_go_to_left=True,  # irrelevant for now
+        sum_gradient_left=0,  # irrelevant for now
+        sum_hessian_left=0,  # irrelevant for now
+        sum_gradient_right=0,  # irrelevant for now
+        sum_hessian_right=0,  # irrelevant for now
+        n_samples_left=0,  # irrelevant for now
+        n_samples_right=0,  # irrelevant for now
+        value_left=0,  # irrelevant for now
+        value_right=0,  # irrelevant for now
+        is_categorical=is_categorical,
+        left_cat_bitset=left_cat_bitset,
+    )
+    hist_parent = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_parent[0, :]["count"] = 2
+    hist_parent[0, 0]["sum_gradients"] = -2 * 2
+    hist_parent[0, 1]["sum_gradients"] = -1 * 2
+    hist_parent[0, 2]["sum_gradients"] = 1 * 2
+    hist_parent[0, 3]["sum_gradients"] = 2 * 2
+    hist_parent[0, 0]["sum_hessians"] = -4 * 2
+    hist_parent[0, 1]["sum_hessians"] = -2 * 2
+    hist_parent[0, 2]["sum_hessians"] = 1 * 2
+    hist_parent[0, 3]["sum_hessians"] = 2 * 2
+
+    hist1 = np.asarray(
+        histogram_builder.compute_histograms_brute(
+            sample_indices=sample_indices,
+            allowed_features=None,
+            parent_split_info=None,
+            parent_histograms=None,
+            is_left_child=True,
+        )
+    )
+
+    hist2 = np.asanyarray(
+        histogram_builder.compute_histograms_brute(
+            sample_indices=sample_indices,
+            allowed_features=None,
+            parent_split_info=split_info,
+            parent_histograms=hist_parent,
+            is_left_child=True,
+        )
+    )
+
+    hist3 = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    histogram_builder._compute_histogram_single_feature_from_parent(
+        feature_idx=0,
+        split_bin_start=0,
+        split_bin_end=1 + 1,
+        is_categorical=is_categorical,
+        left_cat_bitset=left_cat_bitset,
+        is_left_child=True,
+        histograms=hist3,
+        parent_histograms=hist_parent,
+    )
+
+    for key in ("count", "sum_hessians", "sum_gradients"):
+        assert_allclose(hist2[key], hist1[key], rtol=1e-6)
+        assert_allclose(hist3[key], hist1[key], rtol=1e-6)

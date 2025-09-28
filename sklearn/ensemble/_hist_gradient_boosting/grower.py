@@ -605,7 +605,8 @@ class TreeGrower:
             # (using histogram subtraction).
             n_samples_left = left_child_node.sample_indices.shape[0]
             n_samples_right = right_child_node.sample_indices.shape[0]
-            if n_samples_left < n_samples_right:
+            is_left_child = n_samples_left < n_samples_right
+            if is_left_child:
                 smallest_child = left_child_node
                 largest_child = right_child_node
             else:
@@ -618,7 +619,11 @@ class TreeGrower:
             # Note that both left and right child have the same allowed_features.
             tic = time()
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
-                smallest_child.sample_indices, smallest_child.allowed_features
+                smallest_child.sample_indices,
+                smallest_child.allowed_features,
+                parent_split_info=node.split_info,
+                parent_histograms=node.histograms,
+                is_left_child=is_left_child,
             )
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(
