@@ -244,13 +244,13 @@ def _weighted_percentile(
 
     n_dim_percentile = 0
     q = xp.asarray([percentile_rank / 100])
-    sorter = xp.argsort(q)
+    sorter = xp.argsort(q, stable=False)
     result = xp.empty((n_features, q.size), dtype=floating_dtype)
     sorted_q = q[sorter]
     result_sorted = xp.empty(q.size, dtype=floating_dtype)
 
     for feature_idx in range(n_features):
-        x = xp.ascontiguousarray(array[..., feature_idx])
+        x = array[..., feature_idx]
         mask_nnan = ~xp.isnan(x)
         x = x[mask_nnan]
         if x.size == 0:
