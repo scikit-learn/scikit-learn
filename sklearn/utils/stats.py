@@ -7,7 +7,7 @@ from sklearn.utils._array_api import (
 )
 
 
-def _weighted_percentile(
+def _old_weighted_percentile(
     array, sample_weight, percentile_rank=50, average=False, xp=None
 ):
     """Compute the weighted percentile.
@@ -186,5 +186,100 @@ def _weighted_percentile(
         )
     else:
         result = array[percentile_in_sorted, col_indices]
+
+    return result[0] if n_dim == 1 else result
+
+
+def _weighted_percentile_inner(x, w, target_sums, out, average, xp):
+    if x.size == 1:
+        out[:] = x
+        return
+    i = x.size // 2
+    partitioner = xp.argpartition(x, x.size // 2)
+    w_left = w[partitioner[:i]]
+    sum_left = xp.sum(w_left)
+    j = xp.searchsorted(target_sums, sum_left)
+    target_sums[j:] -= sum_left
+    if j > 0:
+        _weighted_percentile_inner(
+            x[partitioner[:i]], w_left, target_sums[:j], out[:j], average, xp
+        )
+    if j < target_sums.size:
+        idx_0 = xp.searchsorted(target_sums[j:], 0, side="right")
+        if idx_0 > 0:
+            out[j : j + idx_0] = (
+                (x[partitioner[:i]].max() + x[partitioner[i:]].min()) / 2
+                if average
+                else x[partitioner[:i]].max()
+            )
+            j += idx_0
+    if j < target_sums.size:
+        _weighted_percentile_inner(
+            x[partitioner[i:]],
+            w[partitioner[i:]],
+            target_sums[j:],
+            out[j:],
+            average,
+            xp,
+        )
+
+
+def _weighted_percentile(
+    array, sample_weight, percentile_rank=50, average=False, xp=None
+):
+    xp, _, device = get_namespace_and_device(array)
+
+    # `sample_weight` should follow `array` for dtypes
+    # XXX: ^ why? Also: why floating dtype? (is this really floating, I don't think so)
+    floating_dtype = _find_matching_floating_dtype(array, xp=xp)
+    array = xp.asarray(array, dtype=floating_dtype, device=device)
+    sample_weight = xp.asarray(sample_weight, dtype=floating_dtype, device=device)
+
+    n_dim = array.ndim
+    if n_dim == 0:
+        return array
+    if array.ndim == 1:
+        array = xp.reshape(array, (-1, 1))
+    n_features = array.shape[1]
+
+    n_dim_percentile = 0
+    q = xp.asarray([percentile_rank / 100])
+    sorter = xp.argsort(q)
+    result = xp.empty((n_features, q.size), dtype=floating_dtype)
+    sorted_q = q[sorter]
+    result_sorted = xp.empty(q.size, dtype=floating_dtype)
+
+    for feature_idx in range(n_features):
+        x = xp.ascontiguousarray(array[..., feature_idx])
+        mask_nnan = ~xp.isnan(x)
+        x = x[mask_nnan]
+        if x.size == 0:
+            result[feature_idx, ...] = xp.nan
+            continue
+        w = (
+            sample_weight[mask_nnan, feature_idx]
+            if sample_weight.ndim == 2
+            else sample_weight[mask_nnan]
+        )
+        mask_nz = w != 0
+        if not mask_nz.all():
+            w = w[mask_nz]
+            x[mask_nz]
+        weights_sum = xp.sum(w)
+        if weights_sum == 0:
+            result[feature_idx, ...] = xp.max(x)
+            continue
+        _weighted_percentile_inner(
+            x,
+            w,
+            target_sums=weights_sum * sorted_q,
+            out=result_sorted,
+            average=average,
+            xp=xp,
+        )
+        result[feature_idx, sorter] = result_sorted
+
+    if n_dim_percentile == 0:
+        result = result[..., 0]
 
     return result[0] if n_dim == 1 else result
