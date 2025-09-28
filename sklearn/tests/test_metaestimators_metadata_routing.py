@@ -215,6 +215,10 @@ METAESTIMATORS: list = [
         "y": y_binary,
         "estimator_routing_methods": ["fit"],
         "preserves_metadata": "subset",
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit", "score"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
     },
     {
         "metaestimator": OneVsRestClassifier,
@@ -866,6 +870,8 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         # This test only makes sense for CV estimators
         return
 
+    X = metaestimator["X"]
+    y = metaestimator["y"]
     metaestimator_class = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
     method_mapping = metaestimator.get("method_mapping", {})
@@ -952,7 +958,11 @@ def test_metadata_routed_to_group_splitter(metaestimator):
     X_ = metaestimator["X"]
     y_ = metaestimator["y"]
 
-    kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
+    kwargs, (_, _), (scorer, _), (_, _) = get_init_args(
+        metaestimator, sub_estimator_consumes=True
+    )
+    if scorer is not None:
+        scorer.set_score_request(sample_weight=True)
     # remove `ConsumingSplitter` from kwargs, so 'cv' param isn't passed twice:
     kwargs.pop("cv", None)
     instance = metaestimator_class(cv=GroupKFold(n_splits=2), **kwargs)
@@ -962,5 +972,7 @@ def test_metadata_routed_to_group_splitter(metaestimator):
         y_,
         params={"groups": groups},
         cv=GroupKFold(n_splits=2),
-        scoring=make_scorer(mean_squared_error, response_method="predict"),
+        scoring=make_scorer(
+            mean_squared_error, response_method="predict"
+        ).set_score_request(sample_weight=True),
     )
