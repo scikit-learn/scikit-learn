@@ -83,7 +83,6 @@ def _weighted_percentile(
         Weighted percentile at the requested probability level.
     """
     xp, _, device = get_namespace_and_device(array)
-
     # `sample_weight` should follow `array` for dtypes
     # XXX: ^ why? Also: why floating dtype? (is this really floating, I don't think so)
     floating_dtype = _find_matching_floating_dtype(array, xp=xp)
