@@ -1258,21 +1258,25 @@ def test_only_constant_features():
         assert est.tree_.max_depth == 0
 
 
-def test_almost_constant_feature():
+@pytest.mark.parametrize("tree_cls", ALL_TREES.values())
+def test_almost_constant_feature(tree_cls):
     # Non regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/32259
     # Make sure that almost constant features are discarded.
     random_state = check_random_state(0)
     X = random_state.rand(10, 2)
-    X[:, 0] *= 1e-7  # almost constant feature
+    # FEATURE_TRESHOLD=1e-7 is defined in sklearn/tree/_partitioner.pyx but not
+    # accessible from Python
+    feature_threshold = 1e-7
+    X[:, 0] *= feature_threshold  # almost constant feature
     y = random_state.randint(0, 2, (10,))
-    for _, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(random_state=0)
-        est.fit(X, y)
-        # the almost constant feature should not be used
-        assert est.feature_importances_[0] == 0
-        # other feature should be used
-        assert est.feature_importances_[1] > 0
+
+    est = tree_cls(random_state=0)
+    est.fit(X, y)
+    # the almost constant feature should not be used
+    assert est.feature_importances_[0] == 0
+    # other feature should be used
+    assert est.feature_importances_[1] > 0
 
 
 def test_behaviour_constant_feature_after_splits():
