@@ -108,12 +108,13 @@ def _weighted_percentile(
     if n_dim_percentile == 0:
         percentile_rank = xp.reshape(percentile_rank, (1,))
     q = percentile_rank / 100
+    n_percentiles = percentile_rank.shape[0]
 
     # Sort quantiles for efficient processing in __weighted_percentile_inner
     q_sorter = xp.argsort(q, stable=False)
-    result = xp.empty((n_features, q.size), dtype=floating_dtype)
+    result = xp.empty((n_features, n_percentiles), dtype=floating_dtype)
     sorted_q = q[q_sorter]
-    result_sorted = xp.empty(q.size, dtype=floating_dtype)
+    result_sorted = xp.empty((n_percentiles,), dtype=floating_dtype)
 
     # Compute weighted percentiles for each feature (column)
     for feature_idx in range(n_features):
@@ -121,7 +122,7 @@ def _weighted_percentile(
         # Ignore NaN values by masking them out
         mask_nnan = ~xp.isnan(x)
         x = x[mask_nnan]
-        if x.size == 0:
+        if len(x) == 0:
             # If all values are NaN, return NaN for this feature
             result[feature_idx, ...] = xp.nan
             continue
@@ -169,10 +170,11 @@ def _weighted_percentile(
 
 
 def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
-    if x.size == 1:
+    n = x.shape[0]
+    if n == 1:
         out[:] = x
         return
-    i = x.size // 2
+    i = n // 2
     if w_sorted:
         w_left = w[:i]
         x_left = x[:i]
@@ -191,7 +193,7 @@ def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
         _weighted_percentile_inner(
             x_left, w_left, target_sums[:j], out[:j], average, w_sorted, xp
         )
-    if j >= target_sums.size:
+    if j >= target_sums.shape[0]:
         return
     idx_0 = xp.searchsorted(target_sums[j:], 0, side="right")
     if idx_0 > 0:
@@ -202,7 +204,7 @@ def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
             (xp.max(x_left) + xp.min(x_right)) / 2 if average else xp.max(x_left)
         )
         j += idx_0
-    if j < target_sums.size:
+    if j < target_sums.shape[0]:
         # some quantiles are to be found on the right side of the partition
         x_right = x[partitioner[i:]] if x_right is None else x_right
         w_right = w[partitioner[i:]] if w_right is None else w_right
