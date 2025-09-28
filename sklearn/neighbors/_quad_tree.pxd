@@ -12,7 +12,7 @@ from ..utils._typedefs cimport float32_t, intp_t
 cdef enum:
     DEBUGFLAG = 0
 
-cdef float EPSILON = 1e-6
+cdef const float EPSILON = 1e-6
 
 # XXX: Careful to not change the order of the arguments. It is important to
 # have is_leaf and max_width consecutive as it permits to avoid padding by
