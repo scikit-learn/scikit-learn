@@ -542,6 +542,24 @@ def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
 
 
+def test_classifier_chain_raises_error_when_multioutput_multiclass():
+    Xs, ys = zip(
+        *(
+            make_classification(random_state=i, n_classes=3, n_informative=3)
+            for i in range(3)
+        )
+    )
+    X = np.hstack(Xs)
+    Y = np.transpose(ys)
+
+    err_msg = "Chaining does not currently support multioutput-multiclass. See User"
+    " Guide section on multiclass and multioutput algorithms for estimators that"
+    " support multioutput-multiclass."
+
+    with pytest.raises(ValueError, match=err_msg):
+        ClassifierChain(LogisticRegression()).fit(X, Y)
+
+
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -673,7 +691,6 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     [
         RandomForestClassifier(n_estimators=2),
         MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
-        ClassifierChain(RandomForestClassifier(n_estimators=2)),
     ],
 )
 def test_multi_output_classes_(estimator):

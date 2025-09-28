@@ -1082,6 +1082,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         _raise_for_params(fit_params, self, "fit")
 
+        if len(np.unique(Y)) > 2:
+            raise ValueError(
+                "Chaining does not currently support multioutput-multiclass. See User"
+                " Guide section on multiclass and multioutput algorithms for"
+                " estimators that support multioutput-multiclass."
+            )
+
         super().fit(X, Y, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
