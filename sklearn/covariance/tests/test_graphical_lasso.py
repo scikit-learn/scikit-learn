@@ -224,8 +224,12 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
 @pytest.mark.parametrize(
     "alphas,err_type,err_msg",
     [
-        ([-0.02, 0.03], ValueError, "must be > 0"),
-        ([0, 0.03], ValueError, "must be > 0"),
+        (
+            [-0.02, 0.03],
+            ValueError,
+            r"alpha == -0.02, must be in the range \(0, inf\].",
+        ),
+        ([0, 0.03], ValueError, r"alpha == 0, must be in the range \(0, inf\]."),
         (["not_number", 0.03], TypeError, "must be an instance of float"),
     ],
 )
