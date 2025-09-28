@@ -200,27 +200,27 @@ def _weighted_percentile_inner(x, w, target_sums, out, average, xp):
     sum_left = xp.sum(w_left)
     j = xp.searchsorted(target_sums, sum_left)
     target_sums[j:] -= sum_left
+    x_left = None
     if j > 0:
+        x_left = x[partitioner[:i]]
         _weighted_percentile_inner(
-            x[partitioner[:i]], w_left, target_sums[:j], out[:j], average, xp
+            x_left, w_left, target_sums[:j], out[:j], average, xp
         )
     if j < target_sums.size:
         idx_0 = xp.searchsorted(target_sums[j:], 0, side="right")
         if idx_0 > 0:
+            x_left = x[partitioner[:i]] if x_left is None else x_left
             out[j : j + idx_0] = (
-                (x[partitioner[:i]].max() + x[partitioner[i:]].min()) / 2
+                (x_left.max() + x[partitioner[i:]].min()) / 2
                 if average
-                else x[partitioner[:i]].max()
+                else x_left.max()
             )
             j += idx_0
     if j < target_sums.size:
+        x_right = x[partitioner[i:]]
+        w_right = w[partitioner[i:]]
         _weighted_percentile_inner(
-            x[partitioner[i:]],
-            w[partitioner[i:]],
-            target_sums[j:],
-            out[j:],
-            average,
-            xp,
+            x_right, w_right, target_sums[j:], out[j:], average, xp
         )
 
 
