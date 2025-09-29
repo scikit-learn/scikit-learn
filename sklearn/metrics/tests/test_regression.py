@@ -634,3 +634,16 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+    
+    
+    
+def test_weighted_rmse():
+    from sklearn.metrics import weighted_root_mean_squared_error
+    import numpy as np
+
+    y_true = np.array([3, -0.5, 2, 7])
+    y_pred = np.array([2.5, 0.0, 2, 8])
+    weights = np.array([1, 2, 1, 1])
+
+    result = weighted_root_mean_squared_error(y_true, y_pred, sample_weight=weights)
+    assert np.isclose(result, 0.695, atol=1e-3)

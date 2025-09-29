@@ -53,6 +53,7 @@ __ALL__ = [
     "d2_tweedie_score",
     "d2_pinball_score",
     "d2_absolute_error_score",
+    "weighted_root_mean_squared_error"
 ]
 
 
@@ -1959,3 +1960,76 @@ def d2_absolute_error_score(
     return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
     )
+   
+   
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)    
+    
+def weighted_root_mean_squared_error(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    """Weighted Root Mean Squared Error regression loss.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If None, all samples are equally weighted.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        Weighted root mean squared error (the lower, the better).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import weighted_root_mean_squared_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> weights = [1, 2, 1, 1]
+    >>> weighted_root_mean_squared_error(y_true, y_pred, sample_weight=weights)
+    0.695...
+    """
+    from sklearn.utils._array_api import get_namespace
+    from sklearn.metrics import mean_squared_error
+    from sklearn.utils._array_api import _average
+
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+
+    # Compute mean squared error per output with optional weights
+    output_errors = mean_squared_error(
+        y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
+    )
+
+    # Take square root
+    output_errors = xp.sqrt(output_errors)
+
+    # Handle multioutput
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            multioutput = None  # uniform weights
+
+    weighted_rmse = _average(output_errors, weights=multioutput, xp=xp)
+
+    return float(weighted_rmse)
+
