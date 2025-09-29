@@ -8,23 +8,25 @@ import torch
 from tqdm import tqdm
 
 from sklearn.base import config_context
-from sklearn.calibration import _TemperatureScaling
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 xp = torch
-device_ = "cuda"
-dtype_np = np.float64
-dtype_xp = xp.float64
+device_ = "mps"
+dtype_np = np.float32
+dtype_xp = xp.float32
 n_samples = 100000
 n_classes = 300
 
 
 execution_times = []
 for _ in tqdm(range(10), desc="Numpy"):
+    X = np.random.rand(n_samples, n_classes).astype(dtype_np)
     y = np.random.randint(0, n_classes, n_samples).astype(dtype_np)
-    pred = np.random.rand(n_samples, n_classes).astype(dtype_np)
+    estimator = LinearDiscriminantAnalysis()
     start = time()
-    cal = _TemperatureScaling()
-    cal.fit(pred, y)
+    cal = CalibratedClassifierCV(estimator=estimator, cv=5, method="temperature")
+    cal.fit(X, y)
     execution_times.append(time() - start)
 
 avg_time = sum(execution_times) / 10
@@ -32,12 +34,12 @@ print(f"Avg execution_time for numpy: {avg_time}")
 
 execution_times = []
 for _ in tqdm(range(10), desc=f"Torch {device_}"):
+    X = xp.rand((n_samples, n_classes), dtype=dtype_xp, device=device_)
     y = xp.randint(0, n_classes, (n_samples,), dtype=dtype_xp, device=device_)
-    pred = xp.rand((n_samples, n_classes), dtype=dtype_xp, device=device_)
     start = time()
     with config_context(array_api_dispatch=True):
-        cal = _TemperatureScaling()
-        cal.fit(pred, y)
+        cal = CalibratedClassifierCV(estimator=estimator, cv=5, method="temperature")
+        cal.fit(X, y)
     execution_times.append(time() - start)
 
 avg_time = sum(execution_times) / 10
