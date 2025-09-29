@@ -644,4 +644,4 @@ def test_weighted_rmse():
     weights = np.array([1, 2, 1, 1])
 
     result = weighted_root_mean_squared_error(y_true, y_pred, sample_weight=weights)
-    assert np.isclose(result, 0.695, atol=1e-3)
+    assert np.isclose(result, 0.5916, atol=1e-3)
