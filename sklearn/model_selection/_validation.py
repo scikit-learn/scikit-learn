@@ -29,6 +29,7 @@ from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     device,
+    ensure_common_namespace_device,
     get_namespace,
 )
 from sklearn.utils._param_validation import (
@@ -1219,8 +1220,9 @@ def cross_val_predict(
         and y is not None
     )
     xp, is_array_api = get_namespace(X)
+    y_xp, _ = get_namespace(y)
     if encode:
-        y = xp.asarray(y)
+        y = y_xp.asarray(y)
         if y.ndim == 1:
             le = LabelEncoder()
             y = le.fit_transform(y)
@@ -1230,6 +1232,7 @@ def cross_val_predict(
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
 
+    y = ensure_common_namespace_device(X, y)[0]
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)

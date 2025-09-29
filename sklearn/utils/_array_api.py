@@ -314,7 +314,7 @@ def ensure_common_namespace_device(reference, *arrays):
     if is_array_api:
         device_ = device(reference)
         # Move arrays to the same namespace and device as the reference array.
-        # Since `sample_weight` can be None we also allow that.
+        # Since `sample_weight` can be None we also allow None.
         return [
             xp.asarray(a, device=device_) if a is not None else None for a in arrays
         ]

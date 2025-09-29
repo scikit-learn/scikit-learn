@@ -566,7 +566,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        estimator_tags = get_tags(self._get_estimator())
+        tags.input_tags.sparse = estimator_tags.input_tags.sparse
+        tags.array_api_support = (
+            estimator_tags.array_api_support and self.method == "temperature"
+        )
         return tags
 
 

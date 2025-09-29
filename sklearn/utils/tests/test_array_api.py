@@ -804,7 +804,7 @@ def test_supported_float_types(namespace, device_, expected_types):
     "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name):
-    """Check that array API version of :func:`_half_multinomial_loss` works
+    """Check that the array API version of :func:`_half_multinomial_loss` works
     correctly and matches the results produced by :class:`HalfMultinomialLoss`
     of the private `_loss` module.
     """

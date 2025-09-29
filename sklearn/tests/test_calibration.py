@@ -1272,6 +1272,7 @@ def test_temperature_scaling_array_api_compliance(
         cal_clf_xp = CalibratedClassifierCV(
             FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
         ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
+        get_tags(cal_clf_xp)
 
     clf_np = LinearDiscriminantAnalysis()
     clf_np.fit(X_train, y_train)
