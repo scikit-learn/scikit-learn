@@ -2933,6 +2933,7 @@ def test_absolute_errors_precomputation_function(global_random_seed):
         indices = np.arange(n)
         assert_same_results(y, w, indices)
         assert_same_results(y, np.ones(n), indices)
+        assert_same_results(y, w.round() + 1, indices)
         assert_same_results(y, w, indices, reverse=True)
         indices = rng.permutation(n)
         assert_same_results(y, w, indices)
@@ -2940,6 +2941,10 @@ def test_absolute_errors_precomputation_function(global_random_seed):
 
 
 def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+    """
+    Test that the weighted-median computed under-the-hood when
+    building a tree with criterion="absolute_error" is correct.
+    """
     rng = np.random.default_rng(global_random_seed)
     n = int(1e5)
     data = rng.lognormal(size=n)
