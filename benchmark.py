@@ -12,9 +12,9 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 xp = torch
-device_ = "mps"
-dtype_np = np.float32
-dtype_xp = xp.float32
+device_ = "cuda"
+dtype_np = np.float64
+dtype_xp = xp.float64
 n_samples = 100000
 n_classes = 300
 
