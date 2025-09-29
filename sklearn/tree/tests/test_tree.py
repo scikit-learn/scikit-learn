@@ -69,6 +69,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -2892,7 +2893,7 @@ def test_sort_log2_build():
     assert_array_equal(samples, expected_samples)
 
 
-@pytest.mark.parametrize("q", [0.5, 0.2, 0.9])
+@pytest.mark.parametrize("q", [0.5, 0.2, 0.9, 0.4, 0.75])
 def test_pinball_loss_precomputation_function(q, global_random_seed):
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
@@ -2903,48 +2904,72 @@ def test_pinball_loss_precomputation_function(q, global_random_seed):
     part of the computation, in case of major refactor of the MAE class,
     it can be safely removed.
     """
+    global_random_seed = np.random.choice(10**7)
 
-    def compute_prefix_losses_naive(y: np.ndarray, w: np.ndarray):
+    def compute_prefix_losses_naive(y, w):
         """
         Computes the pinball loss for all (y[:i], w[:i])
         Naive: O(n^2 log n)
         """
-        y = y.ravel()
-        return np.array(
-            [compute_pinball_loss(y[:i], w[:i]) for i in range(1, y.size + 1)]
-        )
+        y = y.ravel().copy()
+        quantiles = [
+            _weighted_percentile(y[:i], w[:i], q * 100, average=True)
+            for i in range(1, y.size + 1)
+        ]
+        losses = [
+            mean_pinball_loss(y[:i], np.full(i, quantile), sample_weight=w[:i], alpha=q)
+            * w[:i].sum()
+            for i, quantile in zip(range(1, y.size + 1), quantiles)
+        ]
+        return np.array(losses), np.array(quantiles)
 
-    def compute_pinball_loss(y: np.ndarray, w: np.ndarray):
-        # 1) compute the weighted quantile
-        quantile = np.quantile(y, q, weights=w, method="inverted_cdf")
-        y_pred = np.full(y.size, quantile)
-        # 2) compute the pinball loss
-        return mean_pinball_loss(y, y_pred, sample_weight=w, alpha=q) * w.sum()
+    def assert_same_results(y, w, indices, reverse=False):
+        args = (n - 1, -1) if reverse else (0, n)
+        losses, quantiles = _py_precompute_pinball_losses(y, w, indices, *args, q=q)
+        y_sorted = y[indices]
+        w_sorted = w[indices]
+        if reverse:
+            y_sorted = y_sorted[::-1]
+            w_sorted = w_sorted[::-1]
+        losses_, quantiles_ = compute_prefix_losses_naive(y_sorted, w_sorted)
+        if reverse:
+            losses_ = losses_[::-1]
+            quantiles_ = quantiles_[::-1]
+        assert_allclose(losses, losses_, atol=1e-12)
+        assert_allclose(quantiles, quantiles_, atol=1e-12)
 
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.default_rng(global_random_seed)
 
     for n in [3, 5, 10, 20, 50, 100]:
         y = rng.uniform(size=(n, 1))
-        w = rng.rand(n)
+        w = rng.random(n)
+        w *= 10.0 ** rng.uniform(-5, 5)
         indices = np.arange(n)
-        pb_losses = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
-        expected = compute_prefix_losses_naive(y, w)
-        assert np.allclose(pb_losses, expected)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, np.ones(n), indices)
+        assert_same_results(y, w.round() + 1, indices)
+        assert_same_results(y, w, indices, reverse=True)
+        indices = rng.permutation(n)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, w, indices, reverse=True)
 
-        pb_losses = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
-        expected = compute_prefix_losses_naive(y[::-1], w[::-1])[::-1]
-        assert np.allclose(pb_losses, expected)
 
-        x = rng.rand(n)
-        indices = np.argsort(x)
-        w[:] = 1
-        y_sorted = y[indices]
-        w_sorted = w[indices]
+def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+    """
+    Test that the weighted-median computed under-the-hood when
+    building a tree with criterion="absolute_error" is correct.
+    """
+    rng = np.random.default_rng(global_random_seed)
+    n = int(1e5)
+    data = rng.lognormal(size=n)
+    # Large number of zeros and otherwise continuous weights:
+    weights = rng.integers(0, 3, size=n) * rng.uniform(0, 1, size=n)
 
-        pb_losses = _py_precompute_pinball_losses(y, w, indices, 0, n, q=q)
-        expected = compute_prefix_losses_naive(y_sorted, w_sorted)
-        assert np.allclose(pb_losses, expected)
+    tree_leaf_weighted_median = (
+        DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+        .fit(np.ones(shape=(data.shape[0], 1)), data, sample_weight=weights)
+        .tree_.value.ravel()[0]
+    )
+    weighted_median = _weighted_percentile(data, weights, 50, average=True)
 
-        pb_losses = _py_precompute_pinball_losses(y, w, indices, n - 1, -1, q=q)
-        expected = compute_prefix_losses_naive(y_sorted[::-1], w_sorted[::-1])[::-1]
-        assert np.allclose(pb_losses, expected)
+    assert_allclose(tree_leaf_weighted_median, weighted_median)

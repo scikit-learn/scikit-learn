@@ -3,7 +3,7 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, INFINITY
+from libc.math cimport INFINITY
 
 import numpy as np
 cimport numpy as cnp
@@ -1256,6 +1256,7 @@ cdef void precompute_pinball_losses(
     cdef float64_t top_val, top_weight
     cdef float64_t quantile = 0.0
     cdef float64_t split_weight
+    cdef float64_t total_weight
 
     p = start
     for _ in range(n):
@@ -1272,7 +1273,11 @@ cdef void precompute_pinball_losses(
         else:
             below.push(y, w)
 
-        split_weight = (above.total_weight + below.total_weight) * (1 - q)
+        total_weight = above.total_weight + below.total_weight
+        split_weight = total_weight - q * total_weight
+        # ^ doing this instead of total_weight * (1 - q) to align
+        # with the rounding-errors in implementation of
+        # sklearn.utils.stats._weighted_percentile
 
         # Rebalance heaps
         while above.total_weight < split_weight and not below.is_empty():
@@ -1286,12 +1291,13 @@ cdef void precompute_pinball_losses(
             below.push(top_val, top_weight)
 
         # Current quantile
-        if above.total_weight > split_weight + 1e-5 * fabs(split_weight):
-            quantile = above.top()
-        else:  # above and below heaps are almost exactly balanced
-            # Any value between below.top() and above.top() is valid here.
-            # We choose the midpoint for determinism.
+        if above.total_weight == split_weight:
+            # above and below heaps are exactly balanced
+            # we choose the midpoint for determinism to match with
+            # sklearn.utils.stats._weighted_percentile(..., average=True)
             quantile = 0.5 * (above.top() + below.top())
+        else:
+            quantile = above.top()
         quantiles[j] = quantile
         losses[j] += (
             q * (above.weighted_sum - quantile * above.total_weight)
@@ -1322,7 +1328,7 @@ def _py_precompute_pinball_losses(
         ys, sample_weight, sample_indices, above, below,
         k, start, end, q, losses, quantiles
     )
-    return np.asarray(losses)
+    return np.asarray(losses), np.asarray(quantiles)
 
 
 cdef class Pinball(Criterion):
