@@ -53,7 +53,7 @@ __ALL__ = [
     "d2_tweedie_score",
     "d2_pinball_score",
     "d2_absolute_error_score",
-    "weighted_root_mean_squared_error"
+    "weighted_root_mean_squared_error",
 ]
 
 
@@ -1960,8 +1960,8 @@ def d2_absolute_error_score(
     return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
     )
-   
-   
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1973,8 +1973,7 @@ def d2_absolute_error_score(
         ],
     },
     prefer_skip_nested_validation=True,
-)    
-    
+)
 def weighted_root_mean_squared_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -2008,9 +2007,8 @@ def weighted_root_mean_squared_error(
     >>> weighted_root_mean_squared_error(y_true, y_pred, sample_weight=weights)
     0.695...
     """
-    from sklearn.utils._array_api import get_namespace
     from sklearn.metrics import mean_squared_error
-    from sklearn.utils._array_api import _average
+    from sklearn.utils._array_api import _average, get_namespace
 
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
 
@@ -2032,4 +2030,3 @@ def weighted_root_mean_squared_error(
     weighted_rmse = _average(output_errors, weights=multioutput, xp=xp)
 
     return float(weighted_rmse)
-

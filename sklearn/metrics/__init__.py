@@ -65,6 +65,7 @@ from sklearn.metrics._regression import (
     r2_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
+    weighted_root_mean_squared_error,
 )
 from sklearn.metrics._scorer import (
     check_scoring,

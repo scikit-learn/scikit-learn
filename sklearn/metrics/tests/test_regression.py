@@ -25,6 +25,7 @@ from sklearn.metrics import (
     r2_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
+    weighted_root_mean_squared_error,
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.model_selection import GridSearchCV
@@ -634,13 +635,10 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
-    
-    
-    
-def test_weighted_rmse():
-    from sklearn.metrics import weighted_root_mean_squared_error
-    import numpy as np
 
+
+def test_weighted_rmse():
+    # Test that weighted RMSE produces the expected output on a simple example
     y_true = np.array([3, -0.5, 2, 7])
     y_pred = np.array([2.5, 0.0, 2, 8])
     weights = np.array([1, 2, 1, 1])
