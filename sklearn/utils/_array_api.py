@@ -625,7 +625,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    xp, _, device_ = get_namespace_and_device(a, weights)
+    xp, _, device_ = get_namespace_and_device(a, weights, xp=xp)
 
     if _is_numpy_namespace(xp):
         if normalize:
@@ -1105,3 +1105,14 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
+
+
+def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
+    """A version of the multinomial loss that is compatible with the array API"""
+    xp, _ = get_namespace(y, pred, sample_weight)
+    device_ = device(y, pred, sample_weight)
+    log_sum_exp = special.logsumexp(pred, axis=1)
+    y = xp.asarray(y, dtype=xp.int64, device=device_)
+    class_margins = xp.asarray(xp.arange(y.shape[0], device=device_)) * pred.shape[1]
+    label_predictions = xp.take(_ravel(pred), y + class_margins)
+    return float(_average(log_sum_exp - label_predictions, weights=sample_weight))
