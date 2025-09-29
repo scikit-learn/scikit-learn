@@ -18,6 +18,7 @@ from libc.string cimport memcpy
 import numpy as np
 from scipy.sparse import issparse
 
+
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
 cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
