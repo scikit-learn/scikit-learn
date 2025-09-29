@@ -50,6 +50,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    device,
+    get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier
@@ -1266,13 +1268,6 @@ def test_temperature_scaling_array_api_compliance(
         sample_weight[1::2] = 2
     else:
         sample_weight = None
-    with config_context(array_api_dispatch=True):
-        clf_xp = LinearDiscriminantAnalysis()
-        clf_xp.fit(X_train_xp, y_train_xp)
-        cal_clf_xp = CalibratedClassifierCV(
-            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
-        ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
-        get_tags(cal_clf_xp)
 
     clf_np = LinearDiscriminantAnalysis()
     clf_np.fit(X_train, y_train)
@@ -1281,10 +1276,22 @@ def test_temperature_scaling_array_api_compliance(
     ).fit(X_cal, y_cal, sample_weight=sample_weight)
 
     calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
-    calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-    rtol = 1e-3 if dtype_name == "float32" else 1e-7
-    assert np.isclose(
-        _convert_to_numpy(calibrator_xp.beta_, xp=xp),
-        calibrator_np.beta_,
-        rtol=rtol,
-    )
+    pred_np = cal_clf_np.predict(X_train)
+    with config_context(array_api_dispatch=True):
+        clf_xp = LinearDiscriminantAnalysis()
+        clf_xp.fit(X_train_xp, y_train_xp)
+        cal_clf_xp = CalibratedClassifierCV(
+            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
+        ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
+
+        calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
+        assert device(calibrator_xp.beta_) == device(X_cal_xp)
+        assert np.isclose(
+            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            calibrator_np.beta_,
+            rtol=rtol,
+        )
+        pred_xp = cal_clf_xp.predict(X_train_xp)
+        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)

@@ -510,7 +510,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
+        xp, _, device_ = get_namespace_and_device(X)
+        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device_)
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -535,8 +536,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         C : ndarray of shape (n_samples,)
             The predicted class.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
-        return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+        return self.classes_[xp.argmax(self.predict_proba(X), axis=1)]
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -776,14 +778,13 @@ class _CalibratedClassifier:
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             predictions = predictions.reshape(-1, 1)
 
-        n_classes = len(self.classes)
-
-        label_encoder = LabelEncoder().fit(self.classes)
-        pos_class_indices = label_encoder.transform(self.estimator.classes_)
+        n_classes = self.classes.shape[0]
 
         proba = np.zeros((_num_samples(X), n_classes))
 
         if self.method in ("sigmoid", "isotonic"):
+            label_encoder = LabelEncoder().fit(self.classes)
+            pos_class_indices = label_encoder.transform(self.estimator.classes_)
             for class_idx, this_pred, calibrator in zip(
                 pos_class_indices, predictions.T, self.calibrators
             ):
@@ -805,13 +806,14 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
+            xp, _ = get_namespace(predictions)
             if n_classes == 2 and predictions.shape[-1] == 1:
                 response_method_name = _check_response_method(
                     self.estimator,
                     ["decision_function", "predict_proba"],
                 ).__name__
                 if response_method_name == "predict_proba":
-                    predictions = np.hstack([1 - predictions, predictions])
+                    predictions = xp.concat([1 - predictions, predictions], axis=1)
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
