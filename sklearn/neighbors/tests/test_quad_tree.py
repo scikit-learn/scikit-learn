@@ -87,7 +87,10 @@ def test_qt_insert_duplicate(n_dimensions):
     # create some duplicates
     Xd = np.r_[X, X[:5]]
     # add slight noise: duplicate detection should tolerate tiny numerical differences
-    Xd += 1e-8 * (rng.rand(*Xd.shape) - 0.5)
+    epsilon = 1e-6
+    # EPSILON=1e-6 is defined in sklearn/neighbors/_quad_tree.pxd but not
+    # accessible from Python
+    Xd += epsilon * (rng.rand(*Xd.shape) - 0.5)
     tree = _QuadTree(n_dimensions=n_dimensions, verbose=0)
     tree.build_tree(Xd)
 
