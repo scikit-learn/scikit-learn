@@ -21,13 +21,12 @@ number of features selected with cross-validation.
 # features are non-informative as they are drawn at random.
 
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
 
 n_features = 15
 feat_names = [f"feature_{i}" for i in range(15)]
 
 X, y = make_classification(
-    n_samples=1_000,
+    n_samples=500,
     n_features=n_features,
     n_informative=3,
     n_redundant=2,
@@ -36,9 +35,6 @@ X, y = make_classification(
     n_clusters_per_class=1,
     class_sep=0.8,
     random_state=0,
-)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=0.5, shuffle=False, random_state=0
 )
 
 # %%
@@ -64,7 +60,7 @@ rfecv = RFECV(
     min_features_to_select=min_features_to_select,
     n_jobs=2,
 )
-rfecv.fit(X_train, y_train)
+rfecv.fit(X, y)
 
 print(f"Optimal number of features: {rfecv.n_features_}")
 
@@ -132,15 +128,19 @@ for i in range(cv.n_splits):
 
 # %%
 from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
+
+# Extract validation samples for permutation importance
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
 
 
-# Use `feature_indices` to extract from the test set the features that have not been
-# eliminated yet.
-def permutation_importance_getter(model, feature_indices, X_test, y_test, random_state):
+# Use `feature_indices` to extract from the validation set the features that have not
+# been eliminated yet.
+def permutation_importance_getter(model, feature_indices, X_val, y_val, random_state):
     return permutation_importance(
         model,
-        X_test[:, feature_indices],
-        y_test,
+        X_val[:, feature_indices],
+        y_val,
         n_repeats=10,
         n_jobs=2,
         random_state=random_state,
@@ -155,7 +155,7 @@ rfecv = RFECV(
     min_features_to_select=min_features_to_select,
     n_jobs=2,
     importance_getter=lambda model, feature_indices: permutation_importance_getter(
-        model, feature_indices, X_test, y_test, random_state=0
+        model, feature_indices, X_val, y_val, random_state=0
     ),
 )
 rfecv.fit(X, y)
