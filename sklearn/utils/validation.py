@@ -141,6 +141,263 @@ def _assert_all_finite(
     )
 
 
+def _get_enhanced_missing_values_guidance(estimator_name, X):
+    """Generate enhanced guidance for missing values in data."""
+    import numpy as np
+    
+    # Count missing values for more specific guidance
+    if hasattr(X, 'shape'):
+        n_samples, n_features = X.shape
+        missing_count = np.isnan(X).sum() if hasattr(np, 'isnan') else 0
+        missing_percentage = (missing_count / (n_samples * n_features)) * 100
+        
+        guidance = (
+            f"\n\n{estimator_name} does not accept missing values encoded as NaN natively."
+        )
+        
+        if missing_percentage > 50:
+            guidance += (
+                f"\n\nYour data has {missing_count} missing values ({missing_percentage:.1f}% of all values)."
+                " This is a high percentage of missing data. Consider:"
+                "\n1. Investigating why so much data is missing"
+                "\n2. Using domain knowledge to determine if missingness is informative"
+                "\n3. Consider using sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
+                " which handle missing values natively"
+            )
+        elif missing_percentage > 10:
+            guidance += (
+                f"\n\nYour data has {missing_count} missing values ({missing_percentage:.1f}% of all values)."
+                " Consider using an imputer:"
+                "\n1. SimpleImputer for basic strategies (mean, median, most_frequent)"
+                "\n2. IterativeImputer for more sophisticated imputation"
+                "\n3. KNNImputer for k-nearest neighbors imputation"
+            )
+        else:
+            guidance += (
+                f"\n\nYour data has {missing_count} missing values ({missing_percentage:.1f}% of all values)."
+                " Quick fixes:"
+                "\n1. Use SimpleImputer(strategy='mean') for numeric data"
+                "\n2. Use SimpleImputer(strategy='most_frequent') for categorical data"
+                "\n3. Or use sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
+                " which handle missing values natively"
+            )
+        
+        guidance += (
+            "\n\nExample usage:"
+            "\nfrom sklearn.impute import SimpleImputer"
+            "\nfrom sklearn.pipeline import Pipeline"
+            "\n"
+            "\n# For numeric data:"
+            "\npipe = Pipeline(["
+            "\n    ('imputer', SimpleImputer(strategy='mean')),"
+            "\n    ('classifier', YourEstimator())"
+            "\n])"
+            "\n"
+            "\n# For categorical data:"
+            "\npipe = Pipeline(["
+            "\n    ('imputer', SimpleImputer(strategy='most_frequent')),"
+            "\n    ('classifier', YourEstimator())"
+            "\n])"
+            "\n\nSee: https://scikit-learn.org/stable/modules/impute.html"
+        )
+        
+        return guidance
+    else:
+        # Fallback for when we can't analyze the data
+        return (
+            f"\n\n{estimator_name} does not accept missing values encoded as NaN natively."
+            "\n\nQuick fixes:"
+            "\n1. Use SimpleImputer for basic imputation strategies"
+            "\n2. Use sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
+            " which handle missing values natively"
+            "\n3. Drop samples with missing values using dropna()"
+            "\n\nSee: https://scikit-learn.org/stable/modules/impute.html"
+        )
+
+
+def _get_enhanced_infinite_values_guidance(estimator_name, input_name):
+    """Generate enhanced guidance for infinite values in data."""
+    guidance = (
+        f"\n\n{estimator_name} does not accept infinite values."
+    )
+    
+    if input_name == "X":
+        guidance += (
+            "\n\nCommon causes of infinite values:"
+            "\n1. Division by zero in feature engineering"
+            "\n2. Logarithm of zero or negative values"
+            "\n3. Overflow in calculations"
+            "\n4. Missing data encoded as infinity"
+        )
+        
+        guidance += (
+            "\n\nSolutions:"
+            "\n1. Replace infinite values with NaN and use an imputer:"
+            "\n   X = np.where(np.isinf(X), np.nan, X)"
+            "\n   from sklearn.impute import SimpleImputer"
+            "\n   imputer = SimpleImputer(strategy='mean')"
+            "\n   X = imputer.fit_transform(X)"
+            "\n"
+            "\n2. Clip extreme values:"
+            "\n   from sklearn.preprocessing import RobustScaler"
+            "\n   scaler = RobustScaler()"
+            "\n   X = scaler.fit_transform(X)"
+            "\n"
+            "\n3. Check your data preprocessing pipeline for division by zero"
+        )
+    else:
+        guidance += (
+            "\n\nSolutions:"
+            "\n1. Replace infinite values with NaN and use an imputer"
+            "\n2. Check your data preprocessing for division by zero"
+            "\n3. Use RobustScaler to handle extreme values"
+        )
+    
+    return guidance
+
+
+def _get_enhanced_scalar_error_message(array, estimator_name, input_name):
+    """Generate enhanced error message for scalar input."""
+    estimator_info = f" for {estimator_name}" if estimator_name else ""
+    input_info = f" for {input_name}" if input_name else ""
+    
+    return (
+        f"Expected 2D array, got scalar array instead:\narray={array}.\n"
+        f"\n{estimator_name or 'This estimator'} expects 2D input data{input_info}."
+        "\n\nCommon causes and solutions:"
+        "\n1. Single value prediction: Use array.reshape(1, -1) for a single sample"
+        "\n2. Single feature: Use array.reshape(-1, 1) for a single feature"
+        "\n3. Wrong data type: Ensure your data is a 2D array or list of lists"
+        "\n\nExamples:"
+        "\n# Single sample with multiple features:"
+        "\nX = np.array([[1, 2, 3]])  # Shape: (1, 3)"
+        "\n"
+        "\n# Multiple samples with single feature:"
+        "\nX = np.array([[1], [2], [3]])  # Shape: (3, 1)"
+        "\n"
+        "\n# From 1D array:"
+        "\nX_1d = np.array([1, 2, 3])"
+        "\nX_2d = X_1d.reshape(-1, 1)  # Single feature"
+        "\n# or"
+        "\nX_2d = X_1d.reshape(1, -1)  # Single sample"
+    )
+
+
+def _get_enhanced_series_error_message(type_if_series, estimator_name, input_name):
+    """Generate enhanced error message for Series input."""
+    estimator_info = f" for {estimator_name}" if estimator_name else ""
+    input_info = f" for {input_name}" if input_name else ""
+    
+    return (
+        f"Expected a 2-dimensional container but got {type_if_series} "
+        f"instead{input_info}."
+        f"\n\n{estimator_name or 'This estimator'} expects 2D input data."
+        "\n\nSolutions:"
+        "\n1. Convert Series to DataFrame:"
+        "\n   df = pd.DataFrame({'feature': series})  # Single feature"
+        "\n   # or"
+        "\n   df = series.to_frame()  # Single feature"
+        "\n"
+        "\n2. Convert Series to 2D array:"
+        "\n   X = series.values.reshape(-1, 1)  # Single feature"
+        "\n   # or"
+        "\n   X = series.values.reshape(1, -1)  # Single sample"
+        "\n"
+        "\n3. For multiple features, use DataFrame:"
+        "\n   df = pd.DataFrame({'feature1': series1, 'feature2': series2})"
+        "\n"
+        "\n4. For single sample prediction:"
+        "\n   X = series.values.reshape(1, -1)"
+    )
+
+
+def _get_enhanced_1d_error_message(array, estimator_name, input_name):
+    """Generate enhanced error message for 1D array input."""
+    estimator_info = f" for {estimator_name}" if estimator_name else ""
+    input_info = f" for {input_name}" if input_name else ""
+    
+    # Analyze the array to provide specific guidance
+    array_length = len(array) if hasattr(array, '__len__') else 1
+    
+    return (
+        f"Expected 2D array, got 1D array instead:\narray={array}.\n"
+        f"\n{estimator_name or 'This estimator'} expects 2D input data{input_info}."
+        f"\n\nYour 1D array has {array_length} elements."
+        "\n\nSolutions:"
+        "\n1. Single feature (multiple samples):"
+        f"\n   X = np.array({array}).reshape(-1, 1)  # Shape: ({array_length}, 1)"
+        "\n"
+        "\n2. Single sample (multiple features):"
+        f"\n   X = np.array({array}).reshape(1, -1)  # Shape: (1, {array_length})"
+        "\n"
+        "\n3. Using reshape method:"
+        "\n   X = your_array.reshape(-1, 1)  # Single feature"
+        "\n   # or"
+        "\n   X = your_array.reshape(1, -1)  # Single sample"
+        "\n"
+        "\n4. For pandas Series:"
+        "\n   X = series.values.reshape(-1, 1)  # Single feature"
+        "\n   # or"
+        "\n   X = series.values.reshape(1, -1)  # Single sample"
+        "\n"
+        "\n5. For list:"
+        "\n   X = np.array(your_list).reshape(-1, 1)  # Single feature"
+        "\n   # or"
+        "\n   X = np.array(your_list).reshape(1, -1)  # Single sample"
+    )
+
+
+def _get_enhanced_string_data_error_message(array, estimator_name, input_name):
+    """Generate enhanced error message for string/bytes data."""
+    estimator_info = f" for {estimator_name}" if estimator_name else ""
+    input_info = f" for {input_name}" if input_name else ""
+    
+    # Analyze the data to provide specific guidance
+    sample_values = []
+    if hasattr(array, 'flat'):
+        # Get a few sample values for analysis
+        for i, val in enumerate(array.flat):
+            if i >= 3:  # Only show first 3 values
+                break
+            sample_values.append(str(val)[:50])  # Truncate long strings
+    
+    return (
+        f"dtype='numeric' is not compatible with arrays of bytes/strings{input_info}."
+        f"\n\n{estimator_name or 'This estimator'} expects numeric data."
+        f"\n\nYour data contains string/bytes values: {sample_values}"
+        "\n\nSolutions:"
+        "\n1. For categorical data, use LabelEncoder or OneHotEncoder:"
+        "\n   from sklearn.preprocessing import LabelEncoder, OneHotEncoder"
+        "\n   le = LabelEncoder()"
+        "\n   X_encoded = le.fit_transform(your_string_array)"
+        "\n   # or"
+        "\n   ohe = OneHotEncoder()"
+        "\n   X_encoded = ohe.fit_transform(your_string_array.reshape(-1, 1))"
+        "\n"
+        "\n2. For text data, use text vectorizers:"
+        "\n   from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer"
+        "\n   vectorizer = CountVectorizer()"
+        "\n   X_encoded = vectorizer.fit_transform(your_text_data)"
+        "\n"
+        "\n3. For mixed data types, use ColumnTransformer:"
+        "\n   from sklearn.compose import ColumnTransformer"
+        "\n   from sklearn.preprocessing import StandardScaler, OneHotEncoder"
+        "\n   ct = ColumnTransformer(["
+        "\n       ('numeric', StandardScaler(), numeric_columns),"
+        "\n       ('categorical', OneHotEncoder(), categorical_columns)"
+        "\n   ])"
+        "\n"
+        "\n4. Convert strings to numeric manually:"
+        "\n   # For ordinal data:"
+        "\n   mapping = {'low': 0, 'medium': 1, 'high': 2}"
+        "\n   X_numeric = np.array([mapping[x] for x in your_string_array])"
+        "\n"
+        "\n5. For dates/times, convert to numeric:"
+        "\n   import pandas as pd"
+        "\n   X_numeric = pd.to_datetime(your_string_array).astype(int)"
+    )
+
+
 def _assert_all_finite_element_wise(
     X, *, xp, allow_nan, msg_dtype=None, estimator_name=None, input_name=""
 ):
@@ -164,22 +421,11 @@ def _assert_all_finite_element_wise(
         padded_input_name = input_name + " " if input_name else ""
         msg_err = f"Input {padded_input_name}contains {type_err}."
         if estimator_name and input_name == "X" and has_nan_error:
-            # Improve the error message on how to handle missing values in
-            # scikit-learn.
-            msg_err += (
-                f"\n{estimator_name} does not accept missing values"
-                " encoded as NaN natively. For supervised learning, you might want"
-                " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
-                " Regressor which accept missing values encoded as NaNs natively."
-                " Alternatively, it is possible to preprocess the data, for"
-                " instance by using an imputer transformer in a pipeline or drop"
-                " samples with missing values. See"
-                " https://scikit-learn.org/stable/modules/impute.html"
-                " You can find a list of all estimators that handle NaN values"
-                " at the following page:"
-                " https://scikit-learn.org/stable/modules/impute.html"
-                "#estimators-that-handle-nan-values"
-            )
+            # Enhanced error message with specific guidance for missing values
+            msg_err += _get_enhanced_missing_values_guidance(estimator_name, X)
+        elif has_inf:
+            # Enhanced error message for infinite values
+            msg_err += _get_enhanced_infinite_values_guidance(estimator_name, input_name)
         raise ValueError(msg_err)
 
 
@@ -1081,34 +1327,20 @@ def check_array(
             # If input is scalar raise error
             if array.ndim == 0:
                 raise ValueError(
-                    "Expected 2D array, got scalar array instead:\narray={}.\n"
-                    "Reshape your data either using array.reshape(-1, 1) if "
-                    "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array)
+                    _get_enhanced_scalar_error_message(array, estimator_name, input_name)
                 )
             # If input is 1D raise error
             if array.ndim == 1:
                 # If input is a Series-like object (eg. pandas Series or polars Series)
                 if type_if_series is not None:
-                    msg = (
-                        f"Expected a 2-dimensional container but got {type_if_series} "
-                        "instead. Pass a DataFrame containing a single row (i.e. "
-                        "single sample) or a single column (i.e. single feature) "
-                        "instead."
-                    )
+                    msg = _get_enhanced_series_error_message(type_if_series, estimator_name, input_name)
                 else:
-                    msg = (
-                        f"Expected 2D array, got 1D array instead:\narray={array}.\n"
-                        "Reshape your data either using array.reshape(-1, 1) if "
-                        "your data has a single feature or array.reshape(1, -1) "
-                        "if it contains a single sample."
-                    )
+                    msg = _get_enhanced_1d_error_message(array, estimator_name, input_name)
                 raise ValueError(msg)
 
         if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
-                "dtype='numeric' is not compatible with arrays of bytes/strings."
-                "Convert your data to numeric values explicitly instead."
+                _get_enhanced_string_data_error_message(array, estimator_name, input_name)
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
