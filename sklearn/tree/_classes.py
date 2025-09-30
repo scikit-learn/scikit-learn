@@ -1100,8 +1100,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for
-        # common test to
-        # pass, specifically: check_estimators_nan_inf
+        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "gini",
             "log_loss",
@@ -1444,8 +1443,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for
-        # common test to
-        # pass, specifically: check_estimators_nan_inf
+        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
             "friedman_mse",
