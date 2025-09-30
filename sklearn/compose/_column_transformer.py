@@ -642,7 +642,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names_out = self._get_feature_name_out_for_transformer(
                 name, trans, input_features
             )
-
             if feature_names_out is None:
                 continue
             transformer_with_feature_names_out.append((name, feature_names_out))
