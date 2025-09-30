@@ -1611,12 +1611,8 @@ def test_iterative_imputer_constant_fill_value():
         keep_empty_features=False,
     )
     imputer.fit_transform(X)
-    # For some reason the np.nan makes the assert_array_equal fail if dtype is
-    # np.object_, so here we're converting to np.float32 instead.
-    expected_statistic = [fill_value] * 3 + [np.nan]
-    assert_array_equal(
-        imputer.initial_imputer_.statistics_.astype(np.float32), expected_statistic
-    )
+    assert_array_equal(imputer.initial_imputer_.statistics_[:-1], fill_value)
+    assert np.isnan(imputer.initial_imputer_.statistics_[-1])
 
 
 def test_iterative_imputer_min_max_value_remove_empty():
