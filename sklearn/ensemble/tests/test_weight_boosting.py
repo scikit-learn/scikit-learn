@@ -9,7 +9,6 @@ from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
-from sklearn.ensemble._weight_boosting import _samme_proba
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
@@ -50,35 +49,6 @@ diabetes = datasets.load_diabetes()
 diabetes.data, diabetes.target = shuffle(
     diabetes.data, diabetes.target, random_state=rng
 )
-
-
-def test_samme_proba():
-    # Test the `_samme_proba` helper function.
-
-    # Define some example (bad) `predict_proba` output.
-    probs = np.array(
-        [[1, 1e-6, 0], [0.19, 0.6, 0.2], [-999, 0.51, 0.5], [1e-6, 1, 1e-9]]
-    )
-    probs /= np.abs(probs.sum(axis=1))[:, np.newaxis]
-
-    # _samme_proba calls estimator.predict_proba.
-    # Make a mock object so I can control what gets returned.
-    class MockEstimator:
-        def predict_proba(self, X):
-            assert_array_equal(X.shape, probs.shape)
-            return probs
-
-    mock = MockEstimator()
-
-    samme_proba = _samme_proba(mock, 3, np.ones_like(probs))
-
-    assert_array_equal(samme_proba.shape, probs.shape)
-    assert np.isfinite(samme_proba).all()
-
-    # Make sure that the correct elements come out as smallest --
-    # `_samme_proba` should preserve the ordering in each example.
-    assert_array_equal(np.argmin(samme_proba, axis=1), [2, 0, 0, 2])
-    assert_array_equal(np.argmax(samme_proba, axis=1), [0, 1, 1, 1])
 
 
 def test_oneclass_adaboost_proba():

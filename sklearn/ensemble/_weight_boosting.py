@@ -318,27 +318,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         return tags
 
 
-def _samme_proba(estimator, n_classes, X):
-    """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
-
-    References
-    ----------
-    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
-    """
-    proba = estimator.predict_proba(X)
-
-    # Displace zero probabilities so the log is defined.
-    # Also fix negative elements which may occur with
-    # negative sample weights.
-    np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
-    log_proba = np.log(proba)
-
-    return (n_classes - 1) * (
-        log_proba - (1.0 / n_classes) * log_proba.sum(axis=1)[:, np.newaxis]
-    )
-
-
 class AdaBoostClassifier(
     _RoutingNotSupportedMixin, ClassifierMixin, BaseWeightBoosting
 ):
