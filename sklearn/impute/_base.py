@@ -579,8 +579,8 @@ class SimpleImputer(_BaseImputer):
             statistics = np.full(X.shape[1], fill_value, dtype=np.object_)
 
             if not self.keep_empty_features:
-                for i in range(masked_X.shape[1]):
-                    if ma.getmask(masked_X[:, i]).all():
+                for i in range(missing_mask.shape[1]):
+                    if missing_mask[:, i].all():
                         statistics[i] = np.nan
 
             return statistics
