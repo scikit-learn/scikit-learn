@@ -144,44 +144,53 @@ def _assert_all_finite(
 def _get_enhanced_missing_values_guidance(estimator_name, X):
     """Generate enhanced guidance for missing values in data."""
     import numpy as np
-    
+
     # Count missing values for more specific guidance
-    if hasattr(X, 'shape'):
+    if hasattr(X, "shape"):
         n_samples, n_features = X.shape
-        missing_count = np.isnan(X).sum() if hasattr(np, 'isnan') else 0
+        missing_count = np.isnan(X).sum() if hasattr(np, "isnan") else 0
         missing_percentage = (missing_count / (n_samples * n_features)) * 100
-        
+
         guidance = (
-            f"\n\n{estimator_name} does not accept missing values encoded as NaN natively."
+            f"\n\n{estimator_name} does not accept missing values "
+            "encoded as NaN natively."
         )
-        
+
         if missing_percentage > 50:
             guidance += (
-                f"\n\nYour data has {missing_count} missing values ({missing_percentage:.1f}% of all values)."
+                f"\n\nYour data has {missing_count} missing values "
+                f"({missing_percentage:.1f}% of all values)."
                 " This is a high percentage of missing data. Consider:"
                 "\n1. Investigating why so much data is missing"
-                "\n2. Using domain knowledge to determine if missingness is informative"
-                "\n3. Consider using sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
+                "\n2. Using domain knowledge to determine if missingness is "
+                "informative"
+                "\n3. Consider using "
+                "sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
                 " which handle missing values natively"
             )
         elif missing_percentage > 10:
             guidance += (
-                f"\n\nYour data has {missing_count} missing values ({missing_percentage:.1f}% of all values)."
+                f"\n\nYour data has {missing_count} missing values "
+                f"({missing_percentage:.1f}% of all values)."
                 " Consider using an imputer:"
-                "\n1. SimpleImputer for basic strategies (mean, median, most_frequent)"
+                "\n1. SimpleImputer for basic strategies "
+                "(mean, median, most_frequent)"
                 "\n2. IterativeImputer for more sophisticated imputation"
                 "\n3. KNNImputer for k-nearest neighbors imputation"
             )
         else:
             guidance += (
-                f"\n\nYour data has {missing_count} missing values ({missing_percentage:.1f}% of all values)."
+                f"\n\nYour data has {missing_count} missing values "
+                f"({missing_percentage:.1f}% of all values)."
                 " Quick fixes:"
                 "\n1. Use SimpleImputer(strategy='mean') for numeric data"
-                "\n2. Use SimpleImputer(strategy='most_frequent') for categorical data"
-                "\n3. Or use sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
+                "\n2. Use SimpleImputer(strategy='most_frequent') for "
+                "categorical data"
+                "\n3. Or use "
+                "sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
                 " which handle missing values natively"
             )
-        
+
         guidance += (
             "\n\nExample usage:"
             "\nfrom sklearn.impute import SimpleImputer"
@@ -200,12 +209,13 @@ def _get_enhanced_missing_values_guidance(estimator_name, X):
             "\n])"
             "\n\nSee: https://scikit-learn.org/stable/modules/impute.html"
         )
-        
+
         return guidance
     else:
         # Fallback for when we can't analyze the data
         return (
-            f"\n\n{estimator_name} does not accept missing values encoded as NaN natively."
+            f"\n\n{estimator_name} does not accept missing values "
+            "encoded as NaN natively."
             "\n\nQuick fixes:"
             "\n1. Use SimpleImputer for basic imputation strategies"
             "\n2. Use sklearn.ensemble.HistGradientBoostingClassifier/Regressor"
@@ -217,10 +227,8 @@ def _get_enhanced_missing_values_guidance(estimator_name, X):
 
 def _get_enhanced_infinite_values_guidance(estimator_name, input_name):
     """Generate enhanced guidance for infinite values in data."""
-    guidance = (
-        f"\n\n{estimator_name} does not accept infinite values."
-    )
-    
+    guidance = f"\n\n{estimator_name} does not accept infinite values."
+
     if input_name == "X":
         guidance += (
             "\n\nCommon causes of infinite values:"
@@ -229,7 +237,7 @@ def _get_enhanced_infinite_values_guidance(estimator_name, input_name):
             "\n3. Overflow in calculations"
             "\n4. Missing data encoded as infinity"
         )
-        
+
         guidance += (
             "\n\nSolutions:"
             "\n1. Replace infinite values with NaN and use an imputer:"
@@ -252,7 +260,7 @@ def _get_enhanced_infinite_values_guidance(estimator_name, input_name):
             "\n2. Check your data preprocessing for division by zero"
             "\n3. Use RobustScaler to handle extreme values"
         )
-    
+
     return guidance
 
 
@@ -260,7 +268,7 @@ def _get_enhanced_scalar_error_message(array, estimator_name, input_name):
     """Generate enhanced error message for scalar input."""
     estimator_info = f" for {estimator_name}" if estimator_name else ""
     input_info = f" for {input_name}" if input_name else ""
-    
+
     return (
         f"Expected 2D array, got scalar array instead:\narray={array}.\n"
         f"\n{estimator_name or 'This estimator'} expects 2D input data{input_info}."
@@ -287,7 +295,7 @@ def _get_enhanced_series_error_message(type_if_series, estimator_name, input_nam
     """Generate enhanced error message for Series input."""
     estimator_info = f" for {estimator_name}" if estimator_name else ""
     input_info = f" for {input_name}" if input_name else ""
-    
+
     return (
         f"Expected a 2-dimensional container but got {type_if_series} "
         f"instead{input_info}."
@@ -315,10 +323,10 @@ def _get_enhanced_1d_error_message(array, estimator_name, input_name):
     """Generate enhanced error message for 1D array input."""
     estimator_info = f" for {estimator_name}" if estimator_name else ""
     input_info = f" for {input_name}" if input_name else ""
-    
+
     # Analyze the array to provide specific guidance
-    array_length = len(array) if hasattr(array, '__len__') else 1
-    
+    array_length = len(array) if hasattr(array, "__len__") else 1
+
     return (
         f"Expected 2D array, got 1D array instead:\narray={array}.\n"
         f"\n{estimator_name or 'This estimator'} expects 2D input data{input_info}."
@@ -351,16 +359,16 @@ def _get_enhanced_string_data_error_message(array, estimator_name, input_name):
     """Generate enhanced error message for string/bytes data."""
     estimator_info = f" for {estimator_name}" if estimator_name else ""
     input_info = f" for {input_name}" if input_name else ""
-    
+
     # Analyze the data to provide specific guidance
     sample_values = []
-    if hasattr(array, 'flat'):
+    if hasattr(array, "flat"):
         # Get a few sample values for analysis
         for i, val in enumerate(array.flat):
             if i >= 3:  # Only show first 3 values
                 break
             sample_values.append(str(val)[:50])  # Truncate long strings
-    
+
     return (
         f"dtype='numeric' is not compatible with arrays of bytes/strings{input_info}."
         f"\n\n{estimator_name or 'This estimator'} expects numeric data."
@@ -375,7 +383,8 @@ def _get_enhanced_string_data_error_message(array, estimator_name, input_name):
         "\n   X_encoded = ohe.fit_transform(your_string_array.reshape(-1, 1))"
         "\n"
         "\n2. For text data, use text vectorizers:"
-        "\n   from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer"
+        "\n   from sklearn.feature_extraction.text import "
+        "CountVectorizer, TfidfVectorizer"
         "\n   vectorizer = CountVectorizer()"
         "\n   X_encoded = vectorizer.fit_transform(your_text_data)"
         "\n"
@@ -425,7 +434,9 @@ def _assert_all_finite_element_wise(
             msg_err += _get_enhanced_missing_values_guidance(estimator_name, X)
         elif has_inf:
             # Enhanced error message for infinite values
-            msg_err += _get_enhanced_infinite_values_guidance(estimator_name, input_name)
+            msg_err += _get_enhanced_infinite_values_guidance(
+                estimator_name, input_name
+            )
         raise ValueError(msg_err)
 
 
@@ -1327,20 +1338,28 @@ def check_array(
             # If input is scalar raise error
             if array.ndim == 0:
                 raise ValueError(
-                    _get_enhanced_scalar_error_message(array, estimator_name, input_name)
+                    _get_enhanced_scalar_error_message(
+                        array, estimator_name, input_name
+                    )
                 )
             # If input is 1D raise error
             if array.ndim == 1:
                 # If input is a Series-like object (eg. pandas Series or polars Series)
                 if type_if_series is not None:
-                    msg = _get_enhanced_series_error_message(type_if_series, estimator_name, input_name)
+                    msg = _get_enhanced_series_error_message(
+                        type_if_series, estimator_name, input_name
+                    )
                 else:
-                    msg = _get_enhanced_1d_error_message(array, estimator_name, input_name)
+                    msg = _get_enhanced_1d_error_message(
+                        array, estimator_name, input_name
+                    )
                 raise ValueError(msg)
 
         if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
             raise ValueError(
-                _get_enhanced_string_data_error_message(array, estimator_name, input_name)
+                _get_enhanced_string_data_error_message(
+                    array, estimator_name, input_name
+                )
             )
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
