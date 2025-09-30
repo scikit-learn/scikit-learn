@@ -8,14 +8,16 @@ methods, namely :class:`~sklearn.semi_supervised.LabelSpreading` and
 :class:`~sklearn.semi_supervised.SelfTrainingClassifier`, while varying the
 proportion of labeled training data from small fractions up to the full dataset.
 
-Both methods rely on RBF kernels: Label Spreading uses it by default, and
-Self-training is paired here with :class:`~sklearn.svm.SVC` as base estimator
-(also RBF-based by default) to allow a fair comparison. With 100% labeled data,
-Self-training reduces to a fully supervised SVC, since there are no unlabeled
-points left to pseudo-label.
+Both methods rely on RBF kernels: :class:`~sklearn.semi_supervised.LabelSpreading` uses
+it by default, and :class:`~sklearn.semi_supervised.SelfTrainingClassifier` is paired
+here with :class:`~sklearn.svm.SVC` as base estimator (also RBF-based by default) to
+allow a fair comparison. With 100% labeled data,
+:class:`~sklearn.semi_supervised.SelfTrainingClassifier` reduces to a fully supervised
+:class:`~sklearn.svm.SVC`, since there are no unlabeled points left to pseudo-label.
 
-In a second section, we explain how `predict_proba` is computed in Label
-Spreading and Self-training.
+In a second section, we explain how `predict_proba` is computed in
+:class:`~sklearn.semi_supervised.LabelSpreading` and
+:class:`~sklearn.semi_supervised.SelfTrainingClassifier`.
 
 See
 :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_newsgroups.py`
@@ -168,12 +170,14 @@ print("API   :", st.predict_proba(x_query))
 
 # %%
 # In both methods, semi-supervised learning can be understood as constructing a
-# categorical distribution over classes for each sample. Label Spreading keeps
-# these distributions soft and updates them through graph-based propagation.
+# categorical distribution over classes for each sample.
+# :class:`~sklearn.semi_supervised.LabelSpreading` keeps these distributions soft and
+# updates them through graph-based propagation.
 # Predictions (including `predict_proba`) remain tied to the training set, which
 # must be stored for inference.
 #
-# Self-training instead uses these distributions internally to decide which
-# unlabeled points to assign pseudo-labels during training, but at prediction
-# time the returned probabilities come directly from the final fitted estimator,
-# and therefore the decision rule does not require storing the training data.
+# :class:`~sklearn.semi_supervised.SelfTrainingClassifier` instead uses these
+# distributions internally to decide which unlabeled points to assign pseudo-labels
+# during training, but at prediction time the returned probabilities come directly from
+# the final fitted estimator, and therefore the decision rule does not require storing
+# the training data.
