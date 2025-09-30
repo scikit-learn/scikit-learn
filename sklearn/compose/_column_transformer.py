@@ -639,7 +639,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             skip_empty_columns=True,
             skip_drop=True,
         ):
-            print(self._transformer_to_input_indices)
             feature_names_out = self._get_feature_name_out_for_transformer(
                 name, trans, input_features
             )
