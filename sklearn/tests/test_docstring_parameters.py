@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 import sklearn
+from sklearn.callback import Callback
 from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -114,6 +115,13 @@ def test_docstring_parameters():
             this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
+                # Skip callback hooks
+                if isinstance(cls, Callback) and method_name in (
+                    "on_fit_begin",
+                    "on_fit_end",
+                    "on_fit_task_end",
+                ):
+                    continue
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
                     continue
