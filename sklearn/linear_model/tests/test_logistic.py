@@ -475,7 +475,9 @@ def test_liblinear_dual_random_state(global_random_seed):
         assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
-def test_logistic_cv(global_random_seed):
+# TODO(1.12): remove deprecated use_legacy_attributes
+@pytest.mark.parametrize("use_legacy_attributes", [True, False])
+def test_logistic_cv(global_random_seed, use_legacy_attributes):
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
     rng = np.random.RandomState(global_random_seed)
@@ -489,6 +491,7 @@ def test_logistic_cv(global_random_seed):
         random_state=global_random_seed,
         solver="liblinear",
         cv=3,
+        use_legacy_attributes=use_legacy_attributes,
     )
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(
@@ -497,15 +500,21 @@ def test_logistic_cv(global_random_seed):
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
-    assert_array_equal(lr_cv.coef_.shape, (1, n_features))
+    assert lr_cv.coef_.shape == (1, n_features)
     assert_array_equal(lr_cv.classes_, [-1, 1])
     assert len(lr_cv.classes_) == 2
 
-    coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (1, 3, 1, n_features))
-    assert_array_equal(lr_cv.Cs_.shape, (1,))
-    scores = np.asarray(list(lr_cv.scores_.values()))
-    assert_array_equal(scores.shape, (1, 3, 1))
+    if use_legacy_attributes:
+        coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
+        assert coefs_paths.shape == (1, 3, 1, n_features)
+        assert lr_cv.Cs_.shape == (1,)
+        scores = np.asarray(list(lr_cv.scores_.values()))
+        assert scores.shape == (1, 3, 1)
+    else:
+        assert lr_cv.coefs_paths_.shape == (3, 1, 1, 1, n_features)
+        assert isinstance(lr_cv.Cs_, float)
+        assert isinstance(lr_cv.l1_ratio_, float)
+        assert lr_cv.scores_.shape == (3, 1, 1)
 
 
 @pytest.mark.parametrize(
@@ -622,7 +631,9 @@ def test_logistic_cv_sparse(global_random_seed, csr_container):
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 # Best remove this whole test.
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
-def test_ovr_multinomial_iris():
+# TODO(1.12): remove deprecated use_legacy_attributes
+@pytest.mark.parametrize("use_legacy_attributes", [True, False])
+def test_ovr_multinomial_iris(use_legacy_attributes):
     # Test that OvR and multinomial are correct using the iris dataset.
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
@@ -668,6 +679,7 @@ def test_ovr_multinomial_iris():
             random_state=42,
             tol=1e-3 if solver in ["sag", "saga"] else 1e-2,
             cv=2,
+            use_legacy_attributes=use_legacy_attributes,
         )
         if solver == "lbfgs":
             # lbfgs requires scaling to avoid convergence warnings
@@ -681,11 +693,24 @@ def test_ovr_multinomial_iris():
         # Test attributes of LogisticRegressionCV
         assert clf.coef_.shape == clf_multi.coef_.shape
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
-        coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-        assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
-        assert clf_multi.Cs_.shape == (10,)
-        scores = np.asarray(list(clf_multi.scores_.values()))
-        assert scores.shape == (3, n_cv, 10)
+        if use_legacy_attributes:
+            coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
+            assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+            assert clf_multi.Cs_.shape == (10,)
+            scores = np.asarray(list(clf_multi.scores_.values()))
+            assert scores.shape == (3, n_cv, 10)
+        else:
+            n_folds, n_cs, n_l1_ratios, n_classes, n_dof = 2, 10, 1, 3, n_features + 1
+            assert clf_multi.coefs_paths_.shape == (
+                n_folds,
+                n_l1_ratios,
+                n_cs,
+                n_classes,
+                n_dof,
+            )
+            assert isinstance(clf_multi.Cs_, float)
+            assert isinstance(clf_multi.l1_ratio_, float)
+            assert clf_multi.scores_.shape == (n_folds, n_l1_ratios, n_cs)
 
 
 def test_logistic_regression_solvers(global_random_seed):
@@ -2537,3 +2562,12 @@ def test_liblinear_multiclass_warning(Estimator):
     )
     with pytest.warns(FutureWarning, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
+
+
+# TODO(1.10): use_legacy_attributes gets deprecated
+def test_logisticregressioncv_warns_with_use_legacy_attributes():
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
+    lr = LogisticRegressionCV()
+    msg = "The default value of use_legacy_attributes will change from True"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
