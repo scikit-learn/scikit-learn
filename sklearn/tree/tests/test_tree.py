@@ -1627,7 +1627,7 @@ def test_decision_path_hardcoded():
     X = [0, np.nan, np.nan, 2, 3]
     y = [0, 0, 0, 1, 1]
     X = np.array(X).reshape(-1, 1)
-    tree = DecisionTreeRegressor().fit(X, y)
+    tree = DecisionTreeRegressor(random_state=0).fit(X, y)
     n_node_samples = tree.decision_path(X).toarray().sum(axis=0)
     assert_array_equal(n_node_samples, tree.tree_.n_node_samples)
 
