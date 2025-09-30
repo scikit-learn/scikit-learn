@@ -410,29 +410,29 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
         imputer.fit_transform(X)
 
 
-def test_imputation_constant_integer():
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_imputation_constant_integer(keep_empty_features):
     # Test imputation using the constant strategy on integers
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
 
     X_true = np.array([[0, 2, 3, 0], [4, 0, 5, 0], [6, 7, 0, 0], [8, 9, 0, 0]])
+    if not keep_empty_features:
+        X_true = X_true[:, :-1]
 
     imputer = SimpleImputer(
-        missing_values=-1, strategy="constant", fill_value=0, keep_empty_features=True
+        missing_values=-1,
+        strategy="constant",
+        fill_value=0,
+        keep_empty_features=keep_empty_features,
     )
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
-    imputer = SimpleImputer(
-        missing_values=-1, strategy="constant", fill_value=0, keep_empty_features=False
-    )
-    X_trans = imputer.fit_transform(X)
-
-    assert_array_equal(X_trans, X_true[:, :-1])
-
 
 @pytest.mark.parametrize("array_constructor", CSR_CONTAINERS + [np.asarray])
-def test_imputation_constant_float(array_constructor):
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_imputation_constant_float(array_constructor, keep_empty_features):
     # Test imputation using the constant strategy on floats
     X = np.array(
         [
@@ -446,28 +446,24 @@ def test_imputation_constant_float(array_constructor):
     X_true = np.array(
         [[-1, 1.1, 0, -1], [1.2, -1, 1.3, -1], [0, 0, -1, -1], [1.4, 1.5, 0, -1]]
     )
+    if not keep_empty_features:
+        X_true = X_true[:, :-1]
 
     X = array_constructor(X)
 
     X_true = array_constructor(X_true)
 
     imputer = SimpleImputer(
-        strategy="constant", fill_value=-1, keep_empty_features=True
+        strategy="constant", fill_value=-1, keep_empty_features=keep_empty_features
     )
     X_trans = imputer.fit_transform(X)
 
     assert_allclose_dense_sparse(X_trans, X_true)
 
-    imputer = SimpleImputer(
-        strategy="constant", fill_value=-1, keep_empty_features=False
-    )
-    X_trans = imputer.fit_transform(X)
-
-    assert_allclose_dense_sparse(X_trans, X_true[:, :-1])
-
 
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
-def test_imputation_constant_object(marker):
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_imputation_constant_object(marker, keep_empty_features):
     # Test imputation using the constant strategy on objects
     X = np.array(
         [
@@ -488,30 +484,23 @@ def test_imputation_constant_object(marker):
         ],
         dtype=object,
     )
+    if not keep_empty_features:
+        X_true = X_true[:, :-1]
 
     imputer = SimpleImputer(
         missing_values=marker,
         strategy="constant",
         fill_value="missing",
-        keep_empty_features=True,
+        keep_empty_features=keep_empty_features,
     )
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
-    imputer = SimpleImputer(
-        missing_values=marker,
-        strategy="constant",
-        fill_value="missing",
-        keep_empty_features=False,
-    )
-    X_trans = imputer.fit_transform(X)
-
-    assert_array_equal(X_trans, X_true[:, :-1])
-
 
 @pytest.mark.parametrize("dtype", [object, "category"])
-def test_imputation_constant_pandas(dtype):
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_imputation_constant_pandas(dtype, keep_empty_features):
     # Test imputation using the constant strategy on pandas df
     pd = pytest.importorskip("pandas")
 
@@ -528,16 +517,15 @@ def test_imputation_constant_pandas(dtype):
         ],
         dtype=object,
     )
+    if not keep_empty_features:
+        X_true = X_true[:, :-1]
 
-    imputer = SimpleImputer(strategy="constant", keep_empty_features=True)
+    imputer = SimpleImputer(
+        strategy="constant", keep_empty_features=keep_empty_features
+    )
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)
-
-    imputer = SimpleImputer(strategy="constant", keep_empty_features=False)
-    X_trans = imputer.fit_transform(df)
-
-    assert_array_equal(X_trans, X_true[:, :-1])
 
 
 @pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]])
@@ -1588,7 +1576,8 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
 
 
-def test_iterative_imputer_constant_fill_value():
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_iterative_imputer_constant_fill_value(keep_empty_features):
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
 
@@ -1598,25 +1587,15 @@ def test_iterative_imputer_constant_fill_value():
         initial_strategy="constant",
         fill_value=fill_value,
         max_iter=0,
-        keep_empty_features=True,
+        keep_empty_features=keep_empty_features,
     )
     imputer.fit_transform(X)
-    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
 
-    imputer = IterativeImputer(
-        missing_values=-1,
-        initial_strategy="constant",
-        fill_value=fill_value,
-        max_iter=0,
-        keep_empty_features=False,
-    )
-    imputer.fit_transform(X)
-    # For some reason the np.nan makes the assert_array_equal fail if dtype is
-    # np.object_, so here we're converting to np.float32 instead.
-    expected_statistic = [fill_value] * 3 + [np.nan]
-    assert_array_equal(
-        imputer.initial_imputer_.statistics_.astype(np.float32), expected_statistic
-    )
+    if keep_empty_features:
+        assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
+    else:
+        assert_array_equal(imputer.initial_imputer_.statistics_[:-1], fill_value)
+        assert np.isnan(imputer.initial_imputer_.statistics_[-1])
 
 
 def test_iterative_imputer_min_max_value_remove_empty():
