@@ -157,6 +157,7 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
+        yield check_all_zero_sample_weights_error
         if not tags.input_tags.pairwise:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
@@ -1481,6 +1482,20 @@ def check_sample_weights_list(name, estimator_orig):
     sample_weight = [3] * n_samples
     # Test that estimators don't raise any exception
     estimator.fit(X, y, sample_weight=sample_weight)
+
+
+def check_all_zero_sample_weights_error(name, estimator_orig):
+    """Check that estimator raises error when all sample weights are 0."""
+    estimator = clone(estimator_orig)
+
+    X, y = make_classification(random_state=42)
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    sample_weight = np.zeros(_num_samples(X))
+
+    with raises(ValueError, match=r"(.*weight.*zero.*)|(.*zero.*weight.*)"):
+        estimator.fit(X, y, sample_weight=sample_weight)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -5377,17 +5392,3 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
     ):
         estimator.fit(X, y)
-
-
-def check_all_zero_sample_weights_error(name, estimator_orig):
-    """Check that estimator raises error when all sample weights are 0."""
-    estimator = clone(estimator_orig)
-
-    X, y = make_classification(random_state=42)
-    X = _enforce_estimator_tags_X(estimator, X)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    sample_weight = np.zeros(_num_samples(X))
-
-    with raises(ValueError, match=r"(.*weight.*zero.*)|(.*zero.*weight.*)"):
-        estimator.fit(X, y, sample_weight=sample_weight)
