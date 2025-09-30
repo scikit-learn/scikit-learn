@@ -1112,8 +1112,7 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
 
 def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     """A version of the multinomial loss that is compatible with the array API"""
-    xp, _ = get_namespace(y, pred, sample_weight)
-    device_ = device(y, pred, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
     log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
     y = xp.asarray(y, dtype=xp.int64, device=device_)
     class_margins = xp.asarray(xp.arange(y.shape[0], device=device_)) * pred.shape[1]
