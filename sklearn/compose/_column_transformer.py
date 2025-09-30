@@ -588,6 +588,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
 
+    def _get_feature_name_out_for_transformer(self, name, trans, feature_names_in):
+        """Gets feature names of transformer.
+
+        Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
+        """
+        column_indices = self._transformer_to_input_indices[name]
+        names = feature_names_in[column_indices]
+        # An actual transformer
+        if hasattr(trans, "get_feature_names_out"):
+            return trans.get_feature_names_out(names)
+        elif hasattr(self, "_transformers_feature_names_out"):
+            # Fallback to feature names returned by transformers that output
+            # dataframes but don't implement get_feature_names_out.
+            return self._transformers_feature_names_out[self.output_indices_[name]]
+        else:
+            raise AttributeError(
+                f"Transformer {name} (type {type(trans).__name__}) does "
+                "not provide get_feature_names_out."
+            )
+
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -613,27 +633,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
-        for i, (name, trans, *_) in enumerate(
-            self._iter(
-                fitted=True,
-                column_as_labels=False,
-                skip_empty_columns=True,
-                skip_drop=True,
-            )
+        for name, trans, *_ in self._iter(
+            fitted=True,
+            column_as_labels=False,
+            skip_empty_columns=True,
+            skip_drop=True,
         ):
-            if hasattr(trans, "get_feature_names_out"):
-                column_indices = self._transformer_to_input_indices[name]
-                names = input_features[column_indices]
-                feature_names_out = trans.get_feature_names_out(names)
-            elif hasattr(self, "_transformers_feature_names_out"):
-                # Fallback to feature names returned by transformers that output
-                # dataframes but don't implement get_feature_names_out.
-                feature_names_out = self._transformers_feature_names_out[i]
-            else:
-                raise AttributeError(
-                    f"Transformer {name} (type {type(trans).__name__}) does "
-                    "not provide get_feature_names_out."
-                )
+            print(self._transformer_to_input_indices)
+            feature_names_out = self._get_feature_name_out_for_transformer(
+                name, trans, input_features
+            )
 
             if feature_names_out is None:
                 continue
@@ -1146,7 +1155,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if adapter and all(adapter.is_supported_container(X) for X in Xs):
                 # Store feature names out of transformers in case they don't implement
                 # get_feature_names_out
-                self._transformers_feature_names_out = [X.columns for X in Xs]
+                self._transformers_feature_names_out = np.hstack(
+                    [_get_feature_names(X) for X in Xs]
+                )
 
                 # Rename all columns to avoid duplicated column names.
                 # The names are not important here as final column names will be
