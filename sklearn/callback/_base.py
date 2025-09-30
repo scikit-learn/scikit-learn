@@ -8,7 +8,7 @@ from typing import Protocol, runtime_checkable
 class Callback(Protocol):
     """Protocol for the callbacks."""
 
-    def _on_fit_begin(self, estimator):
+    def on_fit_begin(self, estimator):
         """Method called at the beginning of the fit method of the estimator.
 
         Parameters
@@ -17,7 +17,7 @@ class Callback(Protocol):
             The estimator calling this callback hook.
         """
 
-    def _on_fit_task_end(self, estimator, context, **kwargs):
+    def on_fit_task_end(self, estimator, context, **kwargs):
         """Method called at the end of each task of the estimator.
 
         Parameters
@@ -61,7 +61,7 @@ class Callback(Protocol):
             Whether or not to stop the current level of iterations at this task.
         """
 
-    def _on_fit_end(self, estimator, context):
+    def on_fit_end(self, estimator, context):
         """Method called at the end of the fit method of the estimator.
 
         Parameters

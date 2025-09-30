@@ -11,13 +11,13 @@ from sklearn.utils.parallel import Parallel, delayed
 class TestingCallback:
     """A minimal callback used for smoke testing purposes."""
 
-    def _on_fit_begin(self, estimator):
+    def on_fit_begin(self, estimator):
         pass
 
-    def _on_fit_end(self):
+    def on_fit_end(self):
         pass
 
-    def _on_fit_task_end(self, estimator, context, **kwargs):
+    def on_fit_task_end(self, estimator, context, **kwargs):
         pass
 
 
@@ -30,10 +30,10 @@ class TestingAutoPropagatedCallback(TestingCallback):
 class NotValidCallback:
     """Invalid callback since it's missing a method from the protocol.'"""
 
-    def _on_fit_begin(self, estimator):
+    def on_fit_begin(self, estimator):
         pass  # pragma: no cover
 
-    def _on_fit_task_end(self, estimator, context, **kwargs):
+    def on_fit_task_end(self, estimator, context, **kwargs):
         pass  # pragma: no cover
 
 
@@ -51,7 +51,7 @@ class Estimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self.init_callback_context(
+        callback_ctx = self.__skl_init_callback_context__(
             max_subtasks=self.max_iter
         ).eval_on_fit_begin(estimator=self)
 
@@ -84,7 +84,9 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self.init_callback_context().eval_on_fit_begin(estimator=self)
+        callback_ctx = self.__skl_init_callback_context__().eval_on_fit_begin(
+            estimator=self
+        )
 
         i = 0
         while True:
@@ -126,7 +128,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self.init_callback_context(
+        callback_ctx = self.__skl_init_callback_context__(
             max_subtasks=self.n_outer
         ).eval_on_fit_begin(estimator=self)
 

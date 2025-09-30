@@ -63,7 +63,7 @@ from sklearn.callback import AutoPropagatedCallback
 #
 #     @_fit_context()
 #     def fit(self, X, y):
-#         callback_ctx = self.init_callback_context(max_subtasks=self.max_iter)
+#         callback_ctx = self.__skl__init_callback_context__(max_subtasks=self.max_iter)
 #         callback_ctx.eval_on_fit_begin(estimator=self)
 #
 #         for i in range(self.max_iter):
@@ -89,8 +89,8 @@ class CallbackContext:
     This class is responsible for managing the callbacks and holding the tree structure
     of an estimator's tasks. Each instance corresponds to a task of the estimator.
 
-    Instances of this class should be created using the `init_callback_context` method
-    of its estimator or the `subcontext` method of this class.
+    Instances of this class should be created using the `__skl_init_callback_context__`
+    method of its estimator or the `subcontext` method of this class.
 
     These contexts are passed to the callback hooks to be able to keep track of the
     position of a task in the task tree within the callbacks.
@@ -271,7 +271,7 @@ class CallbackContext:
         )
 
     def eval_on_fit_begin(self, estimator):
-        """Evaluate the `_on_fit_begin` method of the callbacks.
+        """Evaluate the `on_fit_begin` method of the callbacks.
 
         Parameters
         ----------
@@ -284,12 +284,12 @@ class CallbackContext:
             if not (
                 isinstance(callback, AutoPropagatedCallback) and self.parent is not None
             ):
-                callback._on_fit_begin(estimator)
+                callback.on_fit_begin(estimator)
 
         return self
 
     def eval_on_fit_task_end(self, estimator, **kwargs):
-        """Evaluate the `_on_fit_task_end` method of the callbacks.
+        """Evaluate the `on_fit_task_end` method of the callbacks.
 
         Parameters
         ----------
@@ -331,12 +331,12 @@ class CallbackContext:
             task.
         """
         return any(
-            callback._on_fit_task_end(estimator, self, **kwargs)
+            callback.on_fit_task_end(estimator, self, **kwargs)
             for callback in self._callbacks
         )
 
     def eval_on_fit_end(self, estimator):
-        """Evaluate the `_on_fit_end` method of the callbacks.
+        """Evaluate the `on_fit_end` method of the callbacks.
 
         Parameters
         ----------
@@ -349,7 +349,7 @@ class CallbackContext:
             if not (
                 isinstance(callback, AutoPropagatedCallback) and self.parent is not None
             ):
-                callback._on_fit_end(estimator, self)
+                callback.on_fit_end(estimator, self)
 
     def propagate_callbacks(self, sub_estimator):
         """Propagate the callbacks to a sub-estimator.

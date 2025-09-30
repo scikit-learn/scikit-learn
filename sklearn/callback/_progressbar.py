@@ -24,15 +24,15 @@ class ProgressBar:
 
         self.max_estimator_depth = max_estimator_depth
 
-    def _on_fit_begin(self, estimator):
+    def on_fit_begin(self, estimator):
         self._queue = Manager().Queue()
         self.progress_monitor = RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
-    def _on_fit_task_end(self, estimator, context, **kwargs):
+    def on_fit_task_end(self, estimator, context, **kwargs):
         self._queue.put(context)
 
-    def _on_fit_end(self, estimator, context):
+    def on_fit_end(self, estimator, context):
         self._queue.put(context)
         self._queue.put(None)
         self.progress_monitor.join()

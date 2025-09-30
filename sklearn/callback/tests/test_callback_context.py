@@ -22,7 +22,7 @@ def test_propagate_callbacks():
     metaestimator = MetaEstimator(estimator)
     metaestimator.set_callbacks([not_propagated_callback, propagated_callback])
 
-    callback_ctx = metaestimator.init_callback_context()
+    callback_ctx = metaestimator.__skl_init_callback_context__()
     callback_ctx.propagate_callbacks(estimator)
 
     assert hasattr(estimator, "_parent_callback_ctx")
@@ -35,7 +35,7 @@ def test_propagate_callback_no_callback():
     estimator = Estimator()
     metaestimator = MetaEstimator(estimator)
 
-    callback_ctx = metaestimator.init_callback_context()
+    callback_ctx = metaestimator.__skl_init_callback_context__()
     assert len(callback_ctx._callbacks) == 0
 
     callback_ctx.propagate_callbacks(estimator)

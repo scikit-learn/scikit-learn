@@ -31,7 +31,7 @@ class CallbackSupportMixin:
 
         return self
 
-    def init_callback_context(self, task_name="fit", max_subtasks=None):
+    def __skl_init_callback_context__(self, task_name="fit", max_subtasks=None):
         """Initialize the callback context for the estimator.
 
         Parameters

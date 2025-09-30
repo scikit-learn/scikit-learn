@@ -42,9 +42,9 @@ def test_set_callbacks_error(callbacks):
 
 
 def test_init_callback_context():
-    """Sanity check for the `init_callback_context` method."""
+    """Sanity check for the `__skl_init_callback_context__` method."""
     estimator = Estimator()
-    callback_ctx = estimator.init_callback_context()
+    callback_ctx = estimator.__skl_init_callback_context__()
 
     assert hasattr(estimator, "_callback_fit_ctx")
     assert hasattr(callback_ctx, "_callbacks")
