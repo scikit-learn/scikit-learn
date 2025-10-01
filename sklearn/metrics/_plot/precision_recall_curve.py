@@ -42,6 +42,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, then the estimator name is not shown.
 
         .. versionchanged:: 1.8
+            `estimator_name` was deprecated in favor of `name`.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when precision and recall metrics

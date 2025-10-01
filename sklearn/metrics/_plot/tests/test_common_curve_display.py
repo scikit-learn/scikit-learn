@@ -156,7 +156,7 @@ def test_display_curve_estimator_name_multiple_calls(
         disp = Display.from_estimator(clf, X, y, name=clf_name)
     else:
         disp = Display.from_predictions(y, y_pred, name=clf_name)
-    # TODO: Remove once `estimator_name` deprecated in all displays
+    # TODO: Clean-up once `estimator_name` deprecated in all displays
     if Display in (PrecisionRecallDisplay, RocCurveDisplay):
         assert disp.name == clf_name
     else:
@@ -195,7 +195,7 @@ def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Disp
     model.fit(X, y)
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
-    # TODO: Remove once `estimator_name` deprecated in all displays
+    # TODO: Clean-up once `estimator_name` deprecated in all displays
     if Display in (PrecisionRecallDisplay, RocCurveDisplay):
         assert disp.name == model.__class__.__name__
     else:
@@ -306,10 +306,12 @@ def test_classifier_display_curve_named_constructor_return_type(
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
+        # TODO(1.10): Remove
         (
             PrecisionRecallDisplay,
             {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
         ),
+        # TODO(1.9): Remove
         (RocCurveDisplay, {"fpr": np.array([0, 0.5, 1]), "tpr": np.array([0, 0.5, 1])}),
     ],
 )
