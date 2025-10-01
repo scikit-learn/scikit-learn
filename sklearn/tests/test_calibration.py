@@ -1301,7 +1301,7 @@ def test_temperature_scaling_array_api_compliance(
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-def test_temperature_scaling_array_api_with_y_as_strings_and_no_pre_fit(
+def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     ensemble, use_sample_weight, array_namespace, device_, dtype_name
 ):
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
