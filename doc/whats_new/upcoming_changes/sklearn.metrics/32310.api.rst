@@ -1,0 +1,3 @@
+- `estimator_name` is deprecated in favour of `name` in
+  :func:`metrics.PrecisionRecallDisplay` and will be removed in v1.10.
+  By :user:`Lucy Liu <lucyleeow>`.
