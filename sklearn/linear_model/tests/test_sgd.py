@@ -409,7 +409,7 @@ def test_early_stopping(klass):
         clf = klass(early_stopping=early_stopping, tol=1e-3, max_iter=max_iter).fit(
             X, Y
         )
-        assert clf.n_iter_ < max_iter, f"{clf.n_iter_} >= {max_iter}"
+        assert clf.n_iter_ < max_iter
 
 
 @pytest.mark.parametrize(
