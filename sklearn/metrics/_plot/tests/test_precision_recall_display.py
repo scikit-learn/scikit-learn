@@ -180,7 +180,7 @@ def test_precision_recall_display_pipeline(pyplot, clf):
         PrecisionRecallDisplay.from_estimator(clf, X, y)
     clf.fit(X, y)
     display = PrecisionRecallDisplay.from_estimator(clf, X, y)
-    assert display.estimator_name == clf.__class__.__name__
+    assert display.name == clf.__class__.__name__
 
 
 def test_precision_recall_display_string_labels(pyplot):
