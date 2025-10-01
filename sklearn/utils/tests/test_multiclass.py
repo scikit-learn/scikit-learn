@@ -303,7 +303,7 @@ def test_check_classification_targets_too_many_unique_classes():
     """
 
     # Create array of unique labels. This does raise a warning.
-    y = np.arange(20)
+    y = np.arange(25)
     msg = r"The number of unique classes is greater than 50% of the number of samples."
     with pytest.warns(UserWarning, match=msg):
         check_classification_targets(y)
