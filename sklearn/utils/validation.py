@@ -329,6 +329,9 @@ def _get_enhanced_1d_error_message(array, estimator_name, input_name):
 
     return (
         f"Expected 2D array, got 1D array instead:\narray={array}.\n"
+        "Reshape your data either using array.reshape(-1, 1) if "
+        "your data has a single feature or array.reshape(1, -1) "
+        "if it contains a single sample."
         f"\n{estimator_name or 'This estimator'} expects 2D input data{input_info}."
         f"\n\nYour 1D array has {array_length} elements."
         "\n\nSolutions:"
