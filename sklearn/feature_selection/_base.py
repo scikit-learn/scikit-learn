@@ -252,7 +252,7 @@ def _get_feature_importances(
 
     if isinstance(getter, attrgetter):
         importances = getter(estimator)
-    else:
+    else:  # callable
         param_names = list(inspect.signature(getter).parameters.keys())
         if "feature_indices" in param_names:
             importances = getter(estimator, feature_indices)
