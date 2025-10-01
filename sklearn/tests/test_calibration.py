@@ -1237,9 +1237,6 @@ def test_temperature_scaling_array_api_compliance(
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API"""
 
-    # TODO: Also ensure that `CalibratedClassifierCV` works appropriately with
-    #  the array API when `y` is an ndarray of strings. In this regard
-    #  `LinearDiscriminantAnalysis` will also need modifications.
     xp = _array_api_for_tests(array_namespace, device_)
     X, y = make_classification(
         n_samples=1000,
@@ -1295,3 +1292,74 @@ def test_temperature_scaling_array_api_compliance(
         )
         pred_xp = cal_clf_xp.predict(X_train_xp)
         assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+
+
+@pytest.mark.parametrize("ensemble", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_temperature_scaling_array_api_with_y_as_strings_and_no_pre_fit(
+    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Check that `CalibratedClassifierCV` with temperature scaling is compatible
+    with the array API when `y` is an ndarray of strings and the estimator is not
+    fit beforehand (i.e. it is fit within `CalibratedClassifierCV`).
+    """
+
+    # TODO: Also ensure that `CalibratedClassifierCV` works appropriately with
+    #  the array API when `y` is an ndarray of strings and we fit
+    #  `LinearDiscriminantAnalysis` beforehand. In this regard
+    #  `LinearDiscriminantAnalysis` will also need modifications.
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_classification(
+        n_samples=500,
+        n_features=10,
+        n_informative=10,
+        n_redundant=0,
+        n_classes=5,
+        n_clusters_per_class=1,
+        class_sep=2.0,
+        random_state=42,
+    )
+    str_mapping = np.asarray(["a", "b", "c", "d", "e"])
+    X = X.astype(dtype_name)
+    y_str = str_mapping[y]
+    X_xp = xp.asarray(X, device=device_)
+
+    if use_sample_weight:
+        sample_weight = np.ones_like(y)
+        sample_weight[1::2] = 2
+    else:
+        sample_weight = None
+
+    cal_clf_np = CalibratedClassifierCV(
+        estimator=LinearDiscriminantAnalysis(),
+        cv=3,
+        method="temperature",
+        ensemble=ensemble,
+    ).fit(X, y_str, sample_weight=sample_weight)
+
+    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+    pred_np = cal_clf_np.predict(X)
+    with config_context(array_api_dispatch=True):
+        cal_clf_xp = CalibratedClassifierCV(
+            estimator=LinearDiscriminantAnalysis(),
+            cv=3,
+            method="temperature",
+            ensemble=ensemble,
+        ).fit(X_xp, y_str, sample_weight=sample_weight)
+
+        calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
+        assert device(calibrator_xp.beta_) == device(X_xp)
+        assert np.isclose(
+            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            calibrator_np.beta_,
+            rtol=rtol,
+        )
+        pred_xp = cal_clf_xp.predict(X_xp)
+        assert_array_equal(pred_xp, pred_np)

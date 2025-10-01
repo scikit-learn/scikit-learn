@@ -29,6 +29,7 @@ from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _half_multinomial_loss,
     _is_numpy_namespace,
     ensure_common_namespace_device,
@@ -361,6 +362,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         # Set `classes_` using all `y`
         label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = label_encoder_.classes_
+        if self.method == "temperature" and isinstance(y[0], str):
+            # for temperature scaling if `y` contains strings then encode it
+            # right here to avoid fitting LabelEncoder again within the
+            # `_fit_calibrator` function.
+            y = label_encoder_.transform(y=y)
 
         if _routing_enabled():
             routed_params = process_routing(
@@ -393,8 +399,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         xp, is_array_api = get_namespace(X)
         if is_array_api:
-            if type(y[0]) == np.str_:
-                y = label_encoder_.transform(y=y)
             y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
         # Check that each cross-validation fold can have at least one
         # example per class
@@ -538,7 +542,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         xp, _ = get_namespace(X)
         check_is_fitted(self)
-        return self.classes_[xp.argmax(self.predict_proba(X), axis=1)]
+        class_indices = xp.argmax(self.predict_proba(X), axis=1)
+        if isinstance(self.classes_[0], str):
+            class_indices = _convert_to_numpy(class_indices, xp=xp)
+
+        return self.classes_[class_indices]
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
