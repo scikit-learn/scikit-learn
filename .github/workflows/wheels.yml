@@ -224,7 +224,10 @@ jobs:
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
           # TODO Put back pandas when there is a pandas release with Python 3.14 wheels
-          CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }}
+          # TODO Remove scipy<1.16.2 when hang on macOS_x86_64 has been fixed.
+          # See https://github.com/scikit-learn/scikit-learn/issues/32279 for
+          # more details.
+          CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }} scipy<1.16.2
           # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
           # does not make sense because it would install dependencies in the host
           # rather than inside the Docker image
