@@ -291,13 +291,7 @@ def test_validate_curve_kwargs_error():
     ],
 )
 @pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [
-        None,
-        {"color": "red"},
-    ],
-)
+@pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
 def test_validate_curve_kwargs_single_legend(
     name, legend_metric, legend_metric_name, curve_kwargs
 ):
@@ -330,15 +324,16 @@ def test_validate_curve_kwargs_single_legend(
     assert curve_kwargs_out[1]["label"] is None
     assert curve_kwargs_out[2]["label"] is None
 
-    # Default multi-curve kwargs
+    # There are 3 default multi-curve kwargs + label kwarg = 4 kwargs
+    # Number of kwargs does not change when we set "color" (over-rides default)
+    assert all(len(kwargs) == 4 for kwargs in curve_kwargs_out)
     if curve_kwargs is None:
-        assert all(len(kwargs) == 4 for kwargs in curve_kwargs_out)
-        assert all(kwargs["alpha"] == 0.5 for kwargs in curve_kwargs_out)
-        assert all(kwargs["linestyle"] == "--" for kwargs in curve_kwargs_out)
         assert all(kwargs["color"] == "blue" for kwargs in curve_kwargs_out)
     else:
-        assert all(len(kwargs) == 2 for kwargs in curve_kwargs_out)
         assert all(kwargs["color"] == "red" for kwargs in curve_kwargs_out)
+    # Other default multi-curve kwargs should always be the same
+    assert all(kwargs["alpha"] == 0.5 for kwargs in curve_kwargs_out)
+    assert all(kwargs["linestyle"] == "--" for kwargs in curve_kwargs_out)
 
 
 @pytest.mark.parametrize("name", [None, "curve_name", ["one", "two", "three"]])
@@ -380,7 +375,11 @@ def test_validate_curve_kwargs_multi_legend(name, legend_metric, legend_metric_n
     for idx, expected_label in enumerate(expected_labels):
         assert curve_kwargs_out[idx]["label"] == expected_label
 
-    assert all(len(kwargs) == 2 for kwargs in curve_kwargs_out)
+    # There are 3 default multi-curve kwargs + label kwarg = 4 kwargs
+    assert all(len(kwargs) == 4 for kwargs in curve_kwargs_out)
+    # Non-specified default multi-curve kwargs should always be the same
+    assert all(kwargs["alpha"] == 0.5 for kwargs in curve_kwargs_out)
+    assert all(kwargs["linestyle"] == "--" for kwargs in curve_kwargs_out)
     for curve_kwarg, curve_kwarg_out in zip(curve_kwargs, curve_kwargs_out):
         assert curve_kwarg_out["color"] == curve_kwarg["color"]
 
