@@ -186,7 +186,7 @@ cdef class WeightVector{{name_suffix}}(object):
         """Scales the weight vector by a constant ``c``.
 
         It updates ``wscale``, ``sq_norm``, and ``l1_norm``. If ``wscale`` gets too
-        small we call ``reset_swcale``."""
+        small we call ``reset_wscale``."""
         self.wscale *= c
         self.sq_norm *= (c * c)
         self.l1_norm *= fabs(c)
