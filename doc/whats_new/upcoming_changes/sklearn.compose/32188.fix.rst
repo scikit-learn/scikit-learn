@@ -1,0 +1,5 @@
+- The :class:`compose.ColumnTransformer` now correctly fits on data
+  provided as a polars.DataFrame. Previously, this raised an
+  AttributeError: 'DataFrame' object has no attribute 'size'.
+  By :user:`Phillipp Gnan <ph-ll-pp>`.
+  
