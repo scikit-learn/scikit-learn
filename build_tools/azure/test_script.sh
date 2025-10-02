@@ -72,11 +72,11 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-if which lscpu ; then
+if [ -x "$(command -v lscpu)" ] ; then
     lscpu
-elif which system_profiler; then
+elif [ -x "$(command -v system_profiler)" ] ; then
     system_profiler SPHardwareDataType
-elif which powershell; then
+elif [ -x "$(command -v powershell)" ] ; then
     powershell -c 'Write-Host "=== CPU Information ==="
           $cpu = Get-WmiObject -Class Win32_Processor
           Write-Host "CPU Model: $($cpu.Name)"
