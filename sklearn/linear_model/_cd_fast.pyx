@@ -6,7 +6,7 @@ import numpy as np
 
 from cython cimport floating
 import warnings
-from exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
