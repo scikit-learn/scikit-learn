@@ -136,6 +136,7 @@ class _BinaryClassifierCurveDisplayMixin:
         legend_metric_name,
         curve_kwargs,
         default_curve_kwargs=None,
+        default_multi_curve_kwargs={"alpha": 0.5, "linestyle": "--", "color": "blue"},
         **kwargs,
     ):
         """Get validated line kwargs for each curve.
@@ -213,12 +214,11 @@ class _BinaryClassifierCurveDisplayMixin:
         # Ensure `curve_kwargs` is of correct length
         if isinstance(curve_kwargs, Mapping):
             curve_kwargs = [curve_kwargs] * n_curves
-        if curve_kwargs is None:
+        elif curve_kwargs is None:
             curve_kwargs = [{}] * n_curves
 
         if default_curve_kwargs is None:
             default_curve_kwargs = {}
-        default_multi_curve_kwargs = {"alpha": 0.5, "linestyle": "--", "color": "blue"}
         if n_curves > 1:
             default_curve_kwargs_ = {
                 **default_multi_curve_kwargs,
