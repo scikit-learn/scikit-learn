@@ -100,7 +100,6 @@ function forceTheme(elementId) {
         console.error(`Element with id ${elementId} not found.`);
     } else {
         const theme = detectTheme(estimatorElement);
-        console.log('sklearn theme:', theme);
         estimatorElement.classList.add(theme);
     }
 }
