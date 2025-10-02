@@ -102,8 +102,8 @@ def _weighted_percentile(
         return array
     if array.ndim == 1:
         array = xp.reshape(array, (-1, 1))
-    n_features = array.shape[1]
 
+    n_features = array.shape[1]
     n_dim_percentile = percentile_rank.ndim
     if n_dim_percentile == 0:
         percentile_rank = xp.reshape(percentile_rank, (1,))
