@@ -96,13 +96,8 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0, csr_containe
     assert_allclose(Yt_dense, Yt_sparse)
 
 
-def _linear_kernel(X, Y):
-    if X.ndim == 1 and Y.ndim == 1:
-        return X @ Y
-    elif X.ndim == 2 and Y.ndim == 2:
-        return X @ Y.T
-    else:
-        raise ValueError("Incompatible shapes for linear kernel")
+def _linear_kernel(x, y):
+    return x @ y
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

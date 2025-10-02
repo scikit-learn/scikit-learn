@@ -1545,7 +1545,6 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
-    xp, _ = get_namespace(X, Y)
 
     if gamma is None:
         gamma = 1.0 / X.shape[1]
