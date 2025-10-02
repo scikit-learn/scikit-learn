@@ -74,6 +74,8 @@ fi
 
 if which lscpu ; then
     lscpu
+elif which system_profiler; then
+    system_profiler SPHardwareDataType
 else
     echo "Could not inspect CPU architecture."
 fi
