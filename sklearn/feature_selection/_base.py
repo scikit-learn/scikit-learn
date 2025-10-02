@@ -258,7 +258,6 @@ def _get_feature_importances(
         importances = getter(estimator)
     else:  # callable
         param_names = list(inspect.signature(getter).parameters.keys())
-        print(param_names)
         if "X_val" in param_names and "y_val" in param_names:
             importances = getter(estimator, X_val, y_val)
         else:

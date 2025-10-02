@@ -113,3 +113,74 @@ for i in range(cv.n_splits):
 # In the five folds, the selected features are consistent. This is good news,
 # it means that the selection is stable across folds, and it confirms that
 # these features are the most informative ones.
+
+# %%
+# Using `permutation_importance` to select features
+# -------------------------------------------------
+# The `importance_getter` parameter in RFE and RFECV uses by default the `coef_` (e.g.
+# in linear models) or the `feature_importances_` attributes of an estimator to derive
+# feature importance. These importance measures are used to choose which features to
+# eliminate first.
+#
+# We show here how to use a callable to compute the `permutation_importance` instead.
+# This callable must accept a fitted model and the external validation samples that we
+# pass in `fit()`.
+
+# %%
+from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
+
+# Extract validation samples for permutation importance
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
+
+
+def permutation_importance_getter(model, X_val, y_val, random_state):
+    return permutation_importance(
+        model,
+        X_val,
+        y_val,
+        n_repeats=10,
+        n_jobs=2,
+        random_state=random_state,
+    ).importances_mean
+
+
+rfecv = RFECV(
+    estimator=clf,
+    step=1,
+    cv=cv,
+    scoring="accuracy",
+    min_features_to_select=min_features_to_select,
+    n_jobs=2,
+    importance_getter=lambda model, X_val, y_val: permutation_importance_getter(
+        model, X_val, y_val, 0
+    ),
+).fit(
+    X_train,
+    y_train,
+    X_val=X_val,
+    y_val=y_val,
+)
+print(f"Optimal number of features: {rfecv.n_features_}")
+
+# %%
+data = {
+    key: value
+    for key, value in rfecv.cv_results_.items()
+    if key in ["n_features", "mean_test_score", "std_test_score"]
+}
+cv_results = pd.DataFrame(data)
+plt.figure()
+plt.xlabel("Number of features selected")
+plt.ylabel("Mean test accuracy")
+plt.errorbar(
+    x=cv_results["n_features"],
+    y=cv_results["mean_test_score"],
+    yerr=cv_results["std_test_score"],
+)
+plt.title("Recursive Feature Elimination \nwith correlated features")
+plt.show()
+
+# %%
+# We see that we obtain very similar results with this model agnostic feature importance
+# method.

@@ -1,0 +1,6 @@
+- The :func:`fit()` method of :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now has optional parameters `X_val` and `y_val` to provide validation samples.
+  These validation samples are passed to :attr:`importance_getter` when a callable
+  that can accept them. This allows using methods that need external data to be accurate
+  like :func:`permutation_importance`.
+  By :user:`Gaétan de Castellane <GaetandeCast>`.
