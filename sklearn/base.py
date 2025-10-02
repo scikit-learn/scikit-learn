@@ -17,7 +17,7 @@ from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
-from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
@@ -304,12 +304,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 init_default_params[param_name]
             ):
                 return True
-            if not np.array_equal(
-                param_value, init_default_params[param_name]
-            ) and not (
+
+            if not (
                 is_scalar_nan(init_default_params[param_name])
-                and is_scalar_nan(param_value)
-            ):
+                and (is_scalar_nan(param_value) or is_pandas_na(param_value))
+            ) and not np.array_equal(param_value, init_default_params[param_name]):
                 return True
 
             return False

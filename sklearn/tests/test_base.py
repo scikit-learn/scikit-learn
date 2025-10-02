@@ -6,6 +6,7 @@ import re
 import warnings
 
 import numpy as np
+import pandas as pd
 import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
@@ -1048,6 +1049,7 @@ def test_param_is_non_default(default_value, test_value):
         ((1, 2, 3), [1, 2, 3]),
         ((1, 2, 3), np.array([1, 2, 3])),
         (np.nan, np.nan),
+        (np.nan, pd.NA),
         ("abc", "abc"),
         (True, True),
         (1, 1),
