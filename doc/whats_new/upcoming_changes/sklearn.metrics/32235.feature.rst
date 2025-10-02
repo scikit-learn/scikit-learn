@@ -1,0 +1,3 @@
+- Added `from_cv_results` method to `DetDisplayCurve` which allows easy plotting of
+  multiple DET curves from :func:`model_selection.cross_validate` results.
+  By :user:`Lucy Liu <lucyleeow>`.
