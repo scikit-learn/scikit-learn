@@ -36,6 +36,10 @@ ESTIMATORS = [
     ),
 ]
 
+LP_ESTIMATORS = [
+    est for est in ESTIMATORS if isinstance(est, label_propagation.LabelPropagation)
+]
+
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_fit_transduction(global_dtype, Estimator, parameters):
@@ -145,7 +149,7 @@ def test_sparse_input_types(
 
 
 @pytest.mark.parametrize("constructor", CONSTRUCTOR_TYPES)
-@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS[:2])
+@pytest.mark.parametrize("Estimator, parameters", LP_ESTIMATORS)
 def test_label_propagation_build_graph_normalized(constructor, Estimator, parameters):
     # required but unused X and labels values
     X = np.array([[1.0, 0.0], [1.0, 1.0], [1.0, 3.0]])
