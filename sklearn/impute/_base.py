@@ -163,7 +163,9 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.allow_nan = is_scalar_nan(self.missing_values)
+        tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
+            self.missing_values
+        )
         return tags
 
 
