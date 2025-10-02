@@ -252,6 +252,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             legend_metric,
             "AUC",
             curve_kwargs=curve_kwargs,
+            default_multi_curve_kwargs={
+                "alpha": 0.5,
+                "linestyle": "--",
+                "color": "blue",
+            },
             **kwargs,
         )
 

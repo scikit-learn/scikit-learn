@@ -167,8 +167,7 @@ class _BinaryClassifierCurveDisplayMixin:
             Default curve kwargs, to be added to all curves. Individual kwargs
             are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
 
-        default_multi_curve_kwargs : dict, default=\
-                {"alpha": 0.5, "linestyle": "--", "color": "blue"}
+        default_multi_curve_kwargs : dict, default=None
             Default curve kwargs for multi-curve plots. Individual kwargs
             are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
 
@@ -224,6 +223,8 @@ class _BinaryClassifierCurveDisplayMixin:
 
         if default_curve_kwargs is None:
             default_curve_kwargs = {}
+        if default_multi_curve_kwargs is None:
+            default_multi_curve_kwargs = {}
         if n_curves > 1:
             default_curve_kwargs_ = {
                 **default_multi_curve_kwargs,
