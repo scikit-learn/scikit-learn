@@ -242,7 +242,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # RFE.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, X_val=None, y_val=None, **fit_params):
         """Fit the RFE model and then the underlying estimator on the selected features.
 
         Parameters
@@ -274,9 +274,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
-        return self._fit(X, y, **routed_params.estimator.fit)
+        return self._fit(X, y, X_val, y_val, **routed_params.estimator.fit)
 
-    def _fit(self, X, y, step_score=None, **fit_params):
+    def _fit(self, X, y, X_val=None, y_val=None, step_score=None, **fit_params):
         # Parameter step_score controls the calculation of self.step_scores_
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
@@ -346,6 +346,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             importances = _get_feature_importances(
                 estimator,
                 self.importance_getter,
+                X_val[:, features],
+                y_val,
                 transform_func="square",
             )
             ranks = np.argsort(importances)

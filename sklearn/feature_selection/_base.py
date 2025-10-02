@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import warnings
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
@@ -196,7 +197,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return input_features[self.get_support()]
 
 
-def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
+def _get_feature_importances(
+    estimator, getter, X_val=None, y_val=None, transform_func=None, norm_order=1
+):
     """
     Retrieve and aggregate (ndim > 1)  the feature importances
     from an estimator. Also optionally applies transformation.
@@ -243,7 +246,14 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     elif not callable(getter):
         raise ValueError("`importance_getter` has to be a string or `callable`")
 
-    importances = getter(estimator)
+    if isinstance(getter, attrgetter):
+        importances = getter(estimator)
+    else:  # callable
+        param_names = list(inspect.signature(getter).parameters.keys())
+        if ["X", "y"] in param_names:
+            importances = getter(estimator, X_val, y_val)
+        else:
+            importances = getter(estimator)
 
     if transform_func is None:
         return importances

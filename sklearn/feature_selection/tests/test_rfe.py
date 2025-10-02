@@ -14,12 +14,13 @@ from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.impute import SimpleImputer
+from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
-from sklearn.model_selection import GroupKFold, cross_val_score
+from sklearn.model_selection import GroupKFold, cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
@@ -753,3 +754,38 @@ def test_results_per_cv_in_rfecv(global_random_seed):
     assert len(rfecv.cv_results_["split1_ranking"]) == len(
         rfecv.cv_results_["split2_ranking"]
     )
+
+
+def test_rfe_with_permutation_importance(global_random_seed):
+    """
+    Ensure that using permutation_importance as a importance_getter returns the amount
+    features set with `n_features_to_select`.
+    """
+    X, y = make_friedman1(n_samples=100, n_features=7, random_state=global_random_seed)
+
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.5, random_state=global_random_seed
+    )
+
+    reg = RandomForestRegressor(random_state=global_random_seed, n_estimators=2)
+
+    def permutation_importance_getter(model, X, y, random_state):
+        return permutation_importance(
+            model,
+            X,
+            y,
+            n_repeats=2,
+            random_state=random_state,
+        ).importances_mean
+
+    rfe = RFE(
+        estimator=reg,
+        importance_getter=lambda model, X_val, y_val: permutation_importance_getter(
+            model, X_val, y_val, global_random_seed
+        ),
+        X_val=X_val,
+        y_val=y_val,
+        n_features_to_select=5,
+    ).fit(X_train, y_train)
+
+    assert rfe.n_features_ == 5
