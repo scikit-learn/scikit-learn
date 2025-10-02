@@ -43,6 +43,11 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 });
 
 
+/**
+ * Adapted from Skrub
+ * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
+ * @returns "light" or "dark"
+ */
 function detectTheme(element) {
     const body = document.querySelector('body');
 
