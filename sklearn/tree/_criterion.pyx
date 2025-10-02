@@ -11,8 +11,8 @@ cnp.import_array()
 
 from scipy.special.cython_special cimport xlogy
 
-from ._utils cimport log
-from ._utils cimport WeightedHeap
+from sklearn.tree._utils cimport log
+from sklearn.tree._utils cimport WeightedHeap
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps

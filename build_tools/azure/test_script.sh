@@ -72,8 +72,19 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-if which lscpu ; then
+if [ -x "$(command -v lscpu)" ] ; then
     lscpu
+elif [ -x "$(command -v system_profiler)" ] ; then
+    system_profiler SPHardwareDataType
+elif [ -x "$(command -v powershell)" ] ; then
+    powershell -c 'Write-Host "=== CPU Information ==="
+          $cpu = Get-WmiObject -Class Win32_Processor
+          Write-Host "CPU Model: $($cpu.Name)"
+          Write-Host "Architecture: $($cpu.Architecture)"
+          Write-Host "Physical Cores: $($cpu.NumberOfCores)"
+          Write-Host "Logical Processors: $($cpu.NumberOfLogicalProcessors)"
+          Write-Host "==========================="
+    '
 else
     echo "Could not inspect CPU architecture."
 fi
