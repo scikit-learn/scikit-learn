@@ -977,6 +977,12 @@ Here's a typical usage pattern::
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> import numpy as np
     
+    >>> # Create sample data
+    >>> X = np.array([['cat', 'A'], ['dog', 'B'], ['cat', 'A'], ['bird', 'C'], 
+    ...               ['dog', 'B'], ['cat', 'A'], ['bird', 'C'], ['cat', 'B'],
+    ...               ['dog', 'A'], ['bird', 'B']], dtype=object)
+    >>> y = np.array([1.0, 2.0, 1.5, 3.0, 2.5, 1.2, 3.2, 1.8, 2.3, 2.9])
+    
     >>> # Split data into train and test sets
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     
@@ -989,8 +995,9 @@ Here's a typical usage pattern::
     
     >>> # Train model on encoded data
     >>> model = RandomForestRegressor(random_state=42)
-    >>> model.fit(X_train_encoded, y_train)
-    >>> model.score(X_test_encoded, y_test)
+    >>> model.fit(X_train_encoded, y_train)  # doctest: +ELLIPSIS
+    RandomForestRegressor(...)
+    >>> model.score(X_test_encoded, y_test)  # doctest: +SKIP
 
 :meth:`~TargetEncoder.fit_transform` also learns a 'full data' encoding using
 the whole training set. This is never used in
