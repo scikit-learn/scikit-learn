@@ -1567,7 +1567,12 @@ class _MetadataRequester:
         # their parents.
         substr = f"__metadata_request__{method}"
         for base_class in reversed(inspect.getmro(cls)):
-            for attr, value in vars(base_class).items():
+            # Copy is needed with free-threaded context to avoid
+            # RuntimeError: dictionary changed size during iteration.
+            # copy.deepcopy applied on an instance of base_class adds
+            # __slotnames__ attribute to base_class.
+            base_class_items = vars(base_class).copy().items()
+            for attr, value in base_class_items:
                 # we don't check for equivalence since python prefixes attrs
                 # starting with __ with the `_ClassName`.
                 if substr not in attr:

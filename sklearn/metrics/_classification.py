@@ -389,7 +389,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    return float(_average(score, weights=sample_weight, normalize=normalize))
+    return float(_average(score, weights=sample_weight, normalize=normalize, xp=xp))
 
 
 @validate_params(
@@ -568,7 +568,7 @@ def confusion_matrix(
     if sample_weight.dtype.kind in {"i", "u", "b"}:
         dtype = np.int64
     else:
-        dtype = np.float64
+        dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
@@ -3235,7 +3235,9 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         )
 
     elif y_type in ["binary", "multiclass"]:
-        return float(_average(y_true != y_pred, weights=sample_weight, normalize=True))
+        return float(
+            _average(y_true != y_pred, weights=sample_weight, normalize=True, xp=xp)
+        )
     else:
         raise ValueError("{0} is not supported".format(y_type))
 

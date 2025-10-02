@@ -55,7 +55,7 @@ _ = sns.pairplot(iris.frame, hue="target")
 # Plot a PCA representation
 # -------------------------
 # Let's apply a Principal Component Analysis (PCA) to the iris dataset
-# and then plot the irises across the first three PCA dimensions.
+# and then plot the irises across the first three principal components.
 # This will allow us to better differentiate among the three types!
 
 import matplotlib.pyplot as plt
@@ -78,10 +78,10 @@ scatter = ax.scatter(
 )
 
 ax.set(
-    title="First three PCA dimensions",
-    xlabel="1st Eigenvector",
-    ylabel="2nd Eigenvector",
-    zlabel="3rd Eigenvector",
+    title="First three principal components",
+    xlabel="1st Principal Component",
+    ylabel="2nd Principal Component",
+    zlabel="3rd Principal Component",
 )
 ax.xaxis.set_ticklabels([])
 ax.yaxis.set_ticklabels([])
@@ -101,5 +101,4 @@ plt.show()
 # %%
 # PCA will create 3 new features that are a linear combination of the 4 original
 # features. In addition, this transformation maximizes the variance. With this
-# transformation, we see that we can identify each species using only the first feature
-# (i.e., first eigenvector).
+# transformation, we can identify each species using only the first principal component.
