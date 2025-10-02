@@ -136,7 +136,7 @@ class _BinaryClassifierCurveDisplayMixin:
         legend_metric_name,
         curve_kwargs,
         default_curve_kwargs=None,
-        default_multi_curve_kwargs={"alpha": 0.5, "linestyle": "--", "color": "blue"},
+        default_multi_curve_kwargs=None,
         **kwargs,
     ):
         """Get validated line kwargs for each curve.
@@ -225,6 +225,16 @@ class _BinaryClassifierCurveDisplayMixin:
             default_curve_kwargs = {}
         if default_multi_curve_kwargs is None:
             default_multi_curve_kwargs = {}
+        # This should never happen, as we would not pass the same keys to both
+        # default kwargs
+        common_keys = set(default_curve_kwargs).intersection(default_multi_curve_kwargs)
+        if len(common_keys) > 0:
+            raise ValueError(
+                "`default_curve_kwargs` and `default_multi_curve_kwargs` both contain "
+                f"the keys {common_keys}. The same kwargs cannot be passed to both "
+                "defaults."
+            )
+
         if n_curves > 1:
             default_curve_kwargs_ = {
                 **default_multi_curve_kwargs,

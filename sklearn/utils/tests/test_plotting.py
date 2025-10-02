@@ -285,10 +285,7 @@ def test_validate_curve_kwargs_error():
 @pytest.mark.parametrize("name", [None, "curve_name", ["curve_name"]])
 @pytest.mark.parametrize(
     "legend_metric",
-    [
-        {"mean": 0.8, "std": 0.2},
-        {"mean": None, "std": None},
-    ],
+    [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}],
 )
 @pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
 @pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
@@ -324,16 +321,10 @@ def test_validate_curve_kwargs_single_legend(
     assert curve_kwargs_out[1]["label"] is None
     assert curve_kwargs_out[2]["label"] is None
 
-    # There are 3 default multi-curve kwargs + label kwarg = 4 kwargs
-    # Number of kwargs does not change when we set "color" (over-rides default)
-    assert all(len(kwargs) == 4 for kwargs in curve_kwargs_out)
     if curve_kwargs is None:
-        assert all(kwargs["color"] == "blue" for kwargs in curve_kwargs_out)
+        assert all("color" not in kwargs for kwargs in curve_kwargs_out)
     else:
         assert all(kwargs["color"] == "red" for kwargs in curve_kwargs_out)
-    # Other default multi-curve kwargs should always be the same
-    assert all(kwargs["alpha"] == 0.5 for kwargs in curve_kwargs_out)
-    assert all(kwargs["linestyle"] == "--" for kwargs in curve_kwargs_out)
 
 
 @pytest.mark.parametrize("name", [None, "curve_name", ["one", "two", "three"]])
@@ -375,13 +366,47 @@ def test_validate_curve_kwargs_multi_legend(name, legend_metric, legend_metric_n
     for idx, expected_label in enumerate(expected_labels):
         assert curve_kwargs_out[idx]["label"] == expected_label
 
-    # There are 3 default multi-curve kwargs + label kwarg = 4 kwargs
-    assert all(len(kwargs) == 4 for kwargs in curve_kwargs_out)
-    # Non-specified default multi-curve kwargs should always be the same
-    assert all(kwargs["alpha"] == 0.5 for kwargs in curve_kwargs_out)
-    assert all(kwargs["linestyle"] == "--" for kwargs in curve_kwargs_out)
     for curve_kwarg, curve_kwarg_out in zip(curve_kwargs, curve_kwargs_out):
         assert curve_kwarg_out["color"] == curve_kwarg["color"]
+
+
+@pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
+@pytest.mark.parametrize("n_curves", [1, 3])
+def test_validate_curve_kwargs_default_kwargs(n_curves, curve_kwargs):
+    """Check default kwargs are incorporated correctly."""
+    curve_kwargs_out = _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+        n_curves=n_curves,
+        name="test",
+        legend_metric={"mean": 0.8, "std": 0.2},
+        legend_metric_name="metric",
+        curve_kwargs=curve_kwargs,
+        default_curve_kwargs={"color": "blue"},
+        default_multi_curve_kwargs={"alpha": 0.7, "linestyle": "--"},
+    )
+    if n_curves > 1:
+        # `default_multi_curve_kwargs` are incorporated
+        assert all(kwarg["alpha"] == 0.7 for kwarg in curve_kwargs_out)
+        assert all(kwarg["linestyle"] == "--" for kwarg in curve_kwargs_out)
+    if curve_kwargs is None:
+        # Use `default_curve_kwargs`
+        assert all(kwarg["color"] == "blue" for kwarg in curve_kwargs_out)
+    else:
+        # Use `curve_kwargs`
+        assert all(kwarg["color"] == "red" for kwarg in curve_kwargs_out)
+
+
+def test_validate_curve_kwargs_common_default_key():
+    """Check error is raised when default kwargs share a common key."""
+    with pytest.raises(ValueError, match="both contain the keys"):
+        _ = _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+            n_curves=3,
+            name="test",
+            legend_metric={"mean": 0.8, "std": 0.2},
+            legend_metric_name="metric",
+            curve_kwargs=None,
+            default_curve_kwargs={"color": "blue"},
+            default_multi_curve_kwargs={"color": "red"},
+        )
 
 
 def metric():
