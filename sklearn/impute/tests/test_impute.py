@@ -1731,40 +1731,52 @@ def test_simple_impute_pd_na():
 
 def test_pandas_na_sklearn_tags():
     """Test that pandas NA is properly handled in sklearn tags.
-    
+
     Non-regression test for issue #32312.
     """
     pd = pytest.importorskip("pandas")
-    
+
     # Test SimpleImputer with pd.NA
     imputer_pd_na = SimpleImputer(missing_values=pd.NA, strategy="mean")
     tags_pd_na = imputer_pd_na.__sklearn_tags__()
-    assert tags_pd_na.input_tags.allow_nan is True, "SimpleImputer should allow NaN when missing_values=pd.NA"
-    
+    assert tags_pd_na.input_tags.allow_nan is True, (
+        "SimpleImputer should allow NaN when missing_values=pd.NA"
+    )
+
     # Test SimpleImputer with np.nan
     imputer_np_nan = SimpleImputer(missing_values=np.nan, strategy="mean")
     tags_np_nan = imputer_np_nan.__sklearn_tags__()
-    assert tags_np_nan.input_tags.allow_nan is True, "SimpleImputer should allow NaN when missing_values=np.nan"
-    
+    assert tags_np_nan.input_tags.allow_nan is True, (
+        "SimpleImputer should allow NaN when missing_values=np.nan"
+    )
+
     # Test SimpleImputer with non-NaN missing values
     imputer_other = SimpleImputer(missing_values=-1, strategy="mean")
     tags_other = imputer_other.__sklearn_tags__()
-    assert tags_other.input_tags.allow_nan is False, "SimpleImputer should not allow NaN when missing_values=-1"
-    
+    assert tags_other.input_tags.allow_nan is False, (
+        "SimpleImputer should not allow NaN when missing_values=-1"
+    )
+
     # Test IterativeImputer with pd.NA (inherits from _BaseImputer)
     iterative_imputer_pd_na = IterativeImputer(missing_values=pd.NA, max_iter=1)
     tags_iter_pd_na = iterative_imputer_pd_na.__sklearn_tags__()
-    assert tags_iter_pd_na.input_tags.allow_nan is True, "IterativeImputer should allow NaN when missing_values=pd.NA"
-    
+    assert tags_iter_pd_na.input_tags.allow_nan is True, (
+        "IterativeImputer should allow NaN when missing_values=pd.NA"
+    )
+
     # Test IterativeImputer with np.nan
     iterative_imputer_np_nan = IterativeImputer(missing_values=np.nan, max_iter=1)
     tags_iter_np_nan = iterative_imputer_np_nan.__sklearn_tags__()
-    assert tags_iter_np_nan.input_tags.allow_nan is True, "IterativeImputer should allow NaN when missing_values=np.nan"
-    
+    assert tags_iter_np_nan.input_tags.allow_nan is True, (
+        "IterativeImputer should allow NaN when missing_values=np.nan"
+    )
+
     # Test IterativeImputer with non-NaN missing values
     iterative_imputer_other = IterativeImputer(missing_values=-1, max_iter=1)
     tags_iter_other = iterative_imputer_other.__sklearn_tags__()
-    assert tags_iter_other.input_tags.allow_nan is False, "IterativeImputer should not allow NaN when missing_values=-1"
+    assert tags_iter_other.input_tags.allow_nan is False, (
+        "IterativeImputer should not allow NaN when missing_values=-1"
+    )
 
 
 def test_missing_indicator_feature_names_out():
