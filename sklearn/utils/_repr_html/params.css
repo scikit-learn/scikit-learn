@@ -130,3 +130,80 @@ a.param-doc-link::before {
     height: 14px;
     cursor: pointer;
 }
+
+ .features {
+    font-family: monospace;
+    font-size: smaller;
+    cursor: pointer;
+    background-color: var(--sklearn-color-fitted-level-1);
+    border: 1px dotted var(--sklearn-color-border-box);
+    border-radius: .5em;
+    margin-bottom: 0.5em;
+}
+
+.features summary {
+  position: sticky;
+  top: 0;
+  padding: .25em .5em;
+  border: none;
+}
+
+.features summary::marker {
+  font-size: 0.8em;
+  color: var(--sklearn-color-icon);
+}
+
+.features summary:hover {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+  border-radius: .5em;
+}
+
+.features .features-container {
+    max-width: 15em;
+    max-height: 10em;
+    overflow: auto;
+    scrollbar-width: thin;
+    padding: .5em;
+    background-color: var(--sklearn-color-fitted-level-0);
+    border-radius: 0 0 .5em .5em;
+    display: flex;
+    justify-content: space-between;
+}
+
+.features .features-container .copy-paste-icon {
+    width: 1em;
+    height: 1em;
+    background-size: 1em 1em;
+    background-color: var(--sklearn-color-fitted-level-0);
+    background-position: center;
+    padding: .5em;
+    border: 1px solid grey;
+    border-radius: .25em;
+    box-shadow: .2em .2em grey;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    right: 0em;
+    z-index: 1;
+    transition: transform 500ms ease;
+}
+
+.features .features-container .copy-paste-icon:hover {
+    box-shadow: .2em .2em black;
+    transform: scale(1.25);
+}
+
+.features .features-table table {
+    width: 95%;
+    margin: 0;
+}
+
+.features .features-container table td {
+  text-align: left;
+  font-size: smaller;
+  padding: 0;
+  white-space: nowrap;
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-0);
+}
