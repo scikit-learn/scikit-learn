@@ -165,7 +165,12 @@ class _BinaryClassifierCurveDisplayMixin:
 
         default_curve_kwargs : dict, default=None
             Default curve kwargs, to be added to all curves. Individual kwargs
-            over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
+            are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
+
+        default_multi_curve_kwargs : dict, default=\
+                {"alpha": 0.5, "linestyle": "--", "color": "blue"}
+            Default curve kwargs for multi-curve plots. Individual kwargs
+            are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
 
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
