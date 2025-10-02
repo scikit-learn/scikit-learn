@@ -39,6 +39,7 @@ python -c "import joblib; print(f'Number of cores (physical): \
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
+show_cpu_information
 
 NUM_CORES=$(python -c "import joblib; print(joblib.cpu_count())")
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
@@ -70,23 +71,6 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
-fi
-
-if [ -x "$(command -v lscpu)" ] ; then
-    lscpu
-elif [ -x "$(command -v system_profiler)" ] ; then
-    system_profiler SPHardwareDataType
-elif [ -x "$(command -v powershell)" ] ; then
-    powershell -c 'Write-Host "=== CPU Information ==="
-          $cpu = Get-WmiObject -Class Win32_Processor
-          Write-Host "CPU Model: $($cpu.Name)"
-          Write-Host "Architecture: $($cpu.Architecture)"
-          Write-Host "Physical Cores: $($cpu.NumberOfCores)"
-          Write-Host "Logical Processors: $($cpu.NumberOfLogicalProcessors)"
-          Write-Host "==========================="
-    '
-else
-    echo "Could not inspect CPU architecture."
 fi
 
 if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
