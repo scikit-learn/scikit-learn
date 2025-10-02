@@ -13,16 +13,26 @@ from collections import defaultdict
 
 import numpy as np
 
-from . import __version__
-from ._config import config_context, get_config
-from .exceptions import InconsistentVersionWarning
-from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
-from .utils._metadata_requests import _MetadataRequester, _routing_enabled
-from .utils._param_validation import validate_parameter_constraints
-from .utils._set_output import _SetOutputMixin
-from .utils._tags import default_tags
-from .utils.fixes import _IS_32BIT
-from .utils.validation import (
+from sklearn import __version__
+from sklearn._config import config_context, get_config
+from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import validate_parameter_constraints
+from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.params import ParamsDict
+from sklearn.utils._set_output import _SetOutputMixin
+from sklearn.utils._tags import (
+    ClassifierTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
     _is_fitted,
@@ -100,8 +110,8 @@ def _clone_parametrized(estimator, *, safe=True):
             if isinstance(estimator, type):
                 raise TypeError(
                     "Cannot clone object. "
-                    + "You should provide an instance of "
-                    + "scikit-learn estimator instead of a class."
+                    "You should provide an instance of "
+                    "scikit-learn estimator instead of a class."
                 )
             else:
                 raise TypeError(
@@ -143,7 +153,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
+class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Inheriting from this class provides default implementations of:
@@ -186,6 +196,15 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     >>> estimator.set_params(param=3).fit(X, y).predict(X)
     array([3, 3, 3])
     """
+
+    def __dir__(self):
+        # Filters conditional methods that should be hidden based
+        # on the `available_if` decorator
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
+    _html_repr = estimator_html_repr
 
     @classmethod
     def _get_param_names(cls):
@@ -242,6 +261,76 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             out[key] = value
         return out
 
+    def _get_params_html(self, deep=True, doc_link=""):
+        """
+        Get parameters for this estimator with a specific HTML representation.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        doc_link : str
+            URL to the estimator documentation.
+            Used for linking to the estimator's parameters documentation
+            available in HTML displays.
+
+        Returns
+        -------
+        params : ParamsDict
+            Parameter names mapped to their values. We return a `ParamsDict`
+            dictionary, which renders a specific HTML representation in table
+            form.
+        """
+        out = self.get_params(deep=deep)
+
+        init_func = getattr(self.__init__, "deprecated_original", self.__init__)
+        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = {
+            name: param.default for name, param in init_default_params.items()
+        }
+
+        def is_non_default(param_name, param_value):
+            """Finds the parameters that have been set by the user."""
+            if param_name not in init_default_params:
+                # happens if k is part of a **kwargs
+                return True
+            if init_default_params[param_name] == inspect._empty:
+                # k has no default value
+                return True
+            # avoid calling repr on nested estimators
+            if isinstance(param_value, BaseEstimator) and type(param_value) is not type(
+                init_default_params[param_name]
+            ):
+                return True
+            if not np.array_equal(
+                param_value, init_default_params[param_name]
+            ) and not (
+                is_scalar_nan(init_default_params[param_name])
+                and is_scalar_nan(param_value)
+            ):
+                return True
+
+            return False
+
+        # reorder the parameters from `self.get_params` using the `__init__`
+        # signature
+        remaining_params = [name for name in out if name not in init_default_params]
+        ordered_out = {name: out[name] for name in init_default_params if name in out}
+        ordered_out.update({name: out[name] for name in remaining_params})
+
+        non_default_ls = tuple(
+            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        )
+
+        return ParamsDict(
+            params=ordered_out,
+            non_default=non_default_ls,
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
     def set_params(self, **params):
         """Set the parameters of this estimator.
 
@@ -294,7 +383,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         # characters to render. We pass it as an optional parameter to ease
         # the tests.
 
-        from .utils._pprint import _EstimatorPrettyPrinter
+        from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
@@ -380,7 +469,13 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.__dict__.update(state)
 
     def __sklearn_tags__(self):
-        return default_tags(self)
+        return Tags(
+            estimator_type=None,
+            target_tags=TargetTags(required=False),
+            transformer_tags=None,
+            regressor_tags=None,
+            classifier_tags=None,
+        )
 
     def _validate_params(self):
         """Validate types and values of constructor parameters
@@ -396,45 +491,16 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             caller_name=self.__class__.__name__,
         )
 
-    @property
-    def _repr_html_(self):
-        """HTML representation of estimator.
-
-        This is redundant with the logic of `_repr_mimebundle_`. The latter
-        should be favorted in the long term, `_repr_html_` is only
-        implemented for consumers who do not interpret `_repr_mimbundle_`.
-        """
-        if get_config()["display"] != "diagram":
-            raise AttributeError(
-                "_repr_html_ is only defined when the "
-                "'display' configuration option is set to "
-                "'diagram'"
-            )
-        return self._repr_html_inner
-
-    def _repr_html_inner(self):
-        """This function is returned by the @property `_repr_html_` to make
-        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
-        on `get_config()["display"]`.
-        """
-        return estimator_html_repr(self)
-
-    def _repr_mimebundle_(self, **kwargs):
-        """Mime bundle used by jupyter kernels to display estimator"""
-        output = {"text/plain": repr(self)}
-        if get_config()["display"] == "diagram":
-            output["text/html"] = estimator_html_repr(self)
-        return output
-
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn.
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `"classifier"`;
+    - set estimator type to `"classifier"` through the `estimator_type` tag;
     - `score` method that default to :func:`~sklearn.metrics.accuracy_score`.
-    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag,
+      which is done by setting the classifier type tag.
 
     Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
 
@@ -460,11 +526,16 @@ class ClassifierMixin:
     0.66...
     """
 
-    _estimator_type = "classifier"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "classifier"
+        tags.classifier_tags = ClassifierTags()
+        tags.target_tags.required = True
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """
-        Return the mean accuracy on the given test data and labels.
+        Return :ref:`accuracy <accuracy_score>` on provided data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -486,7 +557,7 @@ class ClassifierMixin:
         score : float
             Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
-        from .metrics import accuracy_score
+        from sklearn.metrics import accuracy_score
 
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
@@ -496,9 +567,10 @@ class RegressorMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `"regressor"`;
+    - set estimator type to `"regressor"` through the `estimator_type` tag;
     - `score` method that default to :func:`~sklearn.metrics.r2_score`.
-    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag,
+      which is done by setting the regressor type tag.
 
     Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
 
@@ -524,12 +596,17 @@ class RegressorMixin:
     0.0
     """
 
-    _estimator_type = "regressor"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "regressor"
+        tags.regressor_tags = RegressorTags()
+        tags.target_tags.required = True
+        return tags
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination of the prediction.
+        """Return :ref:`coefficient of determination <r2_score>` on test data.
 
-        The coefficient of determination :math:`R^2` is defined as
+        The coefficient of determination, :math:`R^2`, is defined as
         :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
         sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
         is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.
@@ -567,7 +644,7 @@ class RegressorMixin:
         :class:`~sklearn.multioutput.MultiOutputRegressor`).
         """
 
-        from .metrics import r2_score
+        from sklearn.metrics import r2_score
 
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
@@ -576,7 +653,7 @@ class RegressorMixin:
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn.
 
-    - `_estimator_type` class attribute defaulting to `"clusterer"`;
+    - set estimator type to `"clusterer"` through the `estimator_type` tag;
     - `fit_predict` method returning the cluster labels associated to each sample.
 
     Examples
@@ -592,7 +669,12 @@ class ClusterMixin:
     array([1, 1, 1])
     """
 
-    _estimator_type = "clusterer"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "clusterer"
+        if tags.transformer_tags is not None:
+            tags.transformer_tags.preserves_dtype = []
+        return tags
 
     def fit_predict(self, X, y=None, **kwargs):
         """
@@ -620,12 +702,6 @@ class ClusterMixin:
         # method is possible for a given clustering algorithm
         self.fit(X, **kwargs)
         return self.labels_
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        if tags.transformer_tags is not None:
-            tags.transformer_tags.preserves_dtype = []
-        return tags
 
 
 class BiclusterMixin:
@@ -763,6 +839,11 @@ class TransformerMixin(_SetOutputMixin):
     array([1, 1, 1])
     """
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags = TransformerTags()
+        return tags
+
     def fit_transform(self, X, y=None, **fit_params):
         """
         Fit to data, then transform it.
@@ -781,6 +862,7 @@ class TransformerMixin(_SetOutputMixin):
 
         **fit_params : dict
             Additional fit parameters.
+            Pass only if the estimator accepts additional params in its `fit` method.
 
         Returns
         -------
@@ -833,8 +915,8 @@ class OneToOneFeatureMixin:
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.base import OneToOneFeatureMixin
-    >>> class MyEstimator(OneToOneFeatureMixin):
+    >>> from sklearn.base import OneToOneFeatureMixin, BaseEstimator
+    >>> class MyEstimator(OneToOneFeatureMixin, BaseEstimator):
     ...     def fit(self, X, y=None):
     ...         self.n_features_in_ = X.shape[1]
     ...         return self
@@ -863,7 +945,10 @@ class OneToOneFeatureMixin:
         feature_names_out : ndarray of str objects
             Same as input features.
         """
-        check_is_fitted(self, "n_features_in_")
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on
+        # stateless estimators (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
         return _check_feature_names_in(self, input_features)
 
 
@@ -882,8 +967,8 @@ class ClassNamePrefixFeaturesOutMixin:
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.base import ClassNamePrefixFeaturesOutMixin
-    >>> class MyEstimator(ClassNamePrefixFeaturesOutMixin):
+    >>> from sklearn.base import ClassNamePrefixFeaturesOutMixin, BaseEstimator
+    >>> class MyEstimator(ClassNamePrefixFeaturesOutMixin, BaseEstimator):
     ...     def fit(self, X, y=None):
     ...         self._n_features_out = X.shape[1]
     ...         return self
@@ -920,7 +1005,7 @@ class DensityMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `"DensityEstimator"`;
+    - sets estimator type to `"density_estimator"` through the `estimator_type` tag;
     - `score` method that default that do no-op.
 
     Examples
@@ -935,7 +1020,10 @@ class DensityMixin:
     True
     """
 
-    _estimator_type = "DensityEstimator"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "density_estimator"
+        return tags
 
     def score(self, X, y=None):
         """Return the score of the model on the data `X`.
@@ -960,7 +1048,7 @@ class OutlierMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `outlier_detector`;
+    - set estimator type to `"outlier_detector"` through the `estimator_type` tag;
     - `fit_predict` method that default to `fit` and `predict`.
 
     Examples
@@ -979,7 +1067,10 @@ class OutlierMixin:
     array([1., 1., 1.])
     """
 
-    _estimator_type = "outlier_detector"
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "outlier_detector"
+        return tags
 
     def fit_predict(self, X, y=None, **kwargs):
         """Perform fit on X and returns labels for X.
@@ -1113,7 +1204,7 @@ def is_classifier(estimator):
     >>> is_classifier(kmeans)
     False
     """
-    return getattr(estimator, "_estimator_type", None) == "classifier"
+    return get_tags(estimator).estimator_type == "classifier"
 
 
 def is_regressor(estimator):
@@ -1144,7 +1235,7 @@ def is_regressor(estimator):
     >>> is_regressor(kmeans)
     False
     """
-    return getattr(estimator, "_estimator_type", None) == "regressor"
+    return get_tags(estimator).estimator_type == "regressor"
 
 
 def is_clusterer(estimator):
@@ -1177,7 +1268,7 @@ def is_clusterer(estimator):
     >>> is_clusterer(kmeans)
     True
     """
-    return getattr(estimator, "_estimator_type", None) == "clusterer"
+    return get_tags(estimator).estimator_type == "clusterer"
 
 
 def is_outlier_detector(estimator):
@@ -1193,7 +1284,7 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+    return get_tags(estimator).estimator_type == "outlier_detector"
 
 
 def _fit_context(*, prefer_skip_nested_validation):

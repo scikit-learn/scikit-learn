@@ -12,21 +12,19 @@ import numpy as np
 import pytest
 
 import sklearn
-from sklearn import metrics
 from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
-from sklearn.utils._test_common.instance_generator import _construct_instance
+from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import (
     _get_func_name,
-    assert_docstring_consistency,
     check_docstring_parameters,
     ignore_warnings,
 )
@@ -46,18 +44,18 @@ with warnings.catch_warnings():
         [
             pckg[1]
             for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
-            if not ("._" in pckg[1] or ".tests." in pckg[1])
+            if not any(
+                substr in pckg[1] for substr in ["._", ".tests.", "sklearn.externals"]
+            )
         ]
     )
 
 # functions to ignore args / docstring of
-# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
-    "sklearn.utils._joblib",
     "HalfBinomialLoss",
 ]
 
@@ -174,10 +172,11 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+# TODO(1.10): remove copy warning filter
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `copy` will change from False to True in 1.10."
+)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -201,8 +200,13 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
+    elif Estimator.__name__ == "FrozenEstimator":
+        X, y = make_classification(n_samples=20, n_features=5, random_state=0)
+        est = Estimator(LogisticRegression().fit(X, y))
     else:
-        est = _construct_instance(Estimator)
+        # TODO(devtools): use _tested_estimators instead of all_estimators in the
+        # decorator
+        est = next(_construct_instances(Estimator))
 
     if Estimator.__name__ == "SelectKBest":
         est.set_params(k=2)
@@ -220,10 +224,14 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-
-    # TODO(1.6): remove (avoid FutureWarning)
-    if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
-        est.set_params(n_components="auto")
+    # TODO(1.9) remove
+    elif Estimator.__name__ == "KBinsDiscretizer":
+        # default raises an FutureWarning if quantile method is at default "warn"
+        est.set_params(quantile_method="averaged_inverted_cdf")
+    # TODO(1.9) remove
+    elif Estimator.__name__ == "MDS":
+        # default raises a FutureWarning
+        est.set_params(n_init=1)
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
@@ -322,26 +330,3 @@ def _get_all_fitted_attributes(estimator):
             fit_attr.append(name)
 
     return [k for k in fit_attr if k.endswith("_") and not k.startswith("_")]
-
-
-def test_precision_recall_f_score_docstring_consistency():
-    """Check docstrings parameters of related metrics are consistent."""
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-    )
-    assert_docstring_consistency(
-        [
-            metrics.precision_recall_fscore_support,
-            metrics.f1_score,
-            metrics.fbeta_score,
-            metrics.precision_score,
-            metrics.recall_score,
-        ],
-        include_params=True,
-        # "average" - in `recall_score` we have an additional line: 'Weighted recall
-        # is equal to accuracy.'.
-        # "zero_division" - the reason for zero division differs between f scores,
-        # precison and recall.
-        exclude_params=["average", "zero_division"],
-    )

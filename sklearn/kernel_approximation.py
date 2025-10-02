@@ -11,17 +11,21 @@ import scipy.sparse as sp
 from scipy.fft import fft, ifft
 from scipy.linalg import svd
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from .metrics.pairwise import KERNEL_PARAMS, PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
-from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions
-from .utils.extmath import safe_sparse_dot
-from .utils.validation import (
+from sklearn.metrics.pairwise import (
+    KERNEL_PARAMS,
+    PAIRWISE_KERNEL_FUNCTIONS,
+    pairwise_kernels,
+)
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
     validate_data,
@@ -235,6 +239,11 @@ class PolynomialCountSketch(
 
         return data_sketch
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a RBF kernel feature map using random Fourier features.
@@ -404,6 +413,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
@@ -710,9 +720,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         sparse = sp.issparse(X)
 
         if self.sample_interval is None:
-            # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
+            # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
             # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
-            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
+            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
             # 2011
             if self.sample_steps == 1:
                 sample_interval = 0.8
@@ -747,7 +757,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on this
+        # stateless estimator (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=True
         )
@@ -823,6 +836,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
         tags.input_tags.positive_only = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1091,10 +1105,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_transformer_preserves_dtypes": (
-                "dtypes are preserved but not at a close enough precision"
-            )
-        }
+        tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

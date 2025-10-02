@@ -7,10 +7,15 @@ import warnings
 
 import numpy as np
 
-from ..base import RegressorMixin, _fit_context
-from ..metrics import DistanceMetric
-from ..utils._param_validation import StrOptions
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.metrics import DistanceMetric
+from sklearn.neighbors._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _get_weights,
+)
+from sklearn.utils._param_validation import StrOptions
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -227,8 +232,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -457,8 +464,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------

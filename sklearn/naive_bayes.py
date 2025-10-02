@@ -14,16 +14,12 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import (
-    BaseEstimator,
-    ClassifierMixin,
-    _fit_context,
-)
-from .preprocessing import LabelBinarizer, binarize, label_binarize
-from .utils._param_validation import Interval
-from .utils.extmath import safe_sparse_dot
-from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import (
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
+from sklearn.preprocessing import LabelBinarizer, binarize, label_binarize
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.validation import (
     _check_n_features,
     _check_sample_weight,
     check_is_fitted,
@@ -33,10 +29,10 @@ from .utils.validation import (
 
 __all__ = [
     "BernoulliNB",
+    "CategoricalNB",
+    "ComplementNB",
     "GaussianNB",
     "MultinomialNB",
-    "ComplementNB",
-    "CategoricalNB",
 ]
 
 
@@ -154,9 +150,8 @@ class GaussianNB(_BaseNB):
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
-    see Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
-
-        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+    see `Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque
+    <http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf>`_.
 
     Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
 
@@ -772,6 +767,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.classifier_tags.poor_score = True
         return tags
 
@@ -1433,6 +1429,8 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.categorical = True
+        tags.input_tags.sparse = False
         tags.input_tags.positive_only = True
         return tags
 

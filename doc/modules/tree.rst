@@ -284,11 +284,11 @@ of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
   ``predict_proba``.
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
-   :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_002.png
+   :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
 
@@ -304,7 +304,6 @@ the lower half of those faces.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. rubric:: References
@@ -383,7 +382,7 @@ Tips on practical use
 
 * If the samples are weighted, it will be easier to optimize the tree
   structure using weight-based pre-pruning criterion such as
-  ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+  ``min_weight_fraction_leaf``, which ensures that leaf nodes contain at least
   a fraction of the overall sum of the sample weights.
 
 * All decision trees use ``np.float32`` arrays internally.
@@ -473,9 +472,16 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
-:math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
+Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)`
+until a stopping condition is reached, for instance some examples include
+(for others see the docstring of the estimators):
+
+* the maximum allowable depth is reached (`max_depth`)
+
+* :math:`n_m` is smaller than `min_samples_split`
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`
+
 
 Classification criteria
 -----------------------
@@ -561,9 +567,9 @@ Mean Poisson deviance:
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
-necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion. For performance reasons the actual implementation minimizes
-the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
+necessary condition to use this criterion. For performance reasons the actual
+implementation minimizes the half mean poisson deviance, i.e. the mean poisson
+deviance divided by 2.
 
 Mean Absolute Error:
 
@@ -588,8 +594,8 @@ support for missing values for `splitter='random'`, where the splits
 are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
 
-The criterion supported when there are missing-values are
-`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+The criterion supported when there are missing values are
+`'gini'`, `'entropy'`, or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`

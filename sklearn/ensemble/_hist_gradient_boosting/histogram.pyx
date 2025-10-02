@@ -1,6 +1,7 @@
 """This module contains routines for building histograms."""
 
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 cimport cython
 from cython.parallel import prange
@@ -8,11 +9,11 @@ from libc.string cimport memset
 
 import numpy as np
 
-from .common import HISTOGRAM_DTYPE
-from .common cimport hist_struct
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport G_H_DTYPE_C
-from ...utils._typedefs cimport uint8_t
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport G_H_DTYPE_C
+from sklearn.utils._typedefs cimport uint8_t
 
 
 # Notes:

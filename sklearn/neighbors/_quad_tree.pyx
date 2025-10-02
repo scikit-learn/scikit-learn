@@ -1,5 +1,5 @@
-# Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
-# Author: Olivier Grisel <olivier.grisel@ensta.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
@@ -31,6 +31,8 @@ cdef Cell dummy
 CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
+
+cdef const float EPSILON = 1e-6
 
 
 cdef class _QuadTree:

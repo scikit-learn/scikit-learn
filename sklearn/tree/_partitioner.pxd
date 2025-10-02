@@ -10,10 +10,10 @@ from ._splitter cimport SplitRecord
 
 
 # Mitigate precision differences between 32 bit and 64 bit
-cdef float32_t FEATURE_THRESHOLD = 1e-7
+cdef const float32_t FEATURE_THRESHOLD = 1e-7
 
 
-# We provide here the abstract interfact for a Partitioner that would be
+# We provide here the abstract interface for a Partitioner that would be
 # theoretically shared between the Dense and Sparse partitioners. However,
 # we leave it commented out for now as it is not used in the current
 # implementation due to the performance hit from vtable lookups when using

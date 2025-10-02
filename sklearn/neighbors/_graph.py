@@ -5,17 +5,22 @@
 
 import itertools
 
-from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
-from ..utils._param_validation import (
+from sklearn.base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
+from sklearn.neighbors._base import (
+    VALID_METRICS,
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+)
+from sklearn.neighbors._unsupervised import NearestNeighbors
+from sklearn.utils._param_validation import (
     Integral,
     Interval,
     Real,
     StrOptions,
     validate_params,
 )
-from ..utils.validation import check_is_fitted
-from ._base import VALID_METRICS, KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
-from ._unsupervised import NearestNeighbors
+from sklearn.utils.validation import check_is_fitted
 
 
 def _check_params(X, metric, p, metric_params):
@@ -398,7 +403,7 @@ class KNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(KNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             radius=None,
             algorithm=algorithm,
@@ -479,13 +484,6 @@ class KNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_methods_sample_order_invariance": "check is not applicable."
-        }
-        return tags
 
 
 class RadiusNeighborsTransformer(
@@ -630,7 +628,7 @@ class RadiusNeighborsTransformer(
         metric_params=None,
         n_jobs=None,
     ):
-        super(RadiusNeighborsTransformer, self).__init__(
+        super().__init__(
             n_neighbors=None,
             radius=radius,
             algorithm=algorithm,
@@ -709,10 +707,3 @@ class RadiusNeighborsTransformer(
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_methods_sample_order_invariance": "check is not applicable."
-        }
-        return tags

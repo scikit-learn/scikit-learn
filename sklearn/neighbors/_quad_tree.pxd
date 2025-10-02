@@ -1,5 +1,5 @@
-# Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
-# Author: Olivier Grisel <olivier.grisel@ensta.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See quad_tree.pyx for details.
 
@@ -11,8 +11,6 @@ from ..utils._typedefs cimport float32_t, intp_t
 # and remove them at compile time
 cdef enum:
     DEBUGFLAG = 0
-
-cdef float EPSILON = 1e-6
 
 # XXX: Careful to not change the order of the arguments. It is important to
 # have is_leaf and max_width consecutive as it permits to avoid padding by

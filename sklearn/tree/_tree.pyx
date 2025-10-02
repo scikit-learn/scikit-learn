@@ -107,19 +107,7 @@ cdef class TreeBuilder:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
-        # TODO: This check for y seems to be redundant, as it is also
-        #  present in the BaseDecisionTree's fit method, and therefore
-        #  can be removed.
-        if y.base.dtype != DOUBLE or not y.base.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        if (
-            sample_weight is not None and
-            (
-                sample_weight.base.dtype != DOUBLE or
-                not sample_weight.base.flags.contiguous
-            )
-        ):
+        if sample_weight is not None and not sample_weight.base.flags.contiguous:
             sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
 
         return X, y, sample_weight
@@ -1099,6 +1087,7 @@ cdef class Tree:
         # Extract input
         cdef const float32_t[:, :] X_ndarray = X
         cdef intp_t n_samples = X.shape[0]
+        cdef float32_t X_i_node_feature
 
         # Initialize output
         cdef intp_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
@@ -1121,7 +1110,13 @@ cdef class Tree:
                     indices[indptr[i + 1]] = <intp_t>(node - self.nodes)
                     indptr[i + 1] += 1
 
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    X_i_node_feature = X_ndarray[i, node.feature]
+                    if isnan(X_i_node_feature):
+                        if node.missing_go_to_left:
+                            node = &self.nodes[node.left_child]
+                        else:
+                            node = &self.nodes[node.right_child]
+                    elif X_i_node_feature <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]

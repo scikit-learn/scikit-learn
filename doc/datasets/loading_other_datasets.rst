@@ -19,23 +19,28 @@ and pipelines on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
-   :target: ../auto_examples/cluster/plot_color_quantization.html
+.. plot::
+   :context: close-figs
    :scale: 30
    :align: right
+   :include-source: False
 
+    import matplotlib.pyplot as plt
+    from sklearn.datasets import load_sample_image
+
+    china = load_sample_image("china.jpg")
+    plt.imshow(china)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
 
 .. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
   spare memory. Often machine learning algorithms work best if the
   input is converted to a floating point representation first. Also,
-  if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
+  if you plan to use ``matplotlib.pyplot.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
-
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 .. _libsvm_loader:
 
@@ -48,7 +53,7 @@ takes the form ``<label> <feature-id>:<feature-value>
 <feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
 In this module, scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
 
-You may load a dataset like as follows::
+You may load a dataset like this as follows::
 
   >>> from sklearn.datasets import load_svmlight_file
   >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
@@ -229,7 +234,7 @@ From version 1.2, scikit-learn provides a new keyword argument `parser` that
 provides several options to parse the ARFF files provided by OpenML. The legacy
 parser (i.e. `parser="liac-arff"`) is based on the project
 `LIAC-ARFF <https://github.com/renatopp/liac-arff>`_. This parser is however
-slow and consume more memory than required. A new parser based on pandas
+slow and consumes more memory than required. A new parser based on pandas
 (i.e. `parser="pandas"`) is both faster and more memory efficient.
 However, this parser does not support sparse data.
 Therefore, we recommend using `parser="auto"` which will use the best parser
@@ -244,7 +249,7 @@ the output. The notable differences are the following:
   possible.
 - The `"liac-arff"` parser uses float64 to encode numerical features tagged as
   'REAL' and 'NUMERICAL' in the metadata. The `"pandas"` parser instead infers
-  if these numerical features corresponds to integers and uses panda's Integer
+  if these numerical features correspond to integers and uses pandas' Integer
   extension dtype.
 - In particular, classification datasets with integer categories are typically
   loaded as such `(0, 1, ...)` with the `"pandas"` parser while `"liac-arff"`
@@ -282,7 +287,7 @@ format usable by scikit-learn:
   manipulation and conversion into a numeric array suitable for scikit-learn.
 * `scipy.io <https://docs.scipy.org/doc/scipy/reference/io.html>`_
   specializes in binary formats often used in scientific computing
-  context such as .mat and .arff
+  contexts such as .mat and .arff
 * `numpy/routines.io <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
   for standard loading of columnar data into numpy arrays
 * scikit-learn's :func:`load_svmlight_file` for the svmlight or libSVM
@@ -308,5 +313,5 @@ See :ref:`preprocessing`.
 
 Note: if you manage your own numerical data it is recommended to use an
 optimized file format such as HDF5 to reduce data load times. Various libraries
-such as H5Py, PyTables and pandas provides a Python interface for reading and
+such as H5Py, PyTables and pandas provide a Python interface for reading and
 writing data in that format.
