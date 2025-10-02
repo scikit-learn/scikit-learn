@@ -112,8 +112,6 @@ Estimators and other tools in scikit-learn that support Array API compatible inp
 Estimators
 ----------
 
-- :class:`calibration.CalibratedClassifierCV` (with `method="temperature"` and
-  when the underlying `estimator` also supports array API)
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`linear_model.Ridge` (with `solver="svd"`)
@@ -135,6 +133,7 @@ Meta-estimators
 Meta-estimators that accept Array API inputs conditioned on the fact that the
 base estimator also does:
 
+- :class:`calibration.CalibratedClassifierCV` (with `method="temperature"`)
 - :class:`model_selection.GridSearchCV`
 - :class:`model_selection.RandomizedSearchCV`
 - :class:`model_selection.HalvingGridSearchCV`
