@@ -90,7 +90,7 @@ tests = [
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
     "pooch>=1.6.0",
-    "pytest-playwright>=0.7.1"
+    "pytest-playwright>=0.7.1",
 ]
 maintenance = ["conda-lock==3.0.1"]
 

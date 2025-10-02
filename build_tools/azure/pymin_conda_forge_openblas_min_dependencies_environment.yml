@@ -20,6 +20,7 @@ dependencies:
   - pip
   - ninja
   - meson-python=0.17.1  # min
+  - pytest-playwright
   - pytest-cov<=6.3.0
   - coverage
   - ccache
