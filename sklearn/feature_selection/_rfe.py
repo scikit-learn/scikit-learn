@@ -42,7 +42,9 @@ from sklearn.utils.validation import (
 )
 
 
-def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
+def _rfe_single_fit(
+    rfe, estimator, X, y, X_val, y_val, train, test, scorer, routed_params
+):
     """
     Return the score and n_features per step for a fit across one fold.
     """
@@ -58,6 +60,8 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
     rfe._fit(
         X_train,
         y_train,
+        X_val,
+        y_val,
         lambda estimator, features: _score(
             estimator,
             X_test[:, features],
@@ -346,7 +350,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             importances = _get_feature_importances(
                 estimator,
                 self.importance_getter,
-                X_val[:, features],
+                X_val[:, features] if X_val is not None else None,
                 y_val,
                 transform_func="square",
             )
@@ -802,7 +806,7 @@ class RFECV(RFE):
         # RFECV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, *, groups=None, **params):
+    def fit(self, X, y, *, X_val=None, y_val=None, groups=None, **params):
         """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
@@ -903,7 +907,18 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         step_results = parallel(
-            func(clone(rfe), self.estimator, X, y, train, test, scorer, routed_params)
+            func(
+                clone(rfe),
+                self.estimator,
+                X,
+                y,
+                X_val,
+                y_val,
+                train,
+                test,
+                scorer,
+                routed_params,
+            )
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
         scores, supports, rankings, step_n_features = zip(*step_results)
@@ -926,7 +941,7 @@ class RFECV(RFE):
             verbose=self.verbose,
         )
 
-        rfe.fit(X, y, **routed_params.estimator.fit)
+        rfe.fit(X, y, X_val, y_val, **routed_params.estimator.fit)
 
         # Set final attributes
         self.support_ = rfe.support_
