@@ -490,7 +490,8 @@ def estimator_html_repr(estimator):
             script = f.read()
 
         html_end = (
-            f"</div></div><script>{script}\nforceTheme('{container_id}');</script></body>"
+            f"</div></div><script>{script}"
+            f"\nforceTheme('{container_id}');</script></body>"
         )
 
         out.write(html_end)
