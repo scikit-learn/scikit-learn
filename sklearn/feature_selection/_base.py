@@ -214,6 +214,14 @@ def _get_feature_importances(
         An attribute or a callable to get the feature importance. If `"auto"`,
         `estimator` is expected to expose `coef_` or `feature_importances`.
 
+    X_val : {array-like, sparse matrix} of shape (n_samples_val, n_features), \
+            default=None
+        Optional validation samples that can be used when using a callable
+        `getter` such as `permutation_importance`.
+
+    y_val : array-like of shape (n_samples_val,), default=None
+        The target values of the validation samples.
+
     transform_func : {"norm", "square"}, default=None
         The transform to apply to the feature importances. By default (`None`)
         no transformation is applied.

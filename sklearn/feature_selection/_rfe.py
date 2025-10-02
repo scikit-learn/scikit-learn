@@ -124,13 +124,22 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         For example, give `regressor_.coef_` in case of
         :class:`~sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
+        :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        return importance for each feature. If the callable also accept
+        `X_val` and `y_val`, it will be passed the validation samples provided
+        in `fit`.
+        This is useful for feature importance methods that require external
+        data to provide accurate results, such as `permutation_importance`. See
+        :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
+        for an example on how to use this feature.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.8
+            Add support for passing validation samples given during fit.
 
     Attributes
     ----------
@@ -255,7 +264,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The training input samples.
 
         y : array-like of shape (n_samples,)
-            The target values.
+            The target values of the training samples.
+
+        X_val : {array-like, sparse matrix} of shape (n_samples_val, n_features), \
+                default=None
+            Optional validation samples that can be used when using a custom
+            `importance_getter` such as `permutation_importance`. See
+            :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
+            for an example of usage.
+
+        y_val : array-like of shape (n_samples_val,), default=None
+            The target values of the validation samples.
 
         **fit_params : dict
             - If `enable_metadata_routing=False` (default): Parameters directly passed
@@ -652,9 +671,18 @@ class RFECV(RFE):
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        return importance for each feature. If the callable also accept
+        `X_val` and `y_val`, it will be passed the validation samples provided
+        in `fit`.
+        This is useful for feature importance methods that require external
+        data to provide accurate results, such as `permutation_importance`. See
+        :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
+        for an example on how to use this feature.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.8
+            Add support for passing validation samples given during fit.
 
     Attributes
     ----------
@@ -818,6 +846,16 @@ class RFECV(RFE):
         y : array-like of shape (n_samples,)
             Target values (integers for classification, real numbers for
             regression).
+
+        X_val : {array-like, sparse matrix} of shape (n_samples_val, n_features), \
+                default=None
+            Optional validation samples that can be used when using a custom
+            `importance_getter` such as `permutation_importance`. See
+            :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
+            for an example of usage.
+
+        y_val : array-like of shape (n_samples_val,), default=None
+            The target values of the validation samples.
 
         groups : array-like of shape (n_samples,) or None, default=None
             Group labels for the samples used while splitting the dataset into
