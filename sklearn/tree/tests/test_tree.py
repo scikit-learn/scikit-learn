@@ -2873,3 +2873,23 @@ def test_sort_log2_build():
     ]
     # fmt: on
     assert_array_equal(samples, expected_samples)
+
+
+def test_splitting_with_missing_values():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32178
+    X = (
+        np.vstack([[0, 0, 0, 0, 1, 2, 3, 4], [1, 2, 1, 2, 1, 2, 1, 2]])
+        .swapaxes(0, 1)
+        .astype(float)
+    )
+    y = [0, 0, 0, 0, 1, 1, 1, 1]
+    X[X == 0] = np.nan
+
+    # The important thing here is that we want to have two trees, where each one tries
+    # one of the two features first. The resulting tree should be the same in both
+    # cases. The way to control which feature is tried first is `random_state`.
+    tree1 = DecisionTreeRegressor(max_depth=1, random_state=1).fit(X, y)
+    tree2 = DecisionTreeRegressor(max_depth=1, random_state=2).fit(X, y)
+
+    assert_array_equal(tree1.tree_.impurity, np.array([0.25, 0.0, 0.0]))
+    assert_array_equal(tree1.tree_.impurity, tree2.tree_.impurity)
