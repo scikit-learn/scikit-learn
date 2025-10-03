@@ -8,6 +8,7 @@ from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
+from sklearn.utils._sparse import _ensure_sparse_index_int32
 from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
 
@@ -371,6 +372,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64, copy=False)
 
+    _ensure_sparse_index_int32(X)
     return _incr_mean_variance_axis0(X.data,
                                      np.sum(weights),
                                      X.shape[1],
@@ -491,13 +493,13 @@ def inplace_csr_row_normalize_l1(X):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
     >>> import numpy as np
     >>> indptr = np.array([0, 2, 3, 4])
     >>> indices = np.array([0, 1, 2, 3])
     >>> data = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
+    >>> X = csr_array((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -553,13 +555,13 @@ def inplace_csr_row_normalize_l2(X):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
     >>> import numpy as np
     >>> indptr = np.array([0, 2, 3, 4])
     >>> indices = np.array([0, 1, 2, 3])
     >>> data = np.array([1.0, 2.0, 3.0, 4.0])
-    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
+    >>> X = csr_array((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -615,7 +617,7 @@ def assign_rows_csr(
 
     Parameters
     ----------
-    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csr_array, shape=(n_samples, n_features)
     X_rows : array, dtype=np.intp, shape=n_rows
     out_rows : array, dtype=np.intp, shape=n_rows
     out : array, shape=(arbitrary, n_features)

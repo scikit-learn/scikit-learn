@@ -68,7 +68,17 @@ def _mode(a, axis=0):
     return scipy.stats.mode(a, axis=axis)
 
 
-# TODO: Remove when SciPy 1.12 is the minimum supported version
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_12 = sp_base_version < parse_version("1.12.0")
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_15 = sp_base_version < parse_version("1.15.0")
+
+
+# TODO: Remove when Scipy 1.12 is the minimum supported version
 if sp_base_version >= parse_version("1.12.0"):
     _sparse_linalg_cg = scipy.sparse.linalg.cg
 else:
@@ -166,13 +176,13 @@ else:
         value = np.compress(mask, value)
 
         if axis == 0:
-            res = scipy.sparse.coo_matrix(
+            res = scipy.sparse.coo_array(
                 (value, (np.zeros(len(value)), major_index)),
                 dtype=X.dtype,
                 shape=(1, M),
             )
         else:
-            res = scipy.sparse.coo_matrix(
+            res = scipy.sparse.coo_array(
                 (value, (major_index, np.zeros(len(value)))),
                 dtype=X.dtype,
                 shape=(M, 1),
