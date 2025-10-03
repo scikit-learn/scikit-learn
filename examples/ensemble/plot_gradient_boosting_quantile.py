@@ -205,7 +205,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 #
 # To confirm this hypothesis, we tune the hyper-parameters of a new regressor
 # of the 5th percentile by selecting the best model parameters by
-# cross-validation on the pinball loss with alpha=0.05:
+# cross-validation on the pinball loss with `alpha=0.05`:
 
 # %%
 from pprint import pprint
@@ -245,7 +245,7 @@ pprint(search_05p.best_params_)
 #
 # Let's now tune the hyper-parameters for the 95th percentile regressor. We
 # need to redefine the `scoring` metric used to select the best model, along
-# with adjusting the alpha parameter of the inner gradient boosting estimator
+# with adjusting the `alpha` parameter of the inner gradient boosting estimator
 # itself:
 from sklearn.base import clone
 
