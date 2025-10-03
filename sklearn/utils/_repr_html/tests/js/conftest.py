@@ -10,7 +10,7 @@ def check_playwright():
     return pytest.importorskip("playwright")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def browser_type_launch_args(check_playwright, browser_type_launch_args):
     """Ensure that the browser is launched in headless mode."""
     return {**browser_type_launch_args, "headless": True}

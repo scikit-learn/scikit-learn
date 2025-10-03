@@ -6,7 +6,7 @@ import pytest
 def _make_page(body: str) -> str:
     """Helper to create a HTML page that includes `estimator.js` and the given body."""
     current_dir = Path(__file__).parent
-    js_path = current_dir / ".." / "estimator.js"
+    js_path = current_dir / ".." / ".." / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:
         script = f.read()
 
