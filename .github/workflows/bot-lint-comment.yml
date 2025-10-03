@@ -23,7 +23,7 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: lint-log
           path: ${{ runner.temp }}/artifacts
@@ -48,12 +48,12 @@ jobs:
             --jq '"PR_NUMBER=\(.number)"' \
             >> $GITHUB_ENV
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           sparse-checkout: build_tools/get_comment.py
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 

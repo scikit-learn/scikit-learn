@@ -15,10 +15,10 @@ jobs:
     runs-on: "ubuntu-latest"
     name: Build wheel for Pull Request
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b
+        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93
         env:
           CIBW_BUILD: cp313-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
@@ -40,18 +40,18 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: cibw-wheels
           path: ~/dist
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
           # https://github.com/actions/setup-python/issues/886
           python-version: '3.12.3'
       - name: Checkout main repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install miniforge
         run: bash build_tools/github/create_gpu_environment.sh
       - name: Install scikit-learn
