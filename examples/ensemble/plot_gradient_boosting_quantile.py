@@ -90,7 +90,7 @@ all_models["mse"] = gbr_ls.fit(X_train, y_train)
 # %%
 # Create an evenly spaced evaluation set of input values spanning the [0, 10]
 # range.
-xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
+x_plot = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # %%
 # Plot the true conditional mean function f, the predictions of the conditional
@@ -98,18 +98,18 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 # 90% interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
 
-y_pred = all_models["mse"].predict(xx)
-y_lower = all_models["q 0.05"].predict(xx)
-y_upper = all_models["q 0.95"].predict(xx)
-y_med = all_models["q 0.50"].predict(xx)
+y_pred = all_models["mse"].predict(x_plot)
+y_lower = all_models["q 0.05"].predict(x_plot)
+y_upper = all_models["q 0.95"].predict(x_plot)
+y_med = all_models["q 0.50"].predict(x_plot)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(x_plot, f(x_plot), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_med, "tab:orange", linewidth=3, label="Predicted median")
-plt.plot(xx, y_pred, "tab:green", linewidth=3, label="Predicted mean")
+plt.plot(x_plot, y_med, "tab:orange", linewidth=3, label="Predicted median")
+plt.plot(x_plot, y_pred, "tab:green", linewidth=3, label="Predicted mean")
 plt.fill_between(
-    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+    x_plot.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
 )
 plt.xlabel("$x$")
 plt.ylabel("$f(x)$")
@@ -327,14 +327,18 @@ pprint(search_95p.best_params_)
 # that is comprised by the predictions of those two tuned quantile regressors.
 # Note that the prediction of the upper 95th percentile has a much coarser shape
 # than the prediction of the lower 5th percentile because of the outliers:
-y_lower = search_05p.predict(xx)
-y_upper = search_95p.predict(xx)
+y_lower_plot = search_05p.predict(x_plot)
+y_upper_plot = search_95p.predict(x_plot)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(x_plot, f(x_plot), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
 plt.fill_between(
-    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+    x_plot.ravel(),
+    y_lower_plot,
+    y_upper_plot,
+    alpha=0.4,
+    label="Predicted 90% interval",
 )
 plt.xlabel("$x$")
 plt.ylabel("$f(x)$")
