@@ -220,7 +220,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-13
+    vmImage: macOS-15
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
@@ -231,7 +231,7 @@ jobs:
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
+        LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_arm_osx-arm64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
         SCIPY_ARRAY_API: '1'
       pylatest_conda_forge_mkl_no_openmp:

@@ -137,11 +137,11 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
-        "platform": "osx-64",
+        "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
@@ -150,7 +150,7 @@ build_metadata_list = [
             "llvm-openmp",
         ],
         "package_constraints": {
-            "blas": "[build=mkl]",
+            # "blas": "[build=mkl]",
         },
     },
     {

@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python
   - numpy
-  - blas[build=mkl]
+  - blas
   - scipy
   - cython
   - joblib
