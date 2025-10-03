@@ -802,9 +802,9 @@ cdef class BinaryTree{{name_suffix}}:
     # TODO: idx_array and node_bounds must not be const, but this change needs
     # to happen in a way which preserves pickling
     # See also: https://github.com/cython/cython/issues/5639
-    cdef public const intp_t[::1] idx_array
+    cdef public intp_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
-    cdef public const {{INPUT_DTYPE_t}}[:, :, ::1] node_bounds
+    cdef public {{INPUT_DTYPE_t}}[:, :, ::1] node_bounds
 
     cdef intp_t leaf_size
     cdef intp_t n_levels
@@ -935,10 +935,17 @@ cdef class BinaryTree{{name_suffix}}:
         """
         set state for pickling
         """
+        # ``state[1]`` and ``state[3]`` are np.memmap objects. These are
+        # opened with the default mode of `r+`, which is not sufficient
+        # for Cython to see it as a non-const objects, we therefore require
+        # a copy.
+        #
+        # A better solution would be to open the memmap in `c` (copy on write)
+        # mode, but I do not know how to do this (yet).
         self.data = state[0]
-        self.idx_array = state[1]
+        self.idx_array = np.asarray(state[1], copy=True)
         self.node_data = state[2]
-        self.node_bounds = state[3]
+        self.node_bounds = np.asarray(state[3], copy=True)
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
