@@ -37,7 +37,9 @@ ESTIMATORS = [
 ]
 
 LP_ESTIMATORS = [
-    est for est in ESTIMATORS if isinstance(est, label_propagation.LabelPropagation)
+    (klass, params)
+    for (klass, params) in ESTIMATORS
+    if klass == label_propagation.LabelPropagation
 ]
 
 
