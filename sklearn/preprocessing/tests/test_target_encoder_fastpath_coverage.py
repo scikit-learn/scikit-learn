@@ -1,14 +1,14 @@
 import numpy as np
-import pandas as pd
 import numpy.testing as npt
+import pandas as pd
 import pytest
 
 from sklearn.preprocessing import TargetEncoder
 
-
 # ---------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------
+
 
 def _fit_pair(X_fit, y_fit):
     """Return (fast, slow) TargetEncoder pair fit on the same data.
@@ -31,10 +31,12 @@ def _fit_te_binary_pair():
 
 def _fit_te_multiclass_pair(n_classes=5, n_samples=64, seed=0):
     rng = np.random.RandomState(seed)
-    X_fit = pd.DataFrame({
-        "a": rng.choice(list("abcdef"), size=n_samples),
-        "b": rng.choice(list("wxyz"), size=n_samples),
-    })
+    X_fit = pd.DataFrame(
+        {
+            "a": rng.choice(list("abcdef"), size=n_samples),
+            "b": rng.choice(list("wxyz"), size=n_samples),
+        }
+    )
     y = rng.randint(0, n_classes, size=n_samples)
     return _fit_pair(X_fit, y)
 
@@ -42,6 +44,7 @@ def _fit_te_multiclass_pair(n_classes=5, n_samples=64, seed=0):
 # ---------------------------------------------------------------------
 # Core coverage tests for fast-path branches (parity vs slow path)
 # ---------------------------------------------------------------------
+
 
 def test_norm_keys_cover_nan_pd_na_nat_numpy_nat_and_except_paths():
     te, te_ref = _fit_te_binary_pair()
@@ -51,10 +54,13 @@ def test_norm_keys_cover_nan_pd_na_nat_numpy_nat_and_except_paths():
         def __array__(self, *args, **kwargs):
             raise TypeError("cannot array-coerce")
 
-    X = pd.DataFrame({
-        "a": ["u", float("nan"), pd.NA, "u", Weird()],
-        "b": ["x", "x", pd.NaT, np.datetime64("NaT"), "x"],
-    }, dtype="object")
+    X = pd.DataFrame(
+        {
+            "a": ["u", float("nan"), pd.NA, "u", Weird()],
+            "b": ["x", "x", pd.NaT, np.datetime64("NaT"), "x"],
+        },
+        dtype="object",
+    )
 
     out_fast = te.transform(X)
     out_slow = te_ref.transform(X)
@@ -72,7 +78,7 @@ def test_dataframe_shape_mismatch_and_exception_branch():
     bad = BadShape(pd.DataFrame({"a": ["u", "v"], "b": ["x", "y"]}))
     X_obj = bad.astype("object")
 
-    out_fast = te.transform(X_obj)     # triggers internal except path
+    out_fast = te.transform(X_obj)  # triggers internal except path
     out_slow = te_ref.transform(X_obj)
     npt.assert_allclose(out_fast, out_slow, rtol=0, atol=0)
 
@@ -105,15 +111,14 @@ def test_enc_vec_ndim_reshape_only():
 
 
 def test_multiclass_block_and_default_vector_two_branches():
-    X = pd.DataFrame({"a": ["unseen1", "unseen2", "a", "b"],
-                      "b": ["x", "y", "z", "x"]})
+    X = pd.DataFrame({"a": ["unseen1", "unseen2", "a", "b"], "b": ["x", "y", "z", "x"]})
 
     # (a) scalar default on fast; slow gets vector-filled to match expected behavior
     te_fast_a, te_slow_a = _fit_te_multiclass_pair(n_classes=5)
     n_classes = len(te_fast_a.classes_)
     scalar = float(np.mean(te_fast_a.target_mean_))
-    te_fast_a.target_mean_ = np.array(scalar)                      # 0-D ndarray (fast)
-    te_slow_a.target_mean_ = np.full((n_classes,), scalar)         # 1-D vector (slow)
+    te_fast_a.target_mean_ = np.array(scalar)  # 0-D ndarray (fast)
+    te_slow_a.target_mean_ = np.full((n_classes,), scalar)  # 1-D vector (slow)
     npt.assert_allclose(te_fast_a.transform(X), te_slow_a.transform(X), rtol=0, atol=0)
 
     # (b) correct-length vector on both → pass-through
@@ -124,10 +129,10 @@ def test_multiclass_block_and_default_vector_two_branches():
     npt.assert_allclose(te_fast_b.transform(X), te_slow_b.transform(X), rtol=0, atol=0)
 
 
-
 # ---------------------------------------------------------------------
 # Extra edge cases to harden behavior and lift patch coverage
 # ---------------------------------------------------------------------
+
 
 def test_threshold_boundary_routes_fast_vs_slow():
     # Build a slightly larger fit set
@@ -138,74 +143,101 @@ def test_threshold_boundary_routes_fast_vs_slow():
     # exactly at threshold → fast path parity with slow
     te_fast._small_batch_threshold = 256
     X256 = Xf.iloc[:256]
-    npt.assert_allclose(te_fast.transform(X256), te_slow.transform(X256), rtol=0, atol=0)
+    npt.assert_allclose(
+        te_fast.transform(X256), te_slow.transform(X256), rtol=0, atol=0
+    )
 
     # just over threshold → should match the slow/vectorized output as well
     X257 = Xf.iloc[:257]
-    npt.assert_allclose(te_fast.transform(X257), te_slow.transform(X257), rtol=0, atol=0)
+    npt.assert_allclose(
+        te_fast.transform(X257), te_slow.transform(X257), rtol=0, atol=0
+    )
 
 
 def test_pandas_categorical_ordered_and_unordered():
-    X_fit = pd.DataFrame({
-        "a": pd.Categorical(list("abca"), categories=list("abcd"), ordered=True),
-        "b": pd.Categorical(list("xyxz"), categories=list("wxyz"), ordered=False),
-    })
+    X_fit = pd.DataFrame(
+        {
+            "a": pd.Categorical(list("abca"), categories=list("abcd"), ordered=True),
+            "b": pd.Categorical(list("xyxz"), categories=list("wxyz"), ordered=False),
+        }
+    )
     y = np.array([0, 1, 1, 0])
 
     te, te_ref = _fit_pair(X_fit, y)
 
     # include unseen categories ('d' and 'w') and NA
-    X = pd.DataFrame({
-        "a": pd.Categorical(["a", "d", None], categories=list("abcd"), ordered=True),
-        "b": pd.Categorical(["w", "y", pd.NA], categories=list("wxyz"), ordered=False),
-    })
+    X = pd.DataFrame(
+        {
+            "a": pd.Categorical(
+                ["a", "d", None], categories=list("abcd"), ordered=True
+            ),
+            "b": pd.Categorical(
+                ["w", "y", pd.NA], categories=list("wxyz"), ordered=False
+            ),
+        }
+    )
     npt.assert_allclose(te.transform(X), te_ref.transform(X), rtol=0, atol=0)
 
 
 def test_all_missing_and_all_unseen_column():
     te, te_ref = _fit_te_binary_pair()
 
-    X_all_missing = pd.DataFrame({"a": [np.nan, pd.NA, pd.NaT], "b": ["x", "x", "x"]}, dtype="object")
-    X_all_unseen = pd.DataFrame({"a": ["zzz", "yyy", "xxx"], "b": ["new", "new", "new"]})
+    X_all_missing = pd.DataFrame(
+        {"a": [np.nan, pd.NA, pd.NaT], "b": ["x", "x", "x"]}, dtype="object"
+    )
+    X_all_unseen = pd.DataFrame(
+        {"a": ["zzz", "yyy", "xxx"], "b": ["new", "new", "new"]}
+    )
 
     for X in (X_all_missing, X_all_unseen):
         npt.assert_allclose(te.transform(X), te_ref.transform(X), rtol=0, atol=0)
 
 
 def _fit_te_binary_pair_datetime():
-    X_fit = pd.DataFrame({
-        "a": list("uvuw"),
-        "b": np.array(["2024-01-01", "2024-01-03", "2024-01-05", "2024-01-07"],
-                      dtype="datetime64[ns]"),
-    })
+    X_fit = pd.DataFrame(
+        {
+            "a": list("uvuw"),
+            "b": np.array(
+                ["2024-01-01", "2024-01-03", "2024-01-05", "2024-01-07"],
+                dtype="datetime64[ns]",
+            ),
+        }
+    )
     y = np.array([0, 1, 1, 0])
     return _fit_pair(X_fit, y)
 
+
 def test_datetime_nat_variant_column():
     te, te_ref = _fit_te_binary_pair_datetime()
-    X = pd.DataFrame({
-        "a": ["u", "u", "v"],
-        "b": np.array(["2024-01-01", "NaT", "2024-02-01"], dtype="datetime64[ns]"),
-    })
+    X = pd.DataFrame(
+        {
+            "a": ["u", "u", "v"],
+            "b": np.array(["2024-01-01", "NaT", "2024-02-01"], dtype="datetime64[ns]"),
+        }
+    )
     npt.assert_allclose(te.transform(X), te_ref.transform(X), rtol=0, atol=0)
 
 
 def _fit_te_binary_pair_timedelta():
-    X_fit = pd.DataFrame({
-        "a": list("uvuw"),
-        "b": pd.to_timedelta(["1D", "2D", "3D", "4D"]),  # dtype=timedelta64[ns]
-    })
+    X_fit = pd.DataFrame(
+        {
+            "a": list("uvuw"),
+            "b": pd.to_timedelta(["1D", "2D", "3D", "4D"]),  # dtype=timedelta64[ns]
+        }
+    )
     y = np.array([0, 1, 1, 0])
     return _fit_pair(X_fit, y)
 
+
 def test_timedelta_nat_variant_column():
     te, te_ref = _fit_te_binary_pair_timedelta()
-    X = pd.DataFrame({
-        "a": ["u", "v", "u"],
-        "b": pd.to_timedelta(["1D", "NaT", "2D"]),  # includes NaT safely
-    })
+    X = pd.DataFrame(
+        {
+            "a": ["u", "v", "u"],
+            "b": pd.to_timedelta(["1D", "NaT", "2D"]),  # includes NaT safely
+        }
+    )
     npt.assert_allclose(te.transform(X), te_ref.transform(X), rtol=0, atol=0)
-
 
 
 def test_timezone_aware_nat():
@@ -214,10 +246,13 @@ def test_timezone_aware_nat():
 
     te, te_ref = _fit_pair(X_fit, y)
 
-    X = pd.DataFrame({
-        "a": ["u", pd.Timestamp("NaT", tz="UTC")],   # tz-aware NaT
-        "b": ["x", "x"],
-    }, dtype="object")
+    X = pd.DataFrame(
+        {
+            "a": ["u", pd.Timestamp("NaT", tz="UTC")],  # tz-aware NaT
+            "b": ["x", "x"],
+        },
+        dtype="object",
+    )
     npt.assert_allclose(te.transform(X), te_ref.transform(X), rtol=0, atol=0)
 
 
@@ -263,8 +298,9 @@ def test_zero_row_input_raises():
     y = np.array([0, 1, 1, 0])
     te, _ = _fit_pair(Xf, y)
 
-    X0 = pd.DataFrame({"a": pd.Series([], dtype=object),
-                       "b": pd.Series([], dtype=object)})
+    X0 = pd.DataFrame(
+        {"a": pd.Series([], dtype=object), "b": pd.Series([], dtype=object)}
+    )
     with pytest.raises(ValueError):
         te.transform(X0)
 
@@ -272,16 +308,20 @@ def test_zero_row_input_raises():
 def test_pandas_int64_extension_with_pd_NA():
     from pandas import Int64Dtype
 
-    Xf = pd.DataFrame({
-        "a": pd.Series([1, 2, 1, 3], dtype=Int64Dtype()),
-        "b": ["x", "y", "x", "y"],
-    })
+    Xf = pd.DataFrame(
+        {
+            "a": pd.Series([1, 2, 1, 3], dtype=Int64Dtype()),
+            "b": ["x", "y", "x", "y"],
+        }
+    )
     y = np.array([0, 1, 1, 0])
 
     te, te_ref = _fit_pair(Xf, y)
 
-    X = pd.DataFrame({
-        "a": pd.Series([1, pd.NA, 999], dtype=Int64Dtype()),
-        "b": ["x", "x", "x"],
-    })
+    X = pd.DataFrame(
+        {
+            "a": pd.Series([1, pd.NA, 999], dtype=Int64Dtype()),
+            "b": ["x", "x", "x"],
+        }
+    )
     npt.assert_allclose(te.transform(X), te_ref.transform(X), rtol=0, atol=0)
