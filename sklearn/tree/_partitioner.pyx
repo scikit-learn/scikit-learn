@@ -235,7 +235,7 @@ cdef class DensePartitioner:
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
             # non-missing samples
-            while p < partition_end:
+            while p <= partition_end:
                 # Keep samples with missing values at the end
                 if isnan(X[samples[end], best_feature]):
                     end -= 1
