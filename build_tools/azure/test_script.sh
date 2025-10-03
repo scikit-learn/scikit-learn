@@ -97,5 +97,5 @@ fi
 TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x
-eval "$TEST_CMD -k mps -v"
+eval "$TEST_CMD -k mps -v -ra"
 set +x
