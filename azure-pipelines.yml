@@ -229,7 +229,7 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      pylatest_conda_forge_mkl:
+      pylatest_conda_forge_arm:
         DISTRIB: 'conda'
         LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_osx-arm64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
