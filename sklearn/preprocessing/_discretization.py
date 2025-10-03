@@ -365,23 +365,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
                 else:
-                    # TODO: make _weighted_percentile accept an array of
-                    # quantiles instead of calling it multiple times and
-                    # sorting the column multiple times as a result.
                     average = (
                         True if quantile_method == "averaged_inverted_cdf" else False
                     )
-                    bin_edges[jj] = np.asarray(
-                        [
-                            _weighted_percentile(
-                                column,
-                                sample_weight,
-                                percentile_rank=p,
-                                average=average,
-                            )
-                            for p in percentile_levels
-                        ],
-                        dtype=np.float64,
+                    bin_edges[jj] = _weighted_percentile(
+                        column, sample_weight, percentile_levels, average=average
                     )
             elif self.strategy == "kmeans":
                 from sklearn.cluster import KMeans  # fixes import loops
