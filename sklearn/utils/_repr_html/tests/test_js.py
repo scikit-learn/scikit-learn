@@ -1,16 +1,10 @@
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Page
-
-"""
-micromamba install pytest-playwright
-playwright install
-playwright install-deps
-"""
 
 
 def _make_page(body: str) -> str:
+    """Helper to create a HTML page that includes `estimator.js` and the given body."""
     current_dir = Path(__file__).parent
     js_path = current_dir / ".." / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:
@@ -37,7 +31,7 @@ def _make_page(body: str) -> str:
     ],
     indirect=True,
 )
-def test_copy_paste(page: Page, local_server: str) -> None:
+def test_copy_paste(page, local_server) -> None:
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.goto(local_server)
     page.evaluate(

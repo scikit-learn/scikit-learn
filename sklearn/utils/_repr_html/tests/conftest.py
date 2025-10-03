@@ -1,3 +1,4 @@
+import socket
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -5,7 +6,12 @@ import pytest
 
 
 @pytest.fixture(scope="session")
-def browser_type_launch_args(browser_type_launch_args):
+def check_playwright():
+    return pytest.importorskip("playwright")
+
+
+@pytest.fixture(scope="session")
+def browser_type_launch_args(check_playwright, browser_type_launch_args):
     """Ensure that the browser is launched in headless mode."""
     return {**browser_type_launch_args, "headless": True}
 
@@ -17,7 +23,9 @@ def local_server(request):
     Usage: pass `html_content` as a test parameter.
     """
     html_content = getattr(request, "param", "<html><body>Default</body></html>")
-    PORT = 8000
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        PORT = s.getsockname()[1]
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
