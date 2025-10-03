@@ -193,61 +193,6 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
 #
-# .. _calibration-section:
-#
-# Calibration of the confidence interval
-# --------------------------------------
-#
-# We can also evaluate the ability of the two extreme quantile estimators at
-# producing a well-calibrated conditional 90%-confidence interval.
-#
-# To do this we can define two functions:
-#
-# - one to compute the fraction of observations that fall between the
-#   predictions;
-# - one to wrap those metrics in a cross-validation loop and assess their
-#   variability under data resampling.
-
-from sklearn.model_selection import KFold
-
-
-def coverage_fraction(y, y_low, y_high):
-    return np.mean(np.logical_and(y >= y_low, y <= y_high))
-
-
-def cross_val_coverage_fraction(models_dict, X, y, cv):
-    coverage_results = []
-    for _, test_index in cv.split(y):
-        y_low = models_dict["q 0.05"].predict(X[test_index])
-        y_high = models_dict["q 0.95"].predict(X[test_index])
-        y_true = y[test_index]
-
-        coverage = coverage_fraction(y_true, y_low, y_high)
-        coverage_results.append(coverage)
-
-    mean_coverage = np.mean(coverage_results)
-    std_coverage = np.std(coverage_results)
-
-    return mean_coverage, std_coverage
-
-
-cv = KFold(n_splits=5)
-mean_coverage, std_coverage = cross_val_coverage_fraction(
-    all_models, X_train, y_train, cv
-)
-print(f"Train coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
-
-# %%
-# On the training set the calibration is very close to the expected coverage
-# value for a 90% confidence interval.
-mean_coverage, std_coverage = cross_val_coverage_fraction(
-    all_models, X_test, y_test, cv
-)
-print(f"Test coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
-
-# %%
-# On the test set, the estimated confidence interval is slightly too narrow.
-#
 # Tuning the hyper-parameters of the quantile regressors
 # ------------------------------------------------------
 #
@@ -275,10 +220,9 @@ param_grid = dict(
     min_samples_leaf=[1, 5, 10, 20],
     min_samples_split=[5, 10, 20, 30, 50],
 )
-alpha = 0.05
 neg_mean_pinball_loss_05p_scorer = make_scorer(
     mean_pinball_loss,
-    alpha=alpha,
+    alpha=0.05,
     greater_is_better=False,  # maximize the negative loss
 )
 gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
@@ -305,10 +249,9 @@ pprint(search_05p.best_params_)
 # itself:
 from sklearn.base import clone
 
-alpha = 0.95
 neg_mean_pinball_loss_95p_scorer = make_scorer(
     mean_pinball_loss,
-    alpha=alpha,
+    alpha=0.95,
     greater_is_better=False,  # maximize the negative loss
 )
 search_95p = clone(search_05p).set_params(
@@ -351,19 +294,68 @@ plt.show()
 # The plot looks qualitatively better than for the untuned models, especially
 # for the shape of the of lower quantile.
 #
-# We now quantitatively evaluate the joint-calibration of the pair of
-# estimators:
-tuned_models = {"q 0.05": search_05p, "q 0.95": search_95p}
+# .. _calibration-section:
+#
+# Calibration of the confidence interval
+# --------------------------------------
+#
+# We can also evaluate the ability of the two extreme quantile estimators at
+# producing a well-calibrated conditional 90%-confidence interval.
+#
+# To do this we can compute the coverage fraction, i.e. the proportion of
+# observations that fall between the prediction intervals:
 
-mean_coverage, std_coverage = cross_val_coverage_fraction(
-    tuned_models, X_train, y_train, cv
-)
-print(f"Train coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
+
+def coverage_fraction(y, y_low, y_high):
+    return np.mean(np.logical_and(y >= y_low, y <= y_high))
+
+
+coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_train))
+
 # %%
-mean_coverage, std_coverage = cross_val_coverage_fraction(
-    tuned_models, X_test, y_test, cv
-)
-print(f"Test coverage: {mean_coverage:.1%} ± {std_coverage:.1%}")
+# On the training set the calibration is very close to the expected coverage
+# value for a 90% confidence interval.
+coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
+
 # %%
-# The calibration of the tuned pair is sadly not better on the test set: the
-# width of the estimated confidence interval is still too narrow.
+# On the test set, the estimated confidence interval is too narrow to really
+# cover 90% of the test points, but it may still hit the right coverage within
+# reasonable statistical uncertainty. We can use :func:`scipy.stats.bootstrap`
+# to measure the variability of the coverage fraction at prediction time,
+# without retraining the models:
+
+from scipy.stats import bootstrap
+
+train_coverage_bs = bootstrap(
+    (
+        y_train,
+        search_05p.predict(X_train),
+        search_95p.predict(X_train),
+    ),
+    coverage_fraction,
+    paired=True,
+    confidence_level=0.90,
+    n_resamples=1000,
+)
+ci = train_coverage_bs.confidence_interval
+print(f"Train coverage 90% interval: [{ci.low:.1%}, {ci.high:.1%}]")
+
+# %%
+test_coverage_bs = bootstrap(
+    (
+        y_test,
+        search_05p.predict(X_test),
+        search_95p.predict(X_test),
+    ),
+    coverage_fraction,
+    paired=True,
+    confidence_level=0.90,
+    n_resamples=1000,
+)
+ci = test_coverage_bs.confidence_interval
+print(f"Test coverage 90% interval: [{ci.low:.1%}, {ci.high:.1%}]")
+
+# %%
+# The calibration of the tuned models is sadly not well-calibrated on the test
+# set: the width of the estimated confidence interval is too narrow even when
+# taking it's variations into account.
