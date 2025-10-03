@@ -27,7 +27,7 @@ cimport cython
 from libc.limits cimport INT_MAX
 from libc.math cimport sqrt
 
-from ._cython_blas cimport _dot, _scal, _axpy
+from sklearn.utils._cython_blas cimport _dot, _scal, _axpy
 
 {{for name_suffix, c_type, reset_wscale_threshold in dtypes}}
 
