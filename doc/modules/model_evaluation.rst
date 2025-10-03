@@ -92,7 +92,7 @@ mode                no consistent one exists                             reals
 ==================  ===================================================  ====================  =================================
 
 :sup:`1` The Brier score is just a different name for the squared error in case of
-classification.
+classification with one-hot encoded targets.
 
 :sup:`2` The zero-one loss is only consistent but not strictly consistent for the mode.
 The zero-one loss is equivalent to one minus the accuracy score, meaning it gives
@@ -217,7 +217,7 @@ Scoring string name                    Function                                 
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
-'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'neg_brier_score'                      :func:`metrics.brier_score_loss`                   requires ``predict_proba`` support
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -232,8 +232,8 @@ Scoring string name                    Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
-'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
-'d2_brier_score'                       :func:`metrics.d2_brier_score`
+'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`                  requires ``predict_proba`` support
+'d2_brier_score'                       :func:`metrics.d2_brier_score`                     requires ``predict_proba`` support
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
