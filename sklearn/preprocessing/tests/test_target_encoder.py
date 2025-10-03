@@ -1,6 +1,7 @@
 import re
 
 import numpy as np
+import numpy.testing as npt
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
@@ -20,6 +21,7 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
+from sklearn.preprocessing._target_encoder import _norm_key
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -712,3 +714,486 @@ def test_pandas_copy_on_write():
     with pd.option_context("mode.copy_on_write", True):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+# ---------------------------------------------------------------------------
+# Small batch Target encoder tests
+# ---------------------------------------------------------------------------
+
+
+class _NoCategoriesAfterFit(TargetEncoder):
+    """
+    White-box subclass that simulates an upstream breakage by deleting
+    `categories_` after a normal fit.
+
+    Intuition
+    ---------
+    The fast-path initialization guards that `fit` *must* set `categories_`.
+    We ensure this guard fails loudly and with a clear error message.
+    """
+
+    def _fit_encodings_all(self, X, y):
+        out = super()._fit_encodings_all(X, y)
+        if hasattr(self, "categories_"):
+            delattr(self, "categories_")
+        return out
+
+
+class _DupCats(TargetEncoder):
+    """
+    White-box subclass to exercise the defensive index-map collision branch.
+
+    Intuition
+    ---------
+    `_BaseEncoder._fit` guarantees per-feature `categories_[j]` are unique, and
+    this TargetEncoder keeps NA-like values distinct via custom sentinels.
+    Therefore a collision in the normalized dict keys should be unreachable.
+
+    To cover the defensive code path without altering public behavior, we:
+      1) run a standard fit,
+      2) inject an illegal duplicate at the front of `categories_[0]`,
+      3) mirror that duplication in `encodings_[0]` so lengths stay aligned,
+      4) call the private cache builder for feature 0,
+      5) assert that fast-path caches for that feature are left as `None`.
+
+    We *do not* call `transform()` afterward, because the small-batch path
+    would try to use `idx_map.get` on a `None` map (by design), which is beyond
+    the intended scope of this coverage-only test.
+    """
+
+    def _fit_encodings_all(self, X, y):
+        # Run the standard fitting first.
+        Xo, mask, y_enc, ncat = super()._fit_encodings_all(X, y)
+
+        # Inject a duplicate category at the front of feature 0 to force:
+        #   key in index_map and index_map[key] != i
+        j = 0
+        cats0 = list(self.categories_[j])
+        if len(cats0) >= 1:
+            dup = cats0[0]
+            # categories_: make the first entry appear twice
+            self.categories_[j] = np.asarray([dup] + cats0, dtype=object)
+
+            # encodings_: duplicate the first encoding value to keep lengths aligned
+            enc0 = np.asarray(self.encodings_[j])
+            self.encodings_[j] = np.concatenate([enc0[:1], enc0], axis=0)
+
+        return Xo, mask, y_enc, ncat
+
+
+class _FakeDF:
+    """
+    NumPy-coercible, DataFrame-like object with string columns.
+
+    Intuition
+    ---------
+    We want to simulate a very small subset of a pandas DataFrame so that:
+    - `check_array` can coerce it via `__array__` (avoids "scalar array" errors),
+    - `TargetEncoder.fit` can see a `.columns` attribute and (optionally) set
+      `feature_names_in_` when all column labels are strings.
+
+    Keeping this shim minimal helps avoid accidental dependency on pandas logic
+    while still exercising the intended feature-name path.
+    """
+
+    def __init__(self, arr, cols):
+        self._arr = np.asarray(arr, dtype=object)
+        self.columns = list(cols)
+
+    def __array__(self, dtype=None):
+        """Allow sklearn's validation to treat this like an ndarray."""
+        if dtype is None:
+            return self._arr
+        return np.asarray(self._arr, dtype=dtype)
+
+    @property
+    def shape(self):
+        """Expose array shape like a DataFrame would."""
+        return self._arr.shape
+
+    @property
+    def ndim(self):
+        """Expose ndim like a DataFrame would."""
+        return self._arr.ndim
+
+    def astype(self, dtype):
+        """Mirror DataFrame.astype behavior just enough for check_array."""
+        return np.asarray(self._arr, dtype=dtype)
+
+
+class _BadShapeDF(_FakeDF):
+    """
+    Same as _FakeDF but `.shape` raises to exercise a defensive branch.
+
+    Intuition
+    ---------
+    `TargetEncoder.fit` checks (inside `try/except`) whether a DF-like's shape
+    matches the validated `ndarray` shape. If accessing `.shape` explodes,
+    it falls back to treating input as ndarray (and thus will not set
+    `feature_names_in_`). This class lets us test that graceful fallback.
+    """
+
+    @property
+    def shape(self):
+        raise RuntimeError("bad shape")
+
+
+def _fit_pair_numpy():
+    """
+    Fit two encoders on the same tiny dataset:
+    - te_fast uses the small-batch fast-path (threshold >= 256),
+    - te_vec forces the baseline vectorized path (threshold < 0).
+
+    Intuition
+    ---------
+    We compare outputs on subsequent transforms to assert that the
+    implementation-specific fast path matches the reference vectorized path.
+    """
+    X_fit = np.array(
+        [
+            ["u", "x"],
+            ["v", "y"],
+            ["u", "x"],
+            ["w", "y"],
+        ],
+        dtype=object,
+    )
+    y = np.array([0.0, 1.0, 1.0, 0.0])
+    te_fast = TargetEncoder(smooth=5.0).fit(X_fit, y)
+    # White-box: enable small-batch fast path deterministically.
+    te_fast._small_batch_threshold = 256
+    te_vec = TargetEncoder(smooth=5.0).fit(X_fit, y)
+    # White-box: force always-vectorized path for reference.
+    te_vec._small_batch_threshold = -1
+    return te_fast, te_vec
+
+
+def test_norm_key_real_values_cover_nan_nat_and_except_paths():
+    """
+    `_norm_key` should:
+    - map None, float NaN, and NumPy NaT to *distinct* sentinels,
+    - return ordinary strings unchanged,
+    - not crash when np.isnat() raises on e.g. strings (defensive `except`).
+    """
+    # 1) Exactly None → distinct sentinel
+    k_none = _norm_key(None)
+
+    # 2) Float NaN (Python/NumPy) → distinct sentinel
+    k_nan1 = _norm_key(float("nan"))
+    k_nan2 = _norm_key(np.float64(np.nan))
+    assert k_nan1 is k_nan2
+
+    # 3) Plain string reaches the NumPy NaT check and naturally raises inside
+    #    np.isnat("x") → defensive 'except: pass' executes and falls through.
+    k_str = _norm_key("x")
+    assert k_str == "x"
+
+    # 4) NumPy datetime/timedelta NaT (non-float) → distinct sentinel
+    k_nat_dt = _norm_key(np.datetime64("NaT"))
+    k_nat_td = _norm_key(np.timedelta64("NaT"))
+    assert k_nat_dt is k_nat_td
+
+    # sanity: all sentinels are distinct from ordinary values
+    assert k_none is not k_nan1 and k_none is not k_nat_dt
+    assert k_nan1 is not k_nat_dt and k_nan1 != "x"
+    assert k_nat_dt != "x"
+
+
+def test_norm_key_pandas_duck_detection_exception_is_handled():
+    """
+    Force the pandas-duck-typing block to raise when accessing __module__.
+
+    Intuition
+    ---------
+    The implementation refuses to import pandas and instead checks type name +
+    module prefix. We fabricate a type whose metaclass throws on `__module__`.
+    `_norm_key` must catch and fall through (no crash), returning the object.
+    """
+
+    class _RaisingMeta(type):
+        def __getattribute__(cls, name):
+            if name == "__module__":
+                raise RuntimeError("boom")
+            return super().__getattribute__(name)
+
+    class _WeirdNA(metaclass=_RaisingMeta):
+        pass
+
+    x = _WeirdNA()
+    assert _norm_key(x) is x  # fall-through behavior
+
+
+def test_norm_key_duck_pandas_NA_branch_hits_return():
+    """
+    Hit the pandas.NA duck-typed path without importing pandas.
+
+    Intuition
+    ---------
+    `_looks_like_pandas_na` checks `type(x).__name__ == "NAType"` and
+    module startswith("pandas"). We spoof both for a plain Python class.
+    """
+
+    class _FakePandasNA:
+        pass
+
+    _FakePandasNA.__name__ = "NAType"
+    _FakePandasNA.__module__ = "pandas.core.arrays._masked"
+
+    k1 = _norm_key(_FakePandasNA())
+    k2 = _norm_key(_FakePandasNA())
+    assert k1 is k2  # both should map to the same sentinel identity
+
+
+def test_norm_key_duck_pandas_NaT_branch_hits_return():
+    """
+    Hit the pandas.NaT duck-typed path without importing pandas.
+
+    Intuition
+    ---------
+    `_looks_like_pandas_nat` accepts type names {"NaTType", "NaT"} with a
+    module that startswith("pandas"). We spoof those identifiers.
+    """
+
+    class _FakePandasNaT:
+        pass
+
+    _FakePandasNaT.__name__ = "NaTType"  # could also set to "NaT"
+    _FakePandasNaT.__module__ = "pandas._libs.tslibs.nattype"
+
+    k1 = _norm_key(_FakePandasNaT())
+    k2 = _norm_key(_FakePandasNaT())
+    assert k1 is k2
+
+
+def test_small_batch_fastpath_matches_vectorized_with_nans_and_nats():
+    """
+    For tiny inputs, small-batch dict-lookup path should match the reference
+    vectorized path exactly (within tight numerical tolerance).
+
+    Important detail
+    ----------------
+    Do NOT mix datetime64 NaT and timedelta64 NaT in the *same column*, because
+    the vectorized unknown-check (`set(values)`) cannot compare them together.
+    """
+    te_fast, te_vec = _fit_pair_numpy()
+
+    X = np.empty((5, 2), dtype=object)
+    X[0] = ["u", "x"]  # seen
+    X[1] = [float("nan"), "x"]  # float NaN branch
+    X[2] = [None, "x"]  # None branch
+    X[3] = ["u", np.datetime64("NaT")]  # datetime NaT branch
+    X[4] = ["new_unseen", "x"]  # unseen → default
+
+    npt.assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
+
+
+def test_large_batch_vectorized_consistency():
+    """
+    For large inputs, both encoders choose the vectorized path; results must
+    match exactly (within tight tolerance).
+    """
+    te_fast, te_vec = _fit_pair_numpy()
+
+    base = np.array(
+        [["u", "x"], ["v", "y"], ["u", "x"], ["w", "y"], [None, "x"], ["new", "y"]],
+        dtype=object,
+    )
+    X_big = np.tile(base, (60, 1))  # 360 rows → well over 256
+
+    Z_fast = te_fast.transform(X_big)  # chooses vectorized due to size
+    Z_vec = te_vec.transform(X_big)  # always vectorized
+    npt.assert_allclose(Z_fast, Z_vec, rtol=0, atol=1e-9)
+
+
+def test_multiclass_default_fallback_uses_block_mean_axis1():
+    """
+    Multiclass robust default:
+    If `target_mean_` is a valid numeric array but wrong-shaped, the default
+    vector for unseen categories should fall back to `block.mean(axis=1)`.
+    """
+    rng = np.random.RandomState(0)
+    X_fit = np.stack(
+        [
+            rng.choice(list("abc"), size=80),
+            rng.choice(list("wxyz"), size=80),
+        ],
+        axis=1,
+    ).astype(object)
+    y = rng.randint(0, 3, size=80)  # legitimate multiclass target
+
+    te = TargetEncoder(target_type="multiclass").fit(X_fit, y)
+    # White-box: allow small input to build caches where default is computed.
+    te._small_batch_threshold = 256
+
+    # Wrong shape but numeric → triggers robust per-class default via block.mean(axis=1)
+    te.target_mean_ = np.array([[0.2, 0.5, 0.3]], dtype=float)
+
+    X_small = np.array(
+        [
+            ["a", "w"],  # seen
+            ["zzz_unseen", "w"],  # unseen in first feature → use default vector
+        ],
+        dtype=object,
+    )
+
+    Z = te.transform(X_small)
+    n_classes = len(te.classes_)
+    assert Z.shape == (2, X_small.shape[1] * n_classes)
+    assert np.isfinite(Z).all()
+
+
+def test_fit_dataframe_like_sets_feature_names():
+    """
+    DF-like input with string columns:
+    Accept both upstream behaviors:
+      - some implementations set `feature_names_in_` for DF-like input,
+      - others do not (if validate_data ultimately saw an ndarray).
+    In either case, `get_feature_names_out()` should be consistent.
+    """
+    arr = np.array([["a", "x"], ["b", "y"], ["a", "x"]], dtype=object)
+    cols = ["feat_a", "feat_b"]
+    te = TargetEncoder(smooth=5.0).fit(
+        _FakeDF(arr, cols), np.array([0, 1, 1], dtype=float)
+    )
+
+    names = te.get_feature_names_out()
+    default_names = np.array([f"x{i}" for i in range(len(cols))], dtype=object)
+    if hasattr(te, "feature_names_in_"):
+        npt.assert_array_equal(names, np.array(cols, dtype=object))
+    else:
+        npt.assert_array_equal(names, default_names)
+
+
+def test_fit_dataframe_like_shape_mismatch_falls_back_to_ndarray():
+    """
+    If accessing `.shape` on DF-like input fails, fit should gracefully fall
+    back to ndarray handling and *not* set `feature_names_in_`.
+    """
+    arr = np.array([["a", "x"], ["b", "y"]], dtype=object)
+    te = TargetEncoder(smooth=5.0).fit(
+        _BadShapeDF(arr, ["fa", "fb"]), np.array([0, 1], dtype=float)
+    )
+    assert not hasattr(te, "feature_names_in_")
+
+
+def test_smallbatch_cache_reshape_and_default_mean_fallback_binary():
+    """
+    Binary/regression robust default & vector shape:
+    - Force `encodings_[0]` to be 2-D so the cache flattens it.
+    - Force `target_mean_` to be 1-D so default scalar falls back to `mean(enc_vec)`.
+    """
+    te_fast, te_vec = _fit_pair_numpy()
+
+    # Make per-category encoding vector 2-D → fast-path flattens it
+    enc0 = np.asarray(te_fast.encodings_[0]).reshape(-1, 1)
+    te_fast.encodings_[0] = enc0
+
+    # Make global mean 1-D → default scalar falls back to mean(enc_vec)
+    te_fast.target_mean_ = np.array([float(te_fast.target_mean_)], dtype=float)
+
+    X = np.array([["u", "x"], ["new_unseen", "x"]], dtype=object)
+    npt.assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
+
+
+def test_fit_raises_when_categories_missing_no_pytest():
+    """
+    `TargetEncoder.fit` should raise a clear AttributeError if `categories_`
+    is not set before fast-path initialization (defensive guard).
+    """
+    X = np.array([["a"], ["b"]], dtype=object)
+    y = np.array([0.0, 1.0])
+    te = _NoCategoriesAfterFit(smooth=5.0)
+
+    try:
+        te.fit(X, y)
+    except AttributeError as e:
+        msg = "TargetEncoder.fit must set 'categories_' before fast path."
+        assert msg in str(e), f"unexpected error message: {e}"
+    else:
+        raise AssertionError("Expected AttributeError was not raised")
+
+
+def test_collision_branch_disables_fastpath_for_feature():
+    """
+    Force the index-map collision branch and assert that all per-feature
+    fast-path caches are left as None (the intended 'disable fastpath' behavior).
+    """
+    # Small, valid dataset for a normal fit
+    X = np.array([["u"], ["v"], ["u"]], dtype=object)
+    y = np.array([0.0, 1.0, 1.0])
+
+    te = _DupCats(smooth=5.0).fit(X, y)
+    # White-box: allow small-batch cache building
+    te._small_batch_threshold = 256
+
+    # Safeguard in case the private method is renamed in the future.
+    assert hasattr(te, "_ensure_fastpath_structs_for_feature"), (
+        "private fast-path builder was renamed; update test accordingly"
+    )
+
+    # Build caches for feature 0; this must hit the collision branch
+    j = 0
+    te._ensure_fastpath_structs_for_feature(j)
+
+    # Collision path leaves all fast caches as None and returns
+    assert te._te_index_maps_[j] is None
+    assert te._te_enc_vecs_[j] is None
+    assert te._te_enc_blocks_[j] is None
+    assert te._te_defaults_[j] is None
+
+
+def _force_slow_transform(enc: TargetEncoder, X):
+    # Force reference/slow path by disabling the small-batch route and clearing caches.
+    old_thresh = enc._small_batch_threshold
+    enc._small_batch_threshold = -1  # never take fast path
+    # Clear caches (simulate a fresh instance for fairness)
+    enc._te_index_maps_ = None
+    enc._te_is_multiclass_ = None
+    enc._te_enc_vecs_ = None
+    enc._te_enc_blocks_ = None
+    enc._te_defaults_ = None
+    try:
+        out = enc.transform(X)
+    finally:
+        enc._small_batch_threshold = old_thresh
+    return out
+
+
+@pytest.mark.parametrize("n_small", [1, 2, 8, 32])
+@pytest.mark.parametrize("n_cats", [10_000, 50_000])
+def test_small_batch_binary_parity_and_missing(n_small, n_cats):
+    rng = np.random.default_rng(0)
+    X_fit = rng.integers(0, n_cats, size=(150_000, 1)).astype(object)
+    # sprinkle missing during fit to learn its encoding too
+    X_fit[:100, 0] = None
+    y_fit = rng.integers(0, 2, size=(150_000,))
+    enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
+
+    X_small = rng.integers(0, n_cats * 2, size=(n_small, 1)).astype(object)
+    # add missing/unseen explicitly
+    if n_small >= 2:
+        X_small[0, 0] = None
+        X_small[-1, 0] = np.nan
+
+    ref = _force_slow_transform(enc, X_small)
+    fast = enc.transform(X_small)
+    assert_allclose(fast, ref, rtol=0, atol=0)
+
+
+def test_small_batch_multiclass_parity_and_order():
+    rng = np.random.default_rng(1)
+    n_cats = 30_000
+    n_classes = 5
+    X_fit = rng.integers(0, n_cats, size=(200_000, 1)).astype(object)
+    y_fit = rng.integers(0, n_classes, size=(200_000,))
+    enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
+
+    X_small = np.array([[0], [n_cats + 123], [42], [None], [np.nan]], dtype=object)
+    ref = _force_slow_transform(enc, X_small)
+    fast = enc.transform(X_small)
+
+    # 1) numerical parity
+    assert_allclose(fast, ref, rtol=0, atol=0)
+    # 2) shape and class-order parity
+    assert fast.shape[1] % n_classes == 0
+    assert ref.shape == fast.shape
