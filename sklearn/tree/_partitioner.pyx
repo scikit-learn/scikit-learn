@@ -232,10 +232,15 @@ cdef class DensePartitioner:
             const float32_t[:, :] X = self.X
             float32_t current_value
 
+        # with gil:
+        #    print(f"before partitioning {best_n_missing=} {partition_end=} {start=} {end=} {best_threshold=}")
+        #    for i in samples:
+        #        print(f"{X[i, best_feature]=} {i=}")
+
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
             # non-missing samples
-            while p < partition_end:
+            while p <= partition_end:
                 # Keep samples with missing values at the end
                 if isnan(X[samples[end], best_feature]):
                     end -= 1
@@ -243,6 +248,10 @@ cdef class DensePartitioner:
 
                 # Swap sample with missing values with the sample at the end
                 current_value = X[samples[p], best_feature]
+                # with gil:
+                #    print(f"---- {p=} {samples[p]=} {current_value=} {end=}")
+                #    for i in samples:
+                #        print(f"{X[i, best_feature]=} {i=}")
                 if isnan(current_value):
                     samples[p], samples[end] = samples[end], samples[p]
                     end -= 1
@@ -265,6 +274,11 @@ cdef class DensePartitioner:
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
+
+        # with gil:
+        #    print("after partitioning")
+        #    for i in samples:
+        #        print(f"{X[i, best_feature]=} {i=}")
 
 
 @final
