@@ -4,6 +4,7 @@ from functools import partial
 import numpy
 import pytest
 import scipy
+import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -32,6 +33,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     np_compat,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
@@ -105,6 +107,58 @@ def test_get_namespace_array_api(monkeypatch):
             match="scipy's own support is not enabled.",
         ):
             get_namespace(X_xp)
+
+
+def test_move_to_array_api_conversions():
+    """Check conversion of cupy and numpy to torch."""
+    xp_torch = _array_api_for_tests("torch", "cuda")
+    device_torch = xp_torch.asarray([1], device="cuda").device
+
+    xp_cupy = _array_api_for_tests("cupy", None)
+    array_cupy = xp_cupy.asarray([1, 2, 3], device=None)
+
+    array_np = numpy.asarray([1, 2, 3], device=None)
+
+    array_1_out, array_2_out = move_to(
+        array_cupy, array_np, xp_reference=xp_torch, device_referenceerence=device_torch
+    )
+    for array in (array_1_out, array_2_out):
+        assert get_namespace(array) == xp_torch
+        assert device(array) == device_torch
+
+
+def test_move_to_sparse():
+    """Check sparse inputs are handled correctly."""
+    xp_numpy = _array_api_for_tests("numpy", None)
+    xp_torch = _array_api_for_tests("torch", "cpu")
+    device_cpu = xp_torch.asarray([1]).device
+
+    sparse1 = sp.csr_matrix([0, 1, 2, 3])
+    sparse2 = sp.csr_matrix([0, 1, 0, 1])
+    numpy_array = numpy.array([1, 2, 3])
+
+    # sparse to numpy
+    result1, result2 = move_to(
+        sparse1, sparse2, xp_reference=xp_numpy, device_reference=None
+    )
+    assert result1 is sparse1
+    assert result2 is sparse2
+
+    # sparse and None to numpy
+    result1, result2 = move_to(
+        sparse1, None, xp_reference=xp_numpy, device_reference=None
+    )
+    assert result1 is sparse1
+    assert result2 is None
+
+    # sparse to non-Numpy
+    msg = "Array inputs cannot contain both sparse arrays and non-NumPy arrays"
+    with pytest.raises(TypeError, match=msg):
+        move_to(
+            sparse1, numpy_array, xp_reference=xp_torch, device_reference=device_cpu
+        )
+    with pytest.raises(TypeError, match=msg):
+        move_to(sparse1, None, xp_reference=xp_torch, device_reference=device_cpu)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])

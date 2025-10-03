@@ -39,6 +39,7 @@ from sklearn.utils._array_api import (
     _union1d,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     xpx,
 )
 from sklearn.utils._param_validation import (
@@ -376,7 +377,10 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(
+        y_true, sample_weight, xp_reference=xp, device_reference=device
+    )
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
