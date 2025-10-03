@@ -1,0 +1,3 @@
+- :class:`manifold.MDS` now supports arbitrary distance metrics and
+  initialization via classical MDS.
+  By :user:`Dmitry Kobak <dkobak>`
