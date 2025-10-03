@@ -1,0 +1,4 @@
+- Raising error in :class:`sklearn.linear_model.LogisticRegression` when
+  liblinear solver is used and input X values are values larger than 1e30.
+  This is as the liblinear solver freezes otherwise with no result.
+  By :user:`Shruti Nath <snath-xoc>`.
