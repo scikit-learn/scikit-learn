@@ -42,7 +42,7 @@ X, y = make_classification(
 # ----------------------------
 #
 # We create the RFE object and compute the cross-validated scores. The scoring
-# strategy "accuracy" optimizes the proportion of correctly classified samples.
+# strategy "neg_log_loss" optimizes the negative log loss of the predicted probas.
 
 from sklearn.feature_selection import RFECV
 from sklearn.linear_model import LogisticRegression
@@ -56,7 +56,7 @@ rfecv = RFECV(
     estimator=clf,
     step=1,
     cv=cv,
-    scoring="accuracy",
+    scoring="neg_log_loss",
     min_features_to_select=min_features_to_select,
     n_jobs=2,
 )
@@ -82,7 +82,7 @@ data = {
 cv_results = pd.DataFrame(data)
 plt.figure()
 plt.xlabel("Number of features selected")
-plt.ylabel("Mean test accuracy")
+plt.ylabel("Mean test neg log loss")
 plt.errorbar(
     x=cv_results["n_features"],
     y=cv_results["mean_test_score"],
@@ -96,7 +96,7 @@ plt.show()
 # (similar mean value and overlapping errorbars) for 3 to 5 selected features.
 # This is the result of introducing correlated features. Indeed, the optimal
 # model selected by the RFE can lie within this range, depending on the
-# cross-validation technique. The test accuracy decreases above 5 selected
+# cross-validation technique. The test negative log loss decreases above 5 selected
 # features, this is, keeping non-informative features leads to over-fitting and
 # is therefore detrimental for the statistical performance of the models.
 
@@ -149,7 +149,7 @@ rfecv = RFECV(
     estimator=clf,
     step=1,
     cv=cv,
-    scoring="accuracy",
+    scoring="neg_log_loss",
     min_features_to_select=min_features_to_select,
     n_jobs=2,
     importance_getter=lambda model, X_val, y_val: permutation_importance_getter(
@@ -172,7 +172,7 @@ data = {
 cv_results = pd.DataFrame(data)
 plt.figure()
 plt.xlabel("Number of features selected")
-plt.ylabel("Mean test accuracy")
+plt.ylabel("Mean test neg log loss")
 plt.errorbar(
     x=cv_results["n_features"],
     y=cv_results["mean_test_score"],
