@@ -148,6 +148,9 @@ build_metadata_list = [
             "ccache",
             "compilers",
             "llvm-openmp",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-strict",
         ],
         "package_constraints": {
             # "blas": "[build=mkl]",

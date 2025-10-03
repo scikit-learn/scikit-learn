@@ -25,3 +25,6 @@ dependencies:
   - ccache
   - compilers
   - llvm-openmp
+  - pytorch
+  - pytorch-cpu
+  - array-api-strict
