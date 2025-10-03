@@ -4,10 +4,12 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
+PLATFORM_ID=$2
 
 FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
 
-if [[ $FREE_THREADED_BUILD == "False" ]]; then
+# Currently Windows ARM64 runners do not have Docker support.
+if [[ $FREE_THREADED_BUILD == "False" && "$PLATFORM_ID" != "win_arm64" ]]; then
     # Prepare a minimal Windows environment without any developer runtime libraries
     # installed to check that the scikit-learn wheel does not implicitly rely on
     # external DLLs when running the tests.
@@ -23,12 +25,6 @@ if [[ $FREE_THREADED_BUILD == "False" ]]; then
     # TODO Remove this when Python 3.14 is released and there is a Docker image
     if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.14" ]]; then
         PYTHON_DOCKER_IMAGE_PART="3.14-rc"
-    fi
-
-    # Temporary work-around to avoid a loky issue on Windows >= 3.13.7, see
-    # https://github.com/joblib/loky/issues/459
-    if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.13" ]]; then
-        PYTHON_DOCKER_IMAGE_PART="3.13.6"
     fi
 
     # We could have all of the following logic in a Dockerfile but it's a lot

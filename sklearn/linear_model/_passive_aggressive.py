@@ -16,7 +16,7 @@ from sklearn.utils._param_validation import Interval, StrOptions
 # TODO(1.10): Remove
 @deprecated(
     "this is deprecated in version 1.8 and will be removed in 1.10. "
-    "Use `SGDClassifier(loss='hinge', penalty=None, learning_rate='pa1', PA_C=1.0)` "
+    "Use `SGDClassifier(loss='hinge', penalty=None, learning_rate='pa1', eta0=1.0)` "
     "instead."
 )
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -32,7 +32,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                 loss="hinge",
                 penalty=None,
                 learning_rate="pa1",  # or "pa2"
-                PA_C=1.0,  # for parameter C
+                eta0=1.0,  # for parameter C
             )
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
@@ -42,8 +42,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     C : float, default=1.0
         Aggressiveness parameter for the passive-agressive algorithm, see [1].
         For PA-I it is the maximum step size. For PA-II it regularizes the
-        step size (the smaller `PA_C` the more it regularizes).
-        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
+        step size (the smaller `C` the more it regularizes).
+        As a general rule-of-thumb, `C` should be small when the data is noisy.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -203,6 +203,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "C": [Interval(Real, 0, None, closed="right")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,
@@ -234,8 +235,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
-            eta0=1.0,
-            PA_C=C,
+            eta0=C,
             warm_start=warm_start,
             class_weight=class_weight,
             average=average,
@@ -343,7 +343,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 @deprecated(
     "this is deprecated in version 1.8 and will be removed in 1.10. "
     "Use `SGDRegressor(loss='epsilon_insensitive', penalty=None, learning_rate='pa1', "
-    "PA_C = 1.0)` instead."
+    "eta0 = 1.0)` instead."
 )
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor.
@@ -358,7 +358,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                 loss="epsilon_insensitive",
                 penalty=None,
                 learning_rate="pa1",  # or "pa2"
-                PA_C=1.0,  # for parameter C
+                eta0=1.0,  # for parameter C
             )
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
@@ -369,8 +369,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     C : float, default=1.0
         Aggressiveness parameter for the passive-agressive algorithm, see [1].
         For PA-I it is the maximum step size. For PA-II it regularizes the
-        step size (the smaller `PA_C` the more it regularizes).
-        As a general rule-of-thumb, `PA_C` should be small when the data is noisy.
+        step size (the smaller `C` the more it regularizes).
+        As a general rule-of-thumb, `C` should be small when the data is noisy.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -512,6 +512,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         "C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,
@@ -536,8 +537,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,
-            eta0=1.0,
-            PA_C=C,
+            eta0=C,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,

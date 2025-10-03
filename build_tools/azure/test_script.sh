@@ -39,7 +39,9 @@ python -c "import joblib; print(f'Number of cores (physical): \
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
+show_cpu_info
 
+NUM_CORES=$(python -c "import joblib; print(joblib.cpu_count())")
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -59,9 +61,8 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count())")
-    if [[ "$XDIST_WORKERS" != 1 ]]; then
-        TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+    if [[ "$NUM_LOGICAL_CORES" != 1 ]]; then
+        TEST_CMD="$TEST_CMD -n$NUM_CORES"
     fi
 fi
 
@@ -72,18 +73,9 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-if which lscpu ; then
-    lscpu
-else
-    echo "Could not inspect CPU architecture."
-fi
-
 if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
-    # Make sure that GIL is disabled even when importing extensions that have
-    # not declared free-threaded compatibility. This can be removed when numpy,
-    # scipy and scikit-learn extensions all have declared free-threaded
-    # compatibility.
-    export PYTHON_GIL=0
+    # Use pytest-run-parallel
+    TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"

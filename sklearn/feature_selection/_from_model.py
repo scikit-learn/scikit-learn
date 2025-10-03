@@ -128,7 +128,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         - If an integer, then it specifies the maximum number of features to
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
-          features allowed by using the output of `max_features(X)`.
+          features allowed. The callable will receive `X` as input: `max_features(X)`.
         - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
@@ -498,7 +498,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="partial_fit", callee="partial_fit")

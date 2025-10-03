@@ -312,9 +312,6 @@ def cross_validate(
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_validate
-    >>> from sklearn.metrics import make_scorer
-    >>> from sklearn.metrics import confusion_matrix
-    >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
@@ -1261,7 +1258,9 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        predictions = np.concatenate(predictions)
+        xp, _ = get_namespace(X)
+        inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
+        predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):
         return [p[inv_test_indices] for p in predictions]

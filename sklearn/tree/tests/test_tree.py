@@ -1258,6 +1258,27 @@ def test_only_constant_features():
         assert est.tree_.max_depth == 0
 
 
+@pytest.mark.parametrize("tree_cls", ALL_TREES.values())
+def test_almost_constant_feature(tree_cls):
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/pull/32259
+    # Make sure that almost constant features are discarded.
+    random_state = check_random_state(0)
+    X = random_state.rand(10, 2)
+    # FEATURE_TRESHOLD=1e-7 is defined in sklearn/tree/_partitioner.pxd but not
+    # accessible from Python
+    feature_threshold = 1e-7
+    X[:, 0] *= feature_threshold  # almost constant feature
+    y = random_state.randint(0, 2, (10,))
+
+    est = tree_cls(random_state=0)
+    est.fit(X, y)
+    # the almost constant feature should not be used
+    assert est.feature_importances_[0] == 0
+    # other feature should be used
+    assert est.feature_importances_[1] > 0
+
+
 def test_behaviour_constant_feature_after_splits():
     X = np.transpose(
         np.vstack(([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]], np.zeros((4, 11))))
@@ -1614,11 +1635,22 @@ def test_public_apply_sparse_trees(name, csr_container):
 
 
 def test_decision_path_hardcoded():
+    # 1st example
     X = iris.data
     y = iris.target
     est = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
     node_indicator = est.decision_path(X[:2]).toarray()
     assert_array_equal(node_indicator, [[1, 1, 0], [1, 0, 1]])
+
+    # 2nd example (toy dataset)
+    # was failing before the fix in PR
+    # https://github.com/scikit-learn/scikit-learn/pull/32280
+    X = [0, np.nan, np.nan, 2, 3]
+    y = [0, 0, 0, 1, 1]
+    X = np.array(X).reshape(-1, 1)
+    tree = DecisionTreeRegressor(random_state=0).fit(X, y)
+    n_node_samples = tree.decision_path(X).toarray().sum(axis=0)
+    assert_array_equal(n_node_samples, tree.tree_.n_node_samples)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -2675,7 +2707,7 @@ def test_deterministic_pickle():
     ],
 )
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(Tree, X, criterion):
+def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2692,14 +2724,17 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = Tree(criterion=criterion, random_state=0).fit(X, y)
+    tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
     assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
-    # Check the impurity match after the first split
-    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+    # Note: the impurity matches after the first split only on greedy trees
+    # see https://github.com/scikit-learn/scikit-learn/issues/32125
+    if Tree is DecisionTreeRegressor:
+        # Check the impurity match after the first split
+        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(
