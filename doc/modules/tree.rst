@@ -581,6 +581,28 @@ Mean Absolute Error:
 
 Note that it fits much slower than the MSE criterion.
 
+Splitter strategies
+===================
+
+In scikit-learn, decision trees support two strategies to choose how
+candidate splits are evaluated at each node:
+
+- ``splitter="best"`` (default): For each feature, all possible thresholds
+  between unique feature values are evaluated, and the split that maximizes
+  the chosen criterion (like Gini impurity, entropy, variance reduction)
+  is selected. This is an exhaustive search and can be computationally
+  expensive for large datasets, but it generally yields the most informative
+  splits.
+
+- ``splitter="random"``: For each feature, only a single threshold is drawn
+  at random and evaluated. This makes training faster and adds additional
+  randomness, which can sometimes help reduce overfitting but usually leads
+  to less optimal splits compared to ``"best"``.
+
+Note that ensemble methods such as :class:`RandomForestClassifier` and
+:class:`RandomForestRegressor` always use ``splitter="best"`` for their
+underlying decision trees.
+
 .. _tree_missing_value_support:
 
 Missing Values Support
