@@ -132,6 +132,10 @@ scikit_learn_install() {
 main() {
     pre_python_environment_install
     python_environment_install_and_activate
+    env
+    # shot in the dark
+    export CC="ccache $CC"
+    export CXX="ccache $CXX"
     scikit_learn_install
 }
 
