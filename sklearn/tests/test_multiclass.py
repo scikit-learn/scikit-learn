@@ -308,6 +308,7 @@ def test_ovr_multiclass():
         assert_array_equal(y_pred, [0, 0, 1])
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ovr_binary():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
@@ -344,7 +345,11 @@ def test_ovr_binary():
     ):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True), LogisticRegression()):
+    for base_clf in (
+        MultinomialNB(),
+        SVC(probability=True),
+        LogisticRegression(),
+    ):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -400,6 +405,7 @@ def test_ovr_multilabel_dataset():
         )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ovr_multilabel_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     for au in (False, True):

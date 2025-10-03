@@ -386,12 +386,13 @@ def test_pipeline_raise_set_params_error():
         pipe.set_params(cls__invalid_param="nope")
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
-    clf = SVC(probability=True, random_state=0)
+    clf = SVC(random_state=0, probability=True)
     pca = PCA(svd_solver="full", n_components="mle", whiten=True)
     pipe = Pipeline([("pca", pca), ("svc", clf)])
     pipe.fit(X, y)
@@ -434,6 +435,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_pipeline_methods_preprocessing_svm():
     # Test the various methods of the pipeline (preprocessing + svm).
     X = iris.data
@@ -442,7 +444,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver="randomized", whiten=True)
-    clf = SVC(probability=True, random_state=0, decision_function_shape="ovr")
+    clf = SVC(random_state=0, probability=True, decision_function_shape="ovr")
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([("preprocess", preprocessing), ("svc", clf)])
