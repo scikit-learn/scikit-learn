@@ -50,6 +50,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
+            if isinstance(self.categories, dict):
+                raise TypeError(
+                    "When `categories` is a dict, the input `X` should be a pandas "
+                    f"DataFrame but got {type(X).__name__} instead"
+                )
             # if not a dataframe, do normal check_array validation
             X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
             if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
@@ -120,7 +125,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     Xi_dtype = Xi.dtype
 
-                cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if isinstance(self.categories, dict):
+                    column_name = self.feature_names_in_[i]
+                    cats = np.array(self.categories[column_name])
+                else:
+                    cats = np.array(self.categories[i], dtype=Xi_dtype)
                 if (
                     cats.dtype == object
                     and isinstance(cats[0], bytes)
@@ -1280,6 +1289,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
+        - dict : Mapping from column name to array-like of categories.
+          ``X`` needs to be a pandas DataFrame.
 
         The used categories can be found in the ``categories_`` attribute.
 
@@ -1443,7 +1454,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints: dict = {
-        "categories": [StrOptions({"auto"}), list],
+        "categories": [StrOptions({"auto"}), list, dict],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
