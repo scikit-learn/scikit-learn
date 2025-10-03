@@ -22,14 +22,6 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-try:
-    import pandas as pd
-
-    _HAS_PANDAS = True
-except Exception:
-    pd = None
-    _HAS_PANDAS = False
-
 # Distinct, hashable sentinels for each NA-like category (do not unify!)
 _NONE_SENTINEL = object()  # exactly None
 _NAN_SENTINEL = object()  # float NaN (np.nan, math.nan)
@@ -38,10 +30,25 @@ _PD_NAT_SENTINEL = object()  # pandas.NaT
 _NAT_SENTINEL = object()  # NumPy datetime/timedelta NaT (np.isnat == True)
 
 
+def _looks_like_pandas_na(x) -> bool:
+    """Return True if x is pandas.NA (without importing pandas)."""
+    t = type(x)
+    mod = getattr(t, "__module__", "")
+    return t.__name__ == "NAType" and mod.startswith("pandas")
+
+
+def _looks_like_pandas_nat(x) -> bool:
+    """Return True if x is pandas.NaT (without importing pandas)."""
+    t = type(x)
+    mod = getattr(t, "__module__", "")
+    # Some pandas versions use "NaTType", others expose "NaT" type name.
+    return t.__name__ in {"NaTType", "NaT"} and mod.startswith("pandas")
+
+
 def _norm_key(x):
     """Return a dict key that preserves category identity for NA-like values.
 
-    We keep None, float NaN, pandas.NA, pandas.NaT, and NumPy NaT as **distinct**
+    We keep None, float NaN, pandas.NA, pandas.NaT, and NumPy NaT as distinct
     keys so the small-batch fast path matches the vectorized reference exactly.
     """
     # 1) exactly None
@@ -56,12 +63,15 @@ def _norm_key(x):
     except Exception:
         pass
 
-    # 3) pandas extension sentinels (identity checks)
-    if _HAS_PANDAS:
-        if x is pd.NA:
+    # 3) pandas extension sentinels (duck-typed; no pandas import required)
+    try:
+        if _looks_like_pandas_na(x):
             return _PD_NA_SENTINEL
-        if x is pd.NaT:
+        if _looks_like_pandas_nat(x):
             return _PD_NAT_SENTINEL
+    except Exception:
+        # Be defensive—if any weird object makes detection fail, fall through.
+        pass
 
     # 4) NumPy datetime/timedelta NaT (non-float)
     try:
