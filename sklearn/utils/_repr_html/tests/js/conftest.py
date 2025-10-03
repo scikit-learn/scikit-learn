@@ -24,7 +24,7 @@ def local_server(request):
     """
     html_content = getattr(request, "param", "<html><body>Default</body></html>")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 0))
+        s.bind(("127.0.0.1", 0))
         PORT = s.getsockname()[1]
 
     class Handler(BaseHTTPRequestHandler):
@@ -38,10 +38,10 @@ def local_server(request):
         def log_message(self, format, *args):
             return
 
-    httpd = HTTPServer(("localhost", PORT), Handler)
+    httpd = HTTPServer(("127.0.0.1", PORT), Handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
 
-    yield f"http://localhost:{PORT}"
+    yield f"http://127.0.0.1:{PORT}"
 
     httpd.shutdown()
