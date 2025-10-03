@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
+
 from sklearn.preprocessing import TargetEncoder
 from sklearn.utils._testing import assert_allclose
+
 
 def _force_slow_transform(enc: TargetEncoder, X):
     # Force reference/slow path by disabling the small-batch route and clearing caches.
@@ -18,6 +20,7 @@ def _force_slow_transform(enc: TargetEncoder, X):
     finally:
         enc._small_batch_threshold = old_thresh
     return out
+
 
 @pytest.mark.parametrize("n_small", [1, 2, 8, 32])
 @pytest.mark.parametrize("n_cats", [10_000, 50_000])
@@ -38,6 +41,7 @@ def test_small_batch_binary_parity_and_missing(n_small, n_cats):
     ref = _force_slow_transform(enc, X_small)
     fast = enc.transform(X_small)
     assert_allclose(fast, ref, rtol=0, atol=0)
+
 
 def test_small_batch_multiclass_parity_and_order():
     rng = np.random.default_rng(1)
