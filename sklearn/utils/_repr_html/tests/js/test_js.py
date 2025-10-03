@@ -1,12 +1,12 @@
-from pathlib import Path
+import os
 
 import pytest
 
 
 def _make_page(body):
     """Helper to create a HTML page that includes `estimator.js` and the given body."""
-    current_dir = Path(__file__).parent
-    js_path = current_dir / ".." / ".." / "estimator.js"
+    current_dir = os.path.dirname(__file__)
+    js_path = os.path.join(current_dir, "..", "..", "estimator.js")
     with open(js_path, "r", encoding="utf-8") as f:
         script = f.read()
 
