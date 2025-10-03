@@ -302,7 +302,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             ensure_2d=True,
             dtype=None,
             reset=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         # if X_df exists, make sure it has the same shape as validated X
@@ -550,7 +550,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             reset=False,
             ensure_2d=True,
             dtype=None,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
         n_samples = X_checked.shape[0]
         small_thresh = getattr(self, "_small_batch_threshold", 256)
