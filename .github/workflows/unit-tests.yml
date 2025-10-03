@@ -56,7 +56,7 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
           - name: macOS pylatest_conda_forge_arm
-            os: macOS-15-arm
+            os: macOS-15
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_osx-arm64_conda.lock
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
