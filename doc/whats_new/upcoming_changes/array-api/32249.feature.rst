@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.precision_recall_curve` now supports array API compatible
+  inputs.
+  By :user:`Lucy Liu <lucyleeow>`
