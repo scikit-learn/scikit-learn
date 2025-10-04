@@ -264,6 +264,12 @@ class SimpleImputer(_BaseImputer):
 
         .. versionadded:: 1.0
 
+    _pandas_dtypes : dict
+        Dictionary mapping column names or indices to pandas dtypes.
+        Present when the input is a pandas DataFrame with categorical dtypes.
+
+        .. versionadded:: 1.6
+
     See Also
     --------
     IterativeImputer : Multivariate imputer that estimates values to impute for
@@ -444,6 +450,13 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
+        # Store original pandas dtypes if input is a DataFrame
+        self._pandas_dtypes = None
+        if hasattr(X, "dtypes"):
+            categorical_cols = X.columns
+            if len(categorical_cols) > 0:
+                self._pandas_dtypes = {col: X[col].dtype for col in categorical_cols}
+
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -678,8 +691,28 @@ class SimpleImputer(_BaseImputer):
             X[coordinates] = values
 
         X_indicator = super()._transform_indicator(missing_mask)
+        result = super()._concatenate_indicator(X, X_indicator)
 
-        return super()._concatenate_indicator(X, X_indicator)
+        # Check if we should return a pandas DataFrame with preserved dtypes
+        if (
+            hasattr(self, "_pandas_dtypes")
+            and self._pandas_dtypes is not None
+            and hasattr(self, "_sklearn_output_config")
+            and self._sklearn_output_config.get("transform") == "pandas"
+        ):
+            # Use our custom method to create pandas DataFrame with proper dtypes
+            if hasattr(self, "_create_pandas_output"):
+                # Get feature names
+                feature_names = None
+                if hasattr(self, "get_feature_names_out"):
+                    try:
+                        feature_names = self.get_feature_names_out()
+                    except (AttributeError, ValueError):
+                        feature_names = None
+
+                return self._create_pandas_output(result, feature_names)
+
+        return result
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
@@ -742,6 +775,43 @@ class SimpleImputer(_BaseImputer):
 
         X_original[full_mask] = self.missing_values
         return X_original
+
+    def _create_pandas_output(self, X, feature_names_out=None):
+        """Create a pandas DataFrame preserving categorical dtypes.
+
+        This method is used by set_output to properly handle pandas DataFrames
+        by preserving the categorical dtype information that was captured during fit.
+
+        Parameters
+        ----------
+        X : ndarray
+            The transformed array to convert to a DataFrame
+
+        feature_names_out : ndarray of str, default=None
+            The feature names for the transformed array
+
+        Returns
+        -------
+        pandas.DataFrame
+            The transformed array as a DataFrame with categorical dtypes restored
+        """
+        from sklearn.utils._set_output import check_library_installed
+
+        pd = check_library_installed("pandas")
+
+        if feature_names_out is None and hasattr(self, "feature_names_in_"):
+            feature_names_out = self.feature_names_in_
+
+        # Create the DataFrame
+        X_df = pd.DataFrame(X, columns=feature_names_out)
+
+        # Restore categorical dtypes if they were captured during fit
+        if hasattr(self, "_pandas_dtypes") and self._pandas_dtypes is not None:
+            for col, dtype in self._pandas_dtypes.items():
+                if col in X_df.columns:
+                    X_df[col] = X_df[col].astype(dtype)
+
+        return X_df
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
