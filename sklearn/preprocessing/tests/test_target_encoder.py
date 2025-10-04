@@ -1180,6 +1180,69 @@ def test_small_batch_binary_parity_and_missing(n_small, n_cats):
     assert_allclose(fast, ref, rtol=0, atol=0)
 
 
+def test_fake_df_numpy_protocol_paths():
+    # Use numeric data so dtype coercions succeed.
+    arr_num = np.array([[1, 2], [3, 4]], dtype=object)
+    cols = ["a", "b"]
+    df = _FakeDF(arr_num, cols)
+
+    # 1) __array__ called with dtype -> hits "return np.asarray(..., dtype=...)"
+    out = np.asarray(df, dtype=float)
+    assert out.dtype.kind == "f"
+    np.testing.assert_array_equal(out, np.array([[1.0, 2.0], [3.0, 4.0]]))
+
+    # 2) ndim property -> hits "return self._arr.ndim"
+    assert df.ndim == 2
+
+    # 3) astype(...) -> hits "return np.asarray(self._arr, dtype=dtype)"
+    out2 = df.astype(np.float64)
+    assert out2.dtype == np.float64
+    np.testing.assert_array_equal(out2, np.array([[1.0, 2.0], [3.0, 4.0]]))
+
+
+def test_smallbatch_lazy_init_missing_categories_raises_clear_error():
+    """Deleting `categories_` during fit must raise a clear error when the
+    small-batch fast-path initializes during transform."""
+    X = np.array([["a"], ["b"]], dtype=object)
+    y = np.array([0.0, 1.0])
+    te = _NoCategoriesAfterFit(smooth=5.0)
+    # Use fit_transform so the lazy fast-path init happens in the transform part.
+    try:
+        te.fit_transform(X, y)
+    except AttributeError as e:
+        msg1 = "TargetEncoder.fit must set 'categories_' before fast path."
+        msg2 = "TargetEncoder.fit_transform must set 'categories_' before fast path."
+        assert (msg1 in str(e)) or (msg2 in str(e)), f"unexpected error: {e}"
+    else:
+        raise AssertionError("Expected AttributeError was not raised")
+
+
+def test_smallbatch_lazy_init_normal_path_executes_and_allocates():
+    """Normal small-batch lazy init should run (the `try:` branch) and allocate
+    per-feature caches without raising."""
+    X = np.array([["a"], ["b"]], dtype=object)
+    y = np.array([0.0, 1.0])
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+    te._small_batch_threshold = 256  # force small-batch path
+    # Trigger lazy init
+    te.transform(np.array([["a"]], dtype=object))
+    # Sanity: fast-path placeholders/caches exist for feature 0
+    assert getattr(te, "_te_index_maps_", None) is not None
+    assert te._te_index_maps_[0] is not None
+
+
+def test_unfitted_private_fastpath_builder_raises():
+    """Calling the private fast-path builder on an unfitted estimator must fail."""
+    enc = TargetEncoder()
+    # Guard in _ensure_fastpath_structs_for_feature should raise:
+    try:
+        enc._ensure_fastpath_structs_for_feature(0)
+    except AttributeError as e:
+        assert "must be fitted before using the fast path" in str(e)
+    else:
+        raise AssertionError("Expected AttributeError was not raised")
+
+
 def test_small_batch_multiclass_parity_and_order():
     rng = np.random.default_rng(1)
     n_cats = 30_000
