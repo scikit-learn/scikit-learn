@@ -2330,16 +2330,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # using join because str(row) uses an ellipsis if len(row) > 1000
             y = np.array([" ".join(row.astype("str")) for row in y])
 
-        classes, y_indices = np.unique(y, return_inverse=True)
+        classes, y_indices, class_counts = np.unique(
+            y, return_inverse=True, return_counts=True
+        )
         n_classes = classes.shape[0]
 
-        class_counts = np.bincount(y_indices)
         if np.min(class_counts) < 2:
+            too_few_classes = classes[class_counts < 2].tolist()
             raise ValueError(
-                "The least populated class in y has only 1"
+                "The least populated classes in y have only 1"
                 " member, which is too few. The minimum"
                 " number of groups for any class cannot"
-                " be less than 2."
+                " be less than 2. Classes with too few"
+                " members are: %s" % (too_few_classes)
             )
 
         if n_train < n_classes:
