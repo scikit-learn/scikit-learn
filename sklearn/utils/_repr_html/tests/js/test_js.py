@@ -1,12 +1,13 @@
-import os
-
 import pytest
 
 
 def _make_page(body):
     """Helper to create a HTML page that includes `estimator.js` and the given body."""
-    current_dir = os.path.dirname(__file__)
-    js_path = os.path.join(current_dir, "..", "..", "estimator.js")
+
+    # use importskip to avoir importing BufferedIOBase
+    # useful in CI step: debian_32bit -> Test Library
+    pathlib = pytest.importorskip("pathlib")
+    js_path = pathlib.Path(__file__).parent.parent.parent / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:
         script = f.read()
 
