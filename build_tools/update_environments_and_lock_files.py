@@ -74,6 +74,7 @@ common_dependencies_without_coverage = [
     "pip",
     "ninja",
     "meson-python",
+    "pytest-playwright",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
