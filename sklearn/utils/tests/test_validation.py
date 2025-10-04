@@ -1952,14 +1952,26 @@ def test_num_features_errors_scalars(X):
 
 @pytest.mark.parametrize(
     "names",
-    [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
-    ids=["list-int", "range", "default", "MultiIndex"],
+    [list(range(2)), range(2), None],
+    ids=["list-int", "range", "default"],
 )
-def test_get_feature_names_pandas_with_ints_no_warning(names):
-    """Get feature names with pandas dataframes without warning.
+def test_get_feature_names_pandas_with_ints_warns(names):
+    """Integer column names (including default None) should warn."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
-    Column names with consistent dtypes will not warn, such as int or MultiIndex.
-    """
+    with pytest.warns(FutureWarning, match="integer column names"):
+        names = _get_feature_names(X)
+    assert names is None
+
+
+@pytest.mark.parametrize(
+    "names",
+    [[["a", "b"], ["c", "d"]]],
+    ids=["MultiIndex"],
+)
+def test_get_feature_names_pandas_other_non_string_no_warning(names):
+    """Other non-string consistent dtypes (e.g. MultiIndex) should not warn."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
