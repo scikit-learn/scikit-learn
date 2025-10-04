@@ -48,7 +48,7 @@ for break_ties, title, ax in zip((False, True), titles, sub.flatten()):
     classes = [(0, 1), (0, 2), (1, 2)]
     line = np.linspace(X[:, 1].min() - 5, X[:, 1].max() + 5)
     ax.imshow(
-        -pred.reshape(xx.shape),
+        pred.reshape(xx.shape),
         cmap="Accent",
         alpha=0.2,
         extent=(xlim[0], xlim[1], ylim[1], ylim[0]),
