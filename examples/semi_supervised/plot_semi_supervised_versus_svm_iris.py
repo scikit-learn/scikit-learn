@@ -99,9 +99,9 @@ fig.suptitle(
     "Semi-supervised decision boundaries with varying fractions of labeled data", y=1
 )
 fig.legend(
-    handles=handles, loc="lower center", ncol=len(handles), bbox_to_anchor=(0.5, -0.02)
+    handles=handles, loc="lower center", ncol=len(handles), bbox_to_anchor=(0.5, 0.0)
 )
-plt.tight_layout()
+fig.tight_layout(rect=[0, 0.03, 1, 1])
 plt.show()
 
 # %%
