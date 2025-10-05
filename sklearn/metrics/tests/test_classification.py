@@ -211,6 +211,42 @@ def test_classification_report_output_dict_empty_input():
                 assert_almost_equal(expected_report[key][metric], report[key][metric])
 
 
+def test_classification_report_dict_separate_avg():
+    # Test to ensure classification_report separates averages when
+    # separate_avg=True
+    y_true = [0, 1, 2, 2, 2, 0]
+    y_pred = [0, 0, 2, 2, 1, 0]
+    target_names = ["class 0", "class 1", "class 2"]
+
+    report = classification_report(
+        y_true, y_pred, target_names=target_names, output_dict=True, separate_avg=True
+    )
+
+    assert "averages" in report
+    assert "macro avg" in report["averages"]
+    assert "weighted avg" in report["averages"]
+    assert "class 0" in report
+    assert "class 1" in report
+    assert "class 2" in report
+
+    # Ensure macro avg and weighted avg are not at the top level
+    assert "macro avg" not in report
+    assert "weighted avg" not in report
+
+    # Check the correctness of the average metrics
+    assert report["averages"]["macro avg"]["precision"] is not None
+    assert report["averages"]["macro avg"]["recall"] is not None
+    assert report["averages"]["macro avg"]["f1-score"] is not None
+
+    # Also test for separate_avg=False to ensure backward compatibility
+    report_no_separate = classification_report(
+        y_true, y_pred, target_names=target_names, output_dict=True, separate_avg=False
+    )
+    assert "averages" not in report_no_separate
+    assert "macro avg" in report_no_separate
+    assert "weighted avg" in report_no_separate
+
+
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
