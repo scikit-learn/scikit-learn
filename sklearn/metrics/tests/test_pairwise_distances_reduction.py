@@ -740,10 +740,10 @@ def test_argkmin_factory_method_wrong_usages():
     with pytest.raises(ValueError, match=msg):
         ArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
-    with pytest.raises(ValueError, match="k == -1, must be >= 1."):
+    with pytest.raises(ValueError, match=r"k == -1, must be in the range \[1, inf\)."):
         ArgKmin.compute(X=X, Y=Y, k=-1, metric=metric)
 
-    with pytest.raises(ValueError, match="k == 0, must be >= 1."):
+    with pytest.raises(ValueError, match=r"k == 0, must be in the range \[1, inf\)."):
         ArgKmin.compute(X=X, Y=Y, k=0, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
@@ -837,7 +837,7 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             unique_Y_labels=unique_Y_labels,
         )
 
-    with pytest.raises(ValueError, match="k == -1, must be >= 1."):
+    with pytest.raises(ValueError, match=r"k == -1, must be in the range \[1, inf\)."):
         ArgKminClassMode.compute(
             X=X,
             Y=Y,
@@ -848,7 +848,7 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             unique_Y_labels=unique_Y_labels,
         )
 
-    with pytest.raises(ValueError, match="k == 0, must be >= 1."):
+    with pytest.raises(ValueError, match=r"k == 0, must be in the range \[1, inf\)."):
         ArgKminClassMode.compute(
             X=X,
             Y=Y,
@@ -943,7 +943,9 @@ def test_radius_neighbors_factory_method_wrong_usages():
     ):
         RadiusNeighbors.compute(X=X, Y=Y.astype(np.int32), radius=radius, metric=metric)
 
-    with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
+    with pytest.raises(
+        ValueError, match=r"radius == -1.0, must be in the range \[0, inf\)."
+    ):
         RadiusNeighbors.compute(X=X, Y=Y, radius=-1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
@@ -1048,7 +1050,9 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             outlier_label=None,
         )
 
-    with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
+    with pytest.raises(
+        ValueError, match=r"radius == -1.0, must be in the range \[0, inf\)."
+    ):
         RadiusNeighborsClassMode.compute(
             X=X,
             Y=Y,
