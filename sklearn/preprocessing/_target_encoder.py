@@ -54,18 +54,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         See the :ref:`User Guide <target_encoder>` for details.
 
     .. note::
-        **Recommended usage patterns:**
-
-        - **Training data**: Use `fit_transform(X_train, y_train)` to encode training
-          data with cross-fitting to prevent target leakage and overfitting.
-
-        - **Test/new data**: After fitting on training data with
-          `fit(X_train, y_train)`, use `transform(X_test)` to encode test/new data
-          using the learned encodings.
-
-        - **Pipeline usage**: When used in a :class:`~sklearn.pipeline.Pipeline`,
-          the pipeline automatically calls `fit_transform` during training and
-          `transform` during prediction, following the recommended pattern.
+        For training data, use `fit_transform()` to benefit from cross-fitting.
+        For test data, use `fit().transform()` to apply learned encodings.
 
     .. versionadded:: 1.3
 
@@ -260,14 +250,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
             See the :ref:`User Guide <target_encoder>`. for details.
 
-        .. note::
-            **When to use this method:**
-
-            - Use `fit_transform(X_train, y_train)` to encode training data
-            - This method automatically applies cross-fitting to prevent overfitting
-            - Do NOT use `fit(X_train, y_train).transform(X_train)` on training data
-              as it can cause target leakage and overfitting
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -339,21 +321,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def transform(self, X):
         """Transform X with the target encoding.
 
-        This method applies the encodings learned during `fit` to new data.
-        It does not use cross-fitting and should be used for test/new data.
-
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
             See the :ref:`User Guide <target_encoder>`. for details.
-
-        .. note::
-            **When to use this method:**
-
-            - Use `transform(X_test)` to encode test/new data after fitting on
-              training data
-            - This method applies the encodings learned from the training set
-            - Do NOT use this method on training data; use `fit_transform` instead
 
         Parameters
         ----------

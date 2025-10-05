@@ -953,51 +953,9 @@ diagram shows the :term:`cross fitting` scheme in
    :align: center
 
 .. note::
-   **Recommended usage patterns for TargetEncoder:**
-   
-   - **Training data**: Use `fit_transform(X_train, y_train)` to encode training
-     data with cross-fitting to prevent target leakage and overfitting.
-   
-   - **Test/new data**: After fitting on training data with `fit(X_train, y_train)`,
-     use `transform(X_test)` to encode test/new data using the learned encodings.
-   
-   - **Pipeline usage**: When used in a :class:`~sklearn.pipeline.Pipeline`,
-     the pipeline automatically calls `fit_transform` during training and
-     `transform` during prediction, following the recommended pattern.
-   
-   - **Avoid**: Do not use `fit(X_train, y_train).transform(X_train)` on training
-     data as it can cause target leakage and overfitting.
-
-.. rubric:: Example Usage
-
-Here's a typical usage pattern::
-
-    >>> from sklearn.preprocessing import TargetEncoder
-    >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.ensemble import RandomForestRegressor
-    >>> import numpy as np
-    
-    >>> # Create sample data
-    >>> X = np.array([['cat', 'A'], ['dog', 'B'], ['cat', 'A'], ['bird', 'C'], 
-    ...               ['dog', 'B'], ['cat', 'A'], ['bird', 'C'], ['cat', 'B'],
-    ...               ['dog', 'A'], ['bird', 'B']], dtype=object)
-    >>> y = np.array([1.0, 2.0, 1.5, 3.0, 2.5, 1.2, 3.2, 1.8, 2.3, 2.9])
-    
-    >>> # Split data into train and test sets
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    
-    >>> # Encode training data with cross-fitting (recommended)
-    >>> encoder = TargetEncoder(random_state=42)
-    >>> X_train_encoded = encoder.fit_transform(X_train, y_train)
-    
-    >>> # Encode test data using learned encodings
-    >>> X_test_encoded = encoder.transform(X_test)
-    
-    >>> # Train model on encoded data
-    >>> model = RandomForestRegressor(random_state=42)
-    >>> model.fit(X_train_encoded, y_train)  # doctest: +ELLIPSIS
-    RandomForestRegressor(...)
-    >>> model.score(X_test_encoded, y_test)  # doctest: +SKIP
+   For training data, use `fit_transform(X_train, y_train)` which applies cross-fitting 
+   to prevent overfitting. For test data, use `fit(X_train, y_train).transform(X_test)`.
+   Avoid using `fit().transform()` on the same training data as this can cause target leakage.
 
 :meth:`~TargetEncoder.fit_transform` also learns a 'full data' encoding using
 the whole training set. This is never used in
