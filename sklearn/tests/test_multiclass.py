@@ -29,7 +29,6 @@ from sklearn.multiclass import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
@@ -83,10 +82,7 @@ def test_check_classification_targets():
         check_classification_targets(y)
 
 
-def test_conditional_attrs_not_in_dir():
-    # NOTE: test moved to `sklearn/tests/test_base.py` since it checks
-    # BaseEstimator.__dir__ behavior. See gh-28558.
-    pytest.skip("test moved to test_base.py")
+
 
 
 def test_ovr_ties():
