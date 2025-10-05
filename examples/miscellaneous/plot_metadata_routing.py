@@ -1,22 +1,22 @@
 """
-================
-Metadata Routing
-================
+=====================================================
+Developing Estimators Compliant with Metadata Routing
+=====================================================
 
 .. currentmodule:: sklearn
 
 This document shows how you can use the :ref:`metadata routing mechanism
 <metadata_routing>` in scikit-learn to build estimators that route metadata
-to other estimators, scorers, and CV splitters consuming them.
+to other estimators, scorers, and CV splitters, that can consume :term:`metadata`.
 
 To better understand the following document, we need to introduce two concepts:
-routers and consumers. A router is an object which forwards some given data and
-metadata to other objects. In most cases, a router is a :term:`meta-estimator`,
-i.e. an estimator which takes another estimator as a parameter. A function such
-as :func:`sklearn.model_selection.cross_validate` which takes an estimator as a
-parameter and forwards data and metadata, is also a router.
+:term:`routers <router>` and :term:`consumers <consumer>`. A :term:`router` is an object
+which forwards some given data and metadata to other objects. In most cases, a router is
+a :term:`meta-estimator`, i.e. an estimator which takes another estimator as a
+parameter. A function such as :func:`sklearn.model_selection.cross_validate` which takes
+an estimator as a parameter and forwards data and metadata, is also a router.
 
-A consumer, on the other hand, is an object which accepts and uses some given
+A :term:`consumer`, on the other hand, is an object which accepts and uses some given
 metadata. For instance, an estimator taking into account ``sample_weight`` in
 its :term:`fit` method is a consumer of ``sample_weight``.
 
@@ -91,7 +91,7 @@ def print_routing(obj):
 # -------------------
 # Here we demonstrate how an estimator can expose the required API to support
 # metadata routing as a consumer. Imagine a simple classifier accepting
-# ``sample_weight`` as a metadata on its ``fit`` and ``groups`` in its
+# ``sample_weight`` as a metadata in its ``fit`` and ``groups`` in its
 # ``predict`` method:
 
 
