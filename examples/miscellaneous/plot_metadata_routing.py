@@ -145,10 +145,21 @@ print_routing(est)
 #     metadata and the set values are ignored, since a consumer does not
 #     validate or route given metadata. A simple usage of the above estimator
 #     would work as expected.
-
-est = ExampleClassifier()
-est.fit(X, y, sample_weight=my_weights)
-est.predict(X[:3, :], groups=my_groups)
+#
+#     .. code-block:: python
+#
+#         est = ExampleClassifier()
+#         est.fit(X, y, sample_weight=my_weights)
+#         est.predict(X[:3, :], groups=my_groups)
+#
+#     Out:
+#
+#     .. code-block:: none
+#
+#         Received sample_weight of length = 100 in ExampleClassifier.
+#         Received groups of length = 100 in ExampleClassifier.
+#
+#         array([1., 1., 1.])
 
 # %%
 # Routing Meta-Estimator
@@ -165,7 +176,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def get_metadata_routing(self):
         # This method defines the routing for this meta-estimator.
         # In order to do so, a `MetadataRouter` instance is created, and the
-        # routing is added to it. More explanations follow below.
+        # routing is added to it.
         router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
