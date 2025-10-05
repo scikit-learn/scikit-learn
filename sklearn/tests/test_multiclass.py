@@ -84,19 +84,9 @@ def test_check_classification_targets():
 
 
 def test_conditional_attrs_not_in_dir():
-    # Test that __dir__ includes only relevant attributes. #28558
-
-    encoder = LabelEncoder()
-    assert "set_output" not in dir(encoder)
-
-    scalar = StandardScaler()
-    assert "set_output" in dir(scalar)
-
-    svc = SVC(probability=False)
-    assert "predict_proba" not in dir(svc)
-
-    svc.probability = True
-    assert "predict_proba" in dir(svc)
+    # NOTE: test moved to `sklearn/tests/test_base.py` since it checks
+    # BaseEstimator.__dir__ behavior. See gh-28558.
+    pytest.skip("test moved to test_base.py")
 
 
 def test_ovr_ties():

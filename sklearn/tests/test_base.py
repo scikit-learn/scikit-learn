@@ -53,6 +53,27 @@ class K(BaseEstimator):
         self.d = d
 
 
+def test_conditional_attrs_not_in_dir():
+    # Tests that BaseEstimator.__dir__ filters conditional methods so that
+    # only relevant attributes are present in dir(). This covers the
+    # behavior enabled by the `available_if` decorator. Regression test
+    # for issue #28558.
+
+    from sklearn.preprocessing import LabelEncoder
+
+    encoder = LabelEncoder()
+    assert "set_output" not in dir(encoder)
+
+    scalar = StandardScaler()
+    assert "set_output" in dir(scalar)
+
+    svc = SVC(probability=False)
+    assert "predict_proba" not in dir(svc)
+
+    svc.probability = True
+    assert "predict_proba" in dir(svc)
+
+
 class T(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
