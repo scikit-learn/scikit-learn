@@ -4,6 +4,7 @@ from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
 from libc.string cimport memset
+from libc.string cimport memcpy
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ..utils._openmp_helpers cimport omp_lock_t
@@ -192,10 +193,12 @@ cdef void _update_chunk_dense(
     # ||X - C||² = ||X||² - 2 X.C^T + ||C||², we only need to store
     # the - 2 X.C^T + ||C||² term since the argmin for a given sample only
     # depends on the centers.
-    # pairwise_distances = ||C||²
+    # Initialize each row of pairwise_distances with ||C||² using a single
+    # memcpy per row for better memory throughput.
+    cdef floating *centers_sq_ptr = &centers_squared_norms[0]
     for i in range(n_samples):
-        for j in range(n_clusters):
-            pairwise_distances[i * n_clusters + j] = centers_squared_norms[j]
+        memcpy(&pairwise_distances[i * n_clusters], centers_sq_ptr,
+               n_clusters * sizeof(floating))
 
     # pairwise_distances += -2 * X.dot(C.T)
     _gemm(RowMajor, NoTrans, Trans, n_samples, n_clusters, n_features,
