@@ -437,6 +437,8 @@ CONTINUOUS_MULTILABEL_METRICS = {
     "ndcg_score",
     "dcg_score",
     "label_ranking_average_precision_score",
+    "d2_log_loss_score",
+    "d2_brier_score",
 }
 
 # Classification metrics with  "multilabel-indicator" format

@@ -3768,7 +3768,6 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     This metric is not well-defined for a single sample and will return a NaN
     value if n_samples is less than two.
     """
-    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
     check_consistent_length(y_pred, y_true, sample_weight)
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
@@ -3784,26 +3783,15 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         labels=labels,
     )
 
-    # Proportion of labels in the dataset
-    weights = _check_sample_weight(sample_weight, y_true)
-
-    # If labels is passed, augment y_true to ensure that all labels are represented
-    # Use 0 weight for the new samples to not affect the counts
-    y_true_, weights_ = (
-        (
-            np.concatenate([y_true, labels]),
-            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
-        )
-        if labels is not None
-        else (y_true, weights)
+    # log loss of the null model
+    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    transformed_labels, _ = _validate_multiclass_probabilistic_prediction(
+        y_true, y_pred, sample_weight, labels
     )
-
-    _, y_value_indices = np.unique(y_true_, return_inverse=True)
-    counts = np.bincount(y_value_indices, weights=weights_)
-    y_prob = counts / weights.sum()
+    weights = np.ones(y_pred.shape[0]) if sample_weight is None else sample_weight
+    y_prob = np.average(transformed_labels, axis=0, weights=weights)
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 
-    # log loss of the null model
     denominator = log_loss(
         y_true=y_true,
         y_pred=y_pred_null,
@@ -3883,6 +3871,7 @@ def d2_brier_score(
     .. [1] `Wikipedia entry for the Brier Skill Score (BSS)
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
+    check_consistent_length(y_proba, y_true, sample_weight)
     if _num_samples(y_proba) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
@@ -3898,13 +3887,19 @@ def d2_brier_score(
     )
 
     # brier score of the reference or baseline model
-    y_true = column_or_1d(y_true)
-    weights = _check_sample_weight(sample_weight, y_true)
-    labels = np.unique(y_true if labels is None else labels)
-
-    mask = y_true[None, :] == labels[:, None]
-    label_counts = (mask * weights).sum(axis=1)
-    y_prob = label_counts / weights.sum()
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
+    if y_proba.ndim == 1 or y_proba.shape[1] == 1:
+        transformed_labels, _ = _validate_binary_probabilistic_prediction(
+            y_true, y_proba, sample_weight, pos_label
+        )
+    else:
+        transformed_labels, _ = _validate_multiclass_probabilistic_prediction(
+            y_true, y_proba, sample_weight, labels
+        )
+    weights = np.ones(y_proba.shape[0]) if sample_weight is None else sample_weight
+    y_prob = np.average(transformed_labels, axis=0, weights=weights)
     y_proba_ref = np.tile(y_prob, (len(y_true), 1))
     brier_score_ref = brier_score_loss(
         y_true=y_true,
