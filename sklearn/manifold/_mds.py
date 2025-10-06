@@ -16,7 +16,12 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.manifold import ClassicalMDS
 from sklearn.metrics import euclidean_distances, pairwise_distances
 from sklearn.utils import check_array, check_random_state, check_symmetric
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import validate_data
 
@@ -496,7 +501,7 @@ class MDS(BaseEstimator):
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    dissimilarity : {'euclidean', 'precomputed'}, default='euclidean'
+    dissimilarity : {'euclidean', 'precomputed'}
         Dissimilarity measure to use:
 
         - 'euclidean':
@@ -526,10 +531,6 @@ class MDS(BaseEstimator):
         vectors as inputs and must return one value indicating the distance
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
-
-        For backward compatibility, ``True`` and ``False`` are supported.
-        ``True`` is equivalent to ``'euclidean'``. ``False`` is equivalent to
-        ``'euclidean'`` and sets ``metric_mds`` to ``False``.
 
         .. versionadded:: 1.8
 
@@ -633,15 +634,21 @@ class MDS(BaseEstimator):
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "metric_mds": ["boolean"],
-        "n_init": [Interval(Integral, 1, None, closed="left"), StrOptions({"warn"})],
-        "init": [StrOptions({"warn", "random", "classical_mds"})],
+        "n_init": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "init": [StrOptions({"random", "classical_mds"}), Hidden(StrOptions({"warn"}))],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
         "eps": [Interval(Real, 0.0, None, closed="left")],
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
-        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
-        "metric": [str, callable, "boolean"],
+        "dissimilarity": [
+            StrOptions({"euclidean", "precomputed"}),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "metric": [str, callable, Hidden("boolean")],
         "metric_params": [dict, None],
         "normalized_stress": ["boolean", StrOptions({"auto"})],
     }
@@ -658,7 +665,7 @@ class MDS(BaseEstimator):
         eps=1e-6,
         n_jobs=None,
         random_state=None,
-        dissimilarity="euclidean",
+        dissimilarity="deprecated",
         metric="euclidean",
         metric_params=None,
         normalized_stress="auto",
@@ -739,7 +746,8 @@ class MDS(BaseEstimator):
 
         if self.n_init == "warn":
             warnings.warn(
-                "The default value of `n_init` will change from 4 to 1 in 1.9.",
+                "The default value of `n_init` will change from 4 to 1 in 1.9. "
+                "To suppress this warning, provide some value of `n_init`.",
                 FutureWarning,
             )
             self._n_init = 4
@@ -749,19 +757,22 @@ class MDS(BaseEstimator):
         if self.init == "warn":
             warnings.warn(
                 "The default value of `init` will change from 'random' to "
-                "'classical_mds' in 1.10.",
+                "'classical_mds' in 1.10. To suppress this warning, provide "
+                "some value of `init`.",
                 FutureWarning,
             )
             self._init = "random"
         else:
             self._init = self.init
 
-        if self.dissimilarity == "precomputed":
+        if self.dissimilarity != "deprecated":
             warnings.warn(
                 "The `dissimilarity` parameter is deprecated and will be removed "
-                "in 1.10. Use `metric` instead.",
+                "in 1.10. Use `metric` instead. Until then, `dissimilarity` value "
+                "overrides `metric` value.",
                 FutureWarning,
             )
+            self._metric = self.dissimilarity
 
         if isinstance(self.metric, bool):
             warnings.warn(
@@ -769,16 +780,16 @@ class MDS(BaseEstimator):
                 "support for metric={True/False} will be dropped in 1.10.",
                 FutureWarning,
             )
-            self._metric = "euclidean"
+            if self.dissimilarity == "deprecated":
+                self._metric = "euclidean"
             self._metric_mds = self.metric
         else:
-            self._metric = self.metric
+            if self.dissimilarity == "deprecated":
+                self._metric = self.metric
             self._metric_mds = self.metric_mds
 
         X = validate_data(self, X)
-        if X.shape[0] == X.shape[1] and (
-            (self.dissimilarity != "precomputed") and (self._metric != "precomputed")
-        ):
+        if X.shape[0] == X.shape[1] and (self._metric != "precomputed"):
             warnings.warn(
                 "The MDS API has changed. ``fit`` now constructs a"
                 " dissimilarity matrix from data. To use a custom "
@@ -786,12 +797,7 @@ class MDS(BaseEstimator):
                 "``metric='precomputed'``."
             )
 
-        if self.dissimilarity == "precomputed":
-            self.dissimilarity_matrix_ = X
-            self.dissimilarity_matrix_ = check_symmetric(
-                self.dissimilarity_matrix_, raise_exception=True
-            )
-        elif self._metric == "precomputed":
+        if self._metric == "precomputed":
             self.dissimilarity_matrix_ = X
             self.dissimilarity_matrix_ = check_symmetric(
                 self.dissimilarity_matrix_, raise_exception=True
