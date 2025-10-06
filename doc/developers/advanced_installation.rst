@@ -107,8 +107,11 @@ feature, code or documentation improvement).
       (before cythonization) will force the build to fail if OpenMP is not
       supported.
 
-#. Build scikit-learn with pip by running the following command in your `sklearn-env` conda environment
-or virtualenv:
+.. _pip_build:
+
+#. Build scikit-learn with pip
+
+    Run the following command in your `sklearn-env` conda environment or virtualenv:
 
    .. prompt:: bash $
 
@@ -170,6 +173,8 @@ need to make sure you select "Desktop development with C++", similarly to this
 screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
+
+Now go back to :ref:`_pip_build`.
 
 .. _compiler_macos:
 
@@ -241,9 +246,9 @@ They point to files and folders from your ``sklearn-env`` conda environment
 (in particular in the bin/, include/ and lib/ subfolders). For instance
 ``-L/path/to/conda/envs/sklearn-env/lib`` should appear in ``LDFLAGS``.
 
-When building the package in the next step, you should see the compiled extension being built with the clang
-and clang++ compilers installed by conda with the ``-fopenmp`` command line
-flag in the log.
+When building the package in the next step (:ref:`_pip_build`), you should see the
+compiled extension being built with the clang and clang++ compilers installed by
+conda with the ``-fopenmp`` command line flag in the log.
 
 macOS compilers from Homebrew
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -271,6 +276,7 @@ Remove any existing scikit-learn installations and meson builds to avoid conflic
 
     make clean
 
+Now go back to :ref:`_pip_build`.
 
 .. _compiler_linux:
 
@@ -286,7 +292,7 @@ Make sure you activated the `sklearn-env` conda environment and install the foll
 
     conda install -c conda-forge joblib threadpoolctl pytest compilers
 
-
+Now go back to :ref:`_pip_build`.
 
 Linux compilers from the system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -303,8 +309,11 @@ Ubuntu:
     sudo apt-get install build-essential python3-dev python3-pip
 
 
-If, for some reason, you are not using an isolated environment (which is not recommended), ``pip3`` needs to be used instead of ``pip`` in the
-following command above.
+If, for some reason, you are not using an isolated environment (which is not recommended),
+cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
+and joblib) should automatically be installed in
+``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
+``pip3`` needs to be used instead of ``pip`` in the build command (:ref:`_pip_build`).
 
 When precompiled wheels of the runtime dependencies are not available for your
 architecture (e.g. ARM), you can install the system versions:
@@ -344,6 +353,9 @@ can set the environment variables to these locations:
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
+
+Now go back to :ref:`_pip_build`.
+
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
