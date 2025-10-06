@@ -260,7 +260,7 @@ Reference Steps
       .. prompt:: bash
 
         git tag -a {{ version_full }}  # in the {{ version_short }}.X branch
-        git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
+        git push https://github.com/scikit-learn/scikit-learn.git {{ version_full }}
 
       .. warning::
 
@@ -334,7 +334,7 @@ Reference Steps
       .. prompt:: bash
 
         cd /tmp
-        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
+        git clone --depth 1 --no-checkout https://github.com/scikit-learn/scikit-learn.github.io.git
         cd scikit-learn.github.io
         echo stable > .git/info/sparse-checkout
         git checkout main

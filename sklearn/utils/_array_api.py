@@ -625,7 +625,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    xp, _, device_ = get_namespace_and_device(a, weights)
+    xp, _, device_ = get_namespace_and_device(a, weights, xp=xp)
 
     if _is_numpy_namespace(xp):
         if normalize:
