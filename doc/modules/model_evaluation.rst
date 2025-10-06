@@ -952,7 +952,8 @@ AP that interpolate the precision-recall curve. Currently,
 References [Davis2006]_ and [Flach2015]_ describe why a linear interpolation of
 points on the precision-recall curve provides an overly-optimistic measure of
 classifier performance. This linear interpolation is used when computing area
-under the curve with the trapezoidal rule in :func:`auc`.
+under the curve with the trapezoidal rule in :func:`auc`. [Chen2024]_
+benchmarks different interpolation strategies to demonstrate the effects.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -1006,6 +1007,9 @@ precision-recall curve as follows.
 .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
     NIPS 2015.
+.. [Chen2024] W. Chen, C. Miao, Z. Zhang, C.S. Fung, R. Wang, Y. Chen, Y. Qian, L. Cheng, K.Y. Yip, S.K
+   Tsui, Q. Cao, `Commonly used software tools produce conflicting and overly-optimistic AUPRC values
+   <https://doi.org/10.1186/s13059-024-03266-y>`_, Genome Biology 2024.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -2185,49 +2189,45 @@ of 0.0.
     -0.552
 
 
-|details-start|
-**D2 Brier score**
-|details-split|
+.. dropdown:: D2 Brier score
 
-The :func:`d2_brier_score` function implements the special case
-of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+  The :func:`d2_brier_score` function implements the special case
+  of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
 
-.. math::
+  .. math::
 
-  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+    \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS).
 
-Here are some usage examples of the :func:`d2_brier_score` function::
+  Here are some usage examples of the :func:`d2_brier_score` function::
 
-  >>> from sklearn.metrics import d2_brier_score
-  >>> y_true = [1, 1, 2, 3]
-  >>> y_pred = [
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  0.0
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...    [0.98, 0.01, 0.01],
-  ...    [0.01, 0.98, 0.01],
-  ...    [0.01, 0.01, 0.98],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  0.9991
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...    [0.1, 0.6, 0.3],
-  ...    [0.1, 0.6, 0.3],
-  ...    [0.4, 0.5, 0.1],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  -0.370...
-
-|details-end|
+    >>> from sklearn.metrics import d2_brier_score
+    >>> y_true = [1, 1, 2, 3]
+    >>> y_pred = [
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.98, 0.01, 0.01],
+    ...    [0.01, 0.98, 0.01],
+    ...    [0.01, 0.01, 0.98],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.9991
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.4, 0.5, 0.1],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    -0.370...
 
 .. _multilabel_ranking_metrics:
 
