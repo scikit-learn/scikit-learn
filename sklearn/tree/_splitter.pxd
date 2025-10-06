@@ -3,11 +3,11 @@
 
 # See _splitter.pyx for details.
 
-from ..utils._typedefs cimport (
+from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
-from ._criterion cimport Criterion
-from ._tree cimport ParentInfo
+from sklearn.tree._criterion cimport Criterion
+from sklearn.tree._tree cimport ParentInfo
 
 
 cdef struct SplitRecord:

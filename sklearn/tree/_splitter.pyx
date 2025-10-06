@@ -22,13 +22,13 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from ..utils._typedefs cimport int8_t
-from ._criterion cimport Criterion
-from ._partitioner cimport (
+from sklearn.utils._typedefs cimport int8_t
+from sklearn.tree._criterion cimport Criterion
+from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
     shift_missing_values_to_left_if_required
 )
-from ._utils cimport RAND_R_MAX, rand_int, rand_uniform
+from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
 
 import numpy as np
 

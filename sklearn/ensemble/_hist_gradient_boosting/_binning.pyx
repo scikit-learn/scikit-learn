@@ -4,8 +4,8 @@
 from cython.parallel import prange
 from libc.math cimport isnan
 
-from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
-from ...utils._typedefs cimport uint8_t
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C, X_BINNED_DTYPE_C
+from sklearn.utils._typedefs cimport uint8_t
 
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,

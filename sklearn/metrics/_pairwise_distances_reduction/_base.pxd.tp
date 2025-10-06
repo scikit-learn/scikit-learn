@@ -1,6 +1,6 @@
 from cython cimport final
 
-from ...utils._typedefs cimport intp_t, float64_t
+from sklearn.utils._typedefs cimport intp_t, float64_t
 
 {{for name_suffix in ['64', '32']}}
 

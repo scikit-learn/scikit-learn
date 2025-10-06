@@ -1,5 +1,5 @@
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, intp_t
 
 cdef int partition_node_indices(
         const floating *data,

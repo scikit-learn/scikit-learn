@@ -6,14 +6,14 @@ import numpy as np
 
 from cython cimport floating
 import warnings
-from ..exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (
+from sklearn.utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
 )
-from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-from ..utils._typedefs cimport uint8_t, uint32_t
-from ..utils._random cimport our_rand_r
+from sklearn.utils._cython_blas cimport ColMajor, Trans, NoTrans
+from sklearn.utils._typedefs cimport uint8_t, uint32_t
+from sklearn.utils._random cimport our_rand_r
 
 
 # The following two functions are shamelessly copied from the tree code.

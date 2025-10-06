@@ -63,7 +63,6 @@ docs = [
     "sphinxext-opengraph>=0.9.1",
     "plotly>=5.14.0",
     "polars>=0.20.30",
-    "sphinx-design>=0.5.0",
     "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",

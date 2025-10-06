@@ -1,0 +1,4 @@
+- Fix handling of missing values in method :func:`decision_path` of trees
+  (:class:`ensemble.DecisionTreeClassifier`, :class:`ensemble.DecisionTreeRegressor`,
+  :class:`ensemble.ExtraTreeClassifier` and :class:`ensemble.ExtraTreeRegressor`)
+  By :user:`Arthur Lacote <cakedev0>`.

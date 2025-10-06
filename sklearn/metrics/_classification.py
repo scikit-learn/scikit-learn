@@ -568,7 +568,7 @@ def confusion_matrix(
     if sample_weight.dtype.kind in {"i", "u", "b"}:
         dtype = np.int64
     else:
-        dtype = np.float64
+        dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
