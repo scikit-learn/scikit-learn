@@ -1,10 +1,12 @@
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.utils._testing import assert_allclose
+
 
 def test_baseline_is_pos_ratio():
     y_true = np.array([1, 0, 0, 1, 0, 0, 0, 1, 0, 0])
