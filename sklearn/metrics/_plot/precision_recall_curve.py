@@ -165,10 +165,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Name of precision recall curve for labeling. If `None`, use
             `name` if not `None`, otherwise no labeling is shown.
 
-        plot_chance_level : bool, default=False
+
             Whether to plot the chance level. The chance level is the prevalence
             of the positive label computed from the data passed during
-            :meth:`from_estimator` or :meth:`from_predictions` call.
+            :meth:`from_es        plot_chance_level : bool, default=Falsetimator` or :meth:`from_predictions` call.
 
             .. versionadded:: 1.3
 
@@ -243,11 +243,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
+
             default_chance_level_line_kw = {
-                "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
+                "label": f"Baseline (pos prevalence = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
                 "linestyle": "--",
             }
+
 
             if chance_level_kw is None:
                 chance_level_kw = {}
@@ -338,17 +340,20 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is created.
 
         plot_chance_level : bool, default=False
-            Whether to plot the chance level. The chance level is the prevalence
-            of the positive label computed from the data passed during
-            :meth:`from_estimator` or :meth:`from_predictions` call.
+            Whether to plot the baseline (formerly called "chance"). The baseline
+            is the prevalence of the positive label computed from the data
+            passed during :meth:`from_estimator` or :meth:`from_predictions`.
+            This baseline serves as a reference (horizontal) line on the
+            Precision–Recall plot indicating the positive-class prevalence.
 
             .. versionadded:: 1.3
 
-        chance_level_kw : dict, default=None
+         chance_level_kw : dict, default=None
             Keyword arguments to be passed to matplotlib's `plot` for rendering
-            the chance level line.
+            the baseline line (parameter name kept for backward compatibility).
 
             .. versionadded:: 1.3
+
 
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
