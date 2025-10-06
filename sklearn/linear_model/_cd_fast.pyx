@@ -914,7 +914,7 @@ cdef (floating, floating) gap_enet_gram(
     return gap, dual_norm_XtA
 
 
-cdef inline bint screen_features_enet_gram(
+cdef inline uint32_t screen_features_enet_gram(
     const floating[:, ::1] Q,
     const floating[::1] XtA,
     floating[::1] w,
