@@ -763,22 +763,14 @@ class MDS(BaseEstimator):
                 FutureWarning,
             )
 
-        if type(self.metric) == type(True) and self.metric:
+        if isinstance(self.metric, bool):
             warnings.warn(
-                "Use metric_mds='True' instead of metric='True'. The support for "
-                "metric='True' will be dropped in 1.10",
+                f"Use metric_mds={self.metric} instead of metric={self.metric}. The "
+                "support for metric={True/False} will be dropped in 1.10.",
                 FutureWarning,
             )
             self._metric = "euclidean"
-            self._metric_mds = True
-        elif type(self.metric) == type(True) and not self.metric:
-            warnings.warn(
-                "Use metric_mds='False' instead of metric='False'. The support for "
-                "metric='False' will be dropped in 1.10",
-                FutureWarning,
-            )
-            self._metric = "euclidean"
-            self._metric_mds = False
+            self._metric_mds = self.metric
         else:
             self._metric = self.metric
             self._metric_mds = self.metric_mds
