@@ -944,31 +944,29 @@ variables, and help prevent the downstream model from overfitting spurious
 correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
 `fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
 data is split into *k* folds (determined by the `cv` parameter) and each fold is
-encoded using the encodings learnt using the other *k-1* folds. The following
-diagram shows the :term:`cross fitting` scheme in
+encoded using the encodings learnt using the *other k-1* folds. For this reason,
+training data should always be trained and transformed with
+`fit_transform(X_train, y_train)`.
+
+This diagram shows the :term:`cross fitting` scheme in
 :meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
 
 .. image:: ../images/target_encoder_cross_validation.svg
    :width: 600
    :align: center
 
-.. note::
-   For training data, use `fit_transform(X_train, y_train)` which applies cross-fitting 
-   to prevent overfitting. For test data, use `fit(X_train, y_train).transform(X_test)`.
-   Avoid using `fit().transform()` on the same training data as this can cause target leakage.
+The :meth:`~TargetEncoder.fit` method does **not** use any :term:`cross fitting` schemes
+and learns one encoding on the entire training set, which is used to encode categories
+in :meth:`~TargetEncoder.transform`. It is unsafe to use on training data and unusual to
+use on test data.
 
-:meth:`~TargetEncoder.fit_transform` also learns a 'full data' encoding using
-the whole training set. This is never used in
-:meth:`~TargetEncoder.fit_transform` but is saved to the attribute `encodings_`,
-for use when :meth:`~TargetEncoder.transform` is called. Note that the encodings
-learned for each fold during the :term:`cross fitting` scheme are not saved to
+For transforming test data based on the encodings learnt from the train data, use
+`encoder.transform(X_test)`. It uses 'full data' encodings also learned during
+:meth:`~TargetEncoder.fit_transform` and saved to the attribute `encodings_`. The
+learned encodings are never used in :meth:`~TargetEncoder.fit_transform` but are saved
+for use on test data when :meth:`~TargetEncoder.transform` is called. Note that the
+encodings learned for each fold during the :term:`cross fitting` scheme are not saved to
 an attribute.
-
-The :meth:`~TargetEncoder.fit` method does **not** use any :term:`cross fitting`
-schemes and learns one encoding on the entire training set, which is used to
-encode categories in :meth:`~TargetEncoder.transform`.
-This encoding is the same as the 'full data'
-encoding learned in :meth:`~TargetEncoder.fit_transform`.
 
 .. note::
   :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
