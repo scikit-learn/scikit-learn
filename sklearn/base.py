@@ -305,7 +305,9 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             ):
                 return True
 
-            if is_pandas_na(param_value):
+            if is_pandas_na(param_value) and not is_pandas_na(
+                init_default_params[param_name]
+            ):
                 return True
 
             if not np.array_equal(

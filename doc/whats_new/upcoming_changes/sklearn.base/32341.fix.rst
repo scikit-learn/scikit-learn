@@ -1,0 +1,3 @@
+- Fixed the handling of pandas missing values in HTML display
+  in :class:`sklearn.base`.
+  By :user: `Dea María Léon <deamarialeon>` :pr:`32341`.
