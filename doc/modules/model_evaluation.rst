@@ -952,7 +952,8 @@ AP that interpolate the precision-recall curve. Currently,
 References [Davis2006]_ and [Flach2015]_ describe why a linear interpolation of
 points on the precision-recall curve provides an overly-optimistic measure of
 classifier performance. This linear interpolation is used when computing area
-under the curve with the trapezoidal rule in :func:`auc`.
+under the curve with the trapezoidal rule in :func:`auc`. [Chen2024]_
+benchmarks different interpolation strategies to demonstrate the effects.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -1006,6 +1007,9 @@ precision-recall curve as follows.
 .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
     NIPS 2015.
+.. [Chen2024] W. Chen, C. Miao, Z. Zhang, C.S. Fung, R. Wang, Y. Chen, Y. Qian, L. Cheng, K.Y. Yip, S.K
+   Tsui, Q. Cao, `Commonly used software tools produce conflicting and overly-optimistic AUPRC values
+   <https://doi.org/10.1186/s13059-024-03266-y>`_, Genome Biology 2024.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
