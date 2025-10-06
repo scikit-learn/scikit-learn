@@ -3788,14 +3788,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     transformed_labels, _ = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
-    # Note that above validation function already calls _check_sample_weight if
-    # sample_weight is not None so we only need to handle the None case here.
-    weights = (
-        np.ones(y_pred.shape[0], dtype=y_pred.dtype)
-        if sample_weight is None
-        else sample_weight
-    )
-    y_prob = np.average(transformed_labels, axis=0, weights=weights)
+    y_prob = np.average(transformed_labels, axis=0, weights=sample_weight)
     y_pred_null = np.tile(y_prob, (len(y_true), 1))
 
     denominator = log_loss(
@@ -3904,14 +3897,7 @@ def d2_brier_score(
         transformed_labels, _ = _validate_multiclass_probabilistic_prediction(
             y_true, y_proba, sample_weight, labels
         )
-    # Note that above validation functions already call _check_sample_weight if
-    # sample_weight is not None so we only need to handle the None case here.
-    weights = (
-        np.ones(y_proba.shape[0], dtype=y_proba.dtype)
-        if sample_weight is None
-        else sample_weight
-    )
-    y_prob = np.average(transformed_labels, axis=0, weights=weights)
+    y_prob = np.average(transformed_labels, axis=0, weights=sample_weight)
     y_proba_ref = np.tile(y_prob, (len(y_true), 1))
     brier_score_ref = brier_score_loss(
         y_true=y_true,
