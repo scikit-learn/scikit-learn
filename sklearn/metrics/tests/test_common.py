@@ -980,7 +980,8 @@ def test_classification_invariance_string_vs_numbers_labels(name):
 
 @pytest.mark.parametrize("name", CONTINUOUS_CLASSIFICATION_METRICS)
 def test_continuous_classification_invariance_string_vs_numbers_labels(name):
-    # Ensure that continuous metrics with string labels are invariant
+    # Ensure that continuous metrics with string labels are invariant under
+    # class relabeling.
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20,))
     y2 = random_state.randint(0, 2, size=(20,))
