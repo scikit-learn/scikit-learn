@@ -28,21 +28,39 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
-.. `scss/install.scss` overrides some default sphinx-design styling for the tabs
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .install-instructions .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .install-instructions .sd-tab-set.tabs-os::before {
+        content: "Operating System";
+      }
+
+      .install-instructions .sd-tab-set.tabs-package-manager::before {
+        content: "Package Manager";
+      }
+    }
+  </style>
 
 .. div:: install-instructions
 
   .. tab-set::
+    :class: tabs-os
 
-    .. tab-item:: pip
-      :class-label: tab-6
-      :sync: packager-pip
+    .. tab-item:: Windows
+      :class-label: tab-4
 
       .. tab-set::
+        :class: tabs-package-manager
 
-        .. tab-item:: Windows
-          :class-label: tab-4
-          :sync: os-windows
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
 
           Install the 64-bit version of Python 3, for instance from the
           `official website <https://www.python.org/downloads/windows/>`__.
@@ -66,9 +84,21 @@ Installing the latest release
             python -m pip freeze             # show all installed packages in the environment
             python -c "import sklearn; sklearn.show_versions()"
 
-        .. tab-item:: macOS
-          :class-label: tab-4
-          :sync: os-macos
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          .. include:: ./install_instructions_conda.rst
+
+    .. tab-item:: MacOS
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
 
           Install Python 3 using `homebrew <https://brew.sh/>`_ (`brew install python`)
           or by manually installing the package from the `official website
@@ -77,7 +107,7 @@ Installing the latest release
           Now create a `virtual environment (venv)
           <https://docs.python.org/3/tutorial/venv.html>`_ and install scikit-learn.
           Note that the virtual environment is optional but strongly recommended, in
-          order to avoid potential conflicts with other packges.
+          order to avoid potential conflicts with other packages.
 
           .. prompt:: bash
 
@@ -93,9 +123,21 @@ Installing the latest release
             python -m pip freeze             # show all installed packages in the environment
             python -c "import sklearn; sklearn.show_versions()"
 
-        .. tab-item:: Linux
-          :class-label: tab-4
-          :sync: os-linux
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          .. include:: ./install_instructions_conda.rst
+
+    .. tab-item:: Linux
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
 
           Python 3 is usually installed by default on most Linux distributions. To
           check if you have it installed, try:
@@ -127,28 +169,12 @@ Installing the latest release
             python3 -m pip freeze             # show all installed packages in the environment
             python3 -c "import sklearn; sklearn.show_versions()"
 
-    .. tab-item:: conda
-      :class-label: tab-6
-      :sync: packager-conda
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
 
-      Install conda using the `Anaconda or miniconda installers
-      <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`__
-      or the `miniforge installers
-      <https://github.com/conda-forge/miniforge#miniforge>`__ (no administrator
-      permission required for any of those). Then run:
+          .. include:: ./install_instructions_conda.rst
 
-      .. prompt:: bash
-
-        conda create -n sklearn-env -c conda-forge scikit-learn
-        conda activate sklearn-env
-
-      In order to check your installation, you can use:
-
-      .. prompt:: bash
-
-        conda list scikit-learn  # show scikit-learn version and location
-        conda list               # show all installed packages in the environment
-        python -c "import sklearn; sklearn.show_versions()"
 
 Using an isolated environment such as pip venv or conda makes it possible to
 install a specific version of scikit-learn with pip or conda and its dependencies
@@ -176,12 +202,24 @@ purpose.
 .. warning::
 
     Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
-    Scikit-learn 0.21 supported Python 3.5-3.7.
-    Scikit-learn 0.22 supported Python 3.5-3.8.
-    Scikit-learn 0.23-0.24 required Python 3.6 or newer.
-    Scikit-learn 1.0 supported Python 3.7-3.10.
-    Scikit-learn 1.1, 1.2 and 1.3 support Python 3.8-3.12
-    Scikit-learn 1.4 requires Python 3.9 or newer.
+
+    Scikit-learn 0.21 supported Python 3.5—3.7.
+
+    Scikit-learn 0.22 supported Python 3.5—3.8.
+
+    Scikit-learn 0.23 required Python 3.6—3.8.
+
+    Scikit-learn 0.24 required Python 3.6—3.9.
+
+    Scikit-learn 1.0 supported Python 3.7—3.10.
+
+    Scikit-learn 1.1, 1.2 and 1.3 supported Python 3.8—3.12.
+
+    Scikit-learn 1.4 and 1.5 supported Python 3.9—3.12.
+
+    Scikit-learn 1.6 supported Python 3.9—3.13.
+
+    Scikit-learn 1.7 requires Python 3.10 or newer.
 
 .. _install_by_distribution:
 
@@ -229,14 +267,14 @@ Debian/Ubuntu
 
 The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
-implementations and bindings), ``python3-sklearn-doc`` (documentation).
+implementations and bindings), ``python-sklearn-doc`` (documentation).
 Note that scikit-learn requires Python 3, hence the need to use the `python3-`
 suffixed package names.
 Packages can be installed using ``apt-get``:
 
 .. prompt:: bash
 
-  sudo apt-get install python3-sklearn python3-sklearn-lib python3-sklearn-doc
+  sudo apt-get install python3-sklearn python3-sklearn-lib python-sklearn-doc
 
 
 Fedora
@@ -268,7 +306,7 @@ command:
 
 .. prompt:: bash
 
-  sudo port install py39-scikit-learn
+  sudo port install py312-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms

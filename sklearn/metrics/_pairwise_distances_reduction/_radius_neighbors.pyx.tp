@@ -17,7 +17,7 @@ from numbers import Real
 from scipy.sparse import issparse
 from ...utils import check_array, check_scalar
 from ...utils.fixes import _in_unstable_openblas_configuration
-from ... import _threadpool_controller
+from ...utils.parallel import _get_threadpool_controller
 
 cnp.import_array()
 
@@ -110,7 +110,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
-        with _threadpool_controller.limit(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             if pda.execute_in_parallel_on_Y:
                 pda._parallel_on_Y()
             else:

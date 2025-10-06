@@ -26,7 +26,8 @@ It can be concluded that the model with larger L is more likely.
 
 """
 
-# Author: Yoshihiro Uchida <nimbus1after2a1sun7shower@gmail.com>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sinusoidal data with noise

@@ -2,26 +2,30 @@
 This module defines export functions for decision trees.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Trevor Stephens <trev.stephens@gmail.com>
-#          Li Li <aiki.nogard@gmail.com>
-#          Giuseppe Vettigli <vettigli@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
 
 import numpy as np
 
-from ..base import is_classifier
-from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-from ..utils.validation import check_array, check_is_fitted
-from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
-from ._reingold_tilford import Tree, buchheim
+from sklearn.base import is_classifier
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    _criterion,
+    _tree,
+)
+from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_array, check_is_fitted
 
 
 def _color_brew(n):
@@ -266,7 +270,12 @@ class _BaseTreeExporter:
             self.colors["rgb"] = _color_brew(tree.n_classes[0])
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
-                self.colors["bounds"] = (np.min(-tree.impurity), np.max(-tree.impurity))
+                # The next line uses -max(impurity) instead of min(-impurity)
+                # and -min(impurity) instead of max(-impurity) on purpose, in
+                # order to avoid what looks like an issue with SIMD on non
+                # memory aligned arrays on 32bit OS. For more details see
+                # https://github.com/scikit-learn/scikit-learn/issues/27506.
+                self.colors["bounds"] = (-np.max(tree.impurity), -np.min(tree.impurity))
             elif tree.n_classes[0] == 1 and len(np.unique(tree.value)) != 1:
                 # Find max and min values in leaf nodes for regression
                 self.colors["bounds"] = (np.min(tree.value), np.max(tree.value))
@@ -309,6 +318,7 @@ class _BaseTreeExporter:
             # Always write node decision criteria, except for leaves
             if self.feature_names is not None:
                 feature = self.feature_names[tree.feature[node_id]]
+                feature = self.str_escape(feature)
             else:
                 feature = "x%s%s%s" % (
                     characters[1],
@@ -384,6 +394,7 @@ class _BaseTreeExporter:
                 node_string += "class = "
             if self.class_names is not True:
                 class_name = self.class_names[np.argmax(value)]
+                class_name = self.str_escape(class_name)
             else:
                 class_name = "y%s%s%s" % (
                     characters[1],
@@ -397,6 +408,9 @@ class _BaseTreeExporter:
             node_string = node_string[: -len(characters[4])]
 
         return node_string + characters[5]
+
+    def str_escape(self, string):
+        return string
 
 
 class _DOTTreeExporter(_BaseTreeExporter):
@@ -571,6 +585,10 @@ class _DOTTreeExporter(_BaseTreeExporter):
             if parent is not None:
                 # Add edge to parent
                 self.out_file.write("%d -> %d ;\n" % (parent, node_id))
+
+    def str_escape(self, string):
+        # override default escaping for graphviz
+        return string.replace('"', r"\"")
 
 
 class _MPLTreeExporter(_BaseTreeExporter):
@@ -890,6 +908,8 @@ def export_graphviz(
     'digraph Tree {...
     """
     if feature_names is not None:
+        if any((not isinstance(name, str) for name in feature_names)):
+            raise ValueError("All feature names must be strings.")
         feature_names = check_array(
             feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
@@ -1095,7 +1115,7 @@ def export_text(
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
-    export_text.report = ""
+    report = StringIO()
 
     def _add_leaf(value, weighted_n_node_samples, class_name, indent):
         val = ""
@@ -1111,9 +1131,9 @@ def export_text(
         else:
             val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
             val = "[" + "".join(val)[:-2] + "]"
-        export_text.report += value_fmt.format(indent, "", val)
+        report.write(value_fmt.format(indent, "", val))
 
-    def print_tree_recurse(node, depth):
+    def print_tree_recurse(report, node, depth):
         indent = ("|" + (" " * spacing)) * depth
         indent = indent[:-spacing] + "-" * spacing
 
@@ -1138,13 +1158,13 @@ def export_text(
                 name = feature_names_[node]
                 threshold = tree_.threshold[node]
                 threshold = "{1:.{0}f}".format(decimals, threshold)
-                export_text.report += right_child_fmt.format(indent, name, threshold)
-                export_text.report += info_fmt_left
-                print_tree_recurse(tree_.children_left[node], depth + 1)
+                report.write(right_child_fmt.format(indent, name, threshold))
+                report.write(info_fmt_left)
+                print_tree_recurse(report, tree_.children_left[node], depth + 1)
 
-                export_text.report += left_child_fmt.format(indent, name, threshold)
-                export_text.report += info_fmt_right
-                print_tree_recurse(tree_.children_right[node], depth + 1)
+                report.write(left_child_fmt.format(indent, name, threshold))
+                report.write(info_fmt_right)
+                print_tree_recurse(report, tree_.children_right[node], depth + 1)
             else:  # leaf
                 _add_leaf(value, weighted_n_node_samples, class_name, indent)
         else:
@@ -1153,7 +1173,7 @@ def export_text(
                 _add_leaf(value, weighted_n_node_samples, class_name, indent)
             else:
                 trunc_report = "truncated branch of depth %d" % subtree_depth
-                export_text.report += truncation_fmt.format(indent, trunc_report)
+                report.write(truncation_fmt.format(indent, trunc_report))
 
-    print_tree_recurse(0, 1)
-    return export_text.report
+    print_tree_recurse(report, 0, 1)
+    return report.getvalue()

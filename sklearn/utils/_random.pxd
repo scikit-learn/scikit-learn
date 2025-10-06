@@ -1,8 +1,7 @@
-# Authors: Arnaud Joly
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from ._typedefs cimport uint32_t
+from sklearn.utils._typedefs cimport uint32_t
 
 
 cdef inline uint32_t DEFAULT_SEED = 1

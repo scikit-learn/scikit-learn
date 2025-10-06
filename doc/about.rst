@@ -1,26 +1,28 @@
 .. _about:
 
+========
 About us
 ========
 
 History
--------
+=======
 
 This project was started in 2007 as a Google Summer of Code project by
-David Cournapeau. Later that year, Matthieu Brucher started work on
-this project as part of his thesis.
+David Cournapeau. Later that year, Matthieu Brucher started working on this project
+as part of his thesis.
 
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
 following an approximately 3-month cycle, and a thriving international
-community has been leading the development.
+community has been leading the development. As a result, INRIA holds the
+copyright over the work done by people who were employed by INRIA at the
+time of the contribution.
 
 Governance
-----------
+==========
 
-The decision making process and governance structure of scikit-learn is laid
-out in the :ref:`governance document <governance>`.
+The decision making process and governance structure of scikit-learn, like roles and responsibilities, is laid out in the :ref:`governance document <governance>`.
 
 .. The "author" anchors below is there to ensure that old html links (in
    the form of "about.html#author" still work)
@@ -28,13 +30,16 @@ out in the :ref:`governance document <governance>`.
 .. _authors:
 
 The people behind scikit-learn
-------------------------------
+==============================
 
-Scikit-learn is a community project, developed by a large group of
-people, all across the world. A few teams, listed below, have central
-roles, however a more complete list of contributors can be found `on
-github
+scikit-learn is a community project, developed by a large group of
+people, all across the world. A few core contributor teams, listed below, have
+central roles, however a more complete list of contributors can be found `on
+GitHub
 <https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
+
+Active Core Contributors
+------------------------
 
 Maintainers Team
 ................
@@ -79,12 +84,16 @@ The following people help with :ref:`communication around scikit-learn
 
 .. include:: communication_team.rst
 
-Emeritus Core Developers
-........................
+Emeritus Core Contributors
+--------------------------
+
+Emeritus Maintainers Team
+.........................
 
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
+.. rst-class:: grid-list-three-columns
 .. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
@@ -106,7 +115,7 @@ past:
 .. _citing-scikit-learn:
 
 Citing scikit-learn
--------------------
+===================
 
 If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
@@ -150,18 +159,19 @@ Bibtex entry::
     pages = {108--122},
   }
 
-Artwork
--------
+Branding & Logos
+================
 
-High quality PNG and SVG logos are available in the `doc/logos/
+High quality PNG and SVG logos are available in the `doc/logos
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
-source directory.
+source directory. The color palette is available in the
+`Branding Guide <https://github.com/scikit-learn/blog?tab=readme-ov-file#brand-standards>`_.
 
 .. image:: images/scikit-learn-logo-notext.png
   :align: center
 
 Funding
--------
+=======
 
 Scikit-learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
@@ -174,8 +184,9 @@ The project would like to thank the following funders.
 
   .. div:: text-box
 
-    `:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor, François Goupil,
-    Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and Stefanie Senger.
+    `:probabl. <https://probabl.ai>`_ employs Adrin Jalali, Arturo Amor,
+    François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève,
+    Olivier Grisel, and Stefanie Senger.
 
   .. div:: image-box
 
@@ -195,9 +206,6 @@ The project would like to thank the following funders.
 
 .. |dataiku| image:: images/dataiku.png
   :target: https://www.dataiku.com/
-
-.. |hf| image:: images/huggingface_logo-noborder.png
-  :target: https://huggingface.co
 
 .. |nvidia| image:: images/nvidia.png
   :target: https://www.nvidia.com
@@ -243,7 +251,7 @@ The project would like to thank the following funders.
       +----------+-----------+
       |  |axa|   |    |bnp|  |
       +----------+-----------+
-      | |nvidia| |    |hf|   |
+      |       |nvidia|       |
       +----------+-----------+
       |       |dataiku|      |
       +----------+-----------+
@@ -292,6 +300,35 @@ The project would like to thank the following funders.
 
 ...........
 
+.. |czi| image:: images/czi.png
+  :target: https://chanzuckerberg.com
+
+.. |wellcome| image:: images/wellcome-trust.png
+  :target: https://wellcome.org/
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
+    `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
+    `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
+    cycle 6.
+
+    It supports Lucy Liu and diversity & inclusion initiatives that will
+    be announced in the future.
+
+  .. div:: image-box
+
+    .. table::
+      :class: image-subtable
+
+      +----------+----------------+
+      |  |czi|   |    |wellcome|  |
+      +----------+----------------+
+
+...........
+
 .. div:: sk-text-image-grid-small
 
   .. div:: text-box
@@ -308,7 +345,7 @@ The project would like to thank the following funders.
 
 
 Past Sponsors
-.............
+-------------
 
 .. div:: sk-text-image-grid-small
 
@@ -455,7 +492,7 @@ Past Sponsors
 
   .. div:: image-box
 
-    .. image:: images/czi_logo.svg
+    .. image:: images/czi.png
       :target: https://chanzuckerberg.com
 
 ......................
@@ -499,6 +536,9 @@ the past:
 .. |aphp| image:: images/logo_APHP_text.png
   :target: https://aphp.fr/
 
+.. |hf| image:: images/huggingface_logo-noborder.png
+  :target: https://huggingface.co
+
 .. raw:: html
 
   <style>
@@ -536,64 +576,106 @@ the past:
 
     |aphp|
 
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
 
-Sprints
--------
+    |hf|
 
-- The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
-  Also some participants could attend thanks to the support of the `Alfred P.
-  Sloan Foundation <https://sloan.org>`_, the `Python Software
-  Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
-  <https://dataia.eu/en>`_.
 
-- The 2013 International Paris Sprint was made possible thanks to the support of
-  `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
-  <https://www.tinyclues.com/>`_, the `French Python Association
-  <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-  <https://www.frs-fnrs.be>`_.
+Donations in Kind
+-----------------
+The following organizations provide non-financial contributions to the
+scikit-learn project.
 
-- The 2011 International Granada sprint was made possible thanks to the support
-  of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
-  <https://www.tinyclues.com/>`_.
+.. raw:: html
 
+  <table cellspacing="0" cellpadding="8">
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Contribution</th>
+      </tr>
+    </thead>
+    <tbody>
+          <tr>
+        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
+        <td>Storage for our staging and nightly builds</td>
+      </tr>
+      <tr>
+        <td><a href="https://circleci.com/">CircleCI</a></td>
+        <td>CPU time on their Continuous Integration servers</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.github.com">GitHub</a></td>
+        <td>Teams account</td>
+      </tr>
+      <tr>
+        <td><a href="https://azure.microsoft.com/en-us/">Microsoft Azure</a></td>
+        <td>CPU time on their Continuous Integration servers</td>
+      </tr>
+    </tbody>
+  </table>
+
+Coding Sprints
+--------------
+
+The scikit-learn project has a long history of `open source coding sprints
+<https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
+events from 2010 to present day. There are scores of sponsors who contributed
+to costs which include venue, food, travel, developer time and more. See
+`scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for a full
+list of events.
 
 Donating to the project
------------------------
+=======================
 
-If you are interested in donating to the project or to one of our code-sprints,
-please donate via the `NumFOCUS Donations Page
-<https://numfocus.org/donate-to-scikit-learn>`_.
+If you have found scikit-learn to be useful in your work, research, or company, 
+please consider making a donation to the project commensurate with your resources.
+There are several options for making donations:
 
 .. raw:: html
 
   <p class="text-center">
     <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">
-      Help us, <strong>donate!</strong>
+      Donate via NumFOCUS
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://github.com/sponsors/scikit-learn">
+      Donate via GitHub Sponsors
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://causes.benevity.org/projects/433725">
+      Donate via Benevity
     </a>
   </p>
 
-All donations will be handled by `NumFOCUS <https://numfocus.org/>`_, a non-profit
-organization which is managed by a board of `Scipy community members
-<https://numfocus.org/board.html>`_. NumFOCUS's mission is to foster scientific
-computing software, in particular in Python. As a fiscal home of scikit-learn, it
-ensures that money is available when needed to keep the project funded and available
-while in compliance with tax regulations.
+**Donation Options:**
 
-The received donations for the scikit-learn project mostly will go towards covering
-travel-expenses for code sprints, as well as towards the organization budget of the
-project [#f1]_.
+* **NumFOCUS**: Donate via the `NumFOCUS Donations Page
+  <https://numfocus.org/donate-to-scikit-learn>`_, scikit-learn's fiscal sponsor.
+
+* **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
+  <https://github.com/sponsors/scikit-learn>`_.
+
+* **Benevity**: If your company uses scikit-learn, you can also support the
+  project through Benevity, a platform to manage employee donations. It is
+  widely used by hundreds of Fortune 1000 companies to streamline and scale
+  their social impact initiatives. If your company uses Benevity, you are
+  able to make a donation with a company match as high as 100%. Our project
+  ID is `433725 <https://causes.benevity.org/projects/433725>`_.
+
+All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
+non-profit organization based in Austin, Texas, USA. The NumFOCUS board
+consists of `SciPy community members <https://numfocus.org/board.html>`_. 
+Contributions are tax-deductible to the extent allowed by law.
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget, in particular, we might use some of
-  the donated funds to pay for other project expenses such as DNS,
-  hosting or continuous integration services.
+Contributions support the maintenance of the project, including development, 
+documentation, infrastructure and coding sprints. 
 
 
-Infrastructure support
-----------------------
-
-We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-us/>`_,
-`Cirrus Cl <https://cirrus-ci.org>`_, `CircleCl <https://circleci.com/>`_ for free CPU
-time on their Continuous Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_
-for the storage they provide for our staging and nightly builds.
+scikit-learn Swag
+-----------------
+Official scikit-learn swag is available for purchase at the `NumFOCUS online store
+<https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
+A portion of the proceeds from each sale goes to support the scikit-learn project.

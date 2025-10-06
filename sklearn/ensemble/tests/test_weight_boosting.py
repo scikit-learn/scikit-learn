@@ -9,7 +9,6 @@ from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
-from sklearn.ensemble._weight_boosting import _samme_proba
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
@@ -20,7 +19,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
-    assert_array_less,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
@@ -53,52 +51,18 @@ diabetes.data, diabetes.target = shuffle(
 )
 
 
-def test_samme_proba():
-    # Test the `_samme_proba` helper function.
-
-    # Define some example (bad) `predict_proba` output.
-    probs = np.array(
-        [[1, 1e-6, 0], [0.19, 0.6, 0.2], [-999, 0.51, 0.5], [1e-6, 1, 1e-9]]
-    )
-    probs /= np.abs(probs.sum(axis=1))[:, np.newaxis]
-
-    # _samme_proba calls estimator.predict_proba.
-    # Make a mock object so I can control what gets returned.
-    class MockEstimator:
-        def predict_proba(self, X):
-            assert_array_equal(X.shape, probs.shape)
-            return probs
-
-    mock = MockEstimator()
-
-    samme_proba = _samme_proba(mock, 3, np.ones_like(probs))
-
-    assert_array_equal(samme_proba.shape, probs.shape)
-    assert np.isfinite(samme_proba).all()
-
-    # Make sure that the correct elements come out as smallest --
-    # `_samme_proba` should preserve the ordering in each example.
-    assert_array_equal(np.argmin(samme_proba, axis=1), [2, 0, 0, 2])
-    assert_array_equal(np.argmax(samme_proba, axis=1), [0, 1, 1, 1])
-
-
 def test_oneclass_adaboost_proba():
     # Test predict_proba robustness for one class label input.
     # In response to issue #7501
     # https://github.com/scikit-learn/scikit-learn/issues/7501
     y_t = np.ones(len(X))
-    clf = AdaBoostClassifier(algorithm="SAMME").fit(X, y_t)
+    clf = AdaBoostClassifier().fit(X, y_t)
     assert_array_almost_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_classification_toy(algorithm):
+def test_classification_toy():
     # Check classification on a toy dataset.
-    clf = AdaBoostClassifier(algorithm=algorithm, random_state=0)
+    clf = AdaBoostClassifier(random_state=0)
     clf.fit(X, y_class)
     assert_array_equal(clf.predict(T), y_t_class)
     assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
@@ -113,42 +77,26 @@ def test_regression_toy():
     assert_array_equal(clf.predict(T), y_t_regr)
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 def test_iris():
     # Check consistency on dataset iris.
     classes = np.unique(iris.target)
-    clf_samme = prob_samme = None
 
-    for alg in ["SAMME", "SAMME.R"]:
-        clf = AdaBoostClassifier(algorithm=alg)
-        clf.fit(iris.data, iris.target)
+    clf = AdaBoostClassifier()
+    clf.fit(iris.data, iris.target)
 
-        assert_array_equal(classes, clf.classes_)
-        proba = clf.predict_proba(iris.data)
-        if alg == "SAMME":
-            clf_samme = clf
-            prob_samme = proba
-        assert proba.shape[1] == len(classes)
-        assert clf.decision_function(iris.data).shape[1] == len(classes)
+    assert_array_equal(classes, clf.classes_)
+    proba = clf.predict_proba(iris.data)
 
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with algorithm %s and score = %f" % (alg, score)
+    assert proba.shape[1] == len(classes)
+    assert clf.decision_function(iris.data).shape[1] == len(classes)
 
-        # Check we used multiple estimators
-        assert len(clf.estimators_) > 1
-        # Check for distinct random states (see issue #7408)
-        assert len(set(est.random_state for est in clf.estimators_)) == len(
-            clf.estimators_
-        )
+    score = clf.score(iris.data, iris.target)
+    assert score > 0.9, f"Failed with {score = }"
 
-    # Somewhat hacky regression test: prior to
-    # ae7adc880d624615a34bafdb1d75ef67051b8200,
-    # predict_proba returned SAMME.R values for SAMME.
-    clf_samme.algorithm = "SAMME.R"
-    assert_array_less(0, np.abs(clf_samme.predict_proba(iris.data) - prob_samme))
+    # Check we used multiple estimators
+    assert len(clf.estimators_) > 1
+    # Check for distinct random states (see issue #7408)
+    assert len(set(est.random_state for est in clf.estimators_)) == len(clf.estimators_)
 
 
 @pytest.mark.parametrize("loss", ["linear", "square", "exponential"])
@@ -165,18 +113,13 @@ def test_diabetes(loss):
     assert len(set(est.random_state for est in reg.estimators_)) == len(reg.estimators_)
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_staged_predict(algorithm):
+def test_staged_predict():
     # Check staged predictions.
     rng = np.random.RandomState(0)
     iris_weights = rng.randint(10, size=iris.target.shape)
     diabetes_weights = rng.randint(10, size=diabetes.target.shape)
 
-    clf = AdaBoostClassifier(algorithm=algorithm, n_estimators=10)
+    clf = AdaBoostClassifier(n_estimators=10)
     clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
     predictions = clf.predict(iris.data)
@@ -222,7 +165,6 @@ def test_gridsearch():
     parameters = {
         "n_estimators": (1, 2),
         "estimator__max_depth": (1, 2),
-        "algorithm": ("SAMME", "SAMME.R"),
     }
     clf = GridSearchCV(boost, parameters)
     clf.fit(iris.data, iris.target)
@@ -234,25 +176,20 @@ def test_gridsearch():
     clf.fit(diabetes.data, diabetes.target)
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 def test_pickle():
     # Check pickability.
     import pickle
 
     # Adaboost classifier
-    for alg in ["SAMME", "SAMME.R"]:
-        obj = AdaBoostClassifier(algorithm=alg)
-        obj.fit(iris.data, iris.target)
-        score = obj.score(iris.data, iris.target)
-        s = pickle.dumps(obj)
+    obj = AdaBoostClassifier()
+    obj.fit(iris.data, iris.target)
+    score = obj.score(iris.data, iris.target)
+    s = pickle.dumps(obj)
 
-        obj2 = pickle.loads(s)
-        assert type(obj2) == obj.__class__
-        score2 = obj2.score(iris.data, iris.target)
-        assert score == score2
+    obj2 = pickle.loads(s)
+    assert type(obj2) == obj.__class__
+    score2 = obj2.score(iris.data, iris.target)
+    assert score == score2
 
     # Adaboost regressor
     obj = AdaBoostRegressor(random_state=0)
@@ -266,10 +203,6 @@ def test_pickle():
     assert score == score2
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 def test_importances():
     # Check variable importances.
     X, y = datasets.make_classification(
@@ -282,14 +215,13 @@ def test_importances():
         random_state=1,
     )
 
-    for alg in ["SAMME", "SAMME.R"]:
-        clf = AdaBoostClassifier(algorithm=alg)
+    clf = AdaBoostClassifier()
 
-        clf.fit(X, y)
-        importances = clf.feature_importances_
+    clf.fit(X, y)
+    importances = clf.feature_importances_
 
-        assert importances.shape[0] == 10
-        assert (importances[:3, np.newaxis] >= importances[3:]).all()
+    assert importances.shape[0] == 10
+    assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
 def test_adaboost_classifier_sample_weight_error():
@@ -306,10 +238,10 @@ def test_estimator():
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
-    clf = AdaBoostClassifier(RandomForestClassifier(), algorithm="SAMME")
+    clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC())
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -323,14 +255,14 @@ def test_estimator():
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC())
     with pytest.raises(ValueError, match="worse than random"):
         clf.fit(X_fail, y_fail)
 
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0)
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
@@ -375,14 +307,12 @@ def test_sparse_classification(sparse_container, expected_internal_type):
     sparse_classifier = AdaBoostClassifier(
         estimator=CustomSVC(probability=True),
         random_state=1,
-        algorithm="SAMME",
     ).fit(X_train_sparse, y_train)
 
     # Trained on dense format
     dense_classifier = AdaBoostClassifier(
         estimator=CustomSVC(probability=True),
         random_state=1,
-        algorithm="SAMME",
     ).fit(X_train, y_train)
 
     # predict
@@ -530,9 +460,7 @@ def test_multidimensional_X():
     yc = rng.choice([0, 1], 51)
     yr = rng.randn(51)
 
-    boost = AdaBoostClassifier(
-        DummyClassifier(strategy="most_frequent"), algorithm="SAMME"
-    )
+    boost = AdaBoostClassifier(DummyClassifier(strategy="most_frequent"))
     boost.fit(X, yc)
     boost.predict(X)
     boost.predict_proba(X)
@@ -542,15 +470,10 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_adaboostclassifier_without_sample_weight(algorithm):
+def test_adaboostclassifier_without_sample_weight():
     X, y = iris.data, iris.target
     estimator = NoSampleWeightWrapper(DummyClassifier())
-    clf = AdaBoostClassifier(estimator=estimator, algorithm=algorithm)
+    clf = AdaBoostClassifier(estimator=estimator)
     err_msg = "{} doesn't support sample_weight".format(estimator.__class__.__name__)
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
@@ -594,19 +517,14 @@ def test_adaboostregressor_sample_weight():
     assert score_no_outlier == pytest.approx(score_with_weight)
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_adaboost_consistent_predict(algorithm):
+def test_adaboost_consistent_predict():
     # check that predict_proba and predict give consistent results
     # regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/14084
     X_train, X_test, y_train, y_test = train_test_split(
         *datasets.load_digits(return_X_y=True), random_state=42
     )
-    model = AdaBoostClassifier(algorithm=algorithm, random_state=42)
+    model = AdaBoostClassifier(random_state=42)
     model.fit(X_train, y_train)
 
     assert_array_equal(
@@ -642,19 +560,12 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     y = rng.choice([0, 1], size=1000)
     sample_weight = np.ones_like(y) * 1e-263
     tree = DecisionTreeClassifier(max_depth=10, random_state=12)
-    ada_model = AdaBoostClassifier(
-        estimator=tree, n_estimators=20, algorithm="SAMME", random_state=12
-    )
+    ada_model = AdaBoostClassifier(estimator=tree, n_estimators=20, random_state=12)
     ada_model.fit(X, y, sample_weight=sample_weight)
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
 
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default; also re-write test to
-# only consider "SAMME"
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_adaboost_decision_function(algorithm, global_random_seed):
+def test_adaboost_decision_function(global_random_seed):
     """Check that the decision function respects the symmetric constraint for weak
     learners.
 
@@ -665,26 +576,22 @@ def test_adaboost_decision_function(algorithm, global_random_seed):
     X, y = datasets.make_classification(
         n_classes=n_classes, n_clusters_per_class=1, random_state=global_random_seed
     )
-    clf = AdaBoostClassifier(
-        n_estimators=1, random_state=global_random_seed, algorithm=algorithm
-    ).fit(X, y)
+    clf = AdaBoostClassifier(n_estimators=1, random_state=global_random_seed).fit(X, y)
 
     y_score = clf.decision_function(X)
     assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
 
-    if algorithm == "SAMME":
-        # With a single learner, we expect to have a decision function in
-        # {1, - 1 / (n_classes - 1)}.
-        assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
+    # With a single learner, we expect to have a decision function in
+    # {1, - 1 / (n_classes - 1)}.
+    assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
 
     # We can assert the same for staged_decision_function since we have a single learner
     for y_score in clf.staged_decision_function(X):
         assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
 
-        if algorithm == "SAMME":
-            # With a single learner, we expect to have a decision function in
-            # {1, - 1 / (n_classes - 1)}.
-            assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
+        # With a single learner, we expect to have a decision function in
+        # {1, - 1 / (n_classes - 1)}.
+        assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
 
     clf.set_params(n_estimators=5).fit(X, y)
 
@@ -693,13 +600,3 @@ def test_adaboost_decision_function(algorithm, global_random_seed):
 
     for y_score in clf.staged_decision_function(X):
         assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
-
-
-# TODO(1.6): remove
-def test_deprecated_samme_r_algorithm():
-    adaboost_clf = AdaBoostClassifier(n_estimators=1)
-    with pytest.warns(
-        FutureWarning,
-        match=re.escape("The SAMME.R algorithm (the default) is deprecated"),
-    ):
-        adaboost_clf.fit(X, y_class)

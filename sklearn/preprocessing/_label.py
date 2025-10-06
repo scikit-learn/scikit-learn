@@ -1,10 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Hamzeh Alsalhi <ha258@cornell.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools
@@ -15,20 +10,20 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import column_or_1d
-from ..utils._array_api import _setdiff1d, device, get_namespace
-from ..utils._encode import _encode, _unique
-from ..utils._param_validation import Interval, validate_params
-from ..utils.multiclass import type_of_target, unique_labels
-from ..utils.sparsefuncs import min_max_axis
-from ..utils.validation import _num_samples, check_array, check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import column_or_1d
+from sklearn.utils._array_api import device, get_namespace, xpx
+from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.sparsefuncs import min_max_axis
+from sklearn.utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
-    "label_binarize",
     "LabelBinarizer",
     "LabelEncoder",
     "MultiLabelBinarizer",
+    "label_binarize",
 ]
 
 
@@ -75,11 +70,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
+    [np.str_('amsterdam'), np.str_('paris'), np.str_('tokyo')]
     >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
+    [np.str_('tokyo'), np.str_('tokyo'), np.str_('paris')]
     """
 
     def fit(self, y):
@@ -148,7 +143,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y_original : ndarray of shape (n_samples,)
             Original encoding.
         """
         check_is_fitted(self)
@@ -158,9 +153,9 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         if _num_samples(y) == 0:
             return xp.asarray([])
 
-        diff = _setdiff1d(
-            ar1=y,
-            ar2=xp.arange(self.classes_.shape[0], device=device(y)),
+        diff = xpx.setdiff1d(
+            y,
+            xp.arange(self.classes_.shape[0], device=device(y)),
             xp=xp,
         )
         if diff.shape[0]:
@@ -168,8 +163,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         y = xp.asarray(y)
         return xp.take(self.classes_, y, axis=0)
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"], "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
@@ -390,7 +389,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         Returns
         -------
-        y : {ndarray, sparse matrix} of shape (n_samples,)
+        y_original : {ndarray, sparse matrix} of shape (n_samples,)
             Target values. Sparse matrix will be of CSR format.
 
         Notes
@@ -420,8 +419,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         return y_inv
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 @validate_params(
@@ -598,7 +600,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if y_type == "binary":
         if sparse_output:
-            Y = Y.getcol(-1)
+            Y = Y[:, [-1]]
         else:
             Y = Y[:, -1].reshape((-1, 1))
 
@@ -923,7 +925,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
 
         Returns
         -------
-        y : list of tuples
+        y_original : list of tuples
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
@@ -954,5 +956,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
                 )
             return [tuple(self.classes_.compress(indicators)) for indicators in yt]
 
-    def _more_tags(self):
-        return {"X_types": ["2dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.target_tags.two_d_labels = True
+        return tags

@@ -1,19 +1,21 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from abc import abstractmethod
-from copy import deepcopy
 from math import ceil, floor, log
 from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import _fit_context, is_classifier
-from ..metrics._scorer import get_scorer_names
-from ..utils import resample
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
-from . import ParameterGrid, ParameterSampler
-from ._search import BaseSearchCV
-from ._split import _yields_constant_splits, check_cv
+from sklearn.base import _fit_context, is_classifier
+from sklearn.metrics._scorer import get_scorer_names
+from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._split import _yields_constant_splits, check_cv
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import _num_samples, validate_data
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 
@@ -159,7 +161,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = self._validate_data(X="no_validation", y=y)
+                    y = validate_data(self, X="no_validation", y=y)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
@@ -368,18 +370,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
-    def _more_tags(self):
-        tags = deepcopy(super()._more_tags())
-        tags["_xfail_checks"].update(
-            {
-                "check_fit2d_1sample": (
-                    "Fail during parameter check since min/max resources requires"
-                    " more samples"
-                ),
-            }
-        )
-        return tags
-
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
@@ -441,11 +431,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-              problem
-            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-              classification problem
-            - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
+          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+            classification problem
+          - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -489,18 +478,34 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : str, callable, or None, default=None
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-        If None, the estimator's score method is used.
+    scoring : str or callable, default=None
+        Scoring method to use to evaluate the predictions on the test set.
 
-    refit : bool, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
+
+    refit : bool or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_params_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``HalvingGridSearchCV`` instance.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -579,6 +584,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -665,8 +672,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_grid"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
@@ -785,11 +790,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-              problem
-            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-              classification problem
-            - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
+          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+            classification problem
+          - ``1`` when ``resource != 'n_samples'``
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -833,18 +837,34 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : str, callable, or None, default=None
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-        If None, the estimator's score method is used.
+    scoring : str or callable, default=None
+        Scoring method to use to evaluate the predictions on the test set.
 
-    refit : bool, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
+
+    refit : bool or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_params_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``HalvingRandomSearchCV`` instance.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -925,6 +945,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -1015,8 +1037,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

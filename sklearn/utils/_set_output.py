@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import importlib
 from functools import wraps
 from typing import Protocol, runtime_checkable
@@ -5,8 +8,8 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from scipy.sparse import issparse
 
-from .._config import get_config
-from ._available_if import available_if
+from sklearn._config import get_config
+from sklearn.utils._available_if import available_if
 
 
 def check_library_installed(library):
@@ -121,7 +124,7 @@ class PandasAdapter:
             # because `list` exposes an `index` attribute.
             if isinstance(X_output, pd.DataFrame):
                 index = X_output.index
-            elif isinstance(X_original, pd.DataFrame):
+            elif isinstance(X_original, (pd.DataFrame, pd.Series)):
                 index = X_original.index
             else:
                 index = None
@@ -441,10 +444,8 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
     """
-    set_output_for_transform = (
-        hasattr(estimator, "transform")
-        or hasattr(estimator, "fit_transform")
-        and transform is not None
+    set_output_for_transform = hasattr(estimator, "transform") or (
+        hasattr(estimator, "fit_transform") and transform is not None
     )
     if not set_output_for_transform:
         # If estimator can not transform, then `set_output` does not need to be

@@ -8,6 +8,9 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will start by simulating moon shaped data (where the ideal separation
 # between classes is non-linear), adding to it a moderate degree of noise.
@@ -227,8 +230,8 @@ differences = model_1_scores - model_2_scores
 
 n = differences.shape[0]  # number of test sets
 df = n - 1
-n_train = len(list(cv.split(X, y))[0][0])
-n_test = len(list(cv.split(X, y))[0][1])
+n_train = len(next(iter(cv.split(X, y)))[0])
+n_test = len(next(iter(cv.split(X, y)))[1])
 
 t_stat, p_val = compute_corrected_ttest(differences, df, n_train, n_test)
 print(f"Corrected t-value: {t_stat:.3f}\nCorrected p-value: {p_val:.3f}")
@@ -419,7 +422,7 @@ cred_int_df
 # As shown in the table, there is a 50% probability that the true mean
 # difference between models will be between 0.000977 and 0.019023, 70%
 # probability that it will be between -0.005422 and 0.025422, and 95%
-# probability that it will be between -0.016445	and 0.036445.
+# probability that it will be between -0.016445 and 0.036445.
 
 # %%
 # Pairwise comparison of all models: frequentist approach

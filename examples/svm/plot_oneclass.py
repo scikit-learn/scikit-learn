@@ -11,6 +11,9 @@ classifying new data as similar or different to the training set.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import numpy as np
 

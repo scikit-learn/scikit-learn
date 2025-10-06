@@ -34,9 +34,8 @@ This is not easily possible for the case of the kernelized SVM.
 # ---------------------------------------------------
 
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Standard scientific Python imports
 from time import time

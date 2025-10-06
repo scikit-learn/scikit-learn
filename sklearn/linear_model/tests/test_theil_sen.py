@@ -2,8 +2,9 @@
 Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 import re
 import sys
@@ -257,6 +258,7 @@ def test_subsamples():
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 9)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbosity():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Theil-Sen can be verbose

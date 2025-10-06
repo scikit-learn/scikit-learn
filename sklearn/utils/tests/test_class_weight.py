@@ -129,14 +129,32 @@ def test_compute_class_weight_balanced_negative():
     assert len(cw) == len(classes)
     assert_array_almost_equal(cw, np.array([1.0, 1.0, 1.0]))
 
-    # Test with unbalanced class labels.
-    y = np.asarray([-1, 0, 0, -2, -2, -2])
 
-    cw = compute_class_weight("balanced", classes=classes, y=y)
-    assert len(cw) == len(classes)
-    class_counts = np.bincount(y + 2)
-    assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
-    assert_array_almost_equal(cw, [2.0 / 3, 2.0, 1.0])
+def test_compute_class_weight_balanced_sample_weight_equivalence():
+    # Test with unbalanced and negative class labels for
+    # equivalence between repeated and weighted samples
+
+    classes = np.array([-2, -1, 0])
+    y = np.asarray([-1, -1, 0, 0, -2, -2])
+    sw = np.asarray([1, 0, 1, 1, 1, 2])
+
+    y_rep = np.repeat(y, sw, axis=0)
+
+    class_weights_weighted = compute_class_weight(
+        "balanced", classes=classes, y=y, sample_weight=sw
+    )
+    class_weights_repeated = compute_class_weight("balanced", classes=classes, y=y_rep)
+    assert len(class_weights_weighted) == len(classes)
+    assert len(class_weights_repeated) == len(classes)
+
+    class_counts_weighted = np.bincount(y + 2, weights=sw)
+    class_counts_repeated = np.bincount(y_rep + 2)
+
+    assert np.dot(class_weights_weighted, class_counts_weighted) == pytest.approx(
+        np.dot(class_weights_repeated, class_counts_repeated)
+    )
+
+    assert_allclose(class_weights_weighted, class_weights_repeated)
 
 
 def test_compute_class_weight_balanced_unordered():

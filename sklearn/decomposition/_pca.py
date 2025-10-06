@@ -1,32 +1,25 @@
 """Principal Component Analysis."""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-#         Michael Eickenberg <michael.eickenberg@inria.fr>
-#         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from math import log, sqrt
+from math import lgamma, log, sqrt
 from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
-from scipy.special import gammaln
 
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, get_namespace
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
-from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from ..utils.validation import check_is_fitted
-from ._base import _BasePCA
+from sklearn.base import _fit_context
+from sklearn.decomposition._base import _BasePCA
+from sklearn.utils import check_random_state
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
+from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -77,8 +70,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     pu = -rank * log(2.0)
     for i in range(1, rank + 1):
         pu += (
-            gammaln((n_features - i + 1) / 2.0)
-            - log(xp.pi) * (n_features - i + 1) / 2.0
+            lgamma((n_features - i + 1) / 2.0) - log(xp.pi) * (n_features - i + 1) / 2.0
         )
 
     pl = xp.sum(xp.log(spectrum[:rank]))
@@ -361,25 +353,25 @@ class PCA(_BasePCA):
     >>> pca.fit(X)
     PCA(n_components=2)
     >>> print(pca.explained_variance_ratio_)
-    [0.9924... 0.0075...]
+    [0.9924 0.0075]
     >>> print(pca.singular_values_)
-    [6.30061... 0.54980...]
+    [6.30061 0.54980]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)
     PCA(n_components=2, svd_solver='full')
     >>> print(pca.explained_variance_ratio_)
-    [0.9924... 0.00755...]
+    [0.9924 0.00755]
     >>> print(pca.singular_values_)
-    [6.30061... 0.54980...]
+    [6.30061 0.54980]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
     PCA(n_components=1, svd_solver='arpack')
     >>> print(pca.explained_variance_ratio_)
-    [0.99244...]
+    [0.99244]
     >>> print(pca.singular_values_)
-    [6.30061...]
+    [6.30061]
     """
 
     _parameter_constraints: dict = {
@@ -508,9 +500,11 @@ class PCA(_BasePCA):
         # the input data contrary to the other solvers.
         # The copy will happen
         # later, only if needed, once the solver negotiation below is done.
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=[xp.float64, xp.float32],
+            force_writeable=True,
             accept_sparse=("csr", "csc"),
             ensure_2d=True,
             copy=False,
@@ -661,23 +655,15 @@ class PCA(_BasePCA):
             # side='right' ensures that number of features selected
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
-            if is_array_api_compliant:
-                # Convert to numpy as xp.cumsum and xp.searchsorted are not
-                # part of the Array API standard yet:
-                #
-                # https://github.com/data-apis/array-api/issues/597
-                # https://github.com/data-apis/array-api/issues/688
-                #
-                # Furthermore, it's not always safe to call them for namespaces
-                # that already implement them: for instance as
-                # cupy.searchsorted does not accept a float as second argument.
-                explained_variance_ratio_np = _convert_to_numpy(
-                    explained_variance_ratio_, xp=xp
+            ratio_cumsum = xp.cumulative_sum(explained_variance_ratio_)
+            n_components = (
+                xp.searchsorted(
+                    ratio_cumsum,
+                    xp.asarray(n_components, device=device(ratio_cumsum)),
+                    side="right",
                 )
-            else:
-                explained_variance_ratio_np = explained_variance_ratio_
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_np)
-            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+                + 1
+            )
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
@@ -760,7 +746,7 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
-            U, S, Vt = randomized_svd(
+            U, S, Vt = _randomized_svd(
                 X_centered,
                 n_components=n_components,
                 n_oversamples=self.n_oversamples,
@@ -820,7 +806,7 @@ class PCA(_BasePCA):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
+        X = validate_data(self, X, dtype=[xp.float64, xp.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
@@ -851,5 +837,16 @@ class PCA(_BasePCA):
         xp, _ = get_namespace(X)
         return float(xp.mean(self.score_samples(X)))
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32], "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        solver = getattr(self, "_fit_svd_solver", self.svd_solver)
+        tags.array_api_support = solver not in ["arpack", "randomized"] or (
+            solver == "randomized" and self.power_iteration_normalizer == "QR"
+        )
+        tags.input_tags.sparse = self.svd_solver in (
+            "auto",
+            "arpack",
+            "covariance_eigh",
+        )
+        return tags

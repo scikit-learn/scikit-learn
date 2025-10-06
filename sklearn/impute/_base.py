@@ -1,6 +1,5 @@
-# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
-#          Sergey Feldman <sergeyfeldman@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -12,13 +11,19 @@ import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._mask import _get_mask
-from ..utils._missing import is_pandas_na, is_scalar_nan
-from ..utils._param_validation import MissingValues, StrOptions
-from ..utils.fixes import _mode
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
+from sklearn.utils._param_validation import MissingValues, StrOptions
+from sklearn.utils.fixes import _mode
+from sklearn.utils.sparsefuncs import _get_median
+from sklearn.utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _check_n_features,
+    check_is_fitted,
+    validate_data,
+)
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -33,6 +38,20 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _safe_min(items):
+    """Compute the minimum of a list of potentially non-comparable values.
+
+    If values cannot be directly compared due to type incompatibility, the object with
+    the lowest string representation is returned.
+    """
+    try:
+        return min(items)
+    except TypeError as e:
+        if "'<' not supported between" in str(e):
+            return min(items, key=lambda x: (str(type(x)), str(x)))
+        raise  # pragma: no cover
+
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -45,10 +64,12 @@ def _most_frequent(array, extra_value, n_repeat):
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
             # tie breaking similarly to scipy.stats.mode
-            most_frequent_value = min(
-                value
-                for value, count in counter.items()
-                if count == most_frequent_count
+            most_frequent_value = _safe_min(
+                [
+                    value
+                    for value, count in counter.items()
+                    if count == most_frequent_count
+                ]
             )
         else:
             mode = _mode(array)
@@ -67,7 +88,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return most_frequent_value
     elif most_frequent_count == n_repeat:
         # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        return _safe_min([most_frequent_value, extra_value])
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
@@ -140,8 +161,10 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         indicator_names = self.indicator_.get_feature_names_out(input_features)
         return np.concatenate([names, indicator_names])
 
-    def _more_tags(self):
-        return {"allow_nan": is_scalar_nan(self.missing_values)}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = is_scalar_nan(self.missing_values)
+        return tags
 
 
 class SimpleImputer(_BaseImputer):
@@ -324,17 +347,19 @@ class SimpleImputer(_BaseImputer):
             dtype = self._fit_dtype
 
         if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         else:
-            force_all_finite = True
+            ensure_all_finite = True
 
         try:
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 reset=in_fit,
                 accept_sparse="csc",
                 dtype=dtype,
-                force_all_finite=force_all_finite,
+                force_writeable=True if not in_fit else None,
+                ensure_all_finite=ensure_all_finite,
                 copy=self.copy,
             )
         except ValueError as ve:
@@ -377,16 +402,18 @@ class SimpleImputer(_BaseImputer):
                 fill_value_dtype = type(self.fill_value)
                 err_msg = (
                     f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that both dtypes are of the same kind."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "If fill_value is a Python scalar, instead pass  a numpy scalar "
+                    "(e.g. fill_value=np.uint8(0) if your data is of type np.uint8). "
+                    "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
-                fill_value_dtype = self.statistics_.dtype
+                fill_value_dtype = self._fill_dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that the dtypes of the input data is of the same kind between "
-                    "fit and transform."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "Make sure that the dtypes of the input data are of the same kind "
+                    "between fit and transform."
                 )
             else:
                 # By default, fill_value=None, and the replacement is always
@@ -429,6 +456,8 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
+        self._fill_dtype = X.dtype
+
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(
                 X, self.strategy, self.missing_values, fill_value
@@ -450,8 +479,14 @@ class SimpleImputer(_BaseImputer):
 
         if strategy == "constant":
             # for constant strategy, self.statistics_ is used to store
-            # fill_value in each column
+            # fill_value in each column, or np.nan for columns to drop
             statistics.fill(fill_value)
+
+            if not self.keep_empty_features:
+                for i in range(missing_mask.shape[1]):
+                    if all(missing_mask[:, i].data):
+                        statistics[i] = np.nan
+
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i] : X.indptr[i + 1]]
@@ -540,8 +575,15 @@ class SimpleImputer(_BaseImputer):
         # Constant
         elif strategy == "constant":
             # for constant strategy, self.statistcs_ is used to store
-            # fill_value in each column
-            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+            # fill_value in each column, or np.nan for columns to drop
+            statistics = np.full(X.shape[1], fill_value, dtype=np.object_)
+
+            if not self.keep_empty_features:
+                for i in range(missing_mask.shape[1]):
+                    if missing_mask[:, i].all():
+                        statistics[i] = np.nan
+
+            return statistics
 
         # Custom
         elif isinstance(strategy, Callable):
@@ -579,14 +621,16 @@ class SimpleImputer(_BaseImputer):
         missing_mask = _get_mask(X, self.missing_values)
 
         # Decide whether to keep missing features
-        if self.strategy == "constant" or self.keep_empty_features:
-            valid_statistics = statistics
+        if self.keep_empty_features:
+            valid_statistics = statistics.astype(self._fill_dtype, copy=False)
             valid_statistics_indexes = None
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
             valid_mask = np.logical_not(invalid_mask)
-            valid_statistics = statistics[valid_mask]
+            valid_statistics = statistics[valid_mask].astype(
+                self._fill_dtype, copy=False
+            )
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
@@ -620,7 +664,7 @@ class SimpleImputer(_BaseImputer):
                     np.arange(len(X.indptr) - 1, dtype=int), np.diff(X.indptr)
                 )[mask]
 
-                X.data[mask] = valid_statistics[indexes].astype(X.dtype, copy=False)
+                X.data[mask] = valid_statistics[indexes]
         else:
             # use mask computed before eliminating invalid mask
             if valid_statistics_indexes is None:
@@ -699,11 +743,13 @@ class SimpleImputer(_BaseImputer):
         X_original[full_mask] = self.missing_values
         return X_original
 
-    def _more_tags(self):
-        return {
-            "allow_nan": is_pandas_na(self.missing_values)
-            or is_scalar_nan(self.missing_values)
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
+            self.missing_values
+        )
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -866,7 +912,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             imputer_mask.eliminate_zeros()
 
             if self.features == "missing-only":
-                n_missing = imputer_mask.getnnz(axis=0)
+                # count number of True values in each row.
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -893,15 +940,16 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     def _validate_input(self, X, in_fit):
         if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
+            ensure_all_finite = True
         else:
-            force_all_finite = "allow-nan"
-        X = self._validate_data(
+            ensure_all_finite = "allow-nan"
+        X = validate_data(
+            self,
             X,
             reset=in_fit,
             accept_sparse=("csc", "csr"),
             dtype=None,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
@@ -957,7 +1005,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=True)
         else:
             # only create `n_features_in_` in the precomputed case
-            self._check_n_features(X, reset=True)
+            _check_n_features(self, X, reset=True)
 
         self._n_features = X.shape[1]
 
@@ -1086,9 +1134,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             dtype=object,
         )
 
-    def _more_tags(self):
-        return {
-            "allow_nan": True,
-            "X_types": ["2darray", "string"],
-            "preserves_dtype": [],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.input_tags.string = True
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = []
+        return tags

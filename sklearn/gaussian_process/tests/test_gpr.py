@@ -1,8 +1,7 @@
 """Testing for Gaussian process regression"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 import sys
@@ -395,8 +394,9 @@ def test_custom_optimizer(kernel):
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
-        theta_opt, func_min = initial_theta, obj_func(
-            initial_theta, eval_gradient=False
+        theta_opt, func_min = (
+            initial_theta,
+            obj_func(initial_theta, eval_gradient=False),
         )
         for _ in range(50):
             theta = np.atleast_1d(
@@ -847,3 +847,15 @@ def test_gpr_predict_input_not_modified():
     _, _ = gpr.predict(X2, return_std=True)
 
     assert_allclose(X2, X2_copy)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_gpr_predict_no_cov_no_std_return(kernel):
+    """
+    Check that only y_mean is returned when return_cov=False and
+    return_std=False.
+    """
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred = gpr.predict(X, return_cov=False, return_std=False)
+
+    assert_allclose(y_pred, y)

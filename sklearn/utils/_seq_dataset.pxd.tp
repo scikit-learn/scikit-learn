@@ -9,7 +9,7 @@ Template file for easily generate fused types consistent code using Tempita
 Generated file: _seq_dataset.pxd
 
 Each class is duplicated for all dtypes (float and double). The keywords
-between double braces are substituted in setup.py.
+between double braces are substituted during the build.
 """
 
 # name_suffix, c_type
@@ -19,7 +19,7 @@ dtypes = [('64', 'float64_t'),
 }}
 """Dataset abstractions for sequential data access."""
 
-from ._typedefs cimport float32_t, float64_t, intp_t, uint32_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint32_t
 
 # SequentialDataset and its two concrete subclasses are (optionally randomized)
 # iterators over the rows of a matrix X and corresponding target values y.

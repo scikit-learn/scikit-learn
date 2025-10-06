@@ -112,20 +112,21 @@ properties of these support vectors can be found in attributes
 
 * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`
 * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _svm_multi_class:
 
 Multi-class classification
 --------------------------
 
-:class:`SVC` and :class:`NuSVC` implement the "one-versus-one"
-approach for multi-class classification. In total,
+:class:`SVC` and :class:`NuSVC` implement the "one-versus-one" ("ovo")
+approach for multi-class classification, which constructs
 ``n_classes * (n_classes - 1) / 2``
-classifiers are constructed and each one trains data from two classes.
-To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to monotonically transform the
-results of the "one-versus-one" classifiers to a "one-vs-rest" decision
-function of shape ``(n_samples, n_classes)``.
+classifiers, each trained on data from two classes. Internally, the solver
+always uses this "ovo" strategy to train the models. However, by default, the
+`decision_function_shape` parameter is set to `"ovr"` ("one-vs-rest"), to have
+a consistent interface with other classifiers by monotonically transforming the "ovo"
+decision function into an "ovr" decision function of shape ``(n_samples, n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
@@ -140,7 +141,7 @@ function of shape ``(n_samples, n_classes)``.
     >>> dec.shape[1] # 4 classes
     4
 
-On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
+On the other hand, :class:`LinearSVC` implements a "one-vs-rest" ("ovr")
 multi-class strategy, thus training `n_classes` models.
 
     >>> lin_clf = svm.LinearSVC()
@@ -228,7 +229,7 @@ In the multiclass case, this is extended as per [#2]_.
   The same probability calibration procedure is available for all estimators
   via the :class:`~sklearn.calibration.CalibratedClassifierCV` (see
   :ref:`calibration`). In the case of :class:`SVC` and :class:`NuSVC`, this
-  procedure is builtin in `libsvm`_ which is used under the hood, so it does
+  procedure is builtin to `libsvm`_ which is used under the hood, so it does
   not rely on scikit-learn's
   :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
@@ -657,14 +658,14 @@ Once the optimization problem is solved, the output of
 
 .. math:: \sum_{i\in SV} y_i \alpha_i K(x_i, x) + b,
 
-and the predicted class correspond to its sign. We only need to sum over the
+and the predicted class corresponds to its sign. We only need to sum over the
 support vectors (i.e. the samples that lie within the margin) because the
 dual coefficients :math:`\alpha_i` are zero for the other samples.
 
 These parameters can be accessed through the attributes ``dual_coef_``
 which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`b`
+term :math:`b`.
 
 .. note::
 
@@ -673,7 +674,7 @@ term :math:`b`
     equivalence between the amount of regularization of two models depends on
     the exact objective function optimized by the model. For example, when the
     estimator used is :class:`~sklearn.linear_model.Ridge` regression,
-    the relation between them is given as :math:`C = \frac{1}{alpha}`.
+    the relation between them is given as :math:`C = \frac{1}{\alpha}`.
 
 .. dropdown:: LinearSVC
 
@@ -799,7 +800,7 @@ used, please refer to their respective papers.
 
 .. [#5] Bishop, `Pattern recognition and machine learning
   <https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_,
-  chapter 7 Sparse Kernel Machines
+  chapter 7 Sparse Kernel Machines.
 
 .. [#6] :doi:`"A Tutorial on Support Vector Regression"
   <10.1023/B:STCO.0000035301.49549.88>`
@@ -807,8 +808,9 @@ used, please refer to their respective papers.
   Volume 14 Issue 3, August 2004, p. 199-222.
 
 .. [#7] Schölkopf et. al `New Support Vector Algorithms
-  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
+  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_,
+  Neural Computation 12, 1207-1245 (2000).
 
-.. [#8] Crammer and Singer `On the Algorithmic Implementation ofMulticlass
+.. [#8] Crammer and Singer `On the Algorithmic Implementation of Multiclass
   Kernel-based Vector Machines
   <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_, JMLR 2001.

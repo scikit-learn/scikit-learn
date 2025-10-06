@@ -17,8 +17,8 @@ multi-layer perceptron model on this dataset.
 
 """
 
-# Author: Arthur Mensch <arthur.mensch@m4x.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 
@@ -75,7 +75,7 @@ for i in range(10):
     )
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
-    l1_plot.set_xlabel("Class %i" % i)
+    l1_plot.set_xlabel(f"Class {i}")
 plt.suptitle("Classification vector for...")
 
 run_time = time.time() - t0

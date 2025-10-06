@@ -1,3 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
@@ -10,7 +14,7 @@ def check_matplotlib_support(caller_name):
         The name of the caller that requires matplotlib.
     """
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError as e:
         raise ImportError(
             "{} requires matplotlib. You can install matplotlib with "
@@ -35,7 +39,7 @@ def check_pandas_support(caller_name):
         The pandas package.
     """
     try:
-        import pandas  # noqa
+        import pandas
 
         return pandas
     except ImportError as e:

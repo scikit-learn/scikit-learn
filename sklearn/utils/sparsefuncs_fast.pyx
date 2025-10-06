@@ -1,22 +1,21 @@
 """Utilities to work with sparse matrices and arrays written in Cython."""
 
-# Authors: Mathieu Blondel
-#          Olivier Grisel
-#          Peter Prettenhofer
-#          Lars Buitinck
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
+from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
 
 ctypedef fused integral:
+    int32_t
+    int64_t
+
+ctypedef fused integral2:
     int32_t
     int64_t
 
@@ -494,7 +493,11 @@ def inplace_csr_row_normalize_l1(X):
     --------
     >>> from scipy.sparse import csr_matrix
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
-    >>> X = csr_matrix(([1.0, 2.0, 3.0], [0, 2, 3], [0, 3, 4]), shape=(3, 4))
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4])
+    >>> indices = np.array([0, 1, 2, 3])
+    >>> data = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -552,7 +555,11 @@ def inplace_csr_row_normalize_l2(X):
     --------
     >>> from scipy.sparse import csr_matrix
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
-    >>> X = csr_matrix(([1.0, 2.0, 3.0], [0, 2, 3], [0, 3, 4]), shape=(3, 4))
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4])
+    >>> indices = np.array([0, 1, 2, 3])
+    >>> data = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -635,3 +642,42 @@ def assign_rows_csr(
             for ind in range(indptr[rX], indptr[rX + 1]):
                 j = indices[ind]
                 out[out_rows[i], j] = data[ind]
+
+
+def csr_matmul_csr_to_dense(
+    const floating[:] a_data,
+    const integral[:] a_indices,
+    const integral[:] a_indptr,
+    const floating[:] b_data,
+    const integral2[:] b_indices,
+    const integral2[:] b_indptr,
+    floating[:, :] out,
+    uint64_t n1,
+    uint64_t n2,
+    uint64_t n3,
+):
+    """Computes a @ b for sparse csr a and b, returns dense array.
+
+    The shape of `a` is `(n1, n2)` and the shape of `b` is `(n2, n3)`.
+
+    See also
+    Gamma: Leveraging Gustavson's Algorithm to Accelerate Sparse Matrix Multiplication
+    https://dl.acm.org/doi/pdf/10.1145/3445814.3446702
+    """
+    cdef uint64_t i
+    cdef uint64_t j
+    cdef integral2 j_ind
+    cdef uint64_t k
+    cdef integral k_ind
+    cdef floating a_value
+
+    for i in range(n1):
+        for j in range(n3):
+            out[i, j] = 0
+        for k_ind in range(a_indptr[i], a_indptr[i + 1]):  # n2
+            k = a_indices[k_ind]
+            a_value = a_data[k_ind]
+            for j_ind in range(b_indptr[k], b_indptr[k + 1]):  # n3
+                j = b_indices[j_ind]
+                # out[i, j] += a[i, k] * b[k, j]
+                out[i, j] += a_value * b_data[j_ind]

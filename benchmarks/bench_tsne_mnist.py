@@ -5,7 +5,7 @@ MNIST dataset T-SNE benchmark
 
 """
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
 import json

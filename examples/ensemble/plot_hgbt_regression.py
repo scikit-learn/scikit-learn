@@ -26,8 +26,8 @@ This example aims at showcasing all points except 2 and 6 in a real life
 setting.
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Preparing the data
@@ -78,7 +78,7 @@ y = df["transfer"]
 
 fig, ax = plt.subplots(figsize=(15, 10))
 pointplot = sns.lineplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
-handles, lables = ax.get_legend_handles_labels()
+handles, labels = ax.get_legend_handles_labels()
 ax.set(
     title="Hourly energy transfer for different days of the week",
     xlabel="Normalized time of the day",

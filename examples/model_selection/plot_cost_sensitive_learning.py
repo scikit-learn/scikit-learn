@@ -35,6 +35,9 @@ case, the business metric depends on the amount of each individual transaction.
     <https://cseweb.ucsd.edu/~elkan/rescale.pdf>`_
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Cost-sensitive learning with constant gains and costs
 # -----------------------------------------------------
@@ -138,7 +141,7 @@ scoring = {
 # average than the opposite: it is less costly for the financing institution to
 # not grant a credit to a potential customer that will not default (and
 # therefore miss a good customer that would have otherwise both reimbursed the
-# credit and payed interests) than to grant a credit to a customer that will
+# credit and paid interests) than to grant a credit to a customer that will
 # default.
 #
 # We define a python function that weight the confusion matrix and return the
@@ -172,7 +175,7 @@ def credit_gain_score(y, y_pred, neg_label, pos_label):
     return np.sum(cm * gain_matrix)
 
 
-scoring["cost_gain"] = make_scorer(
+scoring["credit_gain"] = make_scorer(
     credit_gain_score, neg_label=neg_label, pos_label=pos_label
 )
 # %%
@@ -247,7 +250,7 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 # However, we recall that the original aim was to minimize the cost (or maximize the
 # gain) as defined by the business metric. We can compute the value of the business
 # metric:
-print(f"Business defined metric: {scoring['cost_gain'](model, X_test, y_test)}")
+print(f"Business defined metric: {scoring['credit_gain'](model, X_test, y_test)}")
 
 # %%
 # At this stage we don't know if any other cut-off can lead to a greater gain. To find
@@ -272,7 +275,7 @@ from sklearn.model_selection import TunedThresholdClassifierCV
 
 tuned_model = TunedThresholdClassifierCV(
     estimator=model,
-    scoring=scoring["cost_gain"],
+    scoring=scoring["credit_gain"],
     store_cv_results=True,  # necessary to inspect all results
 )
 tuned_model.fit(X_train, y_train)
@@ -318,8 +321,7 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            linestyle=linestyle,
-            color=color,
+            curve_kwargs=dict(linestyle=linestyle, color=color),
             ax=axs[1],
             name=name,
             plot_chance_level=idx == 1,
@@ -379,7 +381,7 @@ plot_roc_pr_curves(model, tuned_model, title=title)
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
 # set:
-print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_test)}")
+print(f"Business defined metric: {scoring['credit_gain'](tuned_model, X_test, y_test)}")
 
 # %%
 # We observe that tuning the decision threshold almost improves our business gains
@@ -487,7 +489,7 @@ target.value_counts()
 fraud = target == 1
 amount_fraud = data["Amount"][fraud]
 _, ax = plt.subplots()
-ax.hist(amount_fraud, bins=100)
+ax.hist(amount_fraud, bins=30)
 ax.set_title("Amount of fraud transaction")
 _ = ax.set_xlabel("Amount (€)")
 
@@ -500,10 +502,10 @@ _ = ax.set_xlabel("Amount (€)")
 # a gain of 2% of the amount of the transaction. However, accepting a fraudulent
 # transaction result in a loss of the amount of the transaction. As stated in [2]_, the
 # gain and loss related to refusals (of fraudulent and legitimate transactions) are not
-# trivial to define. Here, we define that a refusal of a legitimate transaction is
-# estimated to a loss of 5€ while the refusal of a fraudulent transaction is estimated
-# to a gain of 50€ and the amount of the transaction. Therefore, we define the
-# following function to compute the total benefit of a given decision:
+# trivial to define. Here, we define that a refusal of a legitimate transaction
+# is estimated to a loss of 5€ while the refusal of a fraudulent transaction is
+# estimated to a gain of 50€. Therefore, we define the following function to
+# compute the total benefit of a given decision:
 
 
 def business_metric(y_true, y_pred, amount):
@@ -511,9 +513,7 @@ def business_metric(y_true, y_pred, amount):
     mask_true_negative = (y_true == 0) & (y_pred == 0)
     mask_false_positive = (y_true == 0) & (y_pred == 1)
     mask_false_negative = (y_true == 1) & (y_pred == 0)
-    fraudulent_refuse = (mask_true_positive.sum() * 50) + amount[
-        mask_true_positive
-    ].sum()
+    fraudulent_refuse = mask_true_positive.sum() * 50
     fraudulent_accept = -amount[mask_false_negative].sum()
     legitimate_refuse = mask_false_positive.sum() * -5
     legitimate_accept = (amount[mask_true_negative] * 0.02).sum()
@@ -540,7 +540,6 @@ business_scorer = make_scorer(business_metric).set_score_request(amount=True)
 amount = credit_card.frame["Amount"].to_numpy()
 
 # %%
-# We first start to train a dummy classifier to have some baseline results.
 from sklearn.model_selection import train_test_split
 
 data_train, data_test, target_train, target_test, amount_train, amount_test = (
@@ -550,50 +549,44 @@ data_train, data_test, target_train, target_test, amount_train, amount_test = (
 )
 
 # %%
+# We first evaluate some baseline policies to serve as reference. Recall that
+# class "0" is the legitimate class and class "1" is the fraudulent class.
 from sklearn.dummy import DummyClassifier
 
-easy_going_classifier = DummyClassifier(strategy="constant", constant=0)
-easy_going_classifier.fit(data_train, target_train)
-benefit_cost = business_scorer(
-    easy_going_classifier, data_test, target_test, amount=amount_test
+always_accept_policy = DummyClassifier(strategy="constant", constant=0)
+always_accept_policy.fit(data_train, target_train)
+benefit = business_scorer(
+    always_accept_policy, data_test, target_test, amount=amount_test
 )
-print(f"Benefit/cost of our easy-going classifier: {benefit_cost:,.2f}€")
+print(f"Benefit of the 'always accept' policy: {benefit:,.2f}€")
 
 # %%
-# A classifier that predict all transactions as legitimate would create a profit of
-# around 220,000.€ We make the same evaluation for a classifier that predicts all
+# A policy that considers all transactions as legitimate would create a profit of
+# around 220,000€. We make the same evaluation for a classifier that predicts all
 # transactions as fraudulent.
-intolerant_classifier = DummyClassifier(strategy="constant", constant=1)
-intolerant_classifier.fit(data_train, target_train)
-benefit_cost = business_scorer(
-    intolerant_classifier, data_test, target_test, amount=amount_test
+always_reject_policy = DummyClassifier(strategy="constant", constant=1)
+always_reject_policy.fit(data_train, target_train)
+benefit = business_scorer(
+    always_reject_policy, data_test, target_test, amount=amount_test
 )
-print(f"Benefit/cost of our intolerant classifier: {benefit_cost:,.2f}€")
+print(f"Benefit of the 'always reject' policy: {benefit:,.2f}€")
+
 
 # %%
-# Such a classifier create a loss of around 670,000.€ A predictive model should allow
-# us to make a profit larger than 220,000.€ It is interesting to compare this business
-# metric with another "standard" statistical metric such as the balanced accuracy.
-from sklearn.metrics import get_scorer
-
-balanced_accuracy_scorer = get_scorer("balanced_accuracy")
-print(
-    "Balanced accuracy of our easy-going classifier: "
-    f"{balanced_accuracy_scorer(easy_going_classifier, data_test, target_test):.3f}"
-)
-print(
-    "Balanced accuracy of our intolerant classifier: "
-    f"{balanced_accuracy_scorer(intolerant_classifier, data_test, target_test):.3f}"
-)
-
-# %%
-# This is not a surprise that the balanced accuracy is at 0.5 for both classifiers.
-# However, we need to be careful in the rest of the evaluation: we potentially can
-# obtain a model with a decent balanced accuracy that does not make any profit.
-# In this case, the model would be harmful for our business.
+# Such a policy would entail a catastrophic loss: around 670,000€. This is
+# expected since the vast majority of the transactions are legitimate and the
+# policy would refuse them at a non-trivial cost.
 #
-# Let's now create a predictive model using a logistic regression without tuning the
-# decision threshold.
+# A predictive model that adapts the accept/reject decisions on a per
+# transaction basis should ideally allow us to make a profit larger than the
+# 220,000€ of the best of our constant baseline policies.
+#
+# We start with a logistic regression model with the default decision threshold
+# at 0.5. Here we tune the hyperparameter `C` of the logistic regression with a
+# proper scoring rule (the log loss) to ensure that the model's probabilistic
+# predictions returned by its `predict_proba` method are as accurate as
+# possible, irrespectively of the choice of the value of the decision
+# threshold.
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
@@ -604,21 +597,19 @@ param_grid = {"logisticregression__C": np.logspace(-6, 6, 13)}
 model = GridSearchCV(logistic_regression, param_grid, scoring="neg_log_loss").fit(
     data_train, target_train
 )
+model
 
+# %%
 print(
-    "Benefit/cost of our logistic regression: "
+    "Benefit of logistic regression with default threshold: "
     f"{business_scorer(model, data_test, target_test, amount=amount_test):,.2f}€"
-)
-print(
-    "Balanced accuracy of our logistic regression: "
-    f"{balanced_accuracy_scorer(model, data_test, target_test):.3f}"
 )
 
 # %%
-# By observing the balanced accuracy, we see that our predictive model is learning
-# some associations between the features and the target. The business metric also shows
-# that our model is beating the baseline in terms of profit and it would be already
-# beneficial to use it instead of ignoring the fraud detection problem.
+# The business metric shows that our predictive model with a default decision
+# threshold is already winning over the baseline in terms of profit and it would be
+# already beneficial to use it to accept or reject transactions instead of
+# accepting all transactions.
 #
 # Tuning the decision threshold
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -643,29 +634,20 @@ tuned_model = TunedThresholdClassifierCV(
 tuned_model.fit(data_train, target_train, amount=amount_train)
 
 # %%
+# We observe that the tuned decision threshold is far away from the default 0.5:
+print(f"Tuned decision threshold: {tuned_model.best_threshold_:.2f}")
+
+# %%
 print(
-    "Benefit/cost of our logistic regression: "
+    "Benefit of logistic regression with a tuned threshold: "
     f"{business_scorer(tuned_model, data_test, target_test, amount=amount_test):,.2f}€"
-)
-print(
-    "Balanced accuracy of our logistic regression: "
-    f"{balanced_accuracy_scorer(tuned_model, data_test, target_test):.3f}"
 )
 
 # %%
-# We observe that tuning the decision threshold increases the expected profit of
-# deploying our model as estimated by the business metric.
-# Eventually, the balanced accuracy also increased. Note that it might not always be
-# the case because the statistical metric is not necessarily a surrogate of the
-# business metric. It is therefore important, whenever possible, optimize the decision
-# threshold with respect to the business metric.
-#
-# Finally, the estimate of the business metric itself can be unreliable, in
-# particular when the number of data points in the minority class is so small.
-# Any business impact estimated by cross-validation of a business metric on
-# historical data (offline evaluation) should ideally be confirmed by A/B testing
-# on live data (online evaluation). Note however that A/B testing models is
-# beyond the scope of the scikit-learn library itself.
+# We observe that tuning the decision threshold increases the expected profit
+# when deploying our model - as indicated by the business metric. It is therefore
+# valuable, whenever possible, to optimize the decision threshold with respect
+# to the business metric.
 #
 # Manually setting the decision threshold instead of tuning it
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -677,26 +659,35 @@ print(
 #
 # The class :class:`~sklearn.model_selection.FixedThresholdClassifier` allows us to
 # manually set the decision threshold. At prediction time, it behave as the previous
-# tuned model but no search is performed during the fitting process.
+# tuned model but no search is performed during the fitting process. Note that here
+# we use :class:`~sklearn.frozen.FrozenEstimator` to wrap the predictive model to
+# avoid any refitting.
 #
 # Here, we will reuse the decision threshold found in the previous section to create a
 # new model and check that it gives the same results.
+from sklearn.frozen import FrozenEstimator
 from sklearn.model_selection import FixedThresholdClassifier
 
 model_fixed_threshold = FixedThresholdClassifier(
-    estimator=model, threshold=tuned_model.best_threshold_
-).fit(data_train, target_train)
+    estimator=FrozenEstimator(model), threshold=tuned_model.best_threshold_
+)
 
 # %%
 business_score = business_scorer(
     model_fixed_threshold, data_test, target_test, amount=amount_test
 )
-print(f"Benefit/cost of our logistic regression: {business_score:,.2f}€")
-print(
-    "Balanced accuracy of our logistic regression: "
-    f"{balanced_accuracy_scorer(model_fixed_threshold, data_test, target_test):.3f}"
-)
+print(f"Benefit of logistic regression with a tuned threshold:  {business_score:,.2f}€")
 
 # %%
-# We observe that we obtained the exact same results but the fitting process was much
-# faster since we did not perform any search.
+# We observe that we obtained the exact same results but the fitting process
+# was much faster since we did not perform any hyper-parameter search.
+#
+# Finally, the estimate of the (average) business metric itself can be unreliable, in
+# particular when the number of data points in the minority class is very small.
+# Any business impact estimated by cross-validation of a business metric on
+# historical data (offline evaluation) should ideally be confirmed by A/B testing
+# on live data (online evaluation). Note however that A/B testing models is
+# beyond the scope of the scikit-learn library itself.
+
+# At the end, we disable the configuration flag for metadata routing::
+sklearn.set_config(enable_metadata_routing=False)

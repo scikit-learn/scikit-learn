@@ -1,15 +1,7 @@
 """K-means clustering."""
 
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Thomas Rueckstiess <ruecksti@in.tum.de>
-#          James Bergstra <james.bergstra@umontreal.ca>
-#          Jan Schlueter <scikit-learn@jan-schlueter.de>
-#          Nelle Varoquaux
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Robert Layton <robertlayton@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABC, abstractmethod
@@ -18,41 +10,51 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .. import _threadpool_controller
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics.pairwise import _euclidean_distances, euclidean_distances
-from ..utils import check_array, check_random_state
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.validation import (
-    _check_sample_weight,
-    _is_arraylike_not_scalar,
-    check_is_fitted,
-)
-from ._k_means_common import (
+from sklearn.cluster._k_means_common import (
     CHUNK_SIZE,
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
 )
-from ._k_means_elkan import (
+from sklearn.cluster._k_means_elkan import (
     elkan_iter_chunked_dense,
     elkan_iter_chunked_sparse,
     init_bounds_dense,
     init_bounds_sparse,
 )
-from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
-from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
+from sklearn.cluster._k_means_lloyd import (
+    lloyd_iter_chunked_dense,
+    lloyd_iter_chunked_sparse,
+)
+from sklearn.cluster._k_means_minibatch import (
+    _minibatch_update_dense,
+    _minibatch_update_sparse,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.parallel import (
+    _get_threadpool_controller,
+    _threadpool_controller_decorator,
+)
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+    validate_data,
+)
 
 ###############################################################################
 # Initialization heuristic
@@ -246,7 +248,7 @@ def _kmeans_plusplus(
         # to the squared distance to the closest existing center
         rand_vals = random_state.uniform(size=n_local_trials) * current_pot
         candidate_ids = np.searchsorted(
-            stable_cumsum(sample_weight * closest_dist_sq), rand_vals
+            np.cumsum(sample_weight * closest_dist_sq), rand_vals
         )
         # XXX: numerical imprecision can result in a candidate_id out of range
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
@@ -624,7 +626,7 @@ def _kmeans_single_elkan(
 
 # Threadpoolctl context to limit the number of threads in second level of
 # nested parallelism (i.e. BLAS) to avoid oversubscription.
-@_threadpool_controller.wrap(limits=1, user_api="blas")
+@_threadpool_controller_decorator(limits=1, user_api="blas")
 def _kmeans_single_lloyd(
     X,
     sample_weight,
@@ -827,7 +829,7 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
 
 
 # Same as _labels_inertia but in a threadpool_limits context.
-_labels_inertia_threadpool_limit = _threadpool_controller.wrap(
+_labels_inertia_threadpool_limit = _threadpool_controller_decorator(
     limits=1, user_api="blas"
 )(_labels_inertia)
 
@@ -922,7 +924,7 @@ class _BaseKMeans(
 
         n_active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
         if n_active_threads < self._n_threads:
-            modules = _threadpool_controller.info()
+            modules = _get_threadpool_controller().info()
             has_vcomp = "vcomp" in [module["prefix"] for module in modules]
             has_mkl = ("mkl", "intel") in [
                 (module["internal_api"], module.get("threading_layer", None))
@@ -945,7 +947,8 @@ class _BaseKMeans(
             )
 
     def _check_test_data(self, X):
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             reset=False,
@@ -1180,14 +1183,10 @@ class _BaseKMeans(
         )
         return -scores
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class KMeans(_BaseKMeans):
@@ -1225,8 +1224,11 @@ class KMeans(_BaseKMeans):
         * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
 
-        For an example of how to use the different `init` strategy, see the example
-        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+        For an example of how to use the different `init` strategies, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
+
+        For an evaluation of the impact of initialization, see the example
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
 
     n_init : 'auto' or int, default='auto'
         Number of times the k-means algorithm is run with different centroid
@@ -1359,20 +1361,17 @@ class KMeans(_BaseKMeans):
     array([[10.,  2.],
            [ 1.,  2.]])
 
-    For a more detailed example of K-Means using the iris dataset see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
-
     For examples of common problems with K-Means and how to address them see
     :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
-
-    For an example of how to use K-Means to perform color quantization see
-    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
     For a demonstration of how K-Means can be used to cluster text documents see
     :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
     For a comparison between K-Means and MiniBatchKMeans refer to example
     :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
+
+    For a comparison between K-Means and BisectingKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1458,7 +1457,8 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -1714,6 +1714,9 @@ class MiniBatchKMeans(_BaseKMeans):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
+        For an evaluation of the impact of initialization, see the example
+        :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_stability_low_dim_dense.py`.
+
     max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
@@ -1842,6 +1845,9 @@ class MiniBatchKMeans(_BaseKMeans):
     always match. One solution is to set `reassignment_ratio=0`, which
     prevents reassignments of clusters that are too small.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.BIRCH`.
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
@@ -1873,6 +1879,9 @@ class MiniBatchKMeans(_BaseKMeans):
            [1.06896552, 1.        ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
+
+    For a comparison of Mini-Batch K-Means clustering with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -2067,7 +2076,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2144,7 +2154,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         n_steps = (self.max_iter * n_samples) // self._batch_size
 
-        with _threadpool_controller.limit(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
@@ -2223,7 +2233,8 @@ class MiniBatchKMeans(_BaseKMeans):
         """
         has_centers = hasattr(self, "cluster_centers_")
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2270,7 +2281,7 @@ class MiniBatchKMeans(_BaseKMeans):
             # Initialize number of samples seen since last reassignment
             self._n_since_last_reassign = 0
 
-        with _threadpool_controller.limit(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             _mini_batch_step(
                 X,
                 sample_weight=sample_weight,

@@ -1,7 +1,7 @@
 # Tree handling (condensing, finding stable clusters) for hdbscan
-# Authors: Leland McInnes
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -184,7 +184,7 @@ cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
             left_count = 1
 
         if right >= n_samples:
-            right_count = <cnp.intp_t> hierarchy[right - n_samples].cluster_size
+            right_count = hierarchy[right - n_samples].cluster_size
         else:
             right_count = 1
 
