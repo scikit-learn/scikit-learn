@@ -3323,13 +3323,19 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
+    return _log_loss(
+        transformed_labels,
+        y_pred,
+        normalize=normalize,
+        sample_weight=sample_weight,
+    )
 
-    # Clipping
+
+def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
+    """Log loss for transformed labels and validated probabilistic predictions."""
     eps = np.finfo(y_pred.dtype).eps
     y_pred = np.clip(y_pred, eps, 1 - eps)
-
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
-
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3774,31 +3780,25 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    # log loss of the fitted model
-    numerator = log_loss(
-        y_true=y_true,
-        y_pred=y_pred,
-        normalize=False,
-        sample_weight=sample_weight,
-        labels=labels,
-    )
-
-    # log loss of the null model
     y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
-    transformed_labels, _ = _validate_multiclass_probabilistic_prediction(
+    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
-    y_prob = np.average(transformed_labels, axis=0, weights=sample_weight)
-    y_pred_null = np.tile(y_prob, (len(y_true), 1))
+    y_pred_null = np.average(transformed_labels, axis=0, weights=sample_weight)
+    y_pred_null = np.tile(y_pred_null, (len(y_true), 1))
 
-    denominator = log_loss(
-        y_true=y_true,
-        y_pred=y_pred_null,
+    numerator = _log_loss(
+        transformed_labels,
+        y_pred,
         normalize=False,
         sample_weight=sample_weight,
-        labels=labels,
     )
-
+    denominator = _log_loss(
+        transformed_labels,
+        y_pred_null,
+        normalize=False,
+        sample_weight=sample_weight,
+    )
     return float(1 - (numerator / denominator))
 
 
@@ -3876,35 +3876,27 @@ def d2_brier_score(
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    # brier score of the fitted model
-    brier_score = brier_score_loss(
-        y_true=y_true,
-        y_proba=y_proba,
-        sample_weight=sample_weight,
-        pos_label=pos_label,
-        labels=labels,
-    )
-
-    # brier score of the reference or baseline model
     y_proba = check_array(
         y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
-        transformed_labels, _ = _validate_binary_probabilistic_prediction(
+        transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
             y_true, y_proba, sample_weight, pos_label
         )
     else:
-        transformed_labels, _ = _validate_multiclass_probabilistic_prediction(
+        transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
             y_true, y_proba, sample_weight, labels
         )
-    y_prob = np.average(transformed_labels, axis=0, weights=sample_weight)
-    y_proba_ref = np.tile(y_prob, (len(y_true), 1))
-    brier_score_ref = brier_score_loss(
-        y_true=y_true,
-        y_proba=y_proba_ref,
-        sample_weight=sample_weight,
-        pos_label=pos_label,
-        labels=labels,
-    )
+    y_proba_null = np.average(transformed_labels, axis=0, weights=sample_weight)
+    y_proba_null = np.tile(y_proba_null, (len(y_true), 1))
 
-    return 1 - brier_score / brier_score_ref
+    # Scaling does not matter in D^2 score as it cancels out by taking the ratio.
+    brier_score = np.average(
+        np.sum((transformed_labels - y_proba) ** 2, axis=1),
+        weights=sample_weight,
+    )
+    brier_score_null = np.average(
+        np.sum((transformed_labels - y_proba_null) ** 2, axis=1),
+        weights=sample_weight,
+    )
+    return float(1 - brier_score / brier_score_null)
