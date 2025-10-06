@@ -28,7 +28,7 @@ from time import time
 from cython cimport floating
 from libc.math cimport exp, fabs, isfinite, log, pow, INFINITY
 
-from sklearn.linear_model._loss._loss cimport CyLossFunction
+from sklearn._loss._loss cimport CyLossFunction
 from sklearn.utils._typedefs cimport uint32_t, uint8_t
 from sklearn.utils._weight_vector cimport WeightVector32, WeightVector64
 from sklearn.utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
