@@ -2,4 +2,4 @@
   ineffective sampling during fitting. This change applies to all estimators that
   support the parameter `sample_weight`. This change also affects metrics that validate
   sample weights.
-  By :user:`John Hendricks <j-hendricks>`
+  By :user:`Lucy Liu <lucyleeow>` and :user:`John Hendricks <j-hendricks>`.
