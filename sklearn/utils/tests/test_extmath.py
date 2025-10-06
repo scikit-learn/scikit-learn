@@ -996,17 +996,9 @@ def test_softmax():
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
 
 
-def test_stable_cumsum():
-    assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
-    r = np.random.RandomState(0).rand(100000)
-    with pytest.warns(RuntimeWarning):
-        stable_cumsum(r, rtol=0, atol=0)
-
-    # test axis parameter
-    A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))
-    assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
-    assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
-    assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+def test_stable_cumsum_deprecation():
+    with pytest.warns(FutureWarning, match="stable_cumsum.+is deprecated"):
+        stable_cumsum([1, 2, 3])
 
 
 @pytest.mark.parametrize(

@@ -1145,6 +1145,8 @@ def roc_curve(
         (ROC) curve given an estimator and some data.
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
+    RocCurveDisplay.from_cv_results : Plot multi-fold ROC curves given
+        cross-validation results.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
 
