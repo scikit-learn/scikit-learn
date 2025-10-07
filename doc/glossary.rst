@@ -1874,13 +1874,7 @@ See concept :term:`sample property`.
         it can be corrected by weighting the training data points based on the
         `inverse probability
         <https://en.wikipedia.org/wiki/Inverse_probability_weighting>`_ of
-        their selection for training (e.g. inverse propensity weighting). It is
-        also useful to model the frequency of an event of interest per unit of
-        time on a dataset of observations with different exposure durations per
-        individual (see
-        :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
-        and
-        :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`).
+        their selection for training (e.g. inverse propensity weighting).
 
         Some model hyper-parameters are expressed in terms of a discrete number
         of data points in a region of the feature space. When fitting with
