@@ -1850,7 +1850,7 @@ See concept :term:`sample property`.
     ``sample_weight``
         A relative weight for each sample. Intuitively, if all weights are
         integers, using them in a model or scorer is like duplicating each
-        sample as many times as the weight value. Weights may be specified as
+        sample as many times as the weight value. Weights may also be specified as
         floats, so that sample weights are usually equivalent up to a constant
         positive scaling factor.
 
@@ -1878,7 +1878,7 @@ See concept :term:`sample property`.
         of samples in a region of the feature space. When fitting with sample
         weights, a count of samples is often automatically converted to a sum
         of their weights, but this is not always the case. Please refer to the
-        docstring for details.
+        model docstring for details.
 
         In classification, weights can also be specified for all samples
         belonging to a given target class with the :term:`class_weight`
