@@ -1181,7 +1181,7 @@ def is_classifier(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -1245,7 +1245,7 @@ def is_clusterer(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
