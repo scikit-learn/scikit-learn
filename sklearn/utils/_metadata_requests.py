@@ -558,10 +558,13 @@ class MethodMetadataRequest:
 
 
 class MetadataRequest:
-    """Contains the metadata request info of a consumer.
+    """Container for storing metadata request info and an associated consumer (`owner`).
 
     Instances of `MethodMetadataRequest` are used in this class for each
     available method under `MetadataRequest(owner=obj).{method}`.
+
+    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that is a
+    `MetadataRequest`.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
@@ -577,17 +580,16 @@ class MetadataRequest:
     Examples
     --------
     >>> from sklearn import set_config
-    >>> from sklearn.linear_model import LogisticRegression
     >>> set_config(enable_metadata_routing=True)
-    >>> lr = (
-    ...     LogisticRegression()
-    ...     .set_fit_request(sample_weight=True)
-    ...     .set_score_request(sample_weight=False)
-    ... )
-    >>> lr._metadata_request
+    >>> from pprint import pprint
+    >>> from sklearn.utils.metadata_routing import MetadataRequest
+    >>> r = MetadataRequest(owner="any_object")
+    >>> r.fit.add_request(param="sample_weight", alias=True)
+    {'sample_weight': True}
+    >>> r.score.add_request(param="sample_weight", alias=False)
+    {'sample_weight': False}
+    >>> pprint(r)
     {'fit': {'sample_weight': True}, 'score': {'sample_weight': False}}
-    >>> type(lr._metadata_request)
-    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
     >>> set_config(enable_metadata_routing=False)
     """
 
