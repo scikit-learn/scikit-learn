@@ -1968,42 +1968,49 @@ def check_array_api_metric(
         # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
+    def _check_metric_matches(metric_a, metric_b, convert_a=False):
+        if convert_a:
+            metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
+        assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
+
+    def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
+        for metric_a_val, metric_b_val in zip(metric_a, metric_b):
+            _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
+
     if numpy_as_array_works:
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
-        assert_allclose(
-            metric_xp,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
-        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
-        assert_allclose(
-            metric_xp_mixed_1,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
-        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
-        assert_allclose(
-            metric_xp_mixed_2,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
+
+        # Handle cases where multiple return values are not of the same shape,
+        # e.g. precision_recall_curve:
+        if (
+            isinstance(metric_np, tuple)
+            and len(set([metric_val.shape for metric_val in metric_np])) > 1
+        ):
+            _check_each_metric_matches(metric_xp, metric_np)
+
+            metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+            _check_each_metric_matches(metric_xp_mixed_1, metric_np)
+
+            metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+            _check_each_metric_matches(metric_xp_mixed_2, metric_np)
+
+        else:
+            _check_metric_matches(metric_xp, metric_np)
+
+            metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+            _check_metric_matches(metric_xp_mixed_1, metric_np)
+
+            metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+            _check_metric_matches(metric_xp_mixed_2, metric_np)
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        def _check_metric_matches(xp_val, np_val):
-            assert_allclose(
-                _convert_to_numpy(xp.asarray(xp_val), xp),
-                np_val,
-                atol=_atol_for_type(dtype_name),
-            )
-
         # Handle cases where there are multiple return values, e.g. roc_curve:
         if isinstance(metric_xp, tuple):
-            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
-                _check_metric_matches(metric_xp_val, metric_np_val)
+            _check_each_metric_matches(metric_xp, metric_np, convert_a=True)
         else:
-            _check_metric_matches(metric_xp, metric_np)
+            _check_metric_matches(metric_xp, metric_np, convert_a=True)
 
 
 def check_array_api_binary_classification_metric(
@@ -2269,6 +2276,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    precision_recall_curve: [check_array_api_binary_classification_metric],
     recall_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
