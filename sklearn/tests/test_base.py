@@ -1085,20 +1085,24 @@ def test_param_is_default(default_value, test_value):
 
 def test_is_regressor_class_vs_instance_error():
     """Test is_regressor gives helpful error when passed a class instead of instance."""
-    from sklearn.svm import SVR
+    # Create a minimal test class to avoid dependency issues
+    class DummyRegressor(BaseEstimator):
+        pass
 
     # Test passing class instead of instance
     with pytest.raises(TypeError, match="Expected an estimator instance"):
-        is_regressor(SVR)  # Should suggest SVR()
+        is_regressor(DummyRegressor)
 
 
 def test_is_classifier_class_vs_instance_error():
     """Test is_classifier error when passed a class instead of instance."""
-    from sklearn.svm import SVC
+    # Create a minimal test class to avoid dependency issues
+    class DummyClassifier(BaseEstimator):
+        pass
 
     # Test passing class instead of instance
     with pytest.raises(TypeError, match="Expected an estimator instance"):
-        is_classifier(SVC)  # Should suggest SVC()
+        is_classifier(DummyClassifier)
 
 
 def test_is_functions_custom_estimator_error():
