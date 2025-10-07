@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from enum import Enum, unique
 from numbers import Integral, Real
 
 import numpy as np
@@ -21,13 +22,6 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-# Distinct, hashable sentinels for each NA-like category (do not unify!)
-_NONE_SENTINEL = object()  # exactly None
-_NAN_SENTINEL = object()  # float NaN (np.nan, math.nan)
-_PD_NA_SENTINEL = object()  # pandas.NA
-_PD_NAT_SENTINEL = object()  # pandas.NaT
-_NAT_SENTINEL = object()  # NumPy datetime/timedelta NaT (np.isnat == True)
-
 
 def _looks_like_pandas_na(x) -> bool:
     """Return True if x is pandas.NA (without importing pandas)."""
@@ -40,46 +34,33 @@ def _looks_like_pandas_nat(x) -> bool:
     """Return True if x is pandas.NaT (without importing pandas)."""
     t = type(x)
     mod = getattr(t, "__module__", "")
-    # Some pandas versions use "NaTType", others expose "NaT" type name.
     return t.__name__ in {"NaTType", "NaT"} and mod.startswith("pandas")
 
 
+@unique
+class _NAKey(Enum):
+    NONE = 0  # exactly None
+    NAN = 1  # float NaN
+    PD_NA = 2  # pandas.NA
+    PD_NAT = 3  # pandas.NaT
+    NAT = 4  # numpy datetime/timedelta NaT
+
+
 def _norm_key(x):
-    """Return a dict key that preserves category identity for NA-like values.
-
-    We keep None, float NaN, pandas.NA, pandas.NaT, and NumPy NaT as distinct
-    keys so the small-batch fast path matches the vectorized reference exactly.
-    """
-    # 1) exactly None
     if x is None:
-        return _NONE_SENTINEL
-
-    # 2) plain Python/NumPy float NaN
-    try:
-        # isinstance(x, float) cheaply catches np.float64 and Python float
-        if isinstance(x, float) and np.isnan(x):
-            return _NAN_SENTINEL
-    except Exception:
-        pass
-
-    # 3) pandas extension sentinels (duck-typed; no pandas import required)
-    try:
-        if _looks_like_pandas_na(x):
-            return _PD_NA_SENTINEL
-        if _looks_like_pandas_nat(x):
-            return _PD_NAT_SENTINEL
-    except Exception:
-        # Be defensive—if any weird object makes detection fail, fall through.
-        pass
-
-    # 4) NumPy datetime/timedelta NaT (non-float)
-    try:
-        if np.isnat(x):
-            return _NAT_SENTINEL
-    except Exception:
-        pass
-
-    # 5) everything else as-is
+        return _NAKey.NONE
+    # plain Python/NumPy float NaN
+    if isinstance(x, (float, np.floating)) and np.isnan(x):
+        return _NAKey.NAN
+    # pandas extension sentinels
+    # (duck-typed; no pandas import required)
+    if _looks_like_pandas_na(x):
+        return _NAKey.PD_NA
+    if _looks_like_pandas_nat(x):
+        return _NAKey.PD_NAT
+    # NumPy datetime/timedelta NaT
+    if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
+        return _NAKey.NAT
     return x
 
 
@@ -277,22 +258,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.shuffle = shuffle
         self.random_state = random_state
 
-        # --- private: small-batch fast-path controls & lazy caches ---
-        # Heuristic threshold for tiny batches (internal, not user-facing).
-        # We only trigger the dict-lookup fast path when n_samples <= this,
-        # or when categories >> rows (see transform()).
-        self._small_batch_threshold = 256
-
-    def __setstate__(self, state):
-        # Restore state, then rebuild caches if the estimator is fitted
-        self.__dict__.update(state)
-        if (
-            hasattr(self, "categories_")
-            and hasattr(self, "encodings_")
-            and hasattr(self, "target_mean_")
-        ):
-            # Recreate fast-path structures with the current module's sentinel objects
-            self._build_fastpath_structs()
+        # --- private: threshold to choose fast path
+        self._small_batch_threshold = 1024
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -311,32 +278,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        # in TargetEncoder.fit(...)
-        X_df = X if hasattr(X, "columns") else None
-
-        # validate once; this sets n_features_in_ and catches shape/type issues
-        X, y = validate_data(
-            self,
-            X,
-            y,
-            ensure_2d=True,
-            dtype=None,
-            reset=True,
-            ensure_all_finite="allow-nan",
-        )
-
-        # set feature_names_in_ only if DataFrame *and* all string columns
-        if X_df is not None:
-            cols = np.asarray(X_df.columns, dtype=object)
-            if cols.size == X.shape[1] and all(isinstance(c, str) for c in cols):
-                self.feature_names_in_ = cols
-
-        # now call the internal fitter with a DataFrame when available,
-        # otherwise use the validated ndarray. This lets _BaseEncoder._fit
-        # discover DataFrame metadata when present.
-        self._fit_encodings_all(X_df if X_df is not None else X, y)
+        self._fit_encodings_all(X, y)
         self._build_fastpath_structs()
-
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -421,7 +364,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Precompute all fast-path structures during fit/fit_transform."""
 
         n_features = len(self.categories_)
-        is_multi = getattr(self, "target_type_", None) == "multiclass"
+        is_multi = self.target_type_ == "multiclass"
         n_classes = 0 if not is_multi else len(self.classes_)
 
         self._te_is_multiclass_ = is_multi
@@ -438,7 +381,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 idx_map[k] = i
             self._te_index_maps_[j] = idx_map
             if not is_multi:
-                enc_vec = np.asarray(self.encodings_[j]).reshape(-1)
+                enc_vec = np.asarray(self.encodings_[j], dtype=float)
                 self._te_enc_vecs_[j] = enc_vec
                 self._te_defaults_[j] = float(np.asarray(self.target_mean_))
             else:
@@ -449,8 +392,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self._te_enc_blocks_[j] = block
 
                 default = np.asarray(self.target_mean_, dtype=float)
-                if default.ndim == 0:
-                    default = np.full((n_classes,), float(default))
                 self._te_defaults_[j] = default
 
     def transform(self, X):
@@ -472,10 +413,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             one column per (feature, class) pair is returned, with classes ordered
             as in ``classes_``.
         """
-        # Decide fast path using only cheap metadata;
-        # no heavy validation/conversion here.
+        # Use the fast path for small batch else fall back to the vectorized path.
         check_is_fitted(self)
-
         X_checked = validate_data(
             self,
             X,
@@ -485,25 +424,18 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             ensure_all_finite="allow-nan",
         )
         n_samples = X_checked.shape[0]
-        small_thresh = getattr(self, "_small_batch_threshold", 256)
-        use_small_batch = n_samples is not None and n_samples <= small_thresh
+        use_small_batch = n_samples <= self._small_batch_threshold
 
         # ---- Small-batch path (tiny inputs only) ---------------------------------
-        if (
-            use_small_batch
-            and getattr(self, "_te_index_maps_", None) is not None
-            and getattr(self, "_te_enc_vecs_", None) is not None
-            and (self._te_is_multiclass_ is not None)
-        ):
+        if use_small_batch:
             X_arr = np.asarray(X_checked, dtype=object)
             n_samples, n_features = X_arr.shape
-            is_multi = getattr(self, "target_type_", None) == "multiclass"
+            is_multi = self._te_is_multiclass_
             if is_multi:
                 n_classes = len(self.classes_)
                 X_out = np.empty((n_samples, n_features * n_classes), dtype=np.float64)
             else:
                 X_out = np.empty((n_samples, n_features), dtype=np.float64)
-                n_classes = 0
 
             norm_key = _norm_key  # local ref for speed
 
@@ -521,7 +453,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     X_out[:, j] = out_col
                 else:
                     enc_block = self._te_enc_blocks_[j]  # (n_classes, n_cats_j)
-                    default_v = np.asarray(self._te_defaults_[j], dtype=float)
+                    default_v = self._te_defaults_[j]
                     out_block = np.empty((n_samples, n_classes), dtype=float)
                     for i in range(n_samples):
                         idx = get(norm_key(col[i]), -1)
@@ -717,7 +649,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed feature names. `feature_names_in_` is used unless it is
             not defined, in which case the following input feature names are
             generated: `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
-            When `type_of_target_` is "multiclass" the names are of the format
+            When `target_type_` is "multiclass" the names are of the format
             '<feature_name>_<class_name>'.
         """
         check_is_fitted(self, "n_features_in_")
