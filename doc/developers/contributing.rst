@@ -459,11 +459,9 @@ complies with the following rules before marking a PR as "ready for review". The
    build the docs: please refer to :ref:`generated_doc_CI`.
 
 4. **Tests are necessary for enhancements to be
-   accepted**. Bug-fixes or new features should be provided with
-   `non-regression tests
-   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-   verify the correct behavior of the fix or feature. In this manner, further
-   modifications on the code base are granted to be consistent with the
+   accepted**. Bug-fixes or new features should be provided with non-regression tests.
+   These tests verify the correct behavior of the fix or feature. In this manner,
+   further modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
@@ -1495,9 +1493,11 @@ up this process by providing your feedback.
     parameters, their values, value types, and combinations tested? Do
     the tests validate that the code is correct, i.e. doing what the
     documentation says it does? If the change is a bug-fix, is a
-    non-regression test included? Look at `this
-    <https://stackoverflow.com/questions/39405701/regression-test-vs-non-regression-test>`__
-    for an intuition on (non-)regression tests.
+    non-regression test included? These tests verify the correct behavior of the fix
+    or feature. In this manner, further modifications on the code base are granted to
+    be consistent with the desired behavior. In the case of bug fixes, at the time of
+    the PR, the non-regression tests should fail for the code base in the ``main``
+    branch and pass for the PR code.
 
   - Do the tests pass in the continuous integration build? If
     appropriate, help the contributor understand why tests failed.
