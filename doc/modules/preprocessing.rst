@@ -940,7 +940,8 @@ cardinality categories are location based such as zip code or region.
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
 representation, especially for non-informative high-cardinality categorical
-variables, and help prevent the downstream model from overfitting spurious
+variables (features with many unique categories where each category appears 
+only a few times), and help prevent the downstream model from overfitting spurious
 correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
 `fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
 data is split into *k* folds (determined by the `cv` parameter) and each fold is
