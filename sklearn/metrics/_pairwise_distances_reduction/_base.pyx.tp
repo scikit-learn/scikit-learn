@@ -128,6 +128,9 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     Implementations inherit from this template and may override the several
     defined hooks as needed in order to easily extend functionality with
     minimal redundant code.
+
+    If metric is 'precomputed' and the precomputed matrix is provided, 
+    a subclass must be able to access it through the compute method.
     """
 
     def __init__(
@@ -138,7 +141,6 @@ cdef class BaseDistancesReduction{{name_suffix}}:
      ):
         cdef:
             intp_t X_n_full_chunks, Y_n_full_chunks
-
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
 

@@ -101,7 +101,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
              # Fall back on a generic implementation that handles most scipy
              # metrics by computing the distances between 2 vectors at a time.
             pda = RadiusNeighbors{{name_suffix}}(
-                datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+                datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, precomputed, metric, metric_kwargs),
                 radius=radius,
                 chunk_size=chunk_size,
                 strategy=strategy,

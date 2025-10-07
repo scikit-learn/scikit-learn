@@ -53,8 +53,8 @@ cdef class DatasetsPair{{name_suffix}}:
     @classmethod
     def get_for(
         cls,
-        X,
-        Y,
+        X = None,
+        Y = None,
         metric="euclidean",
         dict metric_kwargs=None,
     ) -> DatasetsPair{{name_suffix}}:
@@ -98,6 +98,9 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs = copy.copy(metric_kwargs)
             metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
+        if metric = precomputed:
+            return PrecomputedDistanceMatrix{{name_suffix}}(precomputed)
+     
         cdef:
             {{DistanceMetric}} distance_metric = DistanceMetric.get_metric(
                 metric,
@@ -157,6 +160,43 @@ cdef class DatasetsPair{{name_suffix}}:
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -1
+
+
+@final
+cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    """A subclass of DatasetsPair 
+    
+    Parameters: must receive precomputed_distance: ndarray of shape
+        (n_samples_X, n_samples_Y),
+        Must be C-contiguous. 
+    """
+
+    def __init__(
+        self,
+        const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,  
+    ):
+        super().__init__(
+            distance_metric=DistanceMetric{{name_suffix}}(),
+            n_features=0,  
+        )
+        # This array has already been checked.
+        self.distance_matrix = precomputed_distance
+
+    @final
+    cdef intp_t n_samples_X(self) noexcept nogil:
+        return self.distance_matrix.shape[0]
+
+    @final
+    cdef intp_t n_samples_Y(self) noexcept nogil:
+        return self.distance_matrix.shape[1]
+  
+    @final
+    cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
+        return self.distance_matrix[i, j]
+   
+    @final
+    cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
+        return self.distance_matrix[i, j]
 
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):

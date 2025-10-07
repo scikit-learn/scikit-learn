@@ -48,7 +48,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         # Use a generic implementation that handles most scipy
         # metrics by computing the distances between 2 vectors at a time.
         pda = RadiusNeighborsClassMode{{name_suffix}}(
-            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, precomputed, metric, metric_kwargs),
             radius=radius,
             chunk_size=chunk_size,
             strategy=strategy,
