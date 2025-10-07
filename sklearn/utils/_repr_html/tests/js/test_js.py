@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 
@@ -6,8 +8,7 @@ def _make_page(body):
 
     # use importskip to avoir importing BufferedIOBase
     # useful in CI step: debian_32bit -> Test Library
-    pathlib = pytest.importorskip("pathlib")
-    js_path = pathlib.Path(__file__).parent.parent.parent / "estimator.js"
+    js_path = Path(__file__).parent.parent.parent / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:
         script = f.read()
 

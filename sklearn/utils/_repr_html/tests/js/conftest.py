@@ -1,5 +1,6 @@
 import socket
 import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
@@ -36,15 +37,12 @@ def local_server(request):
         ...
     ```
     """
-    # use importskip to avoir importing BufferedIOBase
-    # useful in CI step: debian_32bit -> Test Library
-    http_server = pytest.importorskip("http.server")
     html_content = getattr(request, "param", "<html><body>Default</body></html>")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         PORT = s.getsockname()[1]
 
-    class Handler(http_server.BaseHTTPRequestHandler):
+    class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
@@ -55,7 +53,7 @@ def local_server(request):
         def log_message(self, format, *args):
             return
 
-    httpd = http_server.HTTPServer(("127.0.0.1", PORT), Handler)
+    httpd = HTTPServer(("127.0.0.1", PORT), Handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
 
