@@ -1085,24 +1085,16 @@ def test_param_is_default(default_value, test_value):
 
 def test_is_regressor_class_vs_instance_error():
     """Test is_regressor gives helpful error when passed a class instead of instance."""
-    # Create a minimal test class to avoid dependency issues
-    class DummyRegressor(BaseEstimator):
-        pass
-
-    # Test passing class instead of instance
+    # Test using a standard library class that has __init__ but no __sklearn_tags__
     with pytest.raises(TypeError, match="Expected an estimator instance"):
-        is_regressor(DummyRegressor)
+        is_regressor(dict)
 
 
 def test_is_classifier_class_vs_instance_error():
     """Test is_classifier error when passed a class instead of instance."""
-    # Create a minimal test class to avoid dependency issues
-    class DummyClassifier(BaseEstimator):
-        pass
-
-    # Test passing class instead of instance
+    # Test using a standard library class that has __init__ but no __sklearn_tags__
     with pytest.raises(TypeError, match="Expected an estimator instance"):
-        is_classifier(DummyClassifier)
+        is_classifier(list)
 
 
 def test_is_functions_custom_estimator_error():
