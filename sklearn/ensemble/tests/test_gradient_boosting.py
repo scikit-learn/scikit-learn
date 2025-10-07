@@ -1331,7 +1331,11 @@ def test_early_stopping_stratified():
 
     gbc = GradientBoostingClassifier(n_iter_no_change=5)
     with pytest.raises(
-        ValueError, match="The least populated class in y has only 1 member"
+        ValueError,
+        match=(
+            r"The least populated classes in y have only 1 member.*Classes with "
+            r"too few members are: \[1.0\]"
+        ),
     ):
         gbc.fit(X, y)
 

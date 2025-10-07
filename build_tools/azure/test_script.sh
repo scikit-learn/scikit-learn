@@ -42,7 +42,7 @@ show_installed_libraries
 show_cpu_info
 
 NUM_CORES=$(python -c "import joblib; print(joblib.cpu_count())")
-TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy -rs -v"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable too long text output report in the

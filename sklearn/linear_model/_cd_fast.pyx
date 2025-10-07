@@ -914,6 +914,48 @@ cdef (floating, floating) gap_enet_gram(
     return gap, dual_norm_XtA
 
 
+cdef inline uint32_t screen_features_enet_gram(
+    const floating[:, ::1] Q,
+    const floating[::1] XtA,
+    floating[::1] w,
+    floating[::1] Qw,
+    uint32_t[::1] active_set,
+    uint8_t[::1] excluded_set,
+    floating alpha,
+    floating beta,
+    floating gap,
+    floating dual_norm_XtA,
+    uint32_t n_features,
+) noexcept nogil:
+    """Apply gap safe screening for all features within enet_coordinate_descent_gram"""
+    cdef floating d_j
+    cdef floating Xj_theta
+    cdef uint32_t n_active = 0
+    # Due to floating point issues, gap might be negative.
+    cdef floating radius = sqrt(2 * fabs(gap)) / alpha
+
+    for j in range(n_features):
+        if Q[j, j] == 0:
+            w[j] = 0
+            excluded_set[j] = 1
+            continue
+
+        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+        if d_j <= radius:
+            # include feature j
+            active_set[n_active] = j
+            excluded_set[j] = 0
+            n_active += 1
+        else:
+            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+            w[j] = 0
+            excluded_set[j] = 1
+
+    return n_active
+
+
 def enet_coordinate_descent_gram(
     floating[::1] w,
     floating alpha,
@@ -965,9 +1007,6 @@ def enet_coordinate_descent_gram(
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
-    cdef floating d_j
-    cdef floating radius
-    cdef floating Xj_theta
     cdef floating tmp
     cdef floating w_j
     cdef floating d_w_max
@@ -1011,26 +1050,19 @@ def enet_coordinate_descent_gram(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
-            # Due to floating point issues, gap might be negative.
-            radius = sqrt(2 * fabs(gap)) / alpha
-            n_active = 0
-            for j in range(n_features):
-                if Q[j, j] == 0:
-                    w[j] = 0
-                    excluded_set[j] = 1
-                    continue
-                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
-                d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
-                if d_j <= radius:
-                    # include feature j
-                    active_set[n_active] = j
-                    excluded_set[j] = 0
-                    n_active += 1
-                else:
-                    # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
-                    _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
-                    w[j] = 0
-                    excluded_set[j] = 1
+            n_active = screen_features_enet_gram(
+                Q=Q,
+                XtA=XtA,
+                w=w,
+                Qw=Qw,
+                active_set=active_set,
+                excluded_set=excluded_set,
+                alpha=alpha,
+                beta=beta,
+                gap=gap,
+                dual_norm_XtA=dual_norm_XtA,
+                n_features=n_features,
+            )
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -1084,24 +1116,19 @@ def enet_coordinate_descent_gram(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
-                    # Due to floating point issues, gap might be negative.
-                    radius = sqrt(2 * fabs(gap)) / alpha
-                    n_active = 0
-                    for j in range(n_features):
-                        if excluded_set[j]:
-                            continue
-                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
-                        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
-                        if d_j <= radius:
-                            # include feature j
-                            active_set[n_active] = j
-                            excluded_set[j] = 0
-                            n_active += 1
-                        else:
-                            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
-                            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
-                            w[j] = 0
-                            excluded_set[j] = 1
+                    n_active = screen_features_enet_gram(
+                        Q=Q,
+                        XtA=XtA,
+                        w=w,
+                        Qw=Qw,
+                        active_set=active_set,
+                        excluded_set=excluded_set,
+                        alpha=alpha,
+                        beta=beta,
+                        gap=gap,
+                        dual_norm_XtA=dual_norm_XtA,
+                        n_features=n_features,
+                    )
 
         else:
             # for/else, runs if for doesn't end with a `break`
