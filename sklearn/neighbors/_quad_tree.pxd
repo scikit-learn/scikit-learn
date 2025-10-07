@@ -4,7 +4,7 @@
 # See quad_tree.pyx for details.
 
 cimport numpy as cnp
-from ..utils._typedefs cimport float32_t, intp_t
+from sklearn.utils._typedefs cimport float32_t, intp_t
 
 # This is effectively an ifdef statement in Cython
 # It allows us to write printf debugging lines
