@@ -1099,16 +1099,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           coefficients. It is the most stable solver, in particular more stable
           for singular matrices than 'cholesky' at the cost of being slower.
 
-        - 'cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
           procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
@@ -1117,10 +1117,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           both n_samples and n_features are large. Note that 'sag' and
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
-          scaler from sklearn.preprocessing.
+          scaler from :mod:`sklearn.preprocessing`.
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
-          `scipy.optimize.minimize`. It can be used only when `positive`
+          :func:`scipy.optimize.minimize`. It can be used only when `positive`
           is True.
 
         All solvers except 'svd' support both dense and sparse data. However, only
@@ -1154,7 +1154,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     n_iter_ : None or ndarray of shape (n_targets,)
         Actual number of iterations for each target. Available only for
-        sag and lsqr solvers. Other solvers will return None.
+        'sag' and 'lsqr' solvers. Other solvers will return None.
 
         .. versionadded:: 0.17
 

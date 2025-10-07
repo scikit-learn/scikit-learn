@@ -7,11 +7,35 @@ from sklearn.utils._array_api import (
 )
 
 
-def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
-    """Compute the weighted percentile with method 'inverted_cdf'.
+def _weighted_percentile(
+    array, sample_weight, percentile_rank=50, average=False, xp=None
+):
+    """Compute the weighted percentile.
 
-    When the percentile lies between two data points of `array`, the function returns
-    the lower value.
+    Implement an array API compatible (weighted version) of NumPy's 'inverted_cdf'
+    method when `average=False` (default) and 'averaged_inverted_cdf' when
+    `average=True`.
+
+    For an array ordered by increasing values, when the percentile lies exactly on a
+    data point:
+
+    * 'inverted_cdf' takes the exact data point.
+    * 'averaged_inverted_cdf' takes the average of the exact data point and the one
+      above it (this means it gives the same result as `median` for unit weights).
+
+    E.g., for the array [1, 2, 3, 4] the percentile rank at each data point would
+    be [25, 50, 75, 100]. Percentile rank 50 lies on '2'. 'average_inverted_cdf'
+    computes the average of '2' and '3', making it 'symmetrical' because if you
+    reverse the array, rank 50 would fall on '3'. It also matches 'median'.
+    On the other hand, 'inverted_cdf', which does not satisfy the symmetry property,
+    would give '2'.
+
+    When the requested percentile lies between two data points, both methods return
+    the higher data point.
+    E.g., for the array [1, 2, 3, 4, 5] the percentile rank at each data point would
+    be [20, 40, 60, 80, 100]. Percentile rank 50, lies between '2' and '3'. Taking the
+    higher data point is symmetrical because if you reverse the array, 50 would lie
+    between '4' and '3'. Both methods match median in this case.
 
     If `array` is a 2D array, the `values` are selected along axis 0.
 
@@ -25,6 +49,10 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
         .. versionchanged:: 1.7
             Supports handling of `NaN` values.
 
+        .. versionchanged:: 1.8
+            Supports `average`, which calculates percentile using the
+            "averaged_inverted_cdf" method.
+
     Parameters
     ----------
     array : 1D or 2D array
@@ -37,6 +65,14 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     percentile_rank: int or float, default=50
         The probability level of the percentile to compute, in percent. Must be between
         0 and 100.
+
+    average : bool, default=False
+        If `True`, uses the "averaged_inverted_cdf" quantile method, otherwise
+        defaults to "inverted_cdf". "averaged_inverted_cdf" is symmetrical with
+        unit `sample_weight`, such that the total of `sample_weight` below or equal to
+        `_weighted_percentile(percentile_rank)` is the same as the total of
+        `sample_weight` above or equal to `_weighted_percentile(100-percentile_rank)`.
+        This symmetry is not guaranteed with non-unit weights.
 
     xp : array_namespace, default=None
         The standard-compatible namespace for `array`. Default: infer.
@@ -61,7 +97,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = xp.tile(sample_weight, (array.shape[1], 1)).T
     # Sort `array` and `sample_weight` along axis=0:
-    sorted_idx = xp.argsort(array, axis=0)
+    sorted_idx = xp.argsort(array, axis=0, stable=False)
     sorted_weights = xp.take_along_axis(sample_weight, sorted_idx, axis=0)
 
     # Set NaN values in `sample_weight` to 0. Only perform this operation if NaN
@@ -93,6 +129,8 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
     # For each feature with index j, find sample index i of the scalar value
     # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
     # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
+    # Note `searchsorted` defaults to equality on the right, whereas Hyndman and Fan
+    # reference equation has equality on the left.
     percentile_indices = xp.stack(
         [
             xp.searchsorted(
@@ -101,22 +139,52 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
             for feature_idx in range(weight_cdf.shape[0])
         ],
     )
-    # In rare cases, `percentile_indices` equals to `sorted_idx.shape[0]`
+    # `percentile_indices` may be equal to `sorted_idx.shape[0]` due to floating
+    # point error (see #11813)
     max_idx = sorted_idx.shape[0] - 1
     percentile_indices = xp.clip(percentile_indices, 0, max_idx)
 
     col_indices = xp.arange(array.shape[1], device=device)
     percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
 
-    result = array[percentile_in_sorted, col_indices]
+    if average:
+        # From Hyndman and Fan (1996), `fraction_above` is `g`
+        fraction_above = (
+            weight_cdf[col_indices, percentile_indices] - adjusted_percentile_rank
+        )
+        is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
+        percentile_plus_one_indices = xp.clip(percentile_indices + 1, 0, max_idx)
+        percentile_plus_one_in_sorted = sorted_idx[
+            percentile_plus_one_indices, col_indices
+        ]
+        # Handle case when next index ('plus one') has sample weight of 0
+        zero_weight_cols = col_indices[
+            sample_weight[percentile_plus_one_in_sorted, col_indices] == 0
+        ]
+        for col_idx in zero_weight_cols:
+            cdf_val = weight_cdf[col_idx, percentile_indices[col_idx]]
+            # Search for next index where `weighted_cdf` is greater
+            next_index = xp.searchsorted(
+                weight_cdf[col_idx, ...], cdf_val, side="right"
+            )
+            # Handle case where there are trailing 0 sample weight samples
+            # and `percentile_indices` is already max index
+            if next_index >= max_idx:
+                # use original `percentile_indices` again
+                next_index = percentile_indices[col_idx]
+
+            percentile_plus_one_in_sorted[col_idx] = sorted_idx[next_index, col_idx]
+
+        result = xp.where(
+            is_fraction_above,
+            array[percentile_in_sorted, col_indices],
+            (
+                array[percentile_in_sorted, col_indices]
+                + array[percentile_plus_one_in_sorted, col_indices]
+            )
+            / 2,
+        )
+    else:
+        result = array[percentile_in_sorted, col_indices]
 
     return result[0] if n_dim == 1 else result
-
-
-# TODO: refactor to do the symmetrisation inside _weighted_percentile to avoid
-# sorting the input array twice.
-def _averaged_weighted_percentile(array, sample_weight, percentile_rank=50, xp=None):
-    return (
-        _weighted_percentile(array, sample_weight, percentile_rank, xp=xp)
-        - _weighted_percentile(-array, sample_weight, 100 - percentile_rank, xp=xp)
-    ) / 2

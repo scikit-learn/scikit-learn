@@ -529,7 +529,10 @@ def estimator_html_repr(estimator):
         with open(str(Path(__file__).parent / "estimator.js"), "r") as f:
             script = f.read()
 
-        html_end = f"</div></div><script>{script}</script></body>"
+        html_end = (
+            f"</div></div><script>{script}"
+            f"\nforceTheme('{container_id}');</script></body>"
+        )
 
         out.write(html_end)
 
