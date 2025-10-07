@@ -1495,7 +1495,9 @@ up this process by providing your feedback.
     parameters, their values, value types, and combinations tested? Do
     the tests validate that the code is correct, i.e. doing what the
     documentation says it does? If the change is a bug-fix, is a
-    non-regression test included?
+    non-regression test included? Look at `this
+    <https://stackoverflow.com/questions/39405701/regression-test-vs-non-regression-test>`__
+    for an intuition on (non-)regression tests.
 
   - Do the tests pass in the continuous integration build? If
     appropriate, help the contributor understand why tests failed.
