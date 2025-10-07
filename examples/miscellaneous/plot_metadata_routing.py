@@ -167,6 +167,11 @@ print_routing(est)
 # Now, we show how to design a meta-estimator to be a router. As a simplified
 # example, here is a meta-estimator, which doesn't do much other than routing
 # the metadata.
+# To make the meta-estimator a router, you only need to:
+# 1. define its `get_metadata_routing` method, which returns a `MetadataRouter` instance
+# in charge of configuring the metadata routing.
+# 2. use `process_routing` inside its methods (`fit`, `predict`, ...) to  properly route
+# the metadata from the meta-estimator to its sub-estimator.
 
 
 class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -191,17 +196,30 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # consuming methods.
         routed_params = process_routing(self, "fit", **fit_params)
         # A sub-estimator is fitted and its classes are attributed to the
-        # meta-estimator.
+        # meta-estimator. Since we call the sub-estimator's fit method, we pass the
+        # the metadata stored in `routed_params.estimator.fit`.
         self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
-        # As in `fit`, we get information on all the metadata that should be routed.
+        # As in `fit`, we get information on all the metadata that should be routed and
+        # pass the metadata that is stored in `routed_params.estimator.predict` to the
+        # sub-estimator's predict method.
         routed_params = process_routing(self, "predict", **predict_params)
         return self.estimator_.predict(X, **routed_params.estimator.predict)
 
+
+# %%
+# Let's break down different parts of the above code.
+#
+# In each method, we use the ``process_routing`` function to construct a
+# :class:`~utils.Bunch` of the form ``{"object_name": {"method_name": {"metadata":
+# value}}}`` to pass to the underlying estimator's method. The ``object_name``
+# (``estimator`` in the above ``routed_params.estimator.fit`` example) is the same as
+# the one added in the ``get_metadata_routing``. ``process_routing`` also validates the
+# input metadata: it makes sure all given metadata are requested to avoid silent bugs.
 
 # %%
 # Next, we illustrate the different behaviors and notably the type of errors
