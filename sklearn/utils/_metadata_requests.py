@@ -1702,30 +1702,18 @@ def process_routing(_obj, _method, /, **kwargs):
     --------
     >>> import numpy as np
     >>> from sklearn import set_config
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.base import BaseEstimator, ClassifierMixin
-    >>> from sklearn.utils.metadata_routing import (MetadataRouter, MethodMapping,
-    ...             process_routing)
-    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.utils.metadata_routing import process_routing
+    >>> from sklearn.linear_model import Ridge
+    >>> from sklearn.feature_selection import SelectFromModel
     >>> set_config(enable_metadata_routing=True)
-    >>> X, y = make_classification(random_state=0)
-    >>> sample_weight = np.ones_like(y)
-    >>> class MetaClassifier(ClassifierMixin, BaseEstimator):
-    ...     def __init__(self, estimator):
-    ...         self.estimator = estimator
-    ...     def get_metadata_routing(self):
-    ...         router = MetadataRouter(owner=self).add(
-    ...             estimator=self.estimator,
-    ...             method_mapping=MethodMapping()
-    ...             .add(caller="fit", callee="fit")
-    ...         )
-    ...         return router
-    ...     def fit(self, X, y, **fit_params):
-    ...         routed_params = process_routing(self, "fit", **fit_params)
-    ...         return self
-    >>> MetaClassifier(estimator=LinearRegression().set_fit_request(
-    ...             sample_weight=True)).fit(X, y, sample_weight=sample_weight)
-    MetaClassifier(estimator=LinearRegression())
+    >>> print(
+    ...     process_routing(
+    ...         SelectFromModel(Ridge().set_fit_request(sample_weight=True)),
+    ...         "fit",
+    ...         sample_weight=np.array([1, 1, 2]),
+    ...     )
+    ... )
+    {'estimator': {'fit': {'sample_weight': array([1, 1, 2])}}}
     >>> set_config(enable_metadata_routing=False)
     """
     if not kwargs:

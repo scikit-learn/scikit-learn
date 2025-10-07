@@ -167,11 +167,13 @@ print_routing(est)
 # Now, we show how to design a meta-estimator to be a router. As a simplified
 # example, here is a meta-estimator, which doesn't do much other than routing
 # the metadata.
+#
 # To make the meta-estimator a router, you only need to:
-# 1. define its `get_metadata_routing` method, which returns a `MetadataRouter` instance
-# in charge of configuring the metadata routing.
-# 2. use `process_routing` inside its methods (`fit`, `predict`, ...) to  properly route
-# the metadata from the meta-estimator to its sub-estimator.
+#
+# - define its `get_metadata_routing` method, which returns a `MetadataRouter`
+#   instance in charge of configuring the metadata routing.
+# - use `process_routing` inside its methods (`fit`, `predict`, ...) to  properly
+#   route the metadata from the meta-estimator to its sub-estimator.
 
 
 class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -217,9 +219,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # In each method, we use the ``process_routing`` function to construct a
 # :class:`~utils.Bunch` of the form ``{"object_name": {"method_name": {"metadata":
 # value}}}`` to pass to the underlying estimator's method. The ``object_name``
-# (``estimator`` in the above ``routed_params.estimator.fit`` example) is the same as
-# the one added in the ``get_metadata_routing``. ``process_routing`` also validates the
-# input metadata: it makes sure all given metadata are requested to avoid silent bugs.
+# (``estimator`` in ``routed_params.estimator.fit``) is the same as the `estimator`
+# added in the ``get_metadata_routing``. ``process_routing`` also validates the input
+# metadata: it makes sure all given metadata are requested to avoid silent bugs.
 
 # %%
 # Next, we illustrate the different behaviors and notably the type of errors
