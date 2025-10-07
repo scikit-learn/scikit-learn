@@ -34,6 +34,8 @@ from sklearn.metrics import (
     brier_score_loss,
     class_likelihood_ratios,
     d2_absolute_error_score,
+    d2_brier_score,
+    d2_log_loss_score,
     explained_variance_score,
     f1_score,
     jaccard_score,
@@ -731,6 +733,8 @@ neg_mean_gamma_deviance_scorer = make_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
 d2_absolute_error_scorer = make_scorer(d2_absolute_error_score)
+d2_brier_score_scorer = make_scorer(d2_brier_score, response_method="predict_proba")
+d2_log_loss_scorer = make_scorer(d2_log_loss_score, response_method="predict_proba")
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -824,6 +828,8 @@ _SCORERS = dict(
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
     d2_absolute_error_score=d2_absolute_error_scorer,
+    d2_log_loss_score=d2_log_loss_scorer,
+    d2_brier_score=d2_brier_score_scorer,
     accuracy=accuracy_scorer,
     top_k_accuracy=top_k_accuracy_scorer,
     roc_auc=roc_auc_scorer,
