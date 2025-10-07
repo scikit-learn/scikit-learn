@@ -152,9 +152,6 @@ build_metadata_list = [
             "pytorch-cpu",
             "array-api-strict",
         ],
-        "package_constraints": {
-            # "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",
