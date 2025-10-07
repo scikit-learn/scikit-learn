@@ -3559,14 +3559,11 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
         )
 
     xp, _ = get_namespace(y_prob)
-    xp_y_true, is_y_true_array_api = get_namespace(y_true)
     if xp.max(y_prob) > 1:
         raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
     if xp.min(y_prob) < 0:
         raise ValueError(f"y_prob contains values less than 0: {xp.min(y_prob)}")
 
-    if is_y_true_array_api:
-        y_true = _convert_to_numpy(y_true, xp=xp_y_true)
     # check that pos_label is consistent with y_true
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
