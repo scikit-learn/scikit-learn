@@ -765,11 +765,18 @@ class MDS(BaseEstimator):
         else:
             self._init = self.init
 
+        if self.dissimilarity != "deprecated" and (
+            not isinstance(self.metric, bool) and self.metric != "euclidean"
+        ):
+            raise ValueError(
+                "You provided both `dissimilarity` and `metric`. Please use "
+                "only `metric`."
+            )
+
         if self.dissimilarity != "deprecated":
             warnings.warn(
                 "The `dissimilarity` parameter is deprecated and will be removed "
-                "in 1.10. Use `metric` instead. Until then, `dissimilarity` value "
-                "overrides `metric` value.",
+                "in 1.10. Use `metric` instead.",
                 FutureWarning,
             )
             self._metric = self.dissimilarity
@@ -789,12 +796,12 @@ class MDS(BaseEstimator):
             self._metric_mds = self.metric_mds
 
         X = validate_data(self, X)
-        if X.shape[0] == X.shape[1] and (self._metric != "precomputed"):
+        if X.shape[0] == X.shape[1] and self._metric != "precomputed":
             warnings.warn(
-                "The MDS API has changed. ``fit`` now constructs a"
-                " dissimilarity matrix from data. To use a custom "
-                "dissimilarity matrix, set "
-                "``metric='precomputed'``."
+                "The provided input is a square matrix. Note that ``fit`` constructs "
+                "a dissimilarity matrix from data and will treat rows as samples "
+                "and columns as features. To use a pre-computed dissimilarity matrix, "
+                "set ``metric='precomputed'``."
             )
 
         if self._metric == "precomputed":

@@ -275,6 +275,10 @@ def test_future_warning_init_and_metric():
     with pytest.warns(FutureWarning):
         mds.MDS(metric="euclidean").fit(X)
 
+    # providing both metric and dissimilarity raises an error
+    with pytest.raises(ValueError):
+        mds.MDS(metric="cosine", dissimilarity="euclidean", init="random").fit(X)
+
 
 # TODO(1.9): remove warning filter
 @pytest.mark.filterwarnings("ignore::FutureWarning")
