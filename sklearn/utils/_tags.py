@@ -274,6 +274,17 @@ def get_tags(estimator) -> Tags:
     try:
         tags = estimator.__sklearn_tags__()
     except AttributeError as exc:
+        # Check for common error cases to provide better error messages
+        estimator_name = getattr(estimator, "__name__", str(type(estimator).__name__))
+
+        # Case 1: User passed a class instead of an instance
+        if hasattr(estimator, "__name__") and hasattr(estimator, "__init__"):
+            raise TypeError(
+                f"Expected an estimator instance, but got class '{estimator_name}'. "
+                f"Did you mean to instantiate it? e.g., {estimator_name}()"
+            ) from exc
+
+        # Case 2: Missing __sklearn_tags__ method (the original case)
         if "object has no attribute '__sklearn_tags__'" in str(exc):
             # Happens when `__sklearn_tags__` is implemented by calling
             # `super().__sklearn_tags__()` but there is no `__sklearn_tags__`
@@ -289,7 +300,7 @@ def get_tags(estimator) -> Tags:
                 "alternatively define `__sklearn_tags__` but we don't recommend "
                 "this approach). Note that `BaseEstimator` needs to be on the "
                 "right side of other Mixins in the inheritance order."
-            )
+            ) from exc
         else:
             raise
 

@@ -1065,3 +1065,44 @@ def test_param_is_default(default_value, test_value):
     estimator = make_estimator_with_param(default_value)(param=test_value)
     non_default = estimator._get_params_html().non_default
     assert "param" not in non_default
+
+
+def test_is_regressor_class_vs_instance_error():
+    """Test is_regressor gives helpful error when passed a class instead of instance."""
+    from sklearn.svm import SVR
+
+    # Test passing class instead of instance
+    with pytest.raises(TypeError, match="Expected an estimator instance"):
+        is_regressor(SVR)  # Should suggest SVR()
+
+
+def test_is_classifier_class_vs_instance_error():
+    """Test is_classifier error when passed a class instead of instance."""
+    from sklearn.svm import SVC
+
+    # Test passing class instead of instance
+    with pytest.raises(TypeError, match="Expected an estimator instance"):
+        is_classifier(SVC)  # Should suggest SVC()
+
+
+def test_is_functions_custom_estimator_error():
+    """Test is_* functions error for custom estimators without BaseEstimator."""
+
+    class CustomEstimator:
+        def fit(self, X, y):
+            return self
+
+        def predict(self, X):
+            return None
+
+    custom_est = CustomEstimator()
+
+    # Test that we get helpful error about missing __sklearn_tags__
+    with pytest.raises(AttributeError, match="Make sure to inherit from"):
+        is_regressor(custom_est)
+
+    with pytest.raises(AttributeError, match="Make sure to inherit from"):
+        is_classifier(custom_est)
+
+    with pytest.raises(AttributeError, match="Make sure to inherit from"):
+        is_clusterer(custom_est)
