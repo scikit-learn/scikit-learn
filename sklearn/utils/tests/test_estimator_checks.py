@@ -968,7 +968,7 @@ def test_check_no_attributes_set_in_init():
             pass
 
     class ConformantEstimatorClassAttribute(BaseEstimator):
-        # making sure our __metadata_request__* class attributes are okay!
+        # making sure our `__metadata_request__{method}` class attributes are okay!
         __metadata_request__fit = {"foo": True}
 
         def fit(self, X, y=None):
