@@ -3670,3 +3670,97 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
         assert array_api_device(result) == array_api_device(y_pred)
+
+
+@pytest.mark.parametrize("d2_metric", [d2_brier_score, d2_log_loss_score])
+@pytest.mark.parametrize("str_y_true", [True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_d2_metrics_array_api(
+    d2_metric, str_y_true, array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    # binary case
+    extra_kwargs = {}
+    if str_y_true:
+        y_true_np = np.array(["yes", "no", "yes", "no"])
+        y_true_xp = np.asarray(y_true_np)
+        if d2_metric.__name__ == "d2_brier_score":
+            # `d2_brier_score`` requires specifying the `pos_label`
+            extra_kwargs["pos_label"] = "yes"
+    else:
+        y_true_np = np.array([1, 0, 1, 0])
+        y_true_xp = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+
+    d2_score_np = d2_metric(y_true_np, y_prob_np, **extra_kwargs)
+    with config_context(array_api_dispatch=True):
+        d2_score_xp = d2_metric(y_true_xp, y_prob_xp, **extra_kwargs)
+
+    assert d2_score_xp == pytest.approx(d2_score_np)
+
+    # multi-class case
+    if str_y_true:
+        y_true_np = np.array(["a", "b", "c", "d"])
+        y_true_xp = np.asarray(y_true_np)
+    else:
+        y_true_np = np.array([0, 1, 2, 3])
+        y_true_xp = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array(
+        [
+            [0.5, 0.2, 0.2, 0.1],
+            [0.4, 0.4, 0.1, 0.1],
+            [0.1, 0.1, 0.7, 0.1],
+            [0.1, 0.2, 0.6, 0.1],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+
+    d2_score_np = d2_metric(y_true_np, y_prob_np)
+    with config_context(array_api_dispatch=True):
+        d2_score_xp = d2_metric(y_true_xp, y_prob_xp)
+
+    assert d2_score_xp == pytest.approx(d2_score_np)
+
+
+@pytest.mark.parametrize("d2_metric", [d2_brier_score, d2_log_loss_score])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_d2_metrics_multilabel_array_api(
+    d2_metric, array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    y_true_np = np.array(
+        [
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 0, 0],
+            [1, 1, 0, 1],
+        ],
+        dtype=dtype_name,
+    )
+    y_true_xp = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array(
+        [
+            [0.15, 0.27, 0.46, 0.12],
+            [0.33, 0.38, 0.06, 0.23],
+            [0.06, 0.28, 0.03, 0.63],
+            [0.14, 0.31, 0.26, 0.29],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+
+    d2_score_np = d2_metric(y_true_np, y_prob_np)
+    with config_context(array_api_dispatch=True):
+        d2_score_xp = d2_metric(y_true_xp, y_prob_xp)
+
+    assert d2_score_xp == pytest.approx(d2_score_np)

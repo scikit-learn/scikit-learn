@@ -11,6 +11,7 @@ the lower the better.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from math import sqrt
 from numbers import Integral, Real
 
 import numpy as np
@@ -37,8 +38,10 @@ from sklearn.utils._array_api import (
     _searchsorted,
     _tolist,
     _union1d,
+    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    supported_float_dtypes,
     xpx,
 )
 from sklearn.utils._param_validation import (
@@ -208,20 +211,25 @@ def _validate_multiclass_probabilistic_prediction(
 
     y_prob : array of shape (n_samples, n_classes)
     """
+    xp, _, device_ = get_namespace_and_device(y_prob)
+    xp_y_true, is_y_true_array_api = get_namespace(y_true)
+
     y_prob = check_array(
-        y_prob, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_prob, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
 
-    if y_prob.max() > 1:
-        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
-    if y_prob.min() < 0:
-        raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
+    if xp.max(y_prob) > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
+    if xp.min(y_prob) < 0:
+        raise ValueError(f"y_prob contains values lower than 0: {xp.min(y_prob)}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
         _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
 
     lb = LabelBinarizer()
+    if is_y_true_array_api:
+        y_true = _convert_to_numpy(y_true, xp=xp_y_true)
 
     if labels is not None:
         lb = lb.fit(labels)
@@ -268,15 +276,22 @@ def _validate_multiclass_probabilistic_prediction(
     # If y_prob is of single dimension, assume y_true to be binary
     # and then check.
     if y_prob.ndim == 1:
-        y_prob = y_prob[:, np.newaxis]
+        y_prob = y_prob[:, xp.newaxis]
     if y_prob.shape[1] == 1:
-        y_prob = np.append(1 - y_prob, y_prob, axis=1)
+        y_prob = xp.concat([1 - y_prob, y_prob], axis=1)
 
-    eps = np.finfo(y_prob.dtype).eps
+    eps = xp.finfo(y_prob.dtype).eps
 
     # Make sure y_prob is normalized
-    y_prob_sum = y_prob.sum(axis=1)
-    if not np.allclose(y_prob_sum, 1, rtol=np.sqrt(eps)):
+    y_prob_sum = xp.sum(y_prob, axis=1)
+
+    if not xp.all(
+        xpx.isclose(
+            y_prob_sum,
+            xp.asarray(1, dtype=y_prob_sum.dtype, device=device_),
+            rtol=sqrt(eps),
+        )
+    ):
         warnings.warn(
             "The y_prob values do not sum to one. Make sure to pass probabilities.",
             UserWarning,
@@ -302,6 +317,7 @@ def _validate_multiclass_probabilistic_prediction(
                 "labels: {0}".format(lb.classes_)
             )
 
+    transformed_labels = ensure_common_namespace_device(y_prob, transformed_labels)[0]
     return transformed_labels, y_prob
 
 
@@ -3333,9 +3349,12 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
 def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    eps = np.finfo(y_pred.dtype).eps
-    y_pred = np.clip(y_pred, eps, 1 - eps)
-    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
+    xp, _ = get_namespace(y_pred, transformed_labels)
+    if sample_weight is not None:
+        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+    eps = xp.finfo(y_pred.dtype).eps
+    y_pred = xp.clip(y_pred, eps, 1 - eps)
+    loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3539,11 +3558,15 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
             "binary according to the shape of y_prob."
         )
 
-    if y_prob.max() > 1:
-        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
-    if y_prob.min() < 0:
-        raise ValueError(f"y_prob contains values less than 0: {y_prob.min()}")
+    xp, _ = get_namespace(y_prob)
+    xp_y_true, is_y_true_array_api = get_namespace(y_true)
+    if xp.max(y_prob) > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
+    if xp.min(y_prob) < 0:
+        raise ValueError(f"y_prob contains values less than 0: {xp.min(y_prob)}")
 
+    if is_y_true_array_api:
+        y_true = _convert_to_numpy(y_true, xp=xp_y_true)
     # check that pos_label is consistent with y_true
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -3559,7 +3582,8 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     # convert (n_samples,) to (n_samples, 2) shape
     y_true = np.array(y_true == pos_label, int)
     transformed_labels = np.column_stack((1 - y_true, y_true))
-    y_prob = np.column_stack((1 - y_prob, y_prob))
+    y_prob = xp.stack([1 - y_prob, y_prob], axis=1)
+    transformed_labels = ensure_common_namespace_device(y_prob, transformed_labels)[0]
 
     return transformed_labels, y_prob
 
@@ -3784,8 +3808,10 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
-    y_pred_null = np.average(transformed_labels, axis=0, weights=sample_weight)
-    y_pred_null = np.tile(y_pred_null, (len(y_true), 1))
+
+    xp, _ = get_namespace(y_pred, transformed_labels)
+    y_pred_null = _average(transformed_labels, axis=0, weights=sample_weight)
+    y_pred_null = xp.tile(y_pred_null, (y_pred.shape[0], 1))
 
     numerator = _log_loss(
         transformed_labels,
@@ -3876,8 +3902,9 @@ def d2_brier_score(
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
+    xp, _, device_ = get_namespace_and_device(y_proba)
     y_proba = check_array(
-        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
@@ -3887,16 +3914,17 @@ def d2_brier_score(
         transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
             y_true, y_proba, sample_weight, labels
         )
-    y_proba_null = np.average(transformed_labels, axis=0, weights=sample_weight)
-    y_proba_null = np.tile(y_proba_null, (len(y_true), 1))
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
+    y_proba_null = _average(transformed_labels, axis=0, weights=sample_weight)
+    y_proba_null = xp.tile(y_proba_null, (y_proba.shape[0], 1))
 
     # Scaling does not matter in D^2 score as it cancels out by taking the ratio.
-    brier_score = np.average(
-        np.sum((transformed_labels - y_proba) ** 2, axis=1),
+    brier_score = _average(
+        xp.sum((transformed_labels - y_proba) ** 2, axis=1),
         weights=sample_weight,
     )
-    brier_score_null = np.average(
-        np.sum((transformed_labels - y_proba_null) ** 2, axis=1),
+    brier_score_null = _average(
+        xp.sum((transformed_labels - y_proba_null) ** 2, axis=1),
         weights=sample_weight,
     )
     return float(1 - brier_score / brier_score_null)
