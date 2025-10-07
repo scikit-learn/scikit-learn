@@ -8,7 +8,7 @@ from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
+from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
 
 ctypedef fused integral:

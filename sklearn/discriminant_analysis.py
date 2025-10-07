@@ -671,7 +671,7 @@ class LinearDiscriminantAnalysis(
 
         if self.priors is None:  # estimate priors from sample
             _, cnts = xp.unique_counts(y)  # non-negative ints
-            self.priors_ = xp.astype(cnts, X.dtype) / float(y.shape[0])
+            self.priors_ = xp.astype(cnts, X.dtype) / float(n_samples)
         else:
             self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
 
@@ -998,8 +998,8 @@ class QuadraticDiscriminantAnalysis(
             self.priors_ = np.array(self.priors)
 
         cov = None
-        store_covariance = self.store_covariance
-        if store_covariance:
+
+        if self.store_covariance:
             cov = []
         means = []
         scalings = []
@@ -1026,12 +1026,12 @@ class QuadraticDiscriminantAnalysis(
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
                 )
-            if self.store_covariance or store_covariance:
+            if self.store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if self.store_covariance or store_covariance:
+        if self.store_covariance:
             self.covariance_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings

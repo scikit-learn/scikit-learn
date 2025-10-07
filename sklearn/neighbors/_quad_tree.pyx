@@ -32,6 +32,8 @@ CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
 
+cdef const float EPSILON = 1e-6
+
 
 cdef class _QuadTree:
     """Array-based representation of a QuadTree.
