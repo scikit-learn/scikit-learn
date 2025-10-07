@@ -58,8 +58,7 @@ jobs:
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
-          ls -hals ~/dist
-          pip install ~/dist/cibw-wheels/$(ls ~/dist/cibw-wheels)
+          pip install ~/dist/$(ls ~/dist)
 
       - name: Run array API tests
         run: |
