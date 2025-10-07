@@ -27,7 +27,7 @@ from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
@@ -235,6 +235,22 @@ def test_clone_class_rather_than_instance():
     msg = "You should provide an instance of scikit-learn estimator"
     with pytest.raises(TypeError, match=msg):
         clone(MyEstimator)
+
+
+def test_conditional_attrs_not_in_dir():
+    # Test that __dir__ includes only relevant attributes. #28558
+
+    encoder = LabelEncoder()
+    assert "set_output" not in dir(encoder)
+
+    scalar = StandardScaler()
+    assert "set_output" in dir(scalar)
+
+    svc = SVC(probability=False)
+    assert "predict_proba" not in dir(svc)
+
+    svc.probability = True
+    assert "predict_proba" in dir(svc)
 
 
 def test_repr():

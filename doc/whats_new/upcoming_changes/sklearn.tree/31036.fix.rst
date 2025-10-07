@@ -1,0 +1,3 @@
+- :func:`~sklearn.tree.export_graphviz` now raises a `ValueError` if given feature
+  names are not all strings.
+  By :user:`Guilherme Peixoto <guilhermecsnpeixoto>`

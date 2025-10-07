@@ -88,6 +88,8 @@ REGRESSION_SCORERS = [
 CLF_SCORERS = [
     "accuracy",
     "balanced_accuracy",
+    "d2_brier_score",
+    "d2_log_loss_score",
     "top_k_accuracy",
     "f1",
     "f1_weighted",

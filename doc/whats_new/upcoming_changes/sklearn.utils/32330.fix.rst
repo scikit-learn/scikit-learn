@@ -1,0 +1,2 @@
+- Changes the way color are chosen when displaying an estimator as an HTML representation. Colors are not adapted anymore to the user's theme, but chosen based on theme declared color scheme (light or dark) for VSCode and JupyterLab. If theme does not declare a color scheme, scheme is chosen according to default text color of the page, if it fails fallbacks to a media query.
+  By :user:`Matt J. <rouk1>`.

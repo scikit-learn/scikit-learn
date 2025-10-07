@@ -1,4 +1,4 @@
-from ..utils._typedefs cimport intp_t
+from sklearn.utils._typedefs cimport intp_t
 
 cdef extern from "_cython_blas_helpers.h":
     ctypedef double (*dot_func)(int, const double*, int, const double*, int)

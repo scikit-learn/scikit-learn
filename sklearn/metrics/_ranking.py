@@ -1031,19 +1031,24 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
+    xp, _, device = get_namespace_and_device(y_true, y_score)
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    if drop_intermediate and len(fps) > 2:
+    if drop_intermediate and fps.shape[0] > 2:
         # Drop thresholds corresponding to points where true positives (tps)
         # do not change from the previous or subsequent point. This will keep
         # only the first and last point for each tps value. All points
         # with the same tps value have the same recall and thus x coordinate.
         # They appear as a vertical line on the plot.
-        optimal_idxs = np.where(
-            np.concatenate(
-                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+        optimal_idxs = xp.where(
+            xp.concat(
+                [
+                    xp.asarray([True], device=device),
+                    xp.logical_or(xp.diff(tps[:-1]), xp.diff(tps[1:])),
+                    xp.asarray([True], device=device),
+                ]
             )
         )[0]
         fps = fps[optimal_idxs]
@@ -1053,8 +1058,7 @@ def precision_recall_curve(
     ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]
     # does not contain uninitialized values.
-    precision = np.zeros_like(tps)
-    np.divide(tps, ps, out=precision, where=(ps != 0))
+    precision = xp.where(ps != 0, xp.divide(tps, ps), 0.0)
 
     # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels
@@ -1063,13 +1067,16 @@ def precision_recall_curve(
             "No positive class found in y_true, "
             "recall is set to one for all thresholds."
         )
-        recall = np.ones_like(tps)
+        recall = xp.full(tps.shape, 1.0)
     else:
         recall = tps / tps[-1]
 
     # reverse the outputs so recall is decreasing
-    sl = slice(None, None, -1)
-    return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
+    return (
+        xp.concat((xp.flip(precision), xp.asarray([1.0], device=device))),
+        xp.concat((xp.flip(recall), xp.asarray([0.0], device=device))),
+        xp.flip(thresholds),
+    )
 
 
 @validate_params(
@@ -1145,6 +1152,8 @@ def roc_curve(
         (ROC) curve given an estimator and some data.
     RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
         (ROC) curve given the true and predicted values.
+    RocCurveDisplay.from_cv_results : Plot multi-fold ROC curves given
+        cross-validation results.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
 

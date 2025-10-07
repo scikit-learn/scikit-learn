@@ -112,8 +112,8 @@ Estimators and other tools in scikit-learn that support Array API compatible inp
 Estimators
 ----------
 
-- :class:`decomposition.PCA` (with `svd_solver="full"`,
-  `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
+- :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
+  `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.Binarizer`
@@ -174,6 +174,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
 - :func:`sklearn.metrics.precision_score`
+- :func:`sklearn.metrics.precision_recall_curve`
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
@@ -185,6 +186,7 @@ Metrics
 Tools
 -----
 
+- :func:`model_selection.cross_val_predict`
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`
 

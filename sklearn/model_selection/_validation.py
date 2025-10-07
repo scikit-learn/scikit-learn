@@ -1258,7 +1258,9 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        predictions = np.concatenate(predictions)
+        xp, _ = get_namespace(X)
+        inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
+        predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):
         return [p[inv_test_indices] for p in predictions]

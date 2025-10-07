@@ -21,7 +21,6 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import (
     _check_feature_names,
     _estimator_has,
-    _num_features,
     check_is_fitted,
     check_scalar,
 )
@@ -128,7 +127,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         - If an integer, then it specifies the maximum number of features to
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
-          features allowed by using the output of `max_features(X)`.
+          features allowed. The callable will receive `X` as input: `max_features(X)`.
         - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
@@ -308,8 +307,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def _check_max_features(self, X):
         if self.max_features is not None:
-            n_features = _num_features(X)
-
             if callable(self.max_features):
                 max_features = self.max_features(X)
             else:  # int
@@ -320,7 +317,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "max_features",
                 Integral,
                 min_val=0,
-                max_val=n_features,
+                max_val=None,
             )
             self.max_features_ = max_features
 

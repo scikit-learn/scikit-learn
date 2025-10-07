@@ -1,0 +1,4 @@
+- Registered named scorer objects for :func:`metrics.d2_brier_score` and
+  :func:`metrics.d2_log_loss_score` and updated their input validation to be
+  consistent with related metric functions.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Omar Salman <OmarManzoor>`
