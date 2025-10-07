@@ -721,66 +721,6 @@ def test_pandas_copy_on_write():
 # ---------------------------------------------------------------------------
 
 
-class _NoCategoriesAfterFit(TargetEncoder):
-    """
-    White-box subclass that simulates an upstream breakage by deleting
-    `categories_` after a normal fit.
-
-    Intuition
-    ---------
-    The fast-path initialization guards that `fit` *must* set `categories_`.
-    We ensure this guard fails loudly and with a clear error message.
-    """
-
-    def _fit_encodings_all(self, X, y):
-        out = super()._fit_encodings_all(X, y)
-        if hasattr(self, "categories_"):
-            delattr(self, "categories_")
-        return out
-
-
-class _DupCats(TargetEncoder):
-    """
-    White-box subclass to exercise the defensive index-map collision branch.
-
-    Intuition
-    ---------
-    `_BaseEncoder._fit` guarantees per-feature `categories_[j]` are unique, and
-    this TargetEncoder keeps NA-like values distinct via custom sentinels.
-    Therefore a collision in the normalized dict keys should be unreachable.
-
-    To cover the defensive code path without altering public behavior, we:
-      1) run a standard fit,
-      2) inject an illegal duplicate at the front of `categories_[0]`,
-      3) mirror that duplication in `encodings_[0]` so lengths stay aligned,
-      4) call the private cache builder for feature 0,
-      5) assert that fast-path caches for that feature are left as `None`.
-
-    We *do not* call `transform()` afterward, because the small-batch path
-    would try to use `idx_map.get` on a `None` map (by design), which is beyond
-    the intended scope of this coverage-only test.
-    """
-
-    def _fit_encodings_all(self, X, y):
-        # Run the standard fitting first.
-        Xo, mask, y_enc, ncat = super()._fit_encodings_all(X, y)
-
-        # Inject a duplicate category at the front of feature 0 to force:
-        #   key in index_map and index_map[key] != i
-        j = 0
-        cats0 = list(self.categories_[j])
-        if len(cats0) >= 1:
-            dup = cats0[0]
-            # categories_: make the first entry appear twice
-            self.categories_[j] = np.asarray([dup] + cats0, dtype=object)
-
-            # encodings_: duplicate the first encoding value to keep lengths aligned
-            enc0 = np.asarray(self.encodings_[j])
-            self.encodings_[j] = np.concatenate([enc0[:1], enc0], axis=0)
-
-        return Xo, mask, y_enc, ncat
-
-
 class _FakeDF:
     """
     NumPy-coercible, DataFrame-like object with string columns.
@@ -819,23 +759,6 @@ class _FakeDF:
     def astype(self, dtype):
         """Mirror DataFrame.astype behavior just enough for check_array."""
         return np.asarray(self._arr, dtype=dtype)
-
-
-class _BadShapeDF(_FakeDF):
-    """
-    Same as _FakeDF but `.shape` raises to exercise a defensive branch.
-
-    Intuition
-    ---------
-    `TargetEncoder.fit` checks (inside `try/except`) whether a DF-like's shape
-    matches the validated `ndarray` shape. If accessing `.shape` explodes,
-    it falls back to treating input as ndarray (and thus will not set
-    `feature_names_in_`). This class lets us test that graceful fallback.
-    """
-
-    @property
-    def shape(self):
-        raise RuntimeError("bad shape")
 
 
 def _fit_pair_numpy():
@@ -1005,43 +928,6 @@ def test_large_batch_vectorized_consistency():
     npt.assert_allclose(Z_fast, Z_vec, rtol=0, atol=1e-9)
 
 
-def test_multiclass_default_fallback_uses_block_mean_axis1():
-    """
-    Multiclass robust default:
-    If `target_mean_` is a valid numeric array but wrong-shaped, the default
-    vector for unseen categories should fall back to `block.mean(axis=1)`.
-    """
-    rng = np.random.RandomState(0)
-    X_fit = np.stack(
-        [
-            rng.choice(list("abc"), size=80),
-            rng.choice(list("wxyz"), size=80),
-        ],
-        axis=1,
-    ).astype(object)
-    y = rng.randint(0, 3, size=80)  # legitimate multiclass target
-
-    te = TargetEncoder(target_type="multiclass").fit(X_fit, y)
-    # White-box: allow small input to build caches where default is computed.
-    te._small_batch_threshold = 256
-
-    # Wrong shape but numeric → triggers robust per-class default via block.mean(axis=1)
-    te.target_mean_ = np.array([[0.2, 0.5, 0.3]], dtype=float)
-
-    X_small = np.array(
-        [
-            ["a", "w"],  # seen
-            ["zzz_unseen", "w"],  # unseen in first feature → use default vector
-        ],
-        dtype=object,
-    )
-
-    Z = te.transform(X_small)
-    n_classes = len(te.classes_)
-    assert Z.shape == (2, X_small.shape[1] * n_classes)
-    assert np.isfinite(Z).all()
-
-
 def test_fit_dataframe_like_sets_feature_names():
     """
     DF-like input with string columns:
@@ -1064,99 +950,15 @@ def test_fit_dataframe_like_sets_feature_names():
         npt.assert_array_equal(names, default_names)
 
 
-def test_fit_dataframe_like_shape_mismatch_falls_back_to_ndarray():
-    """
-    If accessing `.shape` on DF-like input fails, fit should gracefully fall
-    back to ndarray handling and *not* set `feature_names_in_`.
-    """
-    arr = np.array([["a", "x"], ["b", "y"]], dtype=object)
-    te = TargetEncoder(smooth=5.0).fit(
-        _BadShapeDF(arr, ["fa", "fb"]), np.array([0, 1], dtype=float)
-    )
-    assert not hasattr(te, "feature_names_in_")
-
-
-def test_smallbatch_cache_reshape_and_default_mean_fallback_binary():
-    """
-    Binary/regression robust default & vector shape:
-    - Force `encodings_[0]` to be 2-D so the cache flattens it.
-    - Force `target_mean_` to be 1-D so default scalar falls back to `mean(enc_vec)`.
-    """
-    te_fast, te_vec = _fit_pair_numpy()
-
-    # Make per-category encoding vector 2-D → fast-path flattens it
-    enc0 = np.asarray(te_fast.encodings_[0]).reshape(-1, 1)
-    te_fast.encodings_[0] = enc0
-
-    # Make global mean 1-D → default scalar falls back to mean(enc_vec)
-    te_fast.target_mean_ = np.array([float(te_fast.target_mean_)], dtype=float)
-
-    X = np.array([["u", "x"], ["new_unseen", "x"]], dtype=object)
-    npt.assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
-
-
-def test_fit_raises_when_categories_missing_no_pytest():
-    """
-    `TargetEncoder.fit` should raise a clear AttributeError if `categories_`
-    is not set before fast-path initialization (defensive guard).
-    """
-    X = np.array([["a"], ["b"]], dtype=object)
-    y = np.array([0.0, 1.0])
-    te = _NoCategoriesAfterFit(smooth=5.0)
-
-    try:
-        te.fit(X, y)
-    except AttributeError as e:
-        msg = "TargetEncoder.fit must set 'categories_' before fast path."
-        assert msg in str(e), f"unexpected error message: {e}"
-    else:
-        raise AssertionError("Expected AttributeError was not raised")
-
-
-def test_collision_branch_disables_fastpath_for_feature():
-    """
-    Force the index-map collision branch and assert that all per-feature
-    fast-path caches are left as None (the intended 'disable fastpath' behavior).
-    """
-    # Small, valid dataset for a normal fit
-    X = np.array([["u"], ["v"], ["u"]], dtype=object)
-    y = np.array([0.0, 1.0, 1.0])
-
-    te = _DupCats(smooth=5.0).fit(X, y)
-    # White-box: allow small-batch cache building
-    te._small_batch_threshold = 256
-
-    # Safeguard in case the private method is renamed in the future.
-    assert hasattr(te, "_ensure_fastpath_structs_for_feature"), (
-        "private fast-path builder was renamed; update test accordingly"
-    )
-
-    # Build caches for feature 0; this must hit the collision branch
-    j = 0
-    te._ensure_fastpath_structs_for_feature(j)
-
-    # Collision path leaves all fast caches as None and returns
-    assert te._te_index_maps_[j] is None
-    assert te._te_enc_vecs_[j] is None
-    assert te._te_enc_blocks_[j] is None
-    assert te._te_defaults_[j] is None
-
-
 def _force_slow_transform(enc: TargetEncoder, X):
-    # Force reference/slow path by disabling the small-batch route and clearing caches.
+    """Force the reference (vectorized) transform path by
+    disabling the small-batch fast path."""
     old_thresh = enc._small_batch_threshold
-    enc._small_batch_threshold = -1  # never take fast path
-    # Clear caches (simulate a fresh instance for fairness)
-    enc._te_index_maps_ = None
-    enc._te_is_multiclass_ = None
-    enc._te_enc_vecs_ = None
-    enc._te_enc_blocks_ = None
-    enc._te_defaults_ = None
+    enc._small_batch_threshold = -1
     try:
-        out = enc.transform(X)
+        return enc.transform(X)
     finally:
         enc._small_batch_threshold = old_thresh
-    return out
 
 
 @pytest.mark.parametrize("n_small", [1, 2, 8, 32])
@@ -1200,47 +1002,15 @@ def test_fake_df_numpy_protocol_paths():
     np.testing.assert_array_equal(out2, np.array([[1.0, 2.0], [3.0, 4.0]]))
 
 
-def test_smallbatch_lazy_init_missing_categories_raises_clear_error():
-    """Deleting `categories_` during fit must raise a clear error when the
-    small-batch fast-path initializes during transform."""
-    X = np.array([["a"], ["b"]], dtype=object)
-    y = np.array([0.0, 1.0])
-    te = _NoCategoriesAfterFit(smooth=5.0)
-    # Use fit_transform so the lazy fast-path init happens in the transform part.
-    try:
-        te.fit_transform(X, y)
-    except AttributeError as e:
-        msg1 = "TargetEncoder.fit must set 'categories_' before fast path."
-        msg2 = "TargetEncoder.fit_transform must set 'categories_' before fast path."
-        assert (msg1 in str(e)) or (msg2 in str(e)), f"unexpected error: {e}"
-    else:
-        raise AssertionError("Expected AttributeError was not raised")
-
-
 def test_smallbatch_lazy_init_normal_path_executes_and_allocates():
-    """Normal small-batch lazy init should run (the `try:` branch) and allocate
-    per-feature caches without raising."""
+    """Fast-path caches are built eagerly during fit;
+    they should exist right after fit."""
     X = np.array([["a"], ["b"]], dtype=object)
     y = np.array([0.0, 1.0])
     te = TargetEncoder(smooth=5.0).fit(X, y)
-    te._small_batch_threshold = 256  # force small-batch path
-    # Trigger lazy init
-    te.transform(np.array([["a"]], dtype=object))
-    # Sanity: fast-path placeholders/caches exist for feature 0
+    # Caches must exist immediately after fit (no transform call needed)
     assert getattr(te, "_te_index_maps_", None) is not None
     assert te._te_index_maps_[0] is not None
-
-
-def test_unfitted_private_fastpath_builder_raises():
-    """Calling the private fast-path builder on an unfitted estimator must fail."""
-    enc = TargetEncoder()
-    # Guard in _ensure_fastpath_structs_for_feature should raise:
-    try:
-        enc._ensure_fastpath_structs_for_feature(0)
-    except AttributeError as e:
-        assert "must be fitted before using the fast path" in str(e)
-    else:
-        raise AssertionError("Expected AttributeError was not raised")
 
 
 def test_small_batch_multiclass_parity_and_order():

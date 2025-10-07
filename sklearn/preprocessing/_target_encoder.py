@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Hashable
 from numbers import Integral, Real
 
 import numpy as np
@@ -284,6 +283,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # or when categories >> rows (see transform()).
         self._small_batch_threshold = 256
 
+    def __setstate__(self, state):
+        # Restore state, then rebuild caches if the estimator is fitted
+        self.__dict__.update(state)
+        if (
+            hasattr(self, "categories_")
+            and hasattr(self, "encodings_")
+            and hasattr(self, "target_mean_")
+        ):
+            # Recreate fast-path structures with the current module's sentinel objects
+            self._build_fastpath_structs()
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
@@ -323,14 +333,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             ensure_all_finite="allow-nan",
         )
 
-        # if X_df exists, make sure it has the same shape as validated X
-        if X_df is not None:
-            try:
-                if getattr(X_df, "shape", None) != X.shape:
-                    X_df = None  # shape mismatch; fall back to ndarray
-            except Exception:
-                X_df = None
-
         # set feature_names_in_ only if DataFrame *and* all string columns
         if X_df is not None:
             cols = np.asarray(X_df.columns, dtype=object)
@@ -341,24 +343,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # otherwise use the validated ndarray. This lets _BaseEncoder._fit
         # discover DataFrame metadata when present.
         self._fit_encodings_all(X_df if X_df is not None else X, y)
-
-        # ---- Lazy fast-path initialization ----
-        # We only allocate placeholders; actual per-feature maps/views are built
-        # on the first small-batch transform that needs them.
-        # categories_ is a list-like of length n_features after fitting.
-        try:
-            n_features = len(self.categories_)
-        except Exception as e:  # be defensive if upstream changes
-            raise AttributeError(
-                "TargetEncoder.fit must set 'categories_' before fast path."
-            ) from e
-
-        # ---- initialize lazy fast-path placeholders (underscore attrs) ----
-        self._te_index_maps_ = [None] * n_features
-        self._te_enc_vecs_ = [None] * n_features
-        self._te_enc_blocks_ = [None] * n_features
-        self._te_defaults_ = [None] * n_features
-        self._te_is_multiclass_ = getattr(self, "target_type_", None) == "multiclass"
+        self._build_fastpath_structs()
 
         return self
 
@@ -395,19 +380,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
-        # ---- Lazy fast-path initialization (same as fit) ----
-        try:
-            n_features = len(self.categories_)
-        except Exception as e:
-            raise AttributeError(
-                "TargetEncoder.fit_transform must set 'categories_' before fast path."
-            ) from e
-
-        self._te_index_maps_ = [None] * n_features
-        self._te_enc_vecs_ = [None] * n_features
-        self._te_enc_blocks_ = [None] * n_features
-        self._te_defaults_ = [None] * n_features
-        self._te_is_multiclass_ = getattr(self, "target_type_", None) == "multiclass"
+        self._build_fastpath_structs()
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
@@ -456,93 +429,41 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return X_out
 
-    def _ensure_fastpath_structs_for_feature(self, j: int) -> None:
-        """Lazily build fast-path caches for feature j.
-        Caches:
-        - self._te_index_maps_[j]: dict normalized_category -> index in categories_[j]
-        - self._te_enc_vecs_[j]:   1D view (n_cats_j,) for regression/binary
-        - self._te_enc_blocks_[j]: 2D view (n_classes, n_cats_j) for multiclass
-          ( class order == self.classes_ )
-        - self._te_defaults_[j]:   scalar (binary/regression) or 1D vector (n_classes,)
-          ( for unseen categories )
-        """
-        # already built
-        maps = getattr(self, "_te_index_maps_", None)
-        if maps is not None and maps[j] is not None:
-            return
+    def _build_fastpath_structs(self):
+        """Precompute all fast-path structures during fit/fit_transform."""
 
-        # sanity (fit must have happened)
-        if not hasattr(self, "categories_") or not hasattr(self, "encodings_"):
-            raise AttributeError(
-                "TargetEncoder must be fitted before using the fast path."
-            )
+        n_features = len(self.categories_)
+        is_multi = getattr(self, "target_type_", None) == "multiclass"
+        n_classes = 0 if not is_multi else len(self.classes_)
 
-        # ensure placeholders exist (fit created them)
-        if self._te_index_maps_ is None:
-            n_features = len(self.categories_)
-            self._te_index_maps_ = [None] * n_features
-            self._te_enc_vecs_ = [None] * n_features
-            self._te_enc_blocks_ = [None] * n_features
-            self._te_defaults_ = [None] * n_features
-            self._te_is_multiclass_ = (
-                getattr(self, "target_type_", None) == "multiclass"
-            )
+        self._te_is_multiclass_ = is_multi
+        self._te_index_maps_ = [None] * n_features
+        self._te_enc_vecs_ = [None] * n_features
+        self._te_enc_blocks_ = [None] * n_features
+        self._te_defaults_ = [None] * n_features
 
-        cats_j = self.categories_[j]
-        n_cats_j = len(cats_j)
-        is_multi = bool(self._te_is_multiclass_)
-
-        # -------- index map: category -> index (distinct NA-like sentinels) --------
-        index_map: dict[Hashable, int] = {}
-        for i in range(n_cats_j):
-            key = _norm_key(cats_j[i])
-            # Paranoia: if a collision happens (shouldn’t with distinct sentinels),
-            # disable fastpath for this feature by leaving its map as None.
-            if key in index_map and index_map[key] != i:
-                self._te_index_maps_[j] = None
-                self._te_enc_vecs_[j] = None
-                self._te_enc_blocks_[j] = None
-                self._te_defaults_[j] = None
-                return
-            index_map[key] = i
-
-        if not is_multi:
-            # regression/binary: encodings_[j] is 1D vector (n_cats_j,)
-            enc_vec = np.asarray(self.encodings_[j])
-            if enc_vec.ndim != 1:
-                enc_vec = enc_vec.reshape(-1)
-            self._te_enc_vecs_[j] = enc_vec
-
-            # default for unseen: scalar target mean
-            default = np.asarray(self.target_mean_, dtype=float)
-            if default.ndim != 0:
-                # fall back to global mean of enc_vec (should not happen normally)
-                default = np.asarray(float(np.mean(enc_vec)))
-            self._te_defaults_[j] = default
-        else:
-            # multiclass: encodings_ is feature-major, class-fast:
-            # e_idx for (feature j, class c) == j * n_classes + c
-            n_classes = len(self.classes_)
-            # stack per-class 1D arrays into a (n_classes, n_cats_j) block
-            block = np.empty((n_classes, n_cats_j), dtype=float)
-            base = j * n_classes
-            for c in range(n_classes):
-                block[c, :] = self.encodings_[base + c]
-            self._te_enc_blocks_[j] = block
-
-            # default for unseen: 1D vector (n_classes,) in self.classes_ order
-            default = np.asarray(self.target_mean_, dtype=float)
-            if default.ndim == 0:
-                default = np.full((n_classes,), float(default), dtype=float)
-            elif default.ndim == 1 and default.shape[0] == n_classes:
-                # good as-is
-                pass
+        for j in range(n_features):
+            cats_j = self.categories_[j]
+            idx_map = {}
+            for i, cat in enumerate(cats_j):
+                k = _norm_key(cat)
+                idx_map[k] = i
+            self._te_index_maps_[j] = idx_map
+            if not is_multi:
+                enc_vec = np.asarray(self.encodings_[j]).reshape(-1)
+                self._te_enc_vecs_[j] = enc_vec
+                self._te_defaults_[j] = float(np.asarray(self.target_mean_))
             else:
-                # robust fallback: per-class mean across categories
-                default = block.mean(axis=1)
-            self._te_defaults_[j] = default
+                block = np.empty((n_classes, len(cats_j)), dtype=float)
+                base = j * n_classes
+                for c in range(n_classes):
+                    block[c, :] = self.encodings_[base + c]
+                self._te_enc_blocks_[j] = block
 
-        self._te_index_maps_[j] = index_map
+                default = np.asarray(self.target_mean_, dtype=float)
+                if default.ndim == 0:
+                    default = np.full((n_classes,), float(default))
+                self._te_defaults_[j] = default
 
     def transform(self, X):
         """Transform X with the target encoding.
@@ -574,6 +495,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # Decide fast path using only cheap metadata;
         # no heavy validation/conversion here.
         check_is_fitted(self)
+
         X_checked = validate_data(
             self,
             X,
@@ -589,8 +511,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # ---- Small-batch path (tiny inputs only) ---------------------------------
         if (
             use_small_batch
-            and getattr(self, "categories_", None) is not None
-            and getattr(self, "encodings_", None) is not None
+            and getattr(self, "_te_index_maps_", None) is not None
+            and getattr(self, "_te_enc_vecs_", None) is not None
+            and (self._te_is_multiclass_ is not None)
         ):
             X_arr = np.asarray(X_checked, dtype=object)
             n_samples, n_features = X_arr.shape
@@ -600,17 +523,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X_out = np.empty((n_samples, n_features * n_classes), dtype=np.float64)
             else:
                 X_out = np.empty((n_samples, n_features), dtype=np.float64)
-                n_classes = 0  # unused below
+                n_classes = 0
 
             norm_key = _norm_key  # local ref for speed
 
             for j in range(n_features):
-                self._ensure_fastpath_structs_for_feature(j)
-
                 idx_map = self._te_index_maps_[j]
                 get = idx_map.get
                 col = X_arr[:, j]
-
                 if not is_multi:
                     enc_vec = self._te_enc_vecs_[j]
                     default = float(self._te_defaults_[j])
