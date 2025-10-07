@@ -1044,10 +1044,10 @@ def test_param_is_non_default_when_pandas_NA():
     https://github.com/scikit-learn/scikit-learn/issues/32312
     """
     pd = pytest.importorskip("pandas")
-    if pd:
-        estimator = make_estimator_with_param(None)(param=pd.NA)
-        non_default = estimator._get_params_html().non_default
-        assert "param" in non_default
+
+    estimator = make_estimator_with_param(default_value=0)(param=pd.NA)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
 
 
 @pytest.mark.parametrize(
