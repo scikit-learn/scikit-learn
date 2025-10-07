@@ -26,7 +26,10 @@ def _features_html(features):
     """
 
     FEATURES_ROW_TEMPLATE = """
-        <tr><td>{feature}</td></tr>
+        <tr><td>{feature}</td>
+            <td class="hidden">"{feature}",</td>
+        </tr>
+
     """
     total_features = len(features)
     rows = []
