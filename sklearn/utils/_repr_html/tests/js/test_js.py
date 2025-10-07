@@ -24,15 +24,6 @@ def _make_page(body):
     """
 
 
-@pytest.mark.parametrize(
-    "local_server",
-    [
-        _make_page(
-            '<div class="sk-toggleable__content fitted" data-param-prefix="prefix"/>'
-        )
-    ],
-    indirect=True,
-)
 def test_copy_paste(page, local_server):
     """Test that copyToClipboard copies the right text to the clipboard.
 
@@ -40,8 +31,14 @@ def test_copy_paste(page, local_server):
     Assertion is done by reading back the clipboard content from the browser.
     This is easier than writing a cross platform clipboard reader.
     """
+    url, set_html_response = local_server
+
+    copy_paste_html = (
+        _make_page('<div class="sk-toggleable__content" data-param-prefix="prefix"/>'),
+    )
+    set_html_response(copy_paste_html)
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
-    page.goto(local_server)
+    page.goto(url)
     page.evaluate(
         "copyToClipboard('test', document.querySelector('.sk-toggleable__content'))"
     )
@@ -50,28 +47,33 @@ def test_copy_paste(page, local_server):
 
 
 @pytest.mark.parametrize(
-    "local_server,theme",
+    "color,expected_theme",
     [
         (
-            _make_page('<div id="test" style="color: black;"></div>'),
+            "black",
             "light",
         ),
         (
-            _make_page('<div id="test" style="color: white;"></div>'),
+            "white",
             "dark",
         ),
         (
-            _make_page('<div id="test" style="color: #828282;"></div>'),
+            "#828282",
             "light",
         ),
     ],
-    indirect=["local_server"],
 )
-def test_force_theme(page, local_server, theme):
+def test_force_theme(page, local_server, color, expected_theme):
     """Test that forceTheme applies the right theme class to the element.
 
     A light color must lead to a dark theme and vice-versa.
     """
-    page.goto(local_server)
+    url, set_html_response = local_server
+
+    html = _make_page('<div id="test" style="color: ${color};"></div>')
+    set_html_response(html.replace("${color}", color))
+    page.goto(url)
     page.evaluate("forceTheme('test')")
-    assert page.locator("#test").evaluate(f"el => el.classList.contains('{theme}')")
+    assert page.locator("#test").evaluate(
+        f"el => el.classList.contains('{expected_theme}')"
+    )

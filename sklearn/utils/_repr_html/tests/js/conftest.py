@@ -27,20 +27,22 @@ def local_server(request):
     Usage :
 
     ```python
-    @pytest.mark.parametrize(
-        "local_server",
-        ["<html><body>test body</body></html>",],
-        indirect=True,
-    )
     def test_something(page, local_server):
+        url, set_html_response = local_server
+        set_html_response("<html>...</html>")
         page.goto(local_server)
         ...
     ```
     """
-    html_content = getattr(request, "param", "<html><body>Default</body></html>")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         PORT = s.getsockname()[1]
+
+    html_content = getattr(request, "param", "<html><body>Default</body></html>")
+
+    def set_html_response(content):
+        nonlocal html_content
+        html_content = content
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -57,6 +59,6 @@ def local_server(request):
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
 
-    yield f"http://127.0.0.1:{PORT}"
+    yield f"http://127.0.0.1:{PORT}", set_html_response
 
     httpd.shutdown()

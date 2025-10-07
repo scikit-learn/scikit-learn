@@ -56,12 +56,12 @@ jobs:
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
         --volume $BUILD_REPOSITORY_LOCALPATH:/repo_localpath
-        --volume $PWD:/sklearn
+        --volume $PWD:/app
         --volume $CCACHE_DIR:/ccache
-        -w /sklearn
+        -w /app
         --detach
         --name skcontainer
-        -e BUILD_SOURCESDIRECTORY=/sklearn
+        -e BUILD_SOURCESDIRECTORY=/app
         -e TEST_DIR=/temp_dir
         -e CCACHE_DIR=/ccache
         -e BUILD_REPOSITORY_LOCALPATH=/repo_localpath
