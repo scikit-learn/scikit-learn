@@ -64,7 +64,6 @@ reuters/
 benchmarks/bench_covertype_data/
 benchmarks/HIGGS.csv.gz
 bench_pca_solvers.csv
-benchmarks/minibatch_results/
 
 *.prefs
 .pydevproject
