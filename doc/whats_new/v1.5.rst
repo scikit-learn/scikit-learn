@@ -48,7 +48,7 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Increase rank defficiency threshold in the whitening step of
+- |Fix| Increase rank deficiency threshold in the whitening step of
   :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
   platform-agnosticity of the estimator.
   :pr:`29612` by :user:`Olivier Grisel <ogrisel>`.
@@ -233,7 +233,7 @@ Meson support for building scikit-learn was added in :pr:`28040` by
 Metadata Routing
 ----------------
 
-The following models now support metadata routing in one or more or their
+The following models now support metadata routing in one or more of their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
@@ -253,13 +253,13 @@ more details.
   :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
+- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in its
   `fit` method and routes metadata to the CV splitter.
   :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
   in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
-  underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
+  underlying estimator's ``fit``, ``score`` and ``predict`` methods.
   :pr:`28261` by :user:`Stefanie Senger <StefanieSenger>`.
 
 - |Feature| :class:`ensemble.VotingClassifier` and
@@ -335,7 +335,7 @@ Changelog
   masks, rather than column indices.
   :pr:`27657` by :user:`Jérôme Dockès <jeromedockes>`.
 
-- |Fix| Fixed an bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
   intermediate selected columns were passed to the transformers as read-only arrays.
   :pr:`28822` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
@@ -347,12 +347,13 @@ Changelog
   the previous predicted values were not affected by this bug.
   :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and
-  inverse_transform of:
-  :class:`cross_decomposition.PLSRegression`.
-  :class:`cross_decomposition.PLSCanonical`,
-  :class:`cross_decomposition.CCA`,
-  and :class:`cross_decomposition.PLSSVD`.
+- |API| Deprecates `Y` in favor of `y` in the methods `fit`, `transform` and
+  `inverse_transform` of:
+  :class:`cross_decomposition.PLSRegression`, 
+  :class:`cross_decomposition.PLSCanonical`, 
+  and :class:`cross_decomposition.CCA`, 
+  and methods `fit` and `transform` of:
+  :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
   :pr:`28604` by :user:`David Leon <davidleon123>`.
 
@@ -378,7 +379,7 @@ Changelog
 ............................
 
 - |Efficiency| :class:`decomposition.PCA` with `svd_solver="full"` now assigns
-  a contiguous `components_` attribute instead of an non-contiguous slice of
+  a contiguous `components_` attribute instead of a non-contiguous slice of
   the singular vectors. When `n_components << n_features`, this can save some
   memory and, more importantly, help speed-up subsequent calls to the `transform`
   method by more than an order of magnitude by leveraging cache locality of
@@ -502,13 +503,13 @@ Changelog
 
 - |API| Parameter `multi_class` was deprecated in
   :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.7,
+  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.8,
   and internally, for 3 and more classes, it will always use multinomial.
   If you still want to use the one-vs-rest scheme, you can use
   `OneVsRestClassifier(LogisticRegression(..))`.
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |API| `store_cv_values` and `cv_values_` are deprecated in favor of
+- |API| Parameters `store_cv_values` and `cv_values_` are deprecated in favor of
   `store_cv_results` and `cv_results_` in `~linear_model.RidgeCV` and
   `~linear_model.RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
@@ -656,7 +657,7 @@ Changelog
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
   :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| :class:`utils.parallel_backend` and :func:`utils.register_parallel_backend` are
+- |API| `utils.parallel_backend` and `utils.register_parallel_backend` are
   deprecated and will be removed in version 1.7. Use `joblib.parallel_backend` and
   `joblib.register_parallel_backend` instead.
   :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.

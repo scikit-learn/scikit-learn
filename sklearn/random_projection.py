@@ -33,22 +33,22 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from .exceptions import DataDimensionalityWarning
-from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions, validate_params
-from .utils.extmath import safe_sparse_dot
-from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted, validate_data
+from sklearn.exceptions import DataDimensionalityWarning
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
-    "SparseRandomProjection",
     "GaussianRandomProjection",
+    "SparseRandomProjection",
     "johnson_lindenstrauss_min_dim",
 ]
 
@@ -463,6 +463,7 @@ class BaseRandomProjection(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -745,7 +746,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    np.float64(0.0182...)
+    np.float64(0.0182)
     """
 
     _parameter_constraints: dict = {

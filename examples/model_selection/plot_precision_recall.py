@@ -10,7 +10,7 @@ classes are very imbalanced. In information retrieval, precision is a
 measure of the fraction of relevant items among actually returned items while recall
 is a measure of the fraction of items that were returned among all items that should
 have been returned. 'Relevancy' here refers to items that are
-postively labeled, i.e., true positives and false negatives.
+positively labeled, i.e., true positives and false negatives.
 
 Precision (:math:`P`) is defined as the number of true positives (:math:`T_p`)
 over the number of true positives plus the number of false positives

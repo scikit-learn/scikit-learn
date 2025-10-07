@@ -14,26 +14,19 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy.sparse import csr_matrix, issparse
 
-from ..base import BaseEstimator, MultiOutputMixin, is_classifier
-from ..exceptions import DataConversionWarning, EfficiencyWarning
-from ..metrics import DistanceMetric, pairwise_distances_chunked
-from ..metrics._pairwise_distances_reduction import (
-    ArgKmin,
-    RadiusNeighbors,
-)
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import (
-    check_array,
-    gen_even_slices,
-    get_tags,
-)
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.fixes import parse_version, sp_base_version
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _to_object_array, check_is_fitted, validate_data
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
+from sklearn.base import BaseEstimator, MultiOutputMixin, is_classifier
+from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
+from sklearn.metrics import DistanceMetric, pairwise_distances_chunked
+from sklearn.metrics._pairwise_distances_reduction import ArgKmin, RadiusNeighbors
+from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._kd_tree import KDTree
+from sklearn.utils import check_array, gen_even_slices, get_tags
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.fixes import parse_version, sp_base_version
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _to_object_array, check_is_fitted, validate_data
 
 SCIPY_METRICS = [
     "braycurtis",
@@ -487,7 +480,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             if is_classifier(self):
                 # Classification targets require a specific format
-                if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+                if y.ndim == 1 or (y.ndim == 2 and y.shape[1] == 1):
                     if y.ndim != 1:
                         warnings.warn(
                             (
@@ -707,6 +700,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # For cross-validation routines to split data correctly
         tags.input_tags.pairwise = self.metric == "precomputed"
         # when input is precomputed metric values, all those values need to be positive
@@ -1248,13 +1242,13 @@ class RadiusNeighborsMixin:
             )
             if return_distance:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
-                neigh_dist_list = sum(neigh_dist_chunks, [])
-                neigh_ind_list = sum(neigh_ind_chunks, [])
+                neigh_dist_list = list(itertools.chain.from_iterable(neigh_dist_chunks))
+                neigh_ind_list = list(itertools.chain.from_iterable(neigh_ind_chunks))
                 neigh_dist = _to_object_array(neigh_dist_list)
                 neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
-                neigh_ind_list = sum(chunked_results, [])
+                neigh_ind_list = list(itertools.chain.from_iterable(chunked_results))
                 results = _to_object_array(neigh_ind_list)
 
             if sort_results:

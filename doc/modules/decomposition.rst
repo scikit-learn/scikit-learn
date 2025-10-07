@@ -79,7 +79,7 @@ out-of-core Principal Component Analysis either by:
   ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
-in order update ``explained_variance_ratio_`` incrementally. This is why
+in order to update ``explained_variance_ratio_`` incrementally. This is why
 memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
 
@@ -120,7 +120,7 @@ pictures of human faces look somewhat alike.
 The samples lie on a manifold of much lower
 dimension (say around 200 for instance). The PCA algorithm can be used
 to linearly transform the data while both reducing the dimensionality
-and preserve most of the explained variance at the same time.
+and preserving most of the explained variance at the same time.
 
 The class :class:`PCA` used with the optional parameter
 ``svd_solver='randomized'`` is very useful in that case: since we are going
@@ -197,7 +197,7 @@ the real underlying components can be more naturally imagined as sparse
 vectors; for example in face recognition, components might naturally map to
 parts of faces.
 
-Sparse principal components yields a more parsimonious, interpretable
+Sparse principal components yield a more parsimonious, interpretable
 representation, clearly emphasizing which of the original features contribute
 to the differences between samples.
 
@@ -229,7 +229,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
-                \text{subject to } & ||U_k||_2 <= 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 \leq 1 \text{ for all }
                 0 \leq k < n_{components}
 
 :math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
@@ -525,7 +525,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
-                \text{subject to } & ||V_k||_2 <= 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 \leq 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -553,38 +553,23 @@ indicates positive values, and white represents zeros.
 
 
 .. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_010.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. centered:: |dict_img_pos1| |dict_img_pos2|
 .. centered:: |dict_img_pos3| |dict_img_pos4|
-
-
-The following image shows how a dictionary learned from 4x4 pixel image patches
-extracted from part of the image of a raccoon face looks like.
-
-
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_image_denoising_001.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
-    :align: center
-    :scale: 50%
-
-
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 
 .. rubric:: References
@@ -610,7 +595,7 @@ implement a stopping condition.
 The estimator also implements ``partial_fit``, which updates the dictionary by
 iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
-does not fit into the memory.
+does not fit into memory.
 
 .. currentmodule:: sklearn.cluster
 
@@ -630,6 +615,18 @@ does not fit into the memory.
    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
+
+The following image shows how a dictionary, learned from 4x4 pixel image patches
+extracted from part of the image of a raccoon face, looks like.
+
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_image_denoising_001.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :align: center
+    :scale: 50%
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 .. _FA:
 
@@ -739,7 +736,7 @@ implemented in scikit-learn using the :class:`Fast ICA <FastICA>`
 algorithm. Typically, ICA is not used for reducing dimensionality but
 for separating superimposed signals. Since the ICA model does not include
 a noise term, for the model to be correct, whitening must be applied.
-This can be done internally using the whiten argument or manually using one
+This can be done internally using the `whiten` argument or manually using one
 of the PCA variants.
 
 It is classically used to separate mixed signals (a problem known as
@@ -877,7 +874,7 @@ Or, the Itakura-Saito (IS) divergence:
     d_{IS}(X, Y) = \sum_{i,j} (\frac{X_{ij}}{Y_{ij}} - \log(\frac{X_{ij}}{Y_{ij}}) - 1)
 
 These three distances are special cases of the beta-divergence family, with
-:math:`\beta = 2, 1, 0` respectively [6]_. The beta-divergence are
+:math:`\beta = 2, 1, 0` respectively [6]_. The beta-divergence is
 defined by :
 
 .. math::
@@ -943,7 +940,7 @@ the size of the batches.
 
 In order to speed up the mini-batch algorithm it is also possible to scale
 past batches, giving them less importance than newer batches. This is done
-introducing a so-called forgetting factor controlled by the ``forget_factor``
+by introducing a so-called forgetting factor controlled by the ``forget_factor``
 parameter.
 
 The estimator also implements ``partial_fit``, which updates ``H`` by iterating
@@ -984,7 +981,7 @@ Latent Dirichlet Allocation (LDA)
 =================================
 
 Latent Dirichlet Allocation is a generative probabilistic model for collections of
-discrete dataset such as text corpora. It is also a topic model that is used for
+discrete datasets such as text corpora. It is also a topic model that is used for
 discovering abstract topics from a collection of documents.
 
 The graphical model of LDA is a three-level generative model:

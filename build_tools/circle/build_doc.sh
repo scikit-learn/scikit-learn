@@ -192,7 +192,7 @@ ccache -z
 
 show_installed_libraries
 
-# Specify explictly ninja -j argument because ninja does not handle cgroups v2 and
+# Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
 # use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
 pip install -e . --no-build-isolation --config-settings=compile-args="-j 3"

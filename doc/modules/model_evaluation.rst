@@ -92,7 +92,7 @@ mode                no consistent one exists                             reals
 ==================  ===================================================  ====================  =================================
 
 :sup:`1` The Brier score is just a different name for the squared error in case of
-classification.
+classification with one-hot encoded targets.
 
 :sup:`2` The zero-one loss is only consistent but not strictly consistent for the mode.
 The zero-one loss is equivalent to one minus the accuracy score, meaning it gives
@@ -125,14 +125,14 @@ hyperparameters or in comparing to other models like
     Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
     In: Journal of the American Statistical Association 102 (2007),
     pp. 359– 378.
-    `link to pdf <www.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+    `link to pdf <https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
 
 .. [Gneiting2009] T. Gneiting. :arxiv:`Making and Evaluating Point Forecasts
     <0912.0902>`
     Journal of the American Statistical Association 106 (2009): 746 - 762.
 
 .. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
-    <10.1146/annurev-st atistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+    <10.1146/annurev-statistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
 
 .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
     Comparison and Calibration Assessment: User Guide for Consistent Scoring
@@ -217,7 +217,7 @@ Scoring string name                    Function                                 
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
-'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'neg_brier_score'                      :func:`metrics.brier_score_loss`                   requires ``predict_proba`` support
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -232,7 +232,8 @@ Scoring string name                    Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
-'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
+'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`                  requires ``predict_proba`` support
+'d2_brier_score'                       :func:`metrics.d2_brier_score`                     requires ``predict_proba`` support
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -258,7 +259,7 @@ Scoring string name                    Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
+'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
 Usage examples:
@@ -268,7 +269,7 @@ Usage examples:
     >>> X, y = datasets.load_iris(return_X_y=True)
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
-    array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
+    array([0.96, 0.96, 0.96, 0.93, 1.        ])
 
 .. note::
 
@@ -343,7 +344,7 @@ Creating a custom scorer object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can create your own custom scorer object using
-:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
+:func:`make_scorer`.
 
 .. dropdown:: Custom scorer objects using `make_scorer`
 
@@ -377,7 +378,7 @@ You can create your own custom scorer object using
       >>> import numpy as np
       >>> def my_custom_loss_func(y_true, y_pred):
       ...     diff = np.abs(y_true - y_pred).max()
-      ...     return np.log1p(diff)
+      ...     return float(np.log1p(diff))
       ...
       >>> # score will negate the return value of my_custom_loss_func,
       >>> # which will be np.log(2), 0.693, given the values for X
@@ -389,35 +390,9 @@ You can create your own custom scorer object using
       >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
       >>> clf = clf.fit(X, y)
       >>> my_custom_loss_func(y, clf.predict(X))
-      0.69...
+      0.69
       >>> score(clf, X, y)
-      -0.69...
-
-.. dropdown:: Custom scorer objects from scratch
-
-  You can generate even more flexible model scorers by constructing your own
-  scoring object from scratch, without using the :func:`make_scorer` factory.
-
-  For a callable to be a scorer, it needs to meet the protocol specified by
-  the following two rules:
-
-  - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-    is the model that should be evaluated, ``X`` is validation data, and ``y`` is
-    the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
-    unsupervised case).
-
-  - It returns a floating point number that quantifies the
-    ``estimator`` prediction quality on ``X``, with reference to ``y``.
-    Again, by convention higher numbers are better, so if your scorer
-    returns loss, that value should be negated.
-
-  - Advanced: If it requires extra metadata to be passed to it, it should expose
-    a ``get_metadata_routing`` method returning the requested metadata. The user
-    should be able to set the requested metadata via a ``set_score_request``
-    method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
-    Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
-    more details.
-
+      -0.69
 
 .. dropdown:: Using custom scorers in functions where n_jobs > 1
 
@@ -676,7 +651,7 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   0.75
   >>> # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
-  3
+  3.0
 
 .. _balanced_accuracy_score:
 
@@ -709,7 +684,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
-The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it is rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
@@ -731,7 +706,7 @@ defined as:
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
 \frac{1}{n\_classes}`.  In the binary case, this is also known as
-`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
+`Youden's J statistic <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
 .. note::
@@ -742,7 +717,7 @@ or *informedness*.
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
       [Guyon2015]_ adopt the adjusted version to ensure that random predictions
-      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
@@ -837,7 +812,7 @@ false negatives and true positives as follows::
 
   >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
   >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel().tolist()
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
 
@@ -977,7 +952,8 @@ AP that interpolate the precision-recall curve. Currently,
 References [Davis2006]_ and [Flach2015]_ describe why a linear interpolation of
 points on the precision-recall curve provides an overly-optimistic measure of
 classifier performance. This linear interpolation is used when computing area
-under the curve with the trapezoidal rule in :func:`auc`.
+under the curve with the trapezoidal rule in :func:`auc`. [Chen2024]_
+benchmarks different interpolation strategies to demonstrate the effects.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -1031,6 +1007,9 @@ precision-recall curve as follows.
 .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
     NIPS 2015.
+.. [Chen2024] W. Chen, C. Miao, Z. Zhang, C.S. Fung, R. Wang, Y. Chen, Y. Qian, L. Cheng, K.Y. Yip, S.K
+   Tsui, Q. Cao, `Commonly used software tools produce conflicting and overly-optimistic AUPRC values
+   <https://doi.org/10.1186/s13059-024-03266-y>`_, Genome Biology 2024.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1091,15 +1070,15 @@ Here are some small examples in binary classification::
   >>> metrics.recall_score(y_true, y_pred)
   0.5
   >>> metrics.f1_score(y_true, y_pred)
-  0.66...
+  0.66
   >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)
-  0.83...
+  0.83
   >>> metrics.fbeta_score(y_true, y_pred, beta=1)
-  0.66...
+  0.66
   >>> metrics.fbeta_score(y_true, y_pred, beta=2)
-  0.55...
+  0.55
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-  (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]))
+  (array([0.66, 1.        ]), array([1. , 0.5]), array([0.71, 0.83]), array([2, 2]))
 
 
   >>> import numpy as np
@@ -1109,13 +1088,13 @@ Here are some small examples in binary classification::
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
   >>> precision
-  array([0.5       , 0.66..., 0.5       , 1.        , 1.        ])
+  array([0.5       , 0.66, 0.5       , 1.        , 1.        ])
   >>> recall
   array([1. , 1. , 0.5, 0.5, 0. ])
   >>> threshold
   array([0.1 , 0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)
-  0.83...
+  0.83
 
 
 
@@ -1178,15 +1157,15 @@ Then the metrics are defined as:
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
   >>> metrics.precision_score(y_true, y_pred, average='macro')
-  0.22...
+  0.22
   >>> metrics.recall_score(y_true, y_pred, average='micro')
-  0.33...
+  0.33
   >>> metrics.f1_score(y_true, y_pred, average='weighted')
-  0.26...
+  0.267
   >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-  0.23...
+  0.238
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
-  (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...))
+  (array([0.667, 0., 0.]), array([1., 0., 0.]), array([0.714, 0., 0.]), array([2, 2, 2]))
 
 For multiclass classification with a "negative class", it is possible to exclude some labels:
 
@@ -1197,7 +1176,7 @@ For multiclass classification with a "negative class", it is possible to exclude
 Similarly, labels not present in the data sample may be accounted for in macro-averaging.
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
-  0.166...
+  0.166
 
 .. rubric:: References
 
@@ -1234,7 +1213,7 @@ In the binary case::
   >>> y_pred = np.array([[1, 1, 1],
   ...                    [1, 0, 0]])
   >>> jaccard_score(y_true[0], y_pred[0])
-  0.6666...
+  0.6666
 
 In the 2D comparison case (e.g. image similarity):
 
@@ -1244,9 +1223,9 @@ In the 2D comparison case (e.g. image similarity):
 In the multilabel case with binary label indicators::
 
   >>> jaccard_score(y_true, y_pred, average='samples')
-  0.5833...
+  0.5833
   >>> jaccard_score(y_true, y_pred, average='macro')
-  0.6666...
+  0.6666
   >>> jaccard_score(y_true, y_pred, average=None)
   array([0.5, 0.5, 1. ])
 
@@ -1256,11 +1235,11 @@ multilabel problem::
   >>> y_pred = [0, 2, 1, 2]
   >>> y_true = [0, 1, 2, 2]
   >>> jaccard_score(y_true, y_pred, average=None)
-  array([1. , 0. , 0.33...])
+  array([1. , 0. , 0.33])
   >>> jaccard_score(y_true, y_pred, average='macro')
-  0.44...
+  0.44
   >>> jaccard_score(y_true, y_pred, average='micro')
-  0.33...
+  0.33
 
 .. _hinge_loss:
 
@@ -1313,9 +1292,9 @@ with a svm classifier in a binary class problem::
   LinearSVC(random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision
-  array([-2.18...,  2.36...,  0.09...])
+  array([-2.18,  2.36,  0.09])
   >>> hinge_loss([-1, 1, 1], pred_decision)
-  0.3...
+  0.3
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a multiclass problem::
@@ -1329,7 +1308,7 @@ with a svm classifier in a multiclass problem::
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
-  0.56...
+  0.56
 
 .. _log_loss:
 
@@ -1344,30 +1323,30 @@ probability outputs (``predict_proba``) of a classifier instead of its
 discrete predictions.
 
 For binary classification with a true label :math:`y \in \{0,1\}`
-and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`,
+and a probability estimate :math:`\hat{p} \approx \operatorname{Pr}(y = 1)`,
 the log loss per sample is the negative log-likelihood
 of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log (p) + (1 - y) \log (1 - p))
+    L_{\log}(y, \hat{p}) = -\log \operatorname{Pr}(y|\hat{p}) = -(y \log (\hat{p}) + (1 - y) \log (1 - \hat{p}))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
 be encoded as a 1-of-K binary indicator matrix :math:`Y`,
 i.e., :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
-Let :math:`P` be a matrix of probability estimates,
-with :math:`p_{i,k} = \operatorname{Pr}(y_{i,k} = 1)`.
+Let :math:`\hat{P}` be a matrix of probability estimates,
+with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
 Then the log loss of the whole set is
 
 .. math::
 
-    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
+    L_{\log}(Y, \hat{P}) = -\log \operatorname{Pr}(Y|\hat{P}) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log \hat{p}_{i,k}
 
 To see how this generalizes the binary log loss given above,
 note that in the binary case,
-:math:`p_{i,0} = 1 - p_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
+:math:`\hat{p}_{i,0} = 1 - \hat{p}_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
 so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
 gives the binary log loss.
 
@@ -1379,7 +1358,7 @@ method.
     >>> y_true = [0, 0, 1, 1]
     >>> y_pred = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
     >>> log_loss(y_true, y_pred)
-    0.1738...
+    0.1738
 
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
@@ -1434,7 +1413,7 @@ Then the multiclass MCC is defined as:
 
 When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
-depending on the number and distribution of ground true labels. The maximum
+depending on the number and distribution of ground truth labels. The maximum
 value is always +1.
 For additional information, see [WikipediaMCC2021]_.
 
@@ -1445,7 +1424,7 @@ function:
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    -0.33...
+    -0.33
 
 .. rubric:: References
 
@@ -1632,7 +1611,7 @@ Therefore, the `y_score` parameter is of size (n_samples,).
   >>> from sklearn.linear_model import LogisticRegression
   >>> from sklearn.metrics import roc_auc_score
   >>> X, y = load_breast_cancer(return_X_y=True)
-  >>> clf = LogisticRegression(solver="liblinear").fit(X, y)
+  >>> clf = LogisticRegression().fit(X, y)
   >>> clf.classes_
   array([0, 1])
 
@@ -1640,12 +1619,12 @@ We can use the probability estimates corresponding to `clf.classes_[1]`.
 
   >>> y_score = clf.predict_proba(X)[:, 1]
   >>> roc_auc_score(y, y_score)
-  0.99...
+  0.99
 
 Otherwise, we can use the non-thresholded decision values
 
   >>> roc_auc_score(y, clf.decision_function(X))
-  0.99...
+  0.99
 
 .. _roc_auc_multiclass:
 
@@ -1676,7 +1655,7 @@ class. The OvO and OvR algorithms support weighting uniformly
   where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
   AUC with class :math:`j` as the positive class and class :math:`k` as the
   negative class. In general,
-  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j)` in the multiclass
   case. This algorithm is used by setting the keyword argument ``multiclass``
   to ``'ovo'`` and ``average`` to ``'macro'``.
 
@@ -1728,11 +1707,11 @@ class with the greater label for each output.
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.multioutput import MultiOutputClassifier
   >>> X, y = make_multilabel_classification(random_state=0)
-  >>> inner_clf = LogisticRegression(solver="liblinear", random_state=0)
+  >>> inner_clf = LogisticRegression(random_state=0)
   >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
   >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
   >>> roc_auc_score(y, y_score, average=None)
-  array([0.82..., 0.86..., 0.94..., 0.85... , 0.94...])
+  array([0.828, 0.851, 0.94, 0.87, 0.95])
 
 And the decision values do not require such processing.
 
@@ -1740,7 +1719,7 @@ And the decision values do not require such processing.
   >>> clf = RidgeClassifierCV().fit(X, y)
   >>> y_score = clf.decision_function(X)
   >>> roc_auc_score(y, y_score, average=None)
-  array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
+  array([0.82, 0.85, 0.93, 0.87, 0.94])
 
 .. rubric:: Examples
 
@@ -1860,7 +1839,7 @@ same classification task:
     `The DET Curve in Assessment of Detection Task Performance
     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_, NIST 1997.
 
-.. [Navratil2007] J. Navractil and D. Klusacek,
+.. [Navratil2007] J. Navratil and D. Klusacek,
     `"On Linear DETs" <https://ieeexplore.ieee.org/document/4218079>`_,
     2007 IEEE International Conference on Acoustics,
     Speech and Signal Processing - ICASSP '07, Honolulu,
@@ -1880,7 +1859,7 @@ In multilabel classification, the :func:`zero_one_loss` scores a subset as
 one if its labels strictly match the predictions, and as a zero if there
 are any errors.  By default, the function returns the percentage of imperfectly
 predicted subsets.  To get the count of such subsets instead, set
-``normalize`` to ``False``
+``normalize`` to ``False``.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -1891,8 +1870,8 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
    L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
-loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero-one
+loss can also be computed as :math:`\text{zero-one loss} = 1 - \text{accuracy}`.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -1923,41 +1902,64 @@ set [0,1] has an error::
 Brier score loss
 ----------------
 
-The :func:`brier_score_loss` function computes the
-`Brier score <https://en.wikipedia.org/wiki/Brier_score>`_
-for binary classes [Brier1950]_. Quoting Wikipedia:
+The :func:`brier_score_loss` function computes the `Brier score
+<https://en.wikipedia.org/wiki/Brier_score>`_ for binary and multiclass
+probabilistic predictions and is equivalent to the mean squared error.
+Quoting Wikipedia:
 
-    "The Brier score is a proper score function that measures the accuracy of
-    probabilistic predictions. It is applicable to tasks in which predictions
-    must assign probabilities to a set of mutually exclusive discrete outcomes."
+    "The Brier score is a strictly proper scoring rule that measures the accuracy of
+    probabilistic predictions. [...] [It] is applicable to tasks in which predictions
+    must assign probabilities to a set of mutually exclusive discrete outcomes or
+    classes."
 
-This function returns the mean squared error of the actual outcome
-:math:`y \in \{0,1\}` and the predicted probability estimate
-:math:`p = \operatorname{Pr}(y = 1)` (:term:`predict_proba`) as outputted by:
+Let the true labels for a set of :math:`N` data points be encoded as a 1-of-K binary
+indicator matrix :math:`Y`, i.e., :math:`y_{i,k} = 1` if sample :math:`i` has
+label :math:`k` taken from a set of :math:`K` labels. Let :math:`\hat{P}` be a matrix
+of probability estimates with elements :math:`\hat{p}_{i,k} \approx \operatorname{Pr}(y_{i,k} = 1)`.
+Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
 
-   BS = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1}(y_i - p_i)^2
+  BS(Y, \hat{P}) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - \hat{p}_{i,k})^{2}
 
-The Brier score loss is also between 0 to 1 and the lower the value (the mean
-square difference is smaller), the more accurate the prediction is.
+The Brier score lies in the interval :math:`[0, 2]` and the lower the value the
+better the probability estimates are (the mean squared difference is smaller).
+Actually, the Brier score is a strictly proper scoring rule, meaning that it
+achieves the best score only when the estimated probabilities equal the
+true ones.
 
-Here is a small example of usage of this function::
+Note that in the binary case, the Brier score is usually divided by two and
+ranges between :math:`[0,1]`. For binary targets :math:`y_i \in \{0, 1\}` and
+probability estimates :math:`\hat{p}_i  \approx \operatorname{Pr}(y_i = 1)`
+for the positive class, the Brier score is then equal to:
+
+.. math::
+
+   BS(y, \hat{p}) = \frac{1}{N} \sum_{i=0}^{N - 1}(y_i - \hat{p}_i)^2
+
+The :func:`brier_score_loss` function computes the Brier score given the
+ground-truth labels and predicted probabilities, as returned by an estimator's
+``predict_proba`` method. The `scale_by_half` parameter controls which of the
+two above definitions to follow.
+
 
     >>> import numpy as np
     >>> from sklearn.metrics import brier_score_loss
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
-    >>> y_pred = np.array([0, 1, 1, 0])
     >>> brier_score_loss(y_true, y_prob)
     0.055
     >>> brier_score_loss(y_true, 1 - y_prob, pos_label=0)
     0.055
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.055
-    >>> brier_score_loss(y_true, y_prob > 0.5)
-    0.0
+    >>> brier_score_loss(
+    ...    ["eggs", "ham", "spam"],
+    ...    [[0.8, 0.1, 0.1], [0.2, 0.7, 0.1], [0.2, 0.2, 0.6]],
+    ...    labels=["eggs", "ham", "spam"],
+    ... )
+    0.146
 
 The Brier score can be used to assess how well a classifier is calibrated.
 However, a lower Brier score loss does not always mean a better calibration.
@@ -1992,7 +1994,7 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
   and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
 
 .. _class_likelihood_ratios:
 
@@ -2086,26 +2088,31 @@ the actual formulas).
 
 .. dropdown:: Mathematical divergences
 
-  The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-  interpreted as the classifier perfectly identifying positive cases. If :math:`fp
-  = 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
-  happens, for instance, when using a `DummyClassifier` that always predicts the
-  negative class and therefore the interpretation as a perfect classifier is lost.
+  The positive likelihood ratio (`LR+`) is undefined when :math:`fp=0`, meaning the
+  classifier does not misclassify any negative labels as positives. This condition can
+  either indicate a perfect identification of all the negative cases or, if there are
+  also no true positive predictions (:math:`tp=0`), that the classifier does not predict
+  the positive class at all. In the first case, `LR+` can be interpreted as `np.inf`, in
+  the second case (for instance, with highly imbalanced data) it can be interpreted as
+  `np.nan`.
 
-  The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
-  is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
-  sample belonging to the positive class after being classified as negative, as if
-  the act of classifying caused the positive condition. This includes the case of
-  a `DummyClassifier` that always predicts the positive class (i.e. when
-  :math:`tn=fn=0`).
+  The negative likelihood ratio (`LR-`) is undefined when :math:`tn=0`. Such
+  divergence is invalid, as :math:`LR_- > 1.0` would indicate an increase in the odds of
+  a sample belonging to the positive class after being classified as negative, as if the
+  act of classifying caused the positive condition. This includes the case of a
+  :class:`~sklearn.dummy.DummyClassifier` that always predicts the positive class
+  (i.e. when :math:`tn=fn=0`).
 
-  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
-  that no samples of the positive class were present in the testing set. This can
-  also happen when cross-validating highly imbalanced data.
+  Both class likelihood ratios (`LR+ and LR-`) are undefined when :math:`tp=fn=0`, which
+  means that no samples of the positive class were present in the test set. This can
+  happen when cross-validating on highly imbalanced data and also leads to a division by
+  zero.
 
-  In all the previous cases the :func:`class_likelihood_ratios` function raises by
-  default an appropriate warning message and returns `nan` to avoid pollution when
-  averaging over cross-validation folds.
+  If a division by zero occurs and `raise_warning` is set to `True` (default),
+  :func:`class_likelihood_ratios` raises an `UndefinedMetricWarning` and returns
+  `np.nan` by default to avoid pollution when averaging over cross-validation folds.
+  Users can set return values in case of a division by zero with the
+  `replace_undefined_by` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.
@@ -2117,8 +2124,7 @@ the actual formulas).
 
   * Brenner, H., & Gefeller, O. (1997).
     Variation of sensitivity, specificity, likelihood ratios and predictive
-    values with disease prevalence.
-    Statistics in medicine, 16(9), 981-991.
+    values with disease prevalence. Statistics in medicine, 16(9), 981-991.
 
 
 .. _d2_score_classification:
@@ -2129,7 +2135,7 @@ D² score for classification
 The D² score computes the fraction of deviance explained.
 It is a generalization of R², where the squared error is generalized and replaced
 by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Log loss). D² is a form of a *skill score*.
+(e.g., Log loss, Brier score,). D² is a form of a *skill score*.
 It is calculated as
 
 .. math::
@@ -2137,7 +2143,7 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+(e.g., the per-class proportion of `y_true` in the case of the Log loss and Brier score).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts
@@ -2172,7 +2178,7 @@ of 0.0.
     ...     [0.01, 0.01, 0.98],
     ... ]
     >>> d2_log_loss_score(y_true, y_pred)
-    0.981...
+    0.981
     >>> y_true = [1, 2, 3]
     >>> y_pred = [
     ...     [0.1, 0.6, 0.3],
@@ -2180,8 +2186,48 @@ of 0.0.
     ...     [0.4, 0.5, 0.1],
     ... ]
     >>> d2_log_loss_score(y_true, y_pred)
-    -0.552...
+    -0.552
 
+
+.. dropdown:: D2 Brier score
+
+  The :func:`d2_brier_score` function implements the special case
+  of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+
+  .. math::
+
+    \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+
+  This is also referred to as the Brier Skill Score (BSS).
+
+  Here are some usage examples of the :func:`d2_brier_score` function::
+
+    >>> from sklearn.metrics import d2_brier_score
+    >>> y_true = [1, 1, 2, 3]
+    >>> y_pred = [
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.98, 0.01, 0.01],
+    ...    [0.01, 0.98, 0.01],
+    ...    [0.01, 0.01, 0.98],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.9991
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.4, 0.5, 0.1],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    -0.370...
 
 .. _multilabel_ranking_metrics:
 
@@ -2203,7 +2249,7 @@ The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
-of this metrics is thus the average number of true labels.
+of this metric is thus the average number of true labels.
 
 .. note::
 
@@ -2279,7 +2325,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
-    0.416...
+    0.416
 
 .. _label_ranking_loss:
 
@@ -2314,7 +2360,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_loss(y_true, y_score)
-    0.75...
+    0.75
     >>> # With the following prediction, we have perfect and minimal loss
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
     >>> label_ranking_loss(y_true, y_score)
@@ -2345,7 +2391,7 @@ engine algorithms or related applications. Using a graded relevance scale of
 documents in a search-engine result set, DCG measures the usefulness, or gain,
 of a document based on its position in the result list. The gain is accumulated
 from the top of the result list to the bottom, with the gain of each result
-discounted at lower ranks"
+discounted at lower ranks."
 
 DCG orders the true targets (e.g. relevance of query answers) in the predicted
 order, then multiplies them by a logarithmic decay and sums the result. The sum
@@ -2472,19 +2518,19 @@ Here is a small example of usage of the :func:`r2_score` function::
   >>> y_true = [3, -0.5, 2, 7]
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> r2_score(y_true, y_pred)
-  0.948...
+  0.948
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-  0.938...
+  0.938
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred, multioutput='uniform_average')
-  0.936...
+  0.936
   >>> r2_score(y_true, y_pred, multioutput='raw_values')
-  array([0.965..., 0.908...])
+  array([0.965, 0.908])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
-  0.925...
+  0.925
   >>> y_true = [-2, -2, -2]
   >>> y_pred = [-2, -2, -2]
   >>> r2_score(y_true, y_pred)
@@ -2536,7 +2582,7 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
   array([0.5, 1. ])
   >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-  0.85...
+  0.85
 
 .. _mean_squared_error:
 
@@ -2567,7 +2613,7 @@ function::
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_squared_error(y_true, y_pred)
-  0.7083...
+  0.7083
 
 .. rubric:: Examples
 
@@ -2575,7 +2621,7 @@ function::
   for an example of mean squared error usage to evaluate gradient boosting regression.
 
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
-common metric that provides a measure in the same units as the target variable. RSME is
+common metric that provides a measure in the same units as the target variable. RMSE is
 available through the :func:`root_mean_squared_error` function.
 
 .. _mean_squared_log_error:
@@ -2609,11 +2655,11 @@ function::
   >>> y_true = [3, 5, 2.5, 7]
   >>> y_pred = [2.5, 5, 4, 8]
   >>> mean_squared_log_error(y_true, y_pred)
-  0.039...
+  0.0397
   >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
-  0.044...
+  0.044
 
 The root mean squared logarithmic error (RMSLE) is available through the
 :func:`root_mean_squared_log_error` function.
@@ -2647,7 +2693,7 @@ function::
   >>> y_true = [1, 10, 1e6]
   >>> y_pred = [0.9, 15, 1.2e6]
   >>> mean_absolute_percentage_error(y_true, y_pred)
-  0.2666...
+  0.2666
 
 In above example, if we had used `mean_absolute_error`, it would have ignored
 the small magnitude values and only reflected the error in prediction of highest
@@ -2728,7 +2774,7 @@ Here is a small example of usage of the :func:`max_error` function::
   >>> y_true = [3, 2, 7, 1]
   >>> y_pred = [9, 2, 7, 1]
   >>> max_error(y_true, y_pred)
-  6
+  6.0
 
 The :func:`max_error` does not support multioutput.
 
@@ -2775,13 +2821,13 @@ function::
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)
-    0.957...
+    0.957
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
-    array([0.967..., 1.        ])
+    array([0.967, 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.990...
+    0.990
     >>> y_true = [-2, -2, -2]
     >>> y_pred = [-2, -2, -2]
     >>> explained_variance_score(y_true, y_pred)
@@ -2853,16 +2899,16 @@ prediction difference of the second point,::
 If we increase ``power`` to 1,::
 
     >>> mean_tweedie_deviance([1.0], [1.5], power=1)
-    0.18...
+    0.189
     >>> mean_tweedie_deviance([100.], [150.], power=1)
-    18.9...
+    18.9
 
 the difference in errors decreases. Finally, by setting, ``power=2``::
 
     >>> mean_tweedie_deviance([1.0], [1.5], power=2)
-    0.14...
+    0.144
     >>> mean_tweedie_deviance([100.], [150.], power=2)
-    0.14...
+    0.144
 
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
@@ -2889,13 +2935,13 @@ Here is a small example of usage of the :func:`mean_pinball_loss` function::
   >>> from sklearn.metrics import mean_pinball_loss
   >>> y_true = [1, 2, 3]
   >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
-  0.03...
+  0.033
   >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
-  0.3...
+  0.3
   >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
-  0.3...
+  0.3
   >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
-  0.03...
+  0.033
   >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
   0.0
   >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
@@ -2920,7 +2966,7 @@ quantile regressor via cross-validation:
   ...     random_state=0,
   ... )
   >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
-  array([13.6..., 9.7..., 23.3..., 9.5..., 10.4...])
+  array([13.6, 9.7, 23.3, 9.5, 10.4])
 
 It is also possible to build scorer objects for hyper-parameter tuning. The
 sign of the loss must be switched to ensure that greater means better as
@@ -3007,7 +3053,7 @@ of 0.0.
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.764...
+    0.764
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
@@ -3145,19 +3191,19 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> from sklearn.svm import SVC
   >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
-  0.63...
+  0.63
   >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
   >>> clf.fit(X_train, y_train)
   DummyClassifier(random_state=0, strategy='most_frequent')
   >>> clf.score(X_test, y_test)
-  0.57...
+  0.579
 
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
   >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
-  0.94...
+  0.94
 
 We see that the accuracy was boosted to almost 100%.  A cross validation
 strategy is recommended for a better estimate of the accuracy, if it

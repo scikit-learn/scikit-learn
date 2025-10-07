@@ -26,6 +26,25 @@ show_installed_libraries(){
     fi
 }
 
+show_cpu_info() {
+    echo "========== CPU information =========="
+    if [ -x "$(command -v lscpu)" ] ; then
+        lscpu
+    elif [ -x "$(command -v system_profiler)" ] ; then
+        system_profiler SPHardwareDataType
+    elif [ -x "$(command -v powershell)" ] ; then
+        powershell -c '$cpu = Get-WmiObject -Class Win32_Processor
+            Write-Host "CPU Model: $($cpu.Name)"
+            Write-Host "Architecture: $($cpu.Architecture)"
+            Write-Host "Physical Cores: $($cpu.NumberOfCores)"
+            Write-Host "Logical Processors: $($cpu.NumberOfLogicalProcessors)"
+        '
+    else
+        echo "Could not inspect CPU architecture."
+    fi
+    echo "====================================="
+}
+
 activate_environment() {
     if [[ "$DISTRIB" =~ ^conda.* ]]; then
         source activate $VIRTUALENV
@@ -45,7 +64,7 @@ create_conda_environment_from_lock_file() {
     if [[ "$lock_file_has_pip_packages" == "false" ]]; then
         conda create --name $ENV_NAME --file $LOCK_FILE
     else
-        conda install "$(get_dep conda-lock min)" -y
+        python -m pip install "$(get_dep conda-lock min)"
         conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }

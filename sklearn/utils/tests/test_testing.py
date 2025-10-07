@@ -30,8 +30,6 @@ from sklearn.utils.fixes import (
     _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.metaestimators import available_if
 
@@ -443,8 +441,7 @@ def test_check_docstring_parameters():
             "+ ['a', 'b']",
         ],
         [
-            "In function: "
-            + "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
+            "In function: sklearn.utils.tests.test_testing.f_too_many_param_docstring",
             (
                 "Parameters in function docstring have more items w.r.t. function"
                 " signature, first extra item: c"
@@ -475,8 +472,7 @@ def test_check_docstring_parameters():
             "+ []",
         ],
         [
-            "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
             (
                 "There's a parameter name mismatch in function docstring w.r.t."
                 " function signature, at index 0 diff: 'X' != 'y'"
@@ -489,21 +485,20 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
-            + "predict_proba",
+            f"sklearn.utils.tests.test_testing.{mock_meta_name}."
+            "predict_proba",
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
         ],
         [
-            "In function: "
-            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.score",
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
         ],
         [
-            "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
+            f"In function: sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
             (
                 "Parameters in function docstring have less items w.r.t. function"
                 " signature, first missing item: X"
@@ -788,13 +783,13 @@ def test_assert_docstring_consistency_descr_regex_pattern():
     # Check regex that matches full parameter descriptions
     regex_full = (
         r"The (set|group) "  # match 'set' or 'group'
-        + r"of labels to (include|add) "  # match 'include' or 'add'
-        + r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
-        + r"order if `average is None`\."
-        + r"[\s\w]*\.* "  # optionally match additonal sentence
-        + r"Labels present (on|in) "  # match 'on' or 'in'
-        + r"(them|the) "  # match 'them' or 'the'
-        + r"datas? can be excluded\."  # match 'data' or 'datas'
+        r"of labels to (include|add) "  # match 'include' or 'add'
+        r"when `average \!\= 'binary'`, and (their|the) "  #  match 'their' or 'the'
+        r"order if `average is None`\."
+        r"[\s\w]*\.* "  # optionally match additional sentence
+        r"Labels present (on|in) "  # match 'on' or 'in'
+        r"(them|the) "  # match 'them' or 'the'
+        r"datas? can be excluded\."  # match 'data' or 'datas'
     )
 
     assert_docstring_consistency(
@@ -857,7 +852,6 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 def test_create_memmap_backed_data(monkeypatch):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
@@ -902,6 +896,10 @@ def test_create_memmap_backed_data(monkeypatch):
         ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
+        ("pyarrow", lambda: pytest.importorskip("pyarrow").Table),
+        ("pyarrow_array", lambda: pytest.importorskip("pyarrow").Array),
+        ("polars", lambda: pytest.importorskip("polars").DataFrame),
+        ("polars_series", lambda: pytest.importorskip("polars").Series),
         ("slice", slice),
     ],
 )
@@ -922,7 +920,15 @@ def test_convert_container(
 ):
     """Check that we convert the container to the right type of array with the
     right data type."""
-    if constructor_name in ("dataframe", "polars", "series", "polars_series", "index"):
+    if constructor_name in (
+        "dataframe",
+        "index",
+        "polars",
+        "polars_series",
+        "pyarrow",
+        "pyarrow_array",
+        "series",
+    ):
         # delay the import of pandas/polars within the function to only skip this test
         # instead of the whole file
         container_type = container_type()
@@ -939,6 +945,8 @@ def test_convert_container(
         # list and tuple will use Python class dtype: int, float
         # pandas index will always use high precision: np.int64 and np.float64
         assert np.issubdtype(type(container_converted[0]), superdtype)
+    elif constructor_name in ("polars", "polars_series", "pyarrow", "pyarrow_array"):
+        return
     elif hasattr(container_converted, "dtype"):
         assert container_converted.dtype == dtype
     elif hasattr(container_converted, "dtypes"):
@@ -963,24 +971,6 @@ def test_convert_container_categories_pyarrow():
     pa = pytest.importorskip("pyarrow")
     df = _convert_container([["x"]], "pyarrow", ["A"], categorical_feature_names=["A"])
     assert type(df.schema[0].type) is pa.DictionaryType
-
-
-@pytest.mark.skipif(
-    sp_version >= parse_version("1.8"),
-    reason="sparse arrays are available as of scipy 1.8.0",
-)
-@pytest.mark.parametrize("constructor_name", ["sparse_csr_array", "sparse_csc_array"])
-@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
-def test_convert_container_raise_when_sparray_not_available(constructor_name, dtype):
-    """Check that if we convert to sparse array but sparse array are not supported
-    (scipy<1.8.0), we should raise an explicit error."""
-    container = [0, 1]
-
-    with pytest.raises(
-        ValueError,
-        match=f"only available with scipy>=1.8.0, got {sp_version}",
-    ):
-        _convert_container(container, constructor_name, dtype=dtype)
 
 
 def test_raises():
@@ -1102,17 +1092,9 @@ def test_assert_run_python_script_without_output():
         "sparse_csc",
         pytest.param(
             "sparse_csr_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
         ),
         pytest.param(
             "sparse_csc_array",
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.8"),
-                reason="sparse arrays are available as of scipy 1.8.0",
-            ),
         ),
     ],
 )

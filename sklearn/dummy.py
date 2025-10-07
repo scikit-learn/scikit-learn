@@ -9,19 +9,19 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
     _fit_context,
 )
-from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions
-from .utils.multiclass import class_distribution
-from .utils.random import _random_choice_csc
-from .utils.stats import _weighted_percentile
-from .utils.validation import (
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.random import _random_choice_csc
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_array,
@@ -423,6 +423,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.classifier_tags.poor_score = True
         tags.no_validation = True
         return tags
@@ -581,7 +582,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.constant_ = np.median(y, axis=0)
             else:
                 self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=50.0)
+                    _weighted_percentile(y[:, k], sample_weight, percentile_rank=50.0)
                     for k in range(self.n_outputs_)
                 ]
 
@@ -591,12 +592,14 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     "When using `strategy='quantile', you have to specify the desired "
                     "quantile in the range [0, 1]."
                 )
-            percentile = self.quantile * 100.0
+            percentile_rank = self.quantile * 100.0
             if sample_weight is None:
-                self.constant_ = np.percentile(y, axis=0, q=percentile)
+                self.constant_ = np.percentile(y, axis=0, q=percentile_rank)
             else:
                 self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=percentile)
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile_rank=percentile_rank
+                    )
                     for k in range(self.n_outputs_)
                 ]
 
@@ -662,6 +665,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.regressor_tags.poor_score = True
         tags.no_validation = True
         return tags

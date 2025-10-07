@@ -4,16 +4,12 @@ from pprint import PrettyPrinter
 import numpy as np
 import pytest
 
-from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.pipeline import make_pipeline
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn import config_context
-
-
-# Ignore flake8 (lots of line too long issues)
-# ruff: noqa
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.pipeline import make_pipeline
+from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
 
 # Constructors excerpted to test pprinting
@@ -246,7 +242,8 @@ class SimpleImputer(BaseEstimator):
         self.copy = copy
 
 
-def test_basic(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_basic():
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
@@ -289,7 +286,8 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
 
 
-def test_pipeline(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_pipeline():
     # Render a pipeline object
     pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
     expected = """
@@ -310,7 +308,8 @@ Pipeline(memory=None,
     assert pipeline.__repr__() == expected
 
 
-def test_deeply_nested(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_deeply_nested():
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
@@ -365,7 +364,8 @@ def test_print_estimator_max_depth(print_changed_only, expected):
         assert pp.pformat(rfe) == expected
 
 
-def test_gridsearch(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_gridsearch():
     # render a gridsearch
     param_grid = [
         {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
@@ -391,7 +391,8 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
     assert gs.__repr__() == expected
 
 
-def test_gridsearch_pipeline(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_gridsearch_pipeline():
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
@@ -410,7 +411,7 @@ def test_gridsearch_pipeline(print_changed_only_false):
             "classify__C": C_OPTIONS,
         },
     ]
-    gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
+    gspipeline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
     expected = """
 GridSearchCV(cv=3, error_score='raise-deprecating',
              estimator=Pipeline(memory=None,
@@ -448,16 +449,17 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                                      score_func=<function chi2 at some_address>)],
                           'reduce_dim__k': [2, 4, 8]}],
              pre_dispatch='2*n_jobs', refit=True, return_train_score=False,
-             scoring=None, verbose=0)"""
+             scoring=None, verbose=0)"""  # noqa: E501
 
     expected = expected[1:]  # remove first \n
-    repr_ = pp.pformat(gspipline)
+    repr_ = pp.pformat(gspipeline)
     # Remove address of '<function chi2 at 0x.....>' for reproducibility
     repr_ = re.sub("function chi2 at 0x.*>", "function chi2 at some_address>", repr_)
     assert repr_ == expected
 
 
-def test_n_max_elements_to_show(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_n_max_elements_to_show():
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
         compact=True,
@@ -547,7 +549,8 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert pp.pformat(gs) == expected
 
 
-def test_bruteforce_ellipsis(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_bruteforce_ellipsis():
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 
