@@ -254,6 +254,7 @@ def test_future_warning_n_init():
         mds.MDS(init="random").fit(X)
 
 
+# TODO(1.9): delete the n_init warning check
 # TODO(1.10): delete this test
 def test_future_warning_init_and_metric():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
@@ -261,23 +262,30 @@ def test_future_warning_init_and_metric():
 
     # dissimilarity argument deprecated
     with pytest.warns(FutureWarning):
-        mds.MDS(dissimilarity="precomputed", init="random").fit(sim)
+        mds.MDS(dissimilarity="precomputed", init="random", n_init=1).fit(sim)
 
     # metric=True deprecated
     with pytest.warns(FutureWarning):
-        mds.MDS(metric=True, init="random").fit(X)
+        mds.MDS(metric=True, init="random", n_init=1).fit(X)
 
     # metric=False deprecated
     with pytest.warns(FutureWarning):
-        mds.MDS(metric=False, init="random").fit(X)
+        mds.MDS(metric=False, init="random", n_init=1).fit(X)
 
     # default init will become classical_mds in the future
     with pytest.warns(FutureWarning):
-        mds.MDS(metric="euclidean").fit(X)
+        mds.MDS(metric="euclidean", n_init=1).fit(X)
+
+    # TODO (1.9): delete this check
+    # n_init=1 will become default in the future
+    with pytest.warns(FutureWarning):
+        mds.MDS(metric="euclidean", init="random").fit(X)
 
     # providing both metric and dissimilarity raises an error
     with pytest.raises(ValueError):
-        mds.MDS(metric="cosine", dissimilarity="euclidean", init="random").fit(X)
+        mds.MDS(
+            metric="cosine", dissimilarity="euclidean", init="random", n_init=1
+        ).fit(X)
 
 
 # TODO(1.9): remove warning filter
