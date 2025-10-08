@@ -9,6 +9,7 @@ import sys
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
+from enum import Enum, unique
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
@@ -3033,3 +3034,49 @@ def validate_data(
         _check_n_features(_estimator, X, reset=reset)
 
     return out
+
+
+def _looks_like_pandas_na(x) -> bool:
+    """Return True if x is pandas.NA (duck-typed; no pandas import)."""
+    t = type(x)
+    mod = getattr(t, "__module__", "")
+    return t.__name__ == "NAType" and mod.startswith("pandas")
+
+
+def _looks_like_pandas_nat(x) -> bool:
+    """Return True if x is pandas.NaT (duck-typed; no pandas import)."""
+    t = type(x)
+    mod = getattr(t, "__module__", "")
+    return t.__name__ in {"NaTType", "NaT"} and mod.startswith("pandas")
+
+
+@unique
+class _NAKey(Enum):
+    """Internal sentinel keys used to normalize various NA/NAT spellings."""
+
+    NONE = 0  # exactly None
+    NAN = 1  # float NaN
+    PD_NA = 2  # pandas.NA
+    PD_NAT = 3  # pandas.NaT
+    NAT = 4  # numpy datetime/timedelta NaT
+
+
+def _normalize_na_key(x):
+    """Map different NA/NAT spellings to stable enum keys for dict lookups.
+
+    Returns an _NAKey member for recognized missing values; otherwise returns x.
+    """
+    if x is None:
+        return _NAKey.NONE
+    # plain Python/NumPy float NaN
+    if isinstance(x, (float, np.floating)) and np.isnan(x):
+        return _NAKey.NAN
+    # pandas extension sentinels (duck-typed; no pandas import required)
+    if _looks_like_pandas_na(x):
+        return _NAKey.PD_NA
+    if _looks_like_pandas_nat(x):
+        return _NAKey.PD_NAT
+    # NumPy datetime/timedelta NaT
+    if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
+        return _NAKey.NAT
+    return x
