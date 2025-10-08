@@ -74,7 +74,6 @@ common_dependencies_without_coverage = [
     "pip",
     "ninja",
     "meson-python",
-    "pytest-playwright",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
@@ -200,7 +199,7 @@ build_metadata_list = [
         "conda_dependencies": (
             remove_from(common_dependencies_without_coverage, ["matplotlib"])
             + docstring_test_dependencies
-            + ["ccache"]
+            + ["ccache", "pytest-playwright"]
         ),
         "package_constraints": {
             "python": "3.10",
