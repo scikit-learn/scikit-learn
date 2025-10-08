@@ -3355,6 +3355,9 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
+    if sample_weight is not None:
+        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
@@ -3742,9 +3745,12 @@ def brier_score_loss(
     ... )
     0.146
     """
+    xp, _, device_ = get_namespace_and_device(y_proba)
     y_proba = check_array(
-        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
+    if sample_weight is not None:
+        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
@@ -3755,8 +3761,9 @@ def brier_score_loss(
             y_true, y_proba, sample_weight, labels
         )
 
-    brier_score = np.average(
-        np.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
+    brier_score = _average(
+        xp.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
     )
 
     if scale_by_half == "auto":
@@ -3833,6 +3840,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
     if sample_weight is not None:
         sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
@@ -3935,6 +3943,7 @@ def d2_brier_score(
     )
     if sample_weight is not None:
         sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
             y_true, y_proba, sample_weight, pos_label
