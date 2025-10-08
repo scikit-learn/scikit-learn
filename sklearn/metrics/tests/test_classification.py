@@ -3690,13 +3690,13 @@ def test_d2_metrics_array_api(
     extra_kwargs = {}
     if str_y_true:
         y_true_np = np.array(["yes", "no", "yes", "no"])
-        y_true_xp = np.asarray(y_true_np)
+        y_true_xp_or_np = np.asarray(y_true_np)
         if d2_metric.__name__ == "d2_brier_score":
             # `d2_brier_score` requires specifying the `pos_label`
             extra_kwargs["pos_label"] = "yes"
     else:
         y_true_np = np.array([1, 0, 1, 0])
-        y_true_xp = xp.asarray(y_true_np, device=device_)
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
 
     y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
     y_prob_xp = xp.asarray(y_prob_np, device=device_)
@@ -3705,7 +3705,7 @@ def test_d2_metrics_array_api(
     )
     with config_context(array_api_dispatch=True):
         d2_score_xp = d2_metric(
-            y_true_xp, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
+            y_true_xp_or_np, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
         )
 
     assert d2_score_xp == pytest.approx(d2_score_np)
@@ -3713,10 +3713,10 @@ def test_d2_metrics_array_api(
     # multi-class case
     if str_y_true:
         y_true_np = np.array(["a", "b", "c", "d"])
-        y_true_xp = np.asarray(y_true_np)
+        y_true_xp_or_np = np.asarray(y_true_np)
     else:
         y_true_np = np.array([0, 1, 2, 3])
-        y_true_xp = xp.asarray(y_true_np, device=device_)
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
 
     y_prob_np = np.array(
         [
@@ -3730,7 +3730,7 @@ def test_d2_metrics_array_api(
     y_prob_xp = xp.asarray(y_prob_np, device=device_)
     d2_score_np = d2_metric(y_true_np, y_prob_np)
     with config_context(array_api_dispatch=True):
-        d2_score_xp = d2_metric(y_true_xp, y_prob_xp)
+        d2_score_xp = d2_metric(y_true_xp_or_np, y_prob_xp)
 
     assert d2_score_xp == pytest.approx(d2_score_np)
 
