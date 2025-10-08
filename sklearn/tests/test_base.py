@@ -1118,3 +1118,19 @@ def test_is_functions_custom_estimator_error():
 
     with pytest.raises(AttributeError, match="Make sure to inherit from"):
         is_clusterer(custom_est)
+
+
+def test_is_functions_unexpected_error():
+    """Test is_* functions handle unexpected AttributeError cases."""
+
+    class ProblematicEstimator:
+        def __sklearn_tags__(self):
+            # This will raise an unexpected AttributeError
+            raise AttributeError("Some unexpected error")
+
+    problematic_est = ProblematicEstimator()
+
+    # This should re-raise the original AttributeError since it doesn't match
+    # our patterns
+    with pytest.raises(AttributeError, match="Some unexpected error"):
+        is_regressor(problematic_est)
