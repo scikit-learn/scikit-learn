@@ -13,7 +13,7 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
-    binary_classification_curve,
+    confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
     det_curve,
@@ -48,7 +48,7 @@ from sklearn.utils.validation import (
 # Utilities for testing
 
 CURVE_FUNCS = [
-    binary_classification_curve,
+    confusion_matrix_at_thresholds,
     det_curve,
     precision_recall_curve,
     roc_curve,
@@ -195,8 +195,8 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-def test_binary_classification_curve(global_random_seed):
-    """Smoke test for binary_classification_curve."""
+def test_confusion_matrix_at_thresholds(global_random_seed):
+    """Smoke test for confusion_matrix_at_thresholds."""
     rng = np.random.RandomState(global_random_seed)
 
     n_samples = 100
@@ -206,7 +206,7 @@ def test_binary_classification_curve(global_random_seed):
     n_pos = np.sum(y_true)
     n_neg = n_samples - n_pos
 
-    tns, fps, fns, tps, thresholds = binary_classification_curve(y_true, y_score)
+    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
 
     assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
     assert_allclose(tps + fns, n_pos)

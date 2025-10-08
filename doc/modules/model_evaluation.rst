@@ -481,7 +481,7 @@ Some of these are restricted to the binary classification case:
    roc_curve
    class_likelihood_ratios
    det_curve
-   binary_classification_curve
+   confusion_matrix_at_thresholds
 
 
 Others also work in the multiclass case:
@@ -817,13 +817,13 @@ false negatives and true positives as follows::
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
 
-With :func:`binary_classification_curve` we can get true negatives, false positives,
+With :func:`confusion_matrix_at_thresholds` we can get true negatives, false positives,
 false negatives and true positives for different thresholds::
 
-  >>> from sklearn.metrics import binary_classification_curve
+  >>> from sklearn.metrics import confusion_matrix_at_thresholds
   >>> y_true = np.array([0., 0., 1., 1.])
   >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> tns, fps, fns, tps, thresholds = binary_classification_curve(y_true, y_score)
+  >>> tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
   >>> tns
   array([2., 1., 1., 0.])
   >>> fps

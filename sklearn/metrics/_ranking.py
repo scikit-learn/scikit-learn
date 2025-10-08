@@ -357,7 +357,7 @@ def det_curve(
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
-    binary_classification_curve : For binary classification, compute true negative,
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
         false positive, false negative and true positive counts per threshold.
 
     Examples
@@ -374,7 +374,7 @@ def det_curve(
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    _, fps, _, tps, thresholds = binary_classification_curve(
+    _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -838,7 +838,7 @@ def _multiclass_roc_auc_score(
     },
     prefer_skip_nested_validation=True,
 )
-def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=None):
+def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate binary confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -893,10 +893,10 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import binary_classification_curve
+    >>> from sklearn.metrics import confusion_matrix_at_thresholds
     >>> y_true = np.array([0., 0., 1., 1.])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> tns, fps, fns, tps, thresholds = binary_classification_curve(y_true, y_score)
+    >>> tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
     >>> tns
     array([2., 1., 1., 0.])
     >>> fps
@@ -1064,7 +1064,7 @@ def precision_recall_curve(
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    binary_classification_curve : For binary classification, compute true negative,
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
         false positive, false negative and true positive counts per threshold.
 
     Examples
@@ -1084,7 +1084,7 @@ def precision_recall_curve(
     """
     xp, _, device = get_namespace_and_device(y_true, y_score)
 
-    _, fps, _, tps, thresholds = binary_classification_curve(
+    _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -1208,7 +1208,7 @@ def roc_curve(
         cross-validation results.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
-    binary_classification_curve : For binary classification, compute true negative,
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
         false positive, false negative and true positive counts per threshold.
 
     Notes
@@ -1241,7 +1241,7 @@ def roc_curve(
     """
     xp, _, device = get_namespace_and_device(y_true, y_score)
 
-    _, fps, _, tps, thresholds = binary_classification_curve(
+    _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -1251,8 +1251,8 @@ def roc_curve(
     # Here np.diff(_, 2) is used as a "second derivative" to tell if there
     # is a corner at the point. Both fps and tps must be tested to handle
     # thresholds with multiple data points (which are combined in
-    # binary_classification_curve). This keeps all cases where the point should be kept,
-    # but does not drop more complicated cases like fps = [1, 3, 7],
+    # confusion_matrix_at_thresholds). This keeps all cases where the point should be
+    # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and fps.shape[0] > 2:
         optimal_idxs = xp.where(

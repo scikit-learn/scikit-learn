@@ -456,7 +456,7 @@ def confusion_matrix(
     ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
         given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
-    binary_classification_curve : For binary classification, compute true negative,
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
         false positive, false negative and true positive counts per threshold.
 
     References
