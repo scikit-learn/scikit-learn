@@ -178,23 +178,17 @@ a.param-doc-link::before {
     background-color: var(--sklearn-color-fitted-level-0);
     background-position: center;
     padding: .5em;
-    border: 1px solid grey;
-    border-radius: .25em;
-    box-shadow: .2em .2em grey;
+
     flex-shrink: 0;
     position: sticky;
     top: 0;
     right: 0em;
     z-index: 1;
-    transition: transform 500ms ease;
 }
 
-.features .features-container .copy-paste-icon:hover {
-    box-shadow: .2em .2em black;
-    transform: scale(1.25);
-}
 
-.features .features-table table {
+
+.features .features-container table {
     width: 95%;
     margin: 0;
 }
