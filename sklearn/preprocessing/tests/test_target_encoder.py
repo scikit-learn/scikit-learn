@@ -785,41 +785,17 @@ def test_norm_key_real_values_cover_nan_nat_and_strings():
     assert k_nat_dt != "x"
 
 
-def test_norm_key_duck_pandas_NA_branch_hits_return():
-    """
-    Hit the pandas.NA duck-typed path without importing pandas.
-
-    `_looks_like_pandas_na` checks `type(x).__name__ == "NAType"` and
-    module startswith("pandas"). We spoof both for a plain Python class.
-    """
-
-    class _FakePandasNA:
-        pass
-
-    _FakePandasNA.__name__ = "NAType"
-    _FakePandasNA.__module__ = "pandas.core.arrays._masked"
-
-    k1 = _norm_key(_FakePandasNA())
-    k2 = _norm_key(_FakePandasNA())
-    assert k1 is k2  # both map to same sentinel identity
+def test_norm_key_pandas_NA():
+    pd = pytest.importorskip("pandas")
+    k1 = _norm_key(pd.NA)
+    k2 = _norm_key(pd.NA)
+    assert k1 is k2
 
 
-def test_norm_key_duck_pandas_NaT_branch_hits_return():
-    """
-    Hit the pandas.NaT duck-typed path without importing pandas.
-
-    `_looks_like_pandas_nat` accepts type names {"NaTType", "NaT"} with a
-    module that startswith("pandas"). We spoof those identifiers.
-    """
-
-    class _FakePandasNaT:
-        pass
-
-    _FakePandasNaT.__name__ = "NaTType"  # could also be "NaT"
-    _FakePandasNaT.__module__ = "pandas._libs.tslibs.nattype"
-
-    k1 = _norm_key(_FakePandasNaT())
-    k2 = _norm_key(_FakePandasNaT())
+def test_norm_key_pandas_NaT():
+    pd = pytest.importorskip("pandas")
+    k1 = _norm_key(pd.NaT)
+    k2 = _norm_key(pd.NaT)
     assert k1 is k2
 
 
