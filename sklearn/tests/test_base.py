@@ -24,7 +24,6 @@ from sklearn.base import (
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
@@ -1100,8 +1099,8 @@ def test_param_is_default(default_value, test_value):
 @pytest.mark.parametrize(
     "is_func, Estimator",
     [
-        (is_regressor, Ridge),
-        (is_classifier, LogisticRegression),
+        (is_regressor, DecisionTreeRegressor),
+        (is_classifier, DecisionTreeClassifier),
         (is_clusterer, KMeans),
     ],
 )
