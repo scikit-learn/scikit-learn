@@ -3681,7 +3681,7 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
 def test_d2_metrics_array_api(
     d2_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`d2_brier_score` and :fund:`d2_log_loss_score` work
+    """Test that :func:`d2_brier_score` and :func:`d2_log_loss_score` work
     correctly with the array API for the binary and mutli-class cases."""
     xp = _array_api_for_tests(array_namespace, device_)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
@@ -3743,7 +3743,7 @@ def test_d2_metrics_array_api(
 def test_d2_metrics_multilabel_array_api(
     d2_metric, use_sample_weight, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`d2_brier_score` and :fund:`d2_log_loss_score` work
+    """Test that :func:`d2_brier_score` and :func:`d2_log_loss_score` work
     correctly with the array API for the multi-label case."""
     xp = _array_api_for_tests(array_namespace, device_)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
