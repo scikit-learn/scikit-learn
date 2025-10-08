@@ -238,7 +238,6 @@ class CallbackContext:
         # meta-estimator's leaf context
         self.parent = other_context.parent
         self.task_id = other_context.task_id
-        self.max_subtasks = other_context.max_subtasks
         other_context.parent._children_map[self.task_id] = self
 
         # Keep information about the context it was merged with

@@ -39,7 +39,7 @@ def test_progressbar(n_jobs, prefer, InnerEstimator, max_estimator_depth, capsys
     if max_estimator_depth is None or max_estimator_depth > 1:
         for i in range(n_inner):
             assert re.search(
-                rf"MetaEstimator - inner #{i} | {est.__class__.__name__} - fit",
+                rf"MetaEstimator - inner \| {est.__class__.__name__} - fit #{i}",
                 captured.out,
             )
 
