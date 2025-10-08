@@ -173,10 +173,10 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
 
 def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device):
-    """Transforms multi-class `y_true` into a one-hot encoding and also ensures that
-    the transformed output is placed on the target API namespace and device. Also
-    returns the classes provided by `LabelBinarizer` in additional to the encoded
-    output.
+    """Transform multi-class `y_true` into a one-hot encoded array and also ensure
+    that the transformed array is placed on the target API namespace and device.
+    Also return the classes provided by `LabelBinarizer` in additional to the
+    integer encoded array.
     """
     xp_y_true, is_y_true_array_api = get_namespace(y_true)
 
@@ -3531,8 +3531,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
 
 def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device):
-    """Transforms binary `y_true` into a one-hot encoding and also ensures that
-    the transformed output is placed on the target API namespace and device."""
+    """Transform binary `y_true` into a one-hot encoded array and also ensure
+    that the transformed array is placed on the target API namespace and device.
+    """
     xp_y_true, _ = get_namespace(y_true)
     y_true_pos = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
     return target_xp.asarray(y_true_pos, device=target_device)
