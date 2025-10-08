@@ -3674,15 +3674,17 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
 
 @pytest.mark.parametrize("d2_metric", [d2_brier_score, d2_log_loss_score])
 @pytest.mark.parametrize("str_y_true", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_d2_metrics_array_api(
-    d2_metric, str_y_true, array_namespace, device_, dtype_name
+    d2_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
 ):
     """Test that :func:`d2_brier_score` and :fund:`d2_log_loss_score` work
     correctly with the array API for the binary and mutli-class cases."""
     xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
 
     # binary case
     extra_kwargs = {}
@@ -3698,10 +3700,13 @@ def test_d2_metrics_array_api(
 
     y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
     y_prob_xp = xp.asarray(y_prob_np, device=device_)
-
-    d2_score_np = d2_metric(y_true_np, y_prob_np, **extra_kwargs)
+    d2_score_np = d2_metric(
+        y_true_np, y_prob_np, sample_weight=sample_weight, **extra_kwargs
+    )
     with config_context(array_api_dispatch=True):
-        d2_score_xp = d2_metric(y_true_xp, y_prob_xp, **extra_kwargs)
+        d2_score_xp = d2_metric(
+            y_true_xp, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
+        )
 
     assert d2_score_xp == pytest.approx(d2_score_np)
 
@@ -3723,7 +3728,6 @@ def test_d2_metrics_array_api(
         dtype=dtype_name,
     )
     y_prob_xp = xp.asarray(y_prob_np, device=device_)
-
     d2_score_np = d2_metric(y_true_np, y_prob_np)
     with config_context(array_api_dispatch=True):
         d2_score_xp = d2_metric(y_true_xp, y_prob_xp)
@@ -3732,15 +3736,17 @@ def test_d2_metrics_array_api(
 
 
 @pytest.mark.parametrize("d2_metric", [d2_brier_score, d2_log_loss_score])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_d2_metrics_multilabel_array_api(
-    d2_metric, array_namespace, device_, dtype_name
+    d2_metric, use_sample_weight, array_namespace, device_, dtype_name
 ):
     """Test that :func:`d2_brier_score` and :fund:`d2_log_loss_score` work
     correctly with the array API for the multi-label case."""
     xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
     y_true_np = np.array(
         [
             [0, 0, 1, 1],
@@ -3751,7 +3757,6 @@ def test_d2_metrics_multilabel_array_api(
         dtype=dtype_name,
     )
     y_true_xp = xp.asarray(y_true_np, device=device_)
-
     y_prob_np = np.array(
         [
             [0.15, 0.27, 0.46, 0.12],
@@ -3762,9 +3767,8 @@ def test_d2_metrics_multilabel_array_api(
         dtype=dtype_name,
     )
     y_prob_xp = xp.asarray(y_prob_np, device=device_)
-
-    d2_score_np = d2_metric(y_true_np, y_prob_np)
+    d2_score_np = d2_metric(y_true_np, y_prob_np, sample_weight=sample_weight)
     with config_context(array_api_dispatch=True):
-        d2_score_xp = d2_metric(y_true_xp, y_prob_xp)
+        d2_score_xp = d2_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
 
     assert d2_score_xp == pytest.approx(d2_score_np)

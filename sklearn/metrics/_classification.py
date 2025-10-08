@@ -225,7 +225,7 @@ def _validate_multiclass_probabilistic_prediction(
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
+        _check_sample_weight(sample_weight, y_prob, force_float_dtype=False)
 
     lb = LabelBinarizer()
     if is_y_true_array_api:
@@ -3549,7 +3549,7 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
+        _check_sample_weight(sample_weight, y_prob, force_float_dtype=False)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3803,10 +3803,11 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         return float("nan")
 
     y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    if sample_weight is not None:
+        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
-
     xp, _ = get_namespace(y_pred, transformed_labels)
     y_pred_null = _average(transformed_labels, axis=0, weights=sample_weight)
     y_pred_null = xp.tile(y_pred_null, (y_pred.shape[0], 1))
@@ -3904,6 +3905,8 @@ def d2_brier_score(
     y_proba = check_array(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
+    if sample_weight is not None:
+        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
             y_true, y_proba, sample_weight, pos_label
