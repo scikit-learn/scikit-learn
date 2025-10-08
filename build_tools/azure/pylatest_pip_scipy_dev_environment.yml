@@ -14,7 +14,6 @@ dependencies:
     - pip
     - ninja
     - meson-python
-    - pytest-playwright
     - pytest-cov<=6.3.0
     - coverage
     - pooch
