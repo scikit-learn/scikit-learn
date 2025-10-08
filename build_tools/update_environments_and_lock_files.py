@@ -131,6 +131,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-strict",
             "scipy-doctest",
+            "pytest-playwright",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -199,7 +200,7 @@ build_metadata_list = [
         "conda_dependencies": (
             remove_from(common_dependencies_without_coverage, ["matplotlib"])
             + docstring_test_dependencies
-            + ["ccache", "pytest-playwright"]
+            + ["ccache"]
         ),
         "package_constraints": {
             "python": "3.10",
