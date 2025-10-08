@@ -292,6 +292,12 @@ Make sure you activated the `sklearn-env` conda environment and install the foll
 
     conda install -c conda-forge joblib threadpoolctl pytest compilers
 
+Remove any existing scikit-learn installations and meson builds to avoid conflicts
+
+.. prompt:: bash $
+
+    make clean
+
 Now go back to `building scikit-learn <pip_build_>`_.
 
 Linux compilers from the system
