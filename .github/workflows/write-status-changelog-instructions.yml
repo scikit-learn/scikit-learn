@@ -25,7 +25,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             github.rest.repos.createCommitStatus({
-              sha: context.payload.pull_request.head.sha,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.workflow_run.head_sha,
               state: "error",
               context: "Click here for changelog instructions.",
               description: "Missing or malconfigured changelog.",
