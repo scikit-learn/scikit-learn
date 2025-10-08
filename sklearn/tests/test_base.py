@@ -23,8 +23,8 @@ from sklearn.base import (
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
