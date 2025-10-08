@@ -610,7 +610,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # Instead, we resort to lbfgs.
             if self.verbose:
                 print(
-                    "  The inner solver stumbled upon an singular or ill-conditioned "
+                    "  The inner solver stumbled upon a singular or ill-conditioned "
                     "Hessian matrix and resorts to LBFGS instead."
                 )
             self.use_fallback_lbfgs_solve = True

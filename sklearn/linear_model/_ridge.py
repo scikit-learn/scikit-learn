@@ -30,7 +30,7 @@ from sklearn.linear_model._base import (
     _rescale_data,
 )
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics import check_scoring, get_scorer, get_scorer_names
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
@@ -1099,16 +1099,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           coefficients. It is the most stable solver, in particular more stable
           for singular matrices than 'cholesky' at the cost of being slower.
 
-        - 'cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
           procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
@@ -1117,10 +1117,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           both n_samples and n_features are large. Note that 'sag' and
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
-          scaler from sklearn.preprocessing.
+          scaler from :mod:`sklearn.preprocessing`.
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
-          `scipy.optimize.minimize`. It can be used only when `positive`
+          :func:`scipy.optimize.minimize`. It can be used only when `positive`
           is True.
 
         All solvers except 'svd' support both dense and sparse data. However, only
@@ -1154,7 +1154,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     n_iter_ : None or ndarray of shape (n_targets,)
         Actual number of iterations for each target. Available only for
-        sag and lsqr solvers. Other solvers will return None.
+        'sag' and 'lsqr' solvers. Other solvers will return None.
 
         .. versionadded:: 0.17
 
@@ -1358,6 +1358,12 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
         return tags
+
+    def _get_scorer_instance(self):
+        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        parent class. This is used for routing `sample_weight`.
+        """
+        return get_scorer("accuracy")
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -2496,10 +2502,10 @@ class _BaseRidgeCV(LinearModel):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
-                scorer=self.scoring,
+                scorer=self._get_scorer(),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
             .add(
@@ -2510,14 +2516,20 @@ class _BaseRidgeCV(LinearModel):
         return router
 
     def _get_scorer(self):
-        scorer = check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
+        """Make sure the scorer is weighted if necessary.
+
+        This uses `self._get_scorer_instance()` implemented in child objects to get the
+        raw scorer instance of the estimator, which will be ignored if `self.scoring` is
+        not None.
+        """
         if _routing_enabled() and self.scoring is None:
             # This estimator passes an array of 1s as sample_weight even if
             # sample_weight is not provided by the user. Therefore we need to
             # always request it. But we don't set it if it's passed explicitly
             # by the user.
-            scorer.set_score_request(sample_weight=True)
-        return scorer
+            return self._get_scorer_instance().set_score_request(sample_weight=True)
+
+        return check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2706,6 +2718,12 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def _get_scorer_instance(self):
+        """Return a scorer which corresponds to what's defined in RegressorMixin
+        parent class. This is used for routing `sample_weight`.
+        """
+        return get_scorer("r2")
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):

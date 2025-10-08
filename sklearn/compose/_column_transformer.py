@@ -1014,10 +1014,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # determine if concatenated output will be sparse or not
         if any(sparse.issparse(X) for X in Xs):
-            nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(
-                X.shape[0] * X.shape[1] if sparse.issparse(X) else X.size for X in Xs
+            nnz = sum(
+                X.nnz if sparse.issparse(X) else X.shape[0] * X.shape[1] for X in Xs
             )
+            total = sum(X.shape[0] * X.shape[1] for X in Xs)
             density = nnz / total
             self.sparse_output_ = density < self.sparse_threshold
         else:
@@ -1289,7 +1289,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         # Here we don't care about which columns are used for which
         # transformers, and whether or not a transformer is used at all, which
         # might happen if no columns are selected for that transformer. We

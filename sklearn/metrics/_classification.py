@@ -126,9 +126,18 @@ def _check_targets(y_true, y_pred, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
+        try:
+            y_true = column_or_1d(y_true, input_name="y_true")
+            y_pred = column_or_1d(y_pred, input_name="y_pred")
+        except TypeError as e:
+            if "Sparse data was passed" in str(e):
+                raise TypeError(
+                    "Sparse input is only supported when targets are of multilabel type"
+                ) from e
+            else:
+                raise
+
         xp, _ = get_namespace(y_true, y_pred)
-        y_true = column_or_1d(y_true)
-        y_pred = column_or_1d(y_pred)
         if y_type == "binary":
             try:
                 unique_values = _union1d(y_true, y_pred, xp)
@@ -317,10 +326,12 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
+        Ground truth (correct) labels. Sparse matrix is only supported when
+        labels are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
+        Predicted labels, as returned by a classifier. Sparse matrix is only
+        supported when labels are of :term:`multilabel` type.
 
     normalize : bool, default=True
         If ``False``, return the number of correctly classified samples.
@@ -378,7 +389,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    return float(_average(score, weights=sample_weight, normalize=normalize))
+    return float(_average(score, weights=sample_weight, normalize=normalize, xp=xp))
 
 
 @validate_params(
@@ -557,7 +568,7 @@ def confusion_matrix(
     if sample_weight.dtype.kind in {"i", "u", "b"}:
         dtype = np.int64
     else:
-        dtype = np.float64
+        dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
@@ -572,7 +583,7 @@ def confusion_matrix(
             cm = cm / cm.sum(axis=0, keepdims=True)
         elif normalize == "all":
             cm = cm / cm.sum()
-        cm = np.nan_to_num(cm)
+        cm = xpx.nan_to_num(cm)
 
     if cm.shape == (1, 1):
         warnings.warn(
@@ -623,11 +634,13 @@ def multilabel_confusion_matrix(
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_outputs) or \
             (n_samples,)
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        labels are of :term:`multilabel` type.
 
     y_pred : {array-like, sparse matrix} of shape (n_samples, n_outputs) or \
             (n_samples,)
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when labels are of :term:`multilabel` type.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -991,10 +1004,12 @@ def jaccard_score(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
+        Ground truth (correct) labels. Sparse matrix is only supported when
+        labels are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
+        Predicted labels, as returned by a classifier. Sparse matrix is only
+        supported when labels are of :term:`multilabel` type.
 
     labels : array-like of shape (n_classes,), default=None
         The set of labels to include when `average != 'binary'`, and their
@@ -1262,10 +1277,12 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
+        Ground truth (correct) labels. Sparse matrix is only supported when
+        labels are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
+        Predicted labels, as returned by a classifier. Sparse matrix is only
+        supported when labels are of :term:`multilabel` type.
 
     normalize : bool, default=True
         If ``False``, return the number of misclassifications.
@@ -1386,10 +1403,12 @@ def f1_score(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     labels : array-like, default=None
         The set of labels to include when `average != 'binary'`, and their
@@ -1586,10 +1605,12 @@ def fbeta_score(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     beta : float
         Determines the weight of recall in the combined score.
@@ -1902,10 +1923,12 @@ def precision_recall_fscore_support(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     beta : float, default=1.0
         The strength of recall versus precision in the F-score.
@@ -2176,10 +2199,12 @@ def class_likelihood_ratios(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     labels : array-like, default=None
         List of labels to index the matrix. This may be used to select the
@@ -2452,10 +2477,12 @@ def precision_score(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     labels : array-like, default=None
         The set of labels to include when `average != 'binary'`, and their
@@ -2631,10 +2658,12 @@ def recall_score(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     labels : array-like, default=None
         The set of labels to include when `average != 'binary'`, and their
@@ -2890,10 +2919,12 @@ def classification_report(
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) target values.
+        Ground truth (correct) target values. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Estimated targets as returned by a classifier.
+        Estimated targets as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     labels : array-like of shape (n_labels,), default=None
         Optional list of label indices to include in the report.
@@ -3116,10 +3147,12 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
+        Ground truth (correct) labels. Sparse matrix is only supported when
+        targets are of :term:`multilabel` type.
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
+        Predicted labels, as returned by a classifier. Sparse matrix is only
+        supported when targets are of :term:`multilabel` type.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3202,7 +3235,9 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         )
 
     elif y_type in ["binary", "multiclass"]:
-        return float(_average(y_true != y_pred, weights=sample_weight, normalize=True))
+        return float(
+            _average(y_true != y_pred, weights=sample_weight, normalize=True, xp=xp)
+        )
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
@@ -3288,13 +3323,19 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
+    return _log_loss(
+        transformed_labels,
+        y_pred,
+        normalize=normalize,
+        sample_weight=sample_weight,
+    )
 
-    # Clipping
+
+def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
+    """Log loss for transformed labels and validated probabilistic predictions."""
     eps = np.finfo(y_pred.dtype).eps
     y_pred = np.clip(y_pred, eps, 1 - eps)
-
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
-
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3733,50 +3774,31 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     This metric is not well-defined for a single sample and will return a NaN
     value if n_samples is less than two.
     """
-    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
     check_consistent_length(y_pred, y_true, sample_weight)
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    # log loss of the fitted model
-    numerator = log_loss(
-        y_true=y_true,
-        y_pred=y_pred,
+    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
+        y_true, y_pred, sample_weight, labels
+    )
+    y_pred_null = np.average(transformed_labels, axis=0, weights=sample_weight)
+    y_pred_null = np.tile(y_pred_null, (len(y_true), 1))
+
+    numerator = _log_loss(
+        transformed_labels,
+        y_pred,
         normalize=False,
         sample_weight=sample_weight,
-        labels=labels,
     )
-
-    # Proportion of labels in the dataset
-    weights = _check_sample_weight(sample_weight, y_true)
-
-    # If labels is passed, augment y_true to ensure that all labels are represented
-    # Use 0 weight for the new samples to not affect the counts
-    y_true_, weights_ = (
-        (
-            np.concatenate([y_true, labels]),
-            np.concatenate([weights, np.zeros_like(weights, shape=len(labels))]),
-        )
-        if labels is not None
-        else (y_true, weights)
-    )
-
-    _, y_value_indices = np.unique(y_true_, return_inverse=True)
-    counts = np.bincount(y_value_indices, weights=weights_)
-    y_prob = counts / weights.sum()
-    y_pred_null = np.tile(y_prob, (len(y_true), 1))
-
-    # log loss of the null model
-    denominator = log_loss(
-        y_true=y_true,
-        y_pred=y_pred_null,
+    denominator = _log_loss(
+        transformed_labels,
+        y_pred_null,
         normalize=False,
         sample_weight=sample_weight,
-        labels=labels,
     )
-
     return float(1 - (numerator / denominator))
 
 
@@ -3848,35 +3870,33 @@ def d2_brier_score(
     .. [1] `Wikipedia entry for the Brier Skill Score (BSS)
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
+    check_consistent_length(y_proba, y_true, sample_weight)
     if _num_samples(y_proba) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    # brier score of the fitted model
-    brier_score = brier_score_loss(
-        y_true=y_true,
-        y_proba=y_proba,
-        sample_weight=sample_weight,
-        pos_label=pos_label,
-        labels=labels,
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
+    if y_proba.ndim == 1 or y_proba.shape[1] == 1:
+        transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
+            y_true, y_proba, sample_weight, pos_label
+        )
+    else:
+        transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
+            y_true, y_proba, sample_weight, labels
+        )
+    y_proba_null = np.average(transformed_labels, axis=0, weights=sample_weight)
+    y_proba_null = np.tile(y_proba_null, (len(y_true), 1))
 
-    # brier score of the reference or baseline model
-    y_true = column_or_1d(y_true)
-    weights = _check_sample_weight(sample_weight, y_true)
-    labels = np.unique(y_true if labels is None else labels)
-
-    mask = y_true[None, :] == labels[:, None]
-    label_counts = (mask * weights).sum(axis=1)
-    y_prob = label_counts / weights.sum()
-    y_proba_ref = np.tile(y_prob, (len(y_true), 1))
-    brier_score_ref = brier_score_loss(
-        y_true=y_true,
-        y_proba=y_proba_ref,
-        sample_weight=sample_weight,
-        pos_label=pos_label,
-        labels=labels,
+    # Scaling does not matter in D^2 score as it cancels out by taking the ratio.
+    brier_score = np.average(
+        np.sum((transformed_labels - y_proba) ** 2, axis=1),
+        weights=sample_weight,
     )
-
-    return 1 - brier_score / brier_score_ref
+    brier_score_null = np.average(
+        np.sum((transformed_labels - y_proba_null) ** 2, axis=1),
+        weights=sample_weight,
+    )
+    return float(1 - brier_score / brier_score_null)
