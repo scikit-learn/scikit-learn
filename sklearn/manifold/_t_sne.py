@@ -1173,4 +1173,5 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.metric == "precomputed"
+        tags.input_tags.sparse = True
         return tags
