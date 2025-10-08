@@ -16,7 +16,7 @@ implementation_specific_values = [
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport fill
 
-from ...utils._cython_blas cimport (
+from sklearn.utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
   NoTrans,
@@ -24,7 +24,7 @@ from ...utils._cython_blas cimport (
   Trans,
   _gemm,
 )
-from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 
 import numpy as np
 from scipy.sparse import issparse, csr_matrix

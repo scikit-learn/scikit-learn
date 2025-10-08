@@ -513,14 +513,17 @@ def test_column_transformer_list():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_column_transformer_sparse_stacking(csr_container):
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+@pytest.mark.parametrize("constructor_name", ["array", "pandas", "polars"])
+def test_column_transformer_sparse_stacking(csr_container, constructor_name):
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X = _convert_container(X, constructor_name, columns_name=["first", "second"])
+
     col_trans = ColumnTransformer(
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.8,
     )
-    col_trans.fit(X_array)
-    X_trans = col_trans.transform(X_array)
+    col_trans.fit(X)
+    X_trans = col_trans.transform(X)
     assert sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
@@ -531,8 +534,8 @@ def test_column_transformer_sparse_stacking(csr_container):
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.1,
     )
-    col_trans.fit(X_array)
-    X_trans = col_trans.transform(X_array)
+    col_trans.fit(X)
+    X_trans = col_trans.transform(X)
     assert not sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
