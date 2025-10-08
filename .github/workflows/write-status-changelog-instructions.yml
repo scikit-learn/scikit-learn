@@ -1,0 +1,35 @@
+name: Changelog Instructions Status
+# Writes a status with a link to the Changelog Instructions if Check Changelog fails.
+# See:
+# https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
+
+permissions:
+  statuses: write
+
+on:
+  workflow_run:
+    workflows: ["Check Changelog"]
+    types:
+      - completed
+
+jobs:
+  display_link_to_changelog_instructions:
+    name: display link to changelog instructions
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Write status with link to changelog instructions
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.workflow_run.head_sha,
+              state: "error",
+              context: "Click here for changelog instructions.",
+              description: "Missing or malconfigured changelog.",
+              target_url: "https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md"
+            })
