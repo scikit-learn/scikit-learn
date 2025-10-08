@@ -228,6 +228,10 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
 
     transformed_labels = lb.transform(y_true)
     transformed_labels = target_xp.asarray(transformed_labels, device=target_device)
+    if transformed_labels.shape[1] == 1:
+        transformed_labels = target_xp.concat(
+            (1 - transformed_labels, transformed_labels), axis=1
+        )
     return transformed_labels, lb.classes_
 
 
@@ -288,11 +292,6 @@ def _validate_multiclass_probabilistic_prediction(
     transformed_labels, lb_classes = _one_hot_encoding_multiclass_target(
         y_true=y_true, labels=labels, target_xp=xp, target_device=device_
     )
-
-    if transformed_labels.shape[1] == 1:
-        transformed_labels = xp.concat(
-            (1 - transformed_labels, transformed_labels), axis=1
-        )
 
     # If y_prob is of single dimension, assume y_true to be binary
     # and then check.
@@ -3536,7 +3535,8 @@ def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device)
     """
     xp_y_true, _ = get_namespace(y_true)
     y_true_pos = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
-    return target_xp.asarray(y_true_pos, device=target_device)
+    y_true_pos = target_xp.asarray(y_true_pos, device=target_device)
+    return target_xp.stack((1 - y_true_pos, y_true_pos), axis=1)
 
 
 def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos_label):
@@ -3605,11 +3605,10 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
         else:
             raise
 
+    # convert (n_samples,) to (n_samples, 2) shape
     transformed_labels = _one_hot_encoding_binary_target(
         y_true=y_true, pos_label=pos_label, target_xp=xp, target_device=device_
     )
-    # convert (n_samples,) to (n_samples, 2) shape
-    transformed_labels = xp.stack((1 - transformed_labels, transformed_labels), axis=1)
     y_prob = xp.stack((1 - y_prob, y_prob), axis=1)
 
     return transformed_labels, y_prob
