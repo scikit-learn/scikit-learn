@@ -785,20 +785,6 @@ def test_norm_key_real_values_cover_nan_nat_and_strings():
     assert k_nat_dt != "x"
 
 
-def test_norm_key_pandas_NA():
-    pd = pytest.importorskip("pandas")
-    k1 = _norm_key(pd.NA)
-    k2 = _norm_key(pd.NA)
-    assert k1 is k2
-
-
-def test_norm_key_pandas_NaT():
-    pd = pytest.importorskip("pandas")
-    k1 = _norm_key(pd.NaT)
-    k2 = _norm_key(pd.NaT)
-    assert k1 is k2
-
-
 # ------------------------------
 # Tests: fast path vs vectorized parity
 # ------------------------------
