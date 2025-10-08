@@ -26,7 +26,6 @@ from scipy.sparse import csr_matrix
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 
-
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
                                 int nd, cnp.npy_intp* dims,
