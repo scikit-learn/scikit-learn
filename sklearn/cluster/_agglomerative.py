@@ -2,10 +2,6 @@
 
 These routines perform some hierarchical agglomerative clustering of some
 input data.
-
-Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
-          Gael Varoquaux
-License: BSD 3 clause
 """
 
 # Authors: The scikit-learn developers
@@ -19,29 +15,31 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     _fit_context,
 )
-from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING64
-from ..metrics.pairwise import _VALID_METRICS, paired_distances
-from ..utils import check_array
-from ..utils._fast_dict import IntFloatDict
-from ..utils._param_validation import (
+
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from sklearn.cluster import (  # type: ignore[attr-defined]
+    _hierarchical_fast as _hierarchical,
+)
+from sklearn.cluster._feature_agglomeration import AgglomerationTransform
+from sklearn.metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import METRIC_MAPPING64
+from sklearn.metrics.pairwise import _VALID_METRICS, paired_distances
+from sklearn.utils import check_array
+from sklearn.utils._fast_dict import IntFloatDict
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory, validate_data
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
-from ._feature_agglomeration import AgglomerationTransform
+from sklearn.utils.graph import _fix_connected_components
+from sklearn.utils.validation import check_memory, validate_data
 
 ###############################################################################
 # For non fully-connected graphs
@@ -802,6 +800,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "single" and affinity is not "precomputed" any valid pairwise distance
         metric can be assigned.
 
+        For an example of agglomerative clustering with different metrics, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`.
+
         .. versionadded:: 1.2
 
     memory : str or object with the joblib.Memory interface, default=None
@@ -819,7 +820,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         For an example of connectivity matrix using
         :class:`~sklearn.neighbors.kneighbors_graph`, see
-        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
+        :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
@@ -929,6 +930,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
+
+    For a comparison of Agglomerative clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

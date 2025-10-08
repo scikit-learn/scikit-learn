@@ -1,0 +1,6 @@
+- :func:`metrics.median_absolute_error` now uses `_averaged_weighted_percentile`
+  instead of `_weighted_percentile` to calculate median when `sample_weight` is not
+  `None`. This is equivalent to using the "averaged_inverted_cdf" instead of
+  the "inverted_cdf" quantile method, which gives results equivalent to `numpy.median`
+  if equal weights used.
+  By :user:`Lucy Liu <lucyleeow>`

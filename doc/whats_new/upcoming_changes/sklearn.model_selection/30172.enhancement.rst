@@ -1,4 +1,0 @@
-- There is no need to call `fit` on a
-  :class:`~sklearn.model_selection.FixedThresholdClassifier` if the underlying
-  estimator is already fitted.
-  By :user:`Adrin Jalali <adrinjalali>`

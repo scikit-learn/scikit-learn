@@ -1,6 +1,0 @@
-- :class:`~sklearn.decomposition.IncrementalPCA`
-  will now only raise a ``ValueError`` when the number of samples in the
-  input data to ``partial_fit`` is less than the number of components
-  on the first call to ``partial_fit``. Subsequent calls to ``partial_fit``
-  no longer face this restriction.
-  By :user:`Thomas Gessey-Jones <ThomasGesseyJonesPX>`

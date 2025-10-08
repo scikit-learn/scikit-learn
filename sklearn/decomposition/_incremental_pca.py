@@ -8,14 +8,12 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from sklearn.utils import metadata_routing
-
-from ..base import _fit_context
-from ..utils import gen_batches
-from ..utils._param_validation import Interval
-from ..utils.extmath import _incremental_mean_and_var, svd_flip
-from ..utils.validation import validate_data
-from ._base import _BasePCA
+from sklearn.base import _fit_context
+from sklearn.decomposition._base import _BasePCA
+from sklearn.utils import gen_batches, metadata_routing
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import _incremental_mean_and_var, svd_flip
+from sklearn.utils.validation import validate_data
 
 
 class IncrementalPCA(_BasePCA):
@@ -418,3 +416,9 @@ class IncrementalPCA(_BasePCA):
             return np.vstack(output)
         else:
             return super().transform(X)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Beware that fit accepts sparse data but partial_fit doesn't
+        tags.input_tags.sparse = True
+        return tags

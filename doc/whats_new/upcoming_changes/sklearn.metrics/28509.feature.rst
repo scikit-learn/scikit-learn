@@ -1,3 +1,0 @@
-- Adds `zero_division` to :func:`metrics.matthews_corrcoef`.
-  When there is a zero division, the metric is undefined and this value is returned.
-  By :user:`Marc Torrellas Socastro <marctorsoc>` and :user:`Noam Keidar <redjest>`

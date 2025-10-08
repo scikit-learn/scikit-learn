@@ -1,5 +1,5 @@
 Install conda using the
-`miniforge installers <https://github.com/conda-forge/miniforge#miniforge>`__ (no
+`conda-forge installers <https://conda-forge.org/download/>`__ (no
 administrator permission required). Then run:
 
 .. prompt:: bash

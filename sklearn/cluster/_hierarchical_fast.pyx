@@ -1,11 +1,12 @@
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 cimport cython
 
-from ..metrics._dist_metrics cimport DistanceMetric64
-from ..utils._fast_dict cimport IntFloatDict
-from ..utils._typedefs cimport float64_t, intp_t, uint8_t
+from sklearn.metrics._dist_metrics cimport DistanceMetric64
+from sklearn.utils._fast_dict cimport IntFloatDict
+from sklearn.utils._typedefs cimport float64_t, intp_t, uint8_t
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc

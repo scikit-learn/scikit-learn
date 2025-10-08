@@ -137,7 +137,7 @@ See :ref:`adding_graphical_models`.
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adding GPU support by default would introduce heavy harware-specific software
+Adding GPU support by default would introduce heavy hardware-specific software
 dependencies and existing algorithms would need to be reimplemented. This would
 make it both harder for the average user to install scikit-learn and harder for
 the developers to maintain the code.
@@ -300,6 +300,33 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
+What does the "spam" label for issues or pull requests mean?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "spam" label is an indication for reviewers that the issue or
+pull request may not have received sufficient effort or preparation
+from the author for a productive review. The maintainers are using this label
+as a way to deal with the increase of low value PRs and issues.
+
+If an issue or PR was labeled as spam and simultaneously closed, the decision
+is final. A common reason for this happening is when people open a PR for an
+issue that is still under discussion. Please wait for the discussion to
+converge before opening a PR.
+
+If your issue or PR was labeled as spam and not closed the following steps
+can increase the chances of the label being removed:
+
+- follow the :ref:`contribution guidelines <contributing>` and use the provided
+  issue and pull request templates
+- improve the formatting and grammar of the text of the title and description of the issue/PR
+- improve the diff to remove noise and unrelated changes
+- improve the issue or pull request title to be more descriptive
+- self review your code, especially if :ref:`you used AI tools to generate it <automated_contributions_policy>`
+- refrain from opening PRs that paraphrase existing code or documentation
+  without actually improving the correctness, clarity or educational
+  value of the existing code or documentation.
+
+
 .. _new_algorithms_inclusion_criteria:
 
 What are the inclusion criteria for new algorithms?
@@ -359,6 +386,15 @@ long-term maintenance issues in open-source software, look at
 
 Using scikit-learn
 ------------------
+
+How do I get started with scikit-learn?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are new to scikit-learn, or looking to strengthen your understanding,
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+See our :ref:`External Resources, Videos and Talks page <external_resources>`
+for more details.
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -513,7 +549,7 @@ program. Insert the following instructions in your main script::
 
         # call scikit-learn utils with n_jobs > 1 here
 
-You can find more default on the new start methods in the `multiprocessing
+You can find more details on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
 .. _faq_mkl_threading:

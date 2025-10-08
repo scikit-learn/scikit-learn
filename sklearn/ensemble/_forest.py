@@ -35,7 +35,6 @@ Single and multi-output problems are both handled.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -45,7 +44,7 @@ import numpy as np
 from scipy.sparse import hstack as sparse_hstack
 from scipy.sparse import issparse
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
@@ -53,36 +52,36 @@ from ..base import (
     _fit_context,
     is_classifier,
 )
-from ..exceptions import DataConversionWarning
-from ..metrics import accuracy_score, r2_score
-from ..preprocessing import OneHotEncoder
-from ..tree import (
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DOUBLE, DTYPE
-from ..utils import check_random_state, compute_sample_weight
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._tags import get_tags
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.tree._tree import DOUBLE, DTYPE
+from sklearn.utils import check_random_state, compute_sample_weight
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._tags import get_tags
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
-    "RandomForestClassifier",
-    "RandomForestRegressor",
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
     "RandomTreesEmbedding",
 ]
 
@@ -1002,6 +1001,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1167,7 +1167,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.regressor_tags.multi_label = True
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1186,6 +1186,13 @@ class RandomForestClassifier(ForestClassifier):
 
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
+
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -1290,6 +1297,9 @@ class RandomForestClassifier(ForestClassifier):
         By default, :func:`~sklearn.metrics.accuracy_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1469,7 +1479,8 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+           <10.1023/A:1010933404324>`
 
     Examples
     --------
@@ -1570,6 +1581,13 @@ class RandomForestRegressor(ForestRegressor):
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
+
+    This estimator has native support for missing values (NaNs). During training,
+    the tree grower learns at each split point whether samples with missing values
+    should go to the left or right child, based on the potential gain. When predicting,
+    samples with missing values are assigned to the left or right child consequently.
+    If no missing values were encountered for a given feature during training, then
+    samples with missing values are mapped to whichever child has the most samples.
 
     For a comparison between tree-based ensemble models see the example
     :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
@@ -1694,6 +1712,9 @@ class RandomForestRegressor(ForestRegressor):
         By default, :func:`~sklearn.metrics.r2_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1832,11 +1853,12 @@ class RandomForestRegressor(ForestRegressor):
 
     The default value ``max_features=1.0`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
-    [1], whereas the former was more recently justified empirically in [2].
+    [1]_, whereas the former was more recently justified empirically in [2]_.
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+           <10.1023/A:1010933404324>`
 
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
@@ -1927,6 +1949,14 @@ class ExtraTreesClassifier(ForestClassifier):
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
+
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -2031,6 +2061,9 @@ class ExtraTreesClassifier(ForestClassifier):
         By default, :func:`~sklearn.metrics.accuracy_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2301,6 +2334,14 @@ class ExtraTreesRegressor(ForestRegressor):
     of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
+    This estimator has native support for missing values (NaNs) for
+    random splits. During training, a random threshold will be chosen
+    to split the non-missing values on. Then the non-missing values will be sent
+    to the left and right child based on the randomly selected threshold, while
+    the missing values will also be randomly sent to the left or right child.
+    This is repeated for every feature considered at each split. The best split
+    among these is chosen.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -2418,6 +2459,9 @@ class ExtraTreesRegressor(ForestRegressor):
         By default, :func:`~sklearn.metrics.r2_score` is used.
         Provide a callable with signature `metric(y_true, y_pred)` to use a
         custom metric. Only available if `bootstrap=True`.
+
+        For an illustration of out-of-bag (OOB) error estimation, see the example
+        :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2646,6 +2690,10 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
     the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
 
+    For an example of applying Random Trees Embedding to non-linear
+    classification, see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`.
+
     Read more in the :ref:`User Guide <random_trees_embedding>`.
 
     Parameters
@@ -2796,7 +2844,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
            Machine Learning, 63(1), 3-42, 2006.
     .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
            visual codebooks using randomized clustering forests"
-           NIPS 2007
+           NIPS 2007.
 
     Examples
     --------
@@ -2992,3 +3040,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

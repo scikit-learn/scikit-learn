@@ -4,20 +4,24 @@ from warnings import warn
 
 import numpy as np
 
-from sklearn.base import ClassifierMixin
-
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import Bunch, safe_mask
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
+from sklearn.utils import Bunch, get_tags, safe_mask
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.validation import _estimator_has, check_is_fitted, validate_data
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -213,8 +217,7 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         # TODO(1.8) remove
         elif self.estimator is None and self.base_estimator == "deprecated":
             raise ValueError(
-                "You must pass an estimator to SelfTrainingClassifier."
-                " Use `estimator`."
+                "You must pass an estimator to SelfTrainingClassifier. Use `estimator`."
             )
         elif self.estimator is not None and self.base_estimator != "deprecated":
             raise ValueError(
@@ -598,7 +601,7 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=(
@@ -613,3 +616,10 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             ),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO(1.8): remove the condition check together with base_estimator
+        if self.estimator is not None:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

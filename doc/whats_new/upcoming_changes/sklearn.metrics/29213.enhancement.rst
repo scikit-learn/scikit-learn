@@ -1,4 +1,0 @@
-- :func:`sklearn.metrics.accuracy_score` now includes a `zero_division`
-  parameter to raise a warning when  `y_true` and `y_pred` are empty.
-  By :user:`Jaimin Chauhan <jaimin020>`
-

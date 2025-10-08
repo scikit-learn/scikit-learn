@@ -1,4 +1,7 @@
 name: Check Changelog
+permissions:
+  contents: read
+
 # This check makes sure that the changelog is properly updated
 # when a PR introduces a change in a test file.
 # To bypass this check, label the PR with "No Changelog Needed".
@@ -11,7 +14,7 @@ jobs:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: '0'
       - name: Check if tests have changed

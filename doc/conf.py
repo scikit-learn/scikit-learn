@@ -207,6 +207,11 @@ add_function_parentheses = False
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "pydata_sphinx_theme"
 
+# This config option is used to generate the canonical links in the header
+# of every page. The canonical link is needed to prevent search engines from
+# returning results pointing to old scikit-learn versions.
+html_baseurl = "https://scikit-learn.org/stable/"
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -256,9 +261,9 @@ html_theme_options = {
     "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
-        "image_relative": "logos/scikit-learn-logo-small.png",
-        "image_light": "logos/scikit-learn-logo-small.png",
-        "image_dark": "logos/scikit-learn-logo-small.png",
+        "image_relative": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_light": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_dark": "logos/scikit-learn-logo-without-subtitle.svg",
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
@@ -346,6 +351,7 @@ html_additional_pages = {"index": "index.html"}
 html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
+    "scripts/sg_plotly_resize.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -373,7 +379,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file(
             "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
         )
-        # Internal: API search intialization and styling
+        # Internal: API search initialization and styling
         app.add_js_file("scripts/api-search.js")
         app.add_css_file("styles/api-search.css")
     elif pagename == "index":
@@ -485,13 +491,29 @@ redirects = {
     "auto_examples/ensemble/plot_forest_importances_faces": (
         "auto_examples/ensemble/plot_forest_importances"
     ),
+    "auto_examples/ensemble/plot_voting_probas": (
+        "auto_examples/ensemble/plot_voting_decision_regions"
+    ),
     "auto_examples/datasets/plot_iris_dataset": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
     "auto_examples/linear_model/plot_iris_logistic": (
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
+    "auto_examples/linear_model/plot_logistic": (
+        "auto_examples/calibration/plot_calibration_curve"
+    ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
+    "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
+    "auto_examples/linear_model/plot_ols_ridge_variance": (
+        "auto_examples/linear_model/plot_ols_ridge"
+    ),
+    "auto_examples/cluster/plot_agglomerative_clustering.html": (
+        "auto_examples/cluster/plot_ward_structured_vs_unstructured.html"
+    ),
+    "auto_examples/linear_model/plot_sgd_comparison": (
+        "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -652,7 +674,7 @@ def notebook_modification_function(notebook_content, notebook_filename):
     if "seaborn" in notebook_content_str:
         code_lines.append("%pip install seaborn")
     if "plotly.express" in notebook_content_str:
-        code_lines.append("%pip install plotly")
+        code_lines.append("%pip install plotly nbformat")
     if "skimage" in notebook_content_str:
         code_lines.append("%pip install scikit-image")
     if "polars" in notebook_content_str:
@@ -668,6 +690,23 @@ def notebook_modification_function(notebook_content, notebook_filename):
     # always import matplotlib and pandas to avoid Pyodide limitation with
     # imports inside functions
     code_lines.extend(["import matplotlib", "import pandas"])
+
+    # Work around https://github.com/jupyterlite/pyodide-kernel/issues/166
+    # and https://github.com/pyodide/micropip/issues/223 by installing the
+    # dependencies first, and then scikit-learn from Anaconda.org.
+    if "dev" in release:
+        dev_docs_specific_code = [
+            "import piplite",
+            "import joblib",
+            "import threadpoolctl",
+            "import scipy",
+            "await piplite.install(\n"
+            f"  'scikit-learn=={release}',\n"
+            "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
+            ")",
+        ]
+
+        code_lines.extend(dev_docs_specific_code)
 
     if code_lines:
         code_lines = ["# JupyterLite-specific code"] + code_lines
@@ -739,8 +778,10 @@ carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import (  # noqa: F401
+    enable_halving_search_cv,
+    enable_iterative_imputer,
+)
 
 
 def make_carousel_thumbs(app, exception):
@@ -789,6 +830,15 @@ def disable_plot_gallery_for_linkcheck(app):
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
+def skip_properties(app, what, name, obj, skip, options):
+    """Skip properties that are fitted attributes"""
+    if isinstance(obj, property):
+        if name.endswith("_") and not name.startswith("_"):
+            return True
+
+    return skip
+
+
 def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
@@ -800,6 +850,8 @@ def setup(app):
     # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    app.connect("autodoc-skip-member", skip_properties)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
@@ -820,6 +872,8 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
+# TODO(1.10): remove PassiveAggressive
+warnings.filterwarnings("ignore", category=FutureWarning, message="PassiveAggressive")
 if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
     turn_warnings_into_errors()
 
@@ -835,7 +889,7 @@ autosummary_filename_map = {
 # Config for sphinxext.opengraph
 
 ogp_site_url = "https://scikit-learn/stable/"
-ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
 
@@ -901,10 +955,6 @@ linkcheck_ignore = [
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
 ]
-
-# Config for sphinx-remove-toctrees
-
-remove_from_toctrees = ["metadata_routing.rst"]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a

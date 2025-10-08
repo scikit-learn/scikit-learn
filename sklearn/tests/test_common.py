@@ -23,8 +23,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
@@ -35,18 +35,11 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import (
-    ClassifierTags,
-    InputTags,
-    RegressorTags,
-    TargetTags,
-    TransformerTags,
-    get_tags,
-)
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
     _tested_estimators,
+    _yield_instances_for_check,
 )
 from sklearn.utils._testing import (
     SkipTest,
@@ -67,9 +60,9 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
-from sklearn.utils.fixes import _IS_WASM
 
 
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
@@ -141,11 +134,15 @@ def test_check_estimator_generate_only_deprecation():
     assert isgenerator(all_instance_gen_checks)
 
 
-@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @pytest.mark.filterwarnings(
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
 )
+# TODO(1.8): remove this filter
+@pytest.mark.filterwarnings(
+    "ignore:Importing from sklearn.utils._estimator_html_repr is deprecated."
+)
+@pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -155,7 +152,7 @@ def test_import_all_consistency():
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
-        if ".tests." in modname:
+        if ".tests." in modname or "sklearn.externals" in modname:
             continue
         # Avoid test suite depending on build dependencies, for example Cython
         if "sklearn._build_utils" in modname:
@@ -178,16 +175,17 @@ def test_root_import_all_completeness():
         assert modname in sklearn.__all__
 
 
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
     HAS_TESTS_EXCEPTIONS = re.compile(
         r"""(?x)
-                                      \.externals(\.|$)|
-                                      \.tests(\.|$)|
-                                      \._
-                                      """
+        \.externals(\.|$)|
+        \.tests(\.|$)|
+        \._
+        """
     )
     resource_modules = {
         "sklearn.datasets.data",
@@ -228,55 +226,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_valid_tag_types(estimator):
-    """Check that estimator tags are valid."""
-    tags = get_tags(estimator)
-    assert isinstance(tags.estimator_type, (str, type(None)))
-    assert isinstance(tags.target_tags, TargetTags)
-    assert isinstance(tags.classifier_tags, (ClassifierTags, type(None)))
-    assert isinstance(tags.regressor_tags, (RegressorTags, type(None)))
-    assert isinstance(tags.transformer_tags, (TransformerTags, type(None)))
-    assert isinstance(tags.input_tags, InputTags)
-    assert isinstance(tags.array_api_support, bool)
-    assert isinstance(tags.no_validation, bool)
-    assert isinstance(tags.non_deterministic, bool)
-    assert isinstance(tags.requires_fit, bool)
-    assert isinstance(tags._skip_test, bool)
-
-    assert isinstance(tags.target_tags.required, bool)
-    assert isinstance(tags.target_tags.one_d_labels, bool)
-    assert isinstance(tags.target_tags.two_d_labels, bool)
-    assert isinstance(tags.target_tags.positive_only, bool)
-    assert isinstance(tags.target_tags.multi_output, bool)
-    assert isinstance(tags.target_tags.single_output, bool)
-
-    assert isinstance(tags.input_tags.pairwise, bool)
-    assert isinstance(tags.input_tags.allow_nan, bool)
-    assert isinstance(tags.input_tags.sparse, bool)
-    assert isinstance(tags.input_tags.categorical, bool)
-    assert isinstance(tags.input_tags.string, bool)
-    assert isinstance(tags.input_tags.dict, bool)
-    assert isinstance(tags.input_tags.one_d_array, bool)
-    assert isinstance(tags.input_tags.two_d_array, bool)
-    assert isinstance(tags.input_tags.three_d_array, bool)
-    assert isinstance(tags.input_tags.positive_only, bool)
-
-    if tags.classifier_tags is not None:
-        assert isinstance(tags.classifier_tags.poor_score, bool)
-        assert isinstance(tags.classifier_tags.multi_class, bool)
-        assert isinstance(tags.classifier_tags.multi_label, bool)
-
-    if tags.regressor_tags is not None:
-        assert isinstance(tags.regressor_tags.poor_score, bool)
-        assert isinstance(tags.regressor_tags.multi_label, bool)
-
-    if tags.transformer_tags is not None:
-        assert isinstance(tags.transformer_tags.preserves_dtype, list)
-
-
 def _estimators_that_predict_in_fit():
     for estimator in _tested_estimators():
         est_params = set(estimator.get_params())
@@ -308,24 +257,27 @@ column_name_estimators = list(
 
 
 @pytest.mark.parametrize(
-    "estimator", column_name_estimators, ids=_get_check_estimator_ids
+    "estimator_orig", column_name_estimators, ids=_get_check_estimator_ids
 )
-def test_pandas_column_name_consistency(estimator):
-    if isinstance(estimator, ColumnTransformer):
+def test_pandas_column_name_consistency(estimator_orig):
+    if isinstance(estimator_orig, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
     if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
-        estimator
+        estimator_orig
     ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        with warnings.catch_warnings(record=True) as record:
-            check_dataframe_column_names_consistency(
-                estimator.__class__.__name__, estimator
-            )
-        for warning in record:
-            assert "was fitted without feature names" not in str(warning.message)
+    for estimator in _yield_instances_for_check(
+        check_dataframe_column_names_consistency, estimator_orig
+    ):
+        with ignore_warnings(category=(FutureWarning)):
+            with warnings.catch_warnings(record=True) as record:
+                check_dataframe_column_names_consistency(
+                    estimator.__class__.__name__, estimator
+                )
+            for warning in record:
+                assert "was fitted without feature names" not in str(warning.message)
 
 
 # TODO: As more modules support get_feature_names_out they should be removed
@@ -354,7 +306,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer
@@ -400,21 +351,24 @@ SET_OUTPUT_ESTIMATORS = list(
 
 
 @pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator_orig", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_transform(estimator):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
+def test_set_output_transform(estimator_orig):
+    name = estimator_orig.__class__.__name__
+    if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping check_set_output_transform for {name}: Does not support"
             " set_output API"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        check_set_output_transform(estimator.__class__.__name__, estimator)
+    for estimator in _yield_instances_for_check(
+        check_set_output_transform, estimator_orig
+    ):
+        with ignore_warnings(category=(FutureWarning)):
+            check_set_output_transform(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator_orig", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 @pytest.mark.parametrize(
     "check_func",
@@ -425,15 +379,16 @@ def test_set_output_transform(estimator):
         check_global_set_output_transform_polars,
     ],
 )
-def test_set_output_transform_configured(estimator, check_func):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
+def test_set_output_transform_configured(estimator_orig, check_func):
+    name = estimator_orig.__class__.__name__
+    if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        check_func(estimator.__class__.__name__, estimator)
+    for estimator in _yield_instances_for_check(check_func, estimator_orig):
+        with ignore_warnings(category=(FutureWarning)):
+            check_func(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(

@@ -1,8 +1,0 @@
-- The functions :func:`metrics.mean_squared_log_error` and
-  :func:`metrics.root_mean_squared_log_error` now check whether the inputs are within
-  the correct domain for the function :math:`y=\log(1+x)`, rather than
-  :math:`y=\log(x)`. The functions :func:`metrics.mean_absolute_error`,
-  :func:`metrics.mean_absolute_percentage_error`, :func:`metrics.mean_squared_error`
-  and :func:`metrics.root_mean_squared_error` now explicitly check whether a scalar
-  will be returned when `multioutput=uniform_average`.
-  By :user:`Virgil Chan <virchan>`

@@ -1,4 +1,0 @@
-- Adds `zero_division` to :func:`cohen_kappa_score`. When there is a
-  division by zero, the metric is undefined and this value is returned.
-  By :user:`Marc Torrellas Socastro <marctorsoc>` and
-  :user:`Stefanie Senger <StefanieSenger>`

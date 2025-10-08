@@ -1,6 +1,0 @@
-- Classes :class:`metrics.ConfusionMatrixDisplay`,
-  :class:`metrics.RocCurveDisplay`, :class:`calibration.CalibrationDisplay`,
-  :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.PredictionErrorDisplay` and
-  :class:`inspection.PartialDependenceDisplay` now properly handle Matplotlib aliases
-  for style parameters (e.g., `c` and `color`, `ls` and `linestyle`, etc).
-  By :user:`Joseph Barbier <JosephBARBIERDARNAL>`

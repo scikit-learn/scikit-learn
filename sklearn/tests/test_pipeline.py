@@ -6,7 +6,6 @@ import itertools
 import re
 import shutil
 import time
-import warnings
 from tempfile import mkdtemp
 
 import joblib
@@ -16,6 +15,7 @@ import pytest
 from sklearn import config_context
 from sklearn.base import (
     BaseEstimator,
+    ClassifierMixin,
     TransformerMixin,
     clone,
     is_classifier,
@@ -282,6 +282,16 @@ def test_pipeline_invalid_parameters():
     assert params == params2
 
 
+def test_empty_pipeline():
+    X = iris.data
+    y = iris.target
+
+    pipe = Pipeline([])
+    msg = "The pipeline is empty. Please add steps."
+    with pytest.raises(ValueError, match=msg):
+        pipe.fit(X, y)
+
+
 def test_pipeline_init_tuple():
     # Pipeline accepts steps as tuple
     X = np.array([[1, 2]])
@@ -357,7 +367,7 @@ def test_pipeline_raise_set_params_error():
     error_msg = re.escape(
         "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
         " LinearRegression())]). Valid parameters are: ['memory', 'steps',"
-        " 'verbose']."
+        " 'transform_input', 'verbose']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
@@ -370,7 +380,7 @@ def test_pipeline_raise_set_params_error():
     # expected error message for invalid inner parameter
     error_msg = re.escape(
         "Invalid parameter 'invalid_param' for estimator LinearRegression(). Valid"
-        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'positive']."
+        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'positive', 'tol']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(cls__invalid_param="nope")
@@ -602,6 +612,44 @@ def test_make_union_kwargs():
         make_union(pca, mock, transformer_weights={"pca": 10, "Transf": 1})
 
 
+def create_mock_transformer(base_name, n_features=3):
+    """Helper to create a mock transformer with custom feature names."""
+    mock = Transf()
+    mock.get_feature_names_out = lambda input_features: [
+        f"{base_name}{i}" for i in range(n_features)
+    ]
+    return mock
+
+
+def test_make_union_passes_verbose_feature_names_out():
+    # Test that make_union passes verbose_feature_names_out
+    # to the FeatureUnion.
+    X = iris.data
+    y = iris.target
+
+    pca = PCA()
+    mock = create_mock_transformer("transf")
+    union = make_union(pca, mock, verbose_feature_names_out=False)
+
+    assert not union.verbose_feature_names_out
+
+    fu_union = make_union(pca, mock, verbose_feature_names_out=True)
+    fu_union.fit(X, y)
+
+    assert_array_equal(
+        [
+            "pca__pca0",
+            "pca__pca1",
+            "pca__pca2",
+            "pca__pca3",
+            "transf__transf0",
+            "transf__transf1",
+            "transf__transf2",
+        ],
+        fu_union.get_feature_names_out(),
+    )
+
+
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
@@ -782,6 +830,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
+        "transform_input": None,
         "verbose": False,
     }
 
@@ -883,7 +932,7 @@ def test_make_pipeline():
             make_pipeline(StandardScaler()),
             lambda est: get_tags(est).estimator_type is None,
         ),
-        (Pipeline([]), lambda est: est._estimator_type is None),
+        (Pipeline([]), lambda est: get_tags(est).estimator_type is None),
     ],
 )
 def test_pipeline_estimator_type(pipeline, check_estimator_type):
@@ -943,6 +992,9 @@ def test_feature_union_weights():
     assert X_fit_transformed_wo_method.shape == (X.shape[0], 7)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_feature_union_parallel():
     # test that n_jobs work for FeatureUnion
     X = JUNK_FOOD_DOCS
@@ -1337,11 +1389,11 @@ def test_pipeline_memory():
     cachedir = mkdtemp()
     try:
         memory = joblib.Memory(location=cachedir, verbose=10)
-        # Test with Transformer + SVC
-        clf = SVC(probability=True, random_state=0)
+        # Test with transformer + logistic regression
+        clf = LogisticRegression(random_state=0)
         transf = DummyTransf()
-        pipe = Pipeline([("transf", clone(transf)), ("svc", clf)])
-        cached_pipe = Pipeline([("transf", transf), ("svc", clf)], memory=memory)
+        pipe = Pipeline([("transf", clone(transf)), ("logreg", clf)])
+        cached_pipe = Pipeline([("transf", transf), ("logreg", clf)], memory=memory)
 
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
@@ -1371,10 +1423,10 @@ def test_pipeline_memory():
         assert ts == cached_pipe.named_steps["transf"].timestamp_
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = SVC(probability=True, random_state=0)
+        clf_2 = LogisticRegression(random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline(
-            [("transf_2", transf_2), ("svc", clf_2)], memory=memory
+            [("transf_2", transf_2), ("logreg", clf_2)], memory=memory
         )
         cached_pipe_2.fit(X, y)
 
@@ -1851,27 +1903,192 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
-# TODO(1.7): remove this test
-def test_pipeline_inverse_transform_Xt_deprecation():
-    X = np.random.RandomState(0).normal(size=(10, 5))
-    pipe = Pipeline([("pca", PCA(n_components=2))])
-    X = pipe.fit_transform(X)
+def test_feature_union_1d_output():
+    """Test that FeatureUnion raises error for 1D transformer outputs."""
+    X = np.arange(6).reshape(3, 2)
 
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        pipe.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        pipe.inverse_transform(X=X, Xt=X)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        pipe.inverse_transform(X)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        pipe.inverse_transform(Xt=X)
+    with pytest.raises(
+        ValueError,
+        match="Transformer 'b' returned an array or dataframe with 1 dimensions",
+    ):
+        FeatureUnion(
+            [
+                ("a", FunctionTransformer(lambda X: X)),
+                ("b", FunctionTransformer(lambda X: X[:, 1])),
+            ]
+        ).fit_transform(X)
 
 
-# TODO(1.8): change warning to checking for NotFittedError
+# transform_input tests
+# =====================
+
+
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+def test_transform_input_pipeline(method):
+    """Test that with transform_input, data is correctly transformed for each step."""
+
+    def get_transformer(registry, sample_weight, metadata):
+        """Get a transformer with requests set."""
+        return (
+            ConsumingTransformer(registry=registry)
+            .set_fit_request(sample_weight=sample_weight, metadata=metadata)
+            .set_transform_request(sample_weight=sample_weight, metadata=metadata)
+        )
+
+    def get_pipeline():
+        """Get a pipeline and corresponding registries.
+
+        The pipeline has 4 steps, with different request values set to test different
+        cases. One is aliased.
+        """
+        registry_1, registry_2, registry_3, registry_4 = (
+            _Registry(),
+            _Registry(),
+            _Registry(),
+            _Registry(),
+        )
+        pipe = make_pipeline(
+            get_transformer(registry_1, sample_weight=True, metadata=True),
+            get_transformer(registry_2, sample_weight=False, metadata=False),
+            get_transformer(registry_3, sample_weight=True, metadata=True),
+            get_transformer(registry_4, sample_weight="other_weights", metadata=True),
+            transform_input=["sample_weight"],
+        )
+        return pipe, registry_1, registry_2, registry_3, registry_4
+
+    def check_metadata(registry, methods, **metadata):
+        """Check that the right metadata was recorded for the given methods."""
+        assert registry
+        for estimator in registry:
+            for method in methods:
+                check_recorded_metadata(
+                    estimator,
+                    method=method,
+                    parent=method,
+                    **metadata,
+                )
+
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([0, 1])
+    sample_weight = np.array([[1, 2]])
+    other_weights = np.array([[30, 40]])
+    metadata = np.array([[100, 200]])
+
+    pipe, registry_1, registry_2, registry_3, registry_4 = get_pipeline()
+    pipe.fit(
+        X,
+        y,
+        sample_weight=sample_weight,
+        other_weights=other_weights,
+        metadata=metadata,
+    )
+
+    check_metadata(
+        registry_1, ["fit", "transform"], sample_weight=sample_weight, metadata=metadata
+    )
+    check_metadata(registry_2, ["fit", "transform"])
+    check_metadata(
+        registry_3,
+        ["fit", "transform"],
+        sample_weight=sample_weight + 2,
+        metadata=metadata,
+    )
+    check_metadata(
+        registry_4,
+        method.split("_"),  # ["fit", "transform"] if "fit_transform", ["fit"] otherwise
+        sample_weight=other_weights + 3,
+        metadata=metadata,
+    )
+
+
+@config_context(enable_metadata_routing=True)
+def test_transform_input_explicit_value_check():
+    """Test that the right transformed values are passed to `fit`."""
+
+    class Transformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+        def transform(self, X):
+            return X + 1
+
+    class Estimator(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y, X_val=None, y_val=None):
+            assert_array_equal(X, np.array([[1, 2]]))
+            assert_array_equal(y, np.array([0, 1]))
+            assert_array_equal(X_val, np.array([[2, 3]]))
+            assert_array_equal(y_val, np.array([0, 1]))
+            return self
+
+    X = np.array([[0, 1]])
+    y = np.array([0, 1])
+    X_val = np.array([[1, 2]])
+    y_val = np.array([0, 1])
+    pipe = Pipeline(
+        [
+            ("transformer", Transformer()),
+            ("estimator", Estimator().set_fit_request(X_val=True, y_val=True)),
+        ],
+        transform_input=["X_val"],
+    )
+    pipe.fit(X, y, X_val=X_val, y_val=y_val)
+
+
+def test_transform_input_no_slep6():
+    """Make sure the right error is raised if slep6 is not enabled."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([0, 1])
+    msg = "The `transform_input` parameter can only be set if metadata"
+    with pytest.raises(ValueError, match=msg):
+        make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
+
+
+@config_context(enable_metadata_routing=True)
+def test_transform_tuple_input():
+    """Test that if metadata is a tuple of arrays, both arrays are transformed."""
+
+    class Estimator(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y, X_val=None, y_val=None):
+            assert isinstance(X_val, tuple)
+            assert isinstance(y_val, tuple)
+            # Here we make sure that each X_val is transformed by the transformer
+            assert_array_equal(X_val[0], np.array([[2, 3]]))
+            assert_array_equal(y_val[0], np.array([0, 1]))
+            assert_array_equal(X_val[1], np.array([[11, 12]]))
+            assert_array_equal(y_val[1], np.array([1, 2]))
+            self.fitted_ = True
+            return self
+
+    class Transformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+        def transform(self, X):
+            return X + 1
+
+    X = np.array([[1, 2]])
+    y = np.array([0, 1])
+    X_val0 = np.array([[1, 2]])
+    y_val0 = np.array([0, 1])
+    X_val1 = np.array([[10, 11]])
+    y_val1 = np.array([1, 2])
+    pipe = Pipeline(
+        [
+            ("transformer", Transformer()),
+            ("estimator", Estimator().set_fit_request(X_val=True, y_val=True)),
+        ],
+        transform_input=["X_val"],
+    )
+    pipe.fit(X, y, X_val=(X_val0, X_val1), y_val=(y_val0, y_val1))
+
+
+# end of transform_input tests
+# =============================
+
+
 @pytest.mark.parametrize(
     "method",
     [
@@ -1922,7 +2139,7 @@ def test_pipeline_warns_not_fitted(method):
             return X
 
     pipe = Pipeline([("estimator", StatelessEstimator())])
-    with pytest.warns(FutureWarning, match="This Pipeline instance is not fitted yet."):
+    with pytest.raises(NotFittedError):
         getattr(pipe, method)([[1]])
 
 

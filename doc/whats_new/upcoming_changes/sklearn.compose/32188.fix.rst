@@ -1,0 +1,3 @@
+- The :class:`compose.ColumnTransformer` now correctly fits on data provided as a
+  `polars.DataFrame` when any transformer has a sparse output.
+  By :user:`Phillipp Gnan <ph-ll-pp>`.
