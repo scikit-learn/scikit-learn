@@ -3673,7 +3673,7 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
 
 
 @pytest.mark.parametrize("d2_metric", [d2_brier_score, d2_log_loss_score])
-@pytest.mark.parametrize("str_y_true", [True])
+@pytest.mark.parametrize("str_y_true", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )

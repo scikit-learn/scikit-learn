@@ -3576,10 +3576,11 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
         else:
             raise
 
+    xp_y_true, _ = get_namespace(y_true)
     # convert (n_samples,) to (n_samples, 2) shape
-    y_true = np.array(y_true == pos_label, int)
-    transformed_labels = np.column_stack((1 - y_true, y_true))
-    y_prob = xp.stack([1 - y_prob, y_prob], axis=1)
+    y_true = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
+    transformed_labels = xp_y_true.stack((1 - y_true, y_true), axis=1)
+    y_prob = xp.stack((1 - y_prob, y_prob), axis=1)
     transformed_labels = ensure_common_namespace_device(y_prob, transformed_labels)[0]
 
     return transformed_labels, y_prob
