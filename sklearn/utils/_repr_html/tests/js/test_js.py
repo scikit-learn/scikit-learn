@@ -33,9 +33,10 @@ def test_copy_paste(page, local_server):
     """
     url, set_html_response = local_server
 
-    copy_paste_html = (
-        _make_page('<div class="sk-toggleable__content" data-param-prefix="prefix"/>'),
+    copy_paste_html = _make_page(
+        '<div class="sk-toggleable__content" data-param-prefix="prefix"/>'
     )
+
     set_html_response(copy_paste_html)
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.goto(url)
