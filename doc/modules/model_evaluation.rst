@@ -676,26 +676,22 @@ false negatives and true positives as follows::
   (2, 1, 2, 3)
 
 With :func:`binary_classification_curve` we can get true negatives, false positives,
-false negatives and true positives for different thresholds.
+false negatives and true positives for different thresholds::
 
-  >>> import numpy as np
   >>> from sklearn.metrics import binary_classification_curve
   >>> y_true = np.array([0., 0., 1., 1.])
   >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> fps, tps, thresholds = binary_classification_curve(y_true, y_score)
+  >>> tns, fps, fns, tps, thresholds = binary_classification_curve(y_true, y_score)
+  >>> tns
+  array([2., 1., 1., 0.])
   >>> fps
   array([0., 1., 1., 2.])
+  >>> fns
+  array([1., 1., 0., 0.])
   >>> tps
   array([1., 1., 2., 2.])
   >>> thresholds
   array([0.8, 0.4, 0.35, 0.1])
-  >>> # True Negatives can be calculated using:
-  >>> fps[-1] - fps
-  array([2., 1., 1., 0.])]
-  >>> # False negatives can be calculated using:
-  >>> tps[-1] - tps
-  array([1., 1., 0., 0.])
-
 
 .. rubric:: Examples
 

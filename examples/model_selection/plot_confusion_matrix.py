@@ -79,9 +79,10 @@ plt.show()
 # true positives.
 #
 # :func:`sklearn.metrics.binary_classification_curve`
-# can be used to count true negatives, true positives, false positives, false negatives
-# for different threshold values. It is fundamental for binary classification metrics
-# like :func:`sklearn.metrics.roc_auc_score` and :func:`sklearn.metrics.det_curve`.
+# can be used to count true negatives, false positives, false negatives and true
+# positives for different threshold values. It is fundamental for binary classification
+# metrics like :func:`sklearn.metrics.roc_auc_score` and
+# :func:`sklearn.metrics.det_curve`.
 
 from sklearn.datasets import make_classification
 from sklearn.metrics import binary_classification_curve
@@ -104,16 +105,18 @@ classifier.fit(X_train, y_train)
 
 y_score = classifier.predict_proba(X_test)[:, 1]
 
-tps, fps, threshold = binary_classification_curve(y_test, y_score)
+tns, fps, fns, tps, threshold = binary_classification_curve(y_test, y_score)
 
-# Plot TPs and FPs vs Thresholds
+# Plot TNs, FPs, FNs and TPs vs Thresholds
 plt.figure(figsize=(10, 6))
 
-plt.plot(threshold, tps, label="True Positives (TPs)", color="blue")
-plt.plot(threshold, fps, label="False Positives (FPs)", color="red")
+plt.plot(threshold, tns, label="True Negatives (TNs)")
+plt.plot(threshold, fps, label="False Positives (FPs)")
+plt.plot(threshold, fns, label="False Negatives (FNs)")
+plt.plot(threshold, tps, label="True Positives (TPs)")
 plt.xlabel("Thresholds")
 plt.ylabel("Count")
-plt.title("TPs and FPs vs Thresholds")
+plt.title("TNs, FPs, FNs and TPs vs Thresholds")
 plt.legend()
 plt.grid()
 

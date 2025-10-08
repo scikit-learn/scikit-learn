@@ -1,3 +1,0 @@
-- Add :func:`metrics.binary_classification_curve` function that returns the number of
-  true and false positive per threshold.
-  By :user:`Success Moses <SuccessMoses>`

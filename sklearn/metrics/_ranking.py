@@ -326,8 +326,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
-    binary_classification_curve : Compute True Positive and False Positive per
-        threshold.
+    binary_classification_curve : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     Examples
     --------
@@ -343,7 +343,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    fps, tps, thresholds = binary_classification_curve(
+    _, fps, fns, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -353,7 +353,6 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
             "tradeoff curve is not defined in that case."
         )
 
-    fns = tps[-1] - tps
     p_count = tps[-1]
     n_count = fps[-1]
 
@@ -786,11 +785,11 @@ def _multiclass_roc_auc_score(
     prefer_skip_nested_validation=True,
 )
 def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=None):
-    """Calculate true and false positives per binary classification threshold.
+    """Calculate binary confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
 
-    .. versionadded:: 1.6
+    .. versionadded:: 1.8
 
     Parameters
     ----------
@@ -808,17 +807,23 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
 
     Returns
     -------
+    tns : ndarray of shape (n_thresholds,)
+        A count of true negatives, at index i being the number of negative
+        samples assigned a `score < thresholds[i]`.
+
     fps : ndarray of shape (n_thresholds,)
         A count of false positives, at index i being the number of negative
-        samples assigned a score >= thresholds[i]. The total number of
-        negative samples is equal to fps[-1] (thus true negatives are given by
-        fps[-1] - fps).
+        samples assigned a `score >= thresholds[i]`. The total number of
+        negative samples is equal to `fps[-1]`.
+
+    fns : ndarray of shape (n_thresholds,)
+        A count of false negatives, at index i being the number of positive
+        samples assigned a `score < thresholds[i]`.
 
     tps : ndarray of shape (n_thresholds,)
         An increasing count of true positives, at index i being the number
-        of positive samples assigned a score >= thresholds[i]. The total
-        number of positive samples is equal to tps[-1] (thus false negatives
-        are given by tps[-1] - tps).
+        of positive samples assigned a `score >= thresholds[i]`. The total
+        number of positive samples is equal to `tps[-1]`.
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing score values.
@@ -830,8 +835,6 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
     det_curve : Compute Detection error tradeoff (DET) curve.
-    binary_classification_curve : Compute True Positive and False Positive per
-        threshold.
 
     Examples
     --------
@@ -839,9 +842,13 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
     >>> from sklearn.metrics import binary_classification_curve
     >>> y_true = np.array([0., 0., 1., 1.])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fps, tps, thresholds = binary_classification_curve(y_true, y_score)
+    >>> tns, fps, fns, tps, thresholds = binary_classification_curve(y_true, y_score)
+    >>> tns
+    array([2., 1., 1., 0.])
     >>> fps
     array([0., 1., 1., 2.])
+    >>> fns
+    array([1., 1., 0., 0.])
     >>> tps
     array([1., 1., 2., 2.])
     >>> thresholds
@@ -895,7 +902,9 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
         fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
-    return fps, tps, y_score[threshold_idxs]
+    tns = fps[-1] - fps
+    fns = tps[-1] - tps
+    return tns, fps, fns, tps, y_score[threshold_idxs]
 
 
 @validate_params(
@@ -1001,8 +1010,8 @@ def precision_recall_curve(
     average_precision_score : Compute average precision from prediction scores.
     det_curve: Compute error rates for different probability thresholds.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    binary_classification_curve : Compute True Positive and False Positive per
-        threshold.
+    binary_classification_curve : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     Examples
     --------
@@ -1037,7 +1046,7 @@ def precision_recall_curve(
         )
         y_score = probas_pred
 
-    fps, tps, thresholds = binary_classification_curve(
+    _, fps, _, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -1147,8 +1156,8 @@ def roc_curve(
         (ROC) curve given the true and predicted values.
     det_curve: Compute error rates for different probability thresholds.
     roc_auc_score : Compute the area under the ROC curve.
-    binary_classification_curve : Compute True Positive and False Positive per
-        threshold.
+    binary_classification_curve : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     Notes
     -----
@@ -1182,7 +1191,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    fps, tps, thresholds = binary_classification_curve(
+    _, fps, _, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
