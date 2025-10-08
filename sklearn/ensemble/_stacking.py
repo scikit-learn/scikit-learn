@@ -38,7 +38,7 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     _check_response_method,
     _estimator_has,
     check_is_fitted,
@@ -323,7 +323,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        input_features = _check_feature_names_in(
+        input_features = check_feature_names_in(
             self, input_features, generate_names=self.passthrough
         )
 

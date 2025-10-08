@@ -15,7 +15,7 @@ from sklearn.utils import _safe_indexing, check_array, safe_sqr
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._tags import get_tags
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     _is_pandas_df,
     check_is_fitted,
     validate_data,
@@ -192,7 +192,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             Transformed feature names.
         """
         check_is_fitted(self)
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         return input_features[self.get_support()]
 
 

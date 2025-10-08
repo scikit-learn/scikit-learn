@@ -2478,7 +2478,7 @@ def _get_feature_names(X):
         return feature_names
 
 
-def _check_feature_names_in(estimator, input_features=None, *, generate_names=True):
+def check_feature_names_in(estimator, input_features=None, *, generate_names=True):
     """Check `input_features` and generate names if needed.
 
     Commonly used in :term:`get_feature_names_out`.
@@ -2559,7 +2559,7 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     feature_names_in : ndarray of str or `None`
         Feature names in.
     """
-    _check_feature_names_in(estimator, input_features, generate_names=False)
+    check_feature_names_in(estimator, input_features, generate_names=False)
     estimator_name = estimator.__class__.__name__.lower()
     return np.asarray(
         [f"{estimator_name}{i}" for i in range(n_features_out)], dtype=object
@@ -2740,7 +2740,7 @@ def _to_object_array(sequence):
     return out
 
 
-def _check_feature_names(estimator, X, *, reset):
+def check_feature_names(estimator, X, *, reset):
     """Set or check the `feature_names_in_` attribute of an estimator.
 
     .. versionadded:: 1.0
@@ -2839,7 +2839,7 @@ def _check_feature_names(estimator, X, *, reset):
         raise ValueError(message)
 
 
-def _check_n_features(estimator, X, reset):
+def check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
     .. note::
@@ -2984,7 +2984,7 @@ def validate_data(
         The validated input. A tuple is returned if both `X` and `y` are
         validated.
     """
-    _check_feature_names(_estimator, X, reset=reset)
+    check_feature_names(_estimator, X, reset=reset)
     tags = get_tags(_estimator)
     if y is None and tags.target_tags.required:
         raise ValueError(
@@ -3030,6 +3030,6 @@ def validate_data(
         out = X, y
 
     if not no_val_X and check_params.get("ensure_2d", True):
-        _check_n_features(_estimator, X, reset=reset)
+        check_n_features(_estimator, X, reset=reset)
 
     return out

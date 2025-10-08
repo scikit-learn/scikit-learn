@@ -26,7 +26,7 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
-    _check_feature_names_in,
+    check_feature_names_in,
     _num_samples,
     check_is_fitted,
     validate_data,
@@ -977,7 +977,7 @@ class IterativeImputer(_BaseImputer):
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         names = self.initial_imputer_.get_feature_names_out(input_features)
         return self._concatenate_indicator_feature_names_out(names, input_features)
 

@@ -66,7 +66,7 @@ from sklearn.utils.fixes import (
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _allclose_dense_sparse,
-    _check_feature_names_in,
+    check_feature_names_in,
     _check_method_params,
     _check_pos_label_consistency,
     _check_psd_eigenvalues,
@@ -2093,7 +2093,7 @@ class PassthroughTransformer(BaseEstimator):
         return X
 
     def get_feature_names_out(self, input_features=None):
-        return _check_feature_names_in(self, input_features)
+        return check_feature_names_in(self, input_features)
 
 
 def test_check_feature_names_in():

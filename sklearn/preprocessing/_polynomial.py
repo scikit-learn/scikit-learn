@@ -33,7 +33,7 @@ from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
-    _check_feature_names_in,
+    check_feature_names_in,
     _check_sample_weight,
     check_is_fitted,
     validate_data,
@@ -276,7 +276,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         powers = self.powers_
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         feature_names = []
         for row in powers:
             inds = np.where(row)[0]
@@ -847,7 +847,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         check_is_fitted(self, "n_features_in_")
         n_splines = self.bsplines_[0].c.shape[1]
 
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         feature_names = []
         for i in range(self.n_features_in_):
             for j in range(n_splines - 1 + self.include_bias):

@@ -14,7 +14,7 @@ from sklearn.preprocessing._target_encoder_fast import (
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     _check_y,
     check_consistent_length,
     check_is_fitted,
@@ -520,7 +520,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             '<feature_name>_<class_name>'.
         """
         check_is_fitted(self, "n_features_in_")
-        feature_names = _check_feature_names_in(self, input_features)
+        feature_names = check_feature_names_in(self, input_features)
         if self.target_type_ == "multiclass":
             feature_names = [
                 f"{feature_name}_{class_name}"

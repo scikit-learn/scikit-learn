@@ -19,8 +19,8 @@ from sklearn.utils.fixes import _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
-    _check_feature_names_in,
-    _check_n_features,
+    check_feature_names_in,
+    check_n_features,
     check_is_fitted,
     validate_data,
 )
@@ -772,7 +772,7 @@ class SimpleImputer(_BaseImputer):
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         non_missing_mask = np.logical_not(_get_mask(self.statistics_, np.nan))
         names = input_features[non_missing_mask]
         return self._concatenate_indicator_feature_names_out(names, input_features)
@@ -1005,7 +1005,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=True)
         else:
             # only create `n_features_in_` in the precomputed case
-            _check_n_features(self, X, reset=True)
+            check_n_features(self, X, reset=True)
 
         self._n_features = X.shape[1]
 
@@ -1124,7 +1124,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         prefix = self.__class__.__name__.lower()
         return np.asarray(
             [

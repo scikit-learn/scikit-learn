@@ -11,7 +11,7 @@ from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_regressor
 from sklearn.inspection import partial_dependence
-from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.inspection._pd_utils import check_feature_names, _get_feature_index
 from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
 from sklearn.utils._encode import _unique
 from sklearn.utils._optional_dependencies import check_matplotlib_support
@@ -560,7 +560,7 @@ class PartialDependenceDisplay:
             X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
         n_features = X.shape[1]
 
-        feature_names = _check_feature_names(X, feature_names)
+        feature_names = check_feature_names(X, feature_names)
         # expand kind to always be a list of str
         kind_ = [kind] * len(features) if isinstance(kind, str) else kind
         if len(kind_) != len(features):

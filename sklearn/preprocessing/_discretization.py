@@ -13,7 +13,7 @@ from sklearn.utils import resample
 from sklearn.utils._param_validation import Interval, Options, StrOptions
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     _check_sample_weight,
     check_array,
     check_is_fitted,
@@ -551,7 +551,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         if hasattr(self, "_encoder"):
             return self._encoder.get_feature_names_out(input_features)
 

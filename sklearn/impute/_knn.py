@@ -15,7 +15,7 @@ from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
-    _check_feature_names_in,
+    check_feature_names_in,
     check_is_fitted,
     validate_data,
 )
@@ -406,6 +406,6 @@ class KNNImputer(_BaseImputer):
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        input_features = _check_feature_names_in(self, input_features)
+        input_features = check_feature_names_in(self, input_features)
         names = input_features[self._valid_mask]
         return self._concatenate_indicator_feature_names_out(names, input_features)

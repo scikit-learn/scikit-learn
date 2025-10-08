@@ -20,7 +20,7 @@ from sklearn.utils._param_validation import Interval
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.multiclass import _check_partial_fit_first_call
 from sklearn.utils.validation import (
-    _check_n_features,
+    check_n_features,
     _check_sample_weight,
     check_is_fitted,
     check_non_negative,
@@ -1527,7 +1527,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        _check_n_features(self, X, reset=False)
+        check_n_features(self, X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_in_):
             indices = X[:, i]

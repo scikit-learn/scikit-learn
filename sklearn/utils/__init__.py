@@ -42,6 +42,8 @@ from sklearn.utils.validation import (
     check_X_y,
     column_or_1d,
     indexable,
+    check_n_features,
+    check_feature_names
 )
 
 __all__ = [
@@ -78,4 +80,6 @@ __all__ = [
     "safe_mask",
     "safe_sqr",
     "shuffle",
+    "check_feature_names",
+    "check_n_features"
 ]

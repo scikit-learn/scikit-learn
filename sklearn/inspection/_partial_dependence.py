@@ -16,7 +16,7 @@ from sklearn.ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
-from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.inspection._pd_utils import check_feature_names, _get_feature_index
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
@@ -670,7 +670,7 @@ def partial_dependence(
         _get_column_indices(X, features), dtype=np.intp, order="C"
     ).ravel()
 
-    feature_names = _check_feature_names(X, feature_names)
+    feature_names = check_feature_names(X, feature_names)
 
     n_features = X.shape[1]
     if categorical_features is None:

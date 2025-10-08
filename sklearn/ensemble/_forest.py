@@ -70,7 +70,7 @@ from sklearn.utils._tags import get_tags
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
@@ -3011,7 +3011,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             feature names.
         """
         check_is_fitted(self, "_n_features_out")
-        _check_feature_names_in(
+        check_feature_names_in(
             self, input_features=input_features, generate_names=False
         )
 

@@ -45,7 +45,7 @@ from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOpt
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     _assert_all_finite_element_wise,
-    _check_n_features,
+    check_n_features,
     _check_sample_weight,
     assert_all_finite,
     check_is_fitted,
@@ -503,7 +503,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("No support for np.int64 index based sparse matrices")
         else:
             # The number of features is checked regardless of `check_input`
-            _check_n_features(self, X, reset=False)
+            check_n_features(self, X, reset=False)
         return X
 
     def predict(self, X, check_input=True):

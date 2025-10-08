@@ -13,7 +13,7 @@ from sklearn.utils._set_output import _get_adapter_from_container, _get_output_c
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import (
     _allclose_dense_sparse,
-    _check_feature_names_in,
+    check_feature_names_in,
     _get_feature_names,
     _is_pandas_df,
     _is_polars_df,
@@ -360,7 +360,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
               returned by this method.
         """
         if hasattr(self, "n_features_in_") or input_features is not None:
-            input_features = _check_feature_names_in(self, input_features)
+            input_features = check_feature_names_in(self, input_features)
         if self.feature_names_out == "one-to-one":
             names_out = input_features
         elif callable(self.feature_names_out):

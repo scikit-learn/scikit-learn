@@ -38,7 +38,7 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     check_is_fitted,
     column_or_1d,
 )
@@ -516,7 +516,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                 "`flatten_transform=False`"
             )
 
-        _check_feature_names_in(self, input_features, generate_names=False)
+        check_feature_names_in(self, input_features, generate_names=False)
         class_name = self.__class__.__name__.lower()
 
         active_names = [name for name, est in self.estimators if est != "drop"]
@@ -726,7 +726,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Transformed feature names.
         """
         check_is_fitted(self, "n_features_in_")
-        _check_feature_names_in(self, input_features, generate_names=False)
+        check_feature_names_in(self, input_features, generate_names=False)
         class_name = self.__class__.__name__.lower()
         return np.asarray(
             [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],

@@ -33,7 +33,7 @@ from sklearn.utils._tags import (
 )
 from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     _generate_get_feature_names_out,
     _is_fitted,
     check_array,
@@ -949,7 +949,7 @@ class OneToOneFeatureMixin:
         # to check if the attribute is present. Otherwise it will pass on
         # stateless estimators (requires_fit=False)
         check_is_fitted(self, attributes="n_features_in_")
-        return _check_feature_names_in(self, input_features)
+        return check_feature_names_in(self, input_features)
 
 
 class ClassNamePrefixFeaturesOutMixin:

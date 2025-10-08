@@ -26,7 +26,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import (
-    _check_feature_names_in,
+    check_feature_names_in,
     check_is_fitted,
     validate_data,
 )
@@ -761,7 +761,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         # to check if the attribute is present. Otherwise it will pass on this
         # stateless estimator (requires_fit=False)
         check_is_fitted(self, attributes="n_features_in_")
-        input_features = _check_feature_names_in(
+        input_features = check_feature_names_in(
             self, input_features, generate_names=True
         )
         est_name = self.__class__.__name__.lower()
