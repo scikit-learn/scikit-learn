@@ -1083,18 +1083,19 @@ def test_param_is_default(default_value, test_value):
     assert "param" not in non_default
 
 
-def test_is_regressor_class_vs_instance_error():
-    """Test is_regressor gives helpful error when passed a class instead of instance."""
-    # Test using a standard library class that has __init__ but no __sklearn_tags__
+@pytest.mark.parametrize(
+    "is_func, Estimator",
+    [
+        (is_regressor, DecisionTreeRegressor),
+        (is_classifier, DecisionTreeClassifier),
+        (is_clusterer, KMeans),
+    ],
+)
+def test_is_functions_class_vs_instance_error(is_func, Estimator):
+    """Test is_* functions give helpful error when passed a class."""
+    # Test the common mistake of passing class instead of instance
     with pytest.raises(TypeError, match="Expected an estimator instance"):
-        is_regressor(dict)
-
-
-def test_is_classifier_class_vs_instance_error():
-    """Test is_classifier error when passed a class instead of instance."""
-    # Test using a standard library class that has __init__ but no __sklearn_tags__
-    with pytest.raises(TypeError, match="Expected an estimator instance"):
-        is_classifier(list)
+        is_func(Estimator)
 
 
 def test_is_functions_custom_estimator_error():

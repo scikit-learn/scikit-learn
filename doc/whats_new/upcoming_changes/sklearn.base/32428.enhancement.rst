@@ -1,4 +1,4 @@
 - :func:`base.is_regressor`, :func:`base.is_classifier`, and :func:`base.is_clusterer` 
   now provide helpful error messages when users accidentally pass a class instead 
-  of an instance (e.g., ``is_regressor(SVR)`` instead of ``is_regressor(SVR())``).
+  of an instance.
   By :user:`Achyuthan S <Achyuthan-S>`.

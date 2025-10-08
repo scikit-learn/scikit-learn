@@ -273,18 +273,19 @@ def get_tags(estimator) -> Tags:
 
     try:
         tags = estimator.__sklearn_tags__()
-    except AttributeError as exc:
-        # Check for common error cases to provide better error messages
-        estimator_name = getattr(estimator, "__name__", str(type(estimator).__name__))
-
-        # Case 1: User passed a class instead of an instance
-        if hasattr(estimator, "__name__") and hasattr(estimator, "__init__"):
+    except TypeError as exc:
+        # Check for class vs instance error
+        if "__sklearn_tags__() missing 1 required positional argument: 'self'" in str(exc):
+            estimator_name = getattr(
+                estimator, "__name__", str(type(estimator).__name__)
+            )
             raise TypeError(
                 f"Expected an estimator instance, but got class '{estimator_name}'. "
                 f"Did you mean to instantiate it? e.g., {estimator_name}()"
             ) from exc
-
-        # Case 2: Missing __sklearn_tags__ method (the original case)
+        else:
+            raise
+    except AttributeError as exc:
         if "object has no attribute '__sklearn_tags__'" in str(exc):
             # Happens when `__sklearn_tags__` is implemented by calling
             # `super().__sklearn_tags__()` but there is no `__sklearn_tags__`
