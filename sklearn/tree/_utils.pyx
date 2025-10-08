@@ -5,6 +5,7 @@ from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 from libc.math cimport isnan
+from libc.string cimport memset
 
 import numpy as np
 cimport numpy as cnp
@@ -249,3 +250,104 @@ cdef class PytestWeightedHeap(WeightedHeap):
         cdef double v, w
         self.pop(&v, &w)
         return v, w
+
+
+cdef class WeightedFenwickTree:
+    """
+    Fenwick tree (Binary Indexed Tree) for maintaining:
+      - prefix sums of weights, and
+      - prefix sums of weight*value (targets),
+    indexed by the rank of y in sorted order (1-based internally).
+
+    Supports:
+      - add(rank, w, y): point update at 'rank'
+      - search(t): find the smallest rank with cumulative weight > t,
+                   also returns prefix aggregates excluding that rank.
+    """
+
+    def __cinit__(self, intp_t capacity):
+        self.tree_w = NULL
+        self.tree_wy = NULL
+        # safe_realloc can raise MemoryError -> __cinit__ may propagate
+        safe_realloc(&self.tree_w, capacity + 1)
+        safe_realloc(&self.tree_wy, capacity + 1)
+
+    cdef void reset(self, intp_t size) noexcept nogil:
+        cdef intp_t p
+        cdef intp_t n_bytes = (size + 1) * sizeof(float64_t)
+        # +1 because 1-based
+
+        self.size = size
+        memset(self.tree_w, 0, n_bytes)
+        memset(self.tree_wy, 0, n_bytes)
+        self.total_w = 0.0
+        self.total_wy = 0.0
+
+        # highest power of two <= size
+        p = 1
+        while p <= size:
+            p <<= 1
+        self.max_pow2 = p >> 1
+
+    def __dealloc__(self):
+        if self.tree_w != NULL:
+            free(self.tree_w)
+        if self.tree_wy != NULL:
+            free(self.tree_wy)
+
+    cdef void add(self, intp_t idx, float64_t y, float64_t w) noexcept nogil:
+        cdef float64_t wy = w * y
+        idx += 1  # 1-based
+
+        while idx <= self.size:
+            self.tree_w[idx] += w
+            self.tree_wy[idx] += wy
+            idx += idx & -idx
+
+        self.total_w += w
+        self.total_wy += wy
+
+    cdef intp_t search(
+        self,
+        float64_t t,
+        float64_t* cw_out,
+        float64_t* cwy_out,
+        bint inclusive
+    ) noexcept nogil:
+        """
+        Find the leaf such that
+          prefix_weight <= t < prefix_weight if inclusive
+
+        and return:
+          - cw: prefix weight up to (rank-1)
+          - cwv: prefix weighted sum up to (rank-1)
+          - q: the y-value at 'rank' (the weighted alpha-quantile)
+          - prev_idx: if t == 0 at the end, the last index where we made a move
+
+        Notes:
+          * Assumes there is at least one active (positive-weight) item.
+          * If t >= total weight (can happen with alpha ~ 1), we clamp t slightly.
+        """
+        cdef:
+            intp_t idx = 0
+            float64_t cw = 0.0
+            float64_t cwy = 0.0
+            intp_t bit = self.max_pow2
+            float64_t w
+
+        # Standard Fenwick lower-bound with simultaneous prefix accumulation
+        while bit != 0:
+            next_idx = idx + bit
+            if next_idx <= self.size:
+                w = self.tree_w[next_idx]
+                if (t > w) or (inclusive and t >= w):
+                    t -= w
+                    idx = next_idx
+                    cw += w
+                    cwy += self.tree_wy[next_idx]
+            bit >>= 1
+
+        cw_out[0] = cw
+        cwy_out[0] = cwy
+
+        return idx

@@ -67,3 +67,22 @@ cdef class WeightedHeap:
     cdef void _heapify_down(self, intp_t) noexcept nogil
 
 cdef float64_t log(float64_t x) noexcept nogil
+
+
+cdef class WeightedFenwickTree:
+    cdef intp_t size         # number of leaves (ranks)
+    cdef float64_t* tree_w   # BIT for weights
+    cdef float64_t* tree_wy  # BIT for weighted targets
+    cdef intp_t max_pow2     # highest power of two <= n
+    cdef float64_t total_w   # running total weight
+    cdef float64_t total_wy  # running total weighted target
+
+    cdef void reset(self, intp_t size) noexcept nogil
+    cdef void add(self, intp_t idx, float64_t y, float64_t w) noexcept nogil
+    cdef intp_t search(
+        self,
+        float64_t t,
+        float64_t* cw_out,
+        float64_t* cwy_out,
+        bint inclusive
+    ) noexcept nogil
