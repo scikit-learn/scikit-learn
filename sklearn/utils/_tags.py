@@ -275,10 +275,11 @@ def get_tags(estimator) -> Tags:
         tags = estimator.__sklearn_tags__()
     except TypeError as exc:
         # Handle the common mistake of passing a class instead of an instance
-        # Check for the "missing self argument" error with slight variations
+        # Check for the "missing self argument" error with variations across platforms
         exc_str = str(exc)
         if (
-            "missing 1 required positional argument" in exc_str
+            ("missing 1 required positional argument" in exc_str or
+             "takes 1 positional argument but 0 were given" in exc_str)
             and "'self'" in exc_str
             and "__sklearn_tags__" in exc_str
         ):
