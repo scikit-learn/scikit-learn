@@ -408,11 +408,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return X_out
 
     def transform(self, X):
-        """Transform X with the target encoding.
-        .. note::
-            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>`. for details.
+        """Encode X using the learned target encodings.
 
         This method internally uses the `encodings_` attribute learnt during
         :meth:`TargetEncoder.fit_transform` to transform test data.
@@ -425,18 +421,23 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data to encode. Missing values (e.g. ``None`` or ``np.nan``)
-            are treated as categories. Categories unseen during :meth:`fit`
-            are encoded with ``target_mean_``.
+            Input data to encode. Missing values (e.g., None or np.nan) are
+            treated as categories. Categories unseen during fit are encoded
+            with ``target_mean_``.
 
         Returns
         -------
-        X_trans : ndarray of shape (n_samples, n_features) or \
-                (n_samples, n_features * n_classes)
-            Encoded representation of ``X``. For binary and continuous targets,
-            one column per input feature is returned. For multiclass targets,
-            one column per (feature, class) pair is returned, with classes ordered
-            as in ``classes_``.
+        X_trans : ndarray of shape (n_samples, n_features) or
+                  (n_samples, n_features * n_classes) Encoded representation of X.
+                  For binary and continuous targets, one column per input feature is
+                  returned. For multiclass targets, one column per (feature, class)
+                  pair is returned, with classes ordered as in ``classes_``.
+
+        Notes
+        -----
+        ``fit(X, y).transform(X)`` does not equal ``fit_transform(X, y)`` because
+        :term:`cross fitting` is used in ``fit_transform`` for encoding. See the
+        :ref:`User Guide <target_encoder>` for details.
         """
         check_is_fitted(self)
         # Decide path WITHOUT triggering a full validation first.
