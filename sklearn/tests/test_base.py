@@ -23,6 +23,7 @@ from sklearn.base import (
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
@@ -1086,19 +1087,20 @@ def test_param_is_default(default_value, test_value):
 @pytest.mark.parametrize(
     "is_func, Estimator",
     [
-        (is_regressor, DecisionTreeRegressor),
-        (is_classifier, DecisionTreeClassifier),
+        (is_regressor, Ridge),
+        (is_classifier, LogisticRegression),
         (is_clusterer, KMeans),
     ],
 )
 def test_is_functions_class_vs_instance_error(is_func, Estimator):
     """Test is_* functions give helpful error when passed a class."""
-    # Test the common mistake of passing class instead of instance
+    # This is a common mistake - passing the class instead of an instance
     with pytest.raises(TypeError, match="Expected an estimator instance"):
         is_func(Estimator)
 
 
-def test_is_functions_custom_estimator_error():
+@pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
+def test_is_functions_custom_estimator_error(is_func):
     """Test is_* functions error for custom estimators without BaseEstimator."""
 
     class CustomEstimator:
@@ -1110,28 +1112,22 @@ def test_is_functions_custom_estimator_error():
 
     custom_est = CustomEstimator()
 
-    # Test that we get helpful error about missing __sklearn_tags__
+    # Should get a helpful error about missing __sklearn_tags__
     with pytest.raises(AttributeError, match="Make sure to inherit from"):
-        is_regressor(custom_est)
-
-    with pytest.raises(AttributeError, match="Make sure to inherit from"):
-        is_classifier(custom_est)
-
-    with pytest.raises(AttributeError, match="Make sure to inherit from"):
-        is_clusterer(custom_est)
+        is_func(custom_est)
 
 
-def test_is_functions_unexpected_error():
+@pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
+def test_is_functions_unexpected_error(is_func):
     """Test is_* functions handle unexpected AttributeError cases."""
 
     class ProblematicEstimator:
         def __sklearn_tags__(self):
-            # This will raise an unexpected AttributeError
+            # This will cause an unexpected AttributeError
             raise AttributeError("Some unexpected error")
 
     problematic_est = ProblematicEstimator()
 
-    # This should re-raise the original AttributeError since it doesn't match
-    # our patterns
+    # Should re-raise the original error since it doesn't match our patterns
     with pytest.raises(AttributeError, match="Some unexpected error"):
-        is_regressor(problematic_est)
+        is_func(problematic_est)
