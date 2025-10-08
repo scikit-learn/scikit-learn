@@ -3692,7 +3692,7 @@ def test_d2_metrics_array_api(
         y_true_np = np.array(["yes", "no", "yes", "no"])
         y_true_xp = np.asarray(y_true_np)
         if d2_metric.__name__ == "d2_brier_score":
-            # `d2_brier_score`` requires specifying the `pos_label`
+            # `d2_brier_score` requires specifying the `pos_label`
             extra_kwargs["pos_label"] = "yes"
     else:
         y_true_np = np.array([1, 0, 1, 0])
