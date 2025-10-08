@@ -107,11 +107,10 @@ feature, code or documentation improvement).
       (before cythonization) will force the build to fail if OpenMP is not
       supported.
 
-.. _pip_build:
+   .. _pip_build:
 
-#. Build scikit-learn with pip
-
-    Run the following command in your `sklearn-env` conda environment or virtualenv:
+#. Build scikit-learn with pip by running the following command in your `sklearn-env`
+   conda environment or virtualenv:
 
    .. prompt:: bash $
 
@@ -119,19 +118,19 @@ feature, code or documentation improvement).
         --verbose --no-build-isolation \
         --config-settings editable-verbose=true
 
-    .. note::
+   .. note::
 
-    `--config-settings editable-verbose=true` is optional but recommended
-    to avoid surprises when you import `sklearn`. `meson-python` implements
-    editable installs by rebuilding `sklearn` when executing `import sklearn`.
-    With the recommended setting you will see a message when this happens,
-    rather than potentially waiting without feedback and wondering
-    what is taking so long. Bonus: this means you only have to run the `pip
-    install` command once, `sklearn` will automatically be rebuilt when
-    importing `sklearn`.
+      `--config-settings editable-verbose=true` is optional but recommended
+      to avoid surprises when you import `sklearn`. `meson-python` implements
+      editable installs by rebuilding `sklearn` when executing `import sklearn`.
+      With the recommended setting you will see a message when this happens,
+      rather than potentially waiting without feedback and wondering
+      what is taking so long. Bonus: this means you only have to run the `pip
+      install` command once, `sklearn` will automatically be rebuilt when
+      importing `sklearn`.
 
-    Note that `--config-settings` is only supported in `pip` version 23.1 or
-    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
+      Note that `--config-settings` is only supported in `pip` version 23.1 or
+      later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
@@ -172,9 +171,10 @@ Run the downloaded `vs_buildtools.exe` file, during the installation you will
 need to make sure you select "Desktop development with C++", similarly to this
 screenshot:
 
-.. image:: ../images/visual-studio-build-tools-selection.png
+.. image::
+    ../images/visual-studio-build-tools-selection.png
 
-Now go back to :ref:`_pip_build`.
+Now go back to `building scikit-learn <pip_build_>`_.
 
 .. _compiler_macos:
 
@@ -246,7 +246,7 @@ They point to files and folders from your ``sklearn-env`` conda environment
 (in particular in the bin/, include/ and lib/ subfolders). For instance
 ``-L/path/to/conda/envs/sklearn-env/lib`` should appear in ``LDFLAGS``.
 
-When building the package in the next step (:ref:`_pip_build`), you should see the
+When `building scikit-learn <pip_build_>`_ in the next step, you should see the
 compiled extension being built with the clang and clang++ compilers installed by
 conda with the ``-fopenmp`` command line flag in the log.
 
@@ -276,7 +276,7 @@ Remove any existing scikit-learn installations and meson builds to avoid conflic
 
     make clean
 
-Now go back to :ref:`_pip_build`.
+Now go back to `building scikit-learn <pip_build_>`_.
 
 .. _compiler_linux:
 
@@ -292,7 +292,7 @@ Make sure you activated the `sklearn-env` conda environment and install the foll
 
     conda install -c conda-forge joblib threadpoolctl pytest compilers
 
-Now go back to :ref:`_pip_build`.
+Now go back to `building scikit-learn <pip_build_>`_.
 
 Linux compilers from the system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -313,7 +313,8 @@ If, for some reason, you are not using an isolated environment (which is not rec
 cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
 ``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
-``pip3`` needs to be used instead of ``pip`` in the build command (:ref:`_pip_build`).
+``pip3`` needs to be used instead of ``pip`` when `building scikit-learn <pip_build_>`_
+in the next step.
 
 When precompiled wheels of the runtime dependencies are not available for your
 architecture (e.g. ARM), you can install the system versions:
@@ -354,7 +355,7 @@ can set the environment variables to these locations:
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
-Now go back to :ref:`_pip_build`.
+Now go back to `building scikit-learn <pip_build_>`_.
 
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
