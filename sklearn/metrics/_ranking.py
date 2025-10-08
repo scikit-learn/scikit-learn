@@ -374,7 +374,7 @@ def det_curve(
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    _, fps, fns, tps, thresholds = binary_classification_curve(
+    _, fps, _, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -406,6 +406,7 @@ def det_curve(
             "tradeoff curve is not defined in that case."
         )
 
+    fns = tps[-1] - tps
     p_count = tps[-1]
     n_count = fps[-1]
 
