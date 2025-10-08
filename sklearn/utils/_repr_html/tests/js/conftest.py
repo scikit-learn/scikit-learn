@@ -38,7 +38,7 @@ def local_server(request):
         s.bind(("127.0.0.1", 0))
         PORT = s.getsockname()[1]
 
-    html_content = getattr(request, "param", "<html><body>Default</body></html>")
+    html_content = "<html><body>Default</body></html>"
 
     def set_html_response(content):
         nonlocal html_content
