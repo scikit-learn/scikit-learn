@@ -1131,3 +1131,36 @@ def test_is_functions_unexpected_error(is_func):
     # Should re-raise the original error since it doesn't match our patterns
     with pytest.raises(AttributeError, match="Some unexpected error"):
         is_func(problematic_est)
+
+
+@pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
+def test_is_functions_unexpected_typeerror(is_func):
+    """Test is_* functions handle unexpected TypeError cases."""
+
+    class ProblematicEstimator:
+        def __sklearn_tags__(self):
+            # This will cause an unexpected TypeError (not the "missing self" case)
+            raise TypeError("Some different TypeError message")
+
+    problematic_est = ProblematicEstimator()
+
+    # Should re-raise the original TypeError since it doesn't match our pattern
+    with pytest.raises(TypeError, match="Some different TypeError message"):
+        is_func(problematic_est)
+
+
+def test_is_functions_class_error_without_name():
+    """Test error message when class doesn't have __name__ attribute."""
+
+    class EstimatorWithoutName:
+        def __sklearn_tags__(self):
+            pass
+
+    # Remove __name__ to test the fallback to type(estimator).__name__
+    del EstimatorWithoutName.__name__
+
+    # Should get helpful error with class name from type()
+    with pytest.raises(
+        TypeError, match=r"Expected an estimator instance.*EstimatorWithoutName"
+    ):
+        is_regressor(EstimatorWithoutName)
