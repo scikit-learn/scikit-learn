@@ -24,6 +24,7 @@ from sklearn.utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
+    _is_pandas_df,
     check_is_fitted,
 )
 
@@ -50,11 +51,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
-            if isinstance(self.categories, dict):
-                raise TypeError(
-                    "When `categories` is a dict, the input `X` should be a pandas "
-                    f"DataFrame but got {type(X).__name__} instead"
-                )
             # if not a dataframe, do normal check_array validation
             X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
             if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
@@ -1525,6 +1521,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 "unknown_value should only be set when "
                 "handle_unknown is 'use_encoded_value', "
                 f"got {self.unknown_value}."
+            )
+
+        if isinstance(self.categories, dict) and not _is_pandas_df(X):
+            raise TypeError(
+                "When `categories` is a dict, the input `X` should be a pandas "
+                f"DataFrame but got {type(X).__name__} instead"
             )
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
