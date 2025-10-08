@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from enum import Enum, unique
 from numbers import Integral, Real
 
 import numpy as np
@@ -17,51 +16,12 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_y,
+    _num_samples,
     check_consistent_length,
     check_is_fitted,
     validate_data,
 )
-
-
-def _looks_like_pandas_na(x) -> bool:
-    """Return True if x is pandas.NA (without importing pandas)."""
-    t = type(x)
-    mod = getattr(t, "__module__", "")
-    return t.__name__ == "NAType" and mod.startswith("pandas")
-
-
-def _looks_like_pandas_nat(x) -> bool:
-    """Return True if x is pandas.NaT (without importing pandas)."""
-    t = type(x)
-    mod = getattr(t, "__module__", "")
-    return t.__name__ in {"NaTType", "NaT"} and mod.startswith("pandas")
-
-
-@unique
-class _NAKey(Enum):
-    NONE = 0  # exactly None
-    NAN = 1  # float NaN
-    PD_NA = 2  # pandas.NA
-    PD_NAT = 3  # pandas.NaT
-    NAT = 4  # numpy datetime/timedelta NaT
-
-
-def _norm_key(x):
-    if x is None:
-        return _NAKey.NONE
-    # plain Python/NumPy float NaN
-    if isinstance(x, (float, np.floating)) and np.isnan(x):
-        return _NAKey.NAN
-    # pandas extension sentinels
-    # (duck-typed; no pandas import required)
-    if _looks_like_pandas_na(x):
-        return _NAKey.PD_NA
-    if _looks_like_pandas_nat(x):
-        return _NAKey.PD_NAT
-    # NumPy datetime/timedelta NaT
-    if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
-        return _NAKey.NAT
-    return x
+from sklearn.utils.validation import _normalize_na_key as _norm_key
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -240,6 +200,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
     }
+    _small_batch_threshold = 1024
 
     def __init__(
         self,
@@ -257,9 +218,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
         self.shuffle = shuffle
         self.random_state = random_state
-
-        # --- private: threshold to choose fast path
-        self._small_batch_threshold = 1024
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -287,7 +245,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Fitted encoder.
         """
         self._fit_encodings_all(X, y)
-        self._build_fastpath_structs()
+        self._build_index_maps()
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -323,7 +281,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
-        self._build_fastpath_structs()
+        self._build_index_maps()
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
@@ -372,42 +330,89 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return X_out
 
-    def _build_fastpath_structs(self):
-        """Precompute all fast-path structures during fit/fit_transform."""
-
+    def _build_index_maps(self):
+        """Precompute per-feature {category -> ordinal index} dicts.
+        Used only by the small-batch transform path to do O(1) lookups when
+        converting raw categories to their ordinal indices. This avoids
+        duplicating the learned encodings/means in memory.
+        """
         n_features = len(self.categories_)
-        is_multi = self.target_type_ == "multiclass"
-        n_classes = 0 if not is_multi else len(self.classes_)
-
-        self._te_is_multiclass_ = is_multi
-        self._te_index_maps_ = [None] * n_features
-        self._te_enc_vecs_ = [None] * n_features
-        self._te_enc_blocks_ = [None] * n_features
-        self._te_defaults_ = [None] * n_features
-
+        self._index_maps_ = [None] * n_features
         for j in range(n_features):
             cats_j = self.categories_[j]
             idx_map = {}
             for i, cat in enumerate(cats_j):
-                k = _norm_key(cat)
-                idx_map[k] = i
-            self._te_index_maps_[j] = idx_map
+                idx_map[_norm_key(cat)] = i
+            self._index_maps_[j] = idx_map
+
+    def _transform_small_batch(self, X):
+        """Fast-path transform for tiny inputs.
+
+        Notes
+        -----
+        - Called only when n_samples <= _small_batch_threshold.
+        - Performs input validation because we bypass _transform(...) here.
+        - Uses precomputed per-feature {category -> index} maps to do O(1) lookups.
+        """
+        # Validate here (large-batch path validates inside _transform)
+        X_checked = validate_data(
+            self,
+            X,
+            reset=False,
+            ensure_2d=True,
+            dtype=None,
+            ensure_all_finite="allow-nan",
+        )
+        X_arr = np.asarray(X_checked, dtype=object)
+        n_samples, n_features = X_arr.shape
+        is_multi = self.target_type_ == "multiclass"
+
+        if is_multi:
+            n_classes = len(self.classes_)
+            X_out = np.empty((n_samples, n_features * n_classes), dtype=np.float64)
+        else:
+            X_out = np.empty((n_samples, n_features), dtype=np.float64)
+
+        index_maps = self._index_maps_
+        norm_key = _norm_key
+
+        for j in range(n_features):
+            get = index_maps[j].get
+            col = X_arr[:, j]
+
             if not is_multi:
                 enc_vec = np.asarray(self.encodings_[j], dtype=float)
-                self._te_enc_vecs_[j] = enc_vec
-                self._te_defaults_[j] = float(np.asarray(self.target_mean_))
+                default = float(np.asarray(self.target_mean_))
+                out_col = np.empty(n_samples, dtype=float)
+                for i in range(n_samples):
+                    idx = get(norm_key(col[i]), -1)
+                    out_col[i] = enc_vec[idx] if idx >= 0 else default
+                X_out[:, j] = out_col
             else:
-                block = np.empty((n_classes, len(cats_j)), dtype=float)
                 base = j * n_classes
-                for c in range(n_classes):
-                    block[c, :] = self.encodings_[base + c]
-                self._te_enc_blocks_[j] = block
+                default_v = np.asarray(self.target_mean_, dtype=float)
 
-                default = np.asarray(self.target_mean_, dtype=float)
-                self._te_defaults_[j] = default
+                # Local block view from encodings_ (not stored on self)
+                enc_block = np.empty((n_classes, len(self.categories_[j])), dtype=float)
+                for c in range(n_classes):
+                    enc_block[c, :] = np.asarray(self.encodings_[base + c], dtype=float)
+
+                out_block = np.empty((n_samples, n_classes), dtype=float)
+                for i in range(n_samples):
+                    idx = get(norm_key(col[i]), -1)
+                    out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
+
+                start = j * n_classes
+                X_out[:, start : start + n_classes] = out_block
+
+        return X_out
 
     def transform(self, X):
         """Transform X with the target encoding.
+        .. note::
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         This method internally uses the `encodings_` attribute learnt during
         :meth:`TargetEncoder.fit_transform` to transform test data.
@@ -433,55 +438,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             one column per (feature, class) pair is returned, with classes ordered
             as in ``classes_``.
         """
-        # Use the fast path for small batch else fall back to the vectorized path.
         check_is_fitted(self)
-        X_checked = validate_data(
-            self,
-            X,
-            reset=False,
-            ensure_2d=True,
-            dtype=None,
-            ensure_all_finite="allow-nan",
+        # Decide path WITHOUT triggering a full validation first.
+        n_samples = _num_samples(X)
+        use_small_batch = n_samples <= self._small_batch_threshold and hasattr(
+            self, "_index_maps_"
         )
-        n_samples = X_checked.shape[0]
-        use_small_batch = n_samples <= self._small_batch_threshold
 
         # ---- Small-batch path (tiny inputs only) ---------------------------------
         if use_small_batch:
-            X_arr = np.asarray(X_checked, dtype=object)
-            n_samples, n_features = X_arr.shape
-            is_multi = self._te_is_multiclass_
-            if is_multi:
-                n_classes = len(self.classes_)
-                X_out = np.empty((n_samples, n_features * n_classes), dtype=np.float64)
-            else:
-                X_out = np.empty((n_samples, n_features), dtype=np.float64)
-
-            norm_key = _norm_key  # local ref for speed
-
-            for j in range(n_features):
-                idx_map = self._te_index_maps_[j]
-                get = idx_map.get
-                col = X_arr[:, j]
-                if not is_multi:
-                    enc_vec = self._te_enc_vecs_[j]
-                    default = float(self._te_defaults_[j])
-                    out_col = np.empty(n_samples, dtype=float)
-                    for i in range(n_samples):
-                        idx = get(norm_key(col[i]), -1)
-                        out_col[i] = enc_vec[idx] if idx >= 0 else default
-                    X_out[:, j] = out_col
-                else:
-                    enc_block = self._te_enc_blocks_[j]  # (n_classes, n_cats_j)
-                    default_v = self._te_defaults_[j]
-                    out_block = np.empty((n_samples, n_classes), dtype=float)
-                    for i in range(n_samples):
-                        idx = get(norm_key(col[i]), -1)
-                        out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
-                    start = j * n_classes
-                    X_out[:, start : start + n_classes] = out_block
-
-            return X_out
+            return self._transform_small_batch(X)
 
         # ---- Large/normal batches: baseline vectorized path ----------------------
         X_ordinal, X_known_mask = self._transform(
