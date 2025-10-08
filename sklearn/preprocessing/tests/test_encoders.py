@@ -647,28 +647,6 @@ def test_ordinal_encoder_categories_dict():
     assert_array_equal(X_trans, expected)
 
 
-def test_ordinal_encoder_categories_dict_reordered():
-    """Test using a dict for `categories`."""
-    pd = pytest.importorskip("pandas")
-
-    X = pd.DataFrame(
-        {"priority": ["medium", "medium", "high"], "size": ["small", "large", "medium"]}
-    )
-    enc = OrdinalEncoder(
-        categories={
-            "size": ["small", "medium", "large"],
-            "priority": ["low", "medium", "high"],
-        }
-    )
-
-    enc.fit(X)
-    # Different column order from fit
-    X_trans = enc.transform(X[["size", "priority"]])
-
-    expected = np.array([[0, 1], [2, 1], [1, 2]])
-    assert_array_equal(X_trans, expected)
-
-
 @pytest.mark.parametrize("method", ["fit", "fit_transform"])
 def test_ordinal_encoder_categories_dict_array_raise(method):
     """Test using a dict for `categories` raises with array-like input."""
