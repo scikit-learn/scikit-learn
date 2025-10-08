@@ -17,16 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set state on "Check Changelog" status
-        run: |
-          if [ "${{ github.event.workflow_run.conclusion }}" = "failure" ]; then
-            echo "STATE=error" >> $GITHUB_ENV
-          else
-            echo "STATE=success" >> $GITHUB_ENV
-          fi
-
       - name: Write status with link to changelog instructions
-        if: ${{ STATE == 'failure' }}
+        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +34,7 @@ jobs:
             })
 
       - name: Write status with link to changelog instructions
-        if: ${{ STATE == 'success' }}
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
