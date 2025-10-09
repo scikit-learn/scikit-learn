@@ -288,7 +288,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-      git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+      git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
 4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
@@ -308,7 +308,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+        git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
    by running:
@@ -321,10 +321,10 @@ how to set up your git repository:
 
    .. code-block:: text
 
-        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin    git@github.com:YourLogin/scikit-learn.git (push)
-        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    https://github.com/YourLogin/scikit-learn.git (fetch)
+        origin    https://github.com/YourLogin/scikit-learn.git (push)
+        upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
+        upstream  https://github.com/scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
@@ -1495,9 +1495,7 @@ up this process by providing your feedback.
     parameters, their values, value types, and combinations tested? Do
     the tests validate that the code is correct, i.e. doing what the
     documentation says it does? If the change is a bug-fix, is a
-    non-regression test included? Look at `this
-    <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
-    to get started with testing in Python.
+    non-regression test included?
 
   - Do the tests pass in the continuous integration build? If
     appropriate, help the contributor understand why tests failed.
