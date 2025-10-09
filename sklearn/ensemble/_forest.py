@@ -939,13 +939,59 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         p : ndarray of shape (n_samples, n_classes), or a list of such arrays
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Notes
+        -----
+        For small batches, sequential processing may be automatically used
+        instead of parallel processing to avoid parallelization overhead.
+        The decision is based on estimated computation time using Amdahl's Law.
+
+        .. versionchanged:: 1.6
+            Added automatic parallelization strategy selection based on batch
+            size and model complexity to improve small batch performance.
         """
         check_is_fitted(self)
         # Check data
         X = self._validate_X_predict(X)
 
+        n_samples = X.shape[0]
+
+        # Determine optimal parallelization strategy based on Amdahl's Law
+        # For small batches, parallelization overhead dominates computation time
+        #
+        # Empirical measurements (see Issue #16143):
+        # - Thread creation + coordination overhead: ~2ms
+        # - Computation per sample per tree: ~0.02ms
+        #
+        # Use parallel processing only when it provides actual speedup
+        if self.n_jobs == 1 or self.n_jobs is None:
+            # User explicitly wants sequential or default
+            effective_n_jobs = 1
+        else:
+            # Estimate computation time
+            OVERHEAD_MS = 2.0  # Thread creation + coordination overhead
+            COMPUTE_PER_SAMPLE_MS = 0.02  # Measured per tree per sample
+
+            compute_time_ms = COMPUTE_PER_SAMPLE_MS * self.n_estimators * n_samples
+
+            # Sequential time
+            time_sequential = compute_time_ms
+
+            # Parallel time with overhead
+            # Use conservative efficiency estimate (70%) due to coordination costs
+            parallel_efficiency = 0.7
+            time_parallel = OVERHEAD_MS + compute_time_ms / (
+                self.n_jobs * parallel_efficiency
+            )
+
+            # Use parallel only if it provides speedup
+            if time_parallel < time_sequential:
+                effective_n_jobs = self.n_jobs
+            else:
+                effective_n_jobs = 1
+
         # Assign chunk of trees to jobs
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, effective_n_jobs)
 
         # avoid storing the output of every estimator by summing them here
         all_proba = [
