@@ -89,8 +89,8 @@ def _is_constant_feature(var, mean, n_samples):
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.
-    xp, _, device_ = get_namespace_and_device(var, mean)
-    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    xp, _, _ = get_namespace_and_device(var, mean)
+    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device(var))
     eps = xp.finfo(max_float_dtype).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2

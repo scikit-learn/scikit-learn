@@ -278,8 +278,10 @@ def get_tags(estimator) -> Tags:
         # Check for the "missing self argument" error with variations across platforms
         exc_str = str(exc)
         if (
-            ("missing 1 required positional argument" in exc_str or
-             "takes 1 positional argument but 0 were given" in exc_str)
+            (
+                "missing 1 required positional argument" in exc_str
+                or "takes 1 positional argument but 0 were given" in exc_str
+            )
             and "'self'" in exc_str
             and "__sklearn_tags__" in exc_str
         ):

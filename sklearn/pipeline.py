@@ -367,7 +367,7 @@ class Pipeline(_BaseComposition):
                 self.steps[ind], memory=self.memory, verbose=self.verbose
             )
         try:
-            name, est = self.steps[ind]
+            _name, est = self.steps[ind]
         except TypeError:
             # Not an int, try get step by name
             return self.named_steps[ind]

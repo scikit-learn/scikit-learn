@@ -231,7 +231,7 @@ def test_gradient():
                     t, X, Y, None, activations, deltas, coef_grads, intercept_grads
                 )
 
-            [value, grad] = loss_grad_fun(theta)
+            [_value, grad] = loss_grad_fun(theta)
             numgrad = np.zeros(np.size(theta))
             n = np.size(theta, 0)
             E = np.eye(n)
