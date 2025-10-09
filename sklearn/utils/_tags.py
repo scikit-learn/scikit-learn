@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import numpy as np
+
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -247,9 +249,6 @@ class Tags:
     input_tags: InputTags = field(default_factory=InputTags)
 
 
-import numpy as np
-
-
 class _CompatTags(dict):
     """Lightweight compatibility wrapper mimicking sklearn.utils.Tags.
 
@@ -325,4 +324,3 @@ def get_tags(estimator):
 
     # Return a wrapped dict for compatibility with both dict and attribute access
     return _CompatTags(default_tags)
-
