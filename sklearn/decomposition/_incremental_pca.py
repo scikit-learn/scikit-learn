@@ -140,7 +140,7 @@ class IncrementalPCA(_BasePCA):
     Implements the incremental PCA model from Ross et al. (2008) [1]_.
     This model is an extension of the Sequential Karhunen-Loeve Transform
     from Levy and Lindenbaum (2000) [2]_.
-    
+
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
     algorithmic complexity of the SVD. The source for this technique is
