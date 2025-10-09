@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from functools import partial
 from inspect import signature
 from math import log
 from numbers import Integral, Real
@@ -1094,7 +1095,10 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
 
-        halfmulti_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
+        if _is_numpy_namespace(xp):
+            multinomial_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
+        else:
+            multinomial_loss = partial(_half_multinomial_loss, xp=xp)
 
         def log_loss(log_beta=0.0):
             """Compute the log loss as a parameter of the inverse temperature
@@ -1124,19 +1128,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             #   - NumPy 2+:  result.dtype is float64
             #
             #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
-            if _is_numpy_namespace(xp):
-                raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
-                return halfmulti_loss(
-                    y_true=labels,
-                    raw_prediction=raw_prediction,
-                    sample_weight=sample_weight,
-                )
-
             log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
             raw_prediction = xp.exp(log_beta) * logits
-            return _half_multinomial_loss(
-                y=labels, pred=raw_prediction, sample_weight=sample_weight, xp=xp
-            )
+            return multinomial_loss(labels, raw_prediction, sample_weight)
 
         xatol = 64 * xp.finfo(dtype_).eps
         log_beta_minimizer = minimize_scalar(
