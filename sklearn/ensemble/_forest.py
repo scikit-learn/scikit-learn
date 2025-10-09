@@ -942,13 +942,13 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Notes
         -----
-        For small batches, sequential processing may be automatically used
-        instead of parallel processing to avoid parallelization overhead.
-        The decision is based on estimated computation time using Amdahl's Law.
+        For small batches (< 100 samples), sequential processing is automatically
+        used instead of parallel processing to avoid parallelization overhead,
+        which can make predictions 5-10x slower for small batches.
 
         .. versionchanged:: 1.6
             Added automatic parallelization strategy selection based on batch
-            size and model complexity to improve small batch performance.
+            size to improve small batch performance.
         """
         check_is_fitted(self)
         # Check data
@@ -956,39 +956,21 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         n_samples = X.shape[0]
 
-        # Determine optimal parallelization strategy based on Amdahl's Law
+        # Determine optimal parallelization strategy
         # For small batches, parallelization overhead dominates computation time
-        #
-        # Empirical measurements (see Issue #16143):
-        # - Thread creation + coordination overhead: ~2ms
-        # - Computation per sample per tree: ~0.02ms
-        #
-        # Use parallel processing only when it provides actual speedup
+        # Empirically measured threshold (see Issue #16143): parallel becomes
+        # beneficial around 100-200 samples for typical configurations.
         if self.n_jobs == 1 or self.n_jobs is None:
             # User explicitly wants sequential or default
             effective_n_jobs = 1
         else:
-            # Estimate computation time
-            OVERHEAD_MS = 2.0  # Thread creation + coordination overhead
-            COMPUTE_PER_SAMPLE_MS = 0.02  # Measured per tree per sample
-
-            compute_time_ms = COMPUTE_PER_SAMPLE_MS * self.n_estimators * n_samples
-
-            # Sequential time
-            time_sequential = compute_time_ms
-
-            # Parallel time with overhead
-            # Use conservative efficiency estimate (70%) due to coordination costs
-            parallel_efficiency = 0.7
-            time_parallel = OVERHEAD_MS + compute_time_ms / (
-                self.n_jobs * parallel_efficiency
-            )
-
-            # Use parallel only if it provides speedup
-            if time_parallel < time_sequential:
-                effective_n_jobs = self.n_jobs
-            else:
+            # Use conservative threshold of 100 samples
+            PARALLEL_THRESHOLD = 100
+            
+            if n_samples < PARALLEL_THRESHOLD:
                 effective_n_jobs = 1
+            else:
+                effective_n_jobs = self.n_jobs
 
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, effective_n_jobs)
