@@ -1208,7 +1208,11 @@ def is_classifier(estimator):
     >>> is_classifier(kmeans)
     False
     """
-    return get_tags(estimator).estimator_type == "classifier"
+    try:
+        return get_tags(estimator).estimator_type == "classifier"
+    except AttributeError:
+        # For backward compatibility with estimators not inheriting from BaseEstimator
+        return getattr(estimator, "_estimator_type", None) == "classifier"
 
 
 def is_regressor(estimator):
@@ -1239,7 +1243,11 @@ def is_regressor(estimator):
     >>> is_regressor(kmeans)
     False
     """
-    return get_tags(estimator).estimator_type == "regressor"
+    try:
+        return get_tags(estimator).estimator_type == "regressor"
+    except AttributeError:
+        # For backward compatibility with estimators not inheriting from BaseEstimator
+        return getattr(estimator, "_estimator_type", None) == "regressor"
 
 
 def is_clusterer(estimator):
@@ -1272,7 +1280,11 @@ def is_clusterer(estimator):
     >>> is_clusterer(kmeans)
     True
     """
-    return get_tags(estimator).estimator_type == "clusterer"
+    try:
+        return get_tags(estimator).estimator_type == "clusterer"
+    except AttributeError:
+        # For backward compatibility with estimators not inheriting from BaseEstimator
+        return getattr(estimator, "_estimator_type", None) == "clusterer"
 
 
 def is_outlier_detector(estimator):
@@ -1288,7 +1300,11 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    return get_tags(estimator).estimator_type == "outlier_detector"
+    try:
+        return get_tags(estimator).estimator_type == "outlier_detector"
+    except AttributeError:
+        # For backward compatibility with estimators not inheriting from BaseEstimator
+        return getattr(estimator, "_estimator_type", None) == "outlier_detector"
 
 
 def _fit_context(*, prefer_skip_nested_validation):

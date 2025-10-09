@@ -1094,3 +1094,91 @@ def test_param_is_default(default_value, test_value):
     estimator = make_estimator_with_param(default_value)(param=test_value)
     non_default = estimator._get_params_html().non_default
     assert "param" not in non_default
+
+def test_is_regressor_classifier_without_sklearn_tags():
+    """Test is_regressor/is_classifier with estimators not inheriting from BaseEstimator.
+    
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32394
+    """
+    from sklearn.base import is_classifier, is_regressor, is_clusterer, is_outlier_detector
+    
+    # Test with a custom estimator without __sklearn_tags__
+    class MyEstimator:
+        def __init__(self):
+            pass
+
+        def fit(self, X, y=None):
+            self.is_fitted_ = True
+            return self
+
+        def predict(self, X):
+            pass
+
+    # Should not raise AttributeError
+    est = MyEstimator()
+    assert not is_regressor(est)
+    assert not is_classifier(est)
+    assert not is_clusterer(est)
+    assert not is_outlier_detector(est)
+    
+    # Test with old-style estimator using _estimator_type attribute
+    class OldStyleRegressor:
+        _estimator_type = "regressor"
+        
+        def fit(self, X, y=None):
+            return self
+        
+        def predict(self, X):
+            pass
+    
+    est = OldStyleRegressor()
+    assert is_regressor(est)
+    assert not is_classifier(est)
+    assert not is_clusterer(est)
+    assert not is_outlier_detector(est)
+    
+    # Test with old-style classifier
+    class OldStyleClassifier:
+        _estimator_type = "classifier"
+        
+        def fit(self, X, y=None):
+            return self
+        
+        def predict(self, X):
+            pass
+    
+    est = OldStyleClassifier()
+    assert is_classifier(est)
+    assert not is_regressor(est)
+    assert not is_clusterer(est)
+    assert not is_outlier_detector(est)
+    
+    # Test with old-style clusterer
+    class OldStyleClusterer:
+        _estimator_type = "clusterer"
+        
+        def fit(self, X, y=None):
+            return self
+    
+    est = OldStyleClusterer()
+    assert is_clusterer(est)
+    assert not is_classifier(est)
+    assert not is_regressor(est)
+    assert not is_outlier_detector(est)
+    
+    # Test with old-style outlier detector
+    class OldStyleOutlierDetector:
+        _estimator_type = "outlier_detector"
+        
+        def fit(self, X, y=None):
+            return self
+        
+        def predict(self, X):
+            pass
+    
+    est = OldStyleOutlierDetector()
+    assert is_outlier_detector(est)
+    assert not is_classifier(est)
+    assert not is_regressor(est)
+    assert not is_clusterer(est)
