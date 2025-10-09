@@ -35,7 +35,6 @@ from sklearn.utils.metaestimators import _safe_split, available_if
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
-    _deprecate_positional_args,
     _estimator_has,
     check_is_fitted,
     validate_data,
@@ -794,8 +793,6 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    # TODO(1.8): remove `groups` from the signature after deprecation cycle.
-    @_deprecate_positional_args(version="1.8")
     @_fit_context(
         # RFECV.estimator is not validated yet
         prefer_skip_nested_validation=False
