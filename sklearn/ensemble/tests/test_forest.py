@@ -1973,7 +1973,7 @@ def test_predict_proba_pickle_compatibility():
 
     # Make predictions (triggers adaptive logic)
     rf.predict_proba(X_test[:10])  # Small batch
-    rf.predict_proba(X_test)       # Large batch
+    rf.predict_proba(X_test)  # Large batch
 
     # Should still be picklable
     pickled = pickle.dumps(rf)
