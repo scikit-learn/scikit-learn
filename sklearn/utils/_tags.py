@@ -247,21 +247,35 @@ class Tags:
     input_tags: InputTags = field(default_factory=InputTags)
 
 
-def get_tags(estimator) -> Tags:
+import numpy as np
+
+
+class _CompatTags(dict):
+    """Lightweight compatibility wrapper mimicking sklearn.utils.Tags.
+
+    Provides attribute-style access (e.g., tags.estimator_type)
+    while still behaving like a regular dictionary.
+    """
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError as e:
+            raise AttributeError(name) from e
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
+def get_tags(estimator):
     """Get estimator tags.
 
-    This version safely handles third-party estimators lacking the
+    Safely handles third-party estimators that lack the
     ``__sklearn_tags__`` attribute (see issue #32394).
 
-    The :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
-
     For scikit-learn built-in estimators, we should still rely on
-    ``self.__sklearn_tags__()``. ``get_tags(est)`` should be used when we
-    are not sure where ``est`` comes from: typically
-    ``get_tags(self.estimator)`` where ``self`` is a meta-estimator,
-    or in the common checks.
-
-    .. versionadded:: 1.6
+    ``self.__sklearn_tags__()``. This function is mainly intended for
+    meta-estimators or generic utilities that need to query tags safely.
 
     Parameters
     ----------
@@ -270,18 +284,45 @@ def get_tags(estimator) -> Tags:
 
     Returns
     -------
-    tags : :class:`~.sklearn.utils.Tags`
-        The estimator tags.
+    tags : dict-like
+        The estimator tags. Provides both dict-style and attribute access.
     """
     # Fast path for sklearn estimators with proper tag system
     if hasattr(estimator, "__sklearn_tags__"):
         try:
-            return estimator.__sklearn_tags__()
+            tags = estimator.__sklearn_tags__()
+            # Ensure compatibility (convert to dict if needed)
+            if not isinstance(tags, dict) and hasattr(tags, "asdict"):
+                tags = tags.asdict()
+            # Wrap in compatibility class
+            return _CompatTags(tags)
         except Exception:
             pass
 
     # Fallback for objects without sklearn tag machinery
-    from sklearn.utils._tags import _DEFAULT_TAGS
+    default_tags = {
+        "non_deterministic": False,
+        "requires_positive_X": False,
+        "poor_score": False,
+        "no_validation": False,
+        "multioutput": False,
+        "allow_nan": False,
+        "stateless": False,
+        "requires_fit": True,
+        "X_types": ["2darray"],
+        "binary_only": False,
+        "requires_y": False,
+        "requires_positive_y": False,
+        "pairwise": False,
+        "preserves_dtype": [np.float64, np.float32],
+        "multioutput_only": False,
+        "multilabel_only": False,
+        "allow_nan_y": False,
+        "requires_positive_X_y": False,
+        "estimator_type": None,
+        "requires_n_features_in": True,
+    }
 
-    # Create a copy to avoid mutating global defaults
-    return _DEFAULT_TAGS.copy()
+    # Return a wrapped dict for compatibility with both dict and attribute access
+    return _CompatTags(default_tags)
+
