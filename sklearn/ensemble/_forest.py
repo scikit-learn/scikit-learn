@@ -960,17 +960,17 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         # For small batches, parallelization overhead dominates computation time
         # Empirically measured threshold (see Issue #16143): parallel becomes
         # beneficial around 100-200 samples for typical configurations.
-        if self.n_jobs == 1 or self.n_jobs is None:
-            # User explicitly wants sequential or default
+
+        # Only apply optimization when parallel processing is requested
+        if self.n_jobs is None or self.n_jobs == 1:
+            # Default or explicitly sequential - no optimization needed
+            effective_n_jobs = self.n_jobs
+        elif n_samples < 100:
+            # Small batch - use sequential to avoid overhead
             effective_n_jobs = 1
         else:
-            # Use conservative threshold of 100 samples
-            PARALLEL_THRESHOLD = 100
-
-            if n_samples < PARALLEL_THRESHOLD:
-                effective_n_jobs = 1
-            else:
-                effective_n_jobs = self.n_jobs
+            # Large batch - use requested parallelization
+            effective_n_jobs = self.n_jobs
 
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, effective_n_jobs)
