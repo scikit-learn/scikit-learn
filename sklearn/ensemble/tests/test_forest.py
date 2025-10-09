@@ -8,6 +8,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 import itertools
 import math
 import pickle
+import time
 from collections import defaultdict
 from functools import partial
 from itertools import combinations, product
@@ -1871,25 +1872,24 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
 # Tests for Issue #16143 - Adaptive parallelization for small batches
 def test_predict_proba_small_batch_performance():
     """Test that small batches benefit from adaptive parallelization.
-    
+
     For small batches, the overhead of parallelization should be avoided
     by automatically using sequential processing.
     """
     X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
     X_train, X_test = X[:800], X[800:]
     y_train, y_test = y[:800], y[800:]
-    
+
     rf = RandomForestClassifier(n_estimators=100, n_jobs=4, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     # Small batch should be fast (no parallel overhead)
     X_small = X_test[:5]
-    import time
     start = time.time()
     for _ in range(100):
         result = rf.predict_proba(X_small)
     duration = time.time() - start
-    
+
     # Should complete quickly (< 1 second for 100 iterations)
     assert duration < 1.0, f"Small batch took {duration:.3f}s, expected < 1.0s"
     assert result.shape == (5, 2)
@@ -1900,13 +1900,13 @@ def test_predict_proba_large_batch_correctness():
     X, y = make_classification(n_samples=1000, n_features=20, random_state=42)
     X_train, X_test = X[:800], X[800:]
     y_train, y_test = y[:800], y[800:]
-    
+
     rf = RandomForestClassifier(n_estimators=100, n_jobs=4, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     # Large batch should use parallelization
     result = rf.predict_proba(X_test)
-    
+
     assert result.shape == (len(X_test), 2)
     assert np.allclose(result.sum(axis=1), 1.0)  # Probabilities sum to 1
 
@@ -1916,14 +1916,14 @@ def test_predict_proba_adaptive_with_few_trees():
     X, y = make_classification(n_samples=500, n_features=20, random_state=42)
     X_train, X_test = X[:400], X[400:]
     y_train, y_test = y[:400], y[400:]
-    
+
     # Few trees - even medium batches might be sequential
     rf = RandomForestClassifier(n_estimators=10, n_jobs=4, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     X_medium = X_test[:50]
     result = rf.predict_proba(X_medium)
-    
+
     assert result.shape == (50, 2)
     assert np.allclose(result.sum(axis=1), 1.0)
 
@@ -1933,14 +1933,14 @@ def test_predict_proba_adaptive_with_many_trees():
     X, y = make_classification(n_samples=500, n_features=20, random_state=42)
     X_train, X_test = X[:400], X[400:]
     y_train, y_test = y[:400], y[400:]
-    
+
     # Many trees - even small batches might benefit from parallel
     rf = RandomForestClassifier(n_estimators=500, n_jobs=4, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     X_small = X_test[:20]
     result = rf.predict_proba(X_small)
-    
+
     assert result.shape == (20, 2)
     assert np.allclose(result.sum(axis=1), 1.0)
 
@@ -1950,39 +1950,39 @@ def test_predict_proba_n_jobs_1_always_sequential():
     X, y = make_classification(n_samples=500, n_features=20, random_state=42)
     X_train, X_test = X[:400], X[400:]
     y_train, y_test = y[:400], y[400:]
-    
+
     rf = RandomForestClassifier(n_estimators=100, n_jobs=1, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     # Should use sequential regardless of batch size
     result_small = rf.predict_proba(X_test[:10])
     result_large = rf.predict_proba(X_test)
-    
+
     assert result_small.shape == (10, 2)
     assert result_large.shape == (len(X_test), 2)
 
 
 def test_predict_proba_pickle_compatibility():
-    """Test that model can still be pickled after prediction with adaptive strategy."""
+    """Test model can be pickled after prediction with adaptive strategy."""
     X, y = make_classification(n_samples=500, n_features=20, random_state=42)
     X_train, X_test = X[:400], X[400:]
     y_train, y_test = y[:400], y[400:]
-    
+
     rf = RandomForestClassifier(n_estimators=100, n_jobs=4, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     # Make predictions (triggers adaptive logic)
     rf.predict_proba(X_test[:10])  # Small batch
     rf.predict_proba(X_test)       # Large batch
-    
+
     # Should still be picklable
     pickled = pickle.dumps(rf)
     rf_loaded = pickle.loads(pickled)
-    
+
     # Should still work after unpickling
     result1 = rf.predict_proba(X_test)
     result2 = rf_loaded.predict_proba(X_test)
-    
+
     assert_allclose(result1, result2)
 
 
@@ -1991,14 +1991,14 @@ def test_predict_proba_numerical_consistency():
     X, y = make_classification(n_samples=500, n_features=20, random_state=42)
     X_train, X_test = X[:400], X[400:]
     y_train, y_test = y[:400], y[400:]
-    
+
     rf = RandomForestClassifier(n_estimators=100, n_jobs=4, random_state=42)
     rf.fit(X_train, y_train)
-    
+
     # Same input should give same output
     result1 = rf.predict_proba(X_test)
     result2 = rf.predict_proba(X_test)
-    
+
     assert_allclose(result1, result2)
 
 
@@ -2007,11 +2007,11 @@ def test_predict_proba_backward_compatibility():
     X, y = make_classification(n_samples=500, n_features=20, random_state=42)
     X_train, X_test = X[:400], X[400:]
     y_train, y_test = y[:400], y[400:]
-    
+
     # Old-style usage should work exactly the same
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X_train, y_train)
     result = rf.predict_proba(X_test)
-    
+
     assert result.shape == (len(X_test), 2)
     assert np.allclose(result.sum(axis=1), 1.0)
