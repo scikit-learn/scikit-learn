@@ -1,5 +1,7 @@
-- :class:`ensemble.RandomForestClassifier` and :class:`ensemble.RandomForestRegressor`
-  now automatically use sequential processing for small batches (< 100 samples) to avoid
-  parallelization overhead, which can make predictions 5-10x slower for small batches.
-  This significantly improves performance for real-time predictions and small batch scenarios.
+- :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.RandomForestRegressor` now automatically use sequential
+  processing for small batches (< 100 samples) to avoid parallelization
+  overhead, which can make predictions 5-10x slower for small batches.
+  This significantly improves performance for real-time predictions and
+  small batch scenarios.
   By :user:`Dex947`.
