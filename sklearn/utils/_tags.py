@@ -276,8 +276,10 @@ def get_tags(estimator) -> Tags:
     except TypeError as exc:
         # When a class is passed instead of an instance, calling __sklearn_tags__()
         # fails with TypeError because 'self' is missing.
-        if "__sklearn_tags__() missing 1 required positional argument: 'self'" in str(
-            exc
+        exc_str = str(exc)
+        if (
+            "missing 1 required positional argument" in exc_str
+            and "'self'" in exc_str
         ):
             estimator_name = getattr(
                 estimator, "__name__", str(type(estimator).__name__)
