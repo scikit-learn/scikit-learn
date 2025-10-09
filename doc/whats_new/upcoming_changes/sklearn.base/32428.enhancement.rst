@@ -1,4 +1,4 @@
-- :func:`base.is_regressor`, :func:`base.is_classifier`, and :func:`base.is_clusterer` 
-  now provide helpful error messages when users accidentally pass a class instead 
+- :func:`base.is_regressor`, :func:`base.is_classifier`, and :func:`base.is_clusterer`
+  now provide helpful error messages when users accidentally pass a class instead
   of an instance.
   By :user:`Achyuthan S <Achyuthan-S>`.

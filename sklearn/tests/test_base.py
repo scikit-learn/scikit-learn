@@ -24,6 +24,7 @@ from sklearn.base import (
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
@@ -1099,18 +1100,27 @@ def test_param_is_default(default_value, test_value):
 @pytest.mark.parametrize(
     "is_func, Estimator",
     [
-        (is_regressor, DecisionTreeRegressor),
-        (is_classifier, DecisionTreeClassifier),
+        (is_regressor, Ridge),
+        (is_classifier, LogisticRegression),
         (is_clusterer, KMeans),
     ],
 )
 def test_is_functions_class_vs_instance_error(is_func, Estimator):
-    """Test is_* functions give helpful error when passed a class."""
-    # This is a common mistake - passing the class instead of an instance
-    # The important thing is that a TypeError is raised, whether it's our
-    # custom message or the original Python error
-    with pytest.raises(TypeError):
+    """Test is_* functions error when passed a class instead of instance."""
+    # Test that passing the class (not an instance) raises TypeError
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"Expected an estimator instance, but got class .* "
+            r"Did you mean to instantiate it"
+        ),
+    ):
         is_func(Estimator)
+
+    # Test that passing an instance works correctly
+    instance = Estimator()
+    result = is_func(instance)
+    assert isinstance(result, bool)
 
 
 @pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
