@@ -1326,7 +1326,7 @@ def _array_api_for_tests(array_namespace, device):
         and not xp.backends.cuda.is_built()
     ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "dpnp" and device != "cpu":
+    elif array_namespace == "dpnp" and device not in (None, "cpu"):
         if len(pytest.importorskip("dpctl").get_devices(device_type=device)) == 0:
             raise SkipTest(f"Skipping dpnp test because no {device} device found")
 
