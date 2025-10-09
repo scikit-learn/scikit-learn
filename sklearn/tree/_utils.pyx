@@ -13,7 +13,7 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
-from ..utils._random cimport our_rand_r
+from sklearn.utils._random cimport our_rand_r
 
 # =============================================================================
 # Helper functions

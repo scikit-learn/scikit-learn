@@ -1495,9 +1495,7 @@ up this process by providing your feedback.
     parameters, their values, value types, and combinations tested? Do
     the tests validate that the code is correct, i.e. doing what the
     documentation says it does? If the change is a bug-fix, is a
-    non-regression test included? Look at `this
-    <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
-    to get started with testing in Python.
+    non-regression test included?
 
   - Do the tests pass in the continuous integration build? If
     appropriate, help the contributor understand why tests failed.
