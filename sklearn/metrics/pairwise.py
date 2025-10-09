@@ -2256,7 +2256,7 @@ def pairwise_distances_chunked(
         "Y": ["array-like", "sparse matrix", None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
-        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"}), Hidden(None)],
+        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"})],
     },
     prefer_skip_nested_validation=True,
 )
