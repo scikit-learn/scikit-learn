@@ -97,7 +97,7 @@ def _weighted_percentile(
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = xp.tile(sample_weight, (array.shape[1], 1)).T
     # Sort `array` and `sample_weight` along axis=0:
-    sorted_idx = xp.argsort(array, axis=0)
+    sorted_idx = xp.argsort(array, axis=0, stable=False)
     sorted_weights = xp.take_along_axis(sample_weight, sorted_idx, axis=0)
 
     # Set NaN values in `sample_weight` to 0. Only perform this operation if NaN

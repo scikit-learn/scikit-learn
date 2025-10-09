@@ -174,6 +174,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
 - :func:`sklearn.metrics.precision_score`
+- :func:`sklearn.metrics.precision_recall_curve`
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
@@ -185,6 +186,7 @@ Metrics
 Tools
 -----
 
+- :func:`model_selection.cross_val_predict`
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`
 
