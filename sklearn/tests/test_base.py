@@ -1053,6 +1053,19 @@ def test_param_is_non_default(default_value, test_value):
     assert "param" in non_default
 
 
+def test_param_is_non_default_when_pandas_NA():
+    """Check that we detect pandas.Na as non-default parameter.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32312
+    """
+    pd = pytest.importorskip("pandas")
+
+    estimator = make_estimator_with_param(default_value=0)(param=pd.NA)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
 @pytest.mark.parametrize(
     "default_value, test_value",
     [
