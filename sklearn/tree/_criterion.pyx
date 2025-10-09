@@ -1247,12 +1247,8 @@ cdef void precompute_absolute_errors_fenwick(
 
         # Weighted alpha-quantile by cumulative weight
         half_weight = 0.5 * tree.total_w
-        median_idx = tree.search(half_weight, &w_left, &wy_left, inclusive=True)
-        if w_left == half_weight:
-            median_prev_idx = tree.search(half_weight, &w_right, &wy_right, inclusive=False)
-            median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
-        else:
-            median = sorted_y[median_idx]
+        median_idx = tree.search(half_weight, &w_left, &wy_left, &median_prev_idx)
+        median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
 
         # Right-side aggregates include the quantile position
         w_right = tree.total_w - w_left

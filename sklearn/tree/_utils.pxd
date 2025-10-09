@@ -66,5 +66,5 @@ cdef class WeightedFenwickTree:
         float64_t t,
         float64_t* cw_out,
         float64_t* cwy_out,
-        bint inclusive
+        intp_t* prev_idx_out,
     ) noexcept nogil

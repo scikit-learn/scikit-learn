@@ -25,7 +25,7 @@ def test_cython_weighted_fenwick_tree():
         y_sorted[idx] = y[idx]
         w_sorted[idx] = w[idx]
         t = rng.uniform(0, w_sorted.sum())
-        t_idx, cw, cwy = tree.py_search(t)
+        t_idx_low, t_idx, cw, cwy = tree.py_search(t)
         assert np.isclose(cw, w_sorted[:t_idx].sum())
         assert np.isclose(cwy, (w_sorted[:t_idx] * y_sorted[:t_idx]).sum())
         assert cw <= t

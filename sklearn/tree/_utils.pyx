@@ -149,34 +149,71 @@ cdef class WeightedFenwickTree:
         float64_t t,
         float64_t* cw_out,
         float64_t* cwy_out,
-        bint inclusive
+        intp_t* prev_idx_out,
     ) noexcept nogil:
         """
-        Find the smallest index such that
-          prefix_weight <= t < prefix_weight if inclusive
+        Find (prev_leaf, leaf) such that:
+            prefix_weight(prev_leaf) <  t < prefix_weight(next_leaf(prev_leaf))
+            prefix_weight(leaf)      <= t < prefix_weight(next_leaf(leaf))
+        Possibly, leaf == prev_leaf
 
         and return:
-          - idx:
+          - idx: leaf
           - cw (write in cw_out): prefix weight up to idx exclusive
           - cwy (write in cwy_out): prefix weighted sum to idx exclusive
+          - prev_idx (write in prev_idx_out): prev_leaf
 
-        Notes:
-          * Assumes there is at least one active (positive-weight) item.
-          * If t >= total weight (can happen with alpha ~ 1), we clamp t slightly.
+        Assumes:
+          * there is at least one active (positive-weight) item.
+          * 0 <= t <= total_weight
         """
         cdef:
             intp_t idx = 0
+            intp_t next_idx, prev_idx, bit_eq
             float64_t cw = 0.0
             float64_t cwy = 0.0
             intp_t bit = self.max_pow2
-            float64_t w
+            float64_t w, t_eq
 
         # Standard Fenwick lower-bound with simultaneous prefix accumulation
         while bit != 0:
             next_idx = idx + bit
             if next_idx <= self.size:
                 w = self.tree_w[next_idx]
-                if (t > w) or (inclusive and t >= w):
+                if t == w:
+                    t_eq = t
+                    bit_eq = bit
+                    break
+                elif t > w:
+                    t -= w
+                    idx = next_idx
+                    cw += w
+                    cwy += self.tree_wy[next_idx]
+            bit >>= 1
+
+        if bit == 0:
+            cw_out[0] = cw
+            cwy_out[0] = cwy
+            prev_idx_out[0] = idx
+            return idx
+
+        prev_idx = idx
+        while bit != 0:
+            next_idx = prev_idx + bit
+            if next_idx <= self.size:
+                w = self.tree_w[next_idx]
+                if t > w:
+                    t -= w
+                    prev_idx = next_idx
+            bit >>= 1
+
+        bit = bit_eq
+        t = t_eq
+        while bit != 0:
+            next_idx = idx + bit
+            if next_idx <= self.size:
+                w = self.tree_w[next_idx]
+                if t >= w:
                     t -= w
                     idx = next_idx
                     cw += w
@@ -185,7 +222,7 @@ cdef class WeightedFenwickTree:
 
         cw_out[0] = cw
         cwy_out[0] = cwy
-
+        prev_idx_out[0] = prev_idx
         return idx
 
 
@@ -198,7 +235,8 @@ cdef class PytestWeightedFenwickTree(WeightedFenwickTree):
     def py_add(self, intp_t idx, float64_t y, float64_t w):
         self.add(idx, y, w)
 
-    def py_search(self, float64_t t, inclusive=True):
+    def py_search(self, float64_t t):
         cdef float64_t w, wy
-        idx = self.search(t, &w, &wy, inclusive)
-        return idx, w, wy
+        cdef intp_t prev_idx
+        idx = self.search(t, &w, &wy, &prev_idx)
+        return prev_idx, idx, w, wy
