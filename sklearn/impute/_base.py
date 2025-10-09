@@ -16,7 +16,7 @@ from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
-from sklearn.utils.fixes import _mode
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12, _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -484,9 +484,14 @@ class SimpleImputer(_BaseImputer):
             statistics.fill(fill_value)
 
             if not self.keep_empty_features:
-                for i in range(missing_mask.shape[1]):
-                    if all(missing_mask[:, i].data):
-                        statistics[i] = np.nan
+                if SCIPY_VERSION_BELOW_1_12:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, [i]].data):
+                            statistics[i] = np.nan
+                else:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, i].data):
+                            statistics[i] = np.nan
 
         else:
             for i in range(X.shape[1]):
