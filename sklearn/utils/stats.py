@@ -111,7 +111,7 @@ def _weighted_percentile(
 
     q = percentile_rank / 100
     n_percentiles = percentile_rank.shape[0]
-    result = xp.empty((n_features, n_percentiles), dtype=floating_dtype)
+    result = xp.empty((n_features, n_percentiles), dtype=floating_dtype, device=device)
 
     # Compute weighted percentiles for each feature (column)
     for feature_idx in range(n_features):
