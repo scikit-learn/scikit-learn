@@ -966,7 +966,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         else:
             # Use conservative threshold of 100 samples
             PARALLEL_THRESHOLD = 100
-            
+
             if n_samples < PARALLEL_THRESHOLD:
                 effective_n_jobs = 1
             else:
