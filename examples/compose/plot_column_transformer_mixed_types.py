@@ -225,7 +225,7 @@ cv_results[
 # training set. We can evaluate that final model on held out test data that was
 # not used for hyperparameter tuning.
 #
-# Useless comment here - erase
+# Will this work ?
 print(
     "accuracy of the best model from randomized search: "
     f"{search_cv.score(X_test, y_test):.3f}"
