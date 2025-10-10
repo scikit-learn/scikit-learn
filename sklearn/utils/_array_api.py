@@ -5,7 +5,6 @@
 
 import itertools
 import math
-import numbers
 import os
 
 import numpy
@@ -489,40 +488,6 @@ def get_namespace_and_device(
         return xp, is_array_api, arrays_device
     else:
         return xp, False, arrays_device
-
-
-def move_to_namespace_and_device(*arrays_to_move, ref):
-    """Helper to implement the 'y follows X' rule.
-
-    Convert arrays to the namespace and device of ``ref``.
-
-    When ``ref`` is not an array api array, the inputs are returned unchanged.
-    """
-    xp, is_array_api = get_namespace(ref)
-    if not is_array_api:
-        return arrays_to_move
-
-    device_ = device(ref)
-
-    new_arrays = []
-    for array in arrays_to_move:
-        if array is None or isinstance(array, (numbers.Number, str)):
-            new_arrays.append(array)
-            continue
-        array_xp, _, array_device = get_namespace_and_device(array)
-        if array_xp == xp and array_device == device_:
-            new_arrays.append(array)
-            continue
-        try:
-            new_arrays.append(xp.asarray(array, device=device_))
-            continue
-        except Exception:
-            # direct conversion to a different library may fail in which
-            # case we try converting to numpy first
-            array = _convert_to_numpy(array, array_xp)
-            new_arrays.append(xp.asarray(array, device=device_))
-
-    return tuple(new_arrays)
 
 
 def _expit(X, xp=None):
