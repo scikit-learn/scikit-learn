@@ -51,7 +51,7 @@ def test_graphical_lassos(global_random_seed):
             )
             covs[method] = cov_
             icovs[method] = icov_
-            costs, dual_gap = np.array(costs).T
+            costs, _ = np.array(costs).T
             # Check that the costs always decrease (doesn't hold if alpha == 0)
             if not alpha == 0:
                 # use 1e-10 since the cost can be exactly 0
@@ -151,7 +151,7 @@ def test_graphical_lasso_iris_singular(method):
     # X = t(array(c(
     #   5.4, 3.7, 1.5, 0.2,
     #   4.8, 3.4, 1.6, 0.2,
-    #   4.8, 3. , 1.4, 0.1),
+    #   4.8, 3.0, 1.4, 0.1),
     #   dim = c(4, 3)
     # ))
     # n = nrow(X)

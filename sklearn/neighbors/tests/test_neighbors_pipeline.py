@@ -55,7 +55,7 @@ def test_spectral_embedding():
             [1.0, 0.0, 0.0, 5.0, 1.0],
         ]
     )
-    S, true_labels = make_blobs(
+    S, _ = make_blobs(
         n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
     )
 
