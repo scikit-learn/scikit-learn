@@ -1014,10 +1014,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # determine if concatenated output will be sparse or not
         if any(sparse.issparse(X) for X in Xs):
-            nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(
-                X.shape[0] * X.shape[1] if sparse.issparse(X) else X.size for X in Xs
+            nnz = sum(
+                X.nnz if sparse.issparse(X) else X.shape[0] * X.shape[1] for X in Xs
             )
+            total = sum(X.shape[0] * X.shape[1] for X in Xs)
             density = nnz / total
             self.sparse_output_ = density < self.sparse_threshold
         else:
