@@ -1,6 +1,4 @@
 """
-Testing 123
-
 ===================================
 Column Transformer with Mixed Types
 ===================================
@@ -227,6 +225,7 @@ cv_results[
 # training set. We can evaluate that final model on held out test data that was
 # not used for hyperparameter tuning.
 #
+# Useless comment here - erase
 print(
     "accuracy of the best model from randomized search: "
     f"{search_cv.score(X_test, y_test):.3f}"
