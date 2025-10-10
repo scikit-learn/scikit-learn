@@ -1111,8 +1111,8 @@ def test_is_functions_class_vs_instance_error(is_func, Estimator):
     with pytest.raises(
         TypeError,
         match=(
-            r"Expected an estimator instance, but got class .* "
-            r"Did you mean to instantiate it"
+            r"Expected an estimator instance, but got class .+\. "
+            r"Did you mean to instantiate it\? e\.g\., .+\(\)"
         ),
     ):
         is_func(Estimator)
