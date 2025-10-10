@@ -34,3 +34,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_USERNAME: changelog-bot
+
+      - name: Link to changelog instructions
+        if: failure()
+        run: |
+          echo "see changelog instructions at https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md"
+          exit 1
