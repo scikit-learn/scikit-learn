@@ -626,6 +626,43 @@ def test_ordinal_encoder(X):
     assert_array_equal(enc.fit_transform(X), exp)
 
 
+def test_ordinal_encoder_categories_dict():
+    """Test using a dict for categories."""
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {"priority": ["medium", "medium", "high"], "size": ["small", "large", "medium"]}
+    )
+    # Categories are specified in a different order than they appear in X
+    enc = OrdinalEncoder(
+        categories={
+            "size": ["small", "medium", "large"],
+            "priority": ["low", "medium", "high"],
+        }
+    )
+
+    X_trans = enc.fit_transform(X)
+
+    expected = np.array([[1, 0], [1, 2], [2, 1]])
+    assert_array_equal(X_trans, expected)
+
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+def test_ordinal_encoder_categories_dict_array_raise(method):
+    """Test using a dict for `categories` raises with array-like input."""
+    pd = pytest.importorskip("pandas")
+
+    X = np.array([["a"], ["b"], ["c"]])
+    enc = OrdinalEncoder(categories={"A": ["a", "b", "c"]})
+
+    msg = (
+        "When `categories` is a dict, the input `X` should be a pandas "
+        "DataFrame but got ndarray instead"
+    )
+    with pytest.raises(TypeError, match=msg):
+        getattr(enc, method)(X)
+
+
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [

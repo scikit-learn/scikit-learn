@@ -24,6 +24,7 @@ from sklearn.utils.validation import (
     _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
+    _is_pandas_df,
     check_is_fitted,
 )
 
@@ -120,7 +121,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     Xi_dtype = Xi.dtype
 
-                cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if isinstance(self.categories, dict):
+                    column_name = self.feature_names_in_[i]
+                    cats = np.array(self.categories[column_name])
+                else:
+                    cats = np.array(self.categories[i], dtype=Xi_dtype)
                 if (
                     cats.dtype == object
                     and isinstance(cats[0], bytes)
@@ -1280,6 +1285,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
+        - dict : Mapping from column name to array-like of categories.
+          ``X`` needs to be a pandas DataFrame.
 
         The used categories can be found in the ``categories_`` attribute.
 
@@ -1443,7 +1450,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints: dict = {
-        "categories": [StrOptions({"auto"}), list],
+        "categories": [StrOptions({"auto"}), list, dict],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
@@ -1514,6 +1521,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 "unknown_value should only be set when "
                 "handle_unknown is 'use_encoded_value', "
                 f"got {self.unknown_value}."
+            )
+
+        if isinstance(self.categories, dict) and not _is_pandas_df(X):
+            raise TypeError(
+                "When `categories` is a dict, the input `X` should be a pandas "
+                f"DataFrame but got {type(X).__name__} instead"
             )
 
         # `_fit` will only raise an error when `self.handle_unknown="error"`
