@@ -43,7 +43,7 @@ def get_min_version_with_wheel(package_name, python_version):
         for file_info in release_info:
             if (
                 file_info["packagetype"] == "bdist_wheel"
-                and f'cp{python_version.replace(".", "")}' in file_info["filename"]
+                and f"cp{python_version.replace('.', '')}" in file_info["filename"]
                 and not file_info["yanked"]
             ):
                 compatible_versions.append(ver)

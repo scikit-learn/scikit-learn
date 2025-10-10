@@ -35,7 +35,7 @@ jobs:
       build: ${{ steps.check_build_trigger.outputs.build }}
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -63,17 +63,18 @@ jobs:
     if: needs.check_build_trigger.outputs.build
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@6c426a3a17cfcadf4b6048de53653eba55d7ae4f # v2.23.2
+      - uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93 # v3.2.0
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
-          CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
+          # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
+          CIBW_TEST_COMMAND: "python -m pytest -sra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
@@ -93,7 +94,7 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: wheelhouse/
           merge-multiple: true

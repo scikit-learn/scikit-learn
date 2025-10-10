@@ -9,9 +9,10 @@ import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import Pipeline
@@ -38,11 +39,12 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -53,13 +55,16 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
+    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
+    _IS_WASM,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    sp_version,
 )
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -113,10 +118,13 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             scaler.fit(X, y, sample_weight=sample_weight_notOK)
 
 
-@pytest.mark.parametrize(
-    ["Xw", "X", "sample_weight"],
-    [
-        ([[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [1, 2, 3], [4, 5, 6]], [2.0, 1.0]),
+def _yield_xw_x_sampleweight():
+    yield from (
+        (
+            [[1, 2, 3], [4, 5, 6]],
+            [[1, 2, 3], [1, 2, 3], [4, 5, 6]],
+            [2.0, 1.0],
+        ),
         (
             [[1, 0, 1], [0, 0, 1]],
             [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
@@ -132,8 +140,10 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             ],
             np.array([1, 3]),
         ),
-    ],
-)
+    )
+
+
+@pytest.mark.parametrize(["Xw", "X", "sample_weight"], _yield_xw_x_sampleweight())
 @pytest.mark.parametrize("array_constructor", ["array", "sparse_csr", "sparse_csc"])
 def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
     with_mean = not array_constructor.startswith("sparse")
@@ -155,6 +165,68 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
     assert_almost_equal(scaler.mean_, scaler_w.mean_)
     assert_almost_equal(scaler.var_, scaler_w.var_)
     assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
+
+
+@pytest.mark.parametrize(["Xw", "X", "sample_weight"], _yield_xw_x_sampleweight())
+@pytest.mark.parametrize(
+    "namespace, dev, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_standard_scaler_sample_weight_array_api(
+    Xw, X, sample_weight, namespace, dev, dtype
+):
+    # N.B. The sample statistics for Xw w/ sample_weight should match
+    #      the statistics of X w/ uniform sample_weight.
+    xp = _array_api_for_tests(namespace, dev)
+
+    X = np.array(X).astype(dtype, copy=False)
+    y = np.ones(X.shape[0]).astype(dtype, copy=False)
+    Xw = np.array(Xw).astype(dtype, copy=False)
+    yw = np.ones(Xw.shape[0]).astype(dtype, copy=False)
+    X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype, copy=False)
+
+    scaler = StandardScaler()
+    scaler.fit(X, y)
+
+    scaler_w = StandardScaler()
+    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+
+    # Test array-api support and correctness.
+    X_xp = xp.asarray(X, device=dev)
+    y_xp = xp.asarray(y, device=dev)
+    Xw_xp = xp.asarray(Xw, device=dev)
+    yw_xp = xp.asarray(yw, device=dev)
+    X_test_xp = xp.asarray(X_test, device=dev)
+    sample_weight_xp = xp.asarray(sample_weight, device=dev)
+
+    scaler_w_xp = StandardScaler()
+    with config_context(array_api_dispatch=True):
+        scaler_w_xp.fit(Xw_xp, yw_xp, sample_weight=sample_weight_xp)
+        w_mean = _convert_to_numpy(scaler_w_xp.mean_, xp=xp)
+        w_var = _convert_to_numpy(scaler_w_xp.var_, xp=xp)
+
+    assert_allclose(scaler_w.mean_, w_mean)
+    assert_allclose(scaler_w.var_, w_var)
+
+    # unweighted, but with repeated samples
+    scaler_xp = StandardScaler()
+    with config_context(array_api_dispatch=True):
+        scaler_xp.fit(X_xp, y_xp)
+        uw_mean = _convert_to_numpy(scaler_xp.mean_, xp=xp)
+        uw_var = _convert_to_numpy(scaler_xp.var_, xp=xp)
+
+    assert_allclose(scaler.mean_, uw_mean)
+    assert_allclose(scaler.var_, uw_var)
+
+    # Check that both array-api outputs match.
+    assert_allclose(uw_mean, w_mean)
+    assert_allclose(uw_var, w_var)
+    with config_context(array_api_dispatch=True):
+        assert_allclose(
+            _convert_to_numpy(scaler_xp.transform(X_test_xp), xp=xp),
+            _convert_to_numpy(scaler_w_xp.transform(X_test_xp), xp=xp),
+        )
 
 
 def test_standard_scaler_1d():
@@ -239,6 +311,7 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
 def test_standard_scaler_constant_features(
     scaler, add_sample_weight, sparse_container, dtype, constant
 ):
+    scaler = clone(scaler)  # Avoid side effects from previous tests.
     if isinstance(scaler, RobustScaler) and add_sample_weight:
         pytest.skip(f"{scaler.__class__.__name__} does not yet support sample_weight")
 
@@ -703,20 +776,48 @@ def test_standard_check_array_of_inverse_transform():
     "estimator",
     [
         MaxAbsScaler(),
+        MaxAbsScaler(clip=True),
         MinMaxScaler(),
         MinMaxScaler(clip=True),
         KernelCenterer(),
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
+        Binarizer(),
     ],
     ids=_get_check_estimator_ids,
 )
-def test_scaler_array_api_compliance(
+def test_preprocessing_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
     check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize("sample_weight", [True, None])
+def test_standard_scaler_array_api_compliance(
+    check, sample_weight, array_namespace, device, dtype_name
+):
+    estimator = StandardScaler()
+    name = estimator.__class__.__name__
+    check(
+        name,
+        estimator,
+        array_namespace,
+        device=device,
+        dtype_name=dtype_name,
+        check_sample_weight=sample_weight,
+    )
 
 
 def test_min_max_scaler_iris():
@@ -1037,10 +1138,10 @@ def test_scale_sparse_with_mean_raise_exception(sparse_container):
 
 
 def test_scale_input_finiteness_validation():
-    # Check if non finite inputs raise ValueError
+    # Check if non-finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(
-        ValueError, match="Input contains infinity or a value too large"
+        ValueError, match=r"Input X contains infinity or a value too large for dtype"
     ):
         scale(X)
 
@@ -2004,6 +2105,21 @@ def test_binarizer(constructor):
             binarizer.transform(constructor(X))
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_binarizer_array_api_int(array_namespace, device, dtype_name):
+    # Checks that Binarizer works with integer elements and float threshold
+    xp = _array_api_for_tests(array_namespace, device)
+    for dtype_name_ in [dtype_name, "int32", "int64"]:
+        X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
+        X_xp = xp.asarray(X_np, device=device)
+        binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
+        with config_context(array_api_dispatch=True):
+            binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
+        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
+
+
 def test_center_kernel():
     # Test that KernelCenterer is equivalent to StandardScaler
     # in feature space
@@ -2435,7 +2551,7 @@ def test_power_transformer_copy_True(method, standardize):
 def test_power_transformer_copy_False(method, standardize):
     # check that when copy=False fit doesn't change X inplace but transform,
     # fit_transform and inverse_transform do.
-    X = X_1col
+    X = X_1col.copy()
     if method == "box-cox":
         X = np.abs(X)
 
@@ -2497,6 +2613,8 @@ def test_minmax_scaler_clip(feature_range):
     # test behaviour of the parameter 'clip' in MinMaxScaler
     X = iris.data
     scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
+    # create a test sample with features outside the training feature range:
+    # first 2 features < min(X) and last 2 features > max(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
     X_transformed = scaler.transform(X_test)
@@ -2504,6 +2622,25 @@ def test_minmax_scaler_clip(feature_range):
         X_transformed,
         [[feature_range[0], feature_range[0], feature_range[1], feature_range[1]]],
     )
+
+
+@pytest.mark.parametrize(
+    "data_constructor", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_maxabs_scaler_clip(data_constructor):
+    # test behaviour of the parameter 'clip' in MaxAbsScaler
+    X = data_constructor(iris.data)
+    is_sparse = sparse.issparse(X)
+    scaler = MaxAbsScaler(clip=True).fit(X)
+    # create a test sample with features outside the training max abs range:
+    # first 2 features > max(abs(X)) and last 2 features < -max(abs(X))
+    max_abs = np.max(np.abs(X), axis=0)
+    max_abs = max_abs.data if is_sparse else max_abs
+    X_test = data_constructor(
+        np.hstack((max_abs[:2] + 10, -max_abs[2:] - 10)).reshape(1, -1)
+    )
+    X_transformed = scaler.transform(X_test)
+    assert_allclose_dense_sparse(X_transformed, data_constructor([[1, 1, -1, -1]]))
 
 
 def test_standard_scaler_raise_error_for_1d_input():
@@ -2622,3 +2759,77 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, np.zeros_like(X))
         else:
             assert_allclose(Xt_, X)
+
+
+@pytest.mark.xfail(
+    _IS_WASM,
+    reason=(
+        "no floating point exceptions, see"
+        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
+    ),
+)
+def test_yeo_johnson_inverse_transform_warning():
+    """Check if a warning is triggered when the inverse transformations of the
+    Box-Cox and Yeo-Johnson transformers return NaN values."""
+    trans = PowerTransformer(method="yeo-johnson")
+    x = np.array([1, 1, 1e10]).reshape(-1, 1)  # extreme skew
+    trans.fit(x)
+    lmbda = trans.lambdas_[0]
+    assert lmbda < 0  # Should be negative
+
+    # any value `psi` for which lambda * psi + 1 <= 0 will result in nan due
+    # to lacking support
+    psi = np.array([10]).reshape(-1, 1)
+    with pytest.warns(UserWarning, match="Some values in column"):
+        x_inv = trans.inverse_transform(psi).item()
+
+    assert np.isnan(x_inv)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.12"),
+    reason="scipy version 1.12 required for stable yeo-johnson",
+)
+def test_power_transformer_no_warnings():
+    """Verify that PowerTransformer operates without raising any warnings on valid data.
+
+    This test addresses numerical issues with floating point numbers (mostly
+    overflows) with the Yeo-Johnson transform, see
+    https://github.com/scikit-learn/scikit-learn/issues/23319#issuecomment-1464933635
+    """
+    x = np.array(
+        [
+            2003.0,
+            1950.0,
+            1997.0,
+            2000.0,
+            2009.0,
+            2009.0,
+            1980.0,
+            1999.0,
+            2007.0,
+            1991.0,
+        ]
+    )
+
+    def _test_no_warnings(data):
+        """Internal helper to test for unexpected warnings."""
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")  # Ensure all warnings are captured
+            PowerTransformer(method="yeo-johnson", standardize=True).fit_transform(data)
+
+        assert not caught_warnings, "Unexpected warnings were raised:\n" + "\n".join(
+            str(w.message) for w in caught_warnings
+        )
+
+    # Full dataset: Should not trigger overflow in variance calculation.
+    _test_no_warnings(x.reshape(-1, 1))
+
+    # Subset of data: Should not trigger overflow in power calculation.
+    _test_no_warnings(x[:5].reshape(-1, 1))
+
+
+def test_yeojohnson_for_different_scipy_version():
+    """Check that the results are consistent across different SciPy versions."""
+    pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
+    pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)

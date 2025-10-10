@@ -11,12 +11,12 @@ from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
-from ..base import BaseEstimator, BiclusterMixin, _fit_context
-from ..utils import check_random_state, check_scalar
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
-from ..utils.validation import assert_all_finite, validate_data
-from ._kmeans import KMeans, MiniBatchKMeans
+from sklearn.base import BaseEstimator, BiclusterMixin, _fit_context
+from sklearn.cluster._kmeans import KMeans, MiniBatchKMeans
+from sklearn.utils import check_random_state, check_scalar
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_svd, make_nonnegative, safe_sparse_dot
+from sklearn.utils.validation import assert_all_finite, validate_data
 
 __all__ = ["SpectralBiclustering", "SpectralCoclustering"]
 
@@ -144,7 +144,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             kwargs = {}
             if self.n_svd_vecs is not None:
                 kwargs["n_oversamples"] = self.n_svd_vecs
-            u, _, vt = randomized_svd(
+            u, _, vt = _randomized_svd(
                 array, n_components, random_state=self.random_state, **kwargs
             )
 
@@ -307,6 +307,9 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
+
+    For a more detailed example, see the following:
+    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`.
     """
 
     _parameter_constraints: dict = {

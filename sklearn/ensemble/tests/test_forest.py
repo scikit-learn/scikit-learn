@@ -168,11 +168,12 @@ def test_regression_criterion(name, criterion):
     reg = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
-    assert (
-        score > 0.93
-    ), "Failed with max_features=None, criterion %s and score = %f" % (
-        criterion,
-        score,
+    assert score > 0.93, (
+        "Failed with max_features=None, criterion %s and score = %f"
+        % (
+            criterion,
+            score,
+        )
     )
 
     reg = ForestRegressor(
@@ -1068,10 +1069,10 @@ def test_min_weight_fraction_leaf(name):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert (
-            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
-        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
-            name, est.min_weight_fraction_leaf
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
+            "Failed with {0} min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf
+            )
         )
 
 
@@ -1478,7 +1479,7 @@ def test_poisson_y_positive_check():
 
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
-class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
+class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore[valid-type,misc]
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)
@@ -1491,6 +1492,9 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend("testing", MyBackend)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
