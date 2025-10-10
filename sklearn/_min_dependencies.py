@@ -50,6 +50,7 @@ dependent_packages = {
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
+    "sphinx-marimo": ("0.2.1", "docs"),
     "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
