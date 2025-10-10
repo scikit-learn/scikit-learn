@@ -43,7 +43,6 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
-    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     _max_precision_float_dtype,
@@ -1237,7 +1236,7 @@ def _test_tolerance(sparse_container):
 
 
 def check_array_api_attributes(
-    name, estimator, array_namespace, device, dtype_name, rtol=None, atol=None
+    name, estimator, array_namespace, device, dtype_name, rtol=None
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1254,23 +1253,21 @@ def check_array_api_attributes(
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
         coef_xp = estimator_xp.coef_
-        assert coef_xp.shape == (4,)
+        assert coef_xp.shape == coef_np.shape
         assert coef_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(coef_xp, xp=xp),
             coef_np,
-            atol=_atol_for_type(dtype_name),
             rtol=rtol,
         )
         intercept_xp = estimator_xp.intercept_
-        assert intercept_xp.shape == ()
+        assert intercept_xp.shape == intercept_np.shape
         assert intercept_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
-            atol=atol if atol is not None else _atol_for_type(dtype_name),
             rtol=rtol,
         )
 
@@ -1287,7 +1284,12 @@ def check_array_api_attributes(
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd"), RidgeCV()],
+    [
+        Ridge(solver="svd"),
+        RidgeClassifier(solver="svd"),
+        RidgeCV(),
+        RidgeClassifierCV(),
+    ],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
@@ -1301,26 +1303,38 @@ def test_ridge_array_api_compliance(
         and check is check_array_api_attributes
         and _max_precision_float_dtype(xp, device) == xp.float32
     ):
-        # The RidgeGCV is not very numerically stable in float32. It casts the
-        # input to float64 unless the device and array api combination makes it
-        # impossible.
-        tols = {"rtol": 1e-3, "atol": 1e-3}
+        # RidgeGCV is not very numerically stable with float32. It casts the
+        # input to float64 unless the device and namespace combination does
+        # not allow float64 (specifically torch with mps)
+        tols["rtol"] = 1e-3
     check(
         name, estimator, array_namespace, device=device, dtype_name=dtype_name, **tols
     )
 
 
 @pytest.mark.parametrize(
-    "array_namespace", yield_namespaces(include_numpy_namespaces=False)
+    "estimator", [RidgeClassifier(solver="svd"), RidgeClassifierCV()]
 )
-def test_multilabel_array_api(array_namespace):
-    xp = _array_api_for_tests(array_namespace, None)
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_ridge_classifier_multilabel_array_api(
+    estimator, array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_multilabel_classification(random_state=0)
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    ridge_np = estimator.fit(X_np, y_np)
+    pred_np = ridge_np.predict(X_np)
     with config_context(array_api_dispatch=True):
-        X, y = make_multilabel_classification(n_classes=2, random_state=0)
-        X, y = xp.asarray(X), xp.asarray(y)
-        ridge = RidgeClassifierCV().fit(X, y)
-        pred = ridge.predict(X)
-        assert pred.shape == y.shape
+        X_xp, y_xp = xp.asarray(X_np, device=device_), xp.asarray(y_np, device=device_)
+        ridge_xp = estimator.fit(X_xp, y_xp)
+        pred_xp = ridge_xp.predict(X_xp)
+        assert pred_xp.shape == pred_np.shape == y.shape
+        assert_allclose(pred_xp, pred_np)
 
 
 @pytest.mark.parametrize(

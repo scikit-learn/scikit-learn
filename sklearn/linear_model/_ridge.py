@@ -1324,7 +1324,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         Y = self._label_binarizer.fit_transform(
             _convert_to_numpy(y, y_xp) if y_is_array_api else y
         )
-        Y = ensure_common_namespace_device(original_X, Y)
+        Y = ensure_common_namespace_device(original_X, Y)[0]
         if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
             self.classes_ = ensure_common_namespace_device(
                 original_X, self._label_binarizer.classes_
@@ -2125,7 +2125,7 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
-            intercept_dim = _find_smallest_angle(normalized_sw, U)
+            intercept_dim = int(_find_smallest_angle(normalized_sw, U))
             # cancel the regularization for the intercept
             w[intercept_dim] = -(alpha**-1)
         c = U @ self._diag_dot(w, UT_y) + (alpha**-1) * y
