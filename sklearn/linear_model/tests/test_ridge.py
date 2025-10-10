@@ -1302,11 +1302,7 @@ def test_ridge_array_api_compliance(
     name = estimator.__class__.__name__
     tols = {}
     xp = _array_api_for_tests(array_namespace, device)
-    if (
-        "CV" in name
-        and check is check_array_api_attributes
-        and _max_precision_float_dtype(xp, device) == xp.float32
-    ):
+    if "CV" in name and _max_precision_float_dtype(xp, device) == xp.float32:
         # RidgeGCV is not very numerically stable with float32. It casts the
         # input to float64 unless the device and namespace combination does
         # not allow float64 (specifically torch with mps)
