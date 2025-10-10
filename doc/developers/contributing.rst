@@ -271,6 +271,38 @@ The preferred way to contribute to scikit-learn is to fork the `main
 repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
 then submit a "pull request" (PR).
 
+.. note::
+  If you want to avoid installing things locally, you can use Github Codespaces
+  by replacing the steps 3-5 below by the following:
+  
+  * Click on the green `Code` button, go to `Codespaces` and create a codespace, 
+    which will take some time (this will open a VS Code instance and will 
+    basically prepare the Python evironment for you as described in the local 
+    installation below).
+
+  * Install the development version of scikit-learn in the TERMINAL:
+
+    .. prompt:: bash $
+ 
+        pip install --editable . \
+            --verbose --no-build-isolation \
+           --config-settings editable-verbose=true
+  
+  and continue with step 6 in the instructions below.
+
+  Note that if you are working on the :ref:`contribute_documentation`, you 
+  also don't need to install anything with pip for :ref:`building_documentation`, 
+  but you do need to open a port for displaying the docs in your browser. 
+  To do this, call
+
+  .. prompt:: bash $
+    
+    python -m http.server --directory _build/html/stable 
+  
+  from the TERMINAL and then and go to the PORTS tab next to the TERMINAL. 
+  There you can open the Link to the Documentation by Ctrl + clicking or 
+  by clicking on the globe icon.
+
 In the first few steps, we explain how to locally install scikit-learn, and
 how to set up your git repository:
 
