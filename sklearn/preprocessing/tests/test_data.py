@@ -2778,7 +2778,7 @@ def test_standard_scaler_with_std(with_std, with_mean):
 
     # test transformed data
     if with_mean:
-        assert_almost_equal(X_scaled.mean(axis=0), [0, 0])
+        assert_allclose(X_scaled.mean(axis=0), [0.0, 0.0], atol=1e-7)
     elif with_std:
         expected_scale = with_std * 10
         assert_allclose(
@@ -2789,7 +2789,7 @@ def test_standard_scaler_with_std(with_std, with_mean):
 
     if with_std:
         inv_std = 1 / with_std
-        assert_almost_equal(X_scaled.std(axis=0), [inv_std, inv_std])
+        assert_allclose(X_scaled.std(axis=0), [inv_std, inv_std])
     else:
         assert_allclose(X_scaled.std(axis=0), [10, 10], rtol=0.05)
 
