@@ -2599,11 +2599,12 @@ def test_power_transformer_box_cox_raise_all_nans_col():
         for csr_container in CSR_CONTAINERS
     ],
 )
-def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
+@pytest.mark.parametrize("with_std", [1, 2, True])
+def test_standard_scaler_sparse_partial_fit_finite_variance(X_2, with_std):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16448
     X_1 = sparse.random(5, 1, density=0.8)
-    scaler = StandardScaler(with_mean=False)
+    scaler = StandardScaler(with_mean=False, with_std=with_std)
     scaler.fit(X_1).partial_fit(X_2)
     assert np.isfinite(scaler.var_[0])
 
