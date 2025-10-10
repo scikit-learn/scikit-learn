@@ -19,7 +19,7 @@ from sklearn.ensemble import (
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC, SVR, LinearSVC
+from sklearn.svm import SVR, LinearSVC
 
 X, y = load_iris(return_X_y=True)
 
@@ -100,7 +100,7 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
 
     # check that set_params() does not add a new attribute
     estimator_new_params = clone(estimator)
-    svm_estimator = SVC() if is_classifier(estimator) else SVR()
+    svm_estimator = LinearSVC() if is_classifier(estimator) else SVR()
     estimator_new_params.set_params(svm=svm_estimator).fit(X, y)
     assert not hasattr(estimator_new_params, "svm")
     assert (
