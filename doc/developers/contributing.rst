@@ -288,7 +288,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-      git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+      git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
 4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
@@ -308,7 +308,7 @@ how to set up your git repository:
 
    .. prompt:: bash
 
-        git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+        git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 7. Check that the `upstream` and `origin` remote aliases are configured correctly
    by running:
@@ -321,10 +321,10 @@ how to set up your git repository:
 
    .. code-block:: text
 
-        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin    git@github.com:YourLogin/scikit-learn.git (push)
-        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
+        origin    https://github.com/YourLogin/scikit-learn.git (fetch)
+        origin    https://github.com/YourLogin/scikit-learn.git (push)
+        upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
+        upstream  https://github.com/scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
@@ -459,11 +459,9 @@ complies with the following rules before marking a PR as "ready for review". The
    build the docs: please refer to :ref:`generated_doc_CI`.
 
 4. **Tests are necessary for enhancements to be
-   accepted**. Bug-fixes or new features should be provided with
-   `non-regression tests
-   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-   verify the correct behavior of the fix or feature. In this manner, further
-   modifications on the code base are granted to be consistent with the
+   accepted**. Bug-fixes or new features should be provided with non-regression tests.
+   These tests verify the correct behavior of the fix or feature. In this manner,
+   further modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
@@ -1495,9 +1493,11 @@ up this process by providing your feedback.
     parameters, their values, value types, and combinations tested? Do
     the tests validate that the code is correct, i.e. doing what the
     documentation says it does? If the change is a bug-fix, is a
-    non-regression test included? Look at `this
-    <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
-    to get started with testing in Python.
+    non-regression test included? These tests verify the correct behavior of the fix
+    or feature. In this manner, further modifications on the code base are granted to
+    be consistent with the desired behavior. In the case of bug fixes, at the time of
+    the PR, the non-regression tests should fail for the code base in the ``main``
+    branch and pass for the PR code.
 
   - Do the tests pass in the continuous integration build? If
     appropriate, help the contributor understand why tests failed.
