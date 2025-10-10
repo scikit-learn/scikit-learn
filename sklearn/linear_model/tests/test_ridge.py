@@ -43,6 +43,7 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
+    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     _max_precision_float_dtype,
@@ -1260,6 +1261,7 @@ def check_array_api_attributes(
             _convert_to_numpy(coef_xp, xp=xp),
             coef_np,
             rtol=rtol,
+            atol=_atol_for_type(dtype_name),
         )
         intercept_xp = estimator_xp.intercept_
         assert intercept_xp.shape == intercept_np.shape
@@ -1269,6 +1271,7 @@ def check_array_api_attributes(
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
             rtol=rtol,
+            atol=_atol_for_type(dtype_name),
         )
 
 
