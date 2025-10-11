@@ -472,15 +472,33 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)`
-until a stopping condition is reached, for instance some examples include
-(for others see the docstring of the estimators):
+The strategy to choose the split at each node is controlled by the `splitter`
+parameter:
 
-* the maximum allowable depth is reached (`max_depth`)
+* With the **best splitter** (default, ``splitter='best'``), :math:`\theta^*` is
+  found by performing a **greedy exhaustive search** over all available features
+  :math:`j` and all possible thresholds :math:`t_m` (i.e. midpoints between
+  sorted, distinct feature values), selecting the pair that yields the greatest
+  impurity reduction (minimum :math:`G(Q_m, \theta)`).
 
-* :math:`n_m` is smaller than `min_samples_split`
+* With the **random splitter** (``splitter='random'``), for each available
+  feature :math:`j`, a **random set of candidate thresholds** :math:`t_m` is
+  sampled, and the best among these sampled splits is chosen as
+  :math:`\theta^*`. This performs a stochastic approximation of the greedy
+  search, effectively reducing computation time (see :ref:`tree_complexity`).
 
-* the impurity decrease for this split is smaller than `min_impurity_decrease`
+After choosing the optimal split :math:`\theta^*` at node :math:`m`, the same
+splitting procedure is then applied recursively to each partition
+:math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)` until a stopping
+condition is reached, such as:
+
+* the maximum allowable depth is reached (`max_depth`);
+
+* :math:`n_m` is smaller than `min_samples_split`;
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`.
+
+See the respective estimator docstring for other stopping conditions.
 
 
 Classification criteria
