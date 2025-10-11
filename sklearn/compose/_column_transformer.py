@@ -44,14 +44,14 @@ from sklearn.utils.metadata_routing import (
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_feature_names,
     _check_feature_names_in,
-    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
+    check_n_features,
+    validate_data,
 )
 
 __all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
@@ -973,7 +973,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
         """
         _raise_for_params(params, self, "fit_transform")
-        _check_feature_names(self, X, reset=True)
 
         if self.force_int_remainder_cols != "deprecated":
             warnings.warn(
@@ -983,9 +982,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 FutureWarning,
             )
 
+        validate_data(self, X=X, skip_check_array=True)
         X = _check_X(X)
         # set n_features_in_ attribute
-        _check_n_features(self, X, reset=True)
+
         self._validate_transformers()
         n_samples = _num_samples(X)
 
@@ -1090,7 +1090,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             # ndarray was used for fitting or transforming, thus we only
             # check that n_features_in_ is consistent
-            _check_n_features(self, X, reset=False)
+            check_n_features(self, X, reset=False)
 
         if _routing_enabled():
             routed_params = process_routing(self, "transform", **params)
