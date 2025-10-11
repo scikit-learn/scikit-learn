@@ -1499,7 +1499,7 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
-@pytest.mark.parametrize("X_is_sparse", [False, True])
+@pytest.mark.parametrize("X_is_sparse", [False, sparse.csc_array, sparse.csc_matrix])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
 def test_enet_alpha_max(X_is_sparse, fit_intercept, sample_weight):
@@ -1507,7 +1507,7 @@ def test_enet_alpha_max(X_is_sparse, fit_intercept, sample_weight):
     beta = np.array([1, 1])
     y = X @ beta
     if X_is_sparse:
-        X = sparse.csc_matrix(X)
+        X = X_is_sparse(X)
     # Test alpha_max makes coefs zero.
     reg = ElasticNetCV(alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
     reg.fit(X, y, sample_weight=sample_weight)

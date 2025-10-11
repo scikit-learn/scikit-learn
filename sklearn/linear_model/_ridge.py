@@ -1853,7 +1853,7 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X, X.T, dense_output=True), X_mean
         # X is sparse
         n_samples = X.shape[0]
-        sample_weight_matrix = sparse.dia_matrix(
+        sample_weight_matrix = sparse.dia_array(
             (sqrt_sw, 0), shape=(n_samples, n_samples)
         )
         X_weighted = sample_weight_matrix.dot(X)
@@ -1901,7 +1901,7 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X.T, X, dense_output=True), X_mean
         # this function only gets called for sparse X
         n_samples = X.shape[0]
-        sample_weight_matrix = sparse.dia_matrix(
+        sample_weight_matrix = sparse.dia_array(
             (sqrt_sw, 0), shape=(n_samples, n_samples)
         )
         X_weighted = sample_weight_matrix.dot(X)
