@@ -1086,7 +1086,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             raise ValueError(
                 "Chaining does not currently support multiclass-multioutput. See User"
                 " Guide section on multiclass and multioutput algorithms for"
-                " estimators that support multiclass-multioutput."
+                " estimators that are more applicable."
             )
 
         super().fit(X, Y, **fit_params)

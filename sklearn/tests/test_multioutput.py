@@ -565,7 +565,7 @@ def test_classifier_chain_raises_error_when_multioutput_multiclass():
 
     err_msg = "Chaining does not currently support multiclass-multioutput. See User"
     " Guide section on multiclass and multioutput algorithms for estimators that"
-    " support multiclass-multioutput."
+    " are more applicable."
 
     with pytest.raises(ValueError, match=err_msg):
         ClassifierChain(LogisticRegression()).fit(X, Y)
