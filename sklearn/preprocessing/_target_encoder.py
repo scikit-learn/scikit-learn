@@ -293,7 +293,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y, groups=None):
+    def fit_transform(self, X, y, **kwargs):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
