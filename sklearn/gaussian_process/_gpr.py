@@ -502,7 +502,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
                 return y_mean, np.sqrt(y_var)
 
-    def sample_y(self, X, n_samples=1, random_state=0):
+    def sample_y(self, X, n_samples=1, random_state=0, sample_method = "svd"):
         """Draw samples from Gaussian process and evaluate at X.
 
         Parameters
@@ -518,7 +518,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Pass an int for reproducible results across multiple function
             calls.
             See :term:`Glossary <random_state>`.
-
+        sample_method : str, default = "svd"
+            Chooses how the multivariate normal RNG uses the covariance matrix.
         Returns
         -------
         y_samples : ndarray of shape (n_samples_X, n_samples), or \
@@ -530,11 +531,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         y_mean, y_cov = self.predict(X, return_cov=True)
         if y_mean.ndim == 1:
-            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
+            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples, method=sample_method).T
         else:
             y_samples = [
                 rng.multivariate_normal(
-                    y_mean[:, target], y_cov[..., target], n_samples
+                    y_mean[:, target], y_cov[..., target], n_samples, method=sample_method
                 ).T[:, np.newaxis]
                 for target in range(y_mean.shape[1])
             ]
