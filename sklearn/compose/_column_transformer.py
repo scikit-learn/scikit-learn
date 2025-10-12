@@ -45,6 +45,7 @@ from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
