@@ -38,5 +38,15 @@ jobs:
       - name: Link to changelog instructions
         if: failure()
         run: |
-          echo "see changelog instructions at https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md"
+
+          cat << EOF
+          - if your PR is likely to affect users, you will need to add a changelog entry
+            describing your PR changes.
+          - otherwise you don't need to do anything, a maintainer will set the relevant label
+            to make this CI build pass.
+
+          See instructions on how to write a changelog entry:
+          https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md"
+          EOF
+
           exit 1
