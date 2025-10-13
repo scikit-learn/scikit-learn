@@ -203,6 +203,17 @@ If you want to help curate issues, read about :ref:`bug_triaging`.
 Contributing code
 =================
 
+The preferred way to contribute to scikit-learn is to fork the `main
+repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+then submit a "pull request" (PR).
+
+For this, you first need to `Create an account <https://github.com/join>`_ on
+GitHub if you do not already have one, and fork the `project repository
+<https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
+button near the top of the page. This creates a copy of the code under your
+account on the GitHub user account. For more details on how to fork a
+repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
+
 .. note::
 
   To avoid duplicating work, it is highly advised that you search through the
@@ -267,21 +278,11 @@ latest up-to-date workflow.
 How to contribute
 -----------------
 
-The preferred way to contribute to scikit-learn is to fork the `main
-repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
-then submit a "pull request" (PR).
+
 
 In the first few steps, we explain how to locally install scikit-learn, and
 how to set up your git repository:
 
-1. `Create an account <https://github.com/join>`_ on
-   GitHub if you do not already have one.
-
-2. Fork the `project repository
-   <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-   button near the top of the page. This creates a copy of the code under your
-   account on the GitHub user account. For more details on how to fork a
-   repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
 3. Clone your fork of the scikit-learn repo from your GitHub account to your
    local disk:
