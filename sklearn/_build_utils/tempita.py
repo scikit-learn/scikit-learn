@@ -7,6 +7,7 @@ Improved Tempita template processor.
 import argparse
 import os
 import sys
+
 from Cython import Tempita as tempita
 
 
@@ -70,7 +71,7 @@ def main() -> None:
         outfile_name = os.path.splitext(os.path.basename(infile))[0]
         outfile = os.path.join(outdir_abs, outfile_name)
     else:
-        outfile = None 
+        outfile = None
 
     process_tempita(infile, outfile)
 
