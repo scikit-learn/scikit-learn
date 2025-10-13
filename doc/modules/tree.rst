@@ -477,15 +477,14 @@ parameter:
 
 * With the **best splitter** (default, ``splitter='best'``), :math:`\theta^*` is
   found by performing a **greedy exhaustive search** over all available features
-  :math:`j` and all possible thresholds :math:`t_m` (i.e. midpoints between
-  sorted, distinct feature values), selecting the pair that yields the greatest
-  impurity reduction (minimum :math:`G(Q_m, \theta)`).
+  and all possible thresholds :math:`t_m` (i.e. midpoints between sorted,
+  distinct feature values), selecting the pair that exactly minimizes
+  :math:`G(Q_m, \theta)`.
 
-* With the **random splitter** (``splitter='random'``), for each available
-  feature :math:`j`, a **random set of candidate thresholds** :math:`t_m` is
-  sampled, and the best among these sampled splits is chosen as
-  :math:`\theta^*`. This performs a stochastic approximation of the greedy
-  search, effectively reducing computation time (see :ref:`tree_complexity`).
+* With the **random splitter** (``splitter='random'``), :math:`\theta^*` is
+  found by sampling a **single random candidate threshold** for each available
+  feature. This performs a stochastic approximation of the greedy search,
+  effectively reducing computation time (see :ref:`tree_complexity`).
 
 After choosing the optimal split :math:`\theta^*` at node :math:`m`, the same
 splitting procedure is then applied recursively to each partition
