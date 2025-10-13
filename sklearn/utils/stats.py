@@ -221,7 +221,10 @@ def _weighted_percentile_inner_sorted(x, w, target_sums, out, average, xp):
     if average:
         mask_0 = cw[idx] == target_sums
         if mask_0.any():
-            out[mask_0] = (x[idx] + x[idx + 1]) / 2
+            idx = idx[mask_0]
+            idx_p1 = idx + 1
+            idx_p1 = xp.minimum(idx_p1, x.shape[0] - 1)
+            out[mask_0] = (x[idx] + x[idx_p1]) / 2
 
 
 def _old_weighted_percentile(
