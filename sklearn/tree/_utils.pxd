@@ -47,23 +47,24 @@ cdef intp_t rand_int(intp_t low, intp_t high,
 cdef float64_t rand_uniform(float64_t low, float64_t high,
                             uint32_t* random_state) noexcept nogil
 
-cdef class WeightedHeap:
-    cdef intp_t capacity
-    cdef intp_t size
-    cdef float64_t* heap
-    cdef float64_t* weights
-    cdef float64_t total_weight
-    cdef float64_t weighted_sum
-    cdef bint min_heap
-
-    cdef void reset(self) noexcept nogil
-    cdef bint is_empty(self) noexcept nogil
-    cdef void push(self, float64_t value, float64_t weight) noexcept nogil
-    cdef void pop(self, float64_t* value, float64_t* weight) noexcept nogil
-    cdef float64_t top_weight(self) noexcept nogil
-    cdef float64_t top(self) noexcept nogil
-    cdef void _swap(self, intp_t, intp_t) noexcept nogil
-    cdef void _heapify_up(self, intp_t) noexcept nogil
-    cdef void _heapify_down(self, intp_t) noexcept nogil
 
 cdef float64_t log(float64_t x) noexcept nogil
+
+
+cdef class WeightedFenwickTree:
+    cdef intp_t size         # number of leaves (ranks)
+    cdef float64_t* tree_w   # BIT for weights
+    cdef float64_t* tree_wy  # BIT for weighted targets
+    cdef intp_t max_pow2     # highest power of two <= n
+    cdef float64_t total_w   # running total weight
+    cdef float64_t total_wy  # running total weighted target
+
+    cdef void reset(self, intp_t size) noexcept nogil
+    cdef void add(self, intp_t idx, float64_t y, float64_t w) noexcept nogil
+    cdef intp_t search(
+        self,
+        float64_t t,
+        float64_t* cw_out,
+        float64_t* cwy_out,
+        intp_t* prev_idx_out,
+    ) noexcept nogil

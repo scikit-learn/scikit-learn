@@ -5,6 +5,7 @@ from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 from libc.math cimport isnan
+from libc.string cimport memset
 
 import numpy as np
 cimport numpy as cnp
@@ -86,166 +87,207 @@ def _any_isnan_axis0(const float32_t[:, :] X):
 
 
 # =============================================================================
-# WeightedHeap data structure
+# WeightedFenwickTree data structure
 # =============================================================================
 
-cdef class WeightedHeap:
-    """Binary heap with per-item weights, supporting min-heap and max-heap modes.
+cdef class WeightedFenwickTree:
+    """
+    Fenwick tree (Binary Indexed Tree) specialized for maintaining:
+      - prefix sums of weights
+      - prefix sums of weight * target (y)
 
-    Values are stored sign-adjusted internally so that the ordering logic
-    is always "min-heap" on the stored buffer:
-      - if min_heap: store v
-      - else (max-heap): store -v
-
-    Attributes (all should be treated as readonly attributes)
-    ----------
-    capacity : intp_t
-        Allocated capacity for the heap arrays.
-
-    size : intp_t
-        Current number of elements in the heap.
-
-    heap : float64_t*
-        Array of (possibly sign-adjusted) values that determines ordering.
-
-    weights : float64_t*
-        Parallel array of weights.
-
-    total_weight : float64_t
-        Sum of all weights currently in the heap.
-
-    weighted_sum : float64_t
-        Sum over items of (original_value * weight), i.e. without sign-adjustment.
-
-    min_heap : bint
-        If True, behaves as a min-heap; if False, behaves as a max-heap.
+    Notes:
+      - Implementation uses 1-based indexing internally for the Fenwick tree
+        arrays, hence the +1 sized buffers.
+      - Memory ownership: this class allocates and frees the underlying C buffers.
+      - Typical operations:
+          add(rank, y, w) -> O(log n)
+          search(t)       -> O(log n), finds the smallest rank with
+                             cumulative weight > t (see search for details).
     """
 
-    def __cinit__(self, intp_t capacity, bint min_heap=True):
-        if capacity <= 0:
-            capacity = 1
-        self.capacity = capacity
-        self.size = 0
-        self.min_heap = min_heap
-        self.total_weight = 0.0
-        self.weighted_sum = 0.0
-        self.heap = NULL
-        self.weights = NULL
-        # safe_realloc can raise MemoryError -> __cinit__ may propagate
-        safe_realloc(&self.heap, capacity)
-        safe_realloc(&self.weights, capacity)
+    def __cinit__(self, intp_t capacity):
+        self.tree_w = NULL
+        self.tree_wy = NULL
+
+        # Allocate arrays of length (capacity + 1) because indices are 1-based.
+        safe_realloc(&self.tree_w, capacity + 1)
+        safe_realloc(&self.tree_wy, capacity + 1)
+
+    cdef void reset(self, intp_t size) noexcept nogil:
+        """
+        Reset the tree to hold 'size' elements and clear all aggregates.
+        """
+        cdef intp_t p
+        cdef intp_t n_bytes = (size + 1) * sizeof(float64_t)  # +1 for 1-based storage
+
+        # Public size and zeroed aggregates.
+        self.size = size
+        memset(self.tree_w, 0, n_bytes)
+        memset(self.tree_wy, 0, n_bytes)
+        self.total_w = 0.0
+        self.total_wy = 0.0
+
+        # highest power of two <= size
+        p = 1
+        while p <= size:
+            p <<= 1
+        self.max_pow2 = p >> 1
 
     def __dealloc__(self):
-        if self.heap != NULL:
-            free(self.heap)
-        if self.weights != NULL:
-            free(self.weights)
+        if self.tree_w != NULL:
+            free(self.tree_w)
+        if self.tree_wy != NULL:
+            free(self.tree_wy)
 
-    cdef void reset(self) noexcept nogil:
-        """Reset to construction state (keeps capacity)."""
-        self.size = 0
-        self.total_weight = 0.0
-        self.weighted_sum = 0.0
+    cdef void add(self, intp_t idx, float64_t y_value, float64_t weight) noexcept nogil:
+        """
+        Add a weighted observation to the Fenwick tree.
 
-    cdef bint is_empty(self) noexcept nogil:
-        return self.size == 0
+        Parameters
+        ----------
+        idx : intp_t
+            The 0-based index where to add the observation
+        y_value : float64_t
+            The target value (y) of the observation
+        weight : float64_t
+            The sample weight
 
-    cdef void push(self, float64_t value, float64_t weight) noexcept nogil:
-        """Insert a (value, weight)."""
-        cdef intp_t n = self.size
-        cdef float64_t stored = value if self.min_heap else -value
+        Notes
+        -----
+        Updates both weight sums and weighted target sums in O(log n) time.
+        """
+        cdef float64_t weighted_y = weight * y_value
+        cdef intp_t fenwick_idx = idx + 1  # Convert to 1-based indexing
 
-        assert n < self.capacity
-        # ^ should never raise as capacity is set to the max possible size
+        # Update Fenwick tree nodes by traversing up the tree
+        while fenwick_idx <= self.size:
+            self.tree_w[fenwick_idx] += weight
+            self.tree_wy[fenwick_idx] += weighted_y
+            # Move to next node using bit manipulation: add lowest set bit
+            fenwick_idx += fenwick_idx & -fenwick_idx
 
-        self.heap[n] = stored
-        self.weights[n] = weight
-        self.size = n + 1
+        # Update global totals
+        self.total_w += weight
+        self.total_wy += weighted_y
 
-        self.total_weight += weight
-        self.weighted_sum += value * weight
+    cdef intp_t search(
+        self,
+        float64_t target_weight,
+        float64_t* cumul_weight_out,
+        float64_t* cumul_weighted_y_out,
+        intp_t* prev_idx_out,
+    ) noexcept nogil:
+        """
+        Binary search to find the position where cumulative weight reaches target.
 
-        self._heapify_up(n)
+        This method performs a binary search on the Fenwick tree to find indices
+        such that the cumulative weight at 'prev_idx' is < target_weight and
+        the cumulative weight at the returned index is >= target_weight.
 
-    cdef void pop(self, float64_t* value, float64_t* weight) noexcept nogil:
-        """Pop top element into pointers."""
-        cdef intp_t n = self.size
-        assert n > 0
+        Parameters
+        ----------
+        target_weight : float64_t
+            The target cumulative weight to search for
+        cumul_weight_out : float64_t*
+            Output pointer for cumulative weight up to returned index (exclusive)
+        cumul_weighted_y_out : float64_t*
+            Output pointer for cumulative weighted y-sum up to returned index (exclusive)
+        prev_idx_out : intp_t*
+            Output pointer for the previous index (largest index with cumul_weight < target)
 
-        cdef float64_t stored = self.heap[0]
-        cdef float64_t v = stored if self.min_heap else -stored
-        cdef float64_t w = self.weights[0]
-        value[0] = v
-        weight[0] = w
+        Returns
+        -------
+        intp_t
+            The index where cumulative weight first reaches or exceeds target_weight
 
-        # Update aggregates
-        self.total_weight -= w
-        self.weighted_sum -= v * w
+        Notes
+        -----
+        - O(log n) complexity
+        - Ignores nodes with zero weights (corresponding to uninserted y-values)
+        - Assumes at least one active (positive-weight) item exists
+        - Assumes 0 <= target_weight <= total_weight
+        """
+        cdef:
+            intp_t current_idx = 0
+            intp_t next_idx, prev_idx, equal_bit
+            float64_t cumul_weight = 0.0
+            float64_t cumul_weighted_y = 0.0
+            intp_t search_bit = self.max_pow2  # Start from highest power of 2
+            float64_t node_weight, equal_target
 
-        # Move last to root and sift down
-        n -= 1
-        self.size = n
-        if n > 0:
-            self.heap[0] = self.heap[n]
-            self.weights[0] = self.weights[n]
-            self._heapify_down(0)
+        # Phase 1: Standard Fenwick binary search with prefix accumulation
+        # Traverse down the tree, moving right when we can consume more weight
+        while search_bit != 0:
+            next_idx = current_idx + search_bit
+            if next_idx <= self.size:
+                node_weight = self.tree_w[next_idx]
+                if target_weight == node_weight:
+                    # Exact match found - store state for later processing
+                    equal_target = target_weight
+                    equal_bit = search_bit
+                    break
+                elif target_weight > node_weight:
+                    # We can consume this node's weight - move right and accumulate
+                    target_weight -= node_weight
+                    current_idx = next_idx
+                    cumul_weight += node_weight
+                    cumul_weighted_y += self.tree_wy[next_idx]
+            search_bit >>= 1
 
-    cdef float64_t top_weight(self) noexcept nogil:
-        assert self.size > 0
-        return self.weights[0]
+        # If no exact match, we're done with standard search
+        if search_bit == 0:
+            cumul_weight_out[0] = cumul_weight
+            cumul_weighted_y_out[0] = cumul_weighted_y
+            prev_idx_out[0] = current_idx
+            return current_idx
 
-    cdef float64_t top(self) noexcept nogil:
-        assert self.size > 0
-        cdef float64_t s = self.heap[0]
-        return s if self.min_heap else -s
+        # Phase 2: Handle exact match case - find prev_idx
+        # Search for the largest index with cumulative weight < original target
+        prev_idx = current_idx
+        while search_bit != 0:
+            next_idx = prev_idx + search_bit
+            if next_idx <= self.size:
+                node_weight = self.tree_w[next_idx]
+                if target_weight > node_weight:
+                    target_weight -= node_weight
+                    prev_idx = next_idx
+            search_bit >>= 1
 
-    # Internal helpers (nogil):
+        # Phase 3: Complete the exact match search
+        # Restore state and search for the largest index with
+        # cumulative weight <= original target (and this is case, we know we have ==)
+        search_bit = equal_bit
+        target_weight = equal_target
+        while search_bit != 0:
+            next_idx = current_idx + search_bit
+            if next_idx <= self.size:
+                node_weight = self.tree_w[next_idx]
+                if target_weight >= node_weight:
+                    target_weight -= node_weight
+                    current_idx = next_idx
+                    cumul_weight += node_weight
+                    cumul_weighted_y += self.tree_wy[next_idx]
+            search_bit >>= 1
 
-    cdef inline void _swap(self, intp_t i, intp_t j) noexcept nogil:
-        cdef float64_t tmp = self.heap[i]
-        self.heap[i] = self.heap[j]
-        self.heap[j] = tmp
-        tmp = self.weights[i]
-        self.weights[i] = self.weights[j]
-        self.weights[j] = tmp
-
-    cdef inline void _heapify_up(self, intp_t i) noexcept nogil:
-        """Move up the element at index i until heap invariant is restored."""
-        cdef intp_t p
-        while i > 0:
-            p = (i - 1) >> 1
-            if self.heap[i] < self.heap[p]:
-                self._swap(i, p)
-                i = p
-            else:
-                break
-
-    cdef inline void _heapify_down(self, intp_t i) noexcept nogil:
-        """Move down the element at index i until heap invariant is restored."""
-        cdef intp_t n = self.size
-        cdef intp_t left, right, mc
-        while True:
-            left = (i << 1) + 1
-            right = left + 1
-            if left >= n:
-                return
-            mc = left
-            if right < n and self.heap[right] < self.heap[left]:
-                mc = right
-            if self.heap[i] > self.heap[mc]:
-                self._swap(i, mc)
-                i = mc
-            else:
-                return
+        # Output results
+        cumul_weight_out[0] = cumul_weight
+        cumul_weighted_y_out[0] = cumul_weighted_y
+        prev_idx_out[0] = prev_idx
+        return current_idx
 
 
-cdef class PytestWeightedHeap(WeightedHeap):
+cdef class PytestWeightedFenwickTree(WeightedFenwickTree):
     """Used for testing only"""
 
-    def py_push(self, double value, double weight):
-        self.push(value, weight)
+    def py_reset(self, intp_t n):
+        self.reset(n)
 
-    def py_pop(self):
-        cdef double v, w
-        self.pop(&v, &w)
-        return v, w
+    def py_add(self, intp_t idx, float64_t y, float64_t w):
+        self.add(idx, y, w)
+
+    def py_search(self, float64_t t):
+        cdef float64_t w, wy
+        cdef intp_t prev_idx
+        idx = self.search(t, &w, &wy, &prev_idx)
+        return prev_idx, idx, w, wy

@@ -12,7 +12,8 @@ cnp.import_array()
 from scipy.special.cython_special cimport xlogy
 
 from sklearn.tree._utils cimport log
-from sklearn.tree._utils cimport WeightedHeap
+from sklearn.tree._utils cimport WeightedFenwickTree
+from sklearn.tree._sorting cimport sort
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
@@ -1177,16 +1178,15 @@ cdef class MSE(RegressionCriterion):
 # Helper for MAE criterion:
 
 cdef void precompute_absolute_errors(
-    const float64_t[:, ::1] ys,
+    const float64_t[::1] sorted_y,
+    const intp_t[::1] ranks,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
-    WeightedHeap above,
-    WeightedHeap below,
-    intp_t k,
+    WeightedFenwickTree tree,
     intp_t start,
     intp_t end,
     float64_t[::1] abs_errors,
-    float64_t[::1] medians
+    float64_t[::1] medians,
 ) noexcept nogil:
     """
     Fill `abs_errors` and `medians`.
@@ -1201,16 +1201,14 @@ cdef void precompute_absolute_errors(
 
     Parameters
     ----------
-    ys : const float64_t[:, ::1]
-        Target values. Shape: (n_samples, n_outputs).
+    sorted_y : const float64_t[::1]
+        Target values, sorted
+    ranks : const intp_t[::1]
     sample_weight : const float64_t[:]
-        Shape: (n_samples,)
     sample_indices : const intp_t[:]
         indices indicating which samples to use. Shape: (n_samples,)
-    above : WeightedHeap
-    below : WeightedHeap
-    k : intp_t
-        Dimension to consider in y. In [0, n_outputs - 1].
+    tree : WeightedFenwickTree
+        pre-instanciated tree
     start : intp_t
         Start index in `sample_indices`
     end : intp_t
@@ -1222,78 +1220,66 @@ cdef void precompute_absolute_errors(
         array to store (overwrite) the computed medians. Shape: (n,)
 
     Complexity: O(n log n)
-    This algorithm is an adaptation of the two heaps solution of
-    the "find median from a data stream" problem
-    See for instance: https://www.geeksforgeeks.org/dsa/median-of-stream-of-integers-running-integers/
-
-    But here, it's the weighted median and we also need to compute the AE, so:
-    - instead of balancing the heaps based on their number of elements,
-      rebalance them based on the summed weights of their elements
-    - rewrite the AE computation by splitting the sum between elements
-      above and below the median, which allow to express it as a simple
-      O(1) computation.
-      See the maths in the PR desc:
-      https://github.com/scikit-learn/scikit-learn/pull/32100
     """
-    cdef intp_t j, p, i, step, n
+    cdef:
+        intp_t p, i, step, n, r, median_idx, median_prev_idx
+        float64_t w = 1.
+        float64_t half_weight, median
+        float64_t w_right, w_left, wy_left, wy_right
+
     if start < end:
-        j = 0
         step = 1
         n = end - start
     else:
         n = start - end
         step = -1
-        j = n - 1
 
-    above.reset()
-    below.reset()
-    cdef float64_t y
-    cdef float64_t w = 1.0
-    cdef float64_t top_val, top_weight
-    cdef float64_t median = 0.0
-    cdef float64_t half_weight
+    tree.reset(n)
 
     p = start
     for _ in range(n):
         i = sample_indices[p]
         if sample_weight is not None:
             w = sample_weight[i]
-        y = ys[i, k]
+        # Activate sample i at its y-rank
+        r = ranks[p]
+        tree.add(r, sorted_y[r], w)
 
-        # Insert into the appropriate heap
-        if below.is_empty():
-            above.push(y, w)
-        elif y > below.top():
-            above.push(y, w)
+        # Weighted alpha-quantile by cumulative weight
+        half_weight = 0.5 * tree.total_w
+        median_idx = tree.search(half_weight, &w_left, &wy_left, &median_prev_idx)
+
+        if median_idx != median_prev_idx:
+            # Exact match for half_weight in the tree, take the middle point:
+            median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
         else:
-            below.push(y, w)
+            median = sorted_y[median_idx]
 
-        half_weight = (above.total_weight + below.total_weight) / 2.0
+        w_right = tree.total_w - w_left
+        wy_right = tree.total_wy - wy_left
 
-        # Rebalance heaps
-        while above.total_weight < half_weight and not below.is_empty():
-            below.pop(&top_val, &top_weight)
-            above.push(top_val, top_weight)
-        while (
-            not above.is_empty()
-            and (above.total_weight - above.top_weight()) >= half_weight
-        ):
-            above.pop(&top_val, &top_weight)
-            below.push(top_val, top_weight)
-
-        # Current median
-        if above.total_weight == half_weight:
-            median = (above.top() + below.top()) / 2.
-        else:
-            median = above.top()
-        medians[j] = median
-        abs_errors[j] += (
-            (below.total_weight - above.total_weight) * median
-            - below.weighted_sum
-            + above.weighted_sum
+        # O(1) pinball loss formula
+        medians[p] = median
+        abs_errors[p] += (
+            (wy_right - median * w_right)
+            + (median * w_left - wy_left)
         )
         p += step
-        j += step
+
+
+cdef inline void compute_ranks(
+    float64_t* y,
+    intp_t* sorted_indices,
+    intp_t* ranks,
+    intp_t n
+) noexcept nogil:
+    """Sort `y` inplace and fill `ranks` accordingly"""
+    cdef intp_t i
+    for i in range(n):
+        sorted_indices[i] = i
+    sort(y, sorted_indices, n)
+    for i in range(n):
+        ranks[sorted_indices[i]] = i
 
 
 def _py_precompute_absolute_errors(
@@ -1302,21 +1288,33 @@ def _py_precompute_absolute_errors(
     const intp_t[:] sample_indices,
     const intp_t start,
     const intp_t end,
+    const intp_t n,
 ):
     """Used for testing precompute_absolute_errors."""
     cdef:
-        intp_t n = end - start if start < end else start - end
-        WeightedHeap above = WeightedHeap(n, True)
-        WeightedHeap below = WeightedHeap(n, False)
-        intp_t k = 0
+        intp_t p, i
+        intp_t s = start
+        intp_t e = end
+        WeightedFenwickTree tree = WeightedFenwickTree(n)
+        float64_t[::1] sorted_y = np.empty(n, dtype=np.float64)
+        intp_t[::1] sorted_indices = np.empty(n, dtype=np.intp)
+        intp_t[::1] ranks = np.empty(n, dtype=np.intp)
         float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
-        float64_t[::1] medians = np.zeros(n, dtype=np.float64)
+        float64_t[::1] medians = np.empty(n, dtype=np.float64)
+
+    if start > end:
+        s = end + 1
+        e = start + 1
+    for p in range(s, e):
+        i = sample_indices[p]
+        sorted_y[p - s] = ys[i, 0]
+    compute_ranks(&sorted_y[0], &sorted_indices[0], &ranks[s], n)
 
     precompute_absolute_errors(
-        ys, sample_weight, sample_indices, above, below,
-        k, start, end, abs_errors, medians
+        sorted_y, ranks, sample_weight, sample_indices, tree,
+        start, end, abs_errors, medians
     )
-    return np.asarray(abs_errors), np.asarray(medians)
+    return np.asarray(abs_errors)[s:e], np.asarray(medians)[s:e]
 
 
 cdef class MAE(Criterion):
@@ -1333,8 +1331,10 @@ cdef class MAE(Criterion):
     cdef float64_t[::1] right_abs_errors
     cdef float64_t[::1] left_medians
     cdef float64_t[::1] right_medians
-    cdef WeightedHeap above
-    cdef WeightedHeap below
+    cdef float64_t[::1] sorted_y
+    cdef intp_t [::1] sorted_indices
+    cdef intp_t[::1] ranks
+    cdef WeightedFenwickTree tree
 
     def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
@@ -1367,8 +1367,11 @@ cdef class MAE(Criterion):
         self.right_abs_errors = np.empty(n_samples, dtype=np.float64)
         self.left_medians = np.empty(n_samples, dtype=np.float64)
         self.right_medians = np.empty(n_samples, dtype=np.float64)
-        self.above = WeightedHeap(n_samples, True)   # min-heap
-        self.below = WeightedHeap(n_samples, False)  # max-heap
+        self.tree = WeightedFenwickTree(n_samples)  # 2 float64 arrays of size n_samples + 1
+
+        self.sorted_y = np.empty(n_samples, dtype=np.float64)
+        self.sorted_indices = np.empty(n_samples, dtype=np.intp)
+        self.ranks = np.empty(n_samples, dtype=np.intp)
 
     cdef int init(
         self,
@@ -1387,15 +1390,18 @@ cdef class MAE(Criterion):
         WARNING: sample_indices will be modified in-place externally
         after this method is called
         """
-        cdef intp_t i
-        cdef float64_t w = 1.0
+        cdef:
+            intp_t i, p
+            intp_t n = end - start
+            float64_t w = 1.0
+
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
         self.start = start
         self.end = end
-        self.n_node_samples = end - start
+        self.n_node_samples = n
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
@@ -1426,43 +1432,53 @@ cdef class MAE(Criterion):
         inplace self.sample_indices[start:end], hence re-computing
         the absolute errors is needed
         """
+        cdef intp_t k, p, i
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
         n_bytes = self.n_node_samples * sizeof(float64_t)
-        memset(&self.left_abs_errors[0], 0, n_bytes)
-        memset(&self.right_abs_errors[0], 0, n_bytes)
+        memset(&self.left_abs_errors[self.start],  0, n_bytes)
+        memset(&self.right_abs_errors[self.start], 0, n_bytes)
 
-        # Precompute absolute errors (summed over each output)
-        # and medians (used only when n_outputs=1)
-        # of the right and left child of all possible splits
-        # for the current ordering of `sample_indices`
-        # Precomputation is needed here and can't be done step-by-step in the update method
-        # like for other criterions. Indeed, we don't have efficient ways to update right child
-        # statistics when removing samples from it. So we compute right child AEs/medians by
-        # traversing from right to left (and hence only adding samples).
         for k in range(self.n_outputs):
+
+            for p in range(self.start, self.end):
+                i = self.sample_indices[p]
+                self.sorted_y[p - self.start] = self.y[i, k]
+
+            # Compute the ranks of the node-local values in sorted order.
+            # - self.sorted_y[0:n_node_samples] is sorted in-place (with indices).
+            # - self.sorted_indices is a buffer used internally by compute_ranks
+            # - self.ranks[p] receives the rank of self.y[self.samples_indices[p], k]
+            #   in the sorted array, for p in [start, end)
+            compute_ranks(
+                &self.sorted_y[0],
+                &self.sorted_indices[0],
+                &self.ranks[self.start],
+                self.n_node_samples,
+            )
+
             # Note that at each iteration of this loop, we overwrite `self.left_medians`
             # and `self.right_medians`. They are used to check for monoticity constraints,
             # which are allowed only with n_outputs=1.
             precompute_absolute_errors(
-                self.y, self.sample_weight, self.sample_indices,
-                self.above, self.below, k, self.start, self.end,
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.tree, self.start, self.end,
                 # left_abs_errors is incremented, left_medians is overwritten
                 self.left_abs_errors, self.left_medians
             )
             # For the right child, we consider samples from end-1 to start-1
             # i.e., reversed, and abs error & median are filled in reverse order to.
             precompute_absolute_errors(
-                self.y, self.sample_weight, self.sample_indices,
-                self.above, self.below, k, self.end - 1, self.start - 1,
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.tree, self.end - 1, self.start - 1,
                 # right_abs_errors is incremented, right_medians is overwritten
                 self.right_abs_errors, self.right_medians
             )
             # Store the median for the current node
-            self.node_medians[k] = self.right_medians[0]
+            self.node_medians[k] = self.right_medians[self.start]
 
         return 0
 
@@ -1508,10 +1524,9 @@ cdef class MAE(Criterion):
         Monotonicity constraints are only supported for single-output trees we can safely assume
         n_outputs == 1.
         """
-        cdef intp_t j = self.pos - self.start
         return (
-            self.left_medians[j - 1]
-            + self.right_medians[j]
+            self.left_medians[self.pos - 1]
+            + self.right_medians[self.pos]
         ) / 2
 
     cdef inline bint check_monotonicity(
@@ -1521,11 +1536,9 @@ cdef class MAE(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
-        cdef intp_t j = self.pos - self.start
-
         return self._check_monotonicity(
             monotonic_cst, lower_bound, upper_bound,
-            self.left_medians[j - 1], self.right_medians[j])
+            self.left_medians[self.pos - 1], self.right_medians[self.pos])
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
@@ -1550,19 +1563,18 @@ cdef class MAE(Criterion):
 
         Time complexity: O(1) (precomputed in `.reset()`)
         """
-        cdef intp_t j = self.pos - self.start
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
         # if pos == start, left child is empty, hence impurity is 0
         if self.pos > self.start:
-            impurity_left += self.left_abs_errors[j - 1]
+            impurity_left += self.left_abs_errors[self.pos - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
         # if pos == end, right child is empty, hence impurity is 0
         if self.pos < self.end:
-            impurity_right += self.right_abs_errors[j]
+            impurity_right += self.right_abs_errors[self.pos]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
 

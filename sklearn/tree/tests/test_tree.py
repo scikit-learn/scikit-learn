@@ -42,7 +42,7 @@ from sklearn.tree._classes import (
     SPARSE_SPLITTERS,
 )
 from sklearn.tree._criterion import _py_precompute_absolute_errors
-from sklearn.tree._partitioner import _py_sort
+from sklearn.tree._sorting import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -2949,7 +2949,7 @@ def test_absolute_errors_precomputation_function(global_random_seed):
 
     def assert_same_results(y, w, indices, reverse=False):
         args = (n - 1, -1) if reverse else (0, n)
-        abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args)
+        abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args, n)
         y_sorted = y[indices]
         w_sorted = w[indices]
         if reverse:

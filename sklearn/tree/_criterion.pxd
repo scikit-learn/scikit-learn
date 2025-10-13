@@ -3,7 +3,6 @@
 
 # See _criterion.pyx for implementation details.
 from sklearn.utils._typedefs cimport float64_t, int8_t, intp_t
-from sklearn.tree._utils cimport WeightedHeap
 
 
 cdef class Criterion:
