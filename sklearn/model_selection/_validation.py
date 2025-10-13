@@ -1220,9 +1220,9 @@ def cross_val_predict(
         and y is not None
     )
     xp, is_array_api = get_namespace(X)
-    y_xp, _ = get_namespace(y)
+    xp_y, _ = get_namespace(y)
     if encode:
-        y = y_xp.asarray(y)
+        y = xp_y.asarray(y)
         if y.ndim == 1:
             le = LabelEncoder()
             y = le.fit_transform(y)

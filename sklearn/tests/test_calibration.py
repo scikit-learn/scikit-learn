@@ -1285,7 +1285,7 @@ def test_temperature_scaling_array_api_compliance(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert device(calibrator_xp.beta_) == device(X_cal_xp)
-        assert np.isclose(
+        assert_allclose(
             _convert_to_numpy(calibrator_xp.beta_, xp=xp),
             calibrator_np.beta_,
             rtol=rtol,
@@ -1356,7 +1356,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert device(calibrator_xp.beta_) == device(X_xp)
-        assert np.isclose(
+        assert_allclose(
             _convert_to_numpy(calibrator_xp.beta_, xp=xp),
             calibrator_np.beta_,
             rtol=rtol,
