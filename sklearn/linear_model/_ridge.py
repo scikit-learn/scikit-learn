@@ -1363,8 +1363,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             # is 1 to use the inverse transform of the label binarizer fitted
             # during fit.
             decision = self.decision_function(X)
-            xp, is_array_api = get_namespace(decision)
-            scores = 2.0 * xp.astype(decision > 0, xp.float32) - 1.0
+            xp, is_array_api, device_ = get_namespace_and_device(decision)
+            max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+            scores = 2.0 * xp.astype(decision > 0, max_float_dtype) - 1.0
             if is_array_api:
                 scores = _convert_to_numpy(scores, xp)
             return self._label_binarizer.inverse_transform(scores)
@@ -1871,7 +1872,7 @@ class _RidgeGCV(LinearModel):
             # or we are not fitting an intercept.
             X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X, X.T, dense_output=True), X_mean
-        # X is sparse, xp is _NumPyAPIWrapper
+        # X is sparse
         n_samples = X.shape[0]
         sample_weight_matrix = sparse.dia_matrix(
             (sqrt_sw, 0), shape=(n_samples, n_samples)
@@ -2168,14 +2169,14 @@ class _RidgeGCV(LinearModel):
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
-            # for X that does not have a simple dtype (eg pandas dataframe) the
-            # attributes will be stored in the dtype chosen by validate_data, ie
-            # np.float64
+            # for X that does not have a simple dtype (e.g. pandas dataframe)
+            # the attributes will be stored in the dtype chosen by
+            # `validate_data``, i.e. np.float64
             original_dtype = None
-        # Using float32 can be numerically unstable for this estimator. So,
-        # if the array API namespace and device allow, convert the input values
-        # to float64 whenever possible before converting back the results to
-        # float32 to keep prediction on float32 inputs efficient.
+        # Using float32 can be numerically unstable for this estimator. So if
+        # the array API namespace and device allow, convert the input values
+        # to float64 whenever possible before converting the results back to
+        # float32.
         dtype = _max_precision_float_dtype(xp, device=device_)
         X, y = validate_data(
             self,
@@ -2262,7 +2263,7 @@ class _RidgeGCV(LinearModel):
                 predictions += y_offset
 
                 if self.store_cv_results:
-                    self.cv_results_[:, i] = xp.reshape(predictions, shape=(-1,))
+                    self.cv_results_[:, i] = _ravel(predictions)
 
                 score_params = score_params or {}
                 alpha_score = self._score(
