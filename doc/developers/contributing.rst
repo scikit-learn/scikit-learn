@@ -241,40 +241,6 @@ contribution must conform to the project's :ref:`coding guidelines
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
-Video resources
----------------
-These videos are step-by-step introductions on how to contribute to
-scikit-learn, and are a great companion to the following text guidelines.
-Please make sure to still check our guidelines below, since they describe our
-latest up-to-date workflow.
-
-- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
-  `Video <https://youtu.be/5OL8XoMMOfA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
-
-- Example of Submitting a Pull Request to scikit-learn:
-  `Video <https://youtu.be/PU1WyDPGePI>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
-
-- Sprint-specific instructions and practical tips:
-  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
-
-- 3 Components of Reviewing a Pull Request:
-  `Video <https://youtu.be/dyxS9KKCNzA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
-
-.. note::
-  In January 2021, the default branch name changed from ``master`` to ``main``
-  for the scikit-learn GitHub repository to use more inclusive terms.
-  These videos were created prior to the renaming of the branch.
-  For contributors who are viewing these videos to set up their
-  working environment and submitting a PR, ``master`` should be replaced to ``main``.
-
 How to contribute
 -----------------
 
@@ -724,6 +690,40 @@ underestimate how easy an issue is to solve!
   Note that not all issues which need contributors will have this tag.
 
 .. _contribute_documentation:
+
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the text guidelines.
+Please make sure to still check our guidelines, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+
+- 3 Components of Reviewing a Pull Request:
+  `Video <https://youtu.be/dyxS9KKCNzA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
 
 Documentation
 =============
