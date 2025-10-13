@@ -1177,7 +1177,7 @@ cdef class MSE(RegressionCriterion):
 
 # Helper for MAE criterion:
 
-cdef void precompute_absolute_errors_fenwick(
+cdef void precompute_absolute_errors(
     const float64_t[::1] sorted_y,
     const intp_t[::1] ranks,
     const float64_t[:] sample_weight,
@@ -1248,9 +1248,13 @@ cdef void precompute_absolute_errors_fenwick(
         # Weighted alpha-quantile by cumulative weight
         half_weight = 0.5 * tree.total_w
         median_idx = tree.search(half_weight, &w_left, &wy_left, &median_prev_idx)
-        median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
 
-        # Right-side aggregates include the quantile position
+        if median_idx != median_prev_idx:
+            # Exact match for half_weight in the tree, take the middle point:
+            median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
+        else:
+            median = sorted_y[median_idx]
+
         w_right = tree.total_w - w_left
         wy_right = tree.total_wy - wy_left
 
@@ -1264,15 +1268,16 @@ cdef void precompute_absolute_errors_fenwick(
 
 
 cdef inline void compute_ranks(
-    float64_t* sorted_y,
+    float64_t* y,
     intp_t* sorted_indices,
     intp_t* ranks,
     intp_t n
 ) noexcept nogil:
+    """Sort `y` inplace and fill `ranks` accordingly"""
     cdef intp_t i
     for i in range(n):
         sorted_indices[i] = i
-    sort(sorted_y, sorted_indices, n)
+    sort(y, sorted_indices, n)
     for i in range(n):
         ranks[sorted_indices[i]] = i
 
@@ -1305,7 +1310,7 @@ def _py_precompute_absolute_errors(
         sorted_y[p - s] = ys[i, 0]
     compute_ranks(&sorted_y[0], &sorted_indices[0], &ranks[s], n)
 
-    precompute_absolute_errors_fenwick(
+    precompute_absolute_errors(
         sorted_y, ranks, sample_weight, sample_indices, tree,
         start, end, abs_errors, medians
     )
@@ -1443,6 +1448,11 @@ cdef class MAE(Criterion):
                 i = self.sample_indices[p]
                 self.sorted_y[p - self.start] = self.y[i, k]
 
+            # Compute the ranks of the node-local values in sorted order.
+            # - self.sorted_y[0:n_node_samples] is sorted in-place (with indices).
+            # - self.sorted_indices is a buffer used internally by compute_ranks
+            # - self.ranks[p] receives the rank of self.y[self.samples_indices[p], k]
+            #   in the sorted array, for p in [start, end)
             compute_ranks(
                 &self.sorted_y[0],
                 &self.sorted_indices[0],
@@ -1453,7 +1463,7 @@ cdef class MAE(Criterion):
             # Note that at each iteration of this loop, we overwrite `self.left_medians`
             # and `self.right_medians`. They are used to check for monoticity constraints,
             # which are allowed only with n_outputs=1.
-            precompute_absolute_errors_fenwick(
+            precompute_absolute_errors(
                 self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
                 self.tree, self.start, self.end,
                 # left_abs_errors is incremented, left_medians is overwritten
@@ -1461,7 +1471,7 @@ cdef class MAE(Criterion):
             )
             # For the right child, we consider samples from end-1 to start-1
             # i.e., reversed, and abs error & median are filled in reverse order to.
-            precompute_absolute_errors_fenwick(
+            precompute_absolute_errors(
                 self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
                 self.tree, self.end - 1, self.start - 1,
                 # right_abs_errors is incremented, right_medians is overwritten

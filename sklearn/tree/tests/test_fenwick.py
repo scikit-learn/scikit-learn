@@ -3,12 +3,11 @@ import numpy as np
 from sklearn.tree._utils import PytestWeightedFenwickTree
 
 
-# @pytest.mark.parametrize("min_heap", [True, False])
-def test_cython_weighted_fenwick_tree():
+def test_cython_weighted_fenwick_tree(global_random_seed):
     """
     Test Cython's weighted Fenwick tree implementation
     """
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(global_random_seed)
 
     n = 100
     indices = rng.permutation(n)
@@ -20,12 +19,31 @@ def test_cython_weighted_fenwick_tree():
     tree = PytestWeightedFenwickTree(n)
     tree.py_reset(n)
 
-    for idx in indices:
+    for i in range(n):
+        idx = indices[i]
         tree.py_add(idx, y[idx], w[idx])
         y_sorted[idx] = y[idx]
         w_sorted[idx] = w[idx]
-        t = rng.uniform(0, w_sorted.sum())
-        t_idx_low, t_idx, cw, cwy = tree.py_search(t)
+
+        target = rng.uniform(0, w_sorted.sum())
+        t_idx_low, t_idx, cw, cwy = tree.py_search(target)
+
+        # check the aggregates are consistent with the returned idx
         assert np.isclose(cw, w_sorted[:t_idx].sum())
         assert np.isclose(cwy, (w_sorted[:t_idx] * y_sorted[:t_idx]).sum())
-        assert cw <= t
+
+        # check if the cumulative weight is less than or equal to the target
+        # depending on t_idx_low and t_idx
+        if t_idx_low == t_idx:
+            assert cw < target
+        else:
+            assert cw == target
+
+        # check that if we add the next weight, we are above the target:
+        next_weights = w_sorted[t_idx:][w_sorted[t_idx:] > 0]
+        if next_weights.size > 0:
+            assert cw + next_weights[0] > target
+        # and not below the target for `t_idx_low`:
+        next_weights = w_sorted[t_idx_low:][w_sorted[t_idx_low:] > 0]
+        if next_weights.size > 0:
+            assert cw + next_weights[0] >= target
