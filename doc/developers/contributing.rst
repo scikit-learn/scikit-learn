@@ -241,10 +241,8 @@ contribution must conform to the project's :ref:`coding guidelines
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
-How to contribute
+Set up your development environment
 -----------------
-
-
 
 In the first few steps, we explain how to locally install scikit-learn, and
 how to set up your git repository:
