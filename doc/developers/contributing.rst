@@ -242,19 +242,45 @@ contribution must conform to the project's :ref:`coding guidelines
 - **Most importantly**: Do not contribute code that you don't understand.
 
 Set up your development environment
------------------
+-----------------------------------
 
-In the first few steps, we explain how to locally install scikit-learn, and
-how to set up your git repository:
+The following steps explain how to set up a local clone of your forked git repository
+and how to locally install scikit-learn according to your operating system.
 
-
-3. Clone your fork of the scikit-learn repo from your GitHub account to your
-   local disk:
+Set up a local clone of your fork
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+First, clone your fork of the scikit-learn repo from your GitHub account to your
+local disk:
 
    .. prompt:: bash
 
       git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
+
+Next, add the ``upstream`` remote. This saves a reference to the main
+scikit-learn repository, which you can use to keep your repository
+synchronized with the latest changes:
+
+   .. prompt:: bash
+
+        git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+
+Check that the `upstream` and `origin` remote aliases are configured correctly
+by running:
+
+   .. prompt:: bash
+
+        git remote -v
+
+This should display:
+
+   .. code-block:: text
+
+        origin    https://github.com/YourLogin/scikit-learn.git (fetch)
+        origin    https://github.com/YourLogin/scikit-learn.git (push)
+        upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
+        upstream  https://github.com/scikit-learn/scikit-learn.git (push)
+
 
 4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
@@ -267,29 +293,7 @@ how to set up your git repository:
 
 .. _upstream:
 
-6. Add the ``upstream`` remote. This saves a reference to the main
-   scikit-learn repository, which you can use to keep your repository
-   synchronized with the latest changes:
-
-   .. prompt:: bash
-
-        git remote add upstream https://github.com/scikit-learn/scikit-learn.git
-
-7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running:
-
-   .. prompt:: bash
-
-        git remote -v
-
-   This should display:
-
-   .. code-block:: text
-
-        origin    https://github.com/YourLogin/scikit-learn.git (fetch)
-        origin    https://github.com/YourLogin/scikit-learn.git (push)
-        upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
-        upstream  https://github.com/scikit-learn/scikit-learn.git (push)
+6.
 
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
