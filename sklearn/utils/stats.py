@@ -109,6 +109,11 @@ def _weighted_percentile(
     if xp.any(percentile_rank[1:] < percentile_rank[:-1]):
         raise ValueError("percentile_rank must be non-decreasing")
 
+    sorted_idx = None
+    w_sorted = not hasattr(xp, "argpartition")
+    if w_sorted:
+        sorted_idx = xp.argsort(array, axis=0, stable=False)
+
     q = percentile_rank / 100
     n_percentiles = percentile_rank.shape[0]
     result = xp.empty((n_features, n_percentiles), dtype=floating_dtype)
@@ -116,6 +121,16 @@ def _weighted_percentile(
     # Compute weighted percentiles for each feature (column)
     for feature_idx in range(n_features):
         x = array[..., feature_idx]
+        w = (
+            sample_weight[..., feature_idx]
+            if sample_weight.ndim == 2
+            else sample_weight
+        )
+        if w_sorted:
+            x_sorter = sorted_idx[..., feature_idx]
+            x = x[x_sorter]
+            w = w[x_sorter]
+
         # Ignore NaN values by masking them out
         mask_not_nan = ~xp.isnan(x)
         x = x[mask_not_nan]
@@ -124,11 +139,7 @@ def _weighted_percentile(
             result[feature_idx, ...] = xp.nan
             continue
         # Select weights for non-NaN values
-        w = (
-            sample_weight[..., feature_idx][mask_not_nan]
-            if sample_weight.ndim == 2
-            else sample_weight[mask_not_nan]
-        )
+        w = w[mask_not_nan]
         # Ignore zero weights
         mask_nz = w != 0
         has_zero = not xp.all(mask_nz)
@@ -142,12 +153,6 @@ def _weighted_percentile(
         if has_zero:
             x = x[mask_nz]
         # Recursively compute weighted percentiles using partitioning
-        w_sorted = False
-        if not hasattr(xp, "argpartition"):
-            x_sorter = xp.argsort(x, stable=False)
-            w = w[x_sorter]
-            x = x[x_sorter]
-            w_sorted = True
         _weighted_percentile_inner(
             x,
             w,
@@ -166,25 +171,24 @@ def _weighted_percentile(
 
 def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
     n = x.shape[0]
-    if n == 1:
-        out[:] = x
+    if n < 100 and not w_sorted:
+        sorted_idx = xp.argsort(x, stable=False)
+        w = w[sorted_idx]
+        x = x[sorted_idx]
+        w_sorted = True
+    if w_sorted:
+        _weighted_percentile_inner_sorted(x, w, target_sums, out, average, xp)
         return
     i = n // 2
-    if w_sorted:
-        w_left = w[:i]
-        x_left = x[:i]
-        w_right = w[i:]
-        x_right = x[i:]
-    else:
-        partitioner = xp.argpartition(x, i)
-        w_left = w[partitioner[:i]]
-        x_left = w_right = x_right = None
+    partitioner = xp.argpartition(x, i)
+    w_left = w[partitioner[:i]]
+    x_right = None
     sum_left = xp.sum(w_left)
     j = xp.searchsorted(target_sums, sum_left)
     target_sums[j:] -= sum_left
     if j > 0:
         # some quantiles are to be found on the left side of the partition
-        x_left = x[partitioner[:i]] if x_left is None else x_left
+        x_left = x[partitioner[:i]]
         _weighted_percentile_inner(
             x_left, w_left, target_sums[:j], out[:j], average, w_sorted, xp
         )
@@ -195,8 +199,8 @@ def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
     idx_0 = xp.searchsorted(target_sums[j:], zero, side="right")
     if idx_0 > 0:
         # some quantiles are precisely at the index of the partition
-        x_left = x[partitioner[:i]] if x_left is None else x_left
-        x_right = x[partitioner[i:]] if x_right is None else x_right
+        x_left = x[partitioner[:i]]
+        x_right = x[partitioner[i:]]
         out[j : j + idx_0] = (
             (xp.max(x_left) + xp.min(x_right)) / 2 if average else xp.max(x_left)
         )
@@ -204,10 +208,20 @@ def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
     if j < target_sums.shape[0]:
         # some quantiles are to be found on the right side of the partition
         x_right = x[partitioner[i:]] if x_right is None else x_right
-        w_right = w[partitioner[i:]] if w_right is None else w_right
+        w_right = w[partitioner[i:]]
         _weighted_percentile_inner(
             x_right, w_right, target_sums[j:], out[j:], average, w_sorted, xp
         )
+
+
+def _weighted_percentile_inner_sorted(x, w, target_sums, out, average, xp):
+    cw = xp.cumsum(w, axis=0)
+    idx = xp.searchsorted(cw, target_sums)
+    out[:] = x[idx]
+    if average:
+        mask_0 = cw[idx] == target_sums
+        if mask_0.any():
+            out[mask_0] = (x[idx] + x[idx + 1]) / 2
 
 
 def _old_weighted_percentile(
