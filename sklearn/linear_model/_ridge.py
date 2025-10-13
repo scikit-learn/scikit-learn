@@ -1320,12 +1320,15 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        y_xp, y_is_array_api = get_namespace(y)
+        xp_y, y_is_array_api = get_namespace(y)
+        # TODO: Update this line to avoid calling `_convert_to_numpy`
+        # once LabelBinarizer has been updated to accept non-NumPy array API
+        # compatible inputs.
         Y = self._label_binarizer.fit_transform(
-            _convert_to_numpy(y, y_xp) if y_is_array_api else y
+            _convert_to_numpy(y, xp_y) if y_is_array_api else y
         )
         Y = ensure_common_namespace_device(original_X, Y)[0]
-        if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
+        if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
             self.classes_ = ensure_common_namespace_device(
                 original_X, self._label_binarizer.classes_
             )[0]
@@ -1363,9 +1366,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             # is 1 to use the inverse transform of the label binarizer fitted
             # during fit.
             decision = self.decision_function(X)
-            xp, is_array_api, device_ = get_namespace_and_device(decision)
-            max_float_dtype = _max_precision_float_dtype(xp, device=device_)
-            scores = 2.0 * xp.astype(decision > 0, max_float_dtype) - 1.0
+            xp, is_array_api = get_namespace(decision)
+            scores = 2.0 * xp.astype(decision > 0, decision.dtype) - 1.0
             if is_array_api:
                 scores = _convert_to_numpy(scores, xp)
             return self._label_binarizer.inverse_transform(scores)

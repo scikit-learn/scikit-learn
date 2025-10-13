@@ -361,8 +361,8 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        coef = self.coef_.T if self.coef_.ndim == 2 else self.coef_
-        scores = safe_sparse_dot(X, coef, dense_output=True) + self.intercept_
+        coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
+        scores = safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)
