@@ -14,12 +14,13 @@ from sklearn.preprocessing._target_encoder_fast import (
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _check_y,
     _num_samples,
     check_consistent_length,
     check_is_fitted,
-    validate_data,
 )
 from sklearn.utils.validation import _normalize_na_key as _norm_key
 
@@ -355,15 +356,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         - Uses precomputed per-feature {category -> index} maps to do O(1) lookups.
         """
         # Validate here (large-batch path validates inside _transform)
-        X_checked = validate_data(
-            self,
-            X,
-            reset=False,
-            ensure_2d=True,
-            dtype=None,
-            ensure_all_finite="allow-nan",
-        )
-        X_arr = np.asarray(X_checked, dtype=object)
+        _, n_samples, n_features = self._check_X(X, ensure_all_finite="allow-nan")
+
+        # 2) feature-name & n_features checks on the original X (keeps pandas names)
+        _check_feature_names(self, X, reset=False)
+        _check_n_features(self, X, reset=False)
+
+        # 3) build an object array for the tiny fast path
+        X_arr = np.asarray(X, dtype=object)
         n_samples, n_features = X_arr.shape
         is_multi = self.target_type_ == "multiclass"
 

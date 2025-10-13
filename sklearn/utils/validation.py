@@ -2972,17 +2972,21 @@ def validate_data(
 
 
 def _looks_like_pandas_na(x) -> bool:
-    """Return True if x is pandas.NA (duck-typed; no pandas import)."""
+    """Return True if x is the pandas scalar NA"""
     t = type(x)
-    mod = getattr(t, "__module__", "")
-    return t.__name__ == "NAType" and mod.startswith("pandas")
+    return (
+        getattr(t, "__name__", "") == "NAType"
+        and getattr(t, "__module__", "") == "pandas._libs.missing"
+    )
 
 
 def _looks_like_pandas_nat(x) -> bool:
-    """Return True if x is pandas.NaT (duck-typed; no pandas import)."""
+    """Return True if x is the pandas scalar NaT"""
     t = type(x)
-    mod = getattr(t, "__module__", "")
-    return t.__name__ in {"NaTType", "NaT"} and mod.startswith("pandas")
+    return (
+        getattr(t, "__name__", "") in {"NaTType", "NaT"}
+        and getattr(t, "__module__", "") == "pandas._libs.tslibs.nattype"
+    )
 
 
 @unique
