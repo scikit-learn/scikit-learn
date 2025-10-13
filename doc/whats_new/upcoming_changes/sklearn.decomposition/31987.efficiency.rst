@@ -1,0 +1,11 @@
+- :class:`sklearn.decomposition.DictionaryLearning` and
+  :class:`sklearn.decomposition.MiniBatchDictionaryLearning` with `fit_algorithm="cd"`,
+  :class:`sklearn.decomposition.SparseCoder` with `transform_algorithm="lasso_cd"`,
+  :class:`sklearn.decomposition.MiniBatchSparsePCA`,
+  :class:`sklearn.decomposition.SparsePCA`,
+  :func:`sklearn.decomposition.dict_learning` and
+  :func:`sklearn.decomposition.dict_learning_online` with `method="cd"`,
+  :func:`sklearn.decomposition.sparse_encode` with `algorithm="lasso_cd"`
+  all profit from the fit time performance improvement of
+  :class:`sklearn.linear_model.Lasso` by means of gap safe screening rules.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -361,7 +361,8 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
+        scores = safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)
@@ -487,7 +488,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
         specifies a different convergence criterion for the `lsqr` solver.
-        `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
+        `tol` is set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
         fitting on sparse training data. This parameter has no effect when fitting
         on dense data.
 
@@ -554,8 +555,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
-    (scipy.optimize.nnls) wrapped as a predictor object.
+    Least Squares (:func:`scipy.linalg.lstsq`) or Non Negative Least Squares
+    (:func:`scipy.optimize.nnls`) wrapped as a predictor object.
 
     Examples
     --------

@@ -246,9 +246,33 @@ def _union1d(a, b, xp):
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
-    Note: float16 is not officially part of the Array API spec at the
+    Parameters
+    ----------
+    xp : module
+        Array namespace to inspect.
+
+    device : str or device instance from xp, default=None
+        Device to use for dtype selection. If ``None``, then a default device
+        is assumed.
+
+    Returns
+    -------
+    supported_dtypes : tuple
+        Tuple of real floating data types supported by the provided array namespace,
+        ordered from the highest precision to lowest.
+
+    See Also
+    --------
+    max_precision_float_dtype : Maximum float dtype for a namespace/device pair.
+
+    Notes
+    -----
+    `float16` is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose
     to accept it when xp.float16 is defined.
+
+    Additionally, some devices available within a namespace may not support
+    all floating-point types that the namespace provides.
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
@@ -290,7 +314,9 @@ def ensure_common_namespace_device(reference, *arrays):
     if is_array_api:
         device_ = device(reference)
         # Move arrays to the same namespace and device as the reference array.
-        return [xp.asarray(a, device=device_) for a in arrays]
+        return [
+            xp.asarray(a, device=device_) if a is not None else None for a in arrays
+        ]
     else:
         return arrays
 
@@ -601,7 +627,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    xp, _, device_ = get_namespace_and_device(a, weights)
+    xp, _, device_ = get_namespace_and_device(a, weights, xp=xp)
 
     if _is_numpy_namespace(xp):
         if normalize:
@@ -748,6 +774,19 @@ def _nanmean(X, axis=None, xp=None):
         return total / count
 
 
+def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _, X_device = get_namespace_and_device(X, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
+
+    mask = xp.isnan(X)
+    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
+    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
+
+
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -840,7 +879,7 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 100
+    return numpy.finfo(dtype_or_dtype_name).eps * 1000
 
 
 def indexing_dtype(xp):

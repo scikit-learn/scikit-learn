@@ -472,9 +472,16 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
-:math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
+Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)`
+until a stopping condition is reached, for instance some examples include
+(for others see the docstring of the estimators):
+
+* the maximum allowable depth is reached (`max_depth`)
+
+* :math:`n_m` is smaller than `min_samples_split`
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`
+
 
 Classification criteria
 -----------------------
@@ -560,9 +567,9 @@ Mean Poisson deviance:
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
-necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion. For performance reasons the actual implementation minimizes
-the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
+necessary condition to use this criterion. For performance reasons the actual
+implementation minimizes the half mean poisson deviance, i.e. the mean poisson
+deviance divided by 2.
 
 Mean Absolute Error:
 

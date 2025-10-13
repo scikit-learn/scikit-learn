@@ -976,12 +976,12 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
-        For pandas container supporting `columns_names`, it will affect
+        For pandas/polars container supporting `columns_names`, it will affect
         specific names.
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
@@ -1439,6 +1439,12 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
+        ),
+        # TODO(1.10): remove PassiveAgressive
+        WarningInfo(
+            "ignore",
+            message="Class PassiveAggressive.+is deprecated",
+            category=FutureWarning,
         ),
     ]
 

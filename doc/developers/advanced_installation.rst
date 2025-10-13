@@ -57,7 +57,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone https://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -188,10 +188,6 @@ to enable OpenMP support:
 
 - or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
-For Apple Silicon M1 hardware, only the conda-forge method below is known to
-work at the time of writing (January 2021). You can install the `macos/arm64`
-distribution of conda using the `conda-forge installer
-<https://conda-forge.org/download/>`_
 
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -279,17 +275,6 @@ Install the LLVM OpenMP library:
 .. prompt:: bash $
 
     brew install libomp
-
-Set the following environment variables:
-
-.. prompt:: bash $
-
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
 Finally, build scikit-learn in verbose mode (to check for the presence of the
 ``-fopenmp`` flag in the compiler commands):
