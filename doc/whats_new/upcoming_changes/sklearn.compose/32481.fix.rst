@@ -1,5 +1,0 @@
-Use
-  :func:`~sklearn.utils.validation.validate_data` instead of the internal
-  `_check_n_features` and `_check_feature_names` functions when both were used
-  together. This improves consistency with the common estimator validation API.
-  :pr:`<32481>` by :user:`Microcosmos22`.
