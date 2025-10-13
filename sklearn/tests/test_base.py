@@ -42,7 +42,6 @@ from sklearn.utils.validation import _check_n_features, validate_data
 #############################################################################
 # A few test classes
 class MyEstimator(BaseEstimator):
-    # changed a test file
     def __init__(self, l1=0, empty=None):
         self.l1 = l1
         self.empty = empty
