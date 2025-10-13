@@ -207,13 +207,6 @@ The preferred way to contribute to scikit-learn is to fork the `main
 repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
 then submit a "pull request" (PR).
 
-For this, you first need to `Create an account <https://github.com/join>`_ on
-GitHub if you do not already have one, and fork the `project repository
-<https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-button near the top of the page. This creates a copy of the code under your
-account on the GitHub user account. For more details on how to fork a
-repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
-
 .. note::
 
   To avoid duplicating work, it is highly advised that you search through the
@@ -244,18 +237,32 @@ contribution must conform to the project's :ref:`coding guidelines
 Set up your development environment
 -----------------------------------
 
+Fork the scikit-learn repository
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+First, you need to `create an account <https://github.com/join>`_ on
+GitHub (if you do not already have one) and fork the `project repository
+<https://github.com/scikit-learn/scikit-learn>`__ by clicking on the 'Fork'
+button near the top of the page. This creates a copy of the code under your
+account on the GitHub user account. For more details on how to fork a
+repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
+
 The following steps explain how to set up a local clone of your forked git repository
 and how to locally install scikit-learn according to your operating system.
 
 Set up a local clone of your fork
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-First, clone your fork of the scikit-learn repo from your GitHub account to your
+Clone your fork of the scikit-learn repo from your GitHub account to your
 local disk:
 
-   .. prompt:: bash
+.. prompt:: bash
 
-      git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-      cd scikit-learn
+  git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+
+and change into that directory:
+
+.. prompt:: bash
+
+  cd scikit-learn
 
 .. _upstream:
 
@@ -263,49 +270,51 @@ Next, add the ``upstream`` remote. This saves a reference to the main
 scikit-learn repository, which you can use to keep your repository
 synchronized with the latest changes (you'll need this later in the :ref:`development_workflow`):
 
-   .. prompt:: bash
+.. prompt:: bash
 
-        git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+  git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 Check that the `upstream` and `origin` remote aliases are configured correctly
 by running:
 
-   .. prompt:: bash
+.. prompt:: bash
 
-        git remote -v
+  git remote -v
 
 This should display:
 
-   .. code-block:: text
+.. code-block:: text
 
-        origin    https://github.com/YourLogin/scikit-learn.git (fetch)
-        origin    https://github.com/YourLogin/scikit-learn.git (push)
-        upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
-        upstream  https://github.com/scikit-learn/scikit-learn.git (push)
+  origin    https://github.com/YourLogin/scikit-learn.git (fetch)
+  origin    https://github.com/YourLogin/scikit-learn.git (push)
+  upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
+  upstream  https://github.com/scikit-learn/scikit-learn.git (push)
 
 Set up a dedicated environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _install_bleeding_edge:
 
-4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
+#. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
-5. Install the development dependencies:
+#. Install the development dependencies:
 
    .. prompt:: bash
 
         pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-You should now have a working installation of scikit-learn, and your git repository
+You should now have a working installation of scikit-learn and your git repository
 properly configured. It could be useful to run some test to verify your installation.
 Please refer to :ref:`pytest_tips` for examples.
 
 .. _development_workflow:
 
 Development workflow
-^^^^^^^^^^^^^^^^^^^^
+--------------------
+
 The next steps describe the process of modifying code and submitting a PR:
 
-8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+#. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash
@@ -314,7 +323,7 @@ The next steps describe the process of modifying code and submitting a PR:
         git fetch upstream
         git merge upstream/main
 
-9. Create a feature branch to hold your development changes:
+#. Create a feature branch to hold your development changes:
 
    .. prompt:: bash
 
@@ -323,7 +332,7 @@ The next steps describe the process of modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-10. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+#. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
     run code style checks before each commit:
 
     .. prompt:: bash
@@ -334,7 +343,7 @@ The next steps describe the process of modifying code and submitting a PR:
     pre-commit checks can be disabled for a particular commit with
     `git commit -n`.
 
-11. Develop the feature on your feature branch on your computer, using Git to
+#. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``:
 
@@ -350,7 +359,7 @@ The next steps describe the process of modifying code and submitting a PR:
 
        git push -u origin my_feature
 
-12. Follow `these
+#. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send a
     notification to potential reviewers. You may want to consider sending a message to
