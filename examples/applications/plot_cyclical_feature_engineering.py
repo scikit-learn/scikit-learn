@@ -61,7 +61,7 @@ df["count"].max()
 #
 # .. note::
 #
-#     The fit method of the models used in this notebook all minimize the
+#     The fit method of the models used in this notebook all minimizes the
 #     mean squared error to estimate the conditional mean.
 #     The absolute error, however, would estimate the conditional median.
 #
