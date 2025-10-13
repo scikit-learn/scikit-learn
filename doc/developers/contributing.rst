@@ -257,9 +257,11 @@ local disk:
       git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
+.. _upstream:
+
 Next, add the ``upstream`` remote. This saves a reference to the main
 scikit-learn repository, which you can use to keep your repository
-synchronized with the latest changes:
+synchronized with the latest changes (you'll need this later in the :ref:`development_workflow`):
 
    .. prompt:: bash
 
@@ -281,6 +283,8 @@ This should display:
         upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
         upstream  https://github.com/scikit-learn/scikit-learn.git (push)
 
+Set up a dedicated environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
@@ -291,15 +295,15 @@ This should display:
 
         pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-.. _upstream:
-
-6.
-
 You should now have a working installation of scikit-learn, and your git repository
 properly configured. It could be useful to run some test to verify your installation.
 Please refer to :ref:`pytest_tips` for examples.
 
-The next steps now describe the process of modifying code and submitting a PR:
+.. _development_workflow:
+
+Development workflow
+^^^^^^^^^^^^^^^^^^^^
+The next steps describe the process of modifying code and submitting a PR:
 
 8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
