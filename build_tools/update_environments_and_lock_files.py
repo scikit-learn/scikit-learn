@@ -399,6 +399,9 @@ build_metadata_list = [
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.10",
+            # The following is needed to avoid getting libnvpl build for blas for some
+            # reason.
+            "blas": "[build=openblas]",
         },
     },
     {
