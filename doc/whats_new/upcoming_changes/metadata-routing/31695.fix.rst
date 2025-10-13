@@ -1,0 +1,4 @@
+- The `get_metadata_routing` method of estimators that are :term:`consumers <consumer>`
+  of metadata has been deprecated and will be removed in version 1.9. Use
+  :func:`~utils.metadata_routing.get_routing_for_object` instead.
+  By :user:`Stefanie Senger <StefanieSenger>`.
