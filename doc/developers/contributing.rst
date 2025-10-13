@@ -691,7 +691,7 @@ underestimate how easy an issue is to solve!
   found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
   Note that not all issues which need contributors will have this tag.
 
-.. _contribute_documentation:
+
 
 Video resources
 ---------------
@@ -726,6 +726,8 @@ latest up-to-date workflow.
   These videos were created prior to the renaming of the branch.
   For contributors who are viewing these videos to set up their
   working environment and submitting a PR, ``master`` should be replaced to ``main``.
+
+.. _contribute_documentation:
 
 Documentation
 =============
