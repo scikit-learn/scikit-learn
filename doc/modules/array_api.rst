@@ -142,13 +142,17 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.d2_brier_score`
+- :func:`sklearn.metrics.d2_log_loss_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.hamming_loss`
 - :func:`sklearn.metrics.jaccard_score`
+- :func:`sklearn.metrics.log_loss`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
