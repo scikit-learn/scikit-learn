@@ -214,6 +214,11 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
+        "package_constraints": {
+            # TODO: remove this constraint once scikit-image and pyamg provide binary
+            # wheels for Python 3.14 (or later) on PyPI.
+            "python": "3.13",
+        },
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
