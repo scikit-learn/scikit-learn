@@ -265,7 +265,7 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge", "conda-forge/label/python_rc"],
+        "channels": ["conda-forge"],
         "conda_dependencies": [
             "python-freethreading",
             "meson-python",
