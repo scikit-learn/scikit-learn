@@ -25,7 +25,7 @@ setup_ccache() {
         ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
-        ccache -M 256M
+        ccache -M 512M
 
         # Zeroing statistics so that ccache statistics are shown only for this build
         ccache -z
