@@ -201,7 +201,3 @@ a.param-doc-link::before {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-0);
 }
-
-.features .features-container .hidden {
-  display: None;
-}

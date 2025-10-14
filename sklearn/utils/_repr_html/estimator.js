@@ -44,9 +44,13 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 
 
 async function copyRowsToClipboard(text) {
+
+  const rows = text.split('\n').map(row => `"${row}"`); // Split rows and wrap each in double quotes
+  const formattedText = `[${rows.join(', ')}]`; // Join rows with commas inside square brackets
+
   const type = "text/plain";
   const clipboardItemData = {
-    [type]: text,
+    [type]: formattedText,
   };
   const clipboardItem = new ClipboardItem(clipboardItemData);
   await navigator.clipboard.write([clipboardItem]);
