@@ -15,6 +15,7 @@ env:
   TEST_DIR: ${{ github.workspace }}/tmp_folder
   CCACHE_DIR: ${{ github.workspace }}/ccache
   COVERAGE: 'true'
+  SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   lint:
@@ -41,11 +42,28 @@ jobs:
           pip install ninja meson scipy
           python build_tools/check-meson-openmp-dependencies.py
 
+  retrieve-commit-message:
+    name: Retrieve the latest commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      message: ${{ steps.git-log.outputs.message }}
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        ref: ${{ env.SHA }}
+    - id: git-log
+      shell: bash
+      run: |
+        set -eu
+        message=$(git log --format=%B -n 1 "${SHA}")
+        echo "message=${message}" >> "${GITHUB_OUTPUT}"
+
   unit-tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     if: github.repository == 'scikit-learn/scikit-learn'
-    needs: [lint]
+    needs: [lint, retrieve-commit-message]
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
@@ -88,6 +106,8 @@ jobs:
 
       - name: Run tests
         run: bash -l build_tools/azure/test_script.sh
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
 
       - name: Combine coverage reports from parallel test runners
         run: bash -l build_tools/azure/combine_coverage_reports.sh
