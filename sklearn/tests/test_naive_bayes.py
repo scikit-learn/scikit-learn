@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from scipy.special import logsumexp
 
+from sklearn._config import config_context
 from sklearn.datasets import load_digits, load_iris
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.naive_bayes import (
@@ -14,7 +15,14 @@ from sklearn.naive_bayes import (
     GaussianNB,
     MultinomialNB,
 )
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    device,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -977,3 +985,57 @@ def test_categorical_input_tag(Estimator):
         assert tags.input_tags.categorical
     else:
         assert not tags.input_tags.categorical
+
+
+@pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_gnb_array_api_compliance(
+    use_str_y, use_sample_weight, array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np = X.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+    if use_str_y:
+        y_np = np.array(["a", "a", "a", "b", "b", "b"])
+        y_xp_or_np = np.array(["a", "a", "a", "b", "b", "b"])
+    else:
+        y_np = y.astype(dtype_name)
+        y_xp_or_np = xp.asarray(y_np, device=device_)
+
+    if use_sample_weight:
+        sample_weight = np.array([1, 2, 3, 1, 2, 3])
+    else:
+        sample_weight = None
+
+    clf_np = GaussianNB().fit(X_np, y_np, sample_weight=sample_weight)
+    y_pred_np = clf_np.predict(X_np)
+    y_pred_proba_np = clf_np.predict_proba(X_np)
+    y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
+    with config_context(array_api_dispatch=True):
+        clf_xp = GaussianNB().fit(X_xp, y_xp_or_np, sample_weight=sample_weight)
+        assert_allclose(_convert_to_numpy(clf_xp.var_, xp=xp), clf_np.var_)
+        assert_allclose(_convert_to_numpy(clf_xp.theta_, xp=xp), clf_np.theta_)
+
+        y_pred_xp = clf_xp.predict(X_xp)
+        if not use_str_y:
+            assert device(y_pred_xp) == device(X_xp)
+            y_pred_xp = _convert_to_numpy(y_pred_xp, xp=xp)
+        assert_array_equal(y_pred_xp, y_pred_np)
+        assert y_pred_xp.dtype == y_pred_np.dtype
+
+        y_pred_proba_xp = clf_xp.predict_proba(X_xp)
+        assert y_pred_proba_xp.dtype == X_xp.dtype
+        assert device(y_pred_proba_xp) == device(X_xp)
+        assert_allclose(_convert_to_numpy(y_pred_proba_xp, xp=xp), y_pred_proba_np)
+
+        y_pred_log_proba_xp = clf_xp.predict_log_proba(X_xp)
+        assert y_pred_log_proba_xp.dtype == X_xp.dtype
+        assert device(y_pred_log_proba_xp) == device(X_xp)
+        assert_allclose(
+            _convert_to_numpy(y_pred_log_proba_xp, xp=xp), y_pred_log_proba_np
+        )

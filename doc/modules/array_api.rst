@@ -119,6 +119,7 @@ Estimators
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
 - :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`naive_bayes.GaussianNB`
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.LabelEncoder`
