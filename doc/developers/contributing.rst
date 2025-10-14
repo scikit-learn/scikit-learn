@@ -359,8 +359,7 @@ The next steps describe the process of modifying code and submitting a PR:
 
        git push -u origin my_feature
 
-#. Follow `these
-    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+#. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send a
     notification to potential reviewers. You may want to consider sending a message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
