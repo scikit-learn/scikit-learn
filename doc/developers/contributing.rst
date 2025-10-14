@@ -234,8 +234,12 @@ contribution must conform to the project's :ref:`coding guidelines
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
+.. _install_bleeding_edge:
+
 Set up your development environment
 -----------------------------------
+
+.. _git_repo:
 
 Fork the scikit-learn repository
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -290,9 +294,21 @@ This should display:
   upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
   upstream  https://github.com/scikit-learn/scikit-learn.git (push)
 
-Set up a dedicated environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. _install_bleeding_edge:
+
+Set up a dedicated environment and install dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
+
+Using an isolated environment such as `venv` or `conda` makes it possible to
+install a specific version of scikit-learn with pip or conda and its dependencies
+independently of any previously installed Python packages. Note that the virtual
+environment is optional but strongly recommended, in order to avoid potential
+conflicts with other packages.
+
+
 
 #. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
@@ -303,9 +319,54 @@ Set up a dedicated environment
 
         pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
+Install editable version of scikit-learn
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Within your venv or conda `sklearn-dev` environment, build the project with pip:
+
+  .. prompt:: bash $
+
+    pip install --editable . \
+      --verbose --no-build-isolation \
+      --config-settings editable-verbose=true
+
+  .. note::
+
+    `--config-settings editable-verbose=true` is optional but recommended
+    to avoid surprises when you import `sklearn`. `meson-python` implements
+    editable installs by rebuilding `sklearn` when executing `import sklearn`.
+    With the recommended setting you will see a message when this happens,
+    rather than potentially waiting without feedback and wondering
+    what is taking so long. Bonus: this means you only have to run the `pip
+    install` command once, `sklearn` will automatically be rebuilt when
+    importing `sklearn`.
+
+    Note that `--config-settings` is only supported in `pip` version 23.1 or
+    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
+
+To check your installation, make sure that the installed scikit-learn has a
+version number ending with `.dev0`:
+
+   .. prompt:: bash $
+
+     python -c "import sklearn; sklearn.show_versions()"
+
 You should now have a working installation of scikit-learn and your git repository
-properly configured. It could be useful to run some test to verify your installation.
-Please refer to :ref:`pytest_tips` for examples.
+properly configured.
+Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
+some tests to verify your installation.
+
+.. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
+.. _Cython: https://cython.org
+.. _meson-python: https://mesonbuild.com/meson-python
+.. _Ninja: https://ninja-build.org/
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
+.. _Homebrew: https://brew.sh
+.. _virtualenv: https://docs.python.org/3/tutorial/venv.html
+.. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _conda-forge: https://conda-forge.org/download/
+..
+   END install_bleeding_edge - TODO: Move thispart to a separate site
 
 .. _development_workflow:
 
