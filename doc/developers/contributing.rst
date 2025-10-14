@@ -308,6 +308,91 @@ independently of any previously installed Python packages. Note that the virtual
 environment is optional but strongly recommended, in order to avoid potential
 conflicts with other packages.
 
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .install-instructions .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .install-instructions .sd-tab-set.tabs-os::before {
+        content: "Operating System";
+      }
+
+      .install-instructions .sd-tab-set.tabs-package-manager::before {
+        content: "Package Manager";
+      }
+    }
+  </style>
+
+.. div:: install-instructions
+
+  .. tab-set::
+    :class: tabs-os
+
+    .. tab-item:: Windows
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          Install the 64-bit version of Python (|PythonMinVersion| or later), for instance from the
+          `official website <https://www.python.org/downloads/windows/>`__.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt:: powershell
+
+            python -m venv sklearn-dev
+            sklearn-dev\Scripts\activate  # activate
+            pip install wheel numpy scipy cython meson-python ninja
+
+          Also install the development dependencies:
+
+          .. prompt:: powershell
+
+            pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          Install a recent version of Python (|PythonMinVersion| or later) for instance
+          using conda-forge_. Conda-forge provides a conda-based distribution of
+          Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages:
+
+          .. prompt:: powershell
+
+            conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
+
+          It is not always necessary but it is safer to open a new prompt before
+          activating the newly created conda environment.
+
+          .. prompt:: powershell
+
+            conda activate sklearn-env
+
+          Also install the development dependencies in your environment:
+
+          .. prompt:: powershell
+
+            conda install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+        Additionally, you need to install a compiler with OpenMP_ support for your platform.
+        Download the `Build Tools for Visual Studio installer<https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+        and run the downloaded `vs_buildtools.exe` file. During the installation you will
+        need to make sure you select "Desktop development with C++", similarly to this
+        screenshot:
+
+        .. image::
+          ../images/visual-studio-build-tools-selection.png
 
 
 #. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
@@ -362,7 +447,7 @@ some tests to verify your installation.
 .. _NumPy: https://numpy.org
 .. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
-.. _virtualenv: https://docs.python.org/3/tutorial/venv.html
+.. _venv: https://docs.python.org/3/tutorial/venv.html
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _conda-forge: https://conda-forge.org/download/
 ..
