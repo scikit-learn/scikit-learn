@@ -8,18 +8,19 @@ def _features_html(features):
     FEATURES_TABLE_TEMPLATE = """
         <div class="features">
           <details>
-            <summary>{total_features} features </summary>
+            <summary>{total_features} features
+            <i class="copy-paste-icon"
+                  onclick="copyRowsToClipboard(
+                  this.closest('details').querySelector('tbody').innerText.trim()
+              )">
+              </i>
+            </summary>
             <div class="features-container">
               <table class="features-table">
                 <tbody>
                   {rows}
                 </tbody>
               </table>
-              <i class="copy-paste-icon"
-                  onclick="copyRowsToClipboard
-                  (this.parentElement.querySelector('tbody').innerText.trim())"
-              >
-              </i>
             </div>
           </details>
         </div>
