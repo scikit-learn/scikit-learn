@@ -997,6 +997,7 @@ def test_categorical_input_tag(Estimator):
 def test_gnb_array_api_compliance(
     use_str_y, use_sample_weight, array_namespace, device_, dtype_name
 ):
+    """Tests that :class:`GaussianNB` works correctly with array API inputs."""
     xp = _array_api_for_tests(array_namespace, device_)
     X_np = X.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device_)
