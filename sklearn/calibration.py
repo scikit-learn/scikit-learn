@@ -970,6 +970,8 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
         # Check if it is the output of predict_proba
         entries_zero_to_one = xp.all((decision_values >= 0) & (decision_values <= 1))
+        # TODO: simplify once upstream issue is addressed
+        # https://github.com/data-apis/array-api-extra/issues/478
         row_sums_to_one = xp.all(
             xpx.isclose(
                 xp.sum(decision_values, axis=1),
