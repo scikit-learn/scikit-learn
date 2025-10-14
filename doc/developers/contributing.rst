@@ -323,32 +323,32 @@ Install editable version of scikit-learn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Within your venv or conda `sklearn-dev` environment, build the project with pip:
 
-  .. prompt:: bash $
+.. prompt:: bash $
 
-    pip install --editable . \
-      --verbose --no-build-isolation \
-      --config-settings editable-verbose=true
+  pip install --editable . \
+    --verbose --no-build-isolation \
+    --config-settings editable-verbose=true
 
-  .. note::
+.. note::
 
-    `--config-settings editable-verbose=true` is optional but recommended
-    to avoid surprises when you import `sklearn`. `meson-python` implements
-    editable installs by rebuilding `sklearn` when executing `import sklearn`.
-    With the recommended setting you will see a message when this happens,
-    rather than potentially waiting without feedback and wondering
-    what is taking so long. Bonus: this means you only have to run the `pip
-    install` command once, `sklearn` will automatically be rebuilt when
-    importing `sklearn`.
+  `--config-settings editable-verbose=true` is optional but recommended
+  to avoid surprises when you import `sklearn`. `meson-python` implements
+  editable installs by rebuilding `sklearn` when executing `import sklearn`.
+  With the recommended setting you will see a message when this happens,
+  rather than potentially waiting without feedback and wondering
+  what is taking so long. Bonus: this means you only have to run the `pip
+  install` command once, `sklearn` will automatically be rebuilt when
+  importing `sklearn`.
 
-    Note that `--config-settings` is only supported in `pip` version 23.1 or
-    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
+  Note that `--config-settings` is only supported in `pip` version 23.1 or
+  later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 To check your installation, make sure that the installed scikit-learn has a
 version number ending with `.dev0`:
 
-   .. prompt:: bash $
+  .. prompt:: bash $
 
-     python -c "import sklearn; sklearn.show_versions()"
+    python -c "import sklearn; sklearn.show_versions()"
 
 You should now have a working installation of scikit-learn and your git repository
 properly configured.
