@@ -934,8 +934,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
+    dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite, dtype=dtype)
 
     if axis == 0:
         X, Y = Y, X
