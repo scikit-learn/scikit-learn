@@ -23,6 +23,13 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
 fi
 
 if [[ -z "${COMMIT_MESSAGE+x}" ]]; then
+    # In GHA context (especially in `.github/workflows/unit-tests.yml` which calls this
+    # script), the environment variable `COMMIT_MESSAGE` is automatically set to the
+    # latest commit message.
+    #
+    # In Azure context and for backward-compatibility, when the variable is unset, it
+    # substitutes its compute to `build_tools/azure/get_commit_message.py` which uses
+    # some Azure-specific variable (in particular `BUILD_SOURCEVERSIONMESSAGE`).
     COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
 fi
 
