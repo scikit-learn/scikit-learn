@@ -51,8 +51,12 @@ jobs:
           done
         env:
           BODY: |
-            Thank you for your interest in contributing to scikit-learn, but we cannot accept your contribution as this pull request doesn't meet the development standards.
+            Thank you for your interest in contributing to scikit-learn, but we cannot \
+            accept your contribution as this pull request doesn't meet the development \
+            standards.
 
-            Following our autoclose policy, we are closing this PR after two weeks time for improvements.
+            Following our autoclose policy, we are closing this PR after two weeks \
+            time for improvements.
 
-            We apologise for the inconvenience. If you think your PR has been closed by mistake, please contact a maintainer.
+            We apologise for the inconvenience. If you think your PR has been closed \
+            by mistake, please contact a maintainer.
