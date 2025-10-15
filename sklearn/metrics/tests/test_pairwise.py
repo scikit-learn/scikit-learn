@@ -1834,8 +1834,8 @@ def test_pairwise_argmin_no_warning_for_bool():
         pairwise_distances_argmin(X, Y, metric="jaccard")
         # Check that the list of caught warnings is empty.
         assert len(w) == 0, "A DataConversionWarning was incorrectly raised."
-        
-        
+
+
 def test_pairwise_argmin_min_no_warning_for_bool():
     """
     Check that no DataConversionWarning is raised for boolean metric
