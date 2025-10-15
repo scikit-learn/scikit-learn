@@ -1819,24 +1819,21 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     )
 
 
+# Some deprecated scipy metrics raise DeprecationWarning warning, filter here
+@pytest.mark.filterwarnings("ignore:The .* metric is deprecated since SciPy .*")
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 @pytest.mark.parametrize(
     "pairwise_fn", [pairwise_distances_argmin, pairwise_distances_argmin_min]
 )
 def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(metric, pairwise_fn):
     X = [[True, True, False, True], [True, False, True, True]]
-    Y = [[True, True, False, True], [True, False, True, True]]
+    Y = [[False, True, False, True], [True, False, True, True]]
     X_arr = np.asarray(X)
     Y_arr = np.asarray(Y)
     with warnings.catch_warnings(record=True) as record:
         pairwise_fn(X, Y, metric=metric)
-        # Some deprecated scipy metrics raise DeprecationWarning warning, filter here
-        record = [w for w in record if issubclass(w.category, DataConversionWarning)]
         assert len(record) == 0, f"A DataConversionWarning was raised for {metric}"
-
-    with warnings.catch_warnings(record=True) as record:
         pairwise_fn(X_arr, Y_arr, metric=metric)
-        record = [w for w in record if issubclass(w.category, DataConversionWarning)]
         assert len(record) == 0, f"A DataConversionWarning was raised for {metric}"
 
     with pytest.warns(DataConversionWarning):
