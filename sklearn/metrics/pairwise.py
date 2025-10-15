@@ -97,7 +97,7 @@ def _find_floating_or_bool_dtype_for_metric_allow_sparse(X, Y, metric, xp=None):
     return _find_floating_dtype_allow_sparse(X, Y, xp)
 
 
-def _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric)
+def _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric):
     if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
         msg = "Data was converted to boolean for metric %s" % metric
         warnings.warn(msg, DataConversionWarning)
