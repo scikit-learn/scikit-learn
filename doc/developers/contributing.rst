@@ -308,6 +308,20 @@ independently of any previously installed Python packages. Note that the virtual
 environment is optional but strongly recommended, in order to avoid potential
 conflicts with other packages.
 
+In addition to the required Python dependencies, you need to have a working C/C++
+compiler with OpenMP_ support to build scikit-learn Cython extensions.
+
+.. note::
+
+      If OpenMP is not supported by the compiler, the build will be done with
+      OpenMP functionalities disabled. This is not recommended since it will force
+      some estimators to run in sequential mode instead of leveraging thread-based
+      parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+      (before cythonization) will force the build to fail if OpenMP is not
+      supported.
+
+In the following, you find the specific install instructions for all supported platforms and package managers.
+
 .. raw:: html
 
   <style>
@@ -359,8 +373,8 @@ conflicts with other packages.
 
             pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-          Additionally, you need to install a compiler with OpenMP_ support for your platform.
-          Download the `Build Tools for Visual Studio installer<https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          Additionally, you need to install a compiler with OpenMP_ support.
+          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
           and run the downloaded `vs_buildtools.exe` file. During the installation you will
           need to make sure you select "Desktop development with C++", similarly to this
           screenshot:
@@ -395,7 +409,7 @@ conflicts with other packages.
             conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
           Additionally, you need to install a compiler with OpenMP_ support.
-          Download the `Build Tools for Visual Studio installer<https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
           and run the downloaded `vs_buildtools.exe` file. During the installation you will
           need to make sure you select "Desktop development with C++", similarly to this
           screenshot:
@@ -599,7 +613,7 @@ conflicts with other packages.
 
           Additionally, you need to have a working C/C++ compiler with OpenMP support.
 
-          Install build dependencies for **Debian-based operating systems, e.g. Ubuntu**:
+          Install the build dependencies for **Debian-based operating systems, e.g. Ubuntu**:
 
           .. prompt:: bash $
 
@@ -665,17 +679,6 @@ conflicts with other packages.
           .. prompt:: bash $
 
               make clean
-
-
-
-#. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
-   development mode and return to this document.
-
-#. Install the development dependencies:
-
-   .. prompt:: bash
-
-        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
 Install editable version of scikit-learn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
