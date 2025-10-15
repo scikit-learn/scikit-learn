@@ -1,0 +1,61 @@
+name: autoclose comment
+# Post comment on PRs when labeled with "autoclose".
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_REPO: ${{ github.repository }}
+  PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+
+  post_comment:
+    name: post_comment
+    if: github.event.label.name == 'autoclose'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: comment on potential autoclose
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/$GH_REPO/issues/$PULL_REQUEST_NUMBER/comments \
+          -f "body=$BODY"
+        env:
+          BODY: |
+            This pull request has been labeled for potential autoclose.
+
+            Thank you for your interest in contributing to scikit-learn. \
+            Unfortunately, reviewer time is extremely limited and reviewing PRs that \
+            are incomplete, unclear or not well-scoped puts a disproportionate burden \
+            on maintainers. Unless the PR is improved, it will be automatically closed \
+            after two weeks.
+
+            To avoid autoclose and increase the chance of a productive review, please:
+            - Ensure your contribution aligns with our \
+            [contribution guide](https://scikit-learn.org/dev/developers/contributing.html).
+            - Include a clear motivation and concise explanation of what the PR does.
+            - Only submit code you understand and can maintain. We will likely request \
+            changes or explanations.
+            - Make sure the code runs and passes tests locally (`pytest`) and in the CI.
+            - Keep the changes minimal and directly relevant to the described issue or \
+            enhancement.
+
+            We understand it can be frustrating that we cannot provide individual \
+            guidance on every PR. Reviewer capacity is very limited and our goal is to \
+            prioritize high-quality, well-prepared contributions to keep scikit-learn \
+            maintainable.
+
+            If you improve your PR within the two-week window, the `autoclose` label \
+            can be removed by maintainers.

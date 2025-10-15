@@ -1,0 +1,58 @@
+name: autoclose schedule
+# Autoclose labeled PR after 2 weeks.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # runs daily at 02:00 UTC
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+
+  autoclose:
+    name: autoclose labeled PRs
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: detect labeled PRs and filter for older than 14 days
+        run: |
+          CUTOFF_DAYS=14
+          NOW=$(date +%s)
+          PULL_REQUESTS=""
+          for PR in $(gh pr list --repo "$GH_REPO" --label autoclose --state open --json number --jq '.[].number'); do
+            TIMESTAMP=$(gh api repos/$GH_REPO/issues/$PR/events --jq '
+              map(select(.event == "labeled" and .label.name == "autoclose")) |
+              last?.created_at' | tr -d '"')
+            if [ -n "$TIMESTAMP" ]; then
+              LABEL_TIME=$(date -d "$TIMESTAMP" +%s)
+              AGE=$(( (NOW - LABEL_TIME) / 86400 ))
+              if [ $AGE -gt $CUTOFF_DAYS ]; then
+                PULL_REQUESTS="$PULL_REQUESTS $PR"
+              fi
+            fi
+          done
+          echo "PULL_REQUESTS=$PULL_REQUESTS" >> $GITHUB_ENV
+
+      - name: close labeled PRs and post comment
+        if: env.PULL_REQUESTS != ''
+        run: |
+          for PR in $PULL_REQUESTS; do
+            echo "Closing PR #$PR"
+            gh pr close "$PR" \
+              --repo "$GH_REPO" \
+              --comment "$BODY"
+          done
+        env:
+          BODY: |
+            Thank you for your interest in contributing to scikit-learn, but we cannot accept your contribution as this pull request doesn't meet the development standards.
+
+            Following our autoclose policy, we are closing this PR after two weeks time for improvements.
+
+            We apologise for the inconvenience. If you think your PR has been closed by mistake, please contact a maintainer.
