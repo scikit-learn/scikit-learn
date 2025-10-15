@@ -131,7 +131,7 @@ scikit_learn_install() {
     ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
-setup_playwright() {
+setup_playwright_if_installed() {
     if python -c "import playwright" &>/dev/null; then
         python -m playwright install --with-deps
     fi
@@ -141,7 +141,7 @@ main() {
     pre_python_environment_install
     python_environment_install_and_activate
     scikit_learn_install
-    setup_playwright
+    setup_playwright_if_installed
 }
 
 main
