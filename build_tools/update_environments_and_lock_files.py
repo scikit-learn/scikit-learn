@@ -373,6 +373,7 @@ build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-marimo",
             "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
