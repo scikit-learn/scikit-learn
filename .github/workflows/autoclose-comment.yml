@@ -38,10 +38,10 @@ jobs:
 
             Thank you for your contribution to scikit-learn and for the effort you've \
             put into this PR. This pull request does not yet meet the quality and \
-            clarity needed for an effective review. Reviewer time is extremely \
-            limited, and reviewing PRs in this state places a disproportionate burden \
-            on maintainers. Unless the PR is improved, it will be automatically closed \
-            after two weeks.
+            clarity needed for an effective review. Reviewing time is extremely \
+            limited, and PRs in this state are difficult to review effectively, which \
+            can slow down progress on other contributions and ongoing work. Unless \
+            this PR is improved, it will be automatically closed after two weeks.
 
             To avoid autoclose and increase the chance of a productive review, please:
             - Ensure your contribution aligns with our \
@@ -56,15 +56,16 @@ jobs:
 
             If you have carefully reviewed these points but are still stuck on a \
             specific problem, please describe it in your own words. This helps \
-            maintainers understand that you have engaged with the code and are not \
-            submitting automatically generated or copied content. We may be able to \
-            provide guidance if the problem is clearly explained and the contribution \
-            reflects your own understanding.
+            maintainers see that you have designed your contribution and understand \
+            how it fits into the codebase, rather than submitting AI-generated or \
+            copied content. We especially encourage beginners to ask focused questions \
+            that show you've tried to explore the problem  and are interested to engage \
+            with the project. We may be able to provide guidance if your explanation of \
+            the problem is clear and reflects your own reasoning.
 
             We understand it can be frustrating that we cannot provide individual \
             guidance on every PR. Reviewer capacity is very limited and our goal is to \
-            prioritize high-quality, well-prepared contributions to keep scikit-learn \
-            maintainable.
+            prioritize well-prepared contributions to keep scikit-learn maintainable.
 
             If you improve your PR within the two-week window, the `autoclose` label \
             can be removed by maintainers.
