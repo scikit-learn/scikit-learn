@@ -39,7 +39,6 @@ dependencies:
   - towncrier
   - jupyterlite-sphinx
   - jupyterlite-pyodide-kernel
-  - sphinx-marimo
   - pip
   - pip:
     - sphinxcontrib-sass
