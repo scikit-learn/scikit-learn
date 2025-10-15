@@ -2112,10 +2112,10 @@ class _RidgeGCV(LinearModel):
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = xp.concat((X, intercept_column), axis=1)
-        U, singvals, _ = linalg.svd(X, full_matrices=True)
-        singvals_sq = np.zeros(U.shape[0], dtype=U.dtype)
+        U, singvals, _ = xp.linalg.svd(X, full_matrices=True)
+        singvals_sq = xp.zeros(U.shape[0], dtype=U.dtype)
         singvals_sq[: len(singvals)] = singvals**2
-        UT_y = np.dot(U.T, y)
+        UT_y = U.T @ y
         return X_mean, singvals_sq, U, UT_y
 
     def _solve_svd_design_matrix(self, alpha, y, sqrt_sw, X_mean, singvals_sq, U, UT_y):
@@ -2132,7 +2132,7 @@ class _RidgeGCV(LinearModel):
             intercept_dim = int(_find_smallest_angle(normalized_sw, U))
             # cancel the regularization for the intercept
             w[intercept_dim] = 0.0
-        c = np.dot(U, self._diag_dot(w, UT_y))
+        c = U @ self._diag_dot(w, UT_y)
         G_inverse_diag = self._decomp_diag(w, U)
         if len(y.shape) != 1:
             # handle case where y is 2-d
