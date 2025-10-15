@@ -2113,7 +2113,7 @@ class _RidgeGCV(LinearModel):
             intercept_column = sqrt_sw[:, None]
             X = xp.concat((X, intercept_column), axis=1)
         U, singvals, _ = xp.linalg.svd(X, full_matrices=True)
-        singvals_sq = xp.zeros(U.shape[0], dtype=U.dtype)
+        singvals_sq = xp.zeros(U.shape[0], dtype=X.dtype, device=device_)
         singvals_sq[: singvals.shape[0]] = singvals**2
         UT_y = U.T @ y
         return X_mean, singvals_sq, U, UT_y
