@@ -817,7 +817,9 @@ def pairwise_distances_argmin_min(
     array([1., 1.])
     """
     xp, _ = get_namespace(X, Y)
-    X, Y, dtype = _find_floating_or_bool_dtype_for_metric_allow_sparse(X, Y, metric, xp=xp)
+    X, Y, dtype = _find_floating_or_bool_dtype_for_metric_allow_sparse(
+        X, Y, metric, xp=xp
+    )
     _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric)
 
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
@@ -962,7 +964,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     array([0, 1])
     """
     xp, _ = get_namespace(X, Y)
-    X, Y, dtype = _find_floating_or_bool_dtype_for_metric_allow_sparse(X, Y, metric, xp=xp)
+    X, Y, dtype = _find_floating_or_bool_dtype_for_metric_allow_sparse(
+        X, Y, metric, xp=xp
+    )
     _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric)
 
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
