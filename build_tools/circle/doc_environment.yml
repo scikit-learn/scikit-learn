@@ -35,6 +35,7 @@ dependencies:
   - sphinxext-opengraph
   - sphinx-remove-toctrees
   - sphinx-design
+  - sphinx-marimo
   - pydata-sphinx-theme
   - towncrier
   - jupyterlite-sphinx
