@@ -385,11 +385,11 @@ build_metadata_list = [
             "pydata-sphinx-theme",
             "towncrier",
             "jupyterlite-sphinx",
+            "jupyterlite-pyodide-kernel",
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
             "sphinx-marimo",
-            "jupyterlite-pyodide-kernel",
         ],
         "package_constraints": {
             "python": "3.10",
