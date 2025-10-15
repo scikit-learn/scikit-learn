@@ -1841,5 +1841,3 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(metric, pairwise_
 
     with pytest.warns(DataConversionWarning):
         pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
-        record = [w for w in record if issubclass(w.category, DataConversionWarning)]
-        assert len(record) == 0, f"A DataConversionWarning was raised for {metric}"
