@@ -403,6 +403,142 @@ conflicts with other packages.
           .. image::
             ../images/visual-studio-build-tools-selection.png
 
+    .. tab-item:: MacOS
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          Install Python 3 (|PythonMinVersion| or later) using Homebrew_ 
+          (`brew install python`) or by manually installing the package from the 
+          `official website <https://www.python.org/downloads/macos/>`__.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt:: bash
+
+            python -m venv sklearn-dev
+            source sklearn-dev/bin/activate  # activate
+            pip install wheel numpy scipy cython meson-python ninja
+
+          Also install the development dependencies:
+
+          .. prompt:: bash
+
+            pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          The default C compiler on macOS, Apple clang (confusingly aliased as
+          `/usr/bin/gcc`), does not directly support OpenMP, so you additionally 
+          need to enable OpenMP support.
+
+          First install the macOS command line tools:
+
+          .. prompt:: bash $
+
+              xcode-select --install
+
+          Install the LLVM OpenMP library with Homebrew_:
+
+          .. prompt:: bash $
+
+              brew install libomp
+
+          Remove any existing scikit-learn installations and meson builds to avoid conflicts.
+          You can use the provided `Makefile` for this by simply calling:
+
+          .. prompt:: bash $
+
+              make clean
+        
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          Install a recent version of Python (|PythonMinVersion| or later) for instance
+          using conda-forge_. Conda-forge provides a conda-based distribution of
+          Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages:
+
+          .. prompt:: bash $
+
+            conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
+
+          It is not always necessary but it is safer to open a new prompt before
+          activating the newly created conda environment:
+
+          .. prompt:: bash $
+
+            conda activate sklearn-dev
+
+          Also install the development dependencies in your environment:
+
+          .. prompt:: bash $
+
+            conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          The default C compiler on macOS, Apple clang (confusingly aliased as
+          `/usr/bin/gcc`), does not directly support OpenMP, so you need to 
+          install the ``compilers`` meta-package from the conda-forge channel, 
+          which provides OpenMP-enabled C/C++ compilers based on the llvm toolchain.
+
+          First install the macOS command line tools:
+
+          .. prompt:: bash $
+
+              xcode-select --install
+
+          Make sure you activated the `sklearn-dev` environment and install the following packages:
+
+          .. prompt:: bash $
+
+              conda install -c conda-forge joblib threadpoolctl pytest compilers llvm-openmp
+
+          Remove any existing scikit-learn installations and meson builds to avoid conflicts.
+          You can use the provided `Makefile` for this by simply calling:
+
+          .. prompt:: bash $
+
+              make clean
+
+          .. note::
+
+            If you get any conflicting dependency error message, try commenting out
+            any custom conda configuration in the ``$HOME/.condarc`` file. In
+            particular the ``channel_priority: strict`` directive is known to cause
+            problems for this setup.
+
+            You can check that the custom compilers are properly installed from conda
+            forge using the following command:
+
+            .. prompt:: bash $
+
+                conda list
+
+            which should include ``compilers`` and ``llvm-openmp``.
+
+            The compilers meta-package will automatically set custom environment
+            variables:
+
+            .. prompt:: bash $
+
+                echo $CC
+                echo $CXX
+                echo $CFLAGS
+                echo $CXXFLAGS
+                echo $LDFLAGS
+
+            They point to files and folders from your ``sklearn-dev`` conda environment
+            (in particular in the bin/, include/ and lib/ subfolders). For instance
+            ``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
+
+            When installing scikit-learn in the next step, you should see the
+            compiled extension being built with the clang and clang++ compilers installed by
+            conda with the ``-fopenmp`` command line flag in the log.
+
 #. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
