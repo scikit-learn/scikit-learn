@@ -359,6 +359,15 @@ conflicts with other packages.
 
             pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
+          Additionally, you need to install a compiler with OpenMP_ support for your platform.
+          Download the `Build Tools for Visual Studio installer<https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          and run the downloaded `vs_buildtools.exe` file. During the installation you will
+          need to make sure you select "Desktop development with C++", similarly to this
+          screenshot:
+
+          .. image::
+            ../images/visual-studio-build-tools-selection.png
+
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
@@ -373,27 +382,26 @@ conflicts with other packages.
             conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
 
           It is not always necessary but it is safer to open a new prompt before
-          activating the newly created conda environment.
+          activating the newly created conda environment:
 
           .. prompt:: powershell
 
-            conda activate sklearn-env
+            conda activate sklearn-dev
 
           Also install the development dependencies in your environment:
 
           .. prompt:: powershell
 
-            conda install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+            conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-        Additionally, you need to install a compiler with OpenMP_ support for your platform.
-        Download the `Build Tools for Visual Studio installer<https://aka.ms/vs/17/release/vs_buildtools.exe>`_
-        and run the downloaded `vs_buildtools.exe` file. During the installation you will
-        need to make sure you select "Desktop development with C++", similarly to this
-        screenshot:
+          Additionally, you need to install a compiler with OpenMP_ support.
+          Download the `Build Tools for Visual Studio installer<https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          and run the downloaded `vs_buildtools.exe` file. During the installation you will
+          need to make sure you select "Desktop development with C++", similarly to this
+          screenshot:
 
-        .. image::
-          ../images/visual-studio-build-tools-selection.png
-
+          .. image::
+            ../images/visual-studio-build-tools-selection.png
 
 #. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
