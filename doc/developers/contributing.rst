@@ -413,8 +413,8 @@ conflicts with other packages.
           :class-label: tab-6
           :sync: package-manager-pip
 
-          Install Python 3 (|PythonMinVersion| or later) using Homebrew_ 
-          (`brew install python`) or by manually installing the package from the 
+          Install Python 3 (|PythonMinVersion| or later) using Homebrew_
+          (`brew install python`) or by manually installing the package from the
           `official website <https://www.python.org/downloads/macos/>`__.
 
           Now create a virtual environment (venv_) and install the required python packages:
@@ -432,7 +432,7 @@ conflicts with other packages.
             pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
           The default C compiler on macOS, Apple clang (confusingly aliased as
-          `/usr/bin/gcc`), does not directly support OpenMP, so you additionally 
+          `/usr/bin/gcc`), does not directly support OpenMP, so you additionally
           need to enable OpenMP support.
 
           First install the macOS command line tools:
@@ -453,7 +453,7 @@ conflicts with other packages.
           .. prompt:: bash $
 
               make clean
-        
+
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
@@ -481,8 +481,8 @@ conflicts with other packages.
             conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
           The default C compiler on macOS, Apple clang (confusingly aliased as
-          `/usr/bin/gcc`), does not directly support OpenMP, so you need to 
-          install the ``compilers`` meta-package from the conda-forge channel, 
+          `/usr/bin/gcc`), does not directly support OpenMP, so you need to
+          install the ``compilers`` meta-package from the conda-forge channel,
           which provides OpenMP-enabled C/C++ compilers based on the llvm toolchain.
 
           First install the macOS command line tools:
