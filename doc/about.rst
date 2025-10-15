@@ -630,7 +630,7 @@ list of events.
 Donating to the project
 =======================
 
-If you have found scikit-learn to be useful in your work, research, or company, 
+If you have found scikit-learn to be useful in your work, research, or company,
 please consider making a donation to the project commensurate with your resources.
 There are several options for making donations:
 
@@ -663,15 +663,15 @@ There are several options for making donations:
   able to make a donation with a company match as high as 100%. Our project
   ID is `433725 <https://causes.benevity.org/projects/433725>`_.
 
-All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
+All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3)
 non-profit organization based in Austin, Texas, USA. The NumFOCUS board
-consists of `SciPy community members <https://numfocus.org/board.html>`_. 
+consists of `SciPy community members <https://numfocus.org/board.html>`_.
 Contributions are tax-deductible to the extent allowed by law.
 
 .. rubric:: Notes
 
-Contributions support the maintenance of the project, including development, 
-documentation, infrastructure and coding sprints. 
+Contributions support the maintenance of the project, including development,
+documentation, infrastructure and coding sprints.
 
 
 scikit-learn Swag
