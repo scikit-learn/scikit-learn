@@ -2085,8 +2085,9 @@ class _RidgeGCV(LinearModel):
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = np.hstack((X, intercept_column))
-        U, singvals, _ = linalg.svd(X, full_matrices=0)
-        singvals_sq = singvals**2
+        U, singvals, _ = linalg.svd(X, full_matrices=True)
+        singvals_sq = np.zeros(U.shape[0], dtype=U.dtype)
+        singvals_sq[: len(singvals)] = singvals**2
         UT_y = np.dot(U.T, y)
         return X_mean, singvals_sq, U, UT_y
 
@@ -2096,15 +2097,15 @@ class _RidgeGCV(LinearModel):
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
-        w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
+        w = 1 / (singvals_sq + alpha)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
-            w[intercept_dim] = -(alpha**-1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha**-1) * y
-        G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
+            w[intercept_dim] = 0.0
+        c = np.dot(U, self._diag_dot(w, UT_y))
+        G_inverse_diag = self._decomp_diag(w, U)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_inverse_diag = G_inverse_diag[:, np.newaxis]

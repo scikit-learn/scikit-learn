@@ -847,6 +847,19 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_gcv_noiseless(gcv_mode, fit_intercept):
+    # Ridge should recover the true coefficients in the noiseless overdetermined case
+    alphas = [1e-16]
+    gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
+    X, y, coef = make_regression(
+        n_samples=100, n_features=50, noise=0, coef=True, random_state=42
+    )
+    gcv_ridge.fit(X, y)
+    assert_allclose(gcv_ridge.coef_, coef, atol=1e-10)
+
+
 def test_ridge_loo_cv_asym_scoring():
     # checking on asymmetric scoring
     scoring = "explained_variance"
