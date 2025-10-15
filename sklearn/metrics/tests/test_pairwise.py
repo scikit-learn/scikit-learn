@@ -1817,3 +1817,37 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+def test_pairwise_argmin_no_warning_for_bool():
+    """
+    Check that no DataConversionWarning is raised for boolean metric
+    when the data is already boolean.
+    Regression test for #32495.
+    """
+    # Create boolean input arrays.
+    X = np.ones((5, 5), dtype=np.bool_)
+    Y = np.ones((5, 5), dtype=np.bool_)
+    # Call the function within a warning-catching context.
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always", DataConversionWarning)
+        pairwise_distances_argmin(X, Y, metric="jaccard")
+        # Check that the list of caught warnings is empty.
+        assert len(w) == 0, "A DataConversionWarning was incorrectly raised."
+        
+        
+def test_pairwise_argmin_min_no_warning_for_bool():
+    """
+    Check that no DataConversionWarning is raised for boolean metric
+    when the data is already boolean.
+    Regression test for #32495.
+    """
+    # Create boolean input arrays.
+    X = np.ones((5, 5), dtype=np.bool_)
+    Y = np.ones((5, 5), dtype=np.bool_)
+    # Call the function within a warning-catching context.
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always", DataConversionWarning)
+        pairwise_distances_argmin_min(X, Y, metric="jaccard")
+        # Check that the list of caught warnings is empty.
+        assert len(w) == 0, "A DataConversionWarning was incorrectly raised."
