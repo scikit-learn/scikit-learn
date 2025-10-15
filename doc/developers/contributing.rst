@@ -539,6 +539,135 @@ conflicts with other packages.
             compiled extension being built with the clang and clang++ compilers installed by
             conda with the ``-fopenmp`` command line flag in the log.
 
+    .. tab-item:: Linux
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          scikit-learn requires a recent version of Python (|PythonMinVersion| or later).
+          Python 3 is usually installed by default on most Linux distributions. To
+          check if you have it installed, try:
+
+          .. prompt:: bash
+
+            python3 --version
+
+          If you don't have Python 3 installed, please install `python3` from your
+          distribution's package manager.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt:: bash
+
+            python -m venv sklearn-dev
+            source sklearn-dev/bin/activate  # activate
+            pip install wheel numpy scipy cython meson-python ninja
+
+          .. dropdown:: If no isolated environment is used (not recommended!)
+
+            If, for some reason, you are not using an isolated environment (which is not recommended),
+            you need to use `pip3` instead of `pip`. You can check if it is installed with:
+
+            .. prompt:: bash
+
+              pip3 --version
+
+            and if not, install `python3-pip` from your distribution's package manager.
+
+            Next, install the required python packages with:
+
+            .. prompt:: bash
+
+              pip3 install wheel numpy scipy cython meson-python ninja
+
+            cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
+            and joblib) should then automatically be installed in
+            ``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
+            ``pip3`` also needs to be used instead of ``pip`` in the following steps and
+            when `installing scikit-learn <pip_build_>`_.
+
+          Also install the development dependencies:
+
+          .. prompt:: bash
+
+            pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          Additionally, you need to have a working C/C++ compiler with OpenMP support.
+
+          Install build dependencies for **Debian-based operating systems, e.g. Ubuntu**:
+
+          .. prompt:: bash $
+
+              sudo apt-get install build-essential python3-dev
+
+          When precompiled wheels of the runtime dependencies are not available for your
+          architecture (e.g. **ARM**), you can install the system versions:
+
+          .. prompt:: bash $
+
+              sudo apt-get install cython3 python3-numpy python3-scipy
+
+          On **Red Hat and clones (e.g. CentOS)**, install the dependencies using:
+
+          .. prompt:: bash $
+
+              sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
+
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          scikit-learn requires a recent version of Python (|PythonMinVersion| or later).
+          Python 3 is usually installed by default on most Linux distributions. To
+          check if you have it installed, try:
+
+          .. prompt:: bash
+
+            python3 --version
+
+          If you don't have Python |PythonMinVersion| or later, please install a
+          recent version for instance using conda-forge_. Conda-forge provides a
+          conda-based distribution of Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages:
+
+          .. prompt:: bash $
+
+            conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
+
+          It is not always necessary but it is safer to open a new prompt before
+          activating the newly created conda environment:
+
+          .. prompt:: bash $
+
+            conda activate sklearn-dev
+
+          Also install the development dependencies in your environment:
+
+          .. prompt:: bash $
+
+            conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          Additionally, you need to have the scikit-learn Python development headers
+          and a working C/C++ compiler with OpenMP support:
+
+          .. prompt:: bash $
+
+              conda install -c conda-forge joblib threadpoolctl compilers
+
+          Remove any existing scikit-learn installations and meson builds to avoid conflicts.
+          You can use the provided `Makefile` for this by simply calling:
+
+          .. prompt:: bash $
+
+              make clean
+
+
+
 #. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
