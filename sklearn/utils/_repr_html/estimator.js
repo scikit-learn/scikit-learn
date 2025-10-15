@@ -43,10 +43,9 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 });
 
 
-async function copyRowsToClipboard(text) {
-
-  const rows = text.split('\n').map(row => `"${row}"`); // Split rows and wrap each in double quotes
-  const formattedText = `[${rows.join(', ')}]`; // Join rows with commas inside square brackets
+async function copyRowsToClipboard(text, iconElement) {
+  const rows = text.split('\n').map(row => `"${row}"`);
+  const formattedText = `[${rows.join(', ')}]`;
 
   const type = "text/plain";
   const clipboardItemData = {
@@ -54,6 +53,12 @@ async function copyRowsToClipboard(text) {
   };
   const clipboardItem = new ClipboardItem(clipboardItemData);
   await navigator.clipboard.write([clipboardItem]);
+
+  const originalHTML = iconElement.innerHTML;
+  iconElement.innerHTML = "Copied!";
+  setTimeout(() => {
+    iconElement.innerHTML = originalHTML;
+  }, 2000);
 }
 /**
  * Adapted from Skrub
