@@ -81,7 +81,7 @@ class OverrideTag(NaNTag):
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
-    """Do nothing"""
+    """sss"""
 
     pass
 
