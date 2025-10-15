@@ -19,11 +19,13 @@ setup_ccache() {
         echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
         mkdir ${CCACHE_LINKS_DIR}
         which ccache
-        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
+        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ \
+                    x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++ \
+                    arm64-apple-darwin20.0.0-clang arm64-apple-darwin20.0.0-clang++; do
         ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
-        ccache -M 256M
+        ccache -M 512M
 
         # Zeroing statistics so that ccache statistics are shown only for this build
         ccache -z

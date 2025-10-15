@@ -9,8 +9,8 @@ implementation_specific_values = [
 ]
 
 }}
-from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
-from ...metrics._dist_metrics cimport DistanceMetric64, DistanceMetric32, DistanceMetric
+from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+from sklearn.metrics._dist_metrics cimport DistanceMetric64, DistanceMetric32, DistanceMetric
 
 {{for name_suffix, DistanceMetric, INPUT_DTYPE_t in implementation_specific_values}}
 
