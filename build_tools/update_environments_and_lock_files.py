@@ -317,7 +317,6 @@ build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
-            "sphinx-marimo",
             "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
@@ -332,6 +331,7 @@ build_metadata_list = [
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            "sphinx-marimo",
         ],
         "package_constraints": {
             "python": "3.10",
@@ -373,7 +373,6 @@ build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
-            "sphinx-marimo",
             "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
@@ -386,10 +385,11 @@ build_metadata_list = [
             "pydata-sphinx-theme",
             "towncrier",
             "jupyterlite-sphinx",
-            "jupyterlite-pyodide-kernel",
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            "sphinx-marimo",
+            "jupyterlite-pyodide-kernel",
         ],
         "package_constraints": {
             "python": "3.10",

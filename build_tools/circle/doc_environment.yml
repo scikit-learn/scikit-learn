@@ -26,6 +26,7 @@ dependencies:
   - compilers
   - sphinx
   - sphinx-gallery
+  - sphinx-marimo
   - sphinx-copybutton
   - numpydoc<1.9.0
   - sphinx-prompt
