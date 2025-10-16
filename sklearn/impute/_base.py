@@ -10,7 +10,6 @@ from typing import Callable
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
-
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
@@ -30,7 +29,9 @@ def _check_inputs_dtype(X, missing_values):
     if is_pandas_na(missing_values):
         # Allow using `pd.NA` as missing values to impute numerical arrays.
         return
-    if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
+    if X.dtype.kind in ("f", "i", "u") and not isinstance(
+        missing_values, numbers.Real
+    ):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
             " both numerical. Got X.dtype={} and "
@@ -71,6 +72,11 @@ def _most_frequent(array, extra_value, n_repeat):
                     if count == most_frequent_count
                 ]
             )
+        elif array.dtype == bool:
+            # For boolean arrays, convert to int for mode calculation
+            mode = _mode(array.astype(int))
+            most_frequent_value = bool(mode[0][0])
+            most_frequent_count = mode[1][0]
         else:
             mode = _mode(array)
             most_frequent_value = mode[0][0]
@@ -104,7 +110,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(
-        self, *, missing_values=np.nan, add_indicator=False, keep_empty_features=False
+        self,
+        *,
+        missing_values=np.nan,
+        add_indicator=False,
+        keep_empty_features=False,
     ):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
@@ -346,7 +356,9 @@ class SimpleImputer(_BaseImputer):
             # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
-        if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
+        if is_pandas_na(self.missing_values) or is_scalar_nan(
+            self.missing_values
+        ):
             ensure_all_finite = "allow-nan"
         else:
             ensure_all_finite = True
@@ -378,11 +390,11 @@ class SimpleImputer(_BaseImputer):
             self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind not in ("i", "u", "f", "O"):
+        if X.dtype.kind not in ("i", "u", "f", "O", "b"):
             raise ValueError(
                 "SimpleImputer does not support data with dtype "
                 "{0}. Please provide either a numeric array (with"
-                " a floating point or integer dtype) or "
+                " a floating point or integer dtype), boolean array, or "
                 "categorical data represented either as an array "
                 "with integer dtype or an array of string values "
                 "with an object dtype.".format(X.dtype)
@@ -532,7 +544,9 @@ class SimpleImputer(_BaseImputer):
             mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
-            mean[np.ma.getmask(mean_masked)] = 0 if self.keep_empty_features else np.nan
+            mean[np.ma.getmask(mean_masked)] = (
+                0 if self.keep_empty_features else np.nan
+            )
 
             return mean
 
@@ -746,9 +760,9 @@ class SimpleImputer(_BaseImputer):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
+        tags.input_tags.allow_nan = is_pandas_na(
             self.missing_values
-        )
+        ) or is_scalar_nan(self.missing_values)
         return tags
 
     def get_feature_names_out(self, input_features=None):
@@ -775,7 +789,9 @@ class SimpleImputer(_BaseImputer):
         input_features = _check_feature_names_in(self, input_features)
         non_missing_mask = np.logical_not(_get_mask(self.statistics_, np.nan))
         names = input_features[non_missing_mask]
-        return self._concatenate_indicator_feature_names_out(names, input_features)
+        return self._concatenate_indicator_feature_names_out(
+            names, input_features
+        )
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
@@ -952,11 +968,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind not in ("i", "u", "f", "O"):
+        if X.dtype.kind not in ("i", "u", "f", "O", "b"):
             raise ValueError(
                 "MissingIndicator does not support data with "
                 "dtype {0}. Please provide either a numeric array"
-                " (with a floating point or integer dtype) or "
+                " (with a floating point or integer dtype), boolean array, or "
                 "categorical data represented either as an array "
                 "with integer dtype or an array of string values "
                 "with an object dtype.".format(X.dtype)
@@ -994,7 +1010,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         """
         if precomputed:
             if not (hasattr(X, "dtype") and X.dtype.kind == "b"):
-                raise ValueError("precomputed is True but the input data is not a mask")
+                raise ValueError(
+                    "precomputed is True but the input data is not a mask"
+                )
             self._precomputed = True
         else:
             self._precomputed = False
@@ -1059,7 +1077,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=False)
         else:
             if not (hasattr(X, "dtype") and X.dtype.kind == "b"):
-                raise ValueError("precomputed is True but the input data is not a mask")
+                raise ValueError(
+                    "precomputed is True but the input data is not a mask"
+                )
 
         imputer_mask, features = self._get_missing_features_info(X)
 
