@@ -309,7 +309,7 @@ environment is optional but strongly recommended, in order to avoid potential
 conflicts with other packages.
 
 In addition to the required Python dependencies, you need to have a working C/C++
-compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>`_ extensions.
+compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>`__ extensions.
 
 .. note::
 
