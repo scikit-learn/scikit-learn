@@ -48,21 +48,21 @@ jobs:
     outputs:
       message: ${{ steps.git-log.outputs.message }}
     steps:
-    - uses: actions/checkout@v5
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-    - id: git-log
-      shell: bash
-      run: |
-        set -eu
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - id: git-log
+        shell: bash
+        run: |
+          set -eu
 
-        message=$(git log --format=%B -n 1)
+          message=$(git log --format=%B -n 1)
 
-        {
-          echo 'message<<EOF'
-          echo "${message}"
-          echo EOF
-        } >> "${GITHUB_OUTPUT}"
+          {
+            echo 'message<<EOF'
+            echo "${message}"
+            echo EOF
+          } >> "${GITHUB_OUTPUT}"
 
   unit-tests:
     name: ${{ matrix.name }}
