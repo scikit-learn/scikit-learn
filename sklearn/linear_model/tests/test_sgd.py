@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
 from sklearn.utils import get_tags
+from sklearn.utils._sparse import _align_api_if_sparse, _sparse_random
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -42,48 +43,49 @@ def _update_kwargs(kwargs):
 
 class _SparseSGDClassifier(linear_model.SGDClassifier):
     def fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().decision_function(X)
 
     def predict_proba(self, X):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().predict_proba(X)
 
 
 class _SparseSGDRegressor(linear_model.SGDRegressor):
     def fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.fit(self, X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.partial_fit(self, X, y, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
         # XXX untested as of v0.22
-        X = sp.csr_matrix(X)
-        return linear_model.SGDRegressor.decision_function(self, X, *args, **kw)
+        return linear_model.SGDRegressor.decision_function(
+            self, _align_api_if_sparse(X), *args, **kw
+        )
 
 
 class _SparseSGDOneClassSVM(linear_model.SGDOneClassSVM):
     def fit(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.fit(self, X, *args, **kw)
 
     def partial_fit(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.partial_fit(self, X, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.decision_function(self, X, *args, **kw)
 
 
@@ -2125,7 +2127,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
-    X = sp.random(500, 2000, density=0.02, format="csr", random_state=random_state)
+    X = _sparse_random((500, 2000), density=0.02, format="csr", rng=random_state)
     y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
