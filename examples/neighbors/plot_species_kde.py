@@ -29,10 +29,10 @@ The two species are:
 References
 ----------
 
-[1] `"Maximum entropy modeling of species geographic distributions"
-    <http://rob.schapire.net/papers/ecolmod.pdf>`_
-    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-    190:231-259, 2006.
+.. [1] `"Maximum entropy modeling of species geographic distributions"
+       <http://rob.schapire.net/papers/ecolmod.pdf>`_
+       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+       190:231-259, 2006.
 """
 
 # Authors: The scikit-learn developers
