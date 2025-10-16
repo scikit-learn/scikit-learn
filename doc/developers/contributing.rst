@@ -309,7 +309,7 @@ environment is optional but strongly recommended, in order to avoid potential
 conflicts with other packages.
 
 In addition to the required Python dependencies, you need to have a working C/C++
-compiler with OpenMP_ support to build scikit-learn Cython_ extensions.
+compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>`_ extensions.
 
 .. note::
 
@@ -717,7 +717,6 @@ Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
 some tests to verify your installation.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
-.. _Cython: https://cython.org
 .. _meson-python: https://mesonbuild.com/meson-python
 .. _Ninja: https://ninja-build.org/
 .. _NumPy: https://numpy.org
