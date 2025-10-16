@@ -356,7 +356,16 @@ In the following, you find the specific install instructions for all supported p
           :class-label: tab-6
           :sync: package-manager-pip
 
-          Install the 64-bit version of Python (|PythonMinVersion| or later), for instance from the
+          First, you need to install a compiler with OpenMP_ support.
+          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          and run the downloaded `vs_buildtools.exe` file. During the installation you will
+          need to make sure you select "Desktop development with C++", similarly to this
+          screenshot:
+
+          .. image::
+            ../images/visual-studio-build-tools-selection.png
+
+          Next, install the 64-bit version of Python (|PythonMinVersion| or later), for instance from the
           `official website <https://www.python.org/downloads/windows/>`__.
 
           Now create a virtual environment (venv_) and install the required python packages:
@@ -373,7 +382,11 @@ In the following, you find the specific install instructions for all supported p
 
             pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-          Additionally, you need to install a compiler with OpenMP_ support.
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          First, you need to install a compiler with OpenMP_ support.
           Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
           and run the downloaded `vs_buildtools.exe` file. During the installation you will
           need to make sure you select "Desktop development with C++", similarly to this
@@ -382,11 +395,7 @@ In the following, you find the specific install instructions for all supported p
           .. image::
             ../images/visual-studio-build-tools-selection.png
 
-        .. tab-item:: conda
-          :class-label: tab-6
-          :sync: package-manager-conda
-
-          Install a recent version of Python (|PythonMinVersion| or later) for instance
+          Next, install a recent version of Python (|PythonMinVersion| or later) for instance
           using conda-forge_. Conda-forge provides a conda-based distribution of
           Python and the most popular scientific libraries.
           Create a new conda environment with the required python packages:
@@ -407,15 +416,6 @@ In the following, you find the specific install instructions for all supported p
           .. prompt:: powershell
 
             conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
-
-          Additionally, you need to install a compiler with OpenMP_ support.
-          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
-          and run the downloaded `vs_buildtools.exe` file. During the installation you will
-          need to make sure you select "Desktop development with C++", similarly to this
-          screenshot:
-
-          .. image::
-            ../images/visual-studio-build-tools-selection.png
 
     .. tab-item:: MacOS
       :class-label: tab-4
