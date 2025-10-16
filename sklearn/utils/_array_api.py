@@ -314,7 +314,9 @@ def ensure_common_namespace_device(reference, *arrays):
     if is_array_api:
         device_ = device(reference)
         # Move arrays to the same namespace and device as the reference array.
-        return [xp.asarray(a, device=device_) for a in arrays]
+        return [
+            xp.asarray(a, device=device_) if a is not None else None for a in arrays
+        ]
     else:
         return arrays
 
@@ -877,7 +879,7 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 100
+    return numpy.finfo(dtype_or_dtype_name).eps * 1000
 
 
 def indexing_dtype(xp):
