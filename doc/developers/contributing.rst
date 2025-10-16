@@ -707,9 +707,9 @@ Within your venv or conda `sklearn-dev` environment, build the project with pip:
 To check your installation, make sure that the installed scikit-learn has a
 version number ending with `.dev0`:
 
-  .. prompt:: bash $
+.. prompt:: bash $
 
-    python -c "import sklearn; sklearn.show_versions()"
+  python -c "import sklearn; sklearn.show_versions()"
 
 You should now have a working installation of scikit-learn and your git repository
 properly configured.
