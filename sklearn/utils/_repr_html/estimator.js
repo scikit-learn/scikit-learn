@@ -35,6 +35,13 @@ function copyToClipboard(text, element) {
 document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
     const toggleableContent = element.closest('.sk-toggleable__content');
     const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
+
+    const parent = element.parentElement;
+    if (!parent || !parent.nextElementSibling) {
+        console.warn('Copy-paste icon missing expected DOM structure');
+        return;
+    }
+
     const paramName = element.parentElement.nextElementSibling
         .textContent.trim().split(' ')[0];
     const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
