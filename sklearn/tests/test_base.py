@@ -36,7 +36,7 @@ from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
-from sklearn.utils.validation import _check_n_features, validate_data
+from sklearn.utils.validation import check_n_features, validate_data
 
 
 #############################################################################
@@ -706,28 +706,28 @@ def test_repr_html_wraps():
 
 
 def test_n_features_in_validation():
-    """Check that `_check_n_features` validates data when reset=False"""
+    """Check that `check_n_features` validates data when reset=False"""
     est = MyEstimator()
     X_train = [[1, 2, 3], [4, 5, 6]]
-    _check_n_features(est, X_train, reset=True)
+    check_n_features(est, X_train, reset=True)
 
     assert est.n_features_in_ == 3
 
     msg = "X does not contain any features, but MyEstimator is expecting 3 features"
     with pytest.raises(ValueError, match=msg):
-        _check_n_features(est, "invalid X", reset=False)
+        check_n_features(est, "invalid X", reset=False)
 
 
 def test_n_features_in_no_validation():
-    """Check that `_check_n_features` does not validate data when
+    """Check that `check_n_features` does not validate data when
     n_features_in_ is not defined."""
     est = MyEstimator()
-    _check_n_features(est, "invalid X", reset=True)
+    check_n_features(est, "invalid X", reset=True)
 
     assert not hasattr(est, "n_features_in_")
 
     # does not raise
-    _check_n_features(est, "invalid X", reset=False)
+    check_n_features(est, "invalid X", reset=False)
 
 
 def test_feature_names_in():
