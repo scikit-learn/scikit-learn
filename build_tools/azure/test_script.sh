@@ -22,13 +22,13 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-# In GitHub Action context (especially in `.github/workflows/unit-tests.yml`
-# which calls this script), the environment variable `COMMIT_MESSAGE` is
-# already set to the latest commit message.
+# In GitHub Action (especially in `.github/workflows/unit-tests.yml` which
+# calls this script), the environment variable `COMMIT_MESSAGE` is already set
+# to the latest commit message.
 if [[ -z "${COMMIT_MESSAGE+x}" ]]; then
     # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
     # message via the get_commit_message.py script which uses Azure-specific
-    # variable, for example 'BUILD_SOURCEVERSIONMESSAGE'.
+    # variables, for example 'BUILD_SOURCEVERSIONMESSAGE'.
     COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
 fi
 
