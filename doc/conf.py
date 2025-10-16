@@ -100,6 +100,8 @@ except ImportError:
 # Add marimo extension to enable marimo notebooks
 extensions.append("sphinx_marimo")
 marimo_show_footer_button = False
+marimo_parallel_build = True
+marimo_n_jobs = -1
 
 # Produce `plot::` directives for examples that contain `import matplotlib` or
 # `from matplotlib import`.
