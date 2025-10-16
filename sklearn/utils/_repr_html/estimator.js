@@ -45,7 +45,7 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 
 async function copyRowsToClipboard(text, iconElement) {
   const rows = text.split('\n').map(row => `"${row}"`);
-  const formattedText = `[${rows.join(', ')}]`;
+  const formattedText = `[${rows.join(',\n ')}]`;
 
   const type = "text/plain";
   const clipboardItemData = {
