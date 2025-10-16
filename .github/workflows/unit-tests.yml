@@ -15,7 +15,6 @@ env:
   TEST_DIR: ${{ github.workspace }}/tmp_folder
   CCACHE_DIR: ${{ github.workspace }}/ccache
   COVERAGE: 'true'
-  SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   lint:
@@ -51,12 +50,12 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-        ref: ${{ env.SHA }}
+        ref: ${{ github.event.pull_request.head.sha }}
     - id: git-log
       shell: bash
       run: |
         set -eu
-        message=$(git log --format=%B -n 1 "${SHA}")
+        message=$(git log --format=%B -n 1)
         echo "message=${message}" >> "${GITHUB_OUTPUT}"
 
   unit-tests:
