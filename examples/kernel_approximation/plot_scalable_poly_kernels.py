@@ -243,9 +243,9 @@ plt.show()
 # References
 # ==========
 #
-# [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
-# explicit feature maps." KDD '13 (2013).
-# https://doi.org/10.1145/2487575.2487591
+# .. [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
+#        explicit feature maps." KDD '13 (2013).
+#        https://doi.org/10.1145/2487575.2487591
 #
-# [2] LIBSVM binary datasets repository
-# https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html
+# .. [2] LIBSVM binary datasets repository
+#        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html
