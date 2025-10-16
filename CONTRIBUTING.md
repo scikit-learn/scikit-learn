@@ -26,6 +26,7 @@ link to it from your website, or simply star it in GitHub to say "I use it".
 
 Note that communications on all channels should respect our
 [Code of Conduct](./CODE_OF_CONDUCT.md).
+- David Kong (@dvaidwho)
 
 Quick links
 -----------
