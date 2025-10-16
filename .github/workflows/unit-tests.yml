@@ -52,6 +52,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - id: git-log
+        name: Set commit message job output
         shell: bash
         run: |
           set -eu
