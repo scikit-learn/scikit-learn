@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import BisectingKMeans, KMeans
 from sklearn.datasets import make_blobs
 
-
 # Generate sample data
 n_samples = 10000
 random_state = 0
