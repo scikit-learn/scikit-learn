@@ -418,6 +418,22 @@ the required packages.
           :class-label: tab-6
           :sync: package-manager-pip
 
+          The default C compiler on macOS, Apple clang (confusingly aliased as
+          `/usr/bin/gcc`), does not directly support OpenMP, so you first need
+          to enable OpenMP support.
+
+          Install the macOS command line tools:
+
+          .. prompt:: bash $
+
+              xcode-select --install
+
+          Next, install the LLVM OpenMP library with Homebrew_:
+
+          .. prompt:: bash $
+
+              brew install libomp
+
           Install Python 3 (|PythonMinVersion| or later) using Homebrew_
           (`brew install python`) or by manually installing the package from the
           `official website <https://www.python.org/downloads/macos/>`__.
@@ -428,33 +444,22 @@ the required packages.
 
             python -m venv sklearn-dev
             source sklearn-dev/bin/activate  # activate
-            pip install wheel numpy scipy cython meson-python ninja
-
-          Also install the development dependencies:
-
-          .. prompt:: bash
-
-            pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
-
-          The default C compiler on macOS, Apple clang (confusingly aliased as
-          `/usr/bin/gcc`), does not directly support OpenMP, so you additionally
-          need to enable OpenMP support.
-
-          First install the macOS command line tools:
-
-          .. prompt:: bash $
-
-              xcode-select --install
-
-          Install the LLVM OpenMP library with Homebrew_:
-
-          .. prompt:: bash $
-
-              brew install libomp
+            pip install wheel numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
+
+          The default C compiler on macOS, Apple clang (confusingly aliased as
+          `/usr/bin/gcc`), does not directly support OpenMP. To enable the
+          installation of the ``compilers`` meta-package from the conda-forge channel,
+          which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain,
+          you first need to install the macOS command line tools:
+
+          .. prompt:: bash $
+
+              xcode-select --install
 
           Install a recent version of Python (|PythonMinVersion| or later) for instance
           using conda-forge_. Conda-forge provides a conda-based distribution of
@@ -463,7 +468,10 @@ the required packages.
 
           .. prompt:: bash $
 
-            conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
+            conda create -n sklearn-dev -c conda-forge python \
+              numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl compilers llvm-openmp
 
           It is not always necessary but it is safer to open a new prompt before
           activating the newly created conda environment:
@@ -471,30 +479,6 @@ the required packages.
           .. prompt:: bash $
 
             conda activate sklearn-dev
-
-          Also install the development dependencies in your environment:
-
-          .. prompt:: bash $
-
-            conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
-
-          The default C compiler on macOS, Apple clang (confusingly aliased as
-          `/usr/bin/gcc`), does not directly support OpenMP, so you need to
-          install the ``compilers`` meta-package from the conda-forge channel,
-          which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain.
-
-          First install the macOS command line tools:
-
-          .. prompt:: bash $
-
-              xcode-select --install
-
-          Make sure you activated the `sklearn-dev` environment and install the following packages:
-
-          .. prompt:: bash $
-
-              conda install -c conda-forge joblib threadpoolctl pytest compilers llvm-openmp
-
 
           .. note::
 
