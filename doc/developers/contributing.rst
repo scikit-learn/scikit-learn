@@ -374,13 +374,8 @@ the required packages.
 
             python -m venv sklearn-dev
             sklearn-dev\Scripts\activate  # activate
-            pip install wheel numpy scipy cython meson-python ninja
-
-          Also install the development dependencies:
-
-          .. prompt:: powershell
-
-            pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+            pip install wheel numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
         .. tab-item:: conda
           :class-label: tab-6
@@ -402,7 +397,9 @@ the required packages.
 
           .. prompt:: powershell
 
-            conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
+            conda create -n sklearn-dev -c conda-forge \
+              python numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
           It is not always necessary but it is safer to open a new prompt before
           activating the newly created conda environment:
@@ -410,12 +407,6 @@ the required packages.
           .. prompt:: powershell
 
             conda activate sklearn-dev
-
-          Also install the development dependencies in your environment:
-
-          .. prompt:: powershell
-
-            conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
     .. tab-item:: MacOS
       :class-label: tab-4
