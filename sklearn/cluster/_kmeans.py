@@ -1723,7 +1723,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
     batch_size : int, default=1024
         Size of the mini batches.
-        For faster computations, you can set `batch_size > 256 * number of cores`
+        For faster computations, you can set `batch_size > 256 * number_of_cores`
         to enable :ref:`parallelism <lower-level-parallelism-with-openmp>`
         on all cores.
 
