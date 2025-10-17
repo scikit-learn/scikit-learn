@@ -30,11 +30,3 @@ index from the PyPI registry of `anaconda.org`:
 
 Note that first uninstalling scikit-learn might be required to be able to
 install nightly builds of scikit-learn.
-
-
-Building a specific version from a tag
---------------------------------------
-
-If you want to build a stable version, you can ``git checkout <VERSION>``
-to get the code for that particular version, or download an zip archive of
-the version from github.
