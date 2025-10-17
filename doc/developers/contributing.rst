@@ -310,6 +310,8 @@ conflicts with other packages.
 
 In addition to the required Python dependencies, you need to have a working C/C++
 compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>`__ extensions.
+The platform-specific instructions below describe how to set up a suitable compiler and install
+the required packages.
 
 .. note::
 
@@ -319,8 +321,6 @@ compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>
       parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
       (before cythonization) will force the build to fail if OpenMP is not
       supported.
-
-In the following, you find the specific install instructions for all supported platforms and package managers.
 
 .. raw:: html
 
