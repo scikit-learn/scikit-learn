@@ -169,62 +169,46 @@ def _weighted_percentile(
     return result[0] if n_dim == 1 else result
 
 
-def _weighted_percentile_inner(x, w, target_sums, out, average, w_sorted, xp):
-    n = x.shape[0]
-    if n < 100 and not w_sorted:
-        sorted_idx = xp.argsort(x, stable=False)
-        w = w[sorted_idx]
-        x = x[sorted_idx]
-        w_sorted = True
-    if w_sorted:
-        _weighted_percentile_inner_sorted(x, w, target_sums, out, average, xp)
-        return
-    i = n // 2
-    partitioner = xp.argpartition(x, i)
-    w_left = w[partitioner[:i]]
-    x_right = None
-    sum_left = xp.sum(w_left)
-    j = xp.searchsorted(target_sums, sum_left)
-    target_sums[j:] -= sum_left
-    if j > 0:
-        # some quantiles are to be found on the left side of the partition
-        x_left = x[partitioner[:i]]
-        _weighted_percentile_inner(
-            x_left, w_left, target_sums[:j], out[:j], average, w_sorted, xp
-        )
-    if j >= target_sums.shape[0]:
-        return
-    zero = xp.sum(target_sums[:0])
-    # ^ array API needs an array as argument for searchsorted
-    idx_0 = xp.searchsorted(target_sums[j:], zero, side="right")
-    if idx_0 > 0:
-        # some quantiles are precisely at the index of the partition
-        x_left = x[partitioner[:i]]
-        x_right = x[partitioner[i:]]
-        out[j : j + idx_0] = (
-            (xp.max(x_left) + xp.min(x_right)) / 2 if average else xp.max(x_left)
-        )
-        j += idx_0
-    if j < target_sums.shape[0]:
-        # some quantiles are to be found on the right side of the partition
-        x_right = x[partitioner[i:]] if x_right is None else x_right
-        w_right = w[partitioner[i:]]
-        _weighted_percentile_inner(
-            x_right, w_right, target_sums[j:], out[j:], average, w_sorted, xp
-        )
+def _weighted_percentile_inner(x, w, target_sums, average, w_sorted, xp):
+    """
+    x: (d, n)
+    w: (d, n)
+    target_sums: (d,)
+    """
+    d, n = x.shape
 
+    while n > 1:
+        i = (n + 1) // 2
+        partitioner = xp.argpartition(x, i, axis=1)
+        w_left = xp.take_along_axis(w, partitioner[:, :i], axis=1)
+        sum_left = xp.sum(w_left, axis=1)
 
-def _weighted_percentile_inner_sorted(x, w, target_sums, out, average, xp):
-    cw = xp.cumsum(w, axis=0)
-    idx = xp.searchsorted(cw, target_sums)
-    out[:] = x[idx]
-    if average:
-        mask_0 = cw[idx] == target_sums
-        if mask_0.any():
-            idx = idx[mask_0]
-            idx_p1 = idx + 1
-            idx_p1 = xp.minimum(idx_p1, x.shape[0] - 1)
-            out[mask_0] = (x[idx] + x[idx_p1]) / 2
+        mask_exact = target_sums == sum_left
+
+        if mask_exact.any():
+            pass
+
+        mask_go_left = target_sums < sum_left
+        mask_go_right = target_sums > sum_left
+
+        x_next = xp.full_like(x, fill_value=xp.inf, shape=(d, i))
+        w_next = xp.zeros_like(w, shape=(d, i))
+
+        target_sums[mask_go_left] -= sum_left
+        left_part = partitioner[mask_go_left][:, :i]
+        i_right = n - i
+        right_part = partitioner[mask_go_right][:, i_right:]
+
+        x_next[mask_go_left] = xp.take_along_axis(x[mask_go_left], left_part, axis=1)
+        x_next[mask_go_right] = xp.take_along_axis(x[mask_go_right], right_part, axis=1)
+        w_next[mask_go_left] = w_left[mask_go_left]
+        w_next[mask_go_right] = xp.take_along_axis(w[mask_go_right], right_part, axis=1)
+
+        x = x_next
+        w = w_next
+        n = i
+
+    return x[:, 0]
 
 
 def _old_weighted_percentile(
