@@ -461,13 +461,6 @@ the required packages.
 
               brew install libomp
 
-          Remove any existing scikit-learn installations and meson builds to avoid conflicts.
-          You can use the provided `Makefile` for this by simply calling:
-
-          .. prompt:: bash $
-
-              make clean
-
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
@@ -511,12 +504,6 @@ the required packages.
 
               conda install -c conda-forge joblib threadpoolctl pytest compilers llvm-openmp
 
-          Remove any existing scikit-learn installations and meson builds to avoid conflicts.
-          You can use the provided `Makefile` for this by simply calling:
-
-          .. prompt:: bash $
-
-              make clean
 
           .. note::
 
@@ -672,13 +659,6 @@ the required packages.
           .. prompt:: bash $
 
               conda install -c conda-forge joblib threadpoolctl compilers
-
-          Remove any existing scikit-learn installations and meson builds to avoid conflicts.
-          You can use the provided `Makefile` for this by simply calling:
-
-          .. prompt:: bash $
-
-              make clean
 
 Install editable version of scikit-learn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

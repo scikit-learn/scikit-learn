@@ -416,3 +416,13 @@ other packages that have written good guides about what it is and how it works.
 - `scipy Meson doc
   <https://scipy.github.io/devdocs/building/understanding_meson.html>`_ gives
   more background about how Meson works behind the scenes
+
+When `building scikit-learn from scratch<install_bleeding_edge_>`__, existing
+scikit-learn installations and meson builds can lead to conflicts.
+
+You can use the `Makefile` provided in the `scikit-learn repository <https://github.com/scikit-learn/scikit-learn/>`__
+to remove conflicting builds by simply calling:
+
+.. prompt:: bash $
+
+    make clean
