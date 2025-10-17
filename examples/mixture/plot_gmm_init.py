@@ -45,7 +45,6 @@ from sklearn.datasets._samples_generator import make_blobs
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.extmath import row_norms
 
-print(__doc__)
 
 # Generate some data
 
