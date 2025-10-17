@@ -542,7 +542,8 @@ the required packages.
 
             python -m venv sklearn-dev
             source sklearn-dev/bin/activate  # activate
-            pip install wheel numpy scipy cython meson-python ninja
+            pip install wheel numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
           .. dropdown:: If no isolated environment is used (not recommended!)
 
@@ -566,12 +567,6 @@ the required packages.
             ``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
             ``pip3`` also needs to be used instead of ``pip`` in the following steps and
             when `installing scikit-learn <pip_build_>`_.
-
-          Also install the development dependencies:
-
-          .. prompt:: bash
-
-            pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
           Additionally, you need to have a working C/C++ compiler with OpenMP support.
 
@@ -609,11 +604,15 @@ the required packages.
           If you don't have Python |PythonMinVersion| or later, please install a
           recent version for instance using conda-forge_. Conda-forge provides a
           conda-based distribution of Python and the most popular scientific libraries.
-          Create a new conda environment with the required python packages:
+          Create a new conda environment with the required python packages
+          (including `compilers` for a working C/C++ compiler with OpenMP support):
 
           .. prompt:: bash $
 
-            conda create -n sklearn-dev -c conda-forge python numpy scipy cython meson-python ninja
+            conda create -n sklearn-dev -c conda-forge python \
+              numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl compilers
 
           It is not always necessary but it is safer to open a new prompt before
           activating the newly created conda environment:
@@ -621,19 +620,6 @@ the required packages.
           .. prompt:: bash $
 
             conda activate sklearn-dev
-
-          Also install the development dependencies in your environment:
-
-          .. prompt:: bash $
-
-            conda install -c conda-forge pytest pytest-cov ruff==0.11.2 mypy numpydoc
-
-          Additionally, you need to have the scikit-learn Python development headers
-          and a working C/C++ compiler with OpenMP support:
-
-          .. prompt:: bash $
-
-              conda install -c conda-forge joblib threadpoolctl compilers
 
 .. _install_from_source:
 
