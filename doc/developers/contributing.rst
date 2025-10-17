@@ -660,6 +660,8 @@ the required packages.
 
               conda install -c conda-forge joblib threadpoolctl compilers
 
+.. _install_from_source:
+
 Install editable version of scikit-learn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Within your venv or conda `sklearn-dev` environment, build the project with pip:
