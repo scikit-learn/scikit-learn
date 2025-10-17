@@ -3,7 +3,7 @@
 
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs, INFINITY
+from libc.math cimport INFINITY
 
 import numpy as np
 cimport numpy as cnp
@@ -12,7 +12,8 @@ cnp.import_array()
 from scipy.special.cython_special cimport xlogy
 
 from sklearn.tree._utils cimport log
-from sklearn.tree._utils cimport WeightedMedianCalculator
+from sklearn.tree._utils cimport WeightedFenwickTree
+from sklearn.tree._sorting cimport sort
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
@@ -1057,6 +1058,7 @@ cdef class RegressionCriterion(Criterion):
 
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
+
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
 
@@ -1173,17 +1175,166 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 
-cdef class MAE(RegressionCriterion):
+# Helper for MAE criterion:
+
+cdef void precompute_absolute_errors(
+    const float64_t[::1] sorted_y,
+    const intp_t[::1] ranks,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    WeightedFenwickTree tree,
+    intp_t start,
+    intp_t end,
+    float64_t[::1] abs_errors,
+    float64_t[::1] medians,
+) noexcept nogil:
+    """
+    Fill `abs_errors` and `medians`.
+
+    If start < end:
+        Computes the "prefix" AEs/medians, i.e the AEs for each set of indices
+        sample_indices[start:start + i] with i in {1, ..., n}
+        where n = end - start
+    Else:
+        Computes the "suffix" AEs/medians, i.e the AEs for each set of indices
+        sample_indices[i:] with i in {0, ..., n-1}
+
+    Parameters
+    ----------
+    sorted_y : const float64_t[::1]
+        Target values, sorted
+    ranks : const intp_t[::1]
+    sample_weight : const float64_t[:]
+    sample_indices : const intp_t[:]
+        indices indicating which samples to use. Shape: (n_samples,)
+    tree : WeightedFenwickTree
+        pre-instanciated tree
+    start : intp_t
+        Start index in `sample_indices`
+    end : intp_t
+        End index (exclusive) in `sample_indices`
+    abs_errors : float64_t[::1]
+        array to store (increment) the computed absolute errors. Shape: (n,)
+        with n := end - start
+    medians : float64_t[::1]
+        array to store (overwrite) the computed medians. Shape: (n,)
+
+    Complexity: O(n log n)
+    """
+    cdef:
+        intp_t p, i, step, n, r, median_idx, median_prev_idx
+        float64_t w = 1.
+        float64_t half_weight, median
+        float64_t w_right, w_left, wy_left, wy_right
+
+    if start < end:
+        step = 1
+        n = end - start
+    else:
+        n = start - end
+        step = -1
+
+    tree.reset(n)
+
+    p = start
+    for _ in range(n):
+        i = sample_indices[p]
+        if sample_weight is not None:
+            w = sample_weight[i]
+        # Activate sample i at its y-rank
+        r = ranks[p]
+        tree.add(r, sorted_y[r], w)
+
+        # Weighted alpha-quantile by cumulative weight
+        half_weight = 0.5 * tree.total_w
+        median_idx = tree.search(half_weight, &w_left, &wy_left, &median_prev_idx)
+
+        if median_idx != median_prev_idx:
+            # Exact match for half_weight in the tree, take the middle point:
+            median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
+        else:
+            median = sorted_y[median_idx]
+
+        w_right = tree.total_w - w_left
+        wy_right = tree.total_wy - wy_left
+
+        # O(1) pinball loss formula
+        medians[p] = median
+        abs_errors[p] += (
+            (wy_right - median * w_right)
+            + (median * w_left - wy_left)
+        )
+        p += step
+
+
+cdef inline void compute_ranks(
+    float64_t* y,
+    intp_t* sorted_indices,
+    intp_t* ranks,
+    intp_t n
+) noexcept nogil:
+    """Sort `y` inplace and fill `ranks` accordingly"""
+    cdef intp_t i
+    for i in range(n):
+        sorted_indices[i] = i
+    sort(y, sorted_indices, n)
+    for i in range(n):
+        ranks[sorted_indices[i]] = i
+
+
+def _py_precompute_absolute_errors(
+    const float64_t[:, ::1] ys,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    const intp_t start,
+    const intp_t end,
+    const intp_t n,
+):
+    """Used for testing precompute_absolute_errors."""
+    cdef:
+        intp_t p, i
+        intp_t s = start
+        intp_t e = end
+        WeightedFenwickTree tree = WeightedFenwickTree(n)
+        float64_t[::1] sorted_y = np.empty(n, dtype=np.float64)
+        intp_t[::1] sorted_indices = np.empty(n, dtype=np.intp)
+        intp_t[::1] ranks = np.empty(n, dtype=np.intp)
+        float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
+        float64_t[::1] medians = np.empty(n, dtype=np.float64)
+
+    if start > end:
+        s = end + 1
+        e = start + 1
+    for p in range(s, e):
+        i = sample_indices[p]
+        sorted_y[p - s] = ys[i, 0]
+    compute_ranks(&sorted_y[0], &sorted_indices[0], &ranks[s], n)
+
+    precompute_absolute_errors(
+        sorted_y, ranks, sample_weight, sample_indices, tree,
+        start, end, abs_errors, medians
+    )
+    return np.asarray(abs_errors)[s:e], np.asarray(medians)[s:e]
+
+
+cdef class MAE(Criterion):
     r"""Mean absolute error impurity criterion.
 
-       MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
-       value and f_i is the predicted value."""
+    MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
+    value and f_i is the predicted value.
 
-    cdef cnp.ndarray left_child
-    cdef cnp.ndarray right_child
-    cdef void** left_child_ptr
-    cdef void** right_child_ptr
+    It has almost nothing in common with other regression criterions
+    so it doesn't inherit from RegressionCriterion
+    """
     cdef float64_t[::1] node_medians
+    cdef float64_t[::1] left_abs_errors
+    cdef float64_t[::1] right_abs_errors
+    cdef float64_t[::1] left_medians
+    cdef float64_t[::1] right_medians
+    cdef float64_t[::1] sorted_y
+    cdef intp_t [::1] sorted_indices
+    cdef intp_t[::1] ranks
+    cdef WeightedFenwickTree tree
 
     def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
@@ -1210,15 +1361,17 @@ cdef class MAE(RegressionCriterion):
 
         self.node_medians = np.zeros(n_outputs, dtype=np.float64)
 
-        self.left_child = np.empty(n_outputs, dtype='object')
-        self.right_child = np.empty(n_outputs, dtype='object')
-        # initialize WeightedMedianCalculators
-        for k in range(n_outputs):
-            self.left_child[k] = WeightedMedianCalculator(n_samples)
-            self.right_child[k] = WeightedMedianCalculator(n_samples)
+        # Note: this criterion has a  n_samples x 64 bytes memory footprint, which is
+        # fine as it's instantiated only once to build an entire tree
+        self.left_abs_errors = np.empty(n_samples, dtype=np.float64)
+        self.right_abs_errors = np.empty(n_samples, dtype=np.float64)
+        self.left_medians = np.empty(n_samples, dtype=np.float64)
+        self.right_medians = np.empty(n_samples, dtype=np.float64)
+        self.tree = WeightedFenwickTree(n_samples)  # 2 float64 arrays of size n_samples + 1
 
-        self.left_child_ptr = <void**> cnp.PyArray_DATA(self.left_child)
-        self.right_child_ptr = <void**> cnp.PyArray_DATA(self.right_child)
+        self.sorted_y = np.empty(n_samples, dtype=np.float64)
+        self.sorted_indices = np.empty(n_samples, dtype=np.intp)
+        self.ranks = np.empty(n_samples, dtype=np.intp)
 
     cdef int init(
         self,
@@ -1233,9 +1386,14 @@ cdef class MAE(RegressionCriterion):
 
         This initializes the criterion at node sample_indices[start:end] and children
         sample_indices[start:start] and sample_indices[start:end].
+
+        WARNING: sample_indices will be modified in-place externally
+        after this method is called
         """
-        cdef intp_t i, p, k
-        cdef float64_t w = 1.0
+        cdef:
+            intp_t i, p
+            intp_t n = end - start
+            float64_t w = 1.0
 
         # Initialize fields
         self.y = y
@@ -1243,33 +1401,15 @@ cdef class MAE(RegressionCriterion):
         self.sample_indices = sample_indices
         self.start = start
         self.end = end
-        self.n_node_samples = end - start
+        self.n_node_samples = n
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef void** left_child = self.left_child_ptr
-        cdef void** right_child = self.right_child_ptr
-
-        for k in range(self.n_outputs):
-            (<WeightedMedianCalculator> left_child[k]).reset()
-            (<WeightedMedianCalculator> right_child[k]).reset()
-
         for p in range(start, end):
             i = sample_indices[p]
-
             if sample_weight is not None:
                 w = sample_weight[i]
-
-            for k in range(self.n_outputs):
-                # push method ends up calling safe_realloc, hence `except -1`
-                # push all values to the right side,
-                # since pos = start initially anyway
-                (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
-
             self.weighted_n_node_samples += w
-        # calculate the node medians
-        for k in range(self.n_outputs):
-            self.node_medians[k] = (<WeightedMedianCalculator> right_child[k]).get_median()
 
         # Reset to pos=start
         self.reset()
@@ -1287,111 +1427,84 @@ cdef class MAE(RegressionCriterion):
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
-        """
-        cdef intp_t i, k
-        cdef float64_t value
-        cdef float64_t weight
 
-        cdef void** left_child = self.left_child_ptr
-        cdef void** right_child = self.right_child_ptr
+        Reset might be called after an external class has changed
+        inplace self.sample_indices[start:end], hence re-computing
+        the absolute errors is needed
+        """
+        cdef intp_t k, p, i
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
-        # reset the WeightedMedianCalculators, left should have no
-        # elements and right should have all elements.
+        n_bytes = self.n_node_samples * sizeof(float64_t)
+        memset(&self.left_abs_errors[self.start],  0, n_bytes)
+        memset(&self.right_abs_errors[self.start], 0, n_bytes)
 
         for k in range(self.n_outputs):
-            # if left has no elements, it's already reset
-            for i in range((<WeightedMedianCalculator> left_child[k]).size()):
-                # remove everything from left and put it into right
-                (<WeightedMedianCalculator> left_child[k]).pop(&value,
-                                                               &weight)
-                # push method ends up calling safe_realloc, hence `except -1`
-                (<WeightedMedianCalculator> right_child[k]).push(value,
-                                                                 weight)
+
+            for p in range(self.start, self.end):
+                i = self.sample_indices[p]
+                self.sorted_y[p - self.start] = self.y[i, k]
+
+            # Compute the ranks of the node-local values in sorted order.
+            # - self.sorted_y[0:n_node_samples] is sorted in-place (with indices).
+            # - self.sorted_indices is a buffer used internally by compute_ranks
+            # - self.ranks[p] receives the rank of self.y[self.samples_indices[p], k]
+            #   in the sorted array, for p in [start, end)
+            compute_ranks(
+                &self.sorted_y[0],
+                &self.sorted_indices[0],
+                &self.ranks[self.start],
+                self.n_node_samples,
+            )
+
+            # Note that at each iteration of this loop, we overwrite `self.left_medians`
+            # and `self.right_medians`. They are used to check for monoticity constraints,
+            # which are allowed only with n_outputs=1.
+            precompute_absolute_errors(
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.tree, self.start, self.end,
+                # left_abs_errors is incremented, left_medians is overwritten
+                self.left_abs_errors, self.left_medians
+            )
+            # For the right child, we consider samples from end-1 to start-1
+            # i.e., reversed, and abs error & median are filled in reverse order to.
+            precompute_absolute_errors(
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.tree, self.end - 1, self.start - 1,
+                # right_abs_errors is incremented, right_medians is overwritten
+                self.right_abs_errors, self.right_medians
+            )
+            # Store the median for the current node
+            self.node_medians[k] = self.right_medians[self.start]
+
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
-        """Reset the criterion at pos=end.
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        self.weighted_n_right = 0.0
-        self.weighted_n_left = self.weighted_n_node_samples
-        self.pos = self.end
-
-        cdef float64_t value
-        cdef float64_t weight
-        cdef void** left_child = self.left_child_ptr
-        cdef void** right_child = self.right_child_ptr
-
-        # reverse reset the WeightedMedianCalculators, right should have no
-        # elements and left should have all elements.
-        for k in range(self.n_outputs):
-            # if right has no elements, it's already reset
-            for i in range((<WeightedMedianCalculator> right_child[k]).size()):
-                # remove everything from right and put it into left
-                (<WeightedMedianCalculator> right_child[k]).pop(&value,
-                                                                &weight)
-                # push method ends up calling safe_realloc, hence `except -1`
-                (<WeightedMedianCalculator> left_child[k]).push(value,
-                                                                weight)
-        return 0
+        """For this class, this method is never called"""
+        raise NotImplementedError("This method is not implemented for this subclass")
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
+        new_pos is guaranteed to be greater than pos
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
+
+        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data)
         """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-
-        cdef void** left_child = self.left_child_ptr
-        cdef void** right_child = self.right_child_ptr
-
         cdef intp_t pos = self.pos
-        cdef intp_t end = self.end
-        cdef intp_t i, p, k
+        cdef intp_t i, p
         cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
-        #
-        # We are going to update right_child and left_child
-        # from the direction that require the least amount of
-        # computations, i.e. from pos to new_pos or from end to new_pos.
-        if (new_pos - pos) <= (end - new_pos):
-            for p in range(pos, new_pos):
-                i = sample_indices[p]
-
-                if sample_weight is not None:
-                    w = sample_weight[i]
-
-                for k in range(self.n_outputs):
-                    # remove y_ik and its weight w from right and add to left
-                    (<WeightedMedianCalculator> right_child[k]).remove(self.y[i, k], w)
-                    # push method ends up calling safe_realloc, hence except -1
-                    (<WeightedMedianCalculator> left_child[k]).push(self.y[i, k], w)
-
-                self.weighted_n_left += w
-        else:
-            self.reverse_reset()
-
-            for p in range(end - 1, new_pos - 1, -1):
-                i = sample_indices[p]
-
-                if sample_weight is not None:
-                    w = sample_weight[i]
-
-                for k in range(self.n_outputs):
-                    # remove y_ik and its weight w from left and add to right
-                    (<WeightedMedianCalculator> left_child[k]).remove(self.y[i, k], w)
-                    (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
-
-                self.weighted_n_left -= w
+        for p in range(pos, new_pos):
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
+            self.weighted_n_left += w
 
         self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
@@ -1412,8 +1525,8 @@ cdef class MAE(RegressionCriterion):
         n_outputs == 1.
         """
         return (
-                (<WeightedMedianCalculator> self.left_child_ptr[0]).get_median() +
-                (<WeightedMedianCalculator> self.right_child_ptr[0]).get_median()
+            self.left_medians[self.pos - 1]
+            + self.right_medians[self.pos]
         ) / 2
 
     cdef inline bint check_monotonicity(
@@ -1423,11 +1536,9 @@ cdef class MAE(RegressionCriterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
-        cdef:
-            float64_t value_left = (<WeightedMedianCalculator> self.left_child_ptr[0]).get_median()
-            float64_t value_right = (<WeightedMedianCalculator> self.right_child_ptr[0]).get_median()
-
-        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
+        return self._check_monotonicity(
+            monotonic_cst, lower_bound, upper_bound,
+            self.left_medians[self.pos - 1], self.right_medians[self.pos])
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
@@ -1435,23 +1546,13 @@ cdef class MAE(RegressionCriterion):
         Evaluate the MAE criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
+
+        Time complexity: O(1) (precomputed in `.reset()`)
         """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef intp_t i, p, k
-        cdef float64_t w = 1.0
-        cdef float64_t impurity = 0.0
-
-        for k in range(self.n_outputs):
-            for p in range(self.start, self.end):
-                i = sample_indices[p]
-
-                if sample_weight is not None:
-                    w = sample_weight[i]
-
-                impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
-
-        return impurity / (self.weighted_n_node_samples * self.n_outputs)
+        return (
+            self.right_abs_errors[0]
+            / (self.weighted_n_node_samples * self.n_outputs)
+        )
 
     cdef void children_impurity(self, float64_t* p_impurity_left,
                                 float64_t* p_impurity_right) noexcept nogil:
@@ -1459,46 +1560,34 @@ cdef class MAE(RegressionCriterion):
 
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
+
+        Time complexity: O(1) (precomputed in `.reset()`)
         """
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-
-        cdef intp_t start = self.start
-        cdef intp_t pos = self.pos
-        cdef intp_t end = self.end
-
-        cdef intp_t i, p, k
-        cdef float64_t median
-        cdef float64_t w = 1.0
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
-        cdef void** left_child = self.left_child_ptr
-        cdef void** right_child = self.right_child_ptr
-
-        for k in range(self.n_outputs):
-            median = (<WeightedMedianCalculator> left_child[k]).get_median()
-            for p in range(start, pos):
-                i = sample_indices[p]
-
-                if sample_weight is not None:
-                    w = sample_weight[i]
-
-                impurity_left += fabs(self.y[i, k] - median) * w
+        # if pos == start, left child is empty, hence impurity is 0
+        if self.pos > self.start:
+            impurity_left += self.left_abs_errors[self.pos - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
-        for k in range(self.n_outputs):
-            median = (<WeightedMedianCalculator> right_child[k]).get_median()
-            for p in range(pos, end):
-                i = sample_indices[p]
-
-                if sample_weight is not None:
-                    w = sample_weight[i]
-
-                impurity_right += fabs(self.y[i, k] - median) * w
+        # if pos == end, right child is empty, hence impurity is 0
+        if self.pos < self.end:
+            impurity_right += self.right_abs_errors[self.pos]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
+
+    # those 2 methods are copied from the RegressionCriterion abstract class:
+    def __reduce__(self):
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
+
+    cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
 
 
 cdef class FriedmanMSE(MSE):
