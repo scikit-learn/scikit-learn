@@ -133,9 +133,9 @@ a.param-doc-link::before {
 
  .features {
     font-family: monospace;
-    font-size: smaller;
+
     cursor: pointer;
-    background-color: var(--sklearn-color-fitted-level-1);
+    background-color: var(--sklearn-color-fitted-level-0);
     border: 1px dotted var(--sklearn-color-border-box);
     border-radius: .5em;
     margin-bottom: 0.5em;
@@ -147,6 +147,8 @@ a.param-doc-link::before {
   top: 0;
   padding: .25em .5em;
   border: none;
+  background-color: var(--sklearn-color-fitted-level-1);
+  border-radius: .5em;
 }
 
 .features summary::marker {
@@ -168,16 +170,16 @@ a.param-doc-link::before {
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
     border-radius: 0 0 .5em .5em;
-
     justify-content: space-between;
 }
 
-.features .features-container .copy-paste-icon {
+.features .copy-paste-icon {
     width: 1em;
     height: 1em;
     background-size: 1em 1em;
     background-color: var(--sklearn-color-fitted-level-0);
-    padding: .5em;
+
+    padding: .25em;
 }
 
 
@@ -188,7 +190,6 @@ a.param-doc-link::before {
 
 .features .features-container table td {
   text-align: left;
-  font-size: smaller;
   padding: 0;
   white-space: nowrap;
   color: var(--sklearn-color-text);
