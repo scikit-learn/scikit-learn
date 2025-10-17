@@ -31,6 +31,7 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
+
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v5
