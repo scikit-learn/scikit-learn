@@ -1819,35 +1819,17 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     )
 
 
-def test_pairwise_argmin_no_warning_for_bool():
-    """
-    Check that no DataConversionWarning is raised for boolean metric
-    when the data is already boolean.
-    Regression test for #32495.
-    """
-    # Create boolean input arrays.
-    X = np.ones((5, 5), dtype=np.bool_)
-    Y = np.ones((5, 5), dtype=np.bool_)
-    # Call the function within a warning-catching context.
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always", DataConversionWarning)
-        pairwise_distances_argmin(X, Y, metric="jaccard")
-        # Check that the list of caught warnings is empty.
-        assert len(w) == 0, "A DataConversionWarning was incorrectly raised."
-
-
-def test_pairwise_argmin_min_no_warning_for_bool():
-    """
-    Check that no DataConversionWarning is raised for boolean metric
-    when the data is already boolean.
-    Regression test for #32495.
-    """
-    # Create boolean input arrays.
-    X = np.ones((5, 5), dtype=np.bool_)
-    Y = np.ones((5, 5), dtype=np.bool_)
-    # Call the function within a warning-catching context.
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always", DataConversionWarning)
-        pairwise_distances_argmin_min(X, Y, metric="jaccard")
-        # Check that the list of caught warnings is empty.
-        assert len(w) == 0, "A DataConversionWarning was incorrectly raised."
+@pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
+@pytest.mark.parametrize(
+    "pairwise_fn", [pairwise_distances_argmin, pairwise_distances_argmin_min]
+)
+def test_pairwise_argmin_correct_warnings(metric, pairwise_fn):
+    X = [[True, True, False, True], [True, False, True, True]]
+    Y = [[True, True, False, True], [True, False, True, True]]
+    X_arr = np.asarray(X)
+    Y_arr = np.asarray(Y)
+    with warnings.catch_warnings(record=True) as record:
+        pairwise_fn(X, Y, metric=metric)
+        # Some deprecated scipy metrics raise DeprecationWarning warning, filter here
+        record = [w for w in record if issubclass(w.category, DataConversionWarning)]
+        assert len(record) == 0, f"A DataConversionWarning was raised for {metric}"
