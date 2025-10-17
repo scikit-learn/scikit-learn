@@ -137,7 +137,7 @@ a.param-doc-link::before {
     cursor: pointer;
     background-color: var(--sklearn-color-fitted-level-0);
     border: 1px dotted var(--sklearn-color-border-box);
-    border-radius: .5em;
+    border-radius: .20em;
     margin-bottom: 0.5em;
     display: flex;
 }
@@ -148,7 +148,7 @@ a.param-doc-link::before {
   padding: .25em .5em;
   border: none;
   background-color: var(--sklearn-color-fitted-level-1);
-  border-radius: .5em;
+  border-radius: .20em 0 0 .20em;
 }
 
 .features summary::marker {
@@ -159,7 +159,7 @@ a.param-doc-link::before {
 .features summary:hover {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
-  border-radius: .5em;
+  border-radius: .20em 0 0 0;
 }
 
 .features .features-container {
@@ -177,9 +177,9 @@ a.param-doc-link::before {
     width: 1em;
     height: 1em;
     background-size: 1em 1em;
-    background-color: var(--sklearn-color-fitted-level-0);
 
-    padding: .25em;
+    background-color: var(--sklearn-color-fitted-level-1);
+    margin: .25em;
 }
 
 
