@@ -497,7 +497,7 @@ the required packages.
           The default C compiler on macOS, Apple clang (confusingly aliased as
           `/usr/bin/gcc`), does not directly support OpenMP, so you need to
           install the ``compilers`` meta-package from the conda-forge channel,
-          which provides OpenMP-enabled C/C++ compilers based on the llvm toolchain.
+          which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain.
 
           First install the macOS command line tools:
 
