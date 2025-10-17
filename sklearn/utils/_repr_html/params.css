@@ -139,6 +139,7 @@ a.param-doc-link::before {
     border: 1px dotted var(--sklearn-color-border-box);
     border-radius: .5em;
     margin-bottom: 0.5em;
+    display: flex;
 }
 
 .features summary {
@@ -167,7 +168,7 @@ a.param-doc-link::before {
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
     border-radius: 0 0 .5em .5em;
-    display: flex;
+
     justify-content: space-between;
 }
 
@@ -176,16 +177,8 @@ a.param-doc-link::before {
     height: 1em;
     background-size: 1em 1em;
     background-color: var(--sklearn-color-fitted-level-0);
-    background-position: center;
     padding: .5em;
-
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    right: 0em;
-    z-index: 1;
 }
-
 
 
 .features .features-container table {

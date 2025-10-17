@@ -11,12 +11,7 @@ def _features_html(features):
             <summary>
             {total_features} features
             </summary>
-            <i class="copy-paste-icon"
-                  onclick="copyRowsToClipboard(
-                  this.closest('details').querySelector('tbody').innerText.trim(),
-                  this
-              )">
-              </i>
+
 
             <div class="features-container">
               <table class="features-table">
@@ -26,6 +21,17 @@ def _features_html(features):
               </table>
             </div>
           </details>
+          <i class="copy-paste-icon"
+              onclick="
+                var detailsElem = this.closest('.features').querySelector('details');
+                var wasOpen = detailsElem.open;
+                detailsElem.open = true;
+                var content = this.closest('.features')
+                  .querySelector('tbody').innerText.trim();
+                if (!wasOpen) detailsElem.open = false;
+                copyRowsToClipboard(content, this);
+              ">
+          </i>
         </div>
     """
 
