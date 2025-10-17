@@ -31,7 +31,6 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       build: ${{ steps.check_build_trigger.outputs.build }}
-
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v5
@@ -61,9 +60,6 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 310
-            platform_id: win_amd64
-          - os: windows-latest
             python: 311
             platform_id: win_amd64
           - os: windows-latest
@@ -84,7 +80,6 @@ jobs:
             platform_id: win_amd64
 
           # Windows on ARM64 (WoA)
-          # python 310 not available for WoA
           - os: windows-11-arm
             python: 311
             platform_id: win_arm64
@@ -106,10 +101,6 @@ jobs:
             platform_id: win_arm64
 
           # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 310
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 311
             platform_id: manylinux_x86_64
@@ -137,10 +128,6 @@ jobs:
             manylinux_image: manylinux2014
 
           # Linux 64 bit manylinux2014
-          - os: ubuntu-24.04-arm
-            python: 310
-            platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
           - os: ubuntu-24.04-arm
             python: 311
             platform_id: manylinux_aarch64
@@ -169,9 +156,6 @@ jobs:
 
           # MacOS x86_64
           - os: macos-13
-            python: 310
-            platform_id: macosx_x86_64
-          - os: macos-13
             python: 311
             platform_id: macosx_x86_64
           - os: macos-13
@@ -192,9 +176,6 @@ jobs:
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          - os: macos-14
-            python: 310
-            platform_id: macosx_arm64
           - os: macos-14
             python: 311
             platform_id: macosx_arm64
