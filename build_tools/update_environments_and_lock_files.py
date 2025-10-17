@@ -174,7 +174,7 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
