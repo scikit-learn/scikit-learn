@@ -1,0 +1,4 @@
+- |Fix| :func:`~sklearn.metrics.pairwise.pairwise_distances_argmin` and
+  :func:`~sklearn.metrics.pairwise.pairwise_distances_argmin_min` no longer
+  raise an incorrect ``DataConversionWarning`` when called with boolean arrays and a
+  boolean metric. By :user:`IgnacioJPickering` and :user:`pushkar-hue`.
