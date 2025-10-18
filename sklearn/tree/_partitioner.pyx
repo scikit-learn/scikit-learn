@@ -26,6 +26,9 @@ cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
 # Allow for 32 bit float comparisons
 cdef float32_t INFINITY_32t = np.inf
 
+# Mitigate precision differences between 32 bit and 64 bit
+cdef const float32_t FEATURE_THRESHOLD = 1e-7
+
 
 @final
 cdef class DensePartitioner:
