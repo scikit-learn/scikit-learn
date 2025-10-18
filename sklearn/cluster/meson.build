@@ -18,6 +18,7 @@ foreach ext_name, ext_dict : cluster_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: [np_dep] + ext_dict.get('dependencies', []),
+    limited_api: '3.12',
     subdir: 'sklearn/cluster',
     install: true
   )
