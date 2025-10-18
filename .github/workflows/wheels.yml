@@ -218,7 +218,7 @@ jobs:
           set -xe
 
           # Do not use abi3 wheels for neither Python 3.11 nor free-threaded Python
-          if [[ $PYTHON_VERSION =~ 311 || PYTHON_VERSION =~ t ]]; then
+          if [[ "$PYTHON_VERSION" == "311" || "$PYTHON_VERSION" =~ t ]]; then
               echo 'CIBW_CONFIG_SETTINGS=setup-args=-Dpython.allow_limited_api=false' >> "$GITHUB_ENV"
           else
               # this is necessary for the wheel to be named correctly, is there a better way???
