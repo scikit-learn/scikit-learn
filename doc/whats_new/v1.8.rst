@@ -50,7 +50,7 @@ Users who wish to experiment with the free-threaded build are encouraged to use
 Python 3.14 and report any issues they encounter.
 
 By :user:`Ritik Verma <ritikverma2000>` and many contributors in the wider Scientific
-Python and CPython ecosystem. :pr:`XXXX`
+Python and CPython ecosystem. :pr:`32534`
 
 .. rubric:: Code and documentation contributors
 
