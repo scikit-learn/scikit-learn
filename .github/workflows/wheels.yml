@@ -218,14 +218,12 @@ jobs:
         run: |
           set -xe
 
-          # Do not use abi3 wheels for neither Python 3.11 nor free-threaded Python
-          if [[ "$PYTHON_VERSION" == "311" || "$PYTHON_VERSION" =~ t ]]; then
-              CIBW_CONFIG_SETTINGS='setup-args=-Dpython.allow_limited_api=false'
-          else
-              # this is necessary for the wheel to be named correctly, is there a better way???
-              cat >> pyproject.toml <<EOF
-          [tool.meson-python]
-          limited-api = true
+          # Only use abi3 wheels for non free-threaded Python >= 3.12
+          if [[ "$PYTHON_VERSION" != "311" && ! "$PYTHON_VERSION" =~ t ]]; then
+              CIBW_CONFIG_SETTINGS='setup-args=-Dpython.allow_limited_api=true'
+
+              # TODO this is necessary for the wheel to be named correctly, is there a better way?
+              echo -ne '\n[tool.meson-python]\nlimited-api = true\n' >> pyproject.toml
           EOF
           fi
 
