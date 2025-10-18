@@ -16,3 +16,11 @@ elif [[ $RUNNER_OS == "macOS" ]]; then
 elif [[ $RUNNER_OS == "Windows" ]]; then
     cat $PROJECT_DIR/build_tools/wheels/LICENSE_windows.txt >>"$LICENSE_FILE"
 fi
+
+PYTHON_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+IS_PYTHON_FREE_THREADED=$(python -c 'import sysconfig; print(sysconfig.get_config_var("Py_GIL_DISABLED"))')
+
+# Change pyproject.toml to not use limited_api
+if [[ $PYTHON_VERSION != "3.11" || IS_PYTHON_FREE_THREADED == "1" ]]; then
+    export CIBW_CONFIG_SETTINGS='setup-args=-Dpython.allow_limited_api=false'
+fi
