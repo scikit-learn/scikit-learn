@@ -214,6 +214,7 @@ jobs:
       - name: Set CIBW_CONFIG_SETTINGS to use limited API when relevant
         env:
           PYTHON_VERSION: ${{ matrix.python }}
+          PLATFORM_ID: ${{ matrix.platform_id }}
         run: |
           set -xe
 
@@ -226,6 +227,12 @@ jobs:
           [tool.meson-python]
           limited-api = true
           EOF
+
+          # Needed on Windows CI to compile with Visual Studio compiler
+          # otherwise Meson detects a MINGW64 platform and use MINGW64
+          # toolchain
+          if [[ "$PLATFORM_ID" =~ win ]]; then
+              CIBW_CONFIG_SETTINGS="$CIBW_CONFIG_SETTINGS setup-args=--vsenv"
           fi
 
       - name: Build and test wheels
@@ -237,10 +244,6 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_CONFIG_SETTINGS: ${{ env.CIBW_CONFIG_SETTINGS }}
-          # Needed on Windows CI to compile with Visual Studio compiler
-          # otherwise Meson detects a MINGW64 platform and use MINGW64
-          # toolchain
-          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{matrix.platform_id}}
