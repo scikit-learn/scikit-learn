@@ -20,7 +20,13 @@ fi
 PYTHON_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 IS_PYTHON_FREE_THREADED=$(python -c 'import sysconfig; print(sysconfig.get_config_var("Py_GIL_DISABLED"))')
 
-# Use abi3 wheels for non vanilla Python >= 3.12
-if [[ $PYTHON_VERSION != "3.11" && IS_PYTHON_FREE_THREADED == "0" ]]; then
-    echo "CIBW_CONFIG_SETTINGS='setup-args=-Dpython.allow_limited_api=true" >> "$GITHUB_ENV"
+# Do not use abi3 wheels for Python 3.11 or free-threaded Python
+if [[ $PYTHON_VERSION == "3.11" || IS_PYTHON_FREE_THREADED == "1" ]]; then
+    echo "CIBW_CONFIG_SETTINGS='setup-args=-Dpython.allow_limited_api=false" >> "$GITHUB_ENV"
+else
+    # this is necessary for the wheel to be named correctly, is there a better way???
+    cat >> pyproject.toml <<EOF
+[tool.meson-python]
+limited-api = true
+EOF
 fi
