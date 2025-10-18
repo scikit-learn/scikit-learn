@@ -203,6 +203,10 @@ If you want to help curate issues, read about :ref:`bug_triaging`.
 Contributing code
 =================
 
+The preferred way to contribute to scikit-learn is to fork the `main
+repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+then submit a "pull request" (PR).
+
 .. note::
 
   To avoid duplicating work, it is highly advised that you search through the
@@ -230,109 +234,451 @@ contribution must conform to the project's :ref:`coding guidelines
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
-Video resources
----------------
-These videos are step-by-step introductions on how to contribute to
-scikit-learn, and are a great companion to the following text guidelines.
-Please make sure to still check our guidelines below, since they describe our
-latest up-to-date workflow.
+.. _install_bleeding_edge:
 
-- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
-  `Video <https://youtu.be/5OL8XoMMOfA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+Set up your development environment
+-----------------------------------
 
-- Example of Submitting a Pull Request to scikit-learn:
-  `Video <https://youtu.be/PU1WyDPGePI>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+.. _git_repo:
 
-- Sprint-specific instructions and practical tips:
-  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+Fork the scikit-learn repository
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+First, you need to `create an account <https://github.com/join>`_ on
+GitHub (if you do not already have one) and fork the `project repository
+<https://github.com/scikit-learn/scikit-learn>`__ by clicking on the 'Fork'
+button near the top of the page. This creates a copy of the code under your
+account on the GitHub user account. For more details on how to fork a
+repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
-- 3 Components of Reviewing a Pull Request:
-  `Video <https://youtu.be/dyxS9KKCNzA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+The following steps explain how to set up a local clone of your forked git repository
+and how to locally install scikit-learn according to your operating system.
 
-.. note::
-  In January 2021, the default branch name changed from ``master`` to ``main``
-  for the scikit-learn GitHub repository to use more inclusive terms.
-  These videos were created prior to the renaming of the branch.
-  For contributors who are viewing these videos to set up their
-  working environment and submitting a PR, ``master`` should be replaced to ``main``.
+Set up a local clone of your fork
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Clone your fork of the scikit-learn repo from your GitHub account to your
+local disk:
 
-How to contribute
------------------
+.. prompt:: bash
 
-The preferred way to contribute to scikit-learn is to fork the `main
-repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
-then submit a "pull request" (PR).
+  git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
 
-In the first few steps, we explain how to locally install scikit-learn, and
-how to set up your git repository:
+and change into that directory:
 
-1. `Create an account <https://github.com/join>`_ on
-   GitHub if you do not already have one.
+.. prompt:: bash
 
-2. Fork the `project repository
-   <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-   button near the top of the page. This creates a copy of the code under your
-   account on the GitHub user account. For more details on how to fork a
-   repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
-
-3. Clone your fork of the scikit-learn repo from your GitHub account to your
-   local disk:
-
-   .. prompt:: bash
-
-      git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-      cd scikit-learn
-
-4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
-   development mode and return to this document.
-
-5. Install the development dependencies:
-
-   .. prompt:: bash
-
-        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
+  cd scikit-learn
 
 .. _upstream:
 
-6. Add the ``upstream`` remote. This saves a reference to the main
-   scikit-learn repository, which you can use to keep your repository
-   synchronized with the latest changes:
+Next, add the ``upstream`` remote. This saves a reference to the main
+scikit-learn repository, which you can use to keep your repository
+synchronized with the latest changes (you'll need this later in the :ref:`development_workflow`):
 
-   .. prompt:: bash
+.. prompt:: bash
 
-        git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+  git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running:
+Check that the `upstream` and `origin` remote aliases are configured correctly
+by running:
 
-   .. prompt:: bash
+.. prompt:: bash
 
-        git remote -v
+  git remote -v
 
-   This should display:
+This should display:
 
-   .. code-block:: text
+.. code-block:: text
 
-        origin    https://github.com/YourLogin/scikit-learn.git (fetch)
-        origin    https://github.com/YourLogin/scikit-learn.git (push)
-        upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
-        upstream  https://github.com/scikit-learn/scikit-learn.git (push)
+  origin    https://github.com/YourLogin/scikit-learn.git (fetch)
+  origin    https://github.com/YourLogin/scikit-learn.git (push)
+  upstream  https://github.com/scikit-learn/scikit-learn.git (fetch)
+  upstream  https://github.com/scikit-learn/scikit-learn.git (push)
 
-You should now have a working installation of scikit-learn, and your git repository
-properly configured. It could be useful to run some test to verify your installation.
-Please refer to :ref:`pytest_tips` for examples.
 
-The next steps now describe the process of modifying code and submitting a PR:
+Set up a dedicated environment and install dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..
+   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
+   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
+.. |PythonMinVersion| replace:: 3.10
 
-8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+Using an isolated environment such as `venv` or `conda` makes it possible to
+install a specific version of scikit-learn with pip or conda and its dependencies
+independently of any previously installed Python packages. Note that the virtual
+environment is optional but strongly recommended, in order to avoid potential
+conflicts with other packages.
+
+In addition to the required Python dependencies, you need to have a working C/C++
+compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>`__ extensions.
+The platform-specific instructions below describe how to set up a suitable compiler and install
+the required packages.
+
+.. note::
+
+      If OpenMP is not supported by the compiler, the build will be done with
+      OpenMP functionalities disabled. This is not recommended since it will force
+      some estimators to run in sequential mode instead of leveraging thread-based
+      parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+      (before cythonization) will force the build to fail if OpenMP is not
+      supported.
+
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .install-instructions .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .install-instructions .sd-tab-set.tabs-os::before {
+        content: "Operating System";
+      }
+
+      .install-instructions .sd-tab-set.tabs-package-manager::before {
+        content: "Package Manager";
+      }
+    }
+  </style>
+
+.. div:: install-instructions
+
+  .. tab-set::
+    :class: tabs-os
+
+    .. tab-item:: Windows
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          First, you need to install a compiler with OpenMP_ support.
+          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          and run the downloaded `vs_buildtools.exe` file. During the installation you will
+          need to make sure you select "Desktop development with C++", similarly to this
+          screenshot:
+
+          .. image::
+            ../images/visual-studio-build-tools-selection.png
+
+          Next, install the 64-bit version of Python (|PythonMinVersion| or later), for instance from the
+          `official website <https://www.python.org/downloads/windows/>`__.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt:: powershell
+
+            python -m venv sklearn-dev
+            sklearn-dev\Scripts\activate  # activate
+            pip install wheel numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          First, you need to install a compiler with OpenMP_ support.
+          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          and run the downloaded `vs_buildtools.exe` file. During the installation you will
+          need to make sure you select "Desktop development with C++", similarly to this
+          screenshot:
+
+          .. image::
+            ../images/visual-studio-build-tools-selection.png
+
+          Next, install a recent version of Python (|PythonMinVersion| or later) for instance
+          using conda-forge_. Conda-forge provides a conda-based distribution of
+          Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages:
+
+          .. prompt:: powershell
+
+            conda create -n sklearn-dev -c conda-forge \
+              python numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          It is not always necessary but it is safer to open a new prompt before
+          activating the newly created conda environment:
+
+          .. prompt:: powershell
+
+            conda activate sklearn-dev
+
+    .. tab-item:: MacOS
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          The default C compiler on macOS, Apple clang (confusingly aliased as
+          `/usr/bin/gcc`), does not directly support OpenMP, so you first need
+          to enable OpenMP support.
+
+          Install the macOS command line tools:
+
+          .. prompt:: bash $
+
+              xcode-select --install
+
+          Next, install the LLVM OpenMP library with Homebrew_:
+
+          .. prompt:: bash $
+
+              brew install libomp
+
+          Install Python 3 (|PythonMinVersion| or later) using Homebrew_
+          (`brew install python`) or by manually installing the package from the
+          `official website <https://www.python.org/downloads/macos/>`__.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt:: bash
+
+            python -m venv sklearn-dev
+            source sklearn-dev/bin/activate  # activate
+            pip install wheel numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          The default C compiler on macOS, Apple clang (confusingly aliased as
+          `/usr/bin/gcc`), does not directly support OpenMP. To enable the
+          installation of the ``compilers`` meta-package from the conda-forge channel,
+          which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain,
+          you first need to install the macOS command line tools:
+
+          .. prompt:: bash $
+
+              xcode-select --install
+
+          Install a recent version of Python (|PythonMinVersion| or later) for instance
+          using conda-forge_. Conda-forge provides a conda-based distribution of
+          Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages:
+
+          .. prompt:: bash $
+
+            conda create -n sklearn-dev -c conda-forge python \
+              numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl compilers llvm-openmp
+
+          It is not always necessary but it is safer to open a new prompt before
+          activating the newly created conda environment:
+
+          .. prompt:: bash $
+
+            conda activate sklearn-dev
+
+          .. note::
+
+            If you get any conflicting dependency error message, try commenting out
+            any custom conda configuration in the ``$HOME/.condarc`` file. In
+            particular the ``channel_priority: strict`` directive is known to cause
+            problems for this setup.
+
+            You can check that the custom compilers are properly installed from conda
+            forge using the following command:
+
+            .. prompt:: bash $
+
+                conda list
+
+            which should include ``compilers`` and ``llvm-openmp``.
+
+            The compilers meta-package will automatically set custom environment
+            variables:
+
+            .. prompt:: bash $
+
+                echo $CC
+                echo $CXX
+                echo $CFLAGS
+                echo $CXXFLAGS
+                echo $LDFLAGS
+
+            They point to files and folders from your ``sklearn-dev`` conda environment
+            (in particular in the bin/, include/ and lib/ subfolders). For instance
+            ``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
+
+            When installing scikit-learn in the next step, you should see the
+            compiled extension being built with the clang and clang++ compilers installed by
+            conda with the ``-fopenmp`` command line flag in the log.
+
+    .. tab-item:: Linux
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          scikit-learn requires a recent version of Python (|PythonMinVersion| or later).
+          Python 3 is usually installed by default on most Linux distributions. To
+          check if you have it installed, try:
+
+          .. prompt:: bash
+
+            python3 --version
+
+          If you don't have Python 3 installed, please install `python3` from your
+          distribution's package manager.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt:: bash
+
+            python -m venv sklearn-dev
+            source sklearn-dev/bin/activate  # activate
+            pip install wheel numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          .. dropdown:: If no isolated environment is used (not recommended!)
+
+            If, for some reason, you are not using an isolated environment (which is not recommended),
+            you need to use `pip3` instead of `pip`. You can check if it is installed with:
+
+            .. prompt:: bash
+
+              pip3 --version
+
+            and if not, install `python3-pip` from your distribution's package manager.
+
+            Next, install the required python packages with:
+
+            .. prompt:: bash
+
+              pip3 install wheel numpy scipy cython meson-python ninja
+
+            cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
+            and joblib) should then automatically be installed in
+            ``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
+            ``pip3`` also needs to be used instead of ``pip`` in the following steps and
+            when `installing scikit-learn <pip_build_>`_.
+
+          Additionally, you need to have a working C/C++ compiler with OpenMP support.
+
+          Install the build dependencies for **Debian-based operating systems, e.g. Ubuntu**:
+
+          .. prompt:: bash $
+
+              sudo apt-get install build-essential python3-dev
+
+          When precompiled wheels of the runtime dependencies are not available for your
+          architecture (e.g. **ARM**), you can install the system versions:
+
+          .. prompt:: bash $
+
+              sudo apt-get install cython3 python3-numpy python3-scipy
+
+          On **Red Hat and clones (e.g. CentOS)**, install the dependencies using:
+
+          .. prompt:: bash $
+
+              sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
+
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          scikit-learn requires a recent version of Python (|PythonMinVersion| or later).
+          Python 3 is usually installed by default on most Linux distributions. To
+          check if you have it installed, try:
+
+          .. prompt:: bash
+
+            python3 --version
+
+          If you don't have Python |PythonMinVersion| or later, please install a
+          recent version for instance using conda-forge_. Conda-forge provides a
+          conda-based distribution of Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages
+          (including `compilers` for a working C/C++ compiler with OpenMP support):
+
+          .. prompt:: bash $
+
+            conda create -n sklearn-dev -c conda-forge python \
+              numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl compilers
+
+          It is not always necessary but it is safer to open a new prompt before
+          activating the newly created conda environment:
+
+          .. prompt:: bash $
+
+            conda activate sklearn-dev
+
+.. _install_from_source:
+
+Install editable version of scikit-learn
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Within your venv or conda `sklearn-dev` environment, build the project with pip:
+
+.. prompt:: bash $
+
+  pip install --editable . \
+    --verbose --no-build-isolation \
+    --config-settings editable-verbose=true
+
+.. note::
+
+  `--config-settings editable-verbose=true` is optional but recommended
+  to avoid surprises when you import `sklearn`. `meson-python` implements
+  editable installs by rebuilding `sklearn` when executing `import sklearn`.
+  With the recommended setting you will see a message when this happens,
+  rather than potentially waiting without feedback and wondering
+  what is taking so long. Bonus: this means you only have to run the `pip
+  install` command once, `sklearn` will automatically be rebuilt when
+  importing `sklearn`.
+
+  Note that `--config-settings` is only supported in `pip` version 23.1 or
+  later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
+
+To check your installation, make sure that the installed scikit-learn has a
+version number ending with `.dev0`:
+
+.. prompt:: bash $
+
+  python -c "import sklearn; sklearn.show_versions()"
+
+You should now have a working installation of scikit-learn and your git repository
+properly configured.
+Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
+some tests to verify your installation.
+
+.. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
+.. _meson-python: https://mesonbuild.com/meson-python
+.. _Ninja: https://ninja-build.org/
+.. _NumPy: https://numpy.org
+.. _SciPy: https://www.scipy.org
+.. _Homebrew: https://brew.sh
+.. _venv: https://docs.python.org/3/tutorial/venv.html
+.. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _conda-forge: https://conda-forge.org/download/
+
+.. END Set up your development environment - TODO: move to separate file and link to it
+
+.. _development_workflow:
+
+Development workflow
+--------------------
+
+The next steps describe the process of modifying code and submitting a PR:
+
+#. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash
@@ -341,7 +687,7 @@ The next steps now describe the process of modifying code and submitting a PR:
         git fetch upstream
         git merge upstream/main
 
-9. Create a feature branch to hold your development changes:
+#. Create a feature branch to hold your development changes:
 
    .. prompt:: bash
 
@@ -350,7 +696,7 @@ The next steps now describe the process of modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-10. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+#. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
     run code style checks before each commit:
 
     .. prompt:: bash
@@ -361,7 +707,7 @@ The next steps now describe the process of modifying code and submitting a PR:
     pre-commit checks can be disabled for a particular commit with
     `git commit -n`.
 
-11. Develop the feature on your feature branch on your computer, using Git to
+#. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``:
 
@@ -377,8 +723,7 @@ The next steps now describe the process of modifying code and submitting a PR:
 
        git push -u origin my_feature
 
-12. Follow `these
-    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+#. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send a
     notification to potential reviewers. You may want to consider sending a message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
@@ -721,6 +1066,42 @@ underestimate how easy an issue is to solve!
   the original contributor left off. The list of issues with the help wanted tag can be
   found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
   Note that not all issues which need contributors will have this tag.
+
+
+
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the text guidelines.
+Please make sure to still check our guidelines, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+
+- 3 Components of Reviewing a Pull Request:
+  `Video <https://youtu.be/dyxS9KKCNzA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
 
 .. _contribute_documentation:
 
