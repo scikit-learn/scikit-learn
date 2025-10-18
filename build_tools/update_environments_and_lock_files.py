@@ -331,6 +331,7 @@ build_metadata_list = [
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            "sphinx-marimo",
         ],
         "package_constraints": {
             "python": "3.10",
@@ -388,6 +389,7 @@ build_metadata_list = [
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            "sphinx-marimo",
         ],
         "package_constraints": {
             "python": "3.10",
