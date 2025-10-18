@@ -30,6 +30,7 @@ foreach name: name_list
     name,
     cython_gen.process(pyx),
     dependencies: [np_dep],
+    limited_api: '3.12',
     subdir: 'sklearn/neighbors',
     install: true
 )
@@ -47,6 +48,7 @@ foreach ext_name, ext_dict : neighbors_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies'),
+    limited_api: '3.12',
     subdir: 'sklearn/neighbors',
     install: true
   )

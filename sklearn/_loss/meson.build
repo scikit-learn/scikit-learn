@@ -18,6 +18,7 @@ py.extension_module(
   '_loss',
   cython_gen.process(_loss_pyx),
   dependencies: [openmp_dep],
+  limited_api: '3.12',
   install: true,
   subdir: 'sklearn/_loss',
 )

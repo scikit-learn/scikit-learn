@@ -6,6 +6,7 @@ _newrand = py.extension_module(
   '_newrand',
   cython_gen_cpp.process('_newrand.pyx'),
   include_directories: [newrand_include],
+  limited_api: '3.12',
   subdir: 'sklearn/svm',
   install: true
 )
@@ -20,6 +21,7 @@ py.extension_module(
   [cython_gen.process('_libsvm.pyx'), utils_cython_tree],
   include_directories: [newrand_include, libsvm_include],
   link_with: libsvm_skl,
+  limited_api: '3.12',
   subdir: 'sklearn/svm',
   install: true
 )
@@ -29,6 +31,7 @@ py.extension_module(
   [cython_gen.process('_libsvm_sparse.pyx'), utils_cython_tree],
   include_directories: [newrand_include, libsvm_include],
   link_with: libsvm_skl,
+  limited_api: '3.12',
   subdir: 'sklearn/svm',
   install: true
 )
@@ -43,6 +46,7 @@ py.extension_module(
   [cython_gen.process('_liblinear.pyx'), utils_cython_tree],
   include_directories: [newrand_include, liblinear_include],
   link_with: [liblinear_skl],
+  limited_api: '3.12',
   subdir: 'sklearn/svm',
   install: true
 )

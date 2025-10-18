@@ -3,7 +3,7 @@ project(
   'c', 'cpp', 'cython',
   version: run_command('sklearn/_build_utils/version.py', check: true).stdout().strip(),
   license: 'BSD-3',
-  meson_version: '>= 1.1.0',
+  meson_version: '>= 1.3.0',
   default_options: [
     'c_std=c11',
     'cpp_std=c++14',
@@ -33,6 +33,10 @@ _global_c_args = cc.get_supported_arguments(
   '-Wno-misleading-indentation',
 )
 add_project_arguments(_global_c_args, language : 'c')
+
+if get_option('python.allow_limited_api')
+  add_project_arguments('-DPy_LIMITED_API=0x030C0000', language : ['c', 'cpp'])
+endif
 
 # We need -lm for all C code (assuming it uses math functions, which is safe to
 # assume for scikit-learn). For C++ it isn't needed, because libstdc++/libc++ is

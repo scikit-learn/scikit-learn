@@ -40,6 +40,7 @@ _datasets_pair = py.extension_module(
   '_datasets_pair',
   cython_gen_cpp.process(_datasets_pair_pyx),
   dependencies: [np_dep],
+  limited_api: '3.12',
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -65,6 +66,7 @@ _base = py.extension_module(
   '_base',
   cython_gen_cpp.process(_base_pyx),
   dependencies: [np_dep, openmp_dep],
+  limited_api: '3.12',
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -91,6 +93,7 @@ _middle_term_computer = py.extension_module(
   '_middle_term_computer',
   cython_gen_cpp.process(_middle_term_computer_pyx),
   dependencies: [np_dep],
+  limited_api: '3.12',
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -117,8 +120,9 @@ _argkmin = py.extension_module(
     '_argkmin',
     cython_gen_cpp.process(_argkmin_pyx),
     dependencies: [np_dep, openmp_dep],
-    subdir: 'sklearn/metrics/_pairwise_distances_reduction',
-    install: true
+  limited_api: '3.12',
+  subdir: 'sklearn/metrics/_pairwise_distances_reduction',
+  install: true
 )
 
 _radius_neighbors_pxd = custom_target(
@@ -143,8 +147,9 @@ _radius_neighbors = py.extension_module(
     '_radius_neighbors',
     cython_gen_cpp.process(_radius_neighbors_pyx),
     dependencies: [np_dep, openmp_dep],
-    subdir: 'sklearn/metrics/_pairwise_distances_reduction',
-    install: true
+  limited_api: '3.12',
+  subdir: 'sklearn/metrics/_pairwise_distances_reduction',
+  install: true
 )
 
 _argkmin_classmode_pyx = custom_target(
@@ -166,6 +171,7 @@ _argkmin_classmode = py.extension_module(
   # XXX: for some reason -fno-sized-deallocation is needed otherwise there is
   # an error with undefined symbol _ZdlPv at import time in manylinux wheels.
   # See https://github.com/scikit-learn/scikit-learn/issues/28596 for more details.
+  limited_api: '3.12',
   cpp_args: ['-fno-sized-deallocation'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
@@ -188,6 +194,7 @@ _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
   cython_gen_cpp.process(_radius_neighbors_classmode_pyx),
   dependencies: [np_dep, openmp_dep],
+  limited_api: '3.12',
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )

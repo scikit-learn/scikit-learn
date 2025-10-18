@@ -9,6 +9,7 @@ foreach ext_name, ext_dict : cluster_hdbscan_extension_metadata
     ext_name,
     ext_dict.get('sources'),
     dependencies: [np_dep],
+    limited_api: '3.12',
     subdir: 'sklearn/cluster/_hdbscan',
     install: true
   )
