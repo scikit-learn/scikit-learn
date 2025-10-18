@@ -237,7 +237,7 @@ jobs:
           fi
 
           # export it to the GITHUB_ENV so that it can be used by cibuildwheel later
-          echo "$CIBW_CONFIG_SETTINGS=$CIBW_CONFIG_SETTINGS" >> "$GITHUB_ENV"
+          echo "CIBW_CONFIG_SETTINGS=$CIBW_CONFIG_SETTINGS" >> "$GITHUB_ENV"
 
       - name: Build and test wheels
         env:
