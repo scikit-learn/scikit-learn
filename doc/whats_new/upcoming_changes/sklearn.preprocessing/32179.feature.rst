@@ -1,0 +1,3 @@
+- :class:`preprocessing.OrdinalEncoder` now accepts a dictionary for the `categories`
+  parameter, allowing categories to be specified by column name.
+  By :user:`João Ferreira <joaosferreira>`
