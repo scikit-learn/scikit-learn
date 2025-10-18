@@ -10,7 +10,6 @@ from sklearn.tree._splitter cimport SplitRecord
 
 
 # Mitigate precision differences between 32 bit and 64 bit
-cdef const float32_t FEATURE_THRESHOLD = 1e-7
 
 
 # We provide here the abstract interface for a Partitioner that would be
