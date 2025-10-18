@@ -130,3 +130,68 @@ a.param-doc-link::before {
     height: 14px;
     cursor: pointer;
 }
+
+ .features {
+    font-family: monospace;
+
+    cursor: pointer;
+    background-color: var(--sklearn-color-fitted-level-0);
+    border: 1px dotted var(--sklearn-color-border-box);
+    border-radius: .20em;
+    margin-bottom: 0.5em;
+    display: flex;
+}
+
+.features summary {
+  position: sticky;
+  top: 0;
+  padding: .25em .5em;
+  border: none;
+  background-color: var(--sklearn-color-fitted-level-1);
+  border-radius: .20em 0 0 .20em;
+}
+
+.features summary::marker {
+  font-size: 0.8em;
+  color: var(--sklearn-color-icon);
+}
+
+.features summary:hover {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+  border-radius: .20em 0 0 0;
+}
+
+.features .features-container {
+    max-width: 15em;
+    max-height: 10em;
+    overflow: auto;
+    scrollbar-width: thin;
+    padding: .5em;
+    background-color: var(--sklearn-color-fitted-level-0);
+    border-radius: 0 0 .5em .5em;
+    justify-content: space-between;
+}
+
+.features .copy-paste-icon {
+    width: 1em;
+    height: 1em;
+    background-size: 1em 1em;
+
+    background-color: var(--sklearn-color-fitted-level-1);
+    margin: .25em;
+}
+
+
+.features .features-container table {
+    width: 95%;
+    margin: 0;
+}
+
+.features .features-container table td {
+  text-align: left;
+  padding: 0;
+  white-space: nowrap;
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-0);
+}

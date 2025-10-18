@@ -35,6 +35,13 @@ function copyToClipboard(text, element) {
 document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
     const toggleableContent = element.closest('.sk-toggleable__content');
     const paramPrefix = toggleableContent ? toggleableContent.dataset.paramPrefix : '';
+
+    const parent = element.parentElement;
+    if (!parent || !parent.nextElementSibling) {
+        console.warn('Copy-paste icon missing expected DOM structure');
+        return;
+    }
+
     const paramName = element.parentElement.nextElementSibling
         .textContent.trim().split(' ')[0];
     const fullParamName = paramPrefix ? `${paramPrefix}${paramName}` : paramName;
@@ -43,6 +50,23 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 });
 
 
+async function copyRowsToClipboard(text, iconElement) {
+  const rows = text.split('\n').map(row => `"${row}"`);
+  const formattedText = `[${rows.join(',\n ')}]`;
+
+  const type = "text/plain";
+  const clipboardItemData = {
+    [type]: formattedText,
+  };
+  const clipboardItem = new ClipboardItem(clipboardItemData);
+  await navigator.clipboard.write([clipboardItem]);
+
+  const originalHTML = iconElement.innerHTML;
+  iconElement.innerHTML = "Copied!";
+  setTimeout(() => {
+    iconElement.innerHTML = originalHTML;
+  }, 2000);
+}
 /**
  * Adapted from Skrub
  * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
