@@ -475,7 +475,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         )
 
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
-        n_samples, n_features = X.shape
+        _n_samples, n_features = X.shape
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 

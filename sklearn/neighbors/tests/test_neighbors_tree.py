@@ -259,8 +259,8 @@ def test_nn_tree_query(Cls, metric, k, dualtree, breadth_first):
     kwargs = METRICS[metric]
 
     kdt = Cls(X, leaf_size=1, metric=metric, **kwargs)
-    dist1, ind1 = kdt.query(Y, k, dualtree=dualtree, breadth_first=breadth_first)
-    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
+    dist1, _ = kdt.query(Y, k, dualtree=dualtree, breadth_first=breadth_first)
+    dist2, _ = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
     # don't check indices here: if there are any duplicate distances,
     # the indices may not match.  Distances should not have this problem.

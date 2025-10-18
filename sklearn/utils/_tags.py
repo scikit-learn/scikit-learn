@@ -273,6 +273,20 @@ def get_tags(estimator) -> Tags:
 
     try:
         tags = estimator.__sklearn_tags__()
+    except TypeError as exc:
+        # When a class is passed instead of an instance, calling __sklearn_tags__()
+        # fails with TypeError because 'self' is missing.
+        exc_str = str(exc)
+        if "missing 1 required positional argument" in exc_str and "'self'" in exc_str:
+            estimator_name = getattr(
+                estimator, "__name__", str(type(estimator).__name__)
+            )
+            raise TypeError(
+                f"Expected an estimator instance, but got class '{estimator_name}'. "
+                f"Did you mean to instantiate it? e.g., {estimator_name}()"
+            ) from exc
+        else:
+            raise
     except AttributeError as exc:
         if "object has no attribute '__sklearn_tags__'" in str(exc):
             # Happens when `__sklearn_tags__` is implemented by calling
@@ -289,7 +303,7 @@ def get_tags(estimator) -> Tags:
                 "alternatively define `__sklearn_tags__` but we don't recommend "
                 "this approach). Note that `BaseEstimator` needs to be on the "
                 "right side of other Mixins in the inheritance order."
-            )
+            ) from exc
         else:
             raise
 

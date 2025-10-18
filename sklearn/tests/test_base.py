@@ -24,6 +24,7 @@ from sklearn.base import (
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
@@ -1094,3 +1095,97 @@ def test_param_is_default(default_value, test_value):
     estimator = make_estimator_with_param(default_value)(param=test_value)
     non_default = estimator._get_params_html().non_default
     assert "param" not in non_default
+
+
+@pytest.mark.parametrize(
+    "is_func, Estimator",
+    [
+        (is_regressor, Ridge),
+        (is_classifier, LogisticRegression),
+        (is_clusterer, KMeans),
+    ],
+)
+def test_is_functions_class_vs_instance_error(is_func, Estimator):
+    """Test is_* functions error when passed a class instead of instance."""
+    # Test that passing the class (not an instance) raises TypeError
+    import re
+
+    static_msg = "Expected an estimator instance, but got class "
+    static_tail = "Did you mean to instantiate it? e.g., "
+    # Build a flexible regex that escapes static parts and allows any class name
+    pattern = re.escape(static_msg) + r".+\. " + re.escape(static_tail) + r".+\(\)"
+    with pytest.raises(TypeError, match=pattern):
+        is_func(Estimator)
+
+    # Test that passing an instance works correctly
+    instance = Estimator()
+    result = is_func(instance)
+    assert isinstance(result, bool)
+
+
+@pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
+def test_is_functions_custom_estimator_error(is_func):
+    """Test is_* functions error for custom estimators without BaseEstimator."""
+
+    class CustomEstimator:
+        def fit(self, X, y):
+            return self
+
+        def predict(self, X):
+            return None
+
+    custom_est = CustomEstimator()
+
+    # Should get a helpful error about missing __sklearn_tags__
+    with pytest.raises(AttributeError, match="Make sure to inherit from"):
+        is_func(custom_est)
+
+
+@pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
+def test_is_functions_unexpected_error(is_func):
+    """Test is_* functions handle unexpected AttributeError cases."""
+
+    class ProblematicEstimator:
+        def __sklearn_tags__(self):
+            # This will cause an unexpected AttributeError
+            raise AttributeError("Some unexpected error")
+
+    problematic_est = ProblematicEstimator()
+
+    # Should re-raise the original error since it doesn't match our patterns
+    with pytest.raises(AttributeError, match="Some unexpected error"):
+        is_func(problematic_est)
+
+
+@pytest.mark.parametrize("is_func", [is_regressor, is_classifier, is_clusterer])
+def test_is_functions_unexpected_typeerror(is_func):
+    """Test is_* functions handle unexpected TypeError cases."""
+
+    class ProblematicEstimator:
+        def __sklearn_tags__(self):
+            # This will cause an unexpected TypeError (not the "missing self" case)
+            raise TypeError("Some different TypeError message")
+
+    problematic_est = ProblematicEstimator()
+
+    # Should re-raise the original TypeError since it doesn't match our pattern
+    with pytest.raises(TypeError, match="Some different TypeError message"):
+        is_func(problematic_est)
+
+
+def test_is_functions_class_error_without_name():
+    """Test error message when class doesn't have __name__ attribute."""
+
+    class EstimatorWithoutName:
+        def __sklearn_tags__(self):
+            pass
+
+    # Instead of deleting __name__, just check that the error message contains the type name
+    try:
+        is_regressor(EstimatorWithoutName)
+    except TypeError as exc:
+        msg = str(exc)
+        assert "Expected an estimator instance" in msg, (
+            "Missing expected error message part"
+        )
+        assert "EstimatorWithoutName" in msg, "Missing class name in error message"
