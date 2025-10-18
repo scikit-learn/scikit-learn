@@ -230,7 +230,10 @@ def pd_fillna(pd, frame):
         infer_objects_kwargs = (
             {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
         )
-        with pd.option_context("future.no_silent_downcasting", True):
+        if parse_version(pd_version) < parse_version("3.0"):
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
+        else:
             frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
