@@ -1,7 +1,7 @@
 py.extension_module(
   '_csr_polynomial_expansion',
   [cython_gen.process('_csr_polynomial_expansion.pyx'), utils_cython_tree],
-  limited_api: '3.12',
+  limited_api: limited_api,
   subdir: 'sklearn/preprocessing',
   install: true
 )
@@ -9,7 +9,7 @@ py.extension_module(
 py.extension_module(
   '_target_encoder_fast',
   [cython_gen_cpp.process('_target_encoder_fast.pyx'), utils_cython_tree],
-  limited_api: '3.12',
+  limited_api: limited_api,
   subdir: 'sklearn/preprocessing',
   install: true
 )

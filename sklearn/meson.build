@@ -205,7 +205,7 @@ if cython.version().version_compare('>=3.1.0')
 
   py.extension_module('_cyutility',
     cython_shared_src,
-    limited_api: '3.12',
+    limited_api: limited_api,
     subdir: 'sklearn',
     cython_args: cython_args,
     install: true,
@@ -231,7 +231,7 @@ extensions = ['_isotonic']
 py.extension_module(
   '_isotonic',
   cython_gen.process('_isotonic.pyx'),
-  limited_api: '3.12',
+  limited_api: limited_api,
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn',

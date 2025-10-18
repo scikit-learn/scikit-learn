@@ -34,8 +34,10 @@ _global_c_args = cc.get_supported_arguments(
 )
 add_project_arguments(_global_c_args, language : 'c')
 
+limited_api = ''
 if get_option('python.allow_limited_api')
   add_project_arguments('-DPy_LIMITED_API=0x030C0000', language : ['c', 'cpp'])
+  limited_api = '3.12'
 endif
 
 # We need -lm for all C code (assuming it uses math functions, which is safe to

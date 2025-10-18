@@ -40,7 +40,7 @@ foreach ext_name, ext_dict : utils_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
-    limited_api: '3.12',
+    limited_api: limited_api,
     subdir: 'sklearn/utils',
     install: true
   )
@@ -70,7 +70,7 @@ foreach name: util_extension_names
   py.extension_module(
     name,
     cython_gen.process(pyx),
-    limited_api: '3.12',
+    limited_api: limited_api,
     subdir: 'sklearn/utils',
     install: true
    )

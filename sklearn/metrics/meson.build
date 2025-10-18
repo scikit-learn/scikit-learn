@@ -33,7 +33,7 @@ _dist_metrics = py.extension_module(
   '_dist_metrics',
   cython_gen.process(_dist_metrics_pyx),
   dependencies: [np_dep],
-  limited_api: '3.12',
+  limited_api: limited_api,
   subdir: 'sklearn/metrics',
   install: true
 )
@@ -42,7 +42,7 @@ py.extension_module(
   '_pairwise_fast',
   [cython_gen.process('_pairwise_fast.pyx'), metrics_cython_tree],
   dependencies: [openmp_dep],
-  limited_api: '3.12',
+  limited_api: limited_api,
   subdir: 'sklearn/metrics',
   install: true
 )

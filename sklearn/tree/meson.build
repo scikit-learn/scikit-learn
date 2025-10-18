@@ -22,7 +22,7 @@ foreach ext_name, ext_dict : tree_extension_metadata
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: [np_dep],
     override_options : ext_dict.get('override_options', []),
-    limited_api: '3.12',
+    limited_api: limited_api,
     subdir: 'sklearn/tree',
     install: true
   )
