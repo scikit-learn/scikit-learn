@@ -16,18 +16,3 @@ elif [[ $RUNNER_OS == "macOS" ]]; then
 elif [[ $RUNNER_OS == "Windows" ]]; then
     cat $PROJECT_DIR/build_tools/wheels/LICENSE_windows.txt >>"$LICENSE_FILE"
 fi
-
-PYTHON_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-IS_PYTHON_FREE_THREADED=$(python -c 'import sysconfig; print(sysconfig.get_config_var("Py_GIL_DISABLED"))')
-
-# Do not use abi3 wheels for Python 3.11 or free-threaded Python
-if [[ $PYTHON_VERSION == "3.11" || IS_PYTHON_FREE_THREADED == "1" ]]; then
-    echo 'CIBW_CONFIG_SETTINGS="setup-args=-Dpython.allow_limited_api=false"' >> "$GITHUB_ENV"
-    cat "$GITHUB_ENV"
-else
-    # this is necessary for the wheel to be named correctly, is there a better way???
-    cat >> pyproject.toml <<EOF
-[tool.meson-python]
-limited-api = true
-EOF
-fi
