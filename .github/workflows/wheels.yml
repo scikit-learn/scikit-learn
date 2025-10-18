@@ -204,7 +204,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11" # update once build dependencies are available
+          python-version: "3.12" # update once build dependencies are available
 
       - uses: conda-incubator/setup-miniconda@v3
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
