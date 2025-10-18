@@ -232,7 +232,7 @@ jobs:
           # Needed on Windows CI to compile with Visual Studio compiler
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
-          if [[ "$PLATFORM_ID" =~ windows ]]; then
+          if [[ "$PLATFORM_ID" =~ win ]]; then
               CIBW_CONFIG_SETTINGS="$CIBW_CONFIG_SETTINGS setup-args=--vsenv"
           fi
 
