@@ -71,6 +71,11 @@ def _most_frequent(array, extra_value, n_repeat):
                     if count == most_frequent_count
                 ]
             )
+        elif array.dtype == bool:
+            # For boolean arrays, convert to int for mode calculation
+            mode = _mode(array.astype(int))
+            most_frequent_value = bool(mode[0][0])
+            most_frequent_count = mode[1][0]
         else:
             mode = _mode(array)
             most_frequent_value = mode[0][0]
@@ -104,7 +109,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(
-        self, *, missing_values=np.nan, add_indicator=False, keep_empty_features=False
+        self,
+        *,
+        missing_values=np.nan,
+        add_indicator=False,
+        keep_empty_features=False,
     ):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
@@ -378,11 +387,11 @@ class SimpleImputer(_BaseImputer):
             self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind not in ("i", "u", "f", "O"):
+        if X.dtype.kind not in ("i", "u", "f", "O", "b"):
             raise ValueError(
                 "SimpleImputer does not support data with dtype "
                 "{0}. Please provide either a numeric array (with"
-                " a floating point or integer dtype) or "
+                " a floating point or integer dtype), boolean array, or "
                 "categorical data represented either as an array "
                 "with integer dtype or an array of string values "
                 "with an object dtype.".format(X.dtype)
@@ -952,11 +961,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind not in ("i", "u", "f", "O"):
+        if X.dtype.kind not in ("i", "u", "f", "O", "b"):
             raise ValueError(
                 "MissingIndicator does not support data with "
                 "dtype {0}. Please provide either a numeric array"
-                " (with a floating point or integer dtype) or "
+                " (with a floating point or integer dtype), boolean array, or "
                 "categorical data represented either as an array "
                 "with integer dtype or an array of string values "
                 "with an object dtype.".format(X.dtype)
