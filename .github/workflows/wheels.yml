@@ -224,7 +224,6 @@ jobs:
 
               # TODO this is necessary for the wheel to be named correctly, is there a better way?
               echo -ne '\n[tool.meson-python]\nlimited-api = true\n' >> pyproject.toml
-          EOF
           fi
 
           # Needed on Windows CI to compile with Visual Studio compiler
