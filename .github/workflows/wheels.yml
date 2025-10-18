@@ -213,6 +213,7 @@ jobs:
 
       - name: Set CIBW_CONFIG_SETTINGS to use limited API when relevant
         run: |
+          set -xe
 
           PYTHON_VERSION=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
           IS_PYTHON_FREE_THREADED=$(python -c 'import sysconfig; print(sysconfig.get_config_var("Py_GIL_DISABLED"))')
@@ -236,6 +237,7 @@ jobs:
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_CONFIG_SETTINGS: ${{ env.CIBW_CONFIG_SETTINGS }}
           # Needed on Windows CI to compile with Visual Studio compiler
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
