@@ -168,6 +168,7 @@ md_scaling = manifold.MDS(
     max_iter=50,
     n_init=1,
     random_state=0,
+    init="classical_mds",
     normalized_stress=False,
 )
 S_scaling_metric = md_scaling.fit_transform(S_points)
@@ -178,7 +179,8 @@ md_scaling_nonmetric = manifold.MDS(
     n_init=1,
     random_state=0,
     normalized_stress=False,
-    metric=False,
+    metric_mds=False,
+    init="classical_mds",
 )
 S_scaling_nonmetric = md_scaling_nonmetric.fit_transform(S_points)
 
