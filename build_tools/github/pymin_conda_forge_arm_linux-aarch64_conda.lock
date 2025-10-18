@@ -74,7 +74,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libglib-2.84.0-hc486b8e_0.c
 https://conda.anaconda.org/conda-forge/linux-aarch64/libopenblas-0.3.30-pthreads_h9d3fd7e_2.conda#e0aa272c985b320f56dd38c31eefde0e
 https://conda.anaconda.org/conda-forge/linux-aarch64/libtiff-4.7.1-h7a57436_0.conda#5180c10fedc014177262eda8dbb36d9c
 https://conda.anaconda.org/conda-forge/linux-aarch64/mysql-libs-9.0.1-h11569fd_6.conda#eadcd0a723240162ec6303917e4fa2a2
-https://conda.anaconda.org/conda-forge/linux-aarch64/python-3.10.18-h256493d_0_cpython.conda#766640fd0208e1d277a26d3497cc4b63
+https://conda.anaconda.org/conda-forge/linux-aarch64/python-3.10.19-hcb9654d_1_cpython.conda#c9f6883e1812ecb434221f6b67ee84e2
 https://conda.anaconda.org/conda-forge/linux-aarch64/qhull-2020.2-h70be974_5.conda#bb138086d938e2b64f5f364945793ebf
 https://conda.anaconda.org/conda-forge/linux-aarch64/wayland-1.23.1-h698ed42_0.conda#2661f9252065051914f1cdf5835e7430
 https://conda.anaconda.org/conda-forge/linux-aarch64/xcb-util-0.4.1-hca56bd8_2.conda#159ffec8f7fab775669a538f0b29373a
@@ -121,7 +121,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxext-1.3.6-h57736b2
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxfixes-6.0.2-he30d5cf_0.conda#e8b4056544341daf1d415eaeae7a040c
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxrender-0.9.12-h86ecc28_0.conda#ae2c2dd0e2d38d249887727db2af960e
 https://conda.anaconda.org/conda-forge/linux-aarch64/ccache-4.11.3-h4889ad1_0.conda#e0b9e519da2bf0fb8c48381daf87a194
-https://conda.anaconda.org/conda-forge/linux-aarch64/coverage-7.10.7-py310h3b5aacf_0.conda#03f0aa5ce4c6808c813a267fcbce3c35
+https://conda.anaconda.org/conda-forge/linux-aarch64/coverage-7.11.0-py310h3b5aacf_0.conda#95a25fdbe5d05806a8b8da6133ec4950
 https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.0-pyhd8ed1ab_0.conda#72e42d28960d875c7654614f8b50939a
 https://conda.anaconda.org/conda-forge/linux-aarch64/fonttools-4.60.1-py310h2d8da20_0.conda#c53da6ab5f411f2334166887416102c1
 https://conda.anaconda.org/conda-forge/linux-aarch64/freetype-2.14.1-h8af1aa0_0.conda#0c8f36ebd3678eed1685f0fc93fc2175
@@ -162,7 +162,7 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.co
 https://conda.anaconda.org/conda-forge/linux-aarch64/scipy-1.15.2-py310hf37559f_0.conda#5c9b72f10d2118d943a5eaaf2f396891
 https://conda.anaconda.org/conda-forge/linux-aarch64/blas-2.137-openblas.conda#68878dad5293cbb5cd203bd0a0dde20f
 https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-11.0.0-hb5e3f52_0.conda#05aafde71043cefa7aa045d02d13a121
-https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.10.6-py310hc06f52e_1.conda#b034b48d7ff7743dc4e3490cba58a8e8
+https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.10.7-py310hc06f52e_0.conda#c18f8e1b94d9a6d0d53ef85ad2be7d24
 https://conda.anaconda.org/conda-forge/linux-aarch64/qt6-main-6.9.0-ha483c8b_0.conda#0790eb2e015cb32391cac90f68b39a40
 https://conda.anaconda.org/conda-forge/linux-aarch64/pyside6-6.9.0-py310hee8ad4f_0.conda#68f556281ac23f1780381f00de99d66d
-https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.10.6-py310hbbe02a8_1.conda#cc668a810d0884e62e344ebacd1ad7e5
+https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.10.7-py310hbbe02a8_0.conda#25396dc336da5b441acab39be0faf337
