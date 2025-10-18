@@ -26,6 +26,32 @@ Version 1.8
 
 .. towncrier release notes start
 
+Free-threaded CPython 3.14 support
+----------------------------------
+
+scikit-learn 1.8 now officially supports free-threaded CPython builds.
+All native extensions have been marked as free-threading compatible, meaning that
+importing them will no longer cause the CPython interpreter to re-enable the
+Global Interpreter Lock (GIL) on a free-threaded build.
+
+We have also set up dedicated continuous integration configurations to
+stress-test scikit-learn components with multiple concurrent threads using
+``pytest-run-parallel``. This testing campaign uncovered a few thread-safety
+issues that are now either fixed or tracked with dedicated open issues in the
+issue tracker.
+
+Free-threaded (also known as nogil) CPython 3.14 continues the work started in
+Python 3.13 to enable efficient multi-threaded use cases by removing the GIL.
+For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
+in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
+
+Users who wish to experiment with the free-threaded build are encouraged to use
+Python 3.14 and report any issues they encounter.
+
+By :user:`Ritik Verma <ritikverma2000>` and many contributors in the wider Scientific
+Python and CPython ecosystem. :pr:`XXXX`
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
