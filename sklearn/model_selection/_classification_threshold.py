@@ -268,6 +268,20 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     sklearn.calibration.CalibratedClassifierCV : Estimator that calibrates
         probabilities.
 
+    Notes
+    -----
+    Given a calibrated classifier, the optimal threshold is theoretically defined as in
+    Eq. (2) of Elkan paper [1]_ if the metric to optimize can be expressed as a
+    weighted sum of the entries of the confusion matrix.
+
+    References
+    ----------
+    .. [1] Elkan, Charles.
+           "The foundations of cost-sensitive learning."
+           International joint conference on artificial intelligence. Vol. 17. No. 1.
+           Lawrence Erlbaum Associates Ltd, 2001.
+           https://cseweb.ucsd.edu//~elkan/rescale.pdf
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -501,8 +515,8 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     This estimator post-tunes the decision threshold (cut-off point) that is
     used for converting posterior probability estimates (i.e. output of
     `predict_proba`) or decision scores (i.e. output of `decision_function`)
-    into a class label. The tuning is done by optimizing a binary metric,
-    potentially constrained by a another metric.
+    into a class label. The tuning is done by optimizing a binary metric. It is closely
+    related to the work presented in [1]_.
 
     Read more in the :ref:`User Guide <TunedThresholdClassifierCV>`.
 
@@ -616,6 +630,12 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         constant threshold.
     sklearn.calibration.CalibratedClassifierCV : Estimator that calibrates
         probabilities.
+
+    References
+    ----------
+    .. [1] Sheng, Victor S., and Charles X. Ling.
+           "Thresholding for making classifiers cost-sensitive." Aaai. Vol. 6. 2006.
+           https://cdn.aaai.org/AAAI/2006/AAAI06-076.pdf
 
     Examples
     --------
