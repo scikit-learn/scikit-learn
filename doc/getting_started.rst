@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-``Scikit-learn`` is an open source machine learning library that supports
+``scikit-learn`` is an open source machine learning library that supports
 supervised and unsupervised learning. It also provides various tools for
 model fitting, data preprocessing, model selection, model evaluation,
 and many other utilities.
@@ -16,7 +16,7 @@ guidance on using ``scikit-learn``.
 Fitting and predicting: estimator basics
 ----------------------------------------
 
-``Scikit-learn`` provides dozens of built-in machine learning algorithms and
+``scikit-learn`` provides dozens of built-in machine learning algorithms and
 models, called :term:`estimators`. Each estimator can be fitted to some data
 using its :term:`fit` method.
 
@@ -159,7 +159,7 @@ parameter that determines the number of trees in the forest, and a
 Quite often, it is not clear what the exact values of these parameters
 should be since they depend on the data at hand.
 
-``Scikit-learn`` provides tools to automatically find the best parameter
+``scikit-learn`` provides tools to automatically find the best parameter
 combinations (via cross-validation). In the following example, we randomly
 search over the parameter space of a random forest with a
 :class:`~sklearn.model_selection.RandomizedSearchCV` object. When the search
