@@ -393,10 +393,12 @@ def k_means(
 
     algorithm : {"lloyd", "elkan"}, default="lloyd"
         K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
-        The `"elkan"` variation can be more efficient on some datasets with
-        well-defined clusters, by using the triangle inequality. However it's
-        more memory intensive due to the allocation of an extra array of shape
-        `(n_samples, n_clusters)`.
+        Elkan's optimizations rely on the assumption that distance bounds can
+        efficiently eliminate unnecessary calculations, but when clusters are
+        close or overlapping, these bounds become less precise, requiring more
+        calculations and reducing the benefit of Elkan's approach compared to
+        Lloyd's direct method. Moreover it's more memory intensive due to the
+        allocation of an extra array of shape `(n_samples, n_clusters)`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
