@@ -39,7 +39,7 @@ pytest-xdist==3.8.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 threadpoolctl==3.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-tomli==2.2.1
+tomli==2.3.0
     # via
     #   meson-python
     #   pytest
