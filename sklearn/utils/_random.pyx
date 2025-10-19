@@ -16,7 +16,6 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils._typedefs cimport intp_t
 
 
-cdef uint32_t DEFAULT_SEED = 1
 
 
 # Compatibility type to always accept the default int type used by NumPy, both
