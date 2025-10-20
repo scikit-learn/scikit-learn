@@ -19,7 +19,7 @@ repos:
         files: sklearn/
         additional_dependencies: [pytest==6.2.4]
 -   repo: https://github.com/MarcoGorelli/cython-lint
-    rev: v0.17.0
+    rev: v0.18.0
     hooks:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
