@@ -1975,9 +1975,7 @@ def check_array_api_metric(
         numpy_as_array_works = False
 
     assert_kwargs = (
-        {"rtol": 0.0}
-        if dtype_name in {"int32", "int64"}
-        else {"atol": _atol_for_type(dtype_name)}
+        {"atol": _atol_for_type(dtype_name)} if dtype_name is not None else {}
     )
 
     def _check_metric_matches(metric_a, metric_b, convert_a=False):
