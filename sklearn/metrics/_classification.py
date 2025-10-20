@@ -958,7 +958,7 @@ def cohen_kappa_score(
         - `np.nan` to return `np.nan`
         - a floating point value in the range of [-1.0, 1.0] to return a specific value
 
-        .. versionadded:: 1.7
+        .. versionadded:: 1.8
 
     Returns
     -------
