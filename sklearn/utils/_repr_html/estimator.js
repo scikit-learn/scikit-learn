@@ -53,7 +53,7 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 function copyRowsToClipboard(text, element) {
     // Format the text as a JavaScript array
     const rows = text.split('\n').map(row => `"${row}"`);
-    const formattedText = `[${rows.join(',\n ')}]`;
+    const formattedText = `[${rows.join(',\n ')}\n]`;
 
     const originalHTML = element.innerHTML.replace('Copied!', '');
     const originalStyle = element.style;
