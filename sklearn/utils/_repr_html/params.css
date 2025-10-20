@@ -140,7 +140,6 @@ a.param-doc-link::before {
     margin-bottom: 0.5em;
     display: flex;
     align-items: first baseline;
-
 }
 
 .features summary {
@@ -172,7 +171,6 @@ a.param-doc-link::before {
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
     border-radius: 0 0 .5em .5em;
-
 }
 
 .features .copy-paste-icon {

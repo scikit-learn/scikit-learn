@@ -50,23 +50,35 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 });
 
 
-async function copyRowsToClipboard(text, iconElement) {
-  const rows = text.split('\n').map(row => `"${row}"`);
-  const formattedText = `[${rows.join(',\n ')}]`;
+function copyRowsToClipboard(text, iconElement) {
+    // Format the text as a JavaScript array
+    const rows = text.split('\n').map(row => `"${row}"`);
+    const formattedText = `[${rows.join(',\n ')}]`;
 
-  const type = "text/plain";
-  const clipboardItemData = {
-    [type]: formattedText,
-  };
-  const clipboardItem = new ClipboardItem(clipboardItemData);
-  await navigator.clipboard.write([clipboardItem]);
+    const originalHTML = iconElement.innerHTML;
+    const originalStyle = iconElement.style;
 
-  const originalHTML = iconElement.innerHTML;
-  iconElement.innerHTML = "Copied!";
+    navigator.clipboard.writeText(formattedText)
+        .then(() => {
+            iconElement.style.fontSize = "x-small";
+            iconElement.style.color = 'green';
+            iconElement.innerHTML = "Copied!";
 
-  setTimeout(() => {
-    iconElement.innerHTML = originalHTML;
-  }, 2000);
+            setTimeout(() => {
+                iconElement.innerHTML = originalHTML;
+                iconElement.style = originalStyle;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy:', err);
+            iconElement.style.color = 'red';
+            iconElement.innerHTML = "Failed!";
+            setTimeout(() => {
+                iconElement.innerHTML = originalHTML;
+                iconElement.style = originalStyle;
+            }, 2000);
+        });
+    return false;
 }
 /**
  * Adapted from Skrub
