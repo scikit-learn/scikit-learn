@@ -50,32 +50,32 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 });
 
 
-function copyRowsToClipboard(text, iconElement) {
+function copyRowsToClipboard(text, element) {
     // Format the text as a JavaScript array
     const rows = text.split('\n').map(row => `"${row}"`);
     const formattedText = `[${rows.join(',\n ')}]`;
 
-    const originalHTML = iconElement.innerHTML;
-    const originalStyle = iconElement.style;
+    const originalHTML = element.innerHTML.replace('Copied!', '');
+    const originalStyle = element.style;
 
     navigator.clipboard.writeText(formattedText)
         .then(() => {
-            iconElement.style.fontSize = "x-small";
-            iconElement.style.color = 'green';
-            iconElement.innerHTML = "Copied!";
+            element.style.fontSize = "x-small";
+            element.style.color = 'green';
+            element.innerHTML = "Copied!";
 
             setTimeout(() => {
-                iconElement.innerHTML = originalHTML;
-                iconElement.style = originalStyle;
+                element.innerHTML = originalHTML;
+                element.style = originalStyle;
             }, 2000);
         })
         .catch(err => {
             console.error('Failed to copy:', err);
-            iconElement.style.color = 'red';
-            iconElement.innerHTML = "Failed!";
+            element.style.color = 'red';
+            element.innerHTML = "Failed!";
             setTimeout(() => {
-                iconElement.innerHTML = originalHTML;
-                iconElement.style = originalStyle;
+                element.innerHTML = originalHTML;
+                element.style = originalStyle;
             }, 2000);
         });
     return false;
