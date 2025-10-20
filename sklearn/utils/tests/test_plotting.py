@@ -393,7 +393,8 @@ def test_validate_curve_kwargs_default_kwargs(n_curves, curve_kwargs):
         else:
             # `curve_kwargs` over-rides any defaults
             assert all(kwarg["color"] == "red" for kwarg in curve_kwargs_out)
-    if curve_kwargs is None:
+    # Single curve
+    elif curve_kwargs is None:
         # Use `default_curve_kwargs`
         assert all(kwarg["color"] == "blue" for kwarg in curve_kwargs_out)
     else:
