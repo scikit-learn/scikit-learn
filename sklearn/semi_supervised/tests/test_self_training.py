@@ -350,25 +350,6 @@ def test_self_training_estimator_attribute_error():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-# TODO(1.8): remove in 1.8
-def test_deprecation_warning_base_estimator():
-    warn_msg = "`base_estimator` has been deprecated in 1.6 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        SelfTrainingClassifier(base_estimator=DecisionTreeClassifier()).fit(
-            X_train, y_train_missing_labels
-        )
-
-    error_msg = "You must pass an estimator to SelfTrainingClassifier"
-    with pytest.raises(ValueError, match=error_msg):
-        SelfTrainingClassifier().fit(X_train, y_train_missing_labels)
-
-    error_msg = "You must pass only one estimator to SelfTrainingClassifier."
-    with pytest.raises(ValueError, match=error_msg):
-        SelfTrainingClassifier(
-            base_estimator=DecisionTreeClassifier(), estimator=DecisionTreeClassifier()
-        ).fit(X_train, y_train_missing_labels)
-
-
 # Metadata routing tests
 # =================================================================
 
