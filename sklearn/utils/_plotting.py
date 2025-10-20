@@ -225,23 +225,9 @@ class _BinaryClassifierCurveDisplayMixin:
             default_curve_kwargs = {}
         if default_multi_curve_kwargs is None:
             default_multi_curve_kwargs = {}
-        # This should never happen, as we would not pass the same keys to both
-        # default kwargs
-        common_keys = set(default_curve_kwargs).intersection(default_multi_curve_kwargs)
-        if len(common_keys) > 0:
-            raise ValueError(
-                "`default_curve_kwargs` and `default_multi_curve_kwargs` both contain "
-                f"the keys {common_keys}. The same kwargs cannot be passed to both "
-                "defaults."
-            )
 
         if n_curves > 1:
-            default_curve_kwargs_ = {
-                **default_multi_curve_kwargs,
-                **default_curve_kwargs,
-            }
-        else:
-            default_curve_kwargs_ = default_curve_kwargs
+            default_curve_kwargs.update(default_multi_curve_kwargs)
 
         labels = []
         if "mean" in legend_metric:
@@ -272,7 +258,7 @@ class _BinaryClassifierCurveDisplayMixin:
 
         curve_kwargs_ = [
             _validate_style_kwargs(
-                {"label": label, **default_curve_kwargs_}, curve_kwargs[fold_idx]
+                {"label": label, **default_curve_kwargs}, curve_kwargs[fold_idx]
             )
             for fold_idx, label in enumerate(labels)
         ]
