@@ -159,6 +159,7 @@ def test_as_float_array():
     "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
 )
 def test_as_float_array_nan(X):
+    X = X.copy()
     X[5, 0] = np.nan
     X[6, 1] = np.nan
     X_converted = as_float_array(X, ensure_all_finite="allow-nan")
@@ -289,7 +290,7 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
         assert extended_msg not in ctx.value.args[0]
 
     if input_name == "X":
-        # Veriy that _validate_data is automatically called with the right argument
+        # Verify that _validate_data is automatically called with the right argument
         # to generate the same exception:
         with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
             SVR().fit(data, np.ones(data.shape[0]))
@@ -2404,23 +2405,6 @@ def test_check_array_on_sparse_inputs_with_array_api_enabled():
 
         with pytest.raises(TypeError):
             check_array(X_sp)
-
-
-# TODO(1.8): remove
-def test_force_all_finite_rename_warning():
-    X = np.random.uniform(size=(10, 10))
-    y = np.random.randint(1, size=(10,))
-
-    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_array(X, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_X_y(X, y, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        as_float_array(X, force_all_finite=True)
 
 
 @pytest.mark.parametrize(

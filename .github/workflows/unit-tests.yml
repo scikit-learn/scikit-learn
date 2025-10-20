@@ -14,6 +14,7 @@ env:
   VIRTUALENV: testvenv
   TEST_DIR: ${{ github.workspace }}/tmp_folder
   CCACHE_DIR: ${{ github.workspace }}/ccache
+  COVERAGE: 'true'
 
 jobs:
   lint:
@@ -23,8 +24,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -40,11 +41,35 @@ jobs:
           pip install ninja meson scipy
           python build_tools/check-meson-openmp-dependencies.py
 
+  retrieve-commit-message:
+    name: Retrieve the latest commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      message: ${{ steps.git-log.outputs.message }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - id: git-log
+        name: Set commit message job output
+        shell: bash
+        run: |
+          set -eu
+
+          message=$(git log --format=%B -n 1)
+
+          {
+            echo 'message<<EOF'
+            echo "${message}"
+            echo EOF
+          } >> "${GITHUB_OUTPUT}"
+
   unit-tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     if: github.repository == 'scikit-learn/scikit-learn'
-    needs: [lint]
+    needs: [lint, retrieve-commit-message]
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
@@ -54,12 +79,19 @@ jobs:
             os: ubuntu-24.04-arm
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+          - name: macOS pylatest_conda_forge_arm
+            os: macOS-15
+            DISTRIB: conda
+            LOCK_FILE: build_tools/azure/pylatest_conda_forge_osx-arm64_conda.lock
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
+            SCIPY_ARRAY_API: 1
+            PYTORCH_ENABLE_MPS_FALLBACK: 1
 
     env: ${{ matrix }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Create cache for ccache
         uses: actions/cache@v4
@@ -80,3 +112,21 @@ jobs:
 
       - name: Run tests
         run: bash -l build_tools/azure/test_script.sh
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+
+      - name: Combine coverage reports from parallel test runners
+        run: bash -l build_tools/azure/combine_coverage_reports.sh
+        if: ${{ env.COVERAGE == 'true' }}
+
+      - name: Upload coverage report to Codecov
+        uses: codecov/codecov-action@v5
+        # TODO: should depend on whether we run the whole test suite (could be by adding
+        # && env.SELECTED_TESTS == '' as in build_tools/azure/posix.yml, or setting
+        # env.COVERAGE == 'false' before the "Run tests" step, so reports are not
+        # generated at all)
+        if: ${{ env.COVERAGE == 'true' }}
+        with:
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true

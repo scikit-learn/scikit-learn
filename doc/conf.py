@@ -261,9 +261,9 @@ html_theme_options = {
     "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
-        "image_relative": "logos/scikit-learn-logo-small.png",
-        "image_light": "logos/scikit-learn-logo-small.png",
-        "image_dark": "logos/scikit-learn-logo-small.png",
+        "image_relative": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_light": "logos/scikit-learn-logo-without-subtitle.svg",
+        "image_dark": "logos/scikit-learn-logo-without-subtitle.svg",
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
@@ -352,6 +352,7 @@ html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
     "scripts/sg_plotly_resize.js",
+    "scripts/theme-observer.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -500,10 +501,16 @@ redirects = {
     "auto_examples/linear_model/plot_iris_logistic": (
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
+    "auto_examples/linear_model/plot_logistic": (
+        "auto_examples/calibration/plot_calibration_curve"
+    ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
     "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
     "auto_examples/linear_model/plot_ols_ridge_variance": (
         "auto_examples/linear_model/plot_ols_ridge"
+    ),
+    "auto_examples/cluster/plot_agglomerative_clustering.html": (
+        "auto_examples/cluster/plot_ward_structured_vs_unstructured.html"
     ),
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
@@ -883,7 +890,7 @@ autosummary_filename_map = {
 # Config for sphinxext.opengraph
 
 ogp_site_url = "https://scikit-learn/stable/"
-ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-notext.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
 
