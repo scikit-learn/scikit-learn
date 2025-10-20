@@ -891,13 +891,10 @@ def multilabel_confusion_matrix(
         "replace_undefined_by": [
             Interval(Real, -1.0, 1.0, closed="both"),
             np.nan,
-            Hidden(StrOptions({"deprecated"})),
         ],
     },
     prefer_skip_nested_validation=True,
 )
-# TODO(1.10): Change default value for `replace_undefined_by` param to 0.0 and remove
-# FutureWarnings; also the defaults in the warning messages need to be updated.
 def cohen_kappa_score(
     y1,
     y2,
@@ -905,7 +902,7 @@ def cohen_kappa_score(
     labels=None,
     weights=None,
     sample_weight=None,
-    replace_undefined_by="deprecated",
+    replace_undefined_by=np.nan,
 ):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
@@ -986,15 +983,6 @@ def cohen_kappa_score(
     >>> cohen_kappa_score(y1, y2)
     0.6875
     """
-
-    def _check_zero_division(denominator, replace_undefined_by, msg):
-        if np.isclose(denominator, 0):
-            if replace_undefined_by == "deprecated":
-                replace_undefined_by = np.nan
-                warnings.warn(mgs_changing_default, FutureWarning)
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-            return True
-
     try:
         confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     except ValueError as e:
@@ -1011,13 +999,6 @@ def cohen_kappa_score(
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
 
-    mgs_changing_default = (
-        "`np.nan` as the default return value of `cohen_kappa_score` in case of a "
-        "division by zero has been deprecated in 1.7 and will be changed to 0.0 in "
-        "version 1.9. Set `replace_undefined_by=0.0` to use the new default and to "
-        "silence this Warning."
-    )
-
     numerator = np.outer(sum0, sum1)
     denominator = np.sum(sum0)
     msg_zero_division = (
@@ -1025,7 +1006,8 @@ def cohen_kappa_score(
         "`cohen_kappa_score` is undefined and set to the value defined by "
         "the `replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if _check_zero_division(denominator, replace_undefined_by, msg_zero_division):
+    if np.isclose(denominator, 0):
+        warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 
     expected = numerator / denominator
@@ -1048,7 +1030,8 @@ def cohen_kappa_score(
         "`cohen_kappa_score` is undefined and set to the value defined by the "
         "`replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if _check_zero_division(denominator, replace_undefined_by, msg_zero_division):
+    if np.isclose(denominator, 0):
+        warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 
     k = numerator / denominator

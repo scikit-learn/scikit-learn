@@ -924,6 +924,7 @@ def test_cohen_kappa():
     )
 
 
+@ignore_warnings(category=UndefinedMetricWarning)
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -936,15 +937,15 @@ def test_cohen_kappa():
         # both inputs (`y1` and `y2`) only have one label:
         ([3] * 10, [3] * 10, None, None),
         # both inputs only have one label in common that is also in `labels`:
-        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], None),
+        ([1] * 5 + [2] * 5, [1] * 5 + [3] * 5, [1, 2], None),
         # like the last test case, but with `weights="linear"` (note that
         # weights="linear" and weights="quadratic" are different branches, though the
         # latter is so similar to the former that the test case is skipped here):
-        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], "linear"),
+        ([1] * 5 + [2] * 5, [1] * 5 + [3] * 5, [1, 2], "linear"),
     ],
 )
 @pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
-def test_cohen_kappa_zero_division(test_case, replace_undefined_by):
+def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
     `replace_undefined_by` param. (The fist two test cases cover the first possible
     location in the function for an occurrence of a division by zero, the last three
@@ -971,8 +972,6 @@ def test_cohen_kappa_zero_division(test_case, replace_undefined_by):
     )
 
 
-# TODO(1.9): remove the @ignore_warnings of the FutureWarning
-@ignore_warnings(category=FutureWarning)
 def test_cohen_kappa_zero_division_warning():
     """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
     occurs."""
@@ -994,31 +993,6 @@ def test_cohen_kappa_zero_division_warning():
     with pytest.warns(
         UndefinedMetricWarning,
         match="`y1`, `y2` and `labels` have only one label in common.",
-    ):
-        cohen_kappa_score(y1, y2, labels=labels)
-
-
-# TODO(1.9): remove test when deprecation cycle is over
-def test_cohen_kappa_score_raise_warning_deprecation():
-    """Test that `cohen_kappa_score` raises a `FutureWarning` for the changing default
-    of the `replace_undefined_by` param."""
-    # test first place to raise warning
-    labels = [1, 2]
-    y1 = np.array([1] * 5 + [2] * 5)
-    y2 = np.array([3] * 10)
-    with pytest.warns(
-        FutureWarning,
-        match="`np.nan` as the default return value of `cohen_kappa_score` in case of",
-    ):
-        cohen_kappa_score(y1, y2, labels=labels)
-
-    # test second place to raise warning
-    labels = [1, 2]
-    y1 = np.array([1] * 5 + [2] * 5)
-    y2 = np.array([1] * 5 + [3] * 5)
-    with pytest.warns(
-        FutureWarning,
-        match="`np.nan` as the default return value of `cohen_kappa_score` in case of",
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 
