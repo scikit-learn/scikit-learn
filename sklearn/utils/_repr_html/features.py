@@ -28,7 +28,8 @@ def _features_html(features):
                   .querySelector('tbody').innerText.trim();
                 if (!wasOpen) detailsElem.open = false;
                 copyRowsToClipboard(content, this);
-              ">
+              "
+              title="Copy all output features">
           </i>
         </div>
     """
