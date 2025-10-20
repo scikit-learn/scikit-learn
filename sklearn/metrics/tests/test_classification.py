@@ -978,7 +978,6 @@ def test_cohen_kappa_zero_division_warning():
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 
-    # test second place to raise warning
     labels = [1, 2]
     y1 = np.array([1] * 5 + [2] * 5)
     y2 = np.array([1] * 5 + [3] * 5)
