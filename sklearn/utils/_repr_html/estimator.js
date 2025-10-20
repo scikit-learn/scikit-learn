@@ -63,6 +63,7 @@ async function copyRowsToClipboard(text, iconElement) {
 
   const originalHTML = iconElement.innerHTML;
   iconElement.innerHTML = "Copied!";
+
   setTimeout(() => {
     iconElement.innerHTML = originalHTML;
   }, 2000);

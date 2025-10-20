@@ -133,13 +133,14 @@ a.param-doc-link::before {
 
  .features {
     font-family: monospace;
-
     cursor: pointer;
     background-color: var(--sklearn-color-fitted-level-0);
     border: 1px dotted var(--sklearn-color-border-box);
     border-radius: .20em;
     margin-bottom: 0.5em;
     display: flex;
+    align-items: first baseline;
+
 }
 
 .features summary {
@@ -149,6 +150,7 @@ a.param-doc-link::before {
   border: none;
   background-color: var(--sklearn-color-fitted-level-1);
   border-radius: .20em 0 0 .20em;
+
 }
 
 .features summary::marker {
@@ -170,18 +172,17 @@ a.param-doc-link::before {
     padding: .5em;
     background-color: var(--sklearn-color-fitted-level-0);
     border-radius: 0 0 .5em .5em;
-    justify-content: space-between;
+
 }
 
 .features .copy-paste-icon {
-    width: 1em;
-    height: 1em;
-    background-size: 1em 1em;
-
-    background-color: var(--sklearn-color-fitted-level-1);
-    margin: .25em;
+   background-size: 10px 10px;
+   width: 10px;
+   height: 10px;
+   background-color: var(--sklearn-color-fitted-level-1);
+   margin-left: 1.5em;
+   margin-right:  1em;
 }
-
 
 .features .features-container table {
     width: 95%;
