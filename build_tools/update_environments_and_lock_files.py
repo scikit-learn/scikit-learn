@@ -174,7 +174,7 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(common_dependencies, ["pandas"])
         + ["ccache", "polars", "pyarrow"],
-        # TODO: for pandas > 1.5.0 move to conda_dependencies:
+        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum supported version
         "pip_dependencies": ["pandas"],
         "package_constraints": {
             "python": "3.11",
