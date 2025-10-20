@@ -1020,7 +1020,7 @@ structure.
        :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
        corresponds to `doc_topic_prior`.
 
-    3. For each word :math:`n` in document :math:`d`:
+    3. For each word :math:`n=1,\cdots,N_d` in document :math:`d`:
 
        a. Draw the topic assignment :math:`z_{dn} \sim \mathrm{Multinomial}
           (\theta_d)`
