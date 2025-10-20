@@ -952,24 +952,17 @@ def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     test cases cover a zero division in the the second possible location in the
     function."""
 
-    def _check_equal(res, exp):
-        if np.isnan(res) and np.isnan(exp):
-            return True
-        return res == exp
-
     y1, y2, labels, weights = test_case
     y1, y2 = np.array(y1), np.array(y2)
 
-    assert _check_equal(
-        cohen_kappa_score(
+    score = cohen_kappa_score(
             y1,
             y2,
             labels=labels,
             weights=weights,
             replace_undefined_by=replace_undefined_by,
-        ),
-        replace_undefined_by,
     )
+    assert_allclose(score, replace_undefined_by, equal_nan=True)
 
 
 def test_cohen_kappa_zero_division_warning():
