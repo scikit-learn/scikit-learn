@@ -249,7 +249,7 @@ def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype
         metric,
         array_namespace,
         device,
-        None,
+        int_dtype,
         labels_true,
         labels_pred,
     )
