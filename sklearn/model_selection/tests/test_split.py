@@ -733,7 +733,7 @@ def test_stratified_group_kfold_shuffle_preserves_stratification():
     # Groups are arranged so perfect stratification across 3 folds is
     # achievable
     groups = np.array([1, 1, 3, 3, 3, 4, 5, 5, 5, 5, 7, 7, 2, 2, 6, 6, 8, 8])
-    distr = np.asarray([2.0 / 3, 1.0 / 3])
+    expected_class_ratios = np.asarray([2.0 / 3, 1.0 / 3])
 
     # Run multiple seeds to ensure the property holds regardless of the
     # tie-breaking order among groups with identical std of class distribution
@@ -745,8 +745,12 @@ def test_stratified_group_kfold_shuffle_preserves_stratification():
             # check group constraint
             assert np.intersect1d(groups[train], groups[test]).size == 0
             # check y distribution
-            assert_allclose(np.bincount(y[train]) / len(train), distr, atol=1e-8)
-            assert_allclose(np.bincount(y[test]) / len(test), distr, atol=1e-8)
+            assert_allclose(
+                np.bincount(y[train]) / len(train), expected_class_ratios, atol=1e-8
+            )
+            assert_allclose(
+                np.bincount(y[test]) / len(test), expected_class_ratios, atol=1e-8
+            )
             test_sizes.append(len(test))
         assert np.ptp(test_sizes) <= 1
 
