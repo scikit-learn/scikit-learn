@@ -434,7 +434,7 @@ the required packages.
 
               brew install libomp
 
-          Install Python 3 (|PythonMinVersion| or later) using Homebrew_
+          Install a recent version of Python (|PythonMinVersion| or later) using Homebrew_
           (`brew install python`) or by manually installing the package from the
           `official website <https://www.python.org/downloads/macos/>`__.
 
