@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from libc.stdio cimport printf
 from sklearn.utils._typedefs cimport uint32_t
 
 
@@ -22,6 +23,8 @@ cdef inline uint32_t our_rand_r(uint32_t* seed) nogil:
     # seed shouldn't ever be 0.
     if (seed[0] == 0):
         seed[0] = DEFAULT_SEED
+        # Debug: Print the value to verify
+        printf("DEBUG: DEFAULT_SEED = %u\n", DEFAULT_SEED)
 
     seed[0] ^= <uint32_t>(seed[0] << 13)
     seed[0] ^= <uint32_t>(seed[0] >> 17)
