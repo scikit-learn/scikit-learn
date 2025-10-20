@@ -652,8 +652,17 @@ version number ending with `.dev0`:
 
 You should now have a working installation of scikit-learn and your git repository
 properly configured.
-Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
-some tests to verify your installation.
+
+It can be useful to run the tests now (even though it will take some time)
+to verify your installation and to be aware of warnings and errors that are not
+related to you contribution:
+
+.. prompt:: bash $
+
+  pytest
+
+For more information on testing, see also the :ref:`pr_checklist`
+and :ref:`pytest_tips`.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _meson-python: https://mesonbuild.com/meson-python
