@@ -55,16 +55,20 @@ function copyRowsToClipboard(text, element) {
     const rows = text.split('\n').map(row => `"${row}"`);
     const formattedText = `[${rows.join(',\n ')}\n]`;
 
-    const originalHTML = element.innerHTML.replace('Copied!', '');
+    const originalHTML = element.innerHTML.replace('✔', '');
     const originalStyle = element.style;
+    const copyMark = document.createElement('span');
+    copyMark.innerHTML = '✔';
+    copyMark.style.color = 'green';
+    copyMark.style.marginLeft = '5px';
 
     navigator.clipboard.writeText(formattedText)
         .then(() => {
-            element.style.fontSize = "x-small";
-            element.style.color = 'green';
-            element.innerHTML = "Copied!";
+            element.style.display = 'none';
+            element.parentElement.appendChild(copyMark);
 
             setTimeout(() => {
+                copyMark.remove();
                 element.innerHTML = originalHTML;
                 element.style = originalStyle;
             }, 2000);
