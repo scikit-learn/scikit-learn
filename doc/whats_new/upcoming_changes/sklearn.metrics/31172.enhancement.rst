@@ -1,3 +1,4 @@
 - :func:`~metrics.cohen_kappa_score` now has a `replace_undefined_by` param, that can be
-  set to define the function's return value when there would be a division by zero.
+  set to define the function's return value when the metric is undefined (division by
+  zero).
   By :user:`Stefanie Senger <StefanieSenger>`
