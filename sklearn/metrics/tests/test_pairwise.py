@@ -1835,9 +1835,13 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(metric, pairwise_
     Y_arr = np.asarray(Y)
     with warnings.catch_warnings(record=True) as record:
         pairwise_fn(X, Y, metric=metric)
-        assert len(record) == 0, f"No warning should have been raised for boolean inputs for {metric}"
+        assert len(record) == 0, (
+            f"No warning should have been raised for boolean inputs for {metric}"
+        )
         pairwise_fn(X_arr, Y_arr, metric=metric)
-        assert len(record) == 0, f"No warning should have been raised for boolean inputs for {metric}"
+        assert len(record) == 0, (
+            f"No warning should have been raised for boolean inputs for {metric}"
+        )
 
     with pytest.warns(DataConversionWarning):
         pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
