@@ -1826,15 +1826,18 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     "pairwise_fn", [pairwise_distances_argmin, pairwise_distances_argmin_min]
 )
 def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(metric, pairwise_fn):
+    """Check for unnecessary DataConversionWarning with boolean metrics.
+    A warning should be raised only for non-boolean data and not for boolean data.
+    """
     X = [[True, True, False, True], [True, False, True, True]]
     Y = [[False, True, False, True], [True, False, True, True]]
     X_arr = np.asarray(X)
     Y_arr = np.asarray(Y)
     with warnings.catch_warnings(record=True) as record:
         pairwise_fn(X, Y, metric=metric)
-        assert len(record) == 0, f"A DataConversionWarning was raised for {metric}"
+        assert len(record) == 0, f"No warning should have been raised for boolean inputs for {metric}"
         pairwise_fn(X_arr, Y_arr, metric=metric)
-        assert len(record) == 0, f"A DataConversionWarning was raised for {metric}"
+        assert len(record) == 0, f"No warning should have been raised for boolean inputs for {metric}"
 
     with pytest.warns(DataConversionWarning):
         pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
