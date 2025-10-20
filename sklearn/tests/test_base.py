@@ -27,7 +27,7 @@ from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
@@ -235,6 +235,22 @@ def test_clone_class_rather_than_instance():
     msg = "You should provide an instance of scikit-learn estimator"
     with pytest.raises(TypeError, match=msg):
         clone(MyEstimator)
+
+
+def test_conditional_attrs_not_in_dir():
+    # Test that __dir__ includes only relevant attributes. #28558
+
+    encoder = LabelEncoder()
+    assert "set_output" not in dir(encoder)
+
+    scalar = StandardScaler()
+    assert "set_output" in dir(scalar)
+
+    svc = SVC(probability=False)
+    assert "predict_proba" not in dir(svc)
+
+    svc.probability = True
+    assert "predict_proba" in dir(svc)
 
 
 def test_repr():
@@ -1033,6 +1049,19 @@ def test_param_is_non_default(default_value, test_value):
     https://github.com/scikit-learn/scikit-learn/issues/31525
     """
     estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
+def test_param_is_non_default_when_pandas_NA():
+    """Check that we detect pandas.Na as non-default parameter.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32312
+    """
+    pd = pytest.importorskip("pandas")
+
+    estimator = make_estimator_with_param(default_value=0)(param=pd.NA)
     non_default = estimator._get_params_html().non_default
     assert "param" in non_default
 
