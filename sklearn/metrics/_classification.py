@@ -896,7 +896,7 @@ def multilabel_confusion_matrix(
     },
     prefer_skip_nested_validation=True,
 )
-# TODO(1.9): Change default value for `replace_undefined_by` param to 0.0 and remove
+# TODO(1.10): Change default value for `replace_undefined_by` param to 0.0 and remove
 # FutureWarnings; also the defaults in the warning messages need to be updated.
 def cohen_kappa_score(
     y1,
