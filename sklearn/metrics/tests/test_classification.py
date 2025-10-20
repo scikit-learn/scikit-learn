@@ -969,7 +969,6 @@ def test_cohen_kappa_zero_division_warning():
     """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
     occurs."""
 
-    # test first place to raise warning
     labels = [1, 2]
     y1 = np.array([1] * 5 + [2] * 5)
     y2 = np.array([3] * 10)
