@@ -80,27 +80,33 @@ def _find_floating_dtype_allow_sparse(X, Y, xp=None):
     return X, Y, dtype_float
 
 
-def _find_floating_or_bool_dtype_for_metric_allow_sparse(X, Y, metric, xp=None):
-    """Find matching floating type, allowing for sparse input.
+def _get_dtype_for_array_check_allow_sparse(X, Y, metric):
+    """Find the necessary dtype to pass to `check_pairwise_arrays` for casting
 
-    Metric-aware. For boolean metrics it returns ``bool`` instead of a floating dtype
+    Metric-aware: returns ``bool`` for boolean metrics, and ``"infer_float"``
+    for non-boolean metrics.
     """
 
     if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
-        # Convert to numpy arrays if not sparse
-        # to match behavior of _return_float_dtype
-        if not issparse(X) and not isinstance(X, np.ndarray):
-            X = np.asarray(X)
-        if Y is not None and not issparse(Y) and not isinstance(Y, np.ndarray):
-            Y = np.asarray(Y)
-        return X, Y, bool
-    return _find_floating_dtype_allow_sparse(X, Y, xp)
+        if issparse(X) or issparse(Y):
+            raise TypeError("scipy distance metrics do not support sparse matrices.")
 
+        xp, _ = get_namespace(X, Y)
+        # Similarly to _return_float_dtype, non-ndarray numpy-namespaced
+        # objects are cast to ndarrays
+        if _is_numpy_namespace(xp):
+            if not isinstance(X, np.ndarray):
+                X = np.asarray(X)
+            if Y is not None and not isinstance(Y, np.ndarray):
+                Y = np.asarray(Y)
 
-def _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric):
-    if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
-        msg = f"Data was converted to boolean for metric {metric}"
-        warnings.warn(msg, DataConversionWarning)
+        if not xp.isdtype(X.dtype, "bool") or (
+            Y is not None and not xp.isdtype(Y.dtype, "bool")
+        ):
+            msg = f"Data was converted to boolean for metric {metric}"
+            warnings.warn(msg, DataConversionWarning)
+        return X, Y, xp.bool
+    return X, Y, "infer_float"
 
 
 def check_pairwise_arrays(
@@ -816,12 +822,7 @@ def pairwise_distances_argmin_min(
     >>> distances
     array([1., 1.])
     """
-    xp, _ = get_namespace(X, Y)
-    X, Y, dtype = _find_floating_or_bool_dtype_for_metric_allow_sparse(
-        X, Y, metric, xp=xp
-    )
-    _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric)
-
+    X, Y, dtype = _get_dtype_for_array_check_allow_sparse(X, Y, metric)
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
     X, Y = check_pairwise_arrays(X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite)
 
@@ -963,12 +964,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    xp, _ = get_namespace(X, Y)
-    X, Y, dtype = _find_floating_or_bool_dtype_for_metric_allow_sparse(
-        X, Y, metric, xp=xp
-    )
-    _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric)
-
+    X, Y, dtype = _get_dtype_for_array_check_allow_sparse(X, Y, metric)
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
     X, Y = check_pairwise_arrays(X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite)
 
@@ -2462,9 +2458,7 @@ def pairwise_distances(
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 
-        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
-        _warn_if_boolean_metric_requires_conversions(X, Y, dtype, metric)
-
+        X, Y, dtype = _get_dtype_for_array_check_allow_sparse(X, Y, metric)
         X, Y = check_pairwise_arrays(
             X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite
         )
