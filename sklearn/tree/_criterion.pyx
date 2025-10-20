@@ -1320,11 +1320,16 @@ def _py_precompute_absolute_errors(
 cdef class MAE(Criterion):
     r"""Mean absolute error impurity criterion.
 
-    MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
-    value and f_i is the predicted value.
-
     It has almost nothing in common with other regression criterions
     so it doesn't inherit from RegressionCriterion.
+
+    MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
+    value and f_i is the predicted value.
+    In decision trees, all samples within a node share the same f_i value,
+    which corresponds to the weighted median of the target values y_i.
+    For detailed explanations of the mathematics and algorithmic aspects of
+    this implementation, refer to
+    https://github.com/cakedev0/fast-mae-split/blob/main/report.ipynb
     """
     cdef float64_t[::1] node_medians
     cdef float64_t[::1] left_abs_errors
@@ -1430,7 +1435,7 @@ cdef class MAE(Criterion):
 
         Reset might be called after an external class has changed
         inplace self.sample_indices[start:end], hence re-computing
-        the absolute errors is needed
+        the absolute errors is needed.
         """
         cdef intp_t k, p, i
 
@@ -1483,17 +1488,17 @@ cdef class MAE(Criterion):
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
-        """For this class, this method is never called"""
+        """For this class, this method is never called."""
         raise NotImplementedError("This method is not implemented for this subclass")
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
-        new_pos is guaranteed to be greater than pos
+        new_pos is guaranteed to be greater than pos.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
-        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data)
+        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data).
         """
         cdef intp_t pos = self.pos
         cdef intp_t i, p
