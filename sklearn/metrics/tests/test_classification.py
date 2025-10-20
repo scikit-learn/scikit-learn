@@ -956,11 +956,11 @@ def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     y1, y2 = np.array(y1), np.array(y2)
 
     score = cohen_kappa_score(
-            y1,
-            y2,
-            labels=labels,
-            weights=weights,
-            replace_undefined_by=replace_undefined_by,
+        y1,
+        y2,
+        labels=labels,
+        weights=weights,
+        replace_undefined_by=replace_undefined_by,
     )
     assert_allclose(score, replace_undefined_by, equal_nan=True)
 
