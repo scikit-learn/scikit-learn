@@ -327,15 +327,6 @@ def test_roc_curve_display_from_cv_results_curve_kwargs(
 
 
 # TODO(1.9): Remove in 1.9
-def test_roc_curve_display_estimator_name_deprecation(pyplot):
-    """Check deprecation of `estimator_name`."""
-    fpr = np.array([0, 0.5, 1])
-    tpr = np.array([0, 0.5, 1])
-    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
-        RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name="test")
-
-
-# TODO(1.9): Remove in 1.9
 @pytest.mark.parametrize(
     "constructor_name", ["from_estimator", "from_predictions", "plot"]
 )

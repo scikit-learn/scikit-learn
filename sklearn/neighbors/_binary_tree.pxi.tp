@@ -166,7 +166,7 @@ from libc.string cimport memcpy
 
 import numpy as np
 import warnings
-from ..metrics._dist_metrics cimport (
+from sklearn.metrics._dist_metrics cimport (
     DistanceMetric,
     DistanceMetric64,
     DistanceMetric32,
@@ -178,13 +178,13 @@ from ..metrics._dist_metrics cimport (
     euclidean_dist_to_rdist32,
 )
 
-from ._partition_nodes cimport partition_node_indices
+from sklearn.neighbors._partition_nodes cimport partition_node_indices
 
-from ..metrics._dist_metrics import get_valid_metric_ids
-from ..utils import check_array
-from ..utils._typedefs cimport float32_t, float64_t, intp_t
-from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
+from sklearn.utils import check_array
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t
+from sklearn.utils._heap cimport heap_push
+from sklearn.utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
 cnp.import_array()
 
