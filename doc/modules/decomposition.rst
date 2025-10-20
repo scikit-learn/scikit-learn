@@ -993,7 +993,7 @@ Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
 * The corpus is a collection of :math:`D` documents.
-* A document is a sequence of :math:`N` words.
+* A document :math:`d \in D` is a sequence of :math:`N_d` words.
 * There are :math:`K` topics in the corpus.
 * The boxes represent repeated sampling.
 
