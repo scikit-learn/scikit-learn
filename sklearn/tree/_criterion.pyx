@@ -1388,7 +1388,7 @@ cdef class MAE(Criterion):
         sample_indices[start:start] and sample_indices[start:end].
 
         WARNING: sample_indices will be modified in-place externally
-        after this method is called
+        after this method is called.
         """
         cdef:
             intp_t i, p
