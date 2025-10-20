@@ -15,6 +15,60 @@ For a short description of the main highlights of the release, please refer to
 
 .. towncrier release notes start
 
+.. _changes_1_6_1:
+
+Version 1.6.1
+=============
+
+**January 2025**
+
+Changed models
+--------------
+
+- |Fix| The `tags.input_tags.sparse` flag was corrected for a majority of estimators.
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30187`
+
+Changes impacting many modules
+------------------------------
+
+- |Fix| `_more_tags`, `_get_tags`, and `_safe_tags` are now raising a
+  :class:`DeprecationWarning` instead of a :class:`FutureWarning` to only notify
+  developers instead of end-users.
+  By :user:`Guillaume Lemaitre <glemaitre>` in :pr:`30573`
+
+:mod:`sklearn.metrics`
+----------------------
+
+- |Fix| Fix regression when scikit-learn metric called on PyTorch CPU tensors would
+  raise an error (with array API dispatch disabled which is the default).
+  By :user:`Loïc Estève <lesteve>` :pr:`30454`
+
+:mod:`sklearn.model_selection`
+------------------------------
+
+- |Fix| :func:`~model_selection.cross_validate`, :func:`~model_selection.cross_val_predict`,
+  and :func:`~model_selection.cross_val_score` now accept `params=None` when metadata
+  routing is enabled. By `Adrin Jalali`_ :pr:`30451`
+
+:mod:`sklearn.tree`
+-------------------
+
+- |Fix| Use `log2` instead of `ln` for building trees to maintain behavior of previous
+  versions. By `Thomas Fan`_ :pr:`30557`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Enhancement| :func:`utils.estimator_checks.check_estimator_sparse_tag` ensures that
+  the estimator tag `input_tags.sparse` is consistent with its `fit`
+  method (accepting sparse input `X` or raising the appropriate error).
+  By :user:`Antoine Baker <antoinebaker>` :pr:`30187`
+
+- |Fix| Raise a `DeprecationWarning` when there is no concrete implementation of `__sklearn_tags__`
+  in the MRO of the estimator. We request to inherit from `BaseEstimator` that
+  implements `__sklearn_tags__`.
+  By :user:`Guillaume Lemaitre <glemaitre>` :pr:`30516`
+
 .. _changes_1_6_0:
 
 Version 1.6.0
@@ -128,19 +182,19 @@ See :ref:`array_api` for more details.
   By :user:`Emily Chen <EmilyXinyi>` :pr:`29389`
 
 - |Feature| :func:`sklearn.metrics.pairwise.euclidean_distances` and
-  :func:`sklearn.metrics.pairwise.rbf_kernel` now supports Array API compatible
+  :func:`sklearn.metrics.pairwise.rbf_kernel` now support Array API compatible
   inputs.
   By :user:`Omar Salman <OmarManzoor>` :pr:`29433`
 
 - |Feature| :func:`sklearn.metrics.pairwise.linear_kernel`,
   :func:`sklearn.metrics.pairwise.sigmoid_kernel`, and
-  :func:`sklearn.metrics.pairwise.polynomial_kernel` now supports Array API
+  :func:`sklearn.metrics.pairwise.polynomial_kernel` now support Array API
   compatible inputs.
   By :user:`Omar Salman <OmarManzoor>` :pr:`29475`
 
 - |Feature| :func:`sklearn.metrics.mean_squared_log_error` and
   :func:`sklearn.metrics.root_mean_squared_log_error`
-  now supports Array API compatible inputs.
+  now support Array API compatible inputs.
   By :user:`Virgil Chan <virchan>` :pr:`29709`
 
 - |Feature| :class:`preprocessing.MinMaxScaler` with `clip=True` now supports Array API
@@ -236,7 +290,7 @@ scikit-learn has preliminary support for free-threaded CPython, in particular
 free-threaded wheels are available for all of our supported platforms.
 
 Free-threaded (also known as nogil) CPython 3.13 is an experimental version of
-CPython 3.13 who aims at enabling efficient multi-threaded use cases by
+CPython 3.13 which aims at enabling efficient multi-threaded use cases by
 removing the Global Interpreter Lock (GIL).
 
 For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
@@ -446,7 +500,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   reweighted or with repeated data points.
   By :user:`Antoine Baker <antoinebaker>` :pr:`30040`
 
-- |Fix| :class:`linear_model.LogisticRegression` and and other linear models that
+- |Fix| :class:`linear_model.LogisticRegression` and other linear models that
   accept `solver="newton-cholesky"` now report the correct number of iterations
   when they fall back to the `"lbfgs"` solver because of a rank deficient
   Hessian matrix.
@@ -489,7 +543,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 - |Fix| :func:`metrics.roc_auc_score` will now correctly return np.nan and
   warn user if only one class is present in the labels.
-  By :user:`Gleb Levitski <glevv>` and :user:`Janez Demšar <janezd>` :pr:`27412`, :pr:`30013`
+  By :user:`Hleb Levitski <glevv>` and :user:`Janez Demšar <janezd>` :pr:`27412`, :pr:`30013`
 
 - |Fix| The functions :func:`metrics.mean_squared_log_error` and
   :func:`metrics.root_mean_squared_log_error` now check whether the inputs are within
@@ -511,7 +565,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 - |API| The default value of the `response_method` parameter of
   :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
-  removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
+  removed in 1.8. In the meantime, `None` is equivalent to `"predict"`.
   By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`30001`
 
 :mod:`sklearn.model_selection`
@@ -591,7 +645,7 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 
 - |Enhancement| Added `warn` option to `handle_unknown` parameter in
   :class:`preprocessing.OneHotEncoder`.
-  By :user:`Gleb Levitski <glevv>` :pr:`28637`
+  By :user:`Hleb Levitski <glevv>` :pr:`28637`
 
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
@@ -694,34 +748,38 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
-Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam 
-J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali, 
-Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan 
-Zihna, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari, Arthur Courselle, 
-Arturo Amor, Aswathavicky, Audrey Flanders, aurelienmorgan, Austin, awwwyan, 
-AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001, bme-git, brdav, Brigitta Sipőcz, 
-Cailean Carter, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, claudio, 
-Conrad Stevens, datarollhexasphericon, Davide Chicco, David Matthew Cherney, 
-Dea María Léon, Deepak Saldanha, Deepyaman Datta, dependabot[bot], dinga92, 
-Dmitry Kobak, Drew Craeton, dymil, Edoardo Abati, EmilyXinyi, Eric Larson, 
-Evelyn, fabianhenning, Farid "Freddie" Taba, Gael Varoquaux, Giorgio Angelotti, 
-Gleb Levitski, Guillaume Lemaitre, Guntitat Sawadwuthikul, Henrique Caroço, 
-hhchen1105, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin 
-Chauhan, Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, 
-Jérôme Dockès, Jirair Aroyan, João Morais, Joe Cainey, John Enblom, 
-JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy, 
-Kevin Doshi, Lars, Loic Esteve, Lucy Liu, lunovian, Marc Bresson, Marco Edward 
-Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann, MarieS-WiMLDS, Martin 
-Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell Liu, Meekail Zain, 
-Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia Mokeeva, Nathan 
-Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov, Nithish 
-Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha, Olivier 
-Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta, Quentin 
-Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath, renaissance0ne, 
-Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427, Santiago M. Mola, 
-scikit-learn-bot, sean moiselle, SHREEKANT VITTHAL NANDIYAWAR, Shruti Nath, 
-Søren Bredlund Caspersen, Stefanie Senger, Steffen Schneider, Štěpán 
-Sršeň, Sylvain Combettes, Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, 
-Thomas Li, Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, vedpawar2254, Victoria 
-Shevchenko, viktor765, Vince Carey, Virgil Chan, Wang Jiayi, Xiao Yuan, Xuefeng 
-Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey, Ziad Amerr
+Aaron Schumacher, Abdulaziz Aloqeely, abhi-jha, Acciaro Gennaro Daniele, Adam
+J. Stewart, Adam Li, Adeel Hassan, Adeyemi Biola, Aditi Juneja, Adrin Jalali,
+Aisha, Akanksha Mhadolkar, Akihiro Kuno, Alberto Torres, alexqiao, Alihan
+Zihna, Aniruddha Saha, antoinebaker, Antony Lee, Anurag Varma, Arif Qodari,
+Arthur Courselle, ArthurDbrn, Arturo Amor, Aswathavicky, Audrey Flanders,
+aurelienmorgan, Austin, awwwyan, AyGeeEm, a.zy.lee, baggiponte, BlazeStorm001,
+bme-git, Boney Patel, brdav, Brigitta Sipőcz, Cailean Carter, Camille
+Troillard, Carlo Lemos, Christian Lorentzen, Christian Veenhuis, Christine P.
+Chai, claudio, Conrad Stevens, datarollhexasphericon, Davide Chicco, David
+Matthew Cherney, Dea María Léon, Deepak Saldanha, Deepyaman Datta,
+dependabot[bot], dinga92, Dmitry Kobak, Domenico, Drew Craeton, dymil, Edoardo
+Abati, EmilyXinyi, Eric Larson, Evelyn, fabianhenning, Farid "Freddie" Taba,
+Gael Varoquaux, Giorgio Angelotti, Hleb Levitski, Guillaume Lemaitre, Guntitat
+Sawadwuthikul, Haesun Park, Hanjun Kim, Henrique Caroço, hhchen1105, Hugo
+Boulenger, Ilya Komarov, Inessa Pawson, Ivan Pan, Ivan Wiryadi, Jaimin Chauhan,
+Jakob Bull, James Lamb, Janez Demšar, Jérémie du Boisberranger, Jérôme
+Dockès, Jirair Aroyan, João Morais, Joe Cainey, Joel Nothman, John Enblom,
+JorgeCardenas, Joseph Barbier, jpienaar-tuks, Julian Chan, K.Bharat Reddy,
+Kevin Doshi, Lars, Loic Esteve, Lucas Colley, Lucy Liu, lunovian, Marc Bresson,
+Marco Edward Gorelli, Marco Maggi, Marco Wolsza, Maren Westermann,
+MarieS-WiMLDS, Martin Helm, Mathew Shen, mathurinm, Matthew Feickert, Maxwell
+Liu, Meekail Zain, Michael Dawson, Miguel Cárdenas, m-maggi, mrastgoo, Natalia
+Mokeeva, Nathan Goldbaum, Nathan Orgera, nbrown-ScottLogic, Nikita Chistyakov,
+Nithish Bolleddula, Noam Keidar, NoPenguinsLand, Norbert Preining, notPlancha,
+Olivier Grisel, Omar Salman, ParsifalXu, Piotr, Priyank Shroff, Priyansh Gupta,
+Quentin Barthélemy, Rachit23110261, Rahil Parikh, raisadz, Rajath,
+renaissance0ne, Reshama Shaikh, Roberto Rosati, Robert Pollak, rwelsch427,
+Santiago Castro, Santiago M. Mola, scikit-learn-bot, sean moiselle, SHREEKANT
+VITTHAL NANDIYAWAR, Shruti Nath, Søren Bredlund Caspersen, Stefanie Senger,
+Stefano Gaspari, Steffen Schneider, Štěpán Sršeň, Sylvain Combettes,
+Tamara, Thomas, Thomas Gessey-Jones, Thomas J. Fan, Thomas Li, ThorbenMaa,
+Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, Umberto Fasci, UV, vedpawar2254,
+Velislav Babatchev, Victoria Shevchenko, viktor765, Vince Carey, Virgil Chan,
+Wang Jiayi, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey,
+Ziad Amerr

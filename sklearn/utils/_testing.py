@@ -37,7 +37,7 @@ from numpy.testing import (
     assert_array_less,
 )
 
-import sklearn
+from sklearn import __file__ as sklearn_path
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -50,24 +50,18 @@ from sklearn.utils.fixes import (
     _IS_32BIT,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
-    check_array,
-    check_is_fitted,
-    check_X_y,
-)
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 __all__ = [
-    "assert_array_equal",
+    "SkipTest",
+    "assert_allclose",
     "assert_almost_equal",
     "assert_array_almost_equal",
+    "assert_array_equal",
     "assert_array_less",
-    "assert_allclose",
     "assert_run_python_script_without_output",
-    "SkipTest",
 ]
 
 SkipTest = unittest.case.SkipTest
@@ -307,7 +301,7 @@ def set_random_state(estimator, random_state=0):
 
 def _is_numpydoc():
     try:
-        import numpydoc  # noqa
+        import numpydoc  # noqa: F401
     except (ImportError, AssertionError):
         return False
     else:
@@ -317,7 +311,7 @@ def _is_numpydoc():
 try:
     _check_array_api_dispatch(True)
     ARRAY_API_COMPAT_FUNCTIONAL = True
-except ImportError:
+except (ImportError, RuntimeError):
     ARRAY_API_COMPAT_FUNCTIONAL = False
 
 try:
@@ -333,7 +327,7 @@ try:
     )
     skip_if_array_api_compat_not_configured = pytest.mark.skipif(
         not ARRAY_API_COMPAT_FUNCTIONAL,
-        reason="requires array_api_compat installed and a new enough version of NumPy",
+        reason="SCIPY_ARRAY_API not set, or versions of NumPy/SciPy too old.",
     )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
@@ -688,12 +682,42 @@ def _get_diff_msg(docstrings_grouped):
 
 
 def _check_consistency_items(
-    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
+    items_docs,
+    type_or_desc,
+    section,
+    n_objects,
+    descr_regex_pattern="",
+    ignore_types=tuple(),
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
     If item is not present in all objects, checking is skipped and warning raised.
     If `regex` provided, match descriptions to all descriptions.
+
+    Parameters
+    ----------
+    items_doc : dict of dict of str
+        Dictionary where the key is the string type or description, value is
+        a dictionary where the key is "type description" or "description"
+        and the value is a list of object names with the same string type or
+        description.
+
+    type_or_desc : {"type description", "description"}
+        Whether to check type description or description between objects.
+
+    section : {"Parameters", "Attributes", "Returns"}
+        Name of the section type.
+
+    n_objects : int
+        Total number of objects.
+
+    descr_regex_pattern : str, default=""
+        Regex pattern to match for description of all objects.
+        Ignored when `type_or_desc="type description".
+
+    ignore_types : tuple of str, default=()
+        Tuple of parameter/attribute/return names for which type description
+        matching is ignored. Ignored when `type_or_desc="description".
     """
     skipped = []
     for item_name, docstrings_grouped in items_docs.items():
@@ -712,6 +736,9 @@ def _check_consistency_items(
                     f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
                 )
                 raise AssertionError(msg)
+        # Skip type checking for items in `ignore_types`
+        elif type_or_desc == "type specification" and item_name in ignore_types:
+            continue
         # Otherwise, if more than one key, docstrings not consistent between objects
         elif len(docstrings_grouped.keys()) > 1:
             msg_diff = _get_diff_msg(docstrings_grouped)
@@ -740,6 +767,7 @@ def assert_docstring_consistency(
     include_returns=False,
     exclude_returns=None,
     descr_regex_pattern=None,
+    ignore_types=tuple(),
 ):
     r"""Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -787,6 +815,10 @@ def assert_docstring_consistency(
         Regular expression to match to all descriptions of included
         parameters/attributes/returns. If None, will revert to default behavior
         of comparing descriptions between objects.
+
+    ignore_types : tuple of str, default=tuple()
+        Tuple of parameter/attribute/return names to exclude from type description
+        matching between objects.
 
     Examples
     --------
@@ -851,7 +883,13 @@ def assert_docstring_consistency(
                     type_items[item_name][type_def].append(obj_name)
                     desc_items[item_name][desc].append(obj_name)
 
-        _check_consistency_items(type_items, "type specification", section, n_objects)
+        _check_consistency_items(
+            type_items,
+            "type specification",
+            section,
+            n_objects,
+            ignore_types=ignore_types,
+        )
         _check_consistency_items(
             desc_items,
             "description",
@@ -885,7 +923,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
         with open(source_file, "wb") as f:
             f.write(source_code.encode("utf-8"))
         cmd = [sys.executable, source_file]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), ".."))
+        cwd = op.normpath(op.join(op.dirname(sklearn_path), ".."))
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
@@ -938,12 +976,12 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
-        For pandas container supporting `columns_names`, it will affect
+        For pandas/polars container supporting `columns_names`, it will affect
         specific names.
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
@@ -979,6 +1017,7 @@ def _convert_container(
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
+        array = array[:, None] if array.ndim == 1 else array
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
@@ -1000,6 +1039,9 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "pyarrow_array":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        return pa.array(container)
     elif constructor_name == "polars_series":
         pl = pytest.importorskip("polars", minversion=minversion)
         return pl.Series(values=container)
@@ -1016,11 +1058,6 @@ def _convert_container(
             # https://github.com/scipy/scipy/pull/18530#issuecomment-1878005149
             container = np.atleast_2d(container)
 
-        if "array" in constructor_name and sp_version < parse_version("1.8"):
-            raise ValueError(
-                f"{constructor_name} is only available with scipy>=1.8.0, got "
-                f"{sp_version}"
-            )
         if constructor_name in ("sparse", "sparse_csr"):
             # sparse and sparse_csr are equivalent for legacy reasons
             return sp.sparse.csr_matrix(container, dtype=dtype)
@@ -1268,22 +1305,21 @@ class MinimalTransformer:
 def _array_api_for_tests(array_namespace, device):
     try:
         array_mod = importlib.import_module(array_namespace)
-    except ModuleNotFoundError:
+    except (ModuleNotFoundError, ImportError):
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
         )
-    try:
-        import array_api_compat  # noqa
-    except ImportError:
-        raise SkipTest(
-            "array_api_compat is not installed: not checking array_api input"
-        )
+
+    if os.environ.get("SCIPY_ARRAY_API") is None:
+        raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
+
+    from sklearn.externals.array_api_compat import get_namespace
 
     # First create an array using the chosen array module and then get the
     # corresponding (compatibility wrapped) array namespace based on it.
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
-    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    xp = get_namespace(array_mod.asarray(1))
     if (
         array_namespace == "torch"
         and device == "cuda"
@@ -1303,6 +1339,17 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
+    elif array_namespace == "torch" and device == "xpu":  # pragma: nocover
+        if not hasattr(xp, "xpu"):
+            # skip xpu testing for PyTorch <2.4
+            raise SkipTest(
+                "XPU is not available because the current PyTorch install was not "
+                "built with XPU support."
+            )
+        if not xp.xpu.is_available():
+            raise SkipTest(
+                "Skipping XPU device test because no XPU device is available"
+            )
     elif array_namespace == "cupy":  # pragma: nocover
         import cupy
 
@@ -1314,9 +1361,9 @@ def _array_api_for_tests(array_namespace, device):
 def _get_warnings_filters_info_list():
     @dataclass
     class WarningInfo:
-        action: "warnings._ActionKind"
-        message: str = ""
-        category: type[Warning] = Warning
+        action: "warnings._ActionKind"  # type: ignore[annotation-unchecked]
+        message: str = ""  # type: ignore[annotation-unchecked]
+        category: type[Warning] = Warning  # type: ignore[annotation-unchecked]
 
         def to_filterwarning_str(self):
             if self.category.__module__ == "builtins":
@@ -1384,6 +1431,20 @@ def _get_warnings_filters_info_list():
         ),
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+        # Plotly deprecated something which we're not using, but internally it's used
+        # and needs to be fixed on their side.
+        # https://github.com/plotly/plotly.py/issues/4997
+        WarningInfo(
+            "ignore",
+            message=".+scattermapbox.+deprecated.+scattermap.+instead",
+            category=DeprecationWarning,
+        ),
+        # TODO(1.10): remove PassiveAgressive
+        WarningInfo(
+            "ignore",
+            message="Class PassiveAggressive.+is deprecated",
+            category=FutureWarning,
         ),
     ]
 

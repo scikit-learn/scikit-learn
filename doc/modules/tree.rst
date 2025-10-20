@@ -382,7 +382,7 @@ Tips on practical use
 
 * If the samples are weighted, it will be easier to optimize the tree
   structure using weight-based pre-pruning criterion such as
-  ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+  ``min_weight_fraction_leaf``, which ensures that leaf nodes contain at least
   a fraction of the overall sum of the sample weights.
 
 * All decision trees use ``np.float32`` arrays internally.
@@ -472,9 +472,33 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
-:math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
+The strategy to choose the split at each node is controlled by the `splitter`
+parameter:
+
+* With the **best splitter** (default, ``splitter='best'``), :math:`\theta^*` is
+  found by performing a **greedy exhaustive search** over all available features
+  and all possible thresholds :math:`t_m` (i.e. midpoints between sorted,
+  distinct feature values), selecting the pair that exactly minimizes
+  :math:`G(Q_m, \theta)`.
+
+* With the **random splitter** (``splitter='random'``), :math:`\theta^*` is
+  found by sampling a **single random candidate threshold** for each available
+  feature. This performs a stochastic approximation of the greedy search,
+  effectively reducing computation time (see :ref:`tree_complexity`).
+
+After choosing the optimal split :math:`\theta^*` at node :math:`m`, the same
+splitting procedure is then applied recursively to each partition
+:math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)` until a stopping
+condition is reached, such as:
+
+* the maximum allowable depth is reached (`max_depth`);
+
+* :math:`n_m` is smaller than `min_samples_split`;
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`.
+
+See the respective estimator docstring for other stopping conditions.
+
 
 Classification criteria
 -----------------------
@@ -560,9 +584,9 @@ Mean Poisson deviance:
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
-necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion. For performance reasons the actual implementation minimizes
-the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
+necessary condition to use this criterion. For performance reasons the actual
+implementation minimizes the half mean poisson deviance, i.e. the mean poisson
+deviance divided by 2.
 
 Mean Absolute Error:
 
@@ -587,8 +611,8 @@ support for missing values for `splitter='random'`, where the splits
 are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
 
-The criterion supported when there are missing-values are
-`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+The criterion supported when there are missing values are
+`'gini'`, `'entropy'`, or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`

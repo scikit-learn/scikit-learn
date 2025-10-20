@@ -9,19 +9,20 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import OutlierMixin, _fit_context
-from ..tree import ExtraTreeRegressor
-from ..tree._tree import DTYPE as tree_dtype
-from ..utils import (
-    check_array,
-    check_random_state,
-    gen_batches,
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.ensemble._bagging import BaseBagging
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree._tree import DTYPE as tree_dtype
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
+    validate_data,
 )
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_is_fitted, validate_data
-from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
@@ -317,6 +318,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         X = validate_data(
             self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -350,7 +355,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         super()._fit(
             X,
             y,
-            max_samples,
+            max_samples=max_samples,
             max_depth=max_depth,
             sample_weight=sample_weight,
             check_input=False,
@@ -596,7 +601,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         # Note: we use default n_jobs value, i.e. sequential computation, which
         # we expect to be more performant that parallelizing for small number
-        # of samples, e.g. < 1k samples. Default n_jobs value can be overriden
+        # of samples, e.g. < 1k samples. Default n_jobs value can be overridden
         # by using joblib.parallel_backend context manager around
         # ._compute_score_samples. Using a higher n_jobs may speed up the
         # computation of the scores, e.g. for > 1k samples. See

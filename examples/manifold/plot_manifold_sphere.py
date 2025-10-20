@@ -12,7 +12,7 @@ side. This enables the manifold learning techniques to
 'spread it open' whilst projecting it onto two dimensions.
 
 For a similar example, where the methods are applied to the
-S-curve dataset, see :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`
+S-curve dataset, see :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`.
 
 Note that the purpose of the :ref:`MDS <multidimensional_scaling>` is
 to find a low-dimensional representation of the data (here 2D) in
@@ -21,7 +21,7 @@ high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
 the low-dimensional space. Here the manifold problem matches fairly
 that of representing a flat map of the Earth, as with
-`map projection <https://en.wikipedia.org/wiki/Map_projection>`_
+`map projection <https://en.wikipedia.org/wiki/Map_projection>`_.
 
 """
 
@@ -50,7 +50,7 @@ p = random_state.rand(n_samples) * (2 * np.pi - 0.55)
 t = random_state.rand(n_samples) * np.pi
 
 # Sever the poles from the sphere.
-indices = (t < (np.pi - (np.pi / 8))) & (t > ((np.pi / 8)))
+indices = (t < (np.pi - (np.pi / 8))) & (t > (np.pi / 8))
 colors = p[indices]
 x, y, z = (
     np.sin(t[indices]) * np.cos(p[indices]),
@@ -59,12 +59,12 @@ x, y, z = (
 )
 
 # Plot our dataset.
-fig = plt.figure(figsize=(15, 8))
+fig = plt.figure(figsize=(15, 12))
 plt.suptitle(
     "Manifold Learning with %i points, %i neighbors" % (1000, n_neighbors), fontsize=14
 )
 
-ax = fig.add_subplot(251, projection="3d")
+ax = fig.add_subplot(351, projection="3d")
 ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow)
 ax.view_init(40, -10)
 
@@ -86,7 +86,7 @@ for i, method in enumerate(methods):
     t1 = time()
     print("%s: %.2g sec" % (methods[i], t1 - t0))
 
-    ax = fig.add_subplot(252 + i)
+    ax = fig.add_subplot(352 + i)
     plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
     plt.title("%s (%.2g sec)" % (labels[i], t1 - t0))
     ax.xaxis.set_major_formatter(NullFormatter())
@@ -103,7 +103,7 @@ trans_data = (
 t1 = time()
 print("%s: %.2g sec" % ("ISO", t1 - t0))
 
-ax = fig.add_subplot(257)
+ax = fig.add_subplot(357)
 plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("%s (%.2g sec)" % ("Isomap", t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
@@ -112,14 +112,40 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, max_iter=100, n_init=1, random_state=42)
+mds = manifold.MDS(2, n_init=1, random_state=42)
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
 
-ax = fig.add_subplot(258)
+ax = fig.add_subplot(358)
 plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("MDS (%.2g sec)" % (t1 - t0))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.yaxis.set_major_formatter(NullFormatter())
+plt.axis("tight")
+
+t0 = time()
+mds = manifold.MDS(2, n_init=1, random_state=42, metric=False)
+trans_data = mds.fit_transform(sphere_data).T
+t1 = time()
+print("Non-metric MDS: %.2g sec" % (t1 - t0))
+
+ax = fig.add_subplot(359)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+plt.title("Non-metric MDS (%.2g sec)" % (t1 - t0))
+ax.xaxis.set_major_formatter(NullFormatter())
+ax.yaxis.set_major_formatter(NullFormatter())
+plt.axis("tight")
+
+t0 = time()
+mds = manifold.ClassicalMDS(2)
+trans_data = mds.fit_transform(sphere_data).T
+t1 = time()
+print("Classical MDS: %.2g sec" % (t1 - t0))
+
+ax = fig.add_subplot(3, 5, 10)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+plt.title("Classical MDS (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
@@ -133,7 +159,7 @@ trans_data = se.fit_transform(sphere_data).T
 t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))
 
-ax = fig.add_subplot(259)
+ax = fig.add_subplot(3, 5, 12)
 plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("Spectral Embedding (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
@@ -147,7 +173,7 @@ trans_data = tsne.fit_transform(sphere_data).T
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 
-ax = fig.add_subplot(2, 5, 10)
+ax = fig.add_subplot(3, 5, 13)
 plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("t-SNE (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())

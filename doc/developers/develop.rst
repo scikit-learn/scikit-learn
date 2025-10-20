@@ -23,14 +23,14 @@ APIs of scikit-learn objects
 ============================
 
 There are two major types of estimators. You can think of the first group as simple
-estimators, which consists most estimators, such as
+estimators, which consists of most estimators, such as
 :class:`~sklearn.linear_model.LogisticRegression` or
 :class:`~sklearn.ensemble.RandomForestClassifier`. And the second group are
 meta-estimators, which are estimators that wrap other estimators.
 :class:`~sklearn.pipeline.Pipeline` and :class:`~sklearn.model_selection.GridSearchCV`
 are two examples of meta-estimators.
 
-Here we start with a few vocabulary, and then we illustrate how you can implement
+Here we start with a few vocabulary terms, and then we illustrate how you can implement
 your own estimators.
 
 Elements of the scikit-learn API are described more definitively in the
@@ -295,7 +295,7 @@ the correct interface more easily.
 .. topic:: :class:`base.BaseEstimator` and mixins:
 
     We tend to use "duck typing" instead of checking for :func:`isinstance`, which means
-    it's technically possible to implement estimator without inheriting from
+    it's technically possible to implement an estimator without inheriting from
     scikit-learn classes. However, if you don't inherit from the right mixins, either
     there will be a large amount of boilerplate code for you to implement and keep in
     sync with scikit-learn development, or your estimator might not function the same
@@ -369,7 +369,7 @@ the following estimator::
     ...         self.subestimator = subestimator
     ...         self.my_extra_param = my_extra_param
 
-The parameter `deep` controls control whether or not the parameters of the
+The parameter `deep` controls whether or not the parameters of the
 `subestimator` should be reported. Thus when `deep=True`, the output will be::
 
     >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
@@ -477,7 +477,7 @@ multiclass and multilabel problems.
 **Clustering algorithms** inherit from :class:`~base.ClusterMixin`. Ideally, they should
 accept a ``y`` parameter in their ``fit`` method, but it should be ignored. Clustering
 algorithms should set a ``labels_`` attribute, storing the labels assigned to each
-sample. If applicale, they can also implement a ``predict`` method, returning the
+sample. If applicable, they can also implement a ``predict`` method, returning the
 labels assigned to newly given samples.
 
 If one needs to check the type of a given estimator, e.g. in a meta-estimator, one can
@@ -493,13 +493,13 @@ Estimator Tags
 
     Scikit-learn introduced estimator tags in version 0.21 as a private API and mostly
     used in tests. However, these tags expanded over time and many third party
-    developers also need to use them. Therefore in version 1.6 the API for the tags were
+    developers also need to use them. Therefore in version 1.6 the API for the tags was
     revamped and exposed as public API.
 
 The estimator tags are annotations of estimators that allow programmatic inspection of
 their capabilities, such as sparse matrix support, supported output types and supported
 methods. The estimator tags are an instance of :class:`~sklearn.utils.Tags` returned by
-the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These tags are used
+the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__`. These tags are used
 in different places, such as :func:`~base.is_regressor` or the common checks run by
 :func:`~sklearn.utils.estimator_checks.check_estimator` and
 :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, where tags determine
@@ -524,7 +524,7 @@ You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add
 tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
-    from dataclasses import dataclass, asdict
+    from dataclasses import dataclass, fields
 
     @dataclass
     class MyTags(Tags):
@@ -578,7 +578,7 @@ when defining a custom subclass::
 The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
 wraps `fit_transform` and `transform`. The `TransformerMixin` uses the
 `__init_subclass__` mechanism to consume `auto_wrap_output_keys` and pass all other
-keyword arguments to it's super class. Super classes' `__init_subclass__` should
+keyword arguments to its super class. Super classes' `__init_subclass__` should
 **not** depend on `auto_wrap_output_keys`.
 
 For transformers that return multiple arrays in `transform`, auto wrapping will
@@ -660,13 +660,11 @@ In addition, we add the following guidelines:
 * Avoid multiple statements on one line. Prefer a line return after
   a control flow statement (``if``/``for``).
 
-* Use relative imports for references inside scikit-learn.
+* Use absolute imports
 
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
+* Unit tests should use imports exactly as client code would.
+  If ``sklearn.foo`` exports a class or function that is implemented in
+  ``sklearn.foo.bar.baz``, the test should import it from ``sklearn.foo``.
 
 * **Please don't use** ``import *`` **in any case**. It is considered harmful
   by the `official Python recommendations

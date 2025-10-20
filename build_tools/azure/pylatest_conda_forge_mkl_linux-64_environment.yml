@@ -20,12 +20,12 @@ dependencies:
   - pip
   - ninja
   - meson-python
-  - pytest-cov
+  - pytest-cov<=6.3.0
   - coverage
   - ccache
   - pytorch
   - pytorch-cpu
   - polars
   - pyarrow
-  - array-api-compat
   - array-api-strict
+  - scipy-doctest
