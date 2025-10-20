@@ -13,7 +13,7 @@ from scipy.special.cython_special cimport xlogy
 
 from sklearn.tree._utils cimport log
 from sklearn.tree._utils cimport WeightedFenwickTree
-from sklearn.tree._sorting cimport sort
+from sklearn.tree._partitioner cimport sort
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
