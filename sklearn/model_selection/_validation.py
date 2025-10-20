@@ -34,6 +34,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._tags import get_tags
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -974,23 +975,25 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
                     UserWarning,
                 )
 
-    error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
-    if isinstance(scores, dict):
-        for name, score in scores.items():
-            if hasattr(score, "item"):
+    # Only check for single-value score if multi_output tag is False
+    if estimator is None or not get_tags(estimator).target_tags.multi_output:
+        error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
+        if isinstance(scores, dict):
+            for name, score in scores.items():
+                if hasattr(score, "item"):
+                    with suppress(ValueError):
+                        # e.g. unwrap memmapped scalars
+                        score = score.item()
+                if not isinstance(score, numbers.Number):
+                    raise ValueError(error_msg % (score, type(score), name))
+                scores[name] = score
+        else:  # scalar
+            if hasattr(scores, "item"):
                 with suppress(ValueError):
                     # e.g. unwrap memmapped scalars
-                    score = score.item()
-            if not isinstance(score, numbers.Number):
-                raise ValueError(error_msg % (score, type(score), name))
-            scores[name] = score
-    else:  # scalar
-        if hasattr(scores, "item"):
-            with suppress(ValueError):
-                # e.g. unwrap memmapped scalars
-                scores = scores.item()
-        if not isinstance(scores, numbers.Number):
-            raise ValueError(error_msg % (scores, type(scores), scorer))
+                    scores = scores.item()
+            if not isinstance(scores, numbers.Number):
+                raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 
