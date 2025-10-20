@@ -125,7 +125,7 @@ def test_force_theme(page, local_server, color, expected_theme):
     """
     url, set_html_response = local_server
 
-    html = _make_page('<div id="test" style="color: ${color};"></div>')
+    html = _make_page('<div style="color: ${color};"><div id="test"></div></div>')
     set_html_response(html.replace("${color}", color))
     page.goto(url)
     page.evaluate("forceTheme('test')")
