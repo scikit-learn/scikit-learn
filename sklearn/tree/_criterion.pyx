@@ -1324,7 +1324,7 @@ cdef class MAE(Criterion):
     value and f_i is the predicted value.
 
     It has almost nothing in common with other regression criterions
-    so it doesn't inherit from RegressionCriterion
+    so it doesn't inherit from RegressionCriterion.
     """
     cdef float64_t[::1] node_medians
     cdef float64_t[::1] left_abs_errors
