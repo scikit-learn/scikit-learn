@@ -10,7 +10,6 @@ import pkgutil
 import re
 import warnings
 from functools import partial
-from inspect import isgenerator
 from itertools import chain
 
 import pytest
@@ -121,17 +120,6 @@ def test_estimators(estimator, check, request):
         category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
     ):
         check(estimator)
-
-
-# TODO(1.8): remove test when generate_only is removed
-def test_check_estimator_generate_only_deprecation():
-    """Check that check_estimator with generate_only=True raises a deprecation
-    warning."""
-    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
-        all_instance_gen_checks = check_estimator(
-            LogisticRegression(), generate_only=True
-        )
-    assert isgenerator(all_instance_gen_checks)
 
 
 @pytest.mark.filterwarnings(
