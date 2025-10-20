@@ -1467,8 +1467,7 @@ def test_make_column_selector_pickle():
         },
         columns=["col_int", "col_float", "col_str"],
     )
-
-    selector = make_column_selector(dtype_include=[object])
+    selector = make_column_selector(dtype_include=[object, str])
     selector_picked = pickle.loads(pickle.dumps(selector))
 
     assert_array_equal(selector(X_df), selector_picked(X_df))

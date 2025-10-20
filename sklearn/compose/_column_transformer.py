@@ -1564,7 +1564,7 @@ class make_column_selector:
     ...       (StandardScaler(),
     ...        make_column_selector(dtype_include=np.number)),  # rating
     ...       (OneHotEncoder(),
-    ...        make_column_selector(dtype_include=object)))  # city
+    ...        make_column_selector(dtype_include=[object, str])))  # city
     >>> ct.fit_transform(X)  # doctest: +SKIP
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],
