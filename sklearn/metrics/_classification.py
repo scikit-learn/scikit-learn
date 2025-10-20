@@ -35,7 +35,6 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _searchsorted,
     _tolist,
     _union1d,
     ensure_common_namespace_device,
@@ -804,7 +803,7 @@ def multilabel_confusion_matrix(
             )
 
         # Retain only selected labels
-        indices = _searchsorted(sorted_labels, labels[:n_labels], xp=xp)
+        indices = xp.searchsorted(sorted_labels, labels[:n_labels])
         tp_sum = xp.take(tp_sum, indices, axis=0)
         true_sum = xp.take(true_sum, indices, axis=0)
         pred_sum = xp.take(pred_sum, indices, axis=0)
