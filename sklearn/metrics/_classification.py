@@ -948,7 +948,7 @@ def cohen_kappa_score(
         Sample weights.
 
     replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
-        Sets the return value when a division by zero would occur. This can happen for
+        Sets the return value when the metric is undefined. This can happen for
         instance on empty input arrays, or when no label of interest (as defined in the
         `labels` param) is assigned by the second annotator, or when both `y1` and `y2`
         only have one label in common that is also in `labels`. In these cases, an
