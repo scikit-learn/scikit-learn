@@ -172,9 +172,13 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"])
+        + ["ccache", "polars", "pyarrow"],
+        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+        # supported version
+        "pip_dependencies": ["pandas"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
