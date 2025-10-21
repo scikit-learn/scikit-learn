@@ -689,7 +689,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
         Raw predictions returned by the un-calibrated base classifier.
 
     y : array-like, shape (n_samples,)
-        The targets.
+        The targets. For `method="temperature"`, `y` needs to be label encoded.
 
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
