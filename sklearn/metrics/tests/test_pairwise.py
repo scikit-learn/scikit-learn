@@ -1836,15 +1836,23 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
     Y = [[False, True, False, True], [True, False, True, True]]
     X_arr = np.asarray(X)
     Y_arr = np.asarray(Y)
-    with warnings.catch_warnings(record=True) as record:
-        pairwise_fn(X, Y, metric=metric)
-        assert len(record) == 0, (
-            f"No warning should have been raised for boolean inputs for {metric}"
-        )
-        pairwise_fn(X_arr, Y_arr, metric=metric)
-        assert len(record) == 0, (
-            f"No warning should have been raised for boolean inputs for {metric}"
-        )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=DataConversionWarning)
+        try:
+            pairwise_fn(X, Y, metric=metric)
+        except DataConversionWarning:
+            pytest.fail(
+                "DataConversionWarning should not be raised"
+                f" for bool non-array inputs for {metric}"
+            )
+
+        try:
+            pairwise_fn(X_arr, Y_arr, metric=metric)
+        except DataConversionWarning:
+            pytest.fail(
+                "DataConversionWarning should not be raised"
+                f" for bool array inputs for {metric}"
+            )
 
     with pytest.warns(DataConversionWarning):
         pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
