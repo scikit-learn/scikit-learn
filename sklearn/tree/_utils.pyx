@@ -98,7 +98,9 @@ cdef class WeightedFenwickTree:
 
     Notes:
       - Implementation uses 1-based indexing internally for the Fenwick tree
-        arrays, hence the +1 sized buffers.
+        arrays, hence the +1 sized buffers. 1-based indexing is customary for this
+        data structure and makes the some index handling slightly more efficient and
+        natural.
       - Memory ownership: this class allocates and frees the underlying C buffers.
       - Typical operations:
           add(rank, y, w) -> O(log n)
