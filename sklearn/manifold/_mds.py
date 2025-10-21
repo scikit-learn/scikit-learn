@@ -512,7 +512,7 @@ class MDS(BaseEstimator):
             ``fit_transform``.
 
         .. deprecated:: 1.8
-            `dissimilarity` was renamed `metric` in 1.8 and will be removed in 1.10.
+           `dissimilarity` was renamed `metric` in 1.8 and will be removed in 1.10.
 
     metric : str or callable, default='euclidean'
         Metric to use for dissimilarity computation. Default is "euclidean".
@@ -530,9 +530,9 @@ class MDS(BaseEstimator):
         efficient than passing the metric name as a string.
 
         .. versionchanged:: 1.8
-           Prior to 1.8, `metric=True/False` was used to select metric/non-metric MDS, which is now
-           the role of `metric_mds`.  The support for ``True`` and ``False`` will be dropped in version 1.10,
-           use `metric_mds` instead.
+           Prior to 1.8, `metric=True/False` was used to select metric/non-metric
+           MDS, which is now the role of `metric_mds`.  The support for ``True``
+           and ``False`` will be dropped in version 1.10, use `metric_mds` instead.
 
     metric_params : dict, default=None
         Additional keyword arguments for the dissimilarity computation.
