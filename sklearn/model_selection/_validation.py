@@ -54,35 +54,6 @@ __all__ = [
 ]
 
 
-def _check_params_groups_deprecation(fit_params, params, groups, version):
-    """A helper function to check deprecations on `groups` and `fit_params`.
-
-    # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
-    # possible.
-    """
-    if params is not None and fit_params is not None:
-        raise ValueError(
-            "`params` and `fit_params` cannot both be provided. Pass parameters "
-            "via `params`. `fit_params` is deprecated and will be removed in "
-            f"version {version}."
-        )
-    elif fit_params is not None:
-        warnings.warn(
-            (
-                "`fit_params` is deprecated and will be removed in version {version}. "
-                "Pass parameters via `params` instead."
-            ),
-            FutureWarning,
-        )
-        params = fit_params
-
-    params = {} if params is None else params
-
-    _check_groups_routing_disabled(groups)
-
-    return params
-
-
 # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
 # possible.
 def _check_groups_routing_disabled(groups):
