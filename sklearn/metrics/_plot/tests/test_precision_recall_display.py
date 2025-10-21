@@ -641,8 +641,28 @@ def test_precision_recall_display_string_labels(pyplot):
 
 
 @pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+    "average_precision, name, expected_label",
+    [
+        (0.9, None, "AP = 0.90"),
+        (None, "my_est", "my_est"),
+        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
+    ],
 )
+def test_default_labels(pyplot, average_precision, name, expected_label):
+    """Check the default labels used in the display."""
+    precision = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    display = PrecisionRecallDisplay(
+        precision,
+        recall,
+        average_precision=average_precision,
+        name=name,
+    )
+    display.plot()
+    assert display.line_.get_label() == expected_label
+
+
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_method):
     """Check switching `pos_label` give correct statistics, using imbalanced data."""

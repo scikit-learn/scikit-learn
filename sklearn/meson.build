@@ -1,7 +1,5 @@
 fs = import('fs')
 
-cython_args = []
-
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'
@@ -180,9 +178,11 @@ else:
     check: true
     ).stdout().strip()
 
+cython_args = []
 cython_program = find_program(cython.cmd_array()[0])
 
 scikit_learn_cython_args = [
+  '--depfile',
   '-X language_level=3', '-X boundscheck=' + boundscheck, '-X wraparound=False',
   '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
   '-X profile=False',
@@ -193,11 +193,12 @@ scikit_learn_cython_args = [
 cython_args += scikit_learn_cython_args
 
 if cython.version().version_compare('>=3.1.0')
+  cython_args += ['-Xfreethreading_compatible=True']
   cython_shared_src = custom_target(
     install: false,
     output: '_cyutility.c',
     command: [
-      cython_program, '-3', '--fast-fail',
+      cython_program, '-3', '--fast-fail', '-Xfreethreading_compatible=True',
       '--generate-shared=' + meson.current_build_dir()/'_cyutility.c'
     ],
   )
@@ -215,11 +216,13 @@ endif
 cython_gen = generator(cython_program,
   arguments : cython_args + ['@INPUT@', '--output-file', '@OUTPUT@'],
   output : '@BASENAME@.c',
+  depfile: '@BASENAME@.c.dep',
 )
 
 cython_gen_cpp = generator(cython_program,
   arguments : cython_args + ['--cplus', '@INPUT@', '--output-file', '@OUTPUT@'],
   output : '@BASENAME@.cpp',
+  depfile: '@BASENAME@.cpp.dep'
 )
 
 extensions = ['_isotonic']

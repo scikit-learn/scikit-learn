@@ -67,9 +67,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         conjunction with `curve_kwargs` being a dictionary or None. If a
         string is provided, it will be used to either label the single legend entry
         or if there are multiple legend entries, label each individual curve with
-        the same name. If still `None`, no name is shown in the legend.
+        the same name. If `None`, no name is shown in the legend.
 
-        .. versionadded:: 1.8
+        .. versionchanged:: 1.8
+            `estimator_name` was deprecated in favor of `name`, which can now take
+            a list of str.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when precision and recall metrics

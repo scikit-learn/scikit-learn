@@ -1804,6 +1804,9 @@ def test_pairwise_dist_custom_metric_for_bool():
     assert_allclose(actual_distance, expected_distance)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_manhattan_readonly_dataset(csr_container):
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
@@ -1814,17 +1817,3 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
-
-
-# TODO(1.8): remove
-def test_force_all_finite_rename_warning():
-    X = np.random.uniform(size=(10, 10))
-    Y = np.random.uniform(size=(10, 10))
-
-    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_pairwise_arrays(X, Y, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        pairwise_distances(X, Y, force_all_finite=True)
