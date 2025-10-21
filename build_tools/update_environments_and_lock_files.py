@@ -87,6 +87,9 @@ default_package_constraints = {
     # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
     # and released.
     "numpydoc": "<1.9.0",
+    # TODO: remove once when we're using the new way to enable coverage in subprocess
+    # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
+    "pytest-cov": "<=6.3.0",
 }
 
 
@@ -134,21 +137,21 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
-        "platform": "osx-64",
+        "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
             "compilers",
             "llvm-openmp",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",
@@ -211,6 +214,11 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
+        "package_constraints": {
+            # TODO: remove this constraint once scikit-image and pyamg provide binary
+            # wheels for Python 3.14 (or later) on PyPI.
+            "python": "3.13",
+        },
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
@@ -265,15 +273,14 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": [
             "python-freethreading",
+            "meson-python",
+            "cython",
             "numpy",
             "scipy",
-            "cython",
             "joblib",
             "threadpoolctl",
             "pytest",
-            "pytest-xdist",
-            "ninja",
-            "meson-python",
+            "pytest-run-parallel",
             "ccache",
             "pip",
         ],
@@ -393,12 +400,13 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "pyamg"]
-        )
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.10",
+            # The following is needed to avoid getting libnvpl build for blas for some
+            # reason.
+            "blas": "[build=openblas]",
         },
     },
     {
@@ -411,6 +419,7 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
+            "pytest-xdist",
             "pytest-cov",
             "ninja",
             "meson-python",

@@ -16,8 +16,12 @@ from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
     get_namespace,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -681,17 +685,15 @@ def test_cartesian_mix_types(arrays, output_dtype):
     assert output.dtype == output_dtype
 
 
-@pytest.fixture()
-def rng():
-    return np.random.RandomState(42)
-
-
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
+@pytest.mark.parametrize("as_list", (True, False))
+def test_incremental_weighted_mean_and_variance_simple(dtype, as_list):
+    rng = np.random.RandomState(42)
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    X1 = X.tolist() if as_list else X
+    mean, var, _ = _incremental_mean_and_var(X1, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
@@ -699,14 +701,51 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     assert_almost_equal(var, expected_var)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_incremental_weighted_mean_and_variance_array_api(
+    array_namespace, device, dtype
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    rng = np.random.RandomState(42)
+    mult = 10
+    X = rng.rand(1000, 20).astype(dtype) * mult
+    sample_weight = rng.rand(X.shape[0]).astype(dtype) * mult
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+
+    X_xp = xp.asarray(X, device=device)
+    sample_weight_xp = xp.asarray(sample_weight, device=device)
+
+    with config_context(array_api_dispatch=True):
+        mean_xp, var_xp, _ = _incremental_mean_and_var(
+            X_xp, 0, 0, 0, sample_weight=sample_weight_xp
+        )
+
+    # The attributes like mean and var are computed and set with respect to the
+    # maximum supported float dtype
+    assert array_device(mean_xp) == array_device(X_xp)
+    assert mean_xp.dtype == _max_precision_float_dtype(xp, device=device)
+    assert array_device(var_xp) == array_device(X_xp)
+    assert var_xp.dtype == _max_precision_float_dtype(xp, device=device)
+
+    mean_xp = _convert_to_numpy(mean_xp, xp=xp)
+    var_xp = _convert_to_numpy(var_xp, xp=xp)
+
+    assert_allclose(mean, mean_xp)
+    assert_allclose(var, var_xp)
+
+
 @pytest.mark.parametrize("mean", [0, 1e7, -1e7])
 @pytest.mark.parametrize("var", [1, 1e-8, 1e5])
 @pytest.mark.parametrize(
     "weight_loc, weight_scale", [(0, 1), (0, 1e-8), (1, 1e-8), (10, 1), (1e7, 1)]
 )
-def test_incremental_weighted_mean_and_variance(
-    mean, var, weight_loc, weight_scale, rng
-):
+def test_incremental_weighted_mean_and_variance(mean, var, weight_loc, weight_scale):
+    rng = np.random.RandomState(42)
+
     # Testing of correctness and numerical stability
     def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]
@@ -957,17 +996,9 @@ def test_softmax():
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
 
 
-def test_stable_cumsum():
-    assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
-    r = np.random.RandomState(0).rand(100000)
-    with pytest.warns(RuntimeWarning):
-        stable_cumsum(r, rtol=0, atol=0)
-
-    # test axis parameter
-    A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))
-    assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
-    assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
-    assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+def test_stable_cumsum_deprecation():
+    with pytest.warns(FutureWarning, match="stable_cumsum.+is deprecated"):
+        stable_cumsum([1, 2, 3])
 
 
 @pytest.mark.parametrize(

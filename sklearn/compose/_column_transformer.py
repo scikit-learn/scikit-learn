@@ -44,7 +44,6 @@ from sklearn.utils.metadata_routing import (
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
     _get_feature_names,
@@ -52,6 +51,7 @@ from sklearn.utils.validation import (
     _num_samples,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 
 __all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
@@ -973,7 +973,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
         """
         _raise_for_params(params, self, "fit_transform")
-        _check_feature_names(self, X, reset=True)
 
         if self.force_int_remainder_cols != "deprecated":
             warnings.warn(
@@ -983,9 +982,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 FutureWarning,
             )
 
+        validate_data(self, X=X, skip_check_array=True)
         X = _check_X(X)
         # set n_features_in_ attribute
-        _check_n_features(self, X, reset=True)
         self._validate_transformers()
         n_samples = _num_samples(X)
 
@@ -1014,10 +1013,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # determine if concatenated output will be sparse or not
         if any(sparse.issparse(X) for X in Xs):
-            nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(
-                X.shape[0] * X.shape[1] if sparse.issparse(X) else X.size for X in Xs
+            nnz = sum(
+                X.nnz if sparse.issparse(X) else X.shape[0] * X.shape[1] for X in Xs
             )
+            total = sum(X.shape[0] * X.shape[1] for X in Xs)
             density = nnz / total
             self.sparse_output_ = density < self.sparse_threshold
         else:
@@ -1289,7 +1288,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         # Here we don't care about which columns are used for which
         # transformers, and whether or not a transformer is used at all, which
         # might happen if no columns are selected for that transformer. We
@@ -1565,7 +1564,7 @@ class make_column_selector:
     ...       (StandardScaler(),
     ...        make_column_selector(dtype_include=np.number)),  # rating
     ...       (OneHotEncoder(),
-    ...        make_column_selector(dtype_include=object)))  # city
+    ...        make_column_selector(dtype_include=[object, "string"])))  # city
     >>> ct.fit_transform(X)  # doctest: +SKIP
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],

@@ -85,6 +85,7 @@ def test_newrand_default():
     assert not all(x == generated[0] for x in generated)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("seed, expected", [(0, 54), (_MAX_UNSIGNED_INT, 9)])
 def test_newrand_set_seed(seed, expected):
     """Test that `set_seed` produces deterministic results"""
@@ -100,6 +101,7 @@ def test_newrand_set_seed_overflow(seed):
         set_seed_wrap(seed)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("range_, n_pts", [(_MAX_UNSIGNED_INT, 10000), (100, 25)])
 def test_newrand_bounded_rand_int(range_, n_pts):
     """Test that `bounded_rand_int` follows a uniform distribution"""
