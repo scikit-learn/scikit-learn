@@ -6,9 +6,9 @@ from libcpp.vector cimport vector
 
 cimport numpy as cnp
 import numpy as np
-from ..utils._typedefs cimport int32_t, int64_t
-from ..utils.murmurhash cimport murmurhash3_bytes_s32
-from ..utils._vector_sentinel cimport vector_to_nd_array
+from sklearn.utils._typedefs cimport int32_t, int64_t
+from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
+from sklearn.utils._vector_sentinel cimport vector_to_nd_array
 
 cnp.import_array()
 

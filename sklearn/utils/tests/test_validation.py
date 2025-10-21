@@ -2407,23 +2407,6 @@ def test_check_array_on_sparse_inputs_with_array_api_enabled():
             check_array(X_sp)
 
 
-# TODO(1.8): remove
-def test_force_all_finite_rename_warning():
-    X = np.random.uniform(size=(10, 10))
-    y = np.random.randint(1, size=(10,))
-
-    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_array(X, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_X_y(X, y, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        as_float_array(X, force_all_finite=True)
-
-
 @pytest.mark.parametrize(
     ["X", "estimator", "expected_error_message"],
     [

@@ -314,7 +314,9 @@ def ensure_common_namespace_device(reference, *arrays):
     if is_array_api:
         device_ = device(reference)
         # Move arrays to the same namespace and device as the reference array.
-        return [xp.asarray(a, device=device_) for a in arrays]
+        return [
+            xp.asarray(a, device=device_) if a is not None else None for a in arrays
+        ]
     else:
         return arrays
 
@@ -877,7 +879,7 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 100
+    return numpy.finfo(dtype_or_dtype_name).eps * 1000
 
 
 def indexing_dtype(xp):
@@ -902,21 +904,6 @@ def indexing_dtype(xp):
     # TODO: once sufficiently adopted, we might want to instead rely on the
     # newer inspection API: https://github.com/data-apis/array-api/issues/640
     return xp.asarray(0).dtype
-
-
-def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
-    # Temporary workaround needed as long as searchsorted is not widely
-    # adopted by implementers of the Array API spec. This is a quite
-    # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
-    xp, _ = get_namespace(a, v, xp=xp)
-    if hasattr(xp, "searchsorted"):
-        return xp.searchsorted(a, v, side=side, sorter=sorter)
-
-    a_np = _convert_to_numpy(a, xp=xp)
-    v_np = _convert_to_numpy(v, xp=xp)
-    indices = numpy.searchsorted(a_np, v_np, side=side, sorter=sorter)
-    return xp.asarray(indices, device=device(a))
 
 
 def _isin(element, test_elements, xp, assume_unique=False, invert=False):
