@@ -302,10 +302,9 @@ Set up a dedicated environment and install dependencies
    Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
 .. |PythonMinVersion| replace:: 3.10
 
-Using an isolated environment such as `venv` or `conda` makes it possible to
-install a specific version of scikit-learn with pip or conda and its dependencies
-independently of any previously installed Python packages. Note that the virtual
-environment is optional but strongly recommended, in order to avoid potential
+Using an isolated environment such as venv_ or conda_ makes it possible to
+install a specific version of scikit-learn with pip or conda and its dependencies,
+independently of any previously installed Python packages, which will avoid potential
 conflicts with other packages.
 
 In addition to the required Python dependencies, you need to have a working C/C++
@@ -504,30 +503,6 @@ the required packages.
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-          .. dropdown:: If no isolated environment is used (not recommended!)
-
-            If, for some reason, you are not using an isolated environment (which is not recommended),
-            you need to use `pip3` instead of `pip`. You can check if it is installed with:
-
-            .. prompt:: bash
-
-              pip3 --version
-
-            and if not, install `python3-pip` from your distribution's package manager.
-
-            Next, install the required python packages with:
-
-            .. prompt:: bash
-
-              pip3 install wheel numpy scipy cython meson-python ninja
-
-            cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
-            and joblib) should then automatically be installed in
-            ``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
-            ``pip3`` also needs to be used instead of ``pip`` in the following steps and
-            when `installing scikit-learn <pip_build_>`_.
-
-
           When precompiled wheels of the runtime dependencies are not available for your
           architecture (e.g. **ARM**), you can install the system versions:
 
@@ -624,7 +599,7 @@ and :ref:`pytest_tips`.
 .. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _venv: https://docs.python.org/3/tutorial/venv.html
-.. _conda_environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _conda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _conda-forge: https://conda-forge.org/download/
 
 .. END Set up your development environment - TODO: move to separate file and link to it
