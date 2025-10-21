@@ -350,17 +350,3 @@ def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
     cdef uint32_t my_seed = seed
     return our_rand_r(&my_seed)
-
-
-# Test code to verify DEFAULT_SEED value
-def _test_default_seed():
-    """Test function to verify DEFAULT_SEED value"""
-    cdef uint32_t seed = 0
-    our_rand_r(&seed)
-    # Use Python print instead of C printf
-    print("DEBUG: DEFAULT_SEED verification - seed value after reset:", seed)
-    return seed
-
-# Call it at import to trigger the print
-_test_default_seed()
-
