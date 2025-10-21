@@ -57,7 +57,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone https://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -96,7 +96,7 @@ feature, code or documentation improvement).
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
-   and :ref:`compiler_freebsd`.
+   and :ref:`compiler_freebsd` and then come back here.
 
    .. note::
 
@@ -107,13 +107,30 @@ feature, code or documentation improvement).
       (before cythonization) will force the build to fail if OpenMP is not
       supported.
 
-#. Build the project with pip:
+   .. _pip_build:
+
+#. Build scikit-learn with pip by running the following command in your `sklearn-env`
+   conda environment or virtualenv:
 
    .. prompt:: bash $
 
      pip install --editable . \
         --verbose --no-build-isolation \
         --config-settings editable-verbose=true
+
+   .. note::
+
+      `--config-settings editable-verbose=true` is optional but recommended
+      to avoid surprises when you import `sklearn`. `meson-python` implements
+      editable installs by rebuilding `sklearn` when executing `import sklearn`.
+      With the recommended setting you will see a message when this happens,
+      rather than potentially waiting without feedback and wondering
+      what is taking so long. Bonus: this means you only have to run the `pip
+      install` command once, `sklearn` will automatically be rebuilt when
+      importing `sklearn`.
+
+      Note that `--config-settings` is only supported in `pip` version 23.1 or
+      later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
@@ -125,19 +142,7 @@ feature, code or documentation improvement).
 #. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
    the tests on the module of your choice.
 
-.. note::
 
-    `--config-settings editable-verbose=true` is optional but recommended
-    to avoid surprises when you import `sklearn`. `meson-python` implements
-    editable installs by rebuilding `sklearn` when executing `import sklearn`.
-    With the recommended setting you will see a message when this happens,
-    rather than potentially waiting without feedback and wondering
-    what is taking so long. Bonus: this means you only have to run the `pip
-    install` command once, `sklearn` will automatically be rebuilt when
-    importing `sklearn`.
-
-    Note that `--config-settings` is only supported in `pip` version 23.1 or
-    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 Building a specific version from a tag
 --------------------------------------
@@ -166,14 +171,10 @@ Run the downloaded `vs_buildtools.exe` file, during the installation you will
 need to make sure you select "Desktop development with C++", similarly to this
 screenshot:
 
-.. image:: ../images/visual-studio-build-tools-selection.png
+.. image::
+    ../images/visual-studio-build-tools-selection.png
 
-Build scikit-learn by running the following command in your `sklearn-env` conda environment
-or virtualenv:
-
-.. prompt:: bash $
-
-    pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
+Now go back to `building scikit-learn <pip_build_>`_.
 
 .. _compiler_macos:
 
@@ -188,10 +189,6 @@ to enable OpenMP support:
 
 - or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
-For Apple Silicon M1 hardware, only the conda-forge method below is known to
-work at the time of writing (January 2021). You can install the `macos/arm64`
-distribution of conda using the `conda-forge installer
-<https://conda-forge.org/download/>`_
 
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,24 +203,17 @@ First install the macOS command line tools:
 
     xcode-select --install
 
-It is recommended to use a dedicated `conda environment`_ to build
-scikit-learn from source:
+Make sure you activated the `sklearn-env` and install the following packages:
 
 .. prompt:: bash $
 
-    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers llvm-openmp meson-python ninja
+    conda install -c conda-forge joblib threadpoolctl pytest compilers llvm-openmp
 
-It is not always necessary but it is safer to open a new prompt before
-activating the newly created conda environment.
+Remove any existing scikit-learn installations and meson builds to avoid conflicts
 
 .. prompt:: bash $
 
-    conda activate sklearn-dev
     make clean
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
 
 .. note::
 
@@ -252,13 +242,13 @@ variables:
     echo $CXXFLAGS
     echo $LDFLAGS
 
-They point to files and folders from your ``sklearn-dev`` conda environment
+They point to files and folders from your ``sklearn-env`` conda environment
 (in particular in the bin/, include/ and lib/ subfolders). For instance
-``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
+``-L/path/to/conda/envs/sklearn-env/lib`` should appear in ``LDFLAGS``.
 
-In the log, you should see the compiled extension being built with the clang
-and clang++ compilers installed by conda with the ``-fopenmp`` command line
-flag.
+When `building scikit-learn <pip_build_>`_ in the next step, you should see the
+compiled extension being built with the clang and clang++ compilers installed by
+conda with the ``-fopenmp`` command line flag in the log.
 
 macOS compilers from Homebrew
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -280,37 +270,41 @@ Install the LLVM OpenMP library:
 
     brew install libomp
 
-Set the following environment variables:
-
-.. prompt:: bash $
-
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
-
-Finally, build scikit-learn in verbose mode (to check for the presence of the
-``-fopenmp`` flag in the compiler commands):
+Remove any existing scikit-learn installations and meson builds to avoid conflicts
 
 .. prompt:: bash $
 
     make clean
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
+
+Now go back to `building scikit-learn <pip_build_>`_.
 
 .. _compiler_linux:
 
 Linux
 -----
 
+Linux compilers from conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Make sure you activated the `sklearn-env` conda environment and install the following packages:
+
+.. prompt:: bash $
+
+    conda install -c conda-forge joblib threadpoolctl pytest compilers
+
+Remove any existing scikit-learn installations and meson builds to avoid conflicts
+
+.. prompt:: bash $
+
+    make clean
+
+Now go back to `building scikit-learn <pip_build_>`_.
+
 Linux compilers from the system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installing scikit-learn from source without using conda requires you to have
-installed the scikit-learn Python development headers and a working C/C++
+Alternatively, to install scikit-learn from source without using conda you need to
+have the scikit-learn Python development headers and a working C/C++
 compiler with OpenMP support (typically the GCC toolchain).
 
 Install build dependencies for Debian-based operating systems, e.g.
@@ -320,22 +314,13 @@ Ubuntu:
 
     sudo apt-get install build-essential python3-dev python3-pip
 
-then proceed as usual:
 
-.. prompt:: bash $
-
-    pip3 install cython
-    pip3 install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
-
-Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
+If, for some reason, you are not using an isolated environment (which is not recommended),
+cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
-``$HOME/.local/lib/pythonX.Y/site-packages``. Alternatively you can run the
-above commands from a virtualenv_ or a `conda environment`_ to get full
-isolation from the Python packages installed via the system packager. When
-using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
-above commands.
+``$HOME/.local/lib/pythonX.Y/site-packages``. In this case,
+``pip3`` needs to be used instead of ``pip`` when `building scikit-learn <pip_build_>`_
+in the next step.
 
 When precompiled wheels of the runtime dependencies are not available for your
 architecture (e.g. ARM), you can install the system versions:
@@ -349,27 +334,6 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using:
 .. prompt:: bash $
 
     sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
-
-Linux compilers from conda-forge
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Alternatively, install a recent version of the GNU C Compiler toolchain (GCC)
-in the user folder using conda:
-
-.. prompt:: bash $
-
-    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers meson-python ninja
-
-It is not always necessary but it is safer to open a new prompt before
-activating the newly created conda environment.
-
-.. prompt:: bash $
-
-    conda activate sklearn-dev
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
 
 .. _compiler_freebsd:
 
@@ -394,16 +358,11 @@ can set the environment variables to these locations:
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
 
-Finally, build the package using the standard command:
-
-.. prompt:: bash $
-
-    pip install --editable . \
-        --verbose --no-build-isolation \
-        --config-settings editable-verbose=true
-
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
+
+Now go back to `building scikit-learn <pip_build_>`_.
+
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org

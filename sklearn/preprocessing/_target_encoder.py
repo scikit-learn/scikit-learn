@@ -5,17 +5,20 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import OneToOneFeatureMixin, _fit_context
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import type_of_target
-from ..utils.validation import (
+from sklearn.base import OneToOneFeatureMixin, _fit_context
+from sklearn.preprocessing._encoders import _BaseEncoder
+from sklearn.preprocessing._target_encoder_fast import (
+    _fit_encoding_fast,
+    _fit_encoding_fast_auto_smooth,
+)
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_y,
     check_consistent_length,
     check_is_fitted,
 )
-from ._encoders import _BaseEncoder
-from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -175,15 +178,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
     >>> enc_high_smooth.target_mean_
-    np.float64(44...)
+    np.float64(44.3)
     >>> enc_high_smooth.encodings_
-    [array([44..., 44..., 44...])]
+    [array([44.1, 44.4, 44.3])]
 
     >>> # On the other hand, a low `smooth` parameter puts more weight on target
     >>> # conditioned on the value of the categorical:
     >>> enc_low_smooth = TargetEncoder(smooth=1.0).fit(X, y)
     >>> enc_low_smooth.encodings_
-    [array([20..., 80..., 43...])]
+    [array([21, 80.8, 43.2])]
     """
 
     _parameter_constraints: dict = {
@@ -254,7 +257,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     (n_samples, (n_features * n_classes))
             Transformed input.
         """
-        from ..model_selection import KFold, StratifiedKFold  # avoid circular import
+        from sklearn.model_selection import (  # avoid circular import
+            KFold,
+            StratifiedKFold,
+        )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
@@ -350,10 +356,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def _fit_encodings_all(self, X, y):
         """Fit a target encoding with all the data."""
         # avoid circular import
-        from ..preprocessing import (
-            LabelBinarizer,
-            LabelEncoder,
-        )
+        from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", ensure_all_finite="allow-nan")

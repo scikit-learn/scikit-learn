@@ -24,9 +24,7 @@ import numbers
 import numpy as np
 from scipy.special import xlogy
 
-from ..utils import check_scalar
-from ..utils.stats import _weighted_percentile
-from ._loss import (
+from sklearn._loss._loss import (
     CyAbsoluteError,
     CyExponentialLoss,
     CyHalfBinomialLoss,
@@ -39,7 +37,7 @@ from ._loss import (
     CyHuberLoss,
     CyPinballLoss,
 )
-from .link import (
+from sklearn._loss.link import (
     HalfLogitLink,
     IdentityLink,
     Interval,
@@ -47,6 +45,8 @@ from .link import (
     LogLink,
     MultinomialLogit,
 )
+from sklearn.utils import check_scalar
+from sklearn.utils.stats import _weighted_percentile
 
 
 # Note: The shape of raw_prediction for multiclass classifications are
@@ -457,6 +457,20 @@ class BaseLoss:
         """Calculate term dropped in loss.
 
         With this term added, the loss of perfect predictions is zero.
+
+        Parameters
+        ----------
+        y_true : array-like of shape (n_samples,)
+            Observed, true target values.
+
+        sample_weight : None or array of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        constant : ndarray of shape (n_samples,)
+            Constant value to be added to raw predictions so that the loss
+            of perfect predictions becomes zero.
         """
         return np.zeros_like(y_true)
 
@@ -982,8 +996,16 @@ class HalfMultinomialLoss(BaseLoss):
     classes: If the full hessian for classes k and l and sample i is H_i_k_l,
     we calculate H_i_k_k, i.e. k=l.
 
-    Reference
-    ---------
+    Parameters
+    ----------
+    sample_weight : {None, ndarray}
+        If sample_weight is None, the hessian might be constant.
+
+    n_classes : {None, int}
+        The number of classes for classification, else None.
+
+    References
+    ----------
     .. [1] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
         Multinomial Regression".
@@ -1015,6 +1037,19 @@ class HalfMultinomialLoss(BaseLoss):
 
         This is the softmax of the weighted average of the target, i.e. over
         the samples axis=0.
+
+        Parameters
+        ----------
+        y_true : array-like of shape (n_samples,)
+            Observed, true target values.
+
+        sample_weight : None or array of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        raw_prediction : numpy scalar or array of shape (n_classes,)
+            Raw predictions of an intercept-only model.
         """
         out = np.zeros(self.n_classes, dtype=y_true.dtype)
         eps = np.finfo(y_true.dtype).eps

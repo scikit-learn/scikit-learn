@@ -241,7 +241,7 @@ The following toy example demonstrates that samples with a sample weight of zero
     >>> gb.predict([[1, 0]])
     array([1])
     >>> gb.predict_proba([[1, 0]])[0, 1]
-    np.float64(0.999...)
+    np.float64(0.999)
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
@@ -308,7 +308,7 @@ values.
   all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
   categories. This can quickly become prohibitive when :math:`K` is large.
   Fortunately, since gradient boosting trees are always regression trees (even
-  for classification problems), there exist a faster strategy that can yield
+  for classification problems), there exists a faster strategy that can yield
   equivalent splits. First, the categories of a feature are sorted according to
   the variance of the target, for each category `k`. Once the categories are
   sorted, one can consider *continuous partitions*, i.e. treat the categories
@@ -369,13 +369,17 @@ following modelling constraint:
 
 Also, monotonic constraints are not supported for multiclass classification.
 
+For a practical implementation of monotonic constraints with the histogram-based
+gradient boosting, including how they can improve generalization when domain knowledge
+is available, see
+:ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`.
+
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
     monotonic constraints on categorical features.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:
@@ -513,7 +517,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
       >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
       ...     max_depth=1, random_state=0).fit(X_train, y_train)
       >>> clf.score(X_test, y_test)
-      0.913...
+      0.913
 
   The number of weak learners (i.e. regression trees) is controlled by the
   parameter ``n_estimators``; :ref:`The size of each tree
@@ -556,7 +560,7 @@ parameters of these estimators are `n_estimators` and `learning_rate`.
       ...     loss='squared_error'
       ... ).fit(X_train, y_train)
       >>> mean_squared_error(y_test, est.predict(X_test))
-      5.00...
+      5.00
 
   The figure below shows the results of applying :class:`GradientBoostingRegressor`
   with least squares loss and 500 base learners to the diabetes dataset
@@ -604,11 +608,11 @@ fitted model.
   ... )
   >>> est = est.fit(X_train, y_train)  # fit with 100 trees
   >>> mean_squared_error(y_test, est.predict(X_test))
-  5.00...
+  5.00
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and increase num of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))
-  3.84...
+  3.84
 
 .. _gradient_boosting_tree_size:
 
@@ -900,7 +904,8 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_
-    array([0.10..., 0.10..., 0.11..., ...
+    array([0.107, 0.105, 0.113, 0.0987, 0.0947,
+           0.107, 0.0916, 0.0972, 0.0958, 0.0906])
 
 Note that this computation of feature importance is based on entropy, and it
 is distinct from :func:`sklearn.inspection.permutation_importance` which is
@@ -917,7 +922,7 @@ based on permutation of the features.
    Annals of Statistics, 29, 1189-1232.
 
 .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-   <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+   <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=48caac2f65bce47f6d27400ae4f60d8395cec2f3>`_.
    Computational Statistics & Data Analysis, 38, 367-378.
 
 .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
@@ -959,19 +964,26 @@ In random forests (see :class:`RandomForestClassifier` and
 from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
-Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the features values of
-either all input features or a random subset of size ``max_features``.
-(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
+During the construction of each tree in the forest, a random subset of the
+features is considered. The size of this subset is controlled by the
+`max_features` parameter; it may include either all input features or a random
+subset of them (see the :ref:`parameter tuning guidelines
+<random_forest_parameters>` for more details).
 
-The purpose of these two sources of randomness is to decrease the variance of
-the forest estimator. Indeed, individual decision trees typically exhibit high
+The purpose of these two sources of randomness (bootstrapping the samples and
+randomly selecting features at each split) is to decrease the variance of the
+forest estimator. Indeed, individual decision trees typically exhibit high
 variance and tend to overfit. The injected randomness in forests yield decision
 trees with somewhat decoupled prediction errors. By taking an average of those
 predictions, some errors can cancel out. Random forests achieve a reduced
 variance by combining diverse trees, sometimes at the cost of a slight increase
 in bias. In practice the variance reduction is often significant hence yielding
 an overall better model.
+
+When growing each tree in the forest, the "best" split (i.e. equivalent to
+passing `splitter="best"` to the underlying decision trees) is chosen according
+to the impurity criterion. See the :ref:`CART mathematical formulation
+<tree_mathematical_formulation>` for more details.
 
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
@@ -1035,13 +1047,13 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.98...)
+    np.float64(0.98)
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.999...)
+    np.float64(0.999)
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
@@ -1578,15 +1590,15 @@ Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[142..., 138..., 146...],
-         [179..., 182..., 151...],
-         [139..., 132..., 158...],
-         [286..., 292..., 225...],
-         [126..., 124..., 164...]])
+  array([[142, 138, 146],
+         [179, 182, 151],
+         [139, 132, 158],
+         [286, 292, 225],
+         [126, 124, 164]])
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
-strengths of the these predictors. However, training a stacking predictor is
+strengths of these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::
@@ -1684,7 +1696,7 @@ learners::
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
-    np.float64(0.9...)
+    np.float64(0.95)
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in

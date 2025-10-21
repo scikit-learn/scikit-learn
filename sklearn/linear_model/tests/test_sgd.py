@@ -1,4 +1,5 @@
 import pickle
+import warnings
 from unittest.mock import Mock
 
 import joblib
@@ -266,6 +267,17 @@ def test_input_format(klass):
         clf.fit(X, Y_)
 
 
+@pytest.mark.parametrize("lr", ["pa1", "pa2"])
+@pytest.mark.parametrize(
+    ["est", "loss"], [(SGDClassifier, "squared_hinge"), (SGDRegressor, "squared_error")]
+)
+def test_learning_rate_PA_raises(lr, est, loss):
+    """Test that SGD raises with forbidden loss for passive-aggressive algo."""
+    est = est(loss=loss, learning_rate=lr)
+    with pytest.raises(ValueError):
+        est.fit(X, Y)
+
+
 @pytest.mark.parametrize(
     "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
@@ -505,6 +517,35 @@ def test_sgd_failing_penalty_validation(Estimator):
         ValueError, match="l1_ratio must be set when penalty is 'elasticnet'"
     ):
         clf.fit(X, Y)
+
+
+# TODO(1.10): remove this test
+@pytest.mark.parametrize(
+    "klass",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_power_t_limits(klass):
+    """Check that a warning is raised when `power_t` is negative."""
+
+    # Check that negative values of `power_t` raise a warning
+    clf = klass(power_t=-1.0)
+    with pytest.warns(
+        FutureWarning, match="Negative values for `power_t` are deprecated"
+    ):
+        clf.fit(X, Y)
+
+    # Check that values of 'power_t in range [0, inf) do not raise a warning
+    with warnings.catch_warnings(record=True) as w:
+        clf = klass(power_t=0.5)
+        clf.fit(X, Y)
+    assert len(w) == 0
 
 
 ###############################################################################
@@ -1728,6 +1769,53 @@ def test_ocsvm_vs_sgdocsvm():
     assert np.mean(y_pred_sgdocsvm == y_pred_ocsvm) >= 0.99
     corrcoef = np.corrcoef(np.concatenate((dec_ocsvm, dec_sgdocsvm)))[0, 1]
     assert corrcoef >= 0.9
+
+
+def test_sgd_oneclass_convergence():
+    # Check that the optimization does not end early and that the stopping criterion
+    # is working. Non-regression test for #30027
+    for nu in [0.1, 0.5, 0.9]:
+        # no need for large max_iter
+        model = SGDOneClassSVM(
+            nu=nu, max_iter=100, tol=1e-3, learning_rate="constant", eta0=1e-3
+        )
+        model.fit(iris.data)
+        # 6 is the minimal number of iterations that should be surpassed, after which
+        # the optimization can stop
+        assert model.n_iter_ > 6
+
+
+def test_sgd_oneclass_vs_linear_oneclass():
+    # Test convergence vs. liblinear `OneClassSVM` with kernel="linear"
+    for nu in [0.1, 0.5, 0.9]:
+        # allow enough iterations, small dataset
+        model = SGDOneClassSVM(
+            nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3
+        )
+        model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)  # reference model
+        model.fit(iris.data)
+        model_ref.fit(iris.data)
+
+        preds = model.predict(iris.data)
+        dec_fn = model.decision_function(iris.data)
+
+        preds_ref = model_ref.predict(iris.data)
+        dec_fn_ref = model_ref.decision_function(iris.data)
+
+        dec_fn_corr = np.corrcoef(dec_fn, dec_fn_ref)[0, 1]
+        preds_corr = np.corrcoef(preds, preds_ref)[0, 1]
+        # check weights and intercept concatenated together for correlation
+        coef_corr = np.corrcoef(
+            np.concatenate([model.coef_, -model.offset_]),
+            np.concatenate([model_ref.coef_.flatten(), model_ref.intercept_]),
+        )[0, 1]
+        # share of predicted 1's
+        share_ones = (preds == 1).sum() / len(preds)
+
+        assert dec_fn_corr > 0.99
+        assert preds_corr > 0.95
+        assert coef_corr > 0.99
+        assert_allclose(1 - share_ones, nu)
 
 
 def test_l1_ratio():

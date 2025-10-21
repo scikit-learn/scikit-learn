@@ -9,10 +9,8 @@ from numbers import Real
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import (
+from sklearn.mixture._base import BaseMixture, _check_shape
+from sklearn.mixture._gaussian_mixture import (
     _check_precision_matrix,
     _check_precision_positivity,
     _compute_log_det_cholesky,
@@ -20,6 +18,8 @@ from ._gaussian_mixture import (
     _estimate_gaussian_parameters,
     _estimate_log_gaussian_prob,
 )
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -342,8 +342,8 @@ class BayesianGaussianMixture(BaseMixture):
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
     >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
     >>> bgm.means_
-    array([[2.49... , 2.29...],
-           [8.45..., 4.52... ]])
+    array([[2.49 , 2.29],
+           [8.45, 4.52 ]])
     >>> bgm.predict([[0, 0], [9, 3]])
     array([0, 1])
     """
@@ -410,7 +410,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
         self.covariance_prior = covariance_prior
 
-    def _check_parameters(self, X):
+    def _check_parameters(self, X, xp=None):
         """Check that the parameters are well defined.
 
         Parameters
@@ -722,7 +722,7 @@ class BayesianGaussianMixture(BaseMixture):
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
 
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X, log_resp, xp=None):
         """M step.
 
         Parameters
@@ -742,7 +742,7 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
 
-    def _estimate_log_weights(self):
+    def _estimate_log_weights(self, xp=None):
         if self.weight_concentration_prior_type == "dirichlet_process":
             digamma_sum = digamma(
                 self.weight_concentration_[0] + self.weight_concentration_[1]
@@ -760,7 +760,7 @@ class BayesianGaussianMixture(BaseMixture):
                 np.sum(self.weight_concentration_)
             )
 
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, xp=None):
         _, n_features = X.shape
         # We remove `n_features * np.log(self.degrees_of_freedom_)` because
         # the precision matrix is normalized
@@ -847,7 +847,7 @@ class BayesianGaussianMixture(BaseMixture):
             self.precisions_cholesky_,
         )
 
-    def _set_parameters(self, params):
+    def _set_parameters(self, params, xp=None):
         (
             self.weight_concentration_,
             self.mean_precision_,
