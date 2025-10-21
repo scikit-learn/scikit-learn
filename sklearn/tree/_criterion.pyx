@@ -1204,6 +1204,9 @@ cdef void precompute_absolute_errors(
     sorted_y : const float64_t[::1]
         Target values, sorted
     ranks : const intp_t[::1]
+        Ranks of the node-local values of y for points in sample_indices such that:
+        sorted_y[ranks[p]] == y[sample_indices[p]] for any p in [start, end) or
+        (end, start].
     sample_weight : const float64_t[:]
     sample_indices : const intp_t[:]
         indices indicating which samples to use. Shape: (n_samples,)

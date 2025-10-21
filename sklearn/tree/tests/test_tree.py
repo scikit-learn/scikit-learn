@@ -2948,6 +2948,7 @@ def test_absolute_errors_precomputation_function(global_random_seed):
         return np.array(errors), np.array(medians)
 
     def assert_same_results(y, w, indices, reverse=False):
+        n = y.shape[0]
         args = (n - 1, -1) if reverse else (0, n)
         abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args, n)
         y_sorted = y[indices]
