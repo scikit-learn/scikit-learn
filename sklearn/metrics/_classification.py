@@ -104,6 +104,11 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
+    for array in [y_true, y_pred]:
+        if _num_samples(array) < 1:
+            raise ValueError(
+                "Found empty input array while a minimum of 1 sample is required."
+            )
     if sample_weight is not None:
         sample_weight = _check_sample_weight(
             sample_weight, y_true, force_float_dtype=False
